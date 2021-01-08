@@ -1,0 +1,22 @@
+{
+    "ExtractionRequest": {
+        "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
+        "ContentFieldNames": [
+            "RIC",
+            "Universal Bid Ask Date",
+            "Universal Ask Price",
+            "Universal Bid Price"
+        ],
+        "IdentifierList": {
+            "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+            "InstrumentIdentifiers": [
+            ],
+            "ValidationOptions": null,
+            "UseUserPreferencesForValidationOptions": false
+        },
+        "Condition":
+        {
+            
+      }
+    }
+}

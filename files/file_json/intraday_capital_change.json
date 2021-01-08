@@ -1,0 +1,22 @@
+{
+    "ExtractionRequest": {
+        "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
+        "ContentFieldNames": [
+            "RIC",
+            "Trade Date",
+            "Last Price",
+            "Percent Change"
+        ],
+        "IdentifierList": {
+            "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+            "InstrumentIdentifiers": [
+            ],
+            "ValidationOptions":{"AllowHistoricalInstruments":true,"AllowOpenAccessInstruments":true},
+            "UseUserPreferencesForValidationOptions": false
+        },
+        "Condition":
+        {
+            
+      }
+    }
+}

@@ -1,0 +1,25 @@
+{
+    "ExtractionRequest": {
+        "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.PriceHistoryExtractionRequest",
+        "ContentFieldNames": [
+            "RIC",
+            "Trade Date",
+            "Open Price",
+            "Low Price",
+            "High Price",
+            "Universal Close Price",
+            "Adjustment Value - Capital Change"
+        ],
+        "IdentifierList": {
+            "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+            "InstrumentIdentifiers": [
+            ],
+            "ValidationOptions": null,
+            "UseUserPreferencesForValidationOptions": false
+        },
+        "Condition":
+        {
+            
+      }
+    }
+}
