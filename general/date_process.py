@@ -58,40 +58,25 @@ def forwarddate_by_year(year):
 def BackTimeFormat(days,strip=None):
     time = date.today() - timedelta(days=days)
     if strip:
-        timeformat=time.strftime('%Y-%m-%d')
+        timeformat=time.strftime("%Y-%m-%d")
     else:
-        timeformat=time.strftime('%Y%m%d')
+        timeformat=time.strftime("%Y%m%d")
     return timeformat
 
-def count_date_range(start, end):
+def count_date_range_by_month(start, end, month):
     start_date = datetime.strptime(start, "%Y-%m-%d")
     end_date = datetime.strptime(end, "%Y-%m-%d")
-    date_range = pd.DataFrame({'date':[]}, index=[])
+    date_range = pd.DataFrame({"date":[]}, index=[])
     i = True
     count = -3
     while i :
         count=(count+3)
-        date_result = end_date - relativedelta(months=count)
-        date_range = date_range.append(pd.DataFrame({'date':[date_result.date()]}, index=[0]))
+        date_result = end_date - relativedelta(months=month)
+        date_range = date_range.append(pd.DataFrame({"date":[date_result.date()]}, index=[0]))
         if ((start_date.month == date_result.month) and (start_date.year == date_result.year)):
             break
     date_range.reset_index(inplace=True)
-    return date_range['date']
-
-def count_date_range_monthly(start, end):
-    start_date = datetime.strptime(start, "%Y-%m-%d")
-    end_date = datetime.strptime(end, "%Y-%m-%d")
-    date_range = pd.DataFrame({'date':[]}, index=[])
-    i = True
-    count = -1
-    while i :
-        count=(count+1)
-        date_result = end_date - relativedelta(months=count)
-        date_range = date_range.append(pd.DataFrame({'date':[date_result.date()]}, index=[0]))
-        if ((start_date.month == date_result.month) and (start_date.year == date_result.year)):
-            break
-    date_range.reset_index(inplace=True)
-    return date_range['date']
+    return date_range["date"]
     
 def timeit(func):
     @functools.wraps(func)
@@ -99,6 +84,6 @@ def timeit(func):
         startTime = time.time()
         func(*args, **kwargs)
         elapsedTime = time.time() - startTime
-        print('function [{}] finished in {} min'.format(
+        print("function [{}] finished in {} min".format(
             func.__name__, float(elapsedTime / 60)))
     return newfunc

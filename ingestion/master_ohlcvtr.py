@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
 from general.data_process import uid_maker
-
 from general.sql_process import do_function
 from general.date_process import dateNow
 from general.sql_query import get_master_ohlcvtr_data, get_master_ohlcvtr_start_date
+from general.sql_output import insert_data_to_database, upsert_data_to_database
+from ingestion.master_tac import master_tac_update, ForwardBackwardFillNull
 
 def datapoint_lte_1000(fulldatapoint):
     exclude = list(module.datasource.models.ReportDatapoint.objects.filter(reingested=True).values_list("ticker",flat=True))
@@ -25,43 +26,6 @@ def datapoint_lte_1000(fulldatapoint):
                     datapoint=data.fulldatapoint,
                     updated = datetime.now().date()
                     )
-
-def DeleteHolidayStatus(data):
-    data = data.loc[data["day_status"] != "holiday"]
-    return data
-
-def rolling_apply(group, field):
-    adjusted_price = [group[field].iloc[0]]
-    for x in group.tac[:-1]:
-        adjusted_price.append(adjusted_price[-1] *  x )
-    group[field] = adjusted_price
-    return group
-
-def roundPrice(price):
-    if price > 10000:
-        return round(price, 0)
-    else:
-        return round(price, 2)
-        
-def ForwardBackwardFillNull(data, columns_field):
-    data = data.sort_values(by="trading_day", ascending=False)
-    data = data.infer_objects()
-    result = data[["uid"]]
-    data_detail = data[["uid", "ticker", "trading_day", "volume", "currency_code"]]
-    universe = data["ticker"].drop_duplicates()
-    universe =universe.tolist()
-    for column in columns_field:
-        price = data.pivot_table(index="trading_day", columns="ticker", values=column, aggfunc="first", dropna=False)
-        price = price.reindex(columns=universe)
-        price = price.ffill().bfill()
-        price = pd.DataFrame(price.values, index=price.index, columns=price.columns)
-        price["trading_day"] = price.index
-        price = price.melt(id_vars="trading_day", var_name="ticker", value_name=column)
-        price = uid_maker(price, "uid", "ticker", "trading_day")
-        price = price.drop(columns=["trading_day", "ticker"])
-        result = result.merge(price, on=["uid"], how="left")
-    result = result.merge(data_detail, on=["uid"], how="left")
-    return result
 
 def FilterWeekend( data):
     data = data[data["trading_day"].apply(lambda x: x.weekday() not in [5, 6])]
@@ -147,7 +111,7 @@ def master_ohlctr_update():
     master_ohlcvtr_data = ForwardBackwardFillNull(master_ohlcvtr_data, ["close", "total_return_index"])
     master_ohlcvtr_data = master_ohlcvtr_data.drop(columns=["point", "fulldatapoint"])
     if(len(master_ohlcvtr_data) > 0):
-        upsert_data_to_database("uid", TEXT, master_ohlcvtr_data, "master_ohlcvtr", method="update")
+        upsert_data_to_database(master_ohlcvtr_data, "master_ohlcvtr", "uid", how="update", Text=True)
         del master_ohlcvtr_data
         master_tac_update()
 

@@ -6,6 +6,7 @@ from general.date_process import (
     datetimeNow, 
     dlp_start_date, 
     dlp_start_date_buffer)
+from general.sql_output import insert_data_to_database, upsert_data_to_database
 
 def dataframe_to_pivot( data, universe, index, column, values, indexes=None):
     result = data.pivot_table(index=index, columns=column, values=values, aggfunc="first", dropna=False)
@@ -85,4 +86,4 @@ def master_multiple_update():
     result = result.drop(columns=["open", "high", "low", "close", "volume"])
     
     print(datetimeNow() + " === Master Multiple Calculate Done ===")
-    insert_data_to_database(result, "master_multiple", method="replace")
+    insert_data_to_database(result, "master_multiple", how="replace")

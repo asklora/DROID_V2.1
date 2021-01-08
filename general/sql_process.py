@@ -10,13 +10,13 @@ def do_function(func):
     connection = engine.raw_connection()
     cursor = connection.cursor()
     try:
-        print(f'trigger functions {func}')
+        print(f"trigger functions {func}")
         cursor.callproc(func)
         cursor.close()
         connection.commit()
-        print(f'functions {func} succeed')
+        print(f"functions {func} succeed")
     except Exception as e:
-        print(f'error: {e}')
+        print(f"error: {e}")
     finally:
         print("close connections")
         connection.close()
