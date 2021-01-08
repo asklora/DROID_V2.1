@@ -44,6 +44,7 @@ CORE_APPS = [
     'core.universe',
     'core.user',
     'core.djangomodule',
+    'core.master',
 ]
 
 INSTALLED_APPS = DJANGO_DEFAULT_APPS + ADDITIONAL_APPS + CORE_APPS

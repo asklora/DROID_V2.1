@@ -4,7 +4,7 @@ from .manager import AppUserManager
 from django.core.exceptions import ValidationError
 import uuid
 from django.utils import timezone
-# from backendmodel.universe.models import Currency
+from core.universe.models import Currency
 from datetime import datetime, date
 from django.db import IntegrityError
 from django.conf import settings
@@ -163,8 +163,8 @@ class Accountbalance(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name='user_balance')
     amount = models.FloatField(default=0, validators=[validate_decimals])
-    # currency = models.ForeignKey(
-    #     Currency, on_delete=models.DO_NOTHING, related_name='user_currency', default='USD')
+    currency = models.ForeignKey(
+        Currency, on_delete=models.DO_NOTHING, related_name='user_currency', default='USD')
     last_updated = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
