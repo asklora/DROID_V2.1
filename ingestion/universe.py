@@ -27,7 +27,7 @@ from general.table_name import (
 
 def update_ticker_name():
     print("{} : === Ticker Name Start Ingestion ===".format(datetimeNow()))
-    universe = get_active_universe()
+    universe = get_active_universe().head(2)
     universe = universe[["ticker"]]
     filter_field = ["WC06003", "NAME"]
     identifier="ticker"

@@ -19,6 +19,7 @@ vix_table = get_vix_table_name()
 currency_table = get_currency_table_name()
 
 def read_query(query, table=universe_table):
+    print(db_read)
     print(f"Get Data From Database on {table} table")
     engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
