@@ -1,8 +1,12 @@
 import time
 import functools
 import pandas as pd
+from pytz import timezone
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
+
+def get_time_by_timezone(timezone_location):
+    return datetime.now(timezone(timezone_location)).utcoffset() / timedelta(minutes =15)
 
 def droid_start_date():
     return backdate_by_year(4) #backdate_by_year(12)

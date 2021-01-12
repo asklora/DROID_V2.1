@@ -3,15 +3,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from general.slack import report_to_slack
-from general.date_process import datetimeNow
+from general.date_process import datetimeNow, get_time_by_timezone
 from general.table_name import get_currency_table_name
-from general.sql_query import get_currency_symbol
+from general.sql_query import get_active_currency, get_active_currency_ric_not_null
 from datasource.dss import get_data_from_dss
 from general.sql_output import upsert_data_to_database
 
 def update_currency_price_from_dss():
     print("{} : === Currency Price Ingestion ===".format(datetimeNow()))
-    currencylist = get_currency_symbol().head(2)
+    currencylist = get_active_currency_ric_not_null()
     currencylist = currencylist.drop(columns=["last_date", "ask_price", "bid_price"])
     currency = currencylist["ric"]
     jsonFileName = "files/file_json/currency_price.json"
@@ -59,27 +59,12 @@ def convert_to_utc(market_close_time, utc_offset, close_ingestion_offset, plus_a
     result = str(different_hours) + ":" + str(different_minutes) + ":00"
     return result
 
-def update_classic_schedule_to_database(args, data):
-    print("Updating classic_schedule to Database")
-    engine_droid = create_engine(args.db_url_droid_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine_droid.connect() as conn:
-        metadata = db.MetaData()
-        for index, row in data.iterrows():
-            classic_schedule = row['classic_schedule']
-            indices = row['index']
-            query = f"update {indices_table} set classic_schedule='{classic_schedule}' where index='{indices}'"
-            result = conn.execute(query)
-    engine_droid.dispose()
-    print(f"classic_schedule Updated to {indices_table} table")
-
 def calculate_timezone(data):
     data["utc_offset_minutes"] = ""
     data["utc_offset"] = ""
     for i in range(len(data)):
         utc_timezone_location = data["utc_timezone_location"].loc[i]
-        timezone_data = timezone(utc_timezone_location)
-        timezone_now = datetime.now(timezone_data)
-        result = timezone_now.utcoffset() / timedelta(minutes =15)
+        result = get_time_by_timezone(utc_timezone_location)
         data["utc_offset_minutes"].loc[i] = result
         if(result % 4 == 0):
             result = str(int(result / 4 * -1)) + ":00" + ":00"
@@ -91,8 +76,8 @@ def calculate_timezone(data):
     return data
 
 def update_utc_offset(args):
-    data = get_timezone_area(args)
-    result = calculate_timezone(data)
+    currency = get_active_currency()
+    timezone_result = calculate_timezone(currency)
     update_utc_offset_to_database(args, result)
     market_close = get_market_close(args)
     plus_another_minutes = "00:15:00"
@@ -105,4 +90,4 @@ def update_utc_offset(args):
     print(market_close)
     update_classic_schedule_to_database(args, market_close)
     
-    report_to_slack("{} : === UTC Offset Updated ===".format(str(datetime.now())), args)
+    report_to_slack("{} : === UTC Offset Updated ===".format(datetimeNow()))

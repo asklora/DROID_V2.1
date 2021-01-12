@@ -42,7 +42,7 @@ def get_active_currency():
     data = read_query(query, table=currency_table)
     return data
 
-def get_active_currency_ric_null():
+def get_active_currency_ric_not_null():
     query = f"select * from {currency_table} where is_active=True and ric is not null"
     data = read_query(query, table=currency_table)
     return data
