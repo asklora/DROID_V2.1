@@ -1,4 +1,3 @@
-from ingestion.master_ohlcvtr import master_ohlctr_update
 import time
 import pandas as pd
 import sqlalchemy as db
@@ -19,7 +18,6 @@ vix_table = get_vix_table_name()
 currency_table = get_currency_table_name()
 
 def read_query(query, table=universe_table):
-    print(db_read)
     print(f"Get Data From Database on {table} table")
     engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
@@ -39,8 +37,13 @@ def get_data_by_table_name_with_condition(table, condition):
     data = read_query(query, table=table)
     return data
 
-def get_currency_symbol():
-    query = f"select currency_code, ric from {currency_table} where ric is not null"
+def get_active_currency():
+    query = f"select * from {currency_table} where is_active=True"
+    data = read_query(query, table=currency_table)
+    return data
+
+def get_active_currency_ric_null():
+    query = f"select * from {currency_table} where is_active=True and ric is not null"
     data = read_query(query, table=currency_table)
     return data
 
@@ -117,27 +120,27 @@ def get_master_ohlcvtr_start_date():
         data = backdate_by_day(7)
     return data
 
-def get_timezone_area(args):
-    print("Get Timezone Area")
-    engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        query = f"select index, utc_timezone_location from {indices_table} where still_live=True"
-        data = pd.read_sql(query, con=conn)
-    engine.dispose()
-    data = pd.DataFrame(data)
-    return data
+# def get_timezone_area(args):
+#     print("Get Timezone Area")
+#     engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
+#     with engine.connect() as conn:
+#         metadata = db.MetaData()
+#         query = f"select index, utc_timezone_location from {indices_table} where still_live=True"
+#         data = pd.read_sql(query, con=conn)
+#     engine.dispose()
+#     data = pd.DataFrame(data)
+#     return data
 
-def get_market_close(args):
-    print("Get Market Close Time")
-    engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        query = f"select index, market_close_time, utc_offset, close_ingestion_offset from {indices_table} where still_live=True"
-        data = pd.read_sql(query, con=conn)
-    engine.dispose()
-    data = pd.DataFrame(data)
-    return data
+# def get_market_close(args):
+#     print("Get Market Close Time")
+#     engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
+#     with engine.connect() as conn:
+#         metadata = db.MetaData()
+#         query = f"select index, market_close_time, utc_offset, close_ingestion_offset from {indices_table} where still_live=True"
+#         data = pd.read_sql(query, con=conn)
+#     engine.dispose()
+#     data = pd.DataFrame(data)
+#     return data
 
 def get_vix():
     print("Get Vix Index")

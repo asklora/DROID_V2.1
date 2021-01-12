@@ -72,6 +72,8 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
             result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date)
             if use_ticker:
                 result[identifier] = universelist.replace("<", "").replace(">", "")
+            else:
+                result[identifier] = universelist
             print(result)
             chunk_data.append(result)
         except Exception as e:

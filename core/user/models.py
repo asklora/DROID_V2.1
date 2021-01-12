@@ -14,7 +14,6 @@ from django.db.models import (
     F, FloatField, ExpressionWrapper,
     Sum, Q, Lookup
     )
-from general.helper import nonetozero
 import jwt
 import base64
 from django.db.models.fields import Field
