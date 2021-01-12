@@ -45,6 +45,7 @@ CORE_APPS = [
     'core.user',
     'core.djangomodule',
     'core.master',
+    'core.topstock',
 ]
 
 INSTALLED_APPS = DJANGO_DEFAULT_APPS + ADDITIONAL_APPS + CORE_APPS
@@ -72,7 +73,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ['templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

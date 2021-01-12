@@ -6,3 +6,4 @@ django-admin startapp universe core/universe
 django-admin startapp user core/user
 django-admin startapp djangomodule core/djangomodule
 django-admin startapp master core/master
+django-admin startapp topstock core/topstock
