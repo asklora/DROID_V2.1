@@ -65,33 +65,25 @@ RouteTablePrivate:
 RouteTablePrivateAssociationA:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-        SubnetId:
-        Ref: PrivateSubnet-A
-        RouteTableId:
-        Ref: RouteTablePrivate
+        SubnetId: !Ref PrivateSubnet-A
+        RouteTableId: !Ref RouteTablePrivate
 RouteTablePrivateAssociationB:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-        SubnetId:
-        Ref: PrivateSubnet-C
-        RouteTableId:
-        Ref: RouteTablePrivate
+        SubnetId: !Ref PrivateSubnet-C
+        RouteTableId: !Ref RouteTablePrivate
 
 # Make Association Route public to subnet
 RouteTablePublicAssociationA:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-        SubnetId:
-        Ref: PublicSubnet-A
-        RouteTableId:
-        Ref: RouteTablePublic
+        SubnetId: !Ref PublicSubnet-A
+        RouteTableId: !Ref RouteTablePublic
 RouteTablePublicAssociationB:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-        SubnetId:
-        Ref: PublicSubnet-C
-        RouteTableId:
-        Ref: RouteTablePublic
+        SubnetId: !Ref PublicSubnet-C
+        RouteTableId: !Ref RouteTablePublic
 
 #Set up internet gateway for public Subnet
 AskloraInternetGateway:
