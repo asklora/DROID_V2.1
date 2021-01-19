@@ -92,8 +92,8 @@ Resources:
         Type: AWS::EC2::InternetGateway
         Properties:
         Tags:
-            - Key: name
-                Value: internet
+        - Key: name
+          Value: internet
 
     #Associate internet with route table public
     AskloraInternetGatewayAssociationA:
