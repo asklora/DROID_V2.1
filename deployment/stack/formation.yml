@@ -1,106 +1,108 @@
-# VPC
-Asklorav21Vpc:
-    Type: AWS::EC2::VPC
-    Properties:
-        CidrBlock: 118.0.0.0/16
+
+Resources:
+    # VPC
+    Asklorav21Vpc:
+        Type: AWS::EC2::VPC
+        Properties:
+            CidrBlock: 118.0.0.0/16
 
 
-        # ****SUBNET****
-# == PRIVATE ==
+            # ****SUBNET****
+    # == PRIVATE ==
 
-#Availability Zone A
-PrivateSubnet-A:
-    Type: AWS::EC2::Subnet
-    Properties: 
-        AvailabilityZone: ap-east-1a
-        CidrBlock: 118.0.16.0/20
-        VpcId: !Ref Asklorav21Vpc
-#Availability Zone C
-PrivateSubnet-C:
-    Type: AWS::EC2::Subnet
-    Properties: 
-        AvailabilityZone: ap-east-1c
-        CidrBlock: 118.0.0.0/24
-        VpcId: !Ref Asklorav21Vpc
-# == END Private AZ ==
+    #Availability Zone A
+    PrivateSubnet-A:
+        Type: AWS::EC2::Subnet
+        Properties: 
+            AvailabilityZone: ap-east-1a
+            CidrBlock: 118.0.16.0/20
+            VpcId: !Ref Asklorav21Vpc
+    #Availability Zone C
+    PrivateSubnet-C:
+        Type: AWS::EC2::Subnet
+        Properties: 
+            AvailabilityZone: ap-east-1c
+            CidrBlock: 118.0.0.0/24
+            VpcId: !Ref Asklorav21Vpc
+    # == END Private AZ ==
 
-# == PUBLIC ==
+    # == PUBLIC ==
 
-#Availability Zone A
-PublicSubnet-A:
-    Type: AWS::EC2::Subnet
-    Properties: 
-        AvailabilityZone: ap-east-1a
-        CidrBlock: 118.0.32.0/20
-        VpcId: !Ref Asklorav21Vpc
-#Availability Zone C
-PublicSubnet-C:
-    Type: AWS::EC2::Subnet
-    Properties: 
-        AvailabilityZone: ap-east-1c
-        CidrBlock: 118.0.1.0/24
-        VpcId: !Ref Asklorav21Vpc
-# == END Public AZ ==
+    #Availability Zone A
+    PublicSubnet-A:
+        Type: AWS::EC2::Subnet
+        Properties: 
+            AvailabilityZone: ap-east-1a
+            CidrBlock: 118.0.32.0/20
+            VpcId: !Ref Asklorav21Vpc
+    #Availability Zone C
+    PublicSubnet-C:
+        Type: AWS::EC2::Subnet
+        Properties: 
+            AvailabilityZone: ap-east-1c
+            CidrBlock: 118.0.1.0/24
+            VpcId: !Ref Asklorav21Vpc
+    # == END Public AZ ==
 
-        # **** END SUBNET****
+            # **** END SUBNET****
 
-# === Route Table ====
-# Route Public
-RouteTablePublic:
-    Type: AWS::EC2::RouteTable
-    Properties: 
-        Tags: 
-        - Public Route Table
-        VpcId: !Ref Asklorav21Vpc
-# Route Private
-RouteTablePrivate:
-    Type: AWS::EC2::RouteTable
-    Properties: 
-        Tags: 
-        - Private Route Table
-        VpcId: !Ref Asklorav21Vpc
-# === End Route ====
+    # === Route Table ====
+    # Route Public
+    RouteTablePublic:
+        Type: AWS::EC2::RouteTable
+        Properties: 
+            Tags: 
+            - Public Route Table
+            VpcId: !Ref Asklorav21Vpc
+    # Route Private
+    RouteTablePrivate:
+        Type: AWS::EC2::RouteTable
+        Properties: 
+            Tags: 
+            - Private Route Table
+            VpcId: !Ref Asklorav21Vpc
+    # === End Route ====
 
-# Make Association Route Private to subnet
-RouteTablePrivateAssociationA:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-        SubnetId: !Ref PrivateSubnet-A
-        RouteTableId: !Ref RouteTablePrivate
-RouteTablePrivateAssociationB:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-        SubnetId: !Ref PrivateSubnet-C
-        RouteTableId: !Ref RouteTablePrivate
+    # Make Association Route Private to subnet
+    RouteTablePrivateAssociationA:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId: !Ref PrivateSubnet-A
+            RouteTableId: !Ref RouteTablePrivate
+    RouteTablePrivateAssociationB:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId: !Ref PrivateSubnet-C
+            RouteTableId: !Ref RouteTablePrivate
 
-# Make Association Route public to subnet
-RouteTablePublicAssociationA:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-        SubnetId: !Ref PublicSubnet-A
-        RouteTableId: !Ref RouteTablePublic
-RouteTablePublicAssociationB:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-        SubnetId: !Ref PublicSubnet-C
-        RouteTableId: !Ref RouteTablePublic
+    # Make Association Route public to subnet
+    RouteTablePublicAssociationA:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId: !Ref PublicSubnet-A
+            RouteTableId: !Ref RouteTablePublic
+    RouteTablePublicAssociationB:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId: !Ref PublicSubnet-C
+            RouteTableId: !Ref RouteTablePublic
 
-#Set up internet gateway for public Subnet
-AskloraInternetGateway:
-    Type: AWS::EC2::InternetGateway
-    Properties:
-      Tags:
-      - Key: name
-        Value: InternetGateway
+    #Set up internet gateway for public Subnet
+    AskloraInternetGateway:
+        Type: AWS::EC2::InternetGateway
+        Properties:
+        Tags:
+        - Key: name
+            Value: InternetGateway
 
-#Associate internet with route table public
-AskloraInternetGatewayAssociationA:
-    Type: AWS::EC2::GatewayRouteTableAssociation
-    Properties: 
-        GatewayId: !Ref AskloraInternetGateway
-        RouteTableId: !Ref RouteTablePublicAssociationA
-AskloraInternetGatewayAssociationB:
-    Type: AWS::EC2::GatewayRouteTableAssociation
-    Properties: 
-        GatewayId: !Ref AskloraInternetGateway
-        RouteTableId: !Ref RouteTablePublicAssociationB
+    #Associate internet with route table public
+    AskloraInternetGatewayAssociationA:
+        Type: AWS::EC2::GatewayRouteTableAssociation
+        Properties: 
+            GatewayId: !Ref AskloraInternetGateway
+            RouteTableId: !Ref RouteTablePublicAssociationA
+    AskloraInternetGatewayAssociationB:
+        Type: AWS::EC2::GatewayRouteTableAssociation
+        Properties: 
+            GatewayId: !Ref AskloraInternetGateway
+            RouteTableId: !Ref RouteTablePublicAssociationB
