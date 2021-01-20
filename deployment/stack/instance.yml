@@ -1,0 +1,64 @@
+Resource:
+    RuleSSHec2:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupName: only-ssh-sg
+            GroupDescription: Limits security group only ssh traffic
+            VpcId: !Ref Asklorav21Vpc
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                FromPort: 22
+                ToPort: 22
+                CidrIp: 0.0.0.0/0
+    VpcSg:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupName: db-sg
+            GroupDescription: for db instance
+            VpcId: !Ref Asklorav21Vpc
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                FromPort: 5432
+                ToPort: 5432
+                CidrIp: 0.0.0.0/0
+    PvsubnetDB:
+        Type: AWS::RDS::DBSubnetGroup
+        Properties: 
+            DBSubnetGroupDescription: pvsubnet
+            DBSubnetGroupName: pvdbsubnet
+            SubnetIds: 
+                - String
+    
+    BastionHost:
+        Type: AWS::EC2::Instance
+        Properties:
+            KeyName: asklora-hk.pem
+            ImageId: ami-077c694a31fa99701
+            InstanceType: c5.xlarge
+            SecurityGroupIds:
+                - !Ref RuleSSHec2
+            UserData: !Base64 |
+                #!/bin/bash -ex
+                # put your script here
+            Tags:
+                - Key: name
+                Value: bastion
+    
+    
+    rdsDBInstance:
+      Type: AWS::RDS::DBInstance
+      Properties:
+        DBInstanceClass: db.t3.small
+        AvailabilityZone: ap-east-1a
+        DBName: postgres
+        DBSecurityGroups: 
+          - db-sg-group
+        DBSubnetGroupName: 
+        Engine: postgres
+        MasterUsername: postgres
+        MasterUserPassword: askLORA2020$
+        MultiAZ: false
+        Port: 5432
+        PubliclyAccessible: false
+        VPCSecurityGroups:
+          - !Ref VpcSg

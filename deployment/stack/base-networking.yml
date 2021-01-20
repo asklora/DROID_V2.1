@@ -1,4 +1,3 @@
-
 Resources:
     # VPC
     Asklorav21Vpc:
@@ -11,14 +10,14 @@ Resources:
     # == PRIVATE ==
 
     #Availability Zone A
-    PrivateSubnet-A:
+    PrivateSubnetA:
         Type: AWS::EC2::Subnet
         Properties: 
             AvailabilityZone: ap-east-1a
             CidrBlock: 118.0.16.0/20
             VpcId: !Ref Asklorav21Vpc
     #Availability Zone C
-    PrivateSubnet-C:
+    PrivateSubnetC:
         Type: AWS::EC2::Subnet
         Properties: 
             AvailabilityZone: ap-east-1c
@@ -29,14 +28,14 @@ Resources:
     # == PUBLIC ==
 
     #Availability Zone A
-    PublicSubnet-A:
+    PublicSubnetA:
         Type: AWS::EC2::Subnet
         Properties: 
             AvailabilityZone: ap-east-1a
             CidrBlock: 118.0.32.0/20
             VpcId: !Ref Asklorav21Vpc
     #Availability Zone C
-    PublicSubnet-C:
+    PublicSubnetC:
         Type: AWS::EC2::Subnet
         Properties: 
             AvailabilityZone: ap-east-1c
@@ -51,15 +50,11 @@ Resources:
     RouteTablePublic:
         Type: AWS::EC2::RouteTable
         Properties: 
-            Tags: 
-            - Public Route Table
             VpcId: !Ref Asklorav21Vpc
     # Route Private
     RouteTablePrivate:
         Type: AWS::EC2::RouteTable
         Properties: 
-            Tags: 
-            - Private Route Table
             VpcId: !Ref Asklorav21Vpc
     # === End Route ====
 
@@ -67,33 +62,33 @@ Resources:
     RouteTablePrivateAssociationA:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
-            SubnetId: !Ref PrivateSubnet-A
+            SubnetId: !Ref PrivateSubnetA
             RouteTableId: !Ref RouteTablePrivate
     RouteTablePrivateAssociationB:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
-            SubnetId: !Ref PrivateSubnet-C
+            SubnetId: !Ref PrivateSubnetC
             RouteTableId: !Ref RouteTablePrivate
 
     # Make Association Route public to subnet
     RouteTablePublicAssociationA:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
-            SubnetId: !Ref PublicSubnet-A
+            SubnetId: !Ref PublicSubnetA
             RouteTableId: !Ref RouteTablePublic
     RouteTablePublicAssociationB:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
-            SubnetId: !Ref PublicSubnet-C
+            SubnetId: !Ref PublicSubnetC
             RouteTableId: !Ref RouteTablePublic
 
     #Set up internet gateway for public Subnet
     AskloraInternetGateway:
         Type: AWS::EC2::InternetGateway
         Properties:
-        Tags:
-        - Key: name
-          Value: internet
+            Tags:
+              - Key: name
+                Value: internet
 
     #Associate internet with route table public
     AskloraInternetGatewayAssociationA:
@@ -106,3 +101,28 @@ Resources:
         Properties: 
             GatewayId: !Ref AskloraInternetGateway
             RouteTableId: !Ref RouteTablePublicAssociationB
+    
+Outputs:
+    VpcID:
+        Description: Vpc id asklora
+        Value: !Ref Asklorav21Vpc
+        Export: 
+            Name:
+                Fn::Sub: "${AWS::StackName}-VPCID"
+    PublicSubnet:
+        Description: The subnet ID to use for public web servers
+        Value:
+            Ref: PublicSubnetA
+        Export:
+            Name:
+                Fn::Sub: "${AWS::StackName}-PublicSubnetID"
+    PrivateSubnet:
+        Description: The subnet ID to use for public web servers
+        Value:
+            Ref: PrivateSubnetA
+        Export:
+            Name:
+                Fn::Sub: "${AWS::StackName}-PrivateSubnetID"
+    
+
+
