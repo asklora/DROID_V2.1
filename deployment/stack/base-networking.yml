@@ -4,6 +4,9 @@ Resources:
         Type: AWS::EC2::VPC
         Properties:
             CidrBlock: 118.0.0.0/16
+            Tags:
+              - Key: Name
+                Value: Asklora-vpc
 
 
             # ****SUBNET****
@@ -16,6 +19,9 @@ Resources:
             AvailabilityZone: ap-east-1a
             CidrBlock: 118.0.16.0/20
             VpcId: !Ref Asklorav21Vpc
+            Tags:
+              - Key: Name
+                Value: Private subnet A
     #Availability Zone C
     PrivateSubnetC:
         Type: AWS::EC2::Subnet
@@ -23,6 +29,9 @@ Resources:
             AvailabilityZone: ap-east-1c
             CidrBlock: 118.0.0.0/24
             VpcId: !Ref Asklorav21Vpc
+            Tags:
+              - Key: Name
+                Value: Private subnet C
     # == END Private AZ ==
 
     # == PUBLIC ==
@@ -34,6 +43,9 @@ Resources:
             AvailabilityZone: ap-east-1a
             CidrBlock: 118.0.32.0/20
             VpcId: !Ref Asklorav21Vpc
+            Tags:
+              - Key: Name
+                Value: Public subnet A
     #Availability Zone C
     PublicSubnetC:
         Type: AWS::EC2::Subnet
@@ -41,6 +53,9 @@ Resources:
             AvailabilityZone: ap-east-1c
             CidrBlock: 118.0.1.0/24
             VpcId: !Ref Asklorav21Vpc
+            Tags:
+              - Key: Name
+                Value: Public subnet C
     # == END Public AZ ==
 
             # **** END SUBNET****
@@ -51,11 +66,17 @@ Resources:
         Type: AWS::EC2::RouteTable
         Properties: 
             VpcId: !Ref Asklorav21Vpc
+            Tags:
+              - Key: Name
+                Value: Route public
     # Route Private
     RouteTablePrivate:
         Type: AWS::EC2::RouteTable
         Properties: 
             VpcId: !Ref Asklorav21Vpc
+            Tags:
+              - Key: Name
+                Value: Route private
     # === End Route ====
 
     # Make Association Route Private to subnet
@@ -87,20 +108,86 @@ Resources:
         Type: AWS::EC2::InternetGateway
         Properties:
             Tags:
-              - Key: name
+              - Key: Name
                 Value: internet
-
-    #Associate internet with route table public
-    AskloraInternetGatewayAssociationA:
+    AttachGateway:
+        Type: AWS::EC2::VPCGatewayAttachment
+        Properties:
+            VpcId:
+                Ref: Asklorav21Vpc
+            InternetGatewayId:
+                Ref: AskloraInternetGateway
+    # Associate internet with route table public
+    AskloraInternetGatewayAssociation:
         Type: AWS::EC2::GatewayRouteTableAssociation
+        Properties:
+            RouteTableId:
+                Ref:  RouteTablePublic
+            GatewayId:
+                Ref:  AskloraInternetGateway
+    
+    
+    RuleSSHec2:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupName: only-ssh-sg
+            GroupDescription: Limits security group only ssh traffic
+            VpcId: !Ref Asklorav21Vpc
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  FromPort: 22
+                  ToPort: 22
+                  CidrIp: 0.0.0.0/0
+    VpcSg:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupName: db-sg
+            GroupDescription: for db instance
+            VpcId: !Ref Asklorav21Vpc
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  FromPort: 5432
+                  ToPort: 5432
+                  CidrIp: 0.0.0.0/0
+    PvsubnetDB:
+        Type: AWS::RDS::DBSubnetGroup
         Properties: 
-            GatewayId: !Ref AskloraInternetGateway
-            RouteTableId: !Ref RouteTablePublicAssociationA
-    AskloraInternetGatewayAssociationB:
-        Type: AWS::EC2::GatewayRouteTableAssociation
-        Properties: 
-            GatewayId: !Ref AskloraInternetGateway
-            RouteTableId: !Ref RouteTablePublicAssociationB
+            DBSubnetGroupDescription: pvsubnet
+            DBSubnetGroupName: pvdbsubnet
+            SubnetIds: 
+                - !Ref PrivateSubnetA
+                - !Ref PrivateSubnetC
+    
+    BastionHost:
+        Type: AWS::EC2::Instance
+        Properties:
+            KeyName: asklora-hk
+            ImageId: ami-077c694a31fa99701
+            InstanceType: c5.xlarge
+            SecurityGroupIds:
+                - !Ref RuleSSHec2
+            SubnetId: !Ref PublicSubnetA
+            Tags:
+              - Key: Name
+                Value: bastion
+    
+    
+    rdsDBInstance:
+        Type: AWS::RDS::DBInstance
+        Properties:
+            AllocatedStorage: 20
+            DBInstanceClass: db.t3.small
+            AvailabilityZone: ap-east-1a
+            DBName: postgres
+            DBSubnetGroupName: !Ref PvsubnetDB
+            Engine: postgres
+            MasterUsername: postgres
+            MasterUserPassword: askLORA2020$
+            MultiAZ: false
+            Port: 5432
+            PubliclyAccessible: false
+            VPCSecurityGroups:
+                - !Ref VpcSg
     
 Outputs:
     VpcID:
