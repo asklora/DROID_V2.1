@@ -119,8 +119,10 @@ Resources:
                 Ref: AskloraInternetGateway
     # Associate internet with route table public
     AskloraInternetGatewayAssociation:
-        Type: AWS::EC2::GatewayRouteTableAssociation
+        Type: AWS::EC2::Route
+        DependsOn: AttachGateway
         Properties:
+            DestinationCidrBlock: 0.0.0.0/0
             RouteTableId:
                 Ref:  RouteTablePublic
             GatewayId:
@@ -171,10 +173,16 @@ Resources:
               - Key: Name
                 Value: bastion
     
-    
+    BastionEIP:
+        Type: AWS::EC2::EIP
+        Properties:
+            InstanceId: !Ref BastionHost
+
+
     rdsDBInstance:
         Type: AWS::RDS::DBInstance
         Properties:
+            DBInstanceIdentifier: askloraprivatedb
             AllocatedStorage: 20
             DBInstanceClass: db.t3.small
             AvailabilityZone: ap-east-1a
