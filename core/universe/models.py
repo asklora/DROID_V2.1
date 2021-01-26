@@ -81,7 +81,7 @@ class CountryCalendars(models.Model):
     description = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'country_calendar'
 
 
@@ -133,21 +133,9 @@ class CountryDial(models.Model):
         db_table = 'country_dial'
 
 
-class SpecialCases(models.Model):
-    ticker = models.TextField(blank=True, null=True)
-    cases_number = models.IntegerField(blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
-    last_updated = models.DateField(blank=True, null=True)
-    date_source = models.DateField(blank=True, null=True)
-    date_replace = models.DateField(blank=True, null=True)
-
-    class Meta:
-        managed = True
-        db_table = 'special_cases'
 
 
 class UniverseConsolidated(models.Model):
-    id = models.AutoField(primary_key=True)
     origin_ticker = models.CharField(max_length=10, blank=False, null=False)
     is_active = models.BooleanField(default=True)
     created = models.DateField(blank=True, null=True)
@@ -180,7 +168,7 @@ class UniverseConsolidated(models.Model):
 class Universe(models.Model):
     # objects = models.Manager()
     # manager = UniverseManager()
-    ticker = models.TextField(primary_key=True)
+    ticker = models.CharField(max_length=255,primary_key=True)
     currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column='currency_code', related_name='universe_currency_code', blank=True, null=True)
     #country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column='country_code', related_name='universe_country_code', blank=True, null=True)
     industry_code = models.ForeignKey(Industry, on_delete=models.CASCADE, db_column='industry_code', related_name='universe_industry_code', blank=True, null=True)
