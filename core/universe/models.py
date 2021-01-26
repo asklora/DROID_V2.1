@@ -1,9 +1,7 @@
 from django.db import models
-# from .manager import UniverseConsolidatedManager, UniverseManager
 
-
-class MarketRegion(models.Model):
-    region_code = models.CharField(primary_key=True, max_length=30)
+class Region(models.Model):
+    region_id = models.CharField(primary_key=True, max_length=30)
     region_name = models.CharField(blank=True, null=True, max_length=30)
     ingestion_time = models.TimeField(blank=True, null=True)
 
@@ -12,11 +10,11 @@ class MarketRegion(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'market_region'
+        db_table = 'region'
 
 
 class Vix(models.Model):
-    vix_index = models.CharField(max_length=100, primary_key=True)
+    vix_id = models.CharField(max_length=100, primary_key=True)
 
     class Meta:
         managed = True
@@ -25,30 +23,25 @@ class Vix(models.Model):
 
 class Currency(models.Model):
     currency_code = models.CharField(primary_key=True, max_length=30)
-    region_code = models.ForeignKey(MarketRegion, on_delete=models.CASCADE,
-                                    db_column='region_code', related_name='currency_region_code')
-    currency_name = models.CharField(blank=True, null=True, max_length=255)
+    region_id = models.ForeignKey(Region, on_delete=models.CASCADE,db_column='region_id', related_name='currency_region_id')
+    vix_id = models.ForeignKey(Vix, on_delete=models.CASCADE, db_column='vix_id', related_name='currency_vix_id')
+
     ric = models.CharField(blank=True, null=True, max_length=255)
+    currency_name = models.CharField(blank=True, null=True, max_length=255)
     is_decimal = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     amount = models.FloatField(blank=True, null=True)
     last_price = models.FloatField(blank=True, null=True)
     last_date = models.DateField(blank=True, null=True)
 
-    vix_index = models.ForeignKey(
-        Vix, on_delete=models.CASCADE, db_column='vix_index', related_name='currency_vix_index')
-    utc_timezone_location = models.CharField(
-        blank=True, null=True, max_length=255)
+    utc_timezone_location = models.CharField(blank=True, null=True, max_length=255)
     ingestion_time = models.TimeField(null=True, blank=True)
     utc_offset = models.CharField(blank=True, null=True, max_length=100)
     market_close_time = models.TimeField(null=True, blank=True)
     market_open_time = models.TimeField(null=True, blank=True)
-    close_ingestion_offset = models.CharField(
-        blank=True, null=True, max_length=100)
-    intraday_offset_close = models.CharField(
-        blank=True, null=True, max_length=100)
-    intraday_offset_open = models.CharField(
-        blank=True, null=True, max_length=100)
+    close_ingestion_offset = models.CharField(blank=True, null=True, max_length=100)
+    intraday_offset_close = models.CharField(blank=True, null=True, max_length=100)
+    intraday_offset_open = models.CharField(blank=True, null=True, max_length=100)
     classic_schedule = models.TimeField(blank=True, null=True)
 
     def __str__(self):
@@ -61,8 +54,7 @@ class Currency(models.Model):
 
 class CurrencyCalendars(models.Model):
     uid = models.TextField(primary_key=True)
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column='currency_code',
-                                      related_name='currency_calendar_currency_code', blank=True, null=True)
+    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column='currency_code',related_name='currency_calendar_currency_code', blank=True, null=True)
     non_working_day = models.DateField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
 
@@ -73,20 +65,18 @@ class CurrencyCalendars(models.Model):
 
 class Country(models.Model):
     country_code = models.TextField(primary_key=True)
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column='currency_code',
-                                      related_name='country_currency_code', blank=True, null=True)
+    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column='currency_code',related_name='country_currency_code', blank=True, null=True)
     country_name = models.TextField(blank=True, null=True)
     ds_country_code = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'country'
 
 
 class CountryCalendars(models.Model):
     uid = models.TextField(primary_key=True)
-    country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column='country_code',
-                                     related_name='country_calendar_country_code', blank=True, null=True)
+    country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column='country_code',related_name='country_calendar_country_code', blank=True, null=True)
     non_working_day = models.DateField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
 
@@ -95,11 +85,9 @@ class CountryCalendars(models.Model):
         db_table = 'country_calendar'
 
 
-
 class IndustryGroup(models.Model):
     industry_group_code = models.CharField(max_length=100, primary_key=True)
-    industry_group_name = models.CharField(
-        max_length=100, blank=True, null=True)
+    industry_group_name = models.CharField(max_length=100, blank=True, null=True)
     industry_group_img = models.FileField(blank=True, null=True)
 
     def __str__(self):
@@ -113,8 +101,7 @@ class IndustryGroup(models.Model):
 class Industry(models.Model):
     industry_code = models.CharField(max_length=100, primary_key=True)
     industry_name = models.CharField(max_length=100, blank=True, null=True)
-    industry_group_code = models.ForeignKey(IndustryGroup, on_delete=models.CASCADE, db_column='industry_group_code',
-                                            related_name='industry_industry_group_code', blank=True, null=True)
+    industry_group_code = models.ForeignKey(IndustryGroup, on_delete=models.CASCADE, db_column='industry_group_code',related_name='industry_industry_group_code', blank=True, null=True)
 
     class Meta:
         managed = True
@@ -131,18 +118,6 @@ class IndustryWorldscope(models.Model):
     class Meta:
         managed = True
         db_table = 'industry_worldscope'
-
-
-class VixData(models.Model):
-    uid = models.TextField(primary_key=True)
-    vix_index = models.ForeignKey(
-        Vix, on_delete=models.CASCADE, db_column='vix_index', related_name='vix_data_vix_index')
-    trading_day = models.DateField(blank=True, null=True)
-    vix_value = models.FloatField(blank=True, null=True)
-
-    class Meta:
-        managed = True
-        db_table = 'vix_data'
 
 
 class CountryDial(models.Model):
@@ -172,14 +147,25 @@ class SpecialCases(models.Model):
 
 
 class UniverseConsolidated(models.Model):
-    consolidated_ticker = models.CharField(primary_key=True, max_length=10)
+    id = models.AutoField(primary_key=True)
     origin_ticker = models.CharField(max_length=10, blank=False, null=False)
-    isin = models.CharField(max_length=500, blank=True, null=True)
-    has_isin = models.BooleanField(default=False)
-    is_consolidated = models.BooleanField(default=True)
-    still_live = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
     created = models.DateField(blank=True, null=True)
     updated = models.DateField(blank=True, null=True)
+    
+    isin = models.CharField(max_length=500, blank=True, null=True)
+    ticker_fullname = models.CharField(max_length=500, blank=True, null=True)
+    use_isin = models.BooleanField(default=False)
+
+    cusip = models.CharField(max_length=500, blank=True, null=True)
+    use_cusip = models.BooleanField(default=False)
+
+    sedol = models.CharField(max_length=500, blank=True, null=True)
+    use_sedol = models.BooleanField(default=False)
+
+    use_manual = models.BooleanField(default=False)
+
+    consolidated_ticker = models.CharField(max_length=10)
     # manager = UniverseConsolidatedManager()
     # objects = models.Manager()
 
@@ -194,32 +180,26 @@ class UniverseConsolidated(models.Model):
 class Universe(models.Model):
     # objects = models.Manager()
     # manager = UniverseManager()
-    ticker = models.OneToOneField(UniverseConsolidated, on_delete=models.CASCADE,
-                                  db_column='ticker', related_name='universe_ticker', primary_key=True)
-    currency_code = models.ForeignKey(
-        Currency, on_delete=models.CASCADE, db_column='currency_code', related_name='universe_currency_code', blank=True, null=True)
-    country_code = models.ForeignKey(
-        Country, on_delete=models.CASCADE, db_column='country_code', related_name='universe_country_code', blank=True, null=True)
-    industry_code = models.ForeignKey(
-        Industry, on_delete=models.CASCADE, db_column='industry_code', related_name='universe_industry_code', blank=True, null=True)
-    wc_industry_code = models.ForeignKey(IndustryWorldscope, on_delete=models.CASCADE,
-                                         db_column='wc_industry_code', related_name='universe_wc_industry_code', blank=True, null=True)
+    ticker = models.TextField(primary_key=True)
+    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column='currency_code', related_name='universe_currency_code', blank=True, null=True)
+    #country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column='country_code', related_name='universe_country_code', blank=True, null=True)
+    industry_code = models.ForeignKey(Industry, on_delete=models.CASCADE, db_column='industry_code', related_name='universe_industry_code', blank=True, null=True)
+    wc_industry_code = models.ForeignKey(IndustryWorldscope, on_delete=models.CASCADE,db_column='wc_industry_code', related_name='universe_wc_industry_code', blank=True, null=True)
+
     created = models.DateField(blank=True, null=True)
     updated = models.DateField(blank=True, null=True)
     last_ingestion = models.DateField(blank=True, null=True)
+
     is_active = models.BooleanField(default=True)
-    is_consolidated = models.BooleanField(default=True)
     quandl_symbol = models.TextField(blank=True, null=True)
     ticker_name = models.TextField(blank=True, null=True)
     ticker_fullname = models.TextField(blank=True, null=True)
     company_description = models.TextField(blank=True, null=True)
     lot_size = models.IntegerField(blank=True, null=True)
-    worldscope_identifier = models.CharField(
-        max_length=500, blank=True, null=True)
+    worldscope_identifier = models.CharField(max_length=500, blank=True, null=True)
     icb_code = models.CharField(max_length=500, blank=True, null=True)
     fiscal_year_end = models.CharField(max_length=500, blank=True, null=True)
     entity_type = models.TextField(blank=True, null=True)
-
 
     def __str__(self):
         return self.ticker.consolidated_ticker
@@ -227,20 +207,6 @@ class Universe(models.Model):
     class Meta:
         managed = True
         db_table = 'universe'
-
-
-class UniverseExcluded(models.Model):
-    ticker = models.OneToOneField(Universe, primary_key=True, on_delete=models.CASCADE,
-                                  db_column='ticker', related_name='universe_excluded_ticker')
-    exclude_dss = models.BooleanField(default=False)
-    exclude_dsws = models.BooleanField(default=False)
-
-    class Meta:
-        managed = True
-        db_table = 'universe_excluded'
-
-    def __str__(self):
-        return self.ticker.ticker
 
 
 class UniverseRating(models.Model):
@@ -259,3 +225,17 @@ class UniverseRating(models.Model):
     class Meta:
         db_table = 'universe_rating'
         managed = True
+
+
+class UniverseExcluded(models.Model):
+    ticker = models.OneToOneField(Universe, primary_key=True, on_delete=models.CASCADE,
+                                  db_column='ticker', related_name='universe_excluded_ticker')
+    exclude_dss = models.BooleanField(default=False)
+    exclude_dsws = models.BooleanField(default=False)
+
+    class Meta:
+        managed = True
+        db_table = 'universe_excluded'
+
+    def __str__(self):
+        return self.ticker.ticker

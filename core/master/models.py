@@ -1,5 +1,5 @@
 from django.db import models
-from core.universe.models import Universe, Currency
+from core.universe.models import Universe, Currency, Vix
 from psqlextra.manager import PostgresManager
 # from .manager import MasterOhlcvtrManager, DataQuandlManager, DssDataManager, DswsDataManager, DataDividendManager
 
@@ -320,3 +320,14 @@ class DataVolSurfaceInferred(models.Model):
 
     def __str__(self):
         return f"{self.ticker}-{self.trading_day}"
+
+
+class DataVix(models.Model):
+    uid = models.TextField(primary_key=True)
+    vix_id = models.ForeignKey(Vix, on_delete=models.CASCADE, db_column='vix_id', related_name='data_vix_vix_id')
+    trading_day = models.DateField(blank=True, null=True)
+    vix_value = models.FloatField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'data_vix'

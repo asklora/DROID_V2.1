@@ -82,6 +82,29 @@ def update_lot_size_from_dss():
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Lot Size Updated ===".format(datetimeNow()))
 
+def update_currency_code_from_dss():
+    print("{} : === Currency Code Start Ingestion ===".format(datetimeNow()))
+    identifier="ticker"
+    universe = get_active_universe()
+    universe = universe.drop(columns=["currency_code"])
+    ticker = "/" + universe["ticker"]
+    jsonFileName = "files/file_json/currency.json"
+    result = get_data_from_dss("start_date", "end_date", ticker, jsonFileName, report=os.getenv("REPORT_INTRADAY"))
+    result = result.drop(columns=["IdentifierType", "Identifier"])
+    print(result)
+    if (len(result) > 0 ):
+        result = result.rename(columns={
+            "RIC": "ticker",
+            "Currency Code": "currency_code"
+        })
+        result["ticker"]=result["ticker"].str.replace("/", "")
+        result["ticker"]=result["ticker"].str.strip()
+        result = remove_null(result, "currency_code")
+        result = universe.merge(result, how="left", on=["ticker"])
+        print(result)
+        #upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+        #report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
+
 def update_vix_from_dsws():
     print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
