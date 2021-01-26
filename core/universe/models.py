@@ -133,9 +133,21 @@ class CountryDial(models.Model):
         db_table = 'country_dial'
 
 
+class Source(models.Model):
+    source_id = models.CharField(max_length=100, primary_key=True)
+    source_name = models.CharField(max_length=100, blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'source'
+
+    def __str__(self):
+        return self.source_name
 
 
 class UniverseConsolidated(models.Model):
+    id = models.AutoField(primary_key=True)
+    source_id = models.ForeignKey(Source, on_delete=models.CASCADE, db_column='source_id', related_name='universe_source_id', blank=True, null=True)
     origin_ticker = models.CharField(max_length=10, blank=False, null=False)
     is_active = models.BooleanField(default=True)
     created = models.DateField(blank=True, null=True)
@@ -190,7 +202,7 @@ class Universe(models.Model):
     entity_type = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return self.ticker.consolidated_ticker
+        return self.ticker
 
     class Meta:
         managed = True
