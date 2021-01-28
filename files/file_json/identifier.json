@@ -1,0 +1,24 @@
+{
+    "ExtractionRequest": {
+        "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.PriceHistoryExtractionRequest",
+        "ContentFieldNames": [
+        	"RIC",
+            "ISIN",
+        	"CUSIP",
+            "SEDOL",
+            "Security Description",
+            "SICC"
+        ],
+        "IdentifierList": {
+            "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+            "InstrumentIdentifiers": [
+            ],
+            "ValidationOptions": null,
+            "UseUserPreferencesForValidationOptions": false
+        },
+        "Condition":
+        {
+            
+      }
+    }
+}

@@ -13,6 +13,7 @@ from general.data_process import uid_maker, remove_null
 from general.sql_query import (
     get_vix,
     get_active_universe, 
+    get_active_universe_consolidated_by_field,
     get_active_universe_company_description_null)
 from general.sql_output import upsert_data_to_database, fill_null_company_desc_with_ticker_name
 from datasource.dsws import get_data_static_from_dsws, get_data_history_from_dsws
@@ -21,18 +22,59 @@ from general.table_name import (
     get_universe_table_name, 
     get_industry_table_name,
     get_country_table_name,
-    get_data_dividend_table_name,
-    get_industry_worldscope_table_name,
-    get_vix_table_name)
+    get_industry_worldscope_table_name)
 
-def update_ticker_name_from_dsws():
+def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
+    print("{} : === Ticker ISIN Start Ingestion ===".format(datetimeNow()))
+    ticker = ["LIN", "LINI.DE", "HSBA.L", "0005.HK", "AAPL.O", "AAPL.OQ", "FLTRF.L", "FLTRF.I"]
+    universe = get_active_universe_consolidated_by_field(isin=True, ticker=ticker)
+    universe = universe.drop(columns=["isin", "consolidated_ticker", "sedol", "is_active"])
+    print(universe)
+    identifier="origin_ticker"
+    filter_field = ["ISIN", "SECD"]# , "NAME", "ISINID", "ISOCUR", "DSCD", "GEOG"
+    result, error_ticker = get_data_static_from_dsws(universe[["origin_ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    result = result.rename(columns={"ISIN": "isin", "index":"origin_ticker", "SECD": "sedol"})
+    print(result)
+
+    isin_list = result[["isin"]]
+    isin_list = isin_list.drop_duplicates(keep="first", inplace=False)
+    result2, error_ticker = get_data_static_from_dsws(isin_list, "isin", ["RIC", "SECD"], use_ticker=False, split_number=min(len(isin_list), 40))
+    result2 = result2.rename(columns={"RIC": "consolidated_ticker", "index":"isin", "SECD": "sedol"})
+    print(result2)
+    result = result.merge(result2, how="left", on=["isin", "sedol"])
+    print(result)
+
+    if(len(result)) > 0 :
+        consolidated_ticker = result.loc[result["consolidated_ticker"].notnull()]
+        consolidated_ticker["is_active"] = True
+        null_consolidated_ticker = result.loc[result["consolidated_ticker"].isnull()]
+        null_consolidated_ticker["is_active"] = False
+        for index, row in null_consolidated_ticker.iterrows():
+            origin_ticker = row["origin_ticker"]
+            isin = row["isin"]
+            sedol = row["sedol"]
+            #find the same isin
+            same_isin = consolidated_ticker.loc[consolidated_ticker["isin"] == isin]
+            if(len(same_isin) > 0):
+                #find the same sedol
+                same_sedol = same_isin.loc[same_isin["sedol"] == sedol]
+                if(len(same_sedol) == 0):
+                    null_consolidated_ticker.loc[index, "consolidated_ticker"] = origin_ticker
+                    null_consolidated_ticker.loc[index, "is_active"] = True
+        result = consolidated_ticker.append(null_consolidated_ticker)
+        result = universe.merge(result, how="left", on=["origin_ticker"])
+        print(result)
+        # upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+        # report_to_slack("{} : === Ticker ISIN Updated ===".format(datetimeNow()))
+
+def update_ticker_name_from_dsws(ticker=None):
     print("{} : === Ticker Name Start Ingestion ===".format(datetimeNow()))
-    universe = get_active_universe()
+    universe = get_active_universe(ticker=ticker)
     universe = universe.drop(columns=["ticker_name", "ticker_fullname"])
     print(universe)
     filter_field = ["WC06003", "NAME"]
     identifier="ticker"
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=40)
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"WC06003": "ticker_name", "NAME" : "ticker_fullname", "index":"ticker"})
@@ -43,13 +85,13 @@ def update_ticker_name_from_dsws():
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Ticker Name Updated ===".format(datetimeNow()))
 
-def update_entity_type_from_dsws():
+def update_entity_type_from_dsws(ticker=None):
     print("{} : === Entity Type Start Ingestion ===".format(datetimeNow()))
-    universe = get_active_universe()
+    universe = get_active_universe(ticker=ticker)
     universe = universe.drop(columns=["entity_type"])
     filter_field = ["WC06100"]
     identifier="ticker"
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=40)
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
     result = result.rename(columns={"WC06100": "entity_type", "index":"ticker"})
     result = remove_null(result, "entity_type")
     print(result)
@@ -59,10 +101,10 @@ def update_entity_type_from_dsws():
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Entity Type Updated ===".format(datetimeNow()))
 
-def update_lot_size_from_dss():
+def update_lot_size_from_dss(ticker=None):
     print("{} : === Lot Size Start Ingestion ===".format(datetimeNow()))
     identifier="ticker"
-    universe = get_active_universe()
+    universe = get_active_universe(ticker=ticker)
     universe = universe.drop(columns=["lot_size"])
     ticker = "/" + universe["ticker"]
     jsonFileName = "files/file_json/lot_size.json"
@@ -82,10 +124,10 @@ def update_lot_size_from_dss():
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Lot Size Updated ===".format(datetimeNow()))
 
-def update_currency_code_from_dss():
+def update_currency_code_from_dss(ticker=None):
     print("{} : === Currency Code Start Ingestion ===".format(datetimeNow()))
     identifier="ticker"
-    universe = get_active_universe()
+    universe = get_active_universe(ticker=ticker)
     universe = universe.drop(columns=["currency_code"])
     ticker = "/" + universe["ticker"]
     jsonFileName = "files/file_json/currency.json"
@@ -113,7 +155,7 @@ def update_vix_from_dsws():
     universe = universe[["vix_index"]]
     identifier="vix_index"
     filter_field = ["PI"]
-    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=False, split_number=1)
+    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=False, split_number=min(len(universe), 40))
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"PI": "vix_value", "index" : "trading_day"})
@@ -123,9 +165,9 @@ def update_vix_from_dsws():
         #upsert_data_to_database(result, get_vix_table_name(), "uid", how="update", Text=True)
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
-def update_company_desc_from_dsws():
+def update_company_desc_from_dsws(ticker=None):
     print("{} : === Company Description Ingestion ===".format(datetimeNow()))
-    universe = get_active_universe_company_description_null()
+    universe = get_active_universe_company_description_null(ticker=ticker)
     universe = universe.drop(columns=["company_description"])
     identifier = "ticker"
     filter_field = ["WC06092"]
@@ -139,13 +181,13 @@ def update_company_desc_from_dsws():
         fill_null_company_desc_with_ticker_name()
         report_to_slack("{} : === Company Description Updated ===".format(datetimeNow()))
 
-def update_country_from_dsws():
+def update_country_from_dsws(ticker=None):
     print("{} : === Country & Industry Ingestion ===".format(datetimeNow()))
-    universe = get_active_universe()
+    universe = get_active_universe(ticker=ticker)
     universe = universe.drop(columns=["country_code", "industry_code", "wc_industry_code"])
     identifier="ticker"
     filter_field = ["GGISO", "WC07040", "WC06011"]
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=40)
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
     print(result)
     if(len(result)>0):
         result = result.rename(columns={"index":"ticker",
@@ -173,13 +215,13 @@ def update_country_from_dsws():
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Country & Industry Updated ===".format(datetimeNow()))
     
-def update_worldscope_identifier_from_dsws():
+def update_worldscope_identifier_from_dsws(ticker=None):
     print("{} : === Worldscope Identifier Ingestion ===".format(datetimeNow()))
-    universe = get_active_universe().head(2)
+    universe = get_active_universe(ticker=ticker)
     universe = universe.drop(columns=["worldscope_identifier", "icb_code", "fiscal_year_end"])
     identifier="ticker"
     filter_field = ["WC06035", "WC07040", "WC05352"]
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=1)
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
     print(result)
     if (len(result) > 0):
         result = result.rename(columns={"WC06035": "worldscope_identifier", "WC07040": "icb_code", "WC05352": "fiscal_year_end", "index" : "ticker"})

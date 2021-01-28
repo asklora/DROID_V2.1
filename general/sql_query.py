@@ -1,16 +1,18 @@
-import time
 import pandas as pd
 import sqlalchemy as db
 from sqlalchemy import create_engine
 from general.sql_process import db_read, db_write
 from general.date_process import backdate_by_day
+from general.data_process import tuple_data
 from general.table_name import (
     get_vix_table_name,
     get_currency_table_name,
     get_universe_table_name, 
     get_master_ohlcvtr_table_name, 
-    get_report_datapoint_table_name)
+    get_report_datapoint_table_name,
+    get_universe_consolidated_table_name)
 
+universe_consolidated_table = get_universe_consolidated_table_name()
 universe_table = get_universe_table_name()
 master_ohlcvtr_table = get_master_ohlcvtr_table_name()
 report_datapoint_table = get_report_datapoint_table_name()
@@ -47,13 +49,35 @@ def get_active_currency_ric_not_null():
     data = read_query(query, table=currency_table)
     return data
 
+def get_active_universe_consolidated_by_field(isin=False, cusip=False, sedol=False, manual=False, ticker=None):
+    if isin:
+        query = f"select * from {universe_consolidated_table} where is_active=True and use_isin=True"
+    elif cusip:
+        query = f"select * from {universe_consolidated_table} where is_active=True and use_cusip=True"
+    elif sedol:
+        query = f"select * from {universe_consolidated_table} where is_active=True and use_sedol=True"
+    elif manual:
+        query = f"select * from {universe_consolidated_table} where is_active=True and use_manual=True"
+    else:
+        query = f"select * from {universe_consolidated_table} where is_active=True"
+    
+    if type(ticker) != type(None):
+        query += f" and origin_ticker in {tuple_data(ticker)} order by origin_ticker "
+    else:
+        query += " order by origin_ticker "
+    data = read_query(query, table=universe_consolidated_table)
+    return data
+
 def get_all_universe():
     query = f"select * from {universe_table} order by ticker"
     data = read_query(query, table=universe_table)
     return data
 
-def get_active_universe():
-    query = f"select * from {universe_table} where is_active=True order by ticker"
+def get_active_universe(ticker=None):
+    if type(ticker) != type(None):
+        query = f"select * from {universe_table} where is_active=True and ticker in {tuple_data(ticker)} order by ticker"
+    else:
+        query = f"select * from {universe_table} where is_active=True order by ticker"
     data = read_query(query, table=universe_table)
     return data
 
@@ -96,9 +120,12 @@ def get_universe_by_region(region_code):
     data = read_query(query, table=universe_table)
     return data
 
-def get_active_universe_company_description_null():
-    query = f"select * from {universe_table} where is_active=True and "
-    query += f"company_description is null or company_description = 'NA' or company_description = 'N/A' order by ticker;"
+def get_active_universe_company_description_null(ticker=None):
+    if type(ticker) != type(None):
+        query = f"select * from {universe_table} where is_active=True ticker in {tuple_data(ticker)} order by ticker;"
+    else:
+        query = f"select * from {universe_table} where is_active=True and "
+        query += f"company_description is null or company_description = 'NA' or company_description = 'N/A' order by ticker;"
     data = read_query(query, table=universe_table)
     return data
 

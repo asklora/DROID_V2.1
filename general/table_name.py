@@ -1,3 +1,6 @@
+def get_universe_consolidated_table_name():
+    return "universe_consolidated"
+
 def get_universe_table_name():
     return "universe"
 
