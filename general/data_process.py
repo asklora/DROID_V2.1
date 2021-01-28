@@ -1,4 +1,5 @@
 import pandas as pd
+from pandas.core.series import Series
 
 def nonetozero(value):
     if value:
@@ -18,4 +19,13 @@ def remove_null(data, field):
     data = data.loc[data[field] != "None"]
     data = data.loc[data[field] != "NA"]
     data = data.loc[data[field] != "N/A"]
+    return data
+
+def tuple_data(data):
+    if(type(data) == Series):
+        data = tuple(data.to_list())
+    elif(type(data) == list):
+        data = tuple(data)
+    data = str(data)
+    data = data.replace(",)", ")")
     return data
