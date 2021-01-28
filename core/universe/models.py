@@ -75,15 +75,15 @@ class Country(models.Model):
         db_table = 'country'
 
 
-class CountryCalendars(models.Model):
-    uid = models.TextField(primary_key=True)
-    country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column='country_code',related_name='country_calendar_country_code', blank=True, null=True)
-    non_working_day = models.DateField(blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
+# class CountryCalendars(models.Model):
+#     uid = models.TextField(primary_key=True)
+#     country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column='country_code',related_name='country_calendar_country_code', blank=True, null=True)
+#     non_working_day = models.DateField(blank=True, null=True)
+#     description = models.TextField(blank=True, null=True)
 
-    class Meta:
-        managed = False
-        db_table = 'country_calendar'
+#     class Meta:
+#         managed = False
+#         db_table = 'country_calendar'
 
 
 class IndustryGroup(models.Model):
