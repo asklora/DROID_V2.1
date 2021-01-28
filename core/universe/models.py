@@ -68,9 +68,10 @@ class Country(models.Model):
     currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column='currency_code',related_name='country_currency_code', blank=True, null=True)
     country_name = models.TextField(blank=True, null=True)
     ds_country_code = models.TextField(blank=True, null=True)
+    is_open = models.BooleanField(default=False)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'country'
 
 
@@ -101,7 +102,8 @@ class IndustryGroup(models.Model):
 class Industry(models.Model):
     industry_code = models.CharField(max_length=100, primary_key=True)
     industry_name = models.CharField(max_length=100, blank=True, null=True)
-    industry_group_code = models.ForeignKey(IndustryGroup, on_delete=models.CASCADE, db_column='industry_group_code',related_name='industry_industry_group_code', blank=True, null=True)
+    industry_group_code = models.ForeignKey(IndustryGroup, on_delete=models.CASCADE,
+    db_column='industry_group_code',related_name='industry_industry_group_code', blank=True, null=True)
 
     class Meta:
         managed = True
@@ -120,17 +122,6 @@ class IndustryWorldscope(models.Model):
         db_table = 'industry_worldscope'
 
 
-class CountryDial(models.Model):
-    country_name = models.CharField(max_length=500, blank=True, null=True)
-    country_name_english = models.CharField(
-        max_length=500, blank=True, null=True)
-    country_code_iso2 = models.CharField(max_length=500, blank=True, null=True)
-    country_code_iso3 = models.CharField(max_length=500, blank=True, null=True)
-    country_dial_code = models.CharField(max_length=500, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'country_dial'
 
 
 class Source(models.Model):

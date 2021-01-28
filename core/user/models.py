@@ -4,7 +4,7 @@ from .manager import AppUserManager
 from django.core.exceptions import ValidationError
 import uuid
 from django.utils import timezone
-from core.universe.models import Currency
+from core.universe.models import Currency,Country
 from datetime import datetime, date
 from django.db import IntegrityError
 from django.conf import settings
@@ -16,28 +16,12 @@ from django.db.models import (
     )
 import jwt
 import base64
-from django.db.models.fields import Field
 
 
-class NotEqual(Lookup):
-    lookup_name = 'ne'
-
-    def as_sql(self, qn, connection):
-        lhs, lhs_params = self.process_lhs(qn, connection)
-        rhs, rhs_params = self.process_rhs(qn, connection)
-        params = lhs_params + rhs_params
-        return '%s <> %s' % (lhs, rhs), params
 
 
-Field.register_lookup(NotEqual)
 
 
-def validate_decimals(value):
-    try:
-        return round(float(value), 2)
-    except Exception:
-        raise ValidationError(
-            ('%(value)s is not an integer or a float  number'), params={'value': value},)
 
 
 
@@ -53,35 +37,6 @@ def usermanagerprofile(instance, filename):
     return '{0}_manager_profile_pic/{1}'.format(instance.username, filename)
 
 
-class CountryPhoneDial(models.Model):
-    country_name = models.CharField(max_length=255, unique=True)
-    country_name_english = models.CharField(
-        max_length=255, null=True, blank=True)
-    country_code_iso2 = models.CharField(max_length=10, null=True, blank=True)
-    country_code_iso3 = models.CharField(max_length=10, null=True, blank=True)
-    country_dial_code = models.CharField(max_length=255, null=True, blank=True)
-
-    class Meta:
-        managed = True
-        db_table = 'country_dial'
-
-    @property
-    def country_long_name(self):
-        if self.country_name_english == '' or self.country_name_english == None:
-            return self.country_name
-        return self.country_name_english
-
-    @property
-    def country_dial_format(self):
-        formats = f'{self.country_long_name} [{self.country_dial}]'
-        return formats
-
-    def __str__(self):
-        if self.country_dial_code:
-            return f'{self.country_dial_code} {self.country_name}'
-        return self.country_name
-
-
 class User(AbstractBaseUser, PermissionsMixin):
     WAIT, APPROVED = 'in waiting list', 'approved'
     status_choices = (
@@ -92,15 +47,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(('email address'), unique=True)
     username = models.CharField(
         max_length=255, unique=True, blank=True, null=True)
-    country_dial = models.ForeignKey(
-        CountryPhoneDial, on_delete=models.CASCADE, related_name='user_country_dial', null=True, blank=True)
+    country = models.ForeignKey(
+        Country, on_delete=models.CASCADE, related_name='user_base_country', null=True, blank=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
     address = models.TextField(blank=True, null=True)
     first_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255, null=True, blank=True)
-    fullname = models.CharField(max_length=255, null=True, blank=True)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    country_code = models.CharField(max_length=255, null=True, blank=True)
     birth_date = models.DateField(null=True, blank=True)
     avatar = models.ImageField(
         upload_to=usermanagerprofile, null=True, blank=True)
@@ -133,18 +85,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
-    # @property
-    # def get_current_assets(self):
-    #     order = self.user_order.filter(status=False).aggregate(total=Sum(
-    #         Case(When(~Q(currency_id=self.user_balance.currency.currency_code),
-    #                   then=F('current_values')),
-    #              default=F('current_values'),
-    #              output_field=FloatField(),
-    #              )))
-    #     asset = noneToZero(order['total']) + self.user_balance.amount
-    #     result = round(asset, 2)
-    #     return result
-
     @property
     def balance(self):
         return self.user_balance.amount
@@ -157,7 +97,7 @@ class Accountbalance(models.Model):
         primary_key=True, max_length=300, blank=True, editable=False, unique=True)
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name='user_balance')
-    amount = models.FloatField(default=0, validators=[validate_decimals])
+    amount = models.FloatField(default=0)
     currency = models.ForeignKey(
         Currency, on_delete=models.DO_NOTHING, related_name='user_currency', default='USD')
     last_updated = models.DateTimeField(auto_now_add=True)
@@ -201,7 +141,7 @@ class TransactionHistory(models.Model):
     balance_id = models.ForeignKey(Accountbalance, on_delete=models.CASCADE,
                                    related_name='account_trasaction', db_column='balanceId')
     tr_type = models.CharField(max_length=100, choices=type_choice)
-    tr_amount = models.FloatField(default=0, validators=[validate_decimals])
+    tr_amount = models.FloatField(default=0)
     description = models.TextField()
     created = models.DateTimeField(auto_now=True)
     updated = models.DateTimeField(auto_now_add=True)
