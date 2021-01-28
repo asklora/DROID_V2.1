@@ -27,12 +27,12 @@ from general.table_name import (
 def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
     print("{} : === Ticker ISIN Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe_consolidated_by_field(isin=True, ticker=ticker)
-    universe = universe.drop(columns=["isin", "consolidated_ticker", "sedol", "is_active"])
+    universe = universe.drop(columns=["isin", "consolidated_ticker", "sedol", "is_active", "cusip", "permid"])
     print(universe)
     identifier="origin_ticker"
-    filter_field = ["ISIN", "SECD", "WC06004"]
+    filter_field = ["ISIN", "SECD", "WC06004", "IPID"]
     result, error_ticker = get_data_static_from_dsws(universe[["origin_ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
-    result = result.rename(columns={"ISIN": "isin", "index":"origin_ticker", "SECD": "sedol"})
+    result = result.rename(columns={"ISIN": "isin", "index":"origin_ticker", "SECD": "sedol", "WC06004": "cusip", "IPID": "permid"})
     print(result)
 
     isin_list = result[["isin"]]

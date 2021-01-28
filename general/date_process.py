@@ -26,6 +26,9 @@ def date_to_string(date_date):
 def time_to_string(date_time):
     return date_time.strftime("%H:%M:%S")
 
+def string_to_time(string_time):
+    return datetime.strptime(string_time, '%H:%M:%S').time()
+
 def timeNow():
     return datetime.utcnow().time().strftime("%H:%M:%S")
 

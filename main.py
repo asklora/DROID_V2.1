@@ -11,7 +11,11 @@ from ingestion.universe import (
     update_vix_from_dsws,
     update_worldscope_identifier_from_dsws
     )
-from ingestion.currency import update_currency_price_from_dss
+from ingestion.currency import update_currency_price_from_dss, update_utc_offset_from_timezone
+
+def update_currency_data():
+    update_utc_offset_from_timezone()
+    update_currency_price_from_dss()
 
 def update_universe_data(ticker=None):
     populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=ticker)

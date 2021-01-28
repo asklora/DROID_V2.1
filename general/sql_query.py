@@ -41,6 +41,7 @@ def get_data_by_table_name_with_condition(table, condition):
 
 def get_active_currency():
     query = f"select * from {currency_table} where is_active=True"
+    #query = f"select currency_code, ric, utc_timezone_location from {currency_table} where is_active=True"
     data = read_query(query, table=currency_table)
     return data
 
