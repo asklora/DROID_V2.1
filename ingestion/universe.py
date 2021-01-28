@@ -26,14 +26,13 @@ from general.table_name import (
 
 def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
     print("{} : === Ticker ISIN Start Ingestion ===".format(datetimeNow()))
-    ticker = ["LIN", "LINI.DE", "HSBA.L", "0005.HK", "AAPL.O", "AAPL.OQ", "FLTRF.L", "FLTRF.I"]
     universe = get_active_universe_consolidated_by_field(isin=True, ticker=ticker)
-    universe = universe.drop(columns=["isin", "consolidated_ticker", "sedol", "is_active"])
+    universe = universe.drop(columns=["isin", "consolidated_ticker", "sedol", "is_active", "cusip", "permid"])
     print(universe)
     identifier="origin_ticker"
-    filter_field = ["ISIN", "SECD"]# , "NAME", "ISINID", "ISOCUR", "DSCD", "GEOG"
+    filter_field = ["ISIN", "SECD", "WC06004", "IPID"]
     result, error_ticker = get_data_static_from_dsws(universe[["origin_ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
-    result = result.rename(columns={"ISIN": "isin", "index":"origin_ticker", "SECD": "sedol"})
+    result = result.rename(columns={"ISIN": "isin", "index":"origin_ticker", "SECD": "sedol", "WC06004": "cusip", "IPID": "permid"})
     print(result)
 
     isin_list = result[["isin"]]
@@ -55,17 +54,17 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
             sedol = row["sedol"]
             #find the same isin
             same_isin = consolidated_ticker.loc[consolidated_ticker["isin"] == isin]
-            if(len(same_isin) > 0):
+            if(len(same_isin) > 0 and isin != np.nan):
                 #find the same sedol
                 same_sedol = same_isin.loc[same_isin["sedol"] == sedol]
-                if(len(same_sedol) == 0):
+                if(len(same_sedol) == 0 and isin != np.nan):
                     null_consolidated_ticker.loc[index, "consolidated_ticker"] = origin_ticker
                     null_consolidated_ticker.loc[index, "is_active"] = True
         result = consolidated_ticker.append(null_consolidated_ticker)
         result = universe.merge(result, how="left", on=["origin_ticker"])
         print(result)
-        # upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
-        # report_to_slack("{} : === Ticker ISIN Updated ===".format(datetimeNow()))
+        upsert_data_to_database(result, get_universe_table_name(), "id", how="update", Int=True)
+        report_to_slack("{} : === Ticker ISIN Updated ===".format(datetimeNow()))
 
 def update_ticker_name_from_dsws(ticker=None):
     print("{} : === Ticker Name Start Ingestion ===".format(datetimeNow()))
@@ -144,8 +143,8 @@ def update_currency_code_from_dss(ticker=None):
         result = remove_null(result, "currency_code")
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
-        #upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
-        #report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
+        upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+        report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
 
 def update_vix_from_dsws():
     print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
@@ -162,7 +161,7 @@ def update_vix_from_dsws():
         result = uid_maker(result, uid="uid", ticker="vix_index", trading_day="trading_day")
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
-        #upsert_data_to_database(result, get_vix_table_name(), "uid", how="update", Text=True)
+        upsert_data_to_database(result, get_vix_table_name(), "uid", how="update", Text=True)
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
 def update_company_desc_from_dsws(ticker=None):
