@@ -106,14 +106,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         upload_to=usermanagerprofile, null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
-    telegram_notif = models.BooleanField(default=False)
-    telegram_chat_id = models.CharField(max_length=200, null=True, blank=True)
     date_joined = models.DateTimeField(auto_now_add=True)
-    over_18 = models.BooleanField(default=False)
-    account_type = models.TextField(null=True, blank=True)
+    broker_account_type = models.TextField(null=True, blank=True)
     current_status = models.CharField(
         max_length=255, null=True, blank=True, choices=status_choices, default=WAIT)
-    frac = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
