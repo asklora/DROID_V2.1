@@ -154,9 +154,8 @@ class UniverseConsolidated(models.Model):
     use_sedol = models.BooleanField(default=False)
 
     use_manual = models.BooleanField(default=False)
-
-    consolidated_ticker = models.CharField(max_length=10)
     permid = models.CharField(max_length=500, blank=True, null=True)
+    consolidated_ticker = models.CharField(max_length=10)
     # manager = UniverseConsolidatedManager()
     # objects = models.Manager()
 
