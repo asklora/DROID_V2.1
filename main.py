@@ -11,6 +11,9 @@ from ingestion.universe import (
     update_vix_from_dsws,
     update_worldscope_identifier_from_dsws
     )
+from ingestion.master_tac import master_tac_update
+from ingestion.master_ohlcvtr import master_ohlctr_update
+from ingestion.master_multiple import master_multiple_update
 from ingestion.currency import update_currency_price_from_dss, update_utc_offset_from_timezone
 
 def update_currency_data():

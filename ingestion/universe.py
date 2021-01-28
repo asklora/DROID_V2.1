@@ -19,6 +19,7 @@ from general.sql_output import upsert_data_to_database, fill_null_company_desc_w
 from datasource.dsws import get_data_static_from_dsws, get_data_history_from_dsws
 from datasource.dss import get_data_from_dss
 from general.table_name import (
+    get_vix_table_name,
     get_universe_table_name, 
     get_industry_table_name,
     get_country_table_name,

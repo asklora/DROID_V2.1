@@ -34,7 +34,7 @@ def master_multiple_update():
     data = get_master_ohlcvtr_data(start_date)
     
     print("OHLCTR Done")
-    data = data.rename(columns={"ticker_id" : "ticker", "currency_code_id" : "currency_code", "total_return_index" : "tri"})
+    data = data.rename(columns={"total_return_index" : "tri"})
     data = data.drop(columns=["datapoint_per_day", "datapoint", "day_status", "currency_code"])
 
     print(datetimeNow() + " === Calculating Master Multiple ===")

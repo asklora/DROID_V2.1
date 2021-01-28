@@ -57,7 +57,7 @@ def master_tac_update():
     print("Getting OHLCVTR Data")
     data = get_master_ohlcvtr_data(droid_start_date)
     print("OHLCTR Done")
-    data = data.rename(columns={"ticker_id" : "ticker", "currency_code_id" : "currency_code"})
+    #data = data.rename(columns={"ticker_id" : "ticker", "currency_code_id" : "currency_code"})
     print("Delete Holiday Status")
     data = DeleteHolidayStatus(data)
     data = data.drop(columns=["datapoint_per_day", "datapoint", "day_status"])
