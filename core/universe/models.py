@@ -165,6 +165,7 @@ class UniverseConsolidated(models.Model):
     use_manual = models.BooleanField(default=False)
 
     consolidated_ticker = models.CharField(max_length=10)
+    permid = models.CharField(max_length=500, blank=True, null=True)
     # manager = UniverseConsolidatedManager()
     # objects = models.Manager()
 
