@@ -149,12 +149,11 @@ class UniverseConsolidated(models.Model):
     id = models.AutoField(primary_key=True)
     source_id = models.ForeignKey(Source, on_delete=models.CASCADE, db_column='source_id', related_name='universe_source_id', blank=True, null=True)
     origin_ticker = models.CharField(max_length=10, blank=False, null=False)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     created = models.DateField(blank=True, null=True)
     updated = models.DateField(blank=True, null=True)
     
     isin = models.CharField(max_length=500, blank=True, null=True)
-    ticker_fullname = models.CharField(max_length=500, blank=True, null=True)
     use_isin = models.BooleanField(default=False)
 
     cusip = models.CharField(max_length=500, blank=True, null=True)
