@@ -1,4 +1,5 @@
 import time
+import sys
 import functools
 import pandas as pd
 from pytz import timezone
@@ -70,19 +71,20 @@ def BackTimeFormat(days,strip=None):
         timeformat=time.strftime("%Y%m%d")
     return timeformat
 
-def count_date_range_by_month(start, end, month):
+def count_date_range_by_month(start, end, month, ascending=False):
     start_date = datetime.strptime(start, "%Y-%m-%d")
     end_date = datetime.strptime(end, "%Y-%m-%d")
     date_range = pd.DataFrame({"date":[]}, index=[])
-    i = True
-    count = -3
-    while i :
-        count=(count+3)
-        date_result = end_date - relativedelta(months=month)
+    count = -month
+    while True :
+        count=(count+month)
+        date_result = end_date - relativedelta(months=count)
         date_range = date_range.append(pd.DataFrame({"date":[date_result.date()]}, index=[0]))
-        if ((start_date.month == date_result.month) and (start_date.year == date_result.year)):
+        if ((start_date.month >= date_result.month) and (start_date.year >= date_result.year)):
             break
     date_range.reset_index(inplace=True)
+    if(ascending):
+        date_range = date_range.sort_values(by="date", ascending=True)
     return date_range["date"]
     
 def timeit(func):

@@ -147,24 +147,6 @@ def update_currency_code_from_dss(ticker=None):
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
 
-def update_vix_from_dsws():
-    print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
-    end_date = dateNow()
-    start_date = backdate_by_day(3)
-    universe = get_vix()
-    universe = universe[["vix_index"]]
-    identifier="vix_index"
-    filter_field = ["PI"]
-    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=False, split_number=min(len(universe), 40))
-    print(result)
-    if(len(result)) > 0 :
-        result = result.rename(columns={"PI": "vix_value", "index" : "trading_day"})
-        result = uid_maker(result, uid="uid", ticker="vix_index", trading_day="trading_day")
-        result = universe.merge(result, how="left", on=["ticker"])
-        print(result)
-        upsert_data_to_database(result, get_vix_table_name(), "uid", how="update", Text=True)
-        report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
-
 def update_company_desc_from_dsws(ticker=None):
     print("{} : === Company Description Ingestion ===".format(datetimeNow()))
     universe = get_active_universe_company_description_null(ticker=ticker)

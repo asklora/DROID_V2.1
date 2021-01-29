@@ -26,6 +26,8 @@ def tuple_data(data):
         data = tuple(data.to_list())
     elif(type(data) == list):
         data = tuple(data)
+    elif(type(data) == str):
+        data = "('"+data+"')"
     data = str(data)
     data = data.replace(",)", ")")
     return data

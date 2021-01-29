@@ -1,5 +1,4 @@
 import os
-import re
 import pandas as pd
 import numpy as np
 from pydatastream import Datastream
@@ -95,7 +94,7 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
 
-def get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals=False):
+def get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False):
     DS = setDataStream()
     print("== Getting Data From DSWS ==")
     chunk_data = []
@@ -109,7 +108,6 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
     splitting_df = np.array_split(ticker, split)
     for universe in splitting_df:
         universelist = ", ".join([str(elem) for elem in universe])
-        print(universelist)
         try:
             if(monthly):
                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="M")
@@ -117,12 +115,11 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="Q")
             else:
                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="D")
-            if (fundamentals):
+            if (fundamentals_score):
                 result[identifier] = universelist
-                result = result.groupby("ticker", as_index=False).last()
+                result = result.groupby(identifier, as_index=False).last()
             if use_ticker:
                 result[identifier] = universelist.replace("<", "").replace(">", "")
-            print(result)
             chunk_data.append(result)
         except Exception as e:
             if use_ticker:
@@ -141,75 +138,63 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
         data = pd.concat(data)
         data = data.drop(columns="level_0")
     print("== Getting Data From DSWS Done ==")
+    print(data)
     return data, error_universe
 
-# def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals=False):
-#     DS = setDataStream()
-#     print("== Getting Data From DSWS ==")
-#     chunk_data = []
-#     error_universe = []
-#     ticker_list = universe[identifier].tolist()
-#     if(monthly):
-#         count_date_range_by_month(start_date, end_date, 1)
-#     elif(quarterly):
-#         count_date_range_by_month(start_date, end_date, 3)
-#     if use_ticker:
-#         ticker = ["<" + tick + ">" for tick in ticker_list]
-#     else:
-#         ticker = ticker_list
-#     split = len(ticker)/split_number
-#     splitting_df = np.array_split(ticker, split)
-#     for universe in splitting_df:
-#         universelist = ", ".join([str(elem) for elem in universe])
-#         print(universelist)
-#         try:
-#             if(monthly):
-#                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="M")
-#             elif(quarterly):
-#                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="Q")
-#             else:
-#                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="D")
-#             if use_ticker:
-#                 result[identifier] = universelist.replace("<", "").replace(">", "")
-
-#             result[name] = universe
-#             result.reset_index(inplace=True)
-#             if (len(chunck_field) == 0) :
-#                 chunck_field = result
-#             else:
-#                 chunck_field = pd.merge(chunck_field, result, how="inner", on=[identifier, "index"])
-#         except Exception as e:
-#             print(e)
-#             result = pd.DataFrame({i:[],identifier:[]}, index=[])
-#             for ranges in date_range:
-#                 result = result.append(pd.DataFrame({i:[np.nan], identifier:[universe]}, index=[ranges]))
-#             result.reset_index(inplace=True)
-#             result["index"] = pd.to_datetime(result["index"])
-#             if (len(chunck_field) == 0) :
-#                 chunck_field = result
-#             else:
-#                 chunck_field = pd.merge(chunck_field, result, how="inner",on=[identifier, "index"])
-
-#             print(result)
-#             chunk_data.append(result)
-#         except Exception as e:
-#             if use_ticker:
-#                 universelist = universelist.replace("<", "").replace(">", "")
-#                 universelist = universelist.strip()
-#             error_universe.append(universelist)
-#             print(e)
-#     data = []
-#     for frame in chunk_data:
-#         df = frame.reset_index()
-#         df2 = df.reset_index()
-#         if use_ticker:
-#             df2[identifier] = df2[identifier].replace("<", "").replace(">", "")
-#         data.append(df2)
-#     if(len(data)) > 0 :
-#         data = pd.concat(data)
-#         data = data.drop(columns="level_0")
-#     print("== Getting Data From DSWS Done ==")
-#     return data, error_universe
+def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False):
+    DS = setDataStream()
+    print("== Getting Data From DSWS ==")
+    chunk_data = []
+    if(monthly):
+        date_range = count_date_range_by_month(start_date, end_date, 1, ascending=True)
+    elif(quarterly):
+        date_range = count_date_range_by_month(start_date, end_date, 3, ascending=True)
+    else:
+        date_range = count_date_range_by_month(start_date, end_date, 3, ascending=True)
+    for ticker in universe:
+        chunck_field = []
+        for by_field in field:
+            try:
+                if(monthly):
+                    result = DS.fetch("<"+ticker+">", [by_field], date_from=start_date, date_to=end_date, freq="M")
+                elif(quarterly):
+                    result = DS.fetch("<"+ticker+">", [by_field], date_from=start_date, date_to=end_date, freq="Q")
+                else:
+                    result = DS.fetch("<"+ticker+">", [by_field], date_from=start_date, date_to=end_date, freq="D")
+                result[identifier] = ticker
+                result.reset_index(inplace=True)
+                if (fundamentals_score):
+                    result = result.groupby(identifier, as_index=False).last()
+                if (len(chunck_field) == 0) :
+                    chunck_field = result
+                else:
+                    chunck_field = pd.merge(chunck_field, result, how="inner", on=[identifier, "index"])
+            except Exception as e:
+                result = pd.DataFrame({by_field:[],identifier:[]}, index=[])
+                for ranges in date_range:
+                    result = result.append(pd.DataFrame({by_field:[np.nan], identifier:[universe]}, index=[ranges]))
+                result.reset_index(inplace=True)
+                result["index"] = pd.to_datetime(result["index"])
+                if (fundamentals_score):
+                    result[identifier] = ticker
+                    result = result.groupby("ticker", as_index=False).last()
+                if (len(chunck_field) == 0) :
+                    chunck_field = result
+                else:
+                    chunck_field = pd.merge(chunck_field, result, how="inner",on=[identifier, "index"])
+        chunk_data.append(chunck_field)
+    data = []
+    for frame in chunk_data:
+        df = frame.reset_index()
+        if use_ticker:
+            df[identifier] = df[identifier].replace("<", "").replace(">", "")
+        data.append(df)
+    if(len(data)) > 0 :
+        data = pd.concat(data)
+        data = data.drop(columns="level_0")
+    print("== Getting Data From DSWS Done ==")
+    print(data)
+    return data
 
 # def get_fundamentals_quarterly_from_dsws_by_field(args, start_date, end_date, universe, name, field, use_ticker=False, **kwargs):
 #     DS = setDataStream(args)
@@ -220,24 +205,24 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
 #         chunck_field = []
 #         for i in field:
 #             try:
-#                 result = DS.fetch(universe, [i], date_from=start_date, date_to=end_date, freq="Q")
+#                 result = DS.fetch(universe, [i], date_from=start_date, date_to=end_date, freq='Q')
 #                 result[name] = universe
 #                 result.reset_index(inplace=True)
 #                 if (len(chunck_field) == 0) :
 #                     chunck_field = result
 #                 else:
-#                     chunck_field = pd.merge(chunck_field, result, how="inner", on=["ticker", "index"])
+#                     chunck_field = pd.merge(chunck_field, result, how='inner', on=['ticker', 'index'])
 #             except Exception as e:
 #                 print(e)
-#                 result = pd.DataFrame({i:[],"ticker":[]}, index=[])
+#                 result = pd.DataFrame({i:[],'ticker':[]}, index=[])
 #                 for ranges in date_range:
-#                     result = result.append(pd.DataFrame({i:[np.nan], "ticker":[universe]}, index=[ranges]))
+#                     result = result.append(pd.DataFrame({i:[np.nan], 'ticker':[universe]}, index=[ranges]))
 #                 result.reset_index(inplace=True)
-#                 result["index"] = pd.to_datetime(result["index"])
+#                 result['index'] = pd.to_datetime(result['index'])
 #                 if (len(chunck_field) == 0) :
 #                     chunck_field = result
 #                 else:
-#                     chunck_field = pd.merge(chunck_field, result, how="inner",on=["ticker", "index"])
+#                     chunck_field = pd.merge(chunck_field, result, how='inner',on=['ticker', 'index'])
 #         print(chunck_field)
 #         chunk_data.append(chunck_field)
 #     data = []
@@ -250,21 +235,12 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
 #         data.append(df2)
 #     try:
 #         data = pd.concat(data)
+#         #data = data.drop(columns='level_0')
 #     except Exception as e:
 #         print(e)
 #     print("== Getting Data From DSWS Done ==")
 #     print(data)
 #     return data
 
-# def get_interest_rate_from_dsws(args, identifier, universe, *field):
-#     DS = setDataStream(args)
-#     print("== Getting Data From DSWS ==")
-#     try:
-#         result = DS.fetch(universe, *field, static=True)
-#         result = result.reset_index()
-#         result = result.rename(columns={"index": identifier})
-#         print(result)
-#     except Exception as e:
-#         print(e)
-#     print("== Getting Data From DSWS Done ==")
-#     return result
+
+
