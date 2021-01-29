@@ -7,7 +7,7 @@ from django.db import IntegrityError
 
 
 class Client(BaseTimeStampModel):
-    uid = models.CharField(max_length=255,primary_key=True)
+    uid = models.CharField(max_length=255,primary_key=True,editable=False)
     client_name = models.CharField(max_length=255)
     client_base_currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='client_currency')
     client_base_commision = models.FloatField(null=True,blank=True)
@@ -41,9 +41,9 @@ class Client(BaseTimeStampModel):
                 success = True
     
 class UserClient(BaseTimeStampModel):
-    uid = models.CharField(max_length=255,primary_key=True)
+    uid = models.CharField(max_length=255,primary_key=True,editable=False)
     user =models.ForeignKey(User, on_delete=models.CASCADE, related_name='client_user')
-    client = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='client_related')
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='client_related')
     extra_data = models.JSONField(null=True,blank=True)
 
     def __str__(self):
