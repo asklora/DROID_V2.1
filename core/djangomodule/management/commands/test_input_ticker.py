@@ -11,8 +11,8 @@ class Command(BaseCommand):
         try:
             Universe.objects.get(ticker=ticker)
         except Universe.DoesNotExist:
-            UniverseConsolidated.objects.create(origin_ticker=ticker,is_active=True)
+            UniverseConsolidated.objects.create(origin_ticker=ticker,is_active=True,use_isin=True)
             populate = UniverseConsolidated.ingestion_manager.get_isin_code(ticker=ticker)
             if populate:
-                UniverseClient.objects.create(client_id=user.client_user.uid,ticker_id=ticker)
+                UniverseClient.objects.create(client_id=user.client_user.client_id,ticker_id=ticker)
         return 'ok'

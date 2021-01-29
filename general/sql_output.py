@@ -27,29 +27,29 @@ def insert_data_to_database(data, table, how="replace"):
 
 def upsert_data_to_database(data, table, primary_key, how="update", Text=False, Date=False, Int=False, Bigint=False, Bool=False):
     print("=== Upsert Data to Database on Table {table} ===")
-    # data = data.drop_duplicates(subset=[primary_key], keep="first", inplace=False)
-    # data = data.set_index(primary_key)
-    # if(Text):
-    #     data_type={primary_key:TEXT}
-    # elif(Date):
-    #     data_type={primary_key:DATE}
-    # elif(Int):
-    #     data_type={primary_key:INTEGER}
-    # elif(Bigint):
-    #     data_type={primary_key:BIGINT}
-    # elif(Bool):
-    #     data_type={primary_key:BOOLEAN}
-    # else:
-    #     data_type={primary_key:TEXT}
-    # engines_droid = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    # upsert(engine=engines_droid,
-    #        df=data,
-    #        table_name=table,
-    #        if_row_exists=how,
-    #        chunksize=20000,
-    #        dtype=data_type)
-    # print("DATA UPSERT TO " + table)
-    # engines_droid.dispose()
+    data = data.drop_duplicates(subset=[primary_key], keep="first", inplace=False)
+    data = data.set_index(primary_key)
+    if(Text):
+        data_type={primary_key:TEXT}
+    elif(Date):
+        data_type={primary_key:DATE}
+    elif(Int):
+        data_type={primary_key:INTEGER}
+    elif(Bigint):
+        data_type={primary_key:BIGINT}
+    elif(Bool):
+        data_type={primary_key:BOOLEAN}
+    else:
+        data_type={primary_key:TEXT}
+    engines_droid = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    upsert(engine=engines_droid,
+           df=data,
+           table_name=table,
+           if_row_exists=how,
+           chunksize=20000,
+           dtype=data_type)
+    print("DATA UPSERT TO " + table)
+    engines_droid.dispose()
 
 def update_fundamentals_score_in_droid_universe_daily(data, table):
     print("=== Update Data to Database on Table {table} ===")
