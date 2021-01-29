@@ -42,7 +42,6 @@ def FillMissingDay(data, start, end):
     data["trading_day"] = pd.to_datetime(data["trading_day"])
     result = result.merge(data, how="left", on=["uid", "ticker", "trading_day"])
     result["currency_code"] = result["currency_code"].ffill().bfill()
-    
     return result
 
 def CountDatapoint( data):

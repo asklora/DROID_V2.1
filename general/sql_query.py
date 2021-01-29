@@ -76,9 +76,8 @@ def get_active_universe_consolidated_by_field(isin=False, cusip=False, sedol=Fal
         query = f"select * from {universe_consolidated_table} where is_active=True"
     
     if type(ticker) != type(None):
-        query += f" and origin_ticker in {tuple_data(ticker)} order by origin_ticker "
-    else:
-        query += " order by origin_ticker "
+        query += f" and origin_ticker in {tuple_data(ticker)} "
+    query += " order by origin_ticker "
     data = read_query(query, table=universe_consolidated_table)
     return data
 
@@ -88,7 +87,7 @@ def get_all_universe():
     return data
 
 def get_active_universe(ticker=None, currency_code=None):
-    query = f"select * from {universe_table} where is_active=True order by ticker "
+    query = f"select * from {universe_table} where is_active=True "
     if type(ticker) != type(None):
         query = f"ticker in {tuple_data(ticker)} "
 
