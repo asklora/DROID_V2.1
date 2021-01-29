@@ -70,7 +70,7 @@ def update_universe_consolidated_data_to_database(data, table):
         query += f"cusip='{cusip}', "
         query += f"sedol='{sedol}', "
         query += f"consolidated_ticker='{consolidated_ticker}', "
-        query += f"permid='{permid}', "
+        query += f"permid='{permid}' "
         query += f"where id={id}"
         data = read_query(query, table=table)
     return True
