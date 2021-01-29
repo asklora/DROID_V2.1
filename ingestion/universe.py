@@ -15,7 +15,7 @@ from general.sql_query import (
     get_active_universe, 
     get_active_universe_consolidated_by_field,
     get_active_universe_company_description_null)
-from general.sql_output import upsert_data_to_database, fill_null_company_desc_with_ticker_name
+from general.sql_output import upsert_data_to_database, fill_null_company_desc_with_ticker_name, update_universe_consolidated_data_to_database
 from datasource.dsws import get_data_static_from_dsws, get_data_history_from_dsws
 from datasource.dss import get_data_from_dss
 from general.table_name import (
@@ -28,7 +28,7 @@ from general.table_name import (
 def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
     print("{} : === Ticker ISIN Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe_consolidated_by_field(isin=True, ticker=ticker)
-    universe = universe.drop(columns=["isin", "consolidated_ticker", "sedol", "is_active", "cusip", "permid"])
+    universe = universe.drop(columns=["isin", "consolidated_ticker", "sedol", "is_active", "cusip", "permid", "updated"])
     print(universe)
     identifier="origin_ticker"
     filter_field = ["ISIN", "SECD", "WC06004", "IPID"]
@@ -63,8 +63,10 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
                     null_consolidated_ticker.loc[index, "is_active"] = True
         result = consolidated_ticker.append(null_consolidated_ticker)
         result = universe.merge(result, how="left", on=["origin_ticker"])
+        result["updated"] = dateNow()
         print(result)
-        upsert_data_to_database(result, get_universe_table_name(), "id", how="update", Int=True)
+        update_universe_consolidated_data_to_database(result, get_universe_table_name())
+        #upsert_data_to_database(result, get_universe_table_name(), "id", how="update", Int=True)
         report_to_slack("{} : === Ticker ISIN Updated ===".format(datetimeNow()))
 
 def update_ticker_name_from_dsws(ticker=None):

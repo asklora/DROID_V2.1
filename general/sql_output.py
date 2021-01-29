@@ -1,6 +1,6 @@
 import sqlalchemy as db
 from sqlalchemy import create_engine
-from sqlalchemy.types import DATE, BIGINT, TEXT, INTEGER, BOOLEAN
+from sqlalchemy.types import DATE, BIGINT, TEXT, INTEGER, BOOLEAN, Integer
 from general.sql_process import db_read, db_write
 from pangres import upsert
 from sqlalchemy.orm import sessionmaker
@@ -34,13 +34,15 @@ def upsert_data_to_database(data, table, primary_key, how="update", Text=False, 
     elif(Date):
         data_type={primary_key:DATE}
     elif(Int):
-        data_type={primary_key:INTEGER}
+        data_type={primary_key:Integer}
     elif(Bigint):
         data_type={primary_key:BIGINT}
     elif(Bool):
         data_type={primary_key:BOOLEAN}
     else:
         data_type={primary_key:TEXT}
+    print(data)
+    print(data_type)
     engines_droid = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
     upsert(engine=engines_droid,
            df=data,
@@ -50,6 +52,28 @@ def upsert_data_to_database(data, table, primary_key, how="update", Text=False, 
            dtype=data_type)
     print("DATA UPSERT TO " + table)
     engines_droid.dispose()
+
+def update_universe_consolidated_data_to_database(data, table):
+    for index, row in data.iterrows():
+        is_active = row["is_active"]
+        updated = row["updated"]
+        isin = row["isin"]
+        cusip = row["cusip"]
+        sedol = row["sedol"]
+        consolidated_ticker = row["consolidated_ticker"]
+        permid = row["permid"]
+        id = row["id"]
+        query = f"update {table} set "
+        query += f"is_active={is_active}, "
+        query += f"updated='{updated}', "
+        query += f"isin='{isin}', "
+        query += f"cusip='{cusip}', "
+        query += f"sedol='{sedol}', "
+        query += f"consolidated_ticker='{consolidated_ticker}', "
+        query += f"permid='{permid}' "
+        query += f"where id={id}"
+        data = read_query(query, table=table)
+    return True
 
 def update_fundamentals_score_in_droid_universe_daily(data, table):
     print("=== Update Data to Database on Table {table} ===")

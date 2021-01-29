@@ -159,30 +159,7 @@ def get_master_ohlcvtr_start_date():
         data = backdate_by_day(7)
     return data
 
-# def get_timezone_area(args):
-#     print("Get Timezone Area")
-#     engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
-#     with engine.connect() as conn:
-#         metadata = db.MetaData()
-#         query = f"select index, utc_timezone_location from {indices_table} where still_live=True"
-#         data = pd.read_sql(query, con=conn)
-#     engine.dispose()
-#     data = pd.DataFrame(data)
-#     return data
-
-# def get_market_close(args):
-#     print("Get Market Close Time")
-#     engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
-#     with engine.connect() as conn:
-#         metadata = db.MetaData()
-#         query = f"select index, market_close_time, utc_offset, close_ingestion_offset from {indices_table} where still_live=True"
-#         data = pd.read_sql(query, con=conn)
-#     engine.dispose()
-#     data = pd.DataFrame(data)
-#     return data
-
 def get_vix(vix_id=None):
-    print("Get Vix Index")
     query = f"select * from {vix_table} "
     if type(vix_id) != type(None):
         query += f" where vix_id in {tuple_data(vix_id)}"
@@ -190,7 +167,6 @@ def get_vix(vix_id=None):
     return data
 
 def get_fundamentals_score(ticker=None, currency_code=None):
-    print("Get Vix Index")
     query = f"select * from {fundamentals_score_table} "
     if type(ticker) != type(None):
         query += f" where ticker in (select ticker from universe is_active=True and currency_code in {tuple_data(ticker)}) "
@@ -198,19 +174,14 @@ def get_fundamentals_score(ticker=None, currency_code=None):
         query += f" where ticker in (select ticker from universe is_active=True and currency_code in {tuple_data(currency_code)}) "
     else:
         query += f" where ticker in (select ticker from universe is_active=True) "
-    
     query += f"order by ticker"
     data = read_query(query, table=vix_table)
     return data
 
-def get_last_close_price_from_db(args):
-    print('Get Last Close Price From Database')
-    engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        query = f"select mo.ticker, mo.close, mo.index, substring(univ.industry_code from 0 for 3) as industry_code from master_ohlctr mo inner join droid_universe univ on univ.ticker=mo.ticker "
-        query += f"where univ.is_active=True and exists( select 1 from (select ticker, max(trading_day) max_date from master_ohlctr where close is not null group by ticker) filter where filter.ticker=mo.ticker and filter.max_date=mo.trading_day)"
-        data = pd.read_sql(query, con=conn)
-    engine.dispose()
-    result = pd.DataFrame(data)
+def get_last_close_industry_code():
+    query = f"select mo.ticker, mo.close, mo.index, substring(univ.industry_code from 0 for 3) as industry_code from "
+    query += f"master_ohlctr mo inner join droid_universe univ on univ.ticker=mo.ticker "
+    query += f"where univ.is_active=True and exists( select 1 from (select ticker, max(trading_day) max_date "
+    query += f"from master_ohlctr where close is not null group by ticker) filter where filter.ticker=mo.ticker "
+    query += f"and filter.max_date=mo.trading_day)"
     return result
