@@ -16,13 +16,13 @@ from ingestion.master_multiple import master_multiple_update
 from ingestion.master_data import (
     update_vix_from_dsws, 
     update_quandl_orats_from_quandl,
-    update_fundamentals_score_from_dsws)
+    update_fundamentals_score_from_dsws,
+    update_fundamentals_quality_value)
 from ingestion.currency import (
     update_currency_price_from_dss, 
     update_utc_offset_from_timezone
     )
     
-
 def update_master_data():
     update_quandl_orats_from_quandl()
     update_vix_from_dsws()
@@ -46,7 +46,7 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    populate_universe_consolidated_by_isin_sedol_from_dsws(ticker="JMIA.N")
-    #update_fundamentals_score_from_dsws(ticker=["AAPL.O", "00637L.TW", "2448.TW", "XLC"]) #
-
+    #populate_universe_consolidated_by_isin_sedol_from_dsws(ticker="JMIA.N")
+    #update_fundamentals_score_from_dsws(ticker=["AAPL.O", "00637L.TW", "2448.TW", "XLC"])
+    update_fundamentals_quality_value(ticker=["AAPL.O", "00637L.TW", "2448.TW", "XLC"])
     print("Done")

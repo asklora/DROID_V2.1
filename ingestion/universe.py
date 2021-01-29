@@ -21,6 +21,7 @@ from datasource.dss import get_data_from_dss
 from general.table_name import (
     get_vix_table_name,
     get_universe_table_name, 
+    get_universe_consolidated_table_name,
     get_industry_table_name,
     get_country_table_name,
     get_industry_worldscope_table_name)
@@ -65,7 +66,7 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
         result = universe.merge(result, how="left", on=["origin_ticker"])
         result["updated"] = dateNow()
         print(result)
-        update_universe_consolidated_data_to_database(result, get_universe_table_name())
+        update_universe_consolidated_data_to_database(result, get_universe_consolidated_table_name())
         #upsert_data_to_database(result, get_universe_table_name(), "id", how="update", Int=True)
         report_to_slack("{} : === Ticker ISIN Updated ===".format(datetimeNow()))
 
