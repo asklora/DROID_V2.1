@@ -1,5 +1,10 @@
 from django.db import models
 from .manager import ConsolidatedManager
+from core.djangomodule.general import generate_id
+from django.db import IntegrityError
+
+
+
 class Region(models.Model):
     region_id = models.CharField(primary_key=True, max_length=30)
     region_name = models.CharField(blank=True, null=True, max_length=30)
@@ -137,9 +142,9 @@ class Source(models.Model):
 
 
 class UniverseConsolidated(models.Model):
-    id = models.AutoField(primary_key=True)
+    uid = models.CharField(primary_key=True,max_length=20,editable=False)
     source_id = models.ForeignKey(Source, on_delete=models.CASCADE, db_column='source_id', related_name='universe_source_id', blank=True, null=True)
-    origin_ticker = models.CharField(max_length=10, blank=False, null=False)
+    origin_ticker = models.CharField(max_length=50, blank=False, null=False)
     is_active = models.BooleanField(default=True)
     created = models.DateField(blank=True, null=True)
     updated = models.DateField(blank=True, null=True)
@@ -155,10 +160,27 @@ class UniverseConsolidated(models.Model):
 
     use_manual = models.BooleanField(default=False)
     permid = models.CharField(max_length=500, blank=True, null=True)
-    consolidated_ticker = models.CharField(max_length=10,blank=True, null=True)
+    consolidated_ticker = models.CharField(max_length=50,blank=True, null=True)
     ingestion_manager = ConsolidatedManager()
     objects = models.Manager()
-
+    def save(self, *args, **kwargs):
+        if not self.uid:
+            self.uid = generate_id(8)
+            # using your function as above or anything else
+        success = False
+        failures = 0
+        while not success:
+            try:
+                super(UniverseConsolidated, self).save(*args, **kwargs)
+            except IntegrityError:
+                failures += 1
+                if failures > 5:  # or some other arbitrary cutoff point at which things are clearly wrong
+                    raise KeyError
+                else:
+                    # looks like a collision, try another random value
+                    self.uid = generate_id(8)
+            else:
+                success = True
     class Meta:
         managed = True
         db_table = 'universe_consolidated'
