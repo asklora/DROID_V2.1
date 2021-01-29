@@ -1,6 +1,6 @@
 import sqlalchemy as db
 from sqlalchemy import create_engine
-from sqlalchemy.types import DATE, BIGINT, TEXT, INTEGER, BOOLEAN
+from sqlalchemy.types import DATE, BIGINT, TEXT, INTEGER, BOOLEAN, Integer
 from general.sql_process import db_read, db_write
 from pangres import upsert
 from sqlalchemy.orm import sessionmaker
@@ -27,29 +27,53 @@ def insert_data_to_database(data, table, how="replace"):
 
 def upsert_data_to_database(data, table, primary_key, how="update", Text=False, Date=False, Int=False, Bigint=False, Bool=False):
     print("=== Upsert Data to Database on Table {table} ===")
-    # data = data.drop_duplicates(subset=[primary_key], keep="first", inplace=False)
-    # data = data.set_index(primary_key)
-    # if(Text):
-    #     data_type={primary_key:TEXT}
-    # elif(Date):
-    #     data_type={primary_key:DATE}
-    # elif(Int):
-    #     data_type={primary_key:INTEGER}
-    # elif(Bigint):
-    #     data_type={primary_key:BIGINT}
-    # elif(Bool):
-    #     data_type={primary_key:BOOLEAN}
-    # else:
-    #     data_type={primary_key:TEXT}
-    # engines_droid = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    # upsert(engine=engines_droid,
-    #        df=data,
-    #        table_name=table,
-    #        if_row_exists=how,
-    #        chunksize=20000,
-    #        dtype=data_type)
-    # print("DATA UPSERT TO " + table)
-    # engines_droid.dispose()
+    data = data.drop_duplicates(subset=[primary_key], keep="first", inplace=False)
+    data = data.set_index(primary_key)
+    if(Text):
+        data_type={primary_key:TEXT}
+    elif(Date):
+        data_type={primary_key:DATE}
+    elif(Int):
+        data_type={primary_key:Integer}
+    elif(Bigint):
+        data_type={primary_key:BIGINT}
+    elif(Bool):
+        data_type={primary_key:BOOLEAN}
+    else:
+        data_type={primary_key:TEXT}
+    print(data)
+    print(data_type)
+    engines_droid = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    upsert(engine=engines_droid,
+           df=data,
+           table_name=table,
+           if_row_exists=how,
+           chunksize=20000,
+           dtype=data_type)
+    print("DATA UPSERT TO " + table)
+    engines_droid.dispose()
+
+def update_universe_consolidated_data_to_database(data, table):
+    for index, row in data.iterrows():
+        is_active = row["is_active"]
+        updated = row["updated"]
+        isin = row["isin"]
+        cusip = row["cusip"]
+        sedol = row["sedol"]
+        consolidated_ticker = row["consolidated_ticker"]
+        permid = row["permid"]
+        id = row["id"]
+        query = f"update {table} set "
+        query += f"is_active={is_active}, "
+        query += f"updated='{updated}', "
+        query += f"isin='{isin}', "
+        query += f"cusip='{cusip}', "
+        query += f"sedol='{sedol}', "
+        query += f"consolidated_ticker='{consolidated_ticker}', "
+        query += f"permid='{permid}', "
+        query += f"where id={id}"
+        data = read_query(query, table=table)
+    return True
 
 def update_fundamentals_score_in_droid_universe_daily(data, table):
     print("=== Update Data to Database on Table {table} ===")

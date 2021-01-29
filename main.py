@@ -46,6 +46,7 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    update_fundamentals_score_from_dsws(ticker=["AAPL.O", "00637L.TW", "2448.TW", "XLC"]) #
+    populate_universe_consolidated_by_isin_sedol_from_dsws(ticker="JMIA.N")
+    #update_fundamentals_score_from_dsws(ticker=["AAPL.O", "00637L.TW", "2448.TW", "XLC"]) #
 
     print("Done")

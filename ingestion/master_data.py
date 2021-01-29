@@ -157,7 +157,7 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
         upsert_data_to_database(result, get_fundamental_score_table_name(), "ticker", how="update", Text=True)
         report_to_slack("{} : === Fundamentals Score Updated ===".format(datetimeNow()))
 
-get_fundamentals_score(ticker=None, currency_code=None)
+#get_fundamentals_score(ticker=None, currency_code=None)
 
 def get_last_close_price_from_db(args):
     print('Get Last Close Price From Database')
