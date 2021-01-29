@@ -1,3 +1,4 @@
+from ingestion import fundamentals_score_calculation
 import pandas as pd
 import sqlalchemy as db
 from sqlalchemy import create_engine
@@ -7,7 +8,8 @@ from general.data_process import tuple_data
 from general.table_name import (
     get_vix_table_name,
     get_currency_table_name,
-    get_universe_table_name, 
+    get_universe_table_name,
+    get_fundamental_score_table_name,
     get_master_ohlcvtr_table_name, 
     get_report_datapoint_table_name,
     get_universe_consolidated_table_name)
@@ -18,6 +20,7 @@ master_ohlcvtr_table = get_master_ohlcvtr_table_name()
 report_datapoint_table = get_report_datapoint_table_name()
 vix_table = get_vix_table_name()
 currency_table = get_currency_table_name()
+fundamentals_score_table = get_fundamental_score_table_name()
 
 def read_query(query, table=universe_table):
     print(f"Get Data From Database on {table} table")
@@ -74,29 +77,29 @@ def get_all_universe():
     data = read_query(query, table=universe_table)
     return data
 
-def get_active_universe(ticker=None):
+def get_active_universe(ticker=None, currency_code=None):
+    query = f"select * from {universe_table} where is_active=True order by ticker "
     if type(ticker) != type(None):
-        query = f"select * from {universe_table} where is_active=True and ticker in {tuple_data(ticker)} order by ticker"
+        query = f"ticker in {tuple_data(ticker)} "
+
+    if type(currency_code) != type(None):
+        query += f"and currency_code in {tuple_data(currency_code)} "
+
+    query += f"order by ticker"
+    data = read_query(query, table=universe_table)
+    return data
+
+def get_active_universe_by_entity_type(ticker=None, currency_code=None, null_entity_type=False):
+    query = f"select * from {universe_table} where is_active=True "
+    if null_entity_type:
+        query += f"and entity_type is null "
     else:
-        query = f"select * from {universe_table} where is_active=True order by ticker"
-    data = read_query(query, table=universe_table)
-    return data
-
-def get_active_universe_by_entity_type():
-    query = f"select * from {universe_table} where is_active=True and entity_type is not null order by ticker"
-    data = read_query(query, table=universe_table)
-    return data
-
-def get_active_universe_by_currency_entity_type(currency_code, method=True):
-    if(method):
-        query = f"select * from {universe_table} where is_active=True and currency_code='{currency_code}' and entity_type is not null order by ticker"
-    else:
-        query = f"select * from {universe_table} where is_active=True and currency_code='{currency_code}' and entity_type is null order by ticker"
-    data = read_query(query, table=universe_table)
-    return data
-
-def get_active_universe_by_currency(currency_code):
-    query = f"select * from {universe_table} where is_active=True and currency_code='{currency_code}' order by ticker"
+        query += f"and entity_type is not null "
+    if type(ticker) != type(None):
+        query += f"and ticker in {tuple_data(ticker)} "
+    if type(currency_code) != type(None):
+        query += f"and currency_code in {tuple_data(currency_code)} " 
+    query += f"order by ticker"
     data = read_query(query, table=universe_table)
     return data
 
@@ -108,11 +111,19 @@ def get_active_universe_by_country_code(country_code, method=True):
     data = read_query(query, table=universe_table)
     return data
 
-def get_active_universe_by_quandl_symbol(method=True):
-    if(method):
-        query = f"select * from {universe_table} where is_active=True and quandl_symbol is not null order by ticker"
+def get_active_universe_by_quandl_symbol(null_symbol=False, ticker=None, quandl_symbol=None):
+    if not (null_symbol):
+        query = f"select * from {universe_table} where is_active=True and quandl_symbol is not null "
+
+        if type(ticker) != type(None):
+            query += f"and ticker in {tuple_data(ticker)} "
+    
+        if type(quandl_symbol) != type(None):
+            query += f"and quandl_symbol in {tuple_data(quandl_symbol)} "
+
     else:
-        query = f"select * from {universe_table} where is_active=True and quandl_symbol is null and country_code='US' order by ticker"
+        query = f"select * from {universe_table} where is_active=True and quandl_symbol is null and country_code='US' "
+    query += f"order by ticker"
     data = read_query(query, table=universe_table)
     return data
 
@@ -170,9 +181,36 @@ def get_master_ohlcvtr_start_date():
 #     data = pd.DataFrame(data)
 #     return data
 
-def get_vix():
+def get_vix(vix_id=None):
     print("Get Vix Index")
-    query = f"select * from {vix_table}"
+    query = f"select * from {vix_table} "
+    if type(vix_id) != type(None):
+        query += f" where vix_id in {tuple_data(vix_id)}"
     data = read_query(query, table=vix_table)
     return data
 
+def get_fundamentals_score(ticker=None, currency_code=None):
+    print("Get Vix Index")
+    query = f"select * from {fundamentals_score_table} "
+    if type(ticker) != type(None):
+        query += f" where ticker in (select ticker from universe is_active=True and currency_code in {tuple_data(ticker)}) "
+    elif type(currency_code) != type(None):
+        query += f" where ticker in (select ticker from universe is_active=True and currency_code in {tuple_data(currency_code)}) "
+    else:
+        query += f" where ticker in (select ticker from universe is_active=True) "
+    
+    query += f"order by ticker"
+    data = read_query(query, table=vix_table)
+    return data
+
+def get_last_close_price_from_db(args):
+    print('Get Last Close Price From Database')
+    engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    with engine.connect() as conn:
+        metadata = db.MetaData()
+        query = f"select mo.ticker, mo.close, mo.index, substring(univ.industry_code from 0 for 3) as industry_code from master_ohlctr mo inner join droid_universe univ on univ.ticker=mo.ticker "
+        query += f"where univ.is_active=True and exists( select 1 from (select ticker, max(trading_day) max_date from master_ohlctr where close is not null group by ticker) filter where filter.ticker=mo.ticker and filter.max_date=mo.trading_day)"
+        data = pd.read_sql(query, con=conn)
+    engine.dispose()
+    result = pd.DataFrame(data)
+    return result

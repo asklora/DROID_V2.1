@@ -100,7 +100,6 @@ def master_ohlctr_update():
     print("Getting OHLCVTR Data")
     master_ohlcvtr_data = get_master_ohlcvtr_data(start_date)
     print("OHLCTR Done")
-    master_ohlcvtr_data = master_ohlcvtr_data.rename(columns={"ticker_id" : "ticker", "currency_code_id" : "currency_code"})
     print("Filling All Missing Days")
     master_ohlcvtr_data = FillMissingDay(master_ohlcvtr_data, start_date, dateNow())
     print("Calculate Datapoint")

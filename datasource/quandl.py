@@ -1,5 +1,7 @@
 import os
 import pandas as pd
+from dotenv import load_dotenv
+load_dotenv()
 from general.data_process import uid_maker
 
 # https://www.quandl.com/api/v3/datasets/OPT/SCHO.csv?start_date='2020-07-07'&end_date='2020-09-03'&api_key=waqWZxLx2dx84mTcsn_w
@@ -16,4 +18,5 @@ def read_quandl_csv(ticker, quandl_symbol, start_date, end_date):
         return data
     except Exception as ex:
         print("error: ", ex)
+        print("This ticker " + ticker + " is Error with symbol " +quandl_symbol)
         return []

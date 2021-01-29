@@ -46,6 +46,15 @@ def get_data_interest_daily_table_name():
 def get_latest_price_table_name():
     return "latest_price"
 
+def get_quandl_table_name():
+    return "data_quandl"
+
+def get_fundamental_score_table_name():
+    return "data_fundamental_score"
+    
+def get_fred_table_name():
+    return "data_fred"
+
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 
