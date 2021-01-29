@@ -42,7 +42,7 @@ class Client(BaseTimeStampModel):
     
 class UserClient(BaseTimeStampModel):
     uid = models.CharField(max_length=255,primary_key=True,editable=False)
-    user =models.ForeignKey(User, on_delete=models.CASCADE, related_name='client_user')
+    user =models.OneToOneField(User, on_delete=models.CASCADE, related_name='client_user')
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='client_related')
     extra_data = models.JSONField(null=True,blank=True)
 

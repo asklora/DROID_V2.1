@@ -24,7 +24,9 @@ from general.table_name import (
     get_universe_consolidated_table_name,
     get_industry_table_name,
     get_country_table_name,
-    get_industry_worldscope_table_name)
+    get_industry_worldscope_table_name,
+    get_universe_consolidated_table_name
+    )
 
 def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
     print("{} : === Ticker ISIN Start Ingestion ===".format(datetimeNow()))

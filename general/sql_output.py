@@ -62,7 +62,7 @@ def update_universe_consolidated_data_to_database(data, table):
         sedol = row["sedol"]
         consolidated_ticker = row["consolidated_ticker"]
         permid = row["permid"]
-        id = row["id"]
+        uid = row["uid"]
         query = f"update {table} set "
         query += f"is_active={is_active}, "
         query += f"updated='{updated}', "
@@ -71,7 +71,7 @@ def update_universe_consolidated_data_to_database(data, table):
         query += f"sedol='{sedol}', "
         query += f"consolidated_ticker='{consolidated_ticker}', "
         query += f"permid='{permid}' "
-        query += f"where id={id}"
+        query += f"where id={uid}"
         execute_query(query, table=table)
     return True
 
