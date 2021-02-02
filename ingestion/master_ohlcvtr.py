@@ -1,31 +1,53 @@
+import sys
 import numpy as np
 import pandas as pd
+from general.slack import report_to_slack
 from general.data_process import uid_maker
 from general.sql_process import do_function
-from general.date_process import dateNow
+from general.date_process import backdate_by_day, dateNow, dlp_start_date, datetimeNow
 from general.sql_query import get_master_ohlcvtr_data, get_master_ohlcvtr_start_date
 from general.sql_output import insert_data_to_database, upsert_data_to_database
+from general.table_name import get_master_ohlcvtr_table_name
 from ingestion.master_tac import master_tac_update, ForwardBackwardFillNull
+from ingestion.universe import update_currency_code_from_dss
+from ingestion.master_data import (
+    update_data_dss_from_dss,
+    update_data_dsws_from_dsws)
 
-def datapoint_lte_1000(fulldatapoint):
-    exclude = list(module.datasource.models.ReportDatapoint.objects.filter(reingested=True).values_list("ticker",flat=True))
-    if exclude:
-        low_datapoint = fulldatapoint.loc[fulldatapoint["ticker"].isin(exclude)]
-    else:
-        low_datapoint = fulldatapoint
-    if low_datapoint:
-        for data in low_datapoint:
-            try:
-                datapoint_table = module.datasource.models.ReportDatapoint.objects.get(ticker=data.ticker)
-                datapoint_table.datapoint = data.fulldatapoint
-                datapoint_table.updated = datetime.now().date()
-                datapoint_table.save()
-            except module.datasource.models.ReportDatapoint.DoesNotExist:
-                datapoint_table = module.datasource.models.ReportDatapoint.objects.create(
-                    ticker=data.ticker,
-                    datapoint=data.fulldatapoint,
-                    updated = datetime.now().date()
-                    )
+# def datapoint_lte_1000(fulldatapoint):
+#     exclude = list(module.datasource.models.ReportDatapoint.objects.filter(reingested=True).values_list("ticker",flat=True))
+#     if exclude:
+#         low_datapoint = fulldatapoint.loc[fulldatapoint["ticker"].isin(exclude)]
+#     else:
+#         low_datapoint = fulldatapoint
+#     if low_datapoint:
+#         for data in low_datapoint:
+#             try:
+#                 datapoint_table = module.datasource.models.ReportDatapoint.objects.get(ticker=data.ticker)
+#                 datapoint_table.datapoint = data.fulldatapoint
+#                 datapoint_table.updated = datetime.now().date()
+#                 datapoint_table.save()
+#             except module.datasource.models.ReportDatapoint.DoesNotExist:
+#                 datapoint_table = module.datasource.models.ReportDatapoint.objects.create(
+#                     ticker=data.ticker,
+#                     datapoint=data.fulldatapoint,
+#                     updated = datetime.now().date()
+#                     )
+
+#New Ticker Categories is When Datapoint Less Than 1000 Datapoint
+def FindNewTicker(fulldatapoint):
+    new_ticker = fulldatapoint.copy()
+    new_ticker = new_ticker.loc[new_ticker["fulldatapoint"] < 1000]
+    new_ticker = new_ticker["ticker"].to_list()
+    print(new_ticker)
+    if(len(new_ticker) > 0):
+        #report_to_slack("{} : === New Ticker Found {} Start Historical Ingestion ===".format(datetimeNow(), new_ticker))
+        update_currency_code_from_dss(ticker=new_ticker)
+        update_data_dss_from_dss(ticker=new_ticker, history=True)
+        update_data_dsws_from_dsws(ticker=new_ticker, history=True)
+    print(new_ticker)
+    print(len(new_ticker))
+    return new_ticker
 
 def FilterWeekend( data):
     data = data[data["trading_day"].apply(lambda x: x.weekday() not in [5, 6])]
@@ -44,7 +66,7 @@ def FillMissingDay(data, start, end):
     result["currency_code"] = result["currency_code"].ffill().bfill()
     return result
 
-def CountDatapoint( data):
+def CountDatapoint(data):
     filter_data = data.copy()
     filter_data[["open", "high", "low", "close", "volume"]] = filter_data[["open", "high", "low", "close", "volume"]].notnull().astype("int")
     filter_data["datapoint"] = (filter_data["open"]+filter_data["high"]+filter_data["low"]+filter_data["close"]+filter_data["volume"])
@@ -52,10 +74,10 @@ def CountDatapoint( data):
     fulldatapoint_result = filter_data[["ticker", "datapoint"]]
     fulldatapoint_result =  fulldatapoint_result.rename(columns={"datapoint":"fulldatapoint"})
     fulldatapoint_result = fulldatapoint_result.groupby("ticker").sum().reset_index()
-
+    print(fulldatapoint_result)
     #update datapoint
-    datapoint_lte_1000(fulldatapoint_result)
-    
+    new_ticker = FindNewTicker(fulldatapoint_result)
+    print(fulldatapoint_result)
     datapoint_per_day_result = filter_data[["trading_day", "currency_code", "datapoint"]]
     datapoint_per_day_result =  datapoint_per_day_result.rename(columns={"datapoint":"datapoint_per_day"})
     datapoint_per_day_result = datapoint_per_day_result.groupby(["currency_code", "trading_day"]).sum().reset_index()
@@ -75,9 +97,9 @@ def CountDatapoint( data):
     result = result.merge(point_result, how="left", on=["uid"])
     result = result.merge(datapoint_result, how="left", on=["currency_code"])
     result = result.merge(datapoint_per_day_result, how="left", on=["trading_day", "currency_code"])
-    return result
+    return result, new_ticker
 
-def FillDayStatus(self, data):
+def FillDayStatus(data):
     conditions = [
         # label with holiday if datapoint less than 25% and the date is more than start date of ticker
         (data["datapoint_per_day"] <= data["datapoint"] / 4) & (data["point"] < 2),
@@ -92,24 +114,34 @@ def FillDayStatus(self, data):
     return data
 
 def master_ohlctr_update():
-    print("Get Start Date")
-    start_date = get_master_ohlcvtr_start_date()
-    print(f"Calculation Start From {start_date}")
     do_function("master_ohlcvtr_update")
+    print("Get Start Date")
+    start_date = dlp_start_date()
+    print(f"Calculation Start From {start_date}")
     print("Getting OHLCVTR Data")
     master_ohlcvtr_data = get_master_ohlcvtr_data(start_date)
     print("OHLCTR Done")
     print("Filling All Missing Days")
     master_ohlcvtr_data = FillMissingDay(master_ohlcvtr_data, start_date, dateNow())
     print("Calculate Datapoint")
-    master_ohlcvtr_data = CountDatapoint(master_ohlcvtr_data)
+    master_ohlcvtr_data, new_ticker = CountDatapoint(master_ohlcvtr_data)
+    if(len(new_ticker) > 0):
+        print("Restart Master OHLCVTR Update")
+        do_function("master_ohlcvtr_update")
+        start_date = dlp_start_date()
+        master_ohlcvtr_data = get_master_ohlcvtr_data(start_date)
+        master_ohlcvtr_data = FillMissingDay(master_ohlcvtr_data, start_date, dateNow())
+        master_ohlcvtr_data, new_ticker = CountDatapoint(master_ohlcvtr_data)
+
     print("Fill Day Status")
     master_ohlcvtr_data = FillDayStatus(master_ohlcvtr_data)
-    print("Fill Null Data Forward & Backward")
-    master_ohlcvtr_data = ForwardBackwardFillNull(master_ohlcvtr_data, ["close", "total_return_index"])
+    # print("Fill Null Data Forward & Backward")
+    # master_ohlcvtr_data = ForwardBackwardFillNull(master_ohlcvtr_data, ["close", "total_return_index"])
     master_ohlcvtr_data = master_ohlcvtr_data.drop(columns=["point", "fulldatapoint"])
+    print(master_ohlcvtr_data)
     if(len(master_ohlcvtr_data) > 0):
-        upsert_data_to_database(master_ohlcvtr_data, "master_ohlcvtr", "uid", how="update", Text=True)
+        upsert_data_to_database(master_ohlcvtr_data, get_master_ohlcvtr_table_name(), "uid", how="update", Text=True)
+        report_to_slack("{} : === Master OHLCVTR Update Updated ===".format(datetimeNow()))
         del master_ohlcvtr_data
         master_tac_update()
 

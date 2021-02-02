@@ -34,6 +34,15 @@ def get_report_datapoint_table_name():
 def get_vix_table_name():
     return "vix"
 
+def get_data_dss_table_name():
+    return "data_dss"
+
+def get_data_dsws_table_name():
+    return "data_dsws"
+
+def get_data_vix_table_name():
+    return "data_vix"
+
 def get_data_dividend_table_name():
     return "data_dividend"
 

@@ -1,4 +1,5 @@
 import os
+import sys
 from general.sql_process import do_function
 from ingestion.universe import (
     update_ticker_name_from_dsws, 
@@ -10,10 +11,17 @@ from ingestion.universe import (
     update_company_desc_from_dsws,
     update_worldscope_identifier_from_dsws
     )
+
 from ingestion.master_tac import master_tac_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
 from ingestion.master_multiple import master_multiple_update
 from ingestion.master_data import (
+    interest_update,
+    interest_daily_update,
+    dividend_updated,
+    dividend_daily_update,
+    update_data_dss_from_dss,
+    update_data_dsws_from_dsws,
     update_vix_from_dsws, 
     update_quandl_orats_from_quandl,
     update_fundamentals_score_from_dsws,
@@ -23,12 +31,17 @@ from ingestion.currency import (
     update_utc_offset_from_timezone
     )
     
-def update_master_data():
+def update_master_data(ticker=None, currency_code=None):
     update_quandl_orats_from_quandl()
     update_vix_from_dsws()
+    do_function("universe_populate")
+    update_data_dss_from_dss(ticker=ticker, currency_code=currency_code)
+    update_data_dsws_from_dsws(ticker=ticker, currency_code=currency_code)
+    do_function("master_ohlcvtr_update")
     master_ohlctr_update()
     master_tac_update()
     master_multiple_update()
+    #do_function("universe_update_last_ingestion")
 
 def update_currency_data():
     update_utc_offset_from_timezone()
@@ -46,9 +59,21 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    update_currency_code_from_dss()
-    master_ohlctr_update()
-    #populate_universe_consolidated_by_isin_sedol_from_dsws(ticker="JMIA.N")
-    #update_fundamentals_score_from_dsws(ticker=["AAPL.O", "00637L.TW", "2448.TW", "XLC"])
-    update_fundamentals_quality_value(ticker=["AAPL.O", "00637L.TW", "2448.TW", "XLC"])
+    ticker=["AAPL.O"]
+    # currency_code=None
+    #update_vix_from_dsws(vix_id=["CBOEVIX"])
+    #update_data_dss_from_dss(ticker=ticker, currency_code=currency_code)
+    #update_data_dsws_from_dsws(ticker=ticker, currency_code=currency_code)
+    #do_function("master_ohlcvtr_update")
+    #master_ohlctr_update()
+    
+    #master_tac_update()
+    #master_multiple_update()
+    # update_fundamentals_score_from_dsws()
+    # update_fundamentals_quality_value()
+    
+    #dividend_updated()
+    dividend_daily_update()
+    #interest_update()
+    #interest_daily_update()
     print("Done")

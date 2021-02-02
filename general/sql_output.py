@@ -5,11 +5,12 @@ from general.sql_process import db_read, db_write
 from pangres import upsert
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
+from general.date_process import dateNow
 from general.sql_query import read_query, execute_query
-from general.table_name import get_universe_table_name
+from general.table_name import get_data_dividend_table_name, get_universe_table_name
 
 def insert_data_to_database(data, table, how="replace"):
-    print("=== Insert Data to Database on Table {table} ===")
+    print(f"=== Insert Data to Database on Table {table} ===")
     engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
     try:
         with engine.connect() as conn:
@@ -21,12 +22,12 @@ def insert_data_to_database(data, table, how="replace"):
                 con=conn
             )
         engine.dispose()
-        print("DATA INSERTED TO " + table)
+        print(f"DATA INSERTED TO {table}")
     except Exception as ex:
-        print("error: ", ex)
+        print(f"error: ", ex)
 
 def upsert_data_to_database(data, table, primary_key, how="update", Text=False, Date=False, Int=False, Bigint=False, Bool=False):
-    print("=== Upsert Data to Database on Table {table} ===")
+    print(f"=== Upsert Data to Database on Table {table} ===")
     data = data.drop_duplicates(subset=[primary_key], keep="first", inplace=False)
     data = data.set_index(primary_key)
     if(Text):
@@ -41,8 +42,6 @@ def upsert_data_to_database(data, table, primary_key, how="update", Text=False, 
         data_type={primary_key:BOOLEAN}
     else:
         data_type={primary_key:TEXT}
-    print(data)
-    print(data_type)
     engines_droid = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
     upsert(engine=engines_droid,
            df=data,
@@ -50,7 +49,7 @@ def upsert_data_to_database(data, table, primary_key, how="update", Text=False, 
            if_row_exists=how,
            chunksize=20000,
            dtype=data_type)
-    print("DATA UPSERT TO " + table)
+    print(f"DATA UPSERT TO {table}")
     engines_droid.dispose()
 
 def update_universe_consolidated_data_to_database(data, table):
@@ -76,7 +75,7 @@ def update_universe_consolidated_data_to_database(data, table):
     return True
 
 def update_fundamentals_score_in_droid_universe_daily(data, table):
-    print("=== Update Data to Database on Table {table} ===")
+    print(f"=== Update Data to Database on Table {table} ===")
     data = data[["ticker","mkt_cap"]]
     resultdict = data.to_dict("records")
     engine = db.create_engine(db_write)
@@ -93,7 +92,7 @@ def update_fundamentals_score_in_droid_universe_daily(data, table):
     session.flush()
     session.commit()
     engine.dispose()
-    print("DATA UPDATE TO " + table)
+    print(f"DATA UPDATE TO {table}")
 
 def fill_null_company_desc_with_ticker_name():
     query = f"update {get_universe_table_name()} set company_description=ticker_fullname "
@@ -109,6 +108,6 @@ def fill_null_quandl_symbol():
 
 def delete_old_dividends_on_database():
     old_date = dateNow()
-    query = f"delete from {dividens_table} where ex_dividend_date < '{old_date}'"
-    data = read_query(query, table=get_universe_table_name())
+    query = f"delete from {get_data_dividend_table_name()} where ex_dividend_date <= '{old_date}'"
+    data = read_query(query, table=get_data_dividend_table_name())
     return data
