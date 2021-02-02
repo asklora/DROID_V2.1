@@ -18,9 +18,11 @@ import numpy as np
 from sklearn.preprocessing import robust_scale, minmax_scale, MinMaxScaler
 from general.slack import report_to_slack
 from general.sql_process import do_function
-from general.data_process import uid_maker, remove_null
+from general.data_process import tuple_data, uid_maker, remove_null
 from general.sql_query import (
-    get_data_by_table_name, get_latest_price,
+    get_data_by_table_name, 
+    get_data_by_table_name_with_condition,
+    get_latest_price,
     get_vix, 
     get_fundamentals_score,
     get_active_universe,
@@ -247,6 +249,7 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
     universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
+    universe_rating = universe_rating.drop(columns=["fundamentals_value", "fundamentals_quality", "updated"])
     print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
     calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth", 
                         "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic"]
@@ -334,9 +337,12 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
                                       fundamentals["earnings_yield_minmax_industry"]).round(1)
 
     print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
-    print(fundamentals)
     if(len(fundamentals)) > 0 :
-        upsert_data_to_database(fundamentals, get_universe_rating_table_name(), "ticker", how="update", Text=True)
+        print(fundamentals)
+        result = universe_rating.merge(fundamentals[["ticker", "fundamentals_value", "fundamentals_quality"]], how="left", on="ticker")
+        result["updated"] = dateNow()
+        print(result)
+        upsert_data_to_database(result, get_universe_rating_table_name(), "ticker", how="update", Text=True)
         report_to_slack("{} : === Universe Fundamentals Quality & Value Updated ===".format(datetimeNow()))
 
 def dividend_updated(ticker=None, currency_code=None):
@@ -402,82 +408,6 @@ def dividend_daily_update():
     upsert_data_to_database(result, get_data_dividend_daily_table_name(), "uid", how="update", Text=True)
     report_to_slack("{} : === Dividens Daily Updated ===".format(datetimeNow()))
 
-# def cal_q_daily(args):
-#     # This script is written based on the following requirement page:
-#     # https://loratechai.atlassian.net/wiki/spaces/ARYA/pages/96830039/r+and+q+daily+scripts
-
-#     # Downloading the required data
-#     # interest_rate_data = get_interest_rate_data(args)
-#     # interest_rate_data = interest_rate_data.rename(columns={'currency': 'currency_code'})
-#     dividends_data = get_dividends_data(args)
-#     args.tickers_list = get_tickers_list_from_aws()['ticker'].tolist()
-#     intraday_price = get_intraday_prices(args)
-#     droid_universe_df = get_droid_universe()
-
-#     # Filtering the data based on the input index
-#     droid_universe_df = droid_universe_df[droid_universe_df.is_active == True]
-#     dividends_data = dividends_data[dividends_data.ticker.isin(droid_universe_df.ticker)]
-#     dividends_data = dividends_data.merge(droid_universe_df[['ticker','index']], on='ticker', how='left')
-#     if args.q_index != 'all':
-#         dividends_data = dividends_data[dividends_data['index'] == args.q_index]
-#         if len(dividends_data) == 0:
-#             print('The entered index does not exist!')
-#             sys.exit()
-
-#     days_q = pd.DataFrame(range(1, args.daily_q_days))
-#     t_q = days_q / 365
-#     dates_temp = days_q
-#     dates_temp['spot_date'] = datetime.date.today()
-
-#     def calculate_expiry(row):
-#         return (row['spot_date'] + BDay(row[0])).date()
-
-#     dates_temp['expiry_date'] = dates_temp.apply(calculate_expiry, axis=1)
-
-#     dates_temp3 = dates_temp.copy()
-
-#     # Calculating q
-#     q_final = pd.DataFrame()
-#     for ticker in dividends_data.ticker.unique():
-#         temp_q = pd.DataFrame()
-#         dates_temp = pd.DataFrame(dates_temp3)
-#         dates_temp2 = dates_temp.copy()
-#         dates_temp = dates_temp2
-#         dates_temp['id'] = 2
-#         dividends_data['id'] = 2
-
-#         dates_temp = pd.merge(dates_temp, dividends_data[dividends_data.ticker == ticker], on='id', how='outer')
-
-#         dates_temp = dates_temp[(dates_temp.spot_date <= dates_temp.ex_dividend_date) &
-#                                 (dates_temp.ex_dividend_date <= dates_temp.expiry_date)]
-
-#         dates_temp = dates_temp.groupby(['expiry_date'])['amount'].sum().reset_index()
-
-#         dates_temp2 = dates_temp2.merge(dates_temp, on='expiry_date', how='left').fillna(0)
-
-#         temp_q['q'] = dates_temp2['amount'] / intraday_price.loc[intraday_price.ticker == ticker, 'close'].values
-
-#         temp_q['ticker'] = ticker
-#         temp_q['spot_date'] = dates_temp2['spot_date']
-#         temp_q['expiry_date'] = dates_temp2['expiry_date']
-#         temp_q['t'] = t_q[0]
-#         # temp_q['when_created'] = dt.fromtimestamp(time.time())
-#         temp_q['uid'] = temp_q.apply(divRatesUid, axis=1, raw=True)
-
-#         q_final = q_final.append(temp_q)
-
-#     q_final = q_final.merge(droid_universe_df[['ticker', 'index']], on='ticker', how='left')
-
-#     # writing the finalized dataframes to AWS
-#     db_url = global_vars.DB_DROID_URL_WRITE
-#     engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-#     with engine.connect() as conn:
-#         q_final.to_sql(con=conn, name=args.daily_dividends_table_name, schema='public', method='multi',
-#                          chunksize=int(len(q_final) / 2), if_exists='replace', index=False)
-#     report_to_slack("{} : === Executive, daily dividends rates(q) calculated! ===".format(str(dt.now())), args)
-#     print('Executive, daily dividends rates(q) calculated!')
-
-
 def interest_update():
     print("{} : === Interest Update ===".format(datetimeNow()))
     universe = get_data_by_table_name(get_data_interest_table_name())
@@ -535,7 +465,7 @@ def interest_update():
     upsert_data_to_database(data, get_data_interest_table_name(), "ticker_interest", how="update", Text=True)
     report_to_slack("{} : === Interest Updated ===".format(datetimeNow()))
 
-def interest_daily_update():
+def interest_daily_update(currency_code=None):
     def cal_interest_rate(interest_rate_data, days_to_expiry):
         unique_horizons = pd.DataFrame(days_to_expiry)
         unique_horizons["id"] = 2
@@ -572,19 +502,22 @@ def interest_daily_update():
         return unique_horizons["rate"].values
     
     print("{} : === Interest Daily Update ===".format(datetimeNow()))
-    interest_rate_data = get_data_by_table_name(get_data_interest_table_name())
-    interest_rate_data = interest_rate_data.rename(columns={"currency": "currency_code"})
-    interest_rate_data = interest_rate_data[interest_rate_data["currency_code"] == args.r_currency]
+    if(type(currency_code) == type(None)):
+        interest_rate_data = get_data_by_table_name(get_data_interest_table_name())
+    else:
+        interest_rate_data = get_data_by_table_name_with_condition(get_data_interest_table_name(), f" currency_code in {tuple_data(currency_code)}")
 
-    days_r = pd.DataFrame(range(1, os.getenv("DAILY_R_DAYS")))
+    days_r = pd.DataFrame(range(1, int(os.getenv("DAILY_R_DAYS"))))
     result = pd.DataFrame()
 
     for currency in interest_rate_data.currency_code.unique():
         temp_r = pd.DataFrame()
         temp_r["r"] = cal_interest_rate(interest_rate_data[interest_rate_data.currency_code == currency], days_r)
-        temp_r["t"] = days_r
+        temp_r["t"] = days_r[0]
         temp_r["currency_code"] = currency
         result = result.append(temp_r)
-    result = uid_maker(result, uid="uid", ticker="currency_code", trading_day="t")
-    insert_data_to_database(result, get_data_interest_daily_table_name(), how="replace")
+    result = uid_maker(result, uid="uid", ticker="currency_code", trading_day="t", date=False)
+    print(result)
+    # insert_data_to_database(result, get_data_interest_daily_table_name(), how="replace")
+    upsert_data_to_database(result, get_data_interest_daily_table_name(), "uid", how="update", Text=True)
     report_to_slack("{} : === Interest Daily Updated ===".format(datetimeNow()))

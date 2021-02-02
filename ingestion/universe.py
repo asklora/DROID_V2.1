@@ -168,34 +168,36 @@ def update_company_desc_from_dsws(ticker=None):
         fill_null_company_desc_with_ticker_name()
         report_to_slack("{} : === Company Description Updated ===".format(datetimeNow()))
 
-def update_country_from_dsws(ticker=None):
+def update_industry_from_dsws(ticker=None):
     print("{} : === Country & Industry Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker)
-    universe = universe.drop(columns=["country_code", "industry_code", "wc_industry_code"])
+    #universe = universe.drop(columns=["country_code", "industry_code", "wc_industry_code"])
+    universe = universe.drop(columns=["industry_code", "wc_industry_code"])
     identifier="ticker"
-    filter_field = ["GGISO", "WC07040", "WC06011"]
+    #filter_field = ["GGISO", "WC07040", "WC06011"]
+    filter_field = ["WC07040", "WC06011"]
     result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
     print(result)
     if(len(result)>0):
         result = result.rename(columns={"index":"ticker",
-            "GGISO":"country_code", 
+            #"GGISO":"country_code", 
             "WC07040":"industry_code", 
             "WC06011":"wc_industry_code"})
-        
-        country = result[["country_code"]]
-        country = country.drop_duplicates(keep="first")
-        country["country_name"] = "NA"
-        upsert_data_to_database(country, get_country_table_name(), identifier, how="ignore", Text=True)
+        print(result)
+        # country = result[["country_code"]]
+        # country = country.drop_duplicates(keep="first")
+        # country["country_name"] = "NA"
+        # upsert_data_to_database(country, get_country_table_name(), identifier, how="ignore", Text=True)
 
         industry = result[["industry_code"]]
         industry = industry.drop_duplicates(keep="first")
         industry["industry_name"] = "NA"
-        upsert_data_to_database(industry, get_industry_table_name(), identifier, how="ignore", Text=True)
+        upsert_data_to_database(industry, get_industry_table_name(), "industry_code", how="ignore", Text=True)
 
         wc_industry = result[["wc_industry_code"]]
         wc_industry = wc_industry.drop_duplicates(keep="first")
         wc_industry["wc_industry_name"] = "NA"
-        upsert_data_to_database(wc_industry, get_industry_worldscope_table_name(), identifier, how="ignore", Text=True)
+        upsert_data_to_database(wc_industry, get_industry_worldscope_table_name(), "wc_industry_code", how="ignore", Text=True)
         
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
