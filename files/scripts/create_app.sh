@@ -8,3 +8,4 @@ django-admin startapp djangomodule core/djangomodule
 django-admin startapp master core/master
 django-admin startapp topstock core/topstock
 django-admin startapp Clients core/Clients
+django-admin startapp signals core/signals

@@ -1,5 +1,8 @@
 from django.db import models
-from core.universe.models import Universe,Currency
+from core.universe.models import Universe,Currency,IntegrityError
+from core.djangomodule.models import BaseTimeStampModel
+from core.djangomodule.general import generate_id
+from core.Clients.models import Client
 
 class Subinterval(models.Model):
     subinterval = models.PositiveIntegerField(primary_key=True)
@@ -102,3 +105,9 @@ class WeeklyTopStock(models.Model):
 
     def __str__(self):
         return f'type : {self.types} || ticker: {self.ticker}'
+
+
+
+
+
+

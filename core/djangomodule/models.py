@@ -2,8 +2,8 @@ from django.db import models
 from django.utils import timezone
 
 class BaseTimeStampModel(models.Model):
-    created = models.DateField(editable=False)
-    updated = models.DateField(editable=False)
+    created = models.DateTimeField(editable=False)
+    updated = models.DateTimeField(editable=False)
 
     class Meta:
         abstract = True
