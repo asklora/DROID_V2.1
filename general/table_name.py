@@ -4,6 +4,9 @@ def get_universe_consolidated_table_name():
 def get_universe_table_name():
     return "universe"
 
+def get_universe_rating_table_name():
+    return "universe_rating"
+
 def get_country_table_name():
     return "country"
 
@@ -31,6 +34,15 @@ def get_report_datapoint_table_name():
 def get_vix_table_name():
     return "vix"
 
+def get_data_dss_table_name():
+    return "data_dss"
+
+def get_data_dsws_table_name():
+    return "data_dsws"
+
+def get_data_vix_table_name():
+    return "data_vix"
+
 def get_data_dividend_table_name():
     return "data_dividend"
 
@@ -51,7 +63,7 @@ def get_quandl_table_name():
 
 def get_fundamental_score_table_name():
     return "data_fundamental_score"
-    
+
 def get_fred_table_name():
     return "data_fred"
 

@@ -21,6 +21,7 @@ from datasource.dss import get_data_from_dss
 from general.table_name import (
     get_vix_table_name,
     get_universe_table_name, 
+    get_universe_consolidated_table_name,
     get_industry_table_name,
     get_country_table_name,
     get_industry_worldscope_table_name,

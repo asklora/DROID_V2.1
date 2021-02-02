@@ -1,14 +1,18 @@
+import pandas as pd
 from talib import RSI, STOCHF
 from general.data_process import uid_maker
 from general.date_process import droid_start_date
 from general.sql_query import get_master_ohlcvtr_data
 from general.sql_output import insert_data_to_database, upsert_data_to_database
 
-def ForwardBackwardFillNull(data, columns_field):
+def ForwardBackwardFillNull(data, columns_field, columns_deletion=False):
     data = data.sort_values(by="trading_day", ascending=False)
     data = data.infer_objects()
     result = data[["uid"]]
-    data_detail = data[["uid", "ticker", "trading_day", "volume", "currency_code"]]
+    if(columns_deletion):
+        data_detail = data.drop(columns=columns_field)
+    else:
+        data_detail = data[["uid", "ticker", "trading_day", "volume", "currency_code"]]
     universe = data["ticker"].drop_duplicates()
     universe =universe.tolist()
     for column in columns_field:
@@ -55,15 +59,17 @@ def get_stochf(df):
 
 def master_tac_update():
     print("Getting OHLCVTR Data")
-    data = get_master_ohlcvtr_data(droid_start_date)
+    data = get_master_ohlcvtr_data(droid_start_date())
+    print(data)
     print("OHLCTR Done")
     #data = data.rename(columns={"ticker_id" : "ticker", "currency_code_id" : "currency_code"})
     print("Delete Holiday Status")
     data = DeleteHolidayStatus(data)
+    print(data)
     data = data.drop(columns=["datapoint_per_day", "datapoint", "day_status"])
     print("Fill Null Data Forward & Backward")
     data = ForwardBackwardFillNull(data, ["open", "high", "low", "close", "total_return_index"])
-
+    print(data)
     print("Calculate TAC")
     result = data.copy()
     data = data[["uid", "ticker", "trading_day", "volume", "currency_code"]]
@@ -75,12 +81,12 @@ def master_tac_update():
 
     result = result.sort_values(by="trading_day", ascending=False)
     result["tac"] =  result.groupby("ticker")["total_return_index"].shift(-1) / result.total_return_index
-
+    print(result)
     result["tri_adj_close"] = result.groupby(result["ticker"]).apply(rolling_apply, "tri_adj_close")["tri_adj_close"]
     result["tri_adj_low"] = result.groupby(result["ticker"]).apply(rolling_apply, "tri_adj_low")["tri_adj_low"]
     result["tri_adj_high"] = result.groupby(result["ticker"]).apply(rolling_apply, "tri_adj_high")["tri_adj_high"]
     result["tri_adj_open"] = result.groupby(result["ticker"]).apply(rolling_apply, "tri_adj_open")["tri_adj_open"]
-
+    print(result)
     print("Round Price")
     result["tri_adj_close"] = result["tri_adj_close"].apply(roundPrice)
     result["tri_adj_low"] = result["tri_adj_low"].apply(roundPrice)
@@ -89,13 +95,13 @@ def master_tac_update():
     result = result.sort_values(by="trading_day", ascending=True)
     result = result.drop(columns=["trading_day", "ticker", "tac", "volume", "currency_code"])
     result = result.merge(data, on=["uid"], how="inner")
-
+    print(result)
     print("Calculate RSI")
     result["rsi"] = result.groupby("ticker")["tri_adj_close"].transform(get_rsi)
-
+    print(result)
     print("Calculate STOCHATIC")
     result = result.groupby("ticker").apply(get_stochf)
-
+    print(result)
     print("Calculate TAC Done")
     print(result)
     insert_data_to_database(result, "master_tac", how="replace")

@@ -13,6 +13,19 @@ def setDataStream(DSWS=True):
         DS = Datastream(username=os.getenv("DSWS_USERNAME2"), password=os.getenv("DSWS_PASSWORD2"))
     return DS
 
+def get_data_static_with_string_from_dsws(identifier, universe, *field):
+    DS = setDataStream()
+    print("== Getting Data From DSWS ==")
+    try:
+        result = DS.fetch(universe, *field, static=True)
+        result = result.reset_index()
+        result = result.rename(columns={"index": identifier})
+    except Exception as e:
+        result = None
+        print(e)
+    print("== Getting Data From DSWS Done ==")
+    return result
+
 def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, split_number=40):
     DS = setDataStream()
     print("== Getting Data From DSWS ==")
@@ -20,6 +33,7 @@ def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, spl
     chunk_data = []
     error_universe = []
     ticker_list = universe[identifier].tolist()
+        
     if use_ticker:
         ticker = ["<" + tick + ">" for tick in ticker_list]
     else:
@@ -27,7 +41,7 @@ def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, spl
     split = len(ticker)/split_number
     splitting_df = np.array_split(ticker, split)
     for universe in splitting_df:
-        universelist = ", ".join([str(elem) for elem in universe])
+        universelist = ",".join([str(elem) for elem in universe])
         try:
             result = DS.fetch(universelist, *field, static=True)
             print(result)
@@ -65,14 +79,9 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
     split = len(ticker)/split_number
     splitting_df = np.array_split(ticker, split)
     for universe in splitting_df:
-        universelist = ", ".join([str(elem) for elem in universe])
-        print(universelist)
+        universelist = ",".join([str(elem) for elem in universe])
         try:
             result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date)
-            if use_ticker:
-                result[identifier] = universelist.replace("<", "").replace(">", "")
-            else:
-                result[identifier] = universelist
             print(result)
             chunk_data.append(result)
         except Exception as e:
@@ -83,14 +92,30 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
             print(e)
     data = []
     for frame in chunk_data:
+        print(frame)
         df = frame.reset_index()
-        df2 = df.reset_index()
+        print(df)
         if use_ticker:
-            df2[identifier] = df2[identifier].replace("<", "").replace(">", "")
-        data.append(df2)
+            if(len(universe) == 1):
+                df["level_1"] = df["index"]
+                df[identifier] = universe[0].replace("<", "").replace(">", "")
+            else:
+                df = df.reset_index()
+                df[identifier] = df["level_0"]
+                df[identifier] = df[identifier].str.replace("<", "").str.replace(">", "")
+                df[identifier] = df[identifier].str.strip()
+            df = df.drop(columns="index")
+        else:
+            if(len(universe) == 1):
+                df["level_1"] = df["index"]
+                df[identifier] = universe[0]
+                df = df.drop(columns="index")
+            else:
+                df[identifier] = df["level_0"]
+                df = df.drop(columns="level_0")
+        data.append(df)
     if(len(data)) > 0 :
         data = pd.concat(data)
-        data = data.drop(columns="level_0")
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
 
@@ -107,7 +132,7 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
     split = len(ticker)/split_number
     splitting_df = np.array_split(ticker, split)
     for universe in splitting_df:
-        universelist = ", ".join([str(elem) for elem in universe])
+        universelist = ",".join([str(elem) for elem in universe])
         try:
             if(monthly):
                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="M")

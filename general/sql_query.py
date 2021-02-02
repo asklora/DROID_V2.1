@@ -1,4 +1,3 @@
-from ingestion import fundamentals_score_calculation
 import pandas as pd
 import sqlalchemy as db
 from sqlalchemy import create_engine
@@ -9,6 +8,7 @@ from general.table_name import (
     get_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
+    get_universe_rating_table_name,
     get_fundamental_score_table_name,
     get_master_ohlcvtr_table_name, 
     get_report_datapoint_table_name,
@@ -21,6 +21,7 @@ report_datapoint_table = get_report_datapoint_table_name()
 vix_table = get_vix_table_name()
 currency_table = get_currency_table_name()
 fundamentals_score_table = get_fundamental_score_table_name()
+universe_rating_table = get_universe_rating_table_name()
 
 def read_query(query, table=universe_table):
     print(f"Get Data From Database on {table} table")
@@ -30,6 +31,23 @@ def read_query(query, table=universe_table):
     engine.dispose()
     data = pd.DataFrame(data)
     print("Total Data = " + str(len(data)))
+    return data
+
+def execute_query(query, table=universe_table):
+    print(f"Execute Query to Table {table}")
+    engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    with engine.connect() as conn:
+        result = conn.execute(query)
+    engine.dispose()
+    return True
+
+def get_latest_price():
+    query = f"select mo.* from master_ohlcvtr mo, "
+    query += f"(select master_ohlcvtr.ticker, max(master_ohlcvtr.trading_day) max_date "
+    query += f"from master_ohlcvtr where master_ohlcvtr.close is not null "
+    query += f"group by master_ohlcvtr.ticker) filter "
+    query += f"where mo.ticker=filter.ticker and mo.trading_day=filter.max_date; "
+    data = read_query(query, table="latest_price")
     return data
 
 def get_data_by_table_name(table):
@@ -54,21 +72,20 @@ def get_active_currency_ric_not_null():
     return data
 
 def get_active_universe_consolidated_by_field(isin=False, cusip=False, sedol=False, manual=False, ticker=None):
+    query = f"select * from {universe_consolidated_table} where is_active=True "
     if isin:
-        query = f"select * from {universe_consolidated_table} where is_active=True and use_isin=True"
+        query += f"and use_isin=True "
     elif cusip:
-        query = f"select * from {universe_consolidated_table} where is_active=True and use_cusip=True"
+        query += f"and use_cusip=True "
     elif sedol:
-        query = f"select * from {universe_consolidated_table} where is_active=True and use_sedol=True"
+        query += f"and use_sedol=True "
     elif manual:
-        query = f"select * from {universe_consolidated_table} where is_active=True and use_manual=True"
-    else:
-        query = f"select * from {universe_consolidated_table} where is_active=True"
-    
+        query += f"and use_manual=True "
+
     if type(ticker) != type(None):
-        query += f" and origin_ticker in {tuple_data(ticker)} order by origin_ticker "
-    else:
-        query += " order by origin_ticker "
+        query += f" and origin_ticker in {tuple_data(ticker)} "
+
+    query += " order by origin_ticker "
     data = read_query(query, table=universe_consolidated_table)
     return data
 
@@ -78,12 +95,12 @@ def get_all_universe():
     return data
 
 def get_active_universe(ticker=None, currency_code=None):
-    query = f"select * from {universe_table} where is_active=True order by ticker "
+    query = f"select * from {universe_table} where is_active=True "
     if type(ticker) != type(None):
-        query = f"ticker in {tuple_data(ticker)} "
+        query += f" and ticker in {tuple_data(ticker)} "
 
     if type(currency_code) != type(None):
-        query += f"and currency_code in {tuple_data(currency_code)} "
+        query += f" and currency_code in {tuple_data(currency_code)} "
 
     query += f"order by ticker"
     data = read_query(query, table=universe_table)
@@ -166,22 +183,48 @@ def get_vix(vix_id=None):
     data = read_query(query, table=vix_table)
     return data
 
+def get_universe_rating(ticker=None, currency_code=None):
+    query = f"select * from {universe_rating_table} "
+    if type(ticker) != type(None):
+        query += f" where ticker in (select ticker from {universe_table} where is_active=True and ticker in {tuple_data(ticker)}) "
+    elif type(currency_code) != type(None):
+        query += f" where ticker in (select ticker from {universe_table} where is_active=True and currency_code in {tuple_data(currency_code)}) "
+    else:
+        query += f" where ticker in (select ticker from {universe_table} where is_active=True) "
+    query += f"order by ticker"
+    data = read_query(query, table=universe_rating_table)
+    return data
+
 def get_fundamentals_score(ticker=None, currency_code=None):
     query = f"select * from {fundamentals_score_table} "
     if type(ticker) != type(None):
-        query += f" where ticker in (select ticker from universe is_active=True and currency_code in {tuple_data(ticker)}) "
+        query += f" where ticker in (select ticker from {universe_table} where is_active=True and ticker in {tuple_data(ticker)}) "
     elif type(currency_code) != type(None):
-        query += f" where ticker in (select ticker from universe is_active=True and currency_code in {tuple_data(currency_code)}) "
+        query += f" where ticker in (select ticker from {universe_table} where is_active=True and currency_code in {tuple_data(currency_code)}) "
     else:
-        query += f" where ticker in (select ticker from universe is_active=True) "
+        query += f" where ticker in (select ticker from {universe_table} where is_active=True) "
     query += f"order by ticker"
-    data = read_query(query, table=vix_table)
+    data = read_query(query, table=fundamentals_score_table)
     return data
 
-def get_last_close_industry_code():
-    query = f"select mo.ticker, mo.close, mo.index, substring(univ.industry_code from 0 for 3) as industry_code from "
-    query += f"master_ohlctr mo inner join droid_universe univ on univ.ticker=mo.ticker "
-    query += f"where univ.is_active=True and exists( select 1 from (select ticker, max(trading_day) max_date "
-    query += f"from master_ohlctr where close is not null group by ticker) filter where filter.ticker=mo.ticker "
+def get_max_last_ingestion_from_universe(ticker=None, currency_code=None):
+    query = f"select max(last_ingestion) as max_date from {universe_table} "
+    if type(ticker) != type(None):
+        query += f" where ticker in {tuple_data(ticker)} "
+    elif type(currency_code) != type(None):
+        query += f" where currency_code in {tuple_data(currency_code)} "
+    data = read_query(query, table=universe_table)
+    return str(data.loc[0, "max_date"])
+    
+def get_last_close_industry_code(ticker=None, currency_code=None):
+    query = f"select mo.ticker, mo.close, mo.currency_code, substring(univ.industry_code from 0 for 3) as industry_code from "
+    query += f"{master_ohlcvtr_table} mo inner join {universe_table} univ on univ.ticker=mo.ticker where univ.is_active=True "
+    if type(ticker) != type(None):
+        query += f"and univ.ticker in {tuple_data(ticker)} "
+    elif type(currency_code) != type(None):
+        query += f"and univ.currency_code in {tuple_data(currency_code)} "
+    query += f"and exists( select 1 from (select ticker, max(trading_day) max_date "
+    query += f"from {master_ohlcvtr_table} where close is not null group by ticker) filter where filter.ticker=mo.ticker "
     query += f"and filter.max_date=mo.trading_day)"
-    return result
+    data = read_query(query, table=master_ohlcvtr_table)
+    return data

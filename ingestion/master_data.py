@@ -1,42 +1,125 @@
+import os
 import sys
 from dotenv import load_dotenv
 load_dotenv()
 from general.date_process import (
+    relativedelta,
     datetimeNow, 
     backdate_by_day, 
     dlp_start_date, 
     backdate_by_month,
     droid_start_date,
+    forwarddate_by_day,
+    str_to_date,
     dateNow)
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import robust_scale, minmax_scale, MinMaxScaler
 from general.slack import report_to_slack
 from general.sql_process import do_function
-from general.data_process import uid_maker
-from general.sql_query import get_vix, get_active_universe_by_quandl_symbol,get_active_universe_by_entity_type
-from general.sql_output import upsert_data_to_database, insert_data_to_database
-from datasource.dsws import get_data_static_from_dsws, get_data_history_from_dsws, get_data_history_frequently_from_dsws, get_data_history_frequently_by_field_from_dsws
+from general.data_process import uid_maker, remove_null
+from general.sql_query import (
+    get_data_by_table_name, get_latest_price,
+    get_vix, 
+    get_fundamentals_score,
+    get_active_universe,
+    get_last_close_industry_code,
+    get_active_universe_by_quandl_symbol,
+    get_active_universe_by_entity_type, 
+    get_universe_rating,
+    get_max_last_ingestion_from_universe)
+from general.sql_output import delete_old_dividends_on_database, upsert_data_to_database, insert_data_to_database
+from datasource.dsws import (
+    get_data_static_from_dsws, 
+    get_data_history_from_dsws, 
+    get_data_history_frequently_from_dsws, 
+    get_data_static_with_string_from_dsws,
+    get_data_history_frequently_by_field_from_dsws)
 from datasource.dss import get_data_from_dss
 from datasource.fred import read_fred_csv
 from datasource.quandl import read_quandl_csv
 from general.table_name import (
-    get_vix_table_name, 
+    get_data_vix_table_name, 
+    get_universe_rating_table_name,
     get_quandl_table_name,
     get_fred_table_name,
-    get_fundamental_score_table_name)
+    get_fundamental_score_table_name, 
+    get_data_dss_table_name, 
+    get_data_dsws_table_name,
+    get_data_dividend_table_name, 
+    get_data_dividend_daily_table_name, 
+    get_data_interest_table_name, 
+    get_data_interest_daily_table_name,
+    get_latest_price_table_name)
 
 # data_dividend
 # data_dividend_daily_rates
-# data_dss
-# data_dsws
 # data_fundamental_score
 # data_interest
 # data_interest_daily_rates
 # data_split
 # data_vol_surface_inferred
-# subinterval
-# top_stock_performance
-# top_stock_weekly
+def update_data_dss_from_dss(ticker=None, currency_code=None, history=False, manual=False):
+    print("{} : === DSS Start Ingestion ===".format(datetimeNow()))
+    end_date = dateNow()
+    
+    if(history):
+        start_date = dlp_start_date()
+    elif(manual):
+        start_date = backdate_by_day(1)
+    else:
+        start_date = get_max_last_ingestion_from_universe(ticker=ticker, currency_code=currency_code)
+        if(start_date=="None"):
+            start_date = backdate_by_day(3)
+    
+    print(f"Ingestion Start From {start_date}")
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    jsonFileName = "files/file_json/historyAPI.json"
+    result = get_data_from_dss(start_date, end_date, universe["ticker"].to_list(), jsonFileName, report=os.getenv("REPORT_HISTORY"))
+    print(result)
+    result = result.drop(columns=["IdentifierType", "Identifier"])
+    print(result)
+    if (len(result) > 0 ):
+        result = result.rename(columns={
+            "RIC": "ticker",
+            "Trade Date": "trading_day",
+            "Open Price": "open",
+            "High Price": "high",
+            "Low Price": "low",
+            "Universal Close Price": "close",
+            "Accumulated Volume Unscaled": "volume"
+        })
+        result = uid_maker(result, uid="dss_id", ticker="ticker", trading_day="trading_day")
+        print(result)
+        upsert_data_to_database(result, get_data_dss_table_name(), "dss_id", how="update", Text=True)
+        report_to_slack("{} : === DSS Updated ===".format(datetimeNow()))
+
+def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, manual=False):
+    print("{} : === DSWS Start Ingestion ===".format(datetimeNow()))
+    end_date = dateNow()
+    
+    if(history):
+        start_date = dlp_start_date()
+    elif(manual):
+        start_date = backdate_by_day(1)
+    else:
+        start_date = get_max_last_ingestion_from_universe(ticker=ticker, currency_code=currency_code)
+        if(start_date=="None"):
+            start_date = backdate_by_day(3)
+    
+    print(f"Ingestion Start From {start_date}")
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    universe = universe[["ticker"]]
+    identifier="ticker"
+    filter_field = ["RI"]
+    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    print(result)
+    if(len(result)) > 0 :
+        result = result.rename(columns={"RI": "total_return_index", "level_1" : "trading_day"})
+        result = uid_maker(result, uid="dsws_id", ticker="ticker", trading_day="trading_day")
+        print(result)
+        upsert_data_to_database(result, get_data_dsws_table_name(), "dsws_id", how="update", Text=True)
+        report_to_slack("{} : === DSWS Updated ===".format(datetimeNow()))
 
 def update_vix_from_dsws(vix_id=None, history=False):
     print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
@@ -44,19 +127,18 @@ def update_vix_from_dsws(vix_id=None, history=False):
     start_date = backdate_by_day(3)
     if(history):
         start_date = droid_start_date()
-    universe = get_vix()
-    universe = universe[["vix_index"]]
-    identifier="vix_index"
+    universe = get_vix(vix_id=vix_id)
+    universe = universe[["vix_id"]]
+    identifier="vix_id"
     filter_field = ["PI"]
     result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=False, split_number=min(len(universe), 40))
-    print(result)
     if(len(result)) > 0 :
-        result = result.rename(columns={"PI": "vix_value", "index" : "trading_day"})
-        result = uid_maker(result, uid="uid", ticker="vix_index", trading_day="trading_day")
-        result = universe.merge(result, how="left", on=["ticker"])
+        result = result.rename(columns={"PI": "vix_value", "level_1" : "trading_day"})
+        result = uid_maker(result, uid="uid", ticker="vix_id", trading_day="trading_day")
+        result["vix_id"] = result["vix_id"] 
         print(result)
-        upsert_data_to_database(result, get_vix_table_name(), "uid", how="update", Text=True)
-        report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
+        # upsert_data_to_database(result, get_data_vix_table_name(), "uid", how="update", Text=True)
+        # report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
 def update_fred_data_from_fred():
     print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
@@ -158,66 +240,40 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
         report_to_slack("{} : === Fundamentals Score Updated ===".format(datetimeNow()))
 
 #get_fundamentals_score(ticker=None, currency_code=None)
+#get_last_close_industry_code(ticker=None, currency_code=None)
 
-def get_last_close_price_from_db(args):
-    print('Get Last Close Price From Database')
-    engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        query = f"select mo.ticker, mo.close, mo.index, substring(univ.industry_code from 0 for 3) as industry_code from master_ohlctr mo inner join droid_universe univ on univ.ticker=mo.ticker "
-        query = query + f"where univ.is_active=True and exists( select 1 from (select ticker, max(trading_day) max_date from master_ohlctr where close is not null group by ticker) filter where filter.ticker=mo.ticker and filter.max_date=mo.trading_day)"
-        data = pd.read_sql(query, con=conn)
-    engine.dispose()
-    result = pd.DataFrame(data)
-    return result
-
-def calculate_quality_value_score(args):
-    print('=== Calculating Fundamentals Value & Fundamentals Quality ===')
+def update_fundamentals_quality_value(ticker=None, currency_code=None):
+    print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
+    universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
+    print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
     calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth", 
                         "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic"]
-    fundamentals_score = get_fundamentals_score_from_db(args)
+    fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
     print(fundamentals_score)
-    close_price = get_last_close_price_from_db(args)
+    close_price = get_last_close_industry_code(ticker=ticker, currency_code=currency_code)
     print(close_price)
-    fundamentals_score = close_price.merge(fundamentals_score, how="left", on='ticker')
-    fundamentals_score['earnings_yield'] = fundamentals_score['eps'] / fundamentals_score['close']
-    fundamentals_score['book_to_price'] = fundamentals_score['bps'] / fundamentals_score['close']
-    fundamentals_score['ebitda_to_ev'] = fundamentals_score['ttm_ebitda'] / fundamentals_score['ev']
-    fundamentals_score['sales_to_price'] = fundamentals_score['ttm_rev'] / fundamentals_score['mkt_cap']
-    fundamentals_score['roic'] = (fundamentals_score['ttm_ebitda'] - fundamentals_score['ttm_capex']) / (fundamentals_score['mkt_cap'] + fundamentals_score['net_debt'])
-    fundamentals_score['roe'] = fundamentals_score['roe']
-    fundamentals_score['cf_to_price'] = fundamentals_score['cfps'] / fundamentals_score['close']
-    fundamentals_score['eps_growth'] = fundamentals_score['peg']
-    fundamentals_score['fwd_bps'] = fundamentals_score['bps1fd12']  / fundamentals_score['close']
-    fundamentals_score['fwd_ebitda_to_ev'] = fundamentals_score['ebd1fd12']  / fundamentals_score['evt1fd12']
-    fundamentals_score['fwd_ey'] = fundamentals_score['eps1fd12']  / fundamentals_score['close']
-    fundamentals_score['fwd_sales_to_price'] = fundamentals_score['sal1fd12']  / fundamentals_score['mkt_cap']
-    fundamentals_score['fwd_roic'] = (fundamentals_score['ebd1fd12'] - fundamentals_score['cap1fd12']) / (fundamentals_score['mkt_cap'] + fundamentals_score['net_debt'])
-    fundamentals = fundamentals_score[["earnings_yield", 
-                                       "book_to_price", 
-                                       "ebitda_to_ev", 
-                                       "sales_to_price", 
-                                       "roic", 
-                                       "roe", 
-                                       "cf_to_price", 
-                                       "eps_growth", 
-                                       "index", 
-                                       "ticker", 
-                                       "industry_code",
-                                       "fwd_bps",
-                                       "fwd_ebitda_to_ev",
-                                       "fwd_ey",
-                                       "fwd_sales_to_price",
-                                       "fwd_roic"]]
+    fundamentals_score = close_price.merge(fundamentals_score, how="left", on="ticker")
+    fundamentals_score["earnings_yield"] = fundamentals_score["eps"] / fundamentals_score["close"]
+    fundamentals_score["book_to_price"] = fundamentals_score["bps"] / fundamentals_score["close"]
+    fundamentals_score["ebitda_to_ev"] = fundamentals_score["ttm_ebitda"] / fundamentals_score["ev"]
+    fundamentals_score["sales_to_price"] = fundamentals_score["ttm_rev"] / fundamentals_score["mkt_cap"]
+    fundamentals_score["roic"] = (fundamentals_score["ttm_ebitda"] - fundamentals_score["ttm_capex"]) / (fundamentals_score["mkt_cap"] + fundamentals_score["net_debt"])
+    fundamentals_score["roe"] = fundamentals_score["roe"]
+    fundamentals_score["cf_to_price"] = fundamentals_score["cfps"] / fundamentals_score["close"]
+    fundamentals_score["eps_growth"] = fundamentals_score["peg"]
+    fundamentals_score["fwd_bps"] = fundamentals_score["bps1fd12"]  / fundamentals_score["close"]
+    fundamentals_score["fwd_ebitda_to_ev"] = fundamentals_score["ebd1fd12"]  / fundamentals_score["evt1fd12"]
+    fundamentals_score["fwd_ey"] = fundamentals_score["eps1fd12"]  / fundamentals_score["close"]
+    fundamentals_score["fwd_sales_to_price"] = fundamentals_score["sal1fd12"]  / fundamentals_score["mkt_cap"]
+    fundamentals_score["fwd_roic"] = (fundamentals_score["ebd1fd12"] - fundamentals_score["cap1fd12"]) / (fundamentals_score["mkt_cap"] + fundamentals_score["net_debt"])
+    fundamentals = fundamentals_score[["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", 
+        "roic", "roe", "cf_to_price", "eps_growth", "currency_code", "ticker", "industry_code","fwd_bps",
+        "fwd_ebitda_to_ev","fwd_ey", "fwd_sales_to_price", "fwd_roic"]]
     print(fundamentals)
 
     calculate_column_score = []
     for column in calculate_column:
         column_score = column + "_score"
-        column_mean = column + "_mean"
-        column_std = column + "_std"
-        column_upper= column + "_upper"
-        column_lower= column + "_lower"
         mean = np.nanmean(fundamentals[column])
         std = np.nanstd(fundamentals[column])
         upper = mean + (std * 2)
@@ -232,58 +288,223 @@ def calculate_quality_value_score(args):
         column_robust_score = column + "_robust_score"
         fundamentals[column_robust_score] = robust_scale(fundamentals[column_score])
         calculate_column_robust_score.append(column_robust_score)
-    fundamentals_robust_score_calc = fundamentals[calculate_column_robust_score]
-    scaler = MinMaxScaler().fit(fundamentals_robust_score_calc)
+    # fundamentals_robust_score_calc = fundamentals[calculate_column_robust_score]
+    # scaler = MinMaxScaler().fit(fundamentals_robust_score_calc)
     for column in calculate_column:
         column_score = column + "_score"
         column_robust_score = column + "_robust_score"
-        column_minmax_index = column + "_minmax_index"
+        column_minmax_currency_code = column + "_minmax_currency_code"
         column_minmax_industry = column + "_minmax_industry"
-        df_index = fundamentals[['index', column_robust_score]]
-        df_index = df_index.rename(columns = {column_robust_score : 'score'})
-        print(df_index)
-        df_industry = fundamentals[['industry_code', column_robust_score]]
-        df_industry = df_industry.rename(columns = {column_robust_score : 'score'})
+        df_currency_code = fundamentals[["currency_code", column_robust_score]]
+        df_currency_code = df_currency_code.rename(columns = {column_robust_score : "score"})
+        print(df_currency_code)
+        df_industry = fundamentals[["industry_code", column_robust_score]]
+        df_industry = df_industry.rename(columns = {column_robust_score : "score"})
         print(df_industry)
-        fundamentals[column_minmax_index] = df_index.groupby('index').score.transform(lambda x: minmax_scale(x.astype(float)))
-        fundamentals[column_minmax_industry] = df_industry.groupby('industry_code').score.transform(lambda x: minmax_scale(x.astype(float)))
+        fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)))
+        fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)))
 
-        fundamentals[column_minmax_index] = np.where(fundamentals[column_minmax_index].isnull(), 0.4, fundamentals[column_minmax_index])
+        fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0.4, fundamentals[column_minmax_currency_code])
 
         fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
 
     #TWELVE points - everthing average yields 0.5 X 12 = 6.0 score
-    fundamentals['fundamentals_value'] = ((fundamentals['earnings_yield_minmax_index']) + 
-                                    fundamentals['earnings_yield_minmax_industry'] + 
-                                    fundamentals['book_to_price_minmax_index'] + 
-                                    fundamentals['book_to_price_minmax_industry'] + 
-                                    fundamentals['ebitda_to_ev_minmax_index'] + 
-                                    fundamentals['ebitda_to_ev_minmax_industry'] +
-                                    fundamentals['fwd_bps_minmax_industry'] + 
-                                    fundamentals['fwd_ebitda_to_ev_minmax_index'] + 
-                                    fundamentals['fwd_ebitda_to_ev_minmax_industry'] + 
-                                    fundamentals['fwd_ey_minmax_index']+ 
-                                    fundamentals['roe_minmax_industry']+ 
-                                    fundamentals['cf_to_price_minmax_index']).round(1)
-    fundamentals['fundamentals_quality'] = ((fundamentals['roic_minmax_index']) + 
-                                      fundamentals['roic_minmax_industry']+
-                                      fundamentals['cf_to_price_minmax_industry']+
-                                      fundamentals['eps_growth_minmax_index'] + 
-                                      fundamentals['eps_growth_minmax_industry'] + 
-                                      (fundamentals['fwd_ey_minmax_industry'] *2) + 
-                                      fundamentals['fwd_sales_to_price_minmax_industry']+ 
-                                      (fundamentals['fwd_roic_minmax_industry'] *2) +
-                                      fundamentals['earnings_yield_minmax_industry']).round(1)
+    fundamentals["fundamentals_value"] = ((fundamentals["earnings_yield_minmax_currency_code"]) + 
+                                    fundamentals["earnings_yield_minmax_industry"] + 
+                                    fundamentals["book_to_price_minmax_currency_code"] + 
+                                    fundamentals["book_to_price_minmax_industry"] + 
+                                    fundamentals["ebitda_to_ev_minmax_currency_code"] + 
+                                    fundamentals["ebitda_to_ev_minmax_industry"] +
+                                    fundamentals["fwd_bps_minmax_industry"] + 
+                                    fundamentals["fwd_ebitda_to_ev_minmax_currency_code"] + 
+                                    fundamentals["fwd_ebitda_to_ev_minmax_industry"] + 
+                                    fundamentals["fwd_ey_minmax_currency_code"]+ 
+                                    fundamentals["roe_minmax_industry"]+ 
+                                    fundamentals["cf_to_price_minmax_currency_code"]).round(1)
+    fundamentals["fundamentals_quality"] = ((fundamentals["roic_minmax_currency_code"]) + 
+                                      fundamentals["roic_minmax_industry"]+
+                                      fundamentals["cf_to_price_minmax_industry"]+
+                                      fundamentals["eps_growth_minmax_currency_code"] + 
+                                      fundamentals["eps_growth_minmax_industry"] + 
+                                      (fundamentals["fwd_ey_minmax_industry"] *2) + 
+                                      fundamentals["fwd_sales_to_price_minmax_industry"]+ 
+                                      (fundamentals["fwd_roic_minmax_industry"] *2) +
+                                      fundamentals["earnings_yield_minmax_industry"]).round(1)
 
-    print('=== Calculate Fundamentals Value & Fundamentals Quality DONE ===')
-    timeprint = str(datetimeNow())
-    update_fundamentals_value_in_droid_universe(args, fundamentals)
+    print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
     print(fundamentals)
-    report_to_slack("{} : === Fundamentals Value & Fundamentals Quality Updated ===".format(str(datetime.now())), args)
-    fundamentals.to_csv(f"fundamentals_calc_history/fundamentals_score_calculation{timeprint}.csv")
-    return True
+    if(len(fundamentals)) > 0 :
+        upsert_data_to_database(fundamentals, get_universe_rating_table_name(), "ticker", how="update", Text=True)
+        report_to_slack("{} : === Universe Fundamentals Quality & Value Updated ===".format(datetimeNow()))
 
-def calculate_fundamentals_score(args):
-    calculate_quality_value_score(args)
-    sys.exit(1)
-    return True
+def dividend_updated(ticker=None, currency_code=None):
+    print("{} : === Dividens Update ===".format(datetimeNow()))
+    end_date = dateNow()
+    start_date = droid_start_date()
+    identifier="ticker"
+    filter_field = ["UDDE"]
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    universe = universe[["ticker"]]
+    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1)
+    print(result)
+    if(len(result)) > 0 :
+        result = result.rename(columns={"UDDE": "amount", "level_1":"ex_dividend_date"})
+        result = result.dropna(subset=["amount"])
+        result = remove_null(result, "amount")
+        result = uid_maker(result, uid="uid", ticker="ticker", trading_day="ex_dividend_date")
+        print(result)
+        delete_old_dividends_on_database()
+        upsert_data_to_database(result, get_data_dividend_table_name(), "uid", how="update", Text=True)
+        report_to_slack("{} : === Dividens Updated ===".format(datetimeNow()))
+
+def dividend_daily_update():
+    print("{} : === Dividens Daily Update ===".format(datetimeNow()))
+    dividend_data = get_data_by_table_name(get_data_dividend_table_name())
+    universe = get_active_universe()
+    #intraday_price = get_data_by_table_name(get_latest_price_table_name())
+    intraday_price = get_latest_price()
+    dividend_data = dividend_data[dividend_data.ticker.isin(universe.ticker)]
+    dividend_data = dividend_data.merge(universe[["ticker", "currency_code"]], on="ticker", how="left")
+    days_q = pd.DataFrame(range(1, os.getenv("DAILY_Q_DAYS")))
+    dates_temp = days_q
+    dates_temp["spot_date"] = str_to_date(dateNow())
+    def calculate_expiry(row):
+        return (row["spot_date"] + relativedelta(days=row[0])).date()
+    dates_temp["expiry_date"] = dates_temp.apply(calculate_expiry, axis=1)
+    dates_temp3 = dates_temp.copy()
+    result = pd.DataFrame()
+    for ticker in dividend_data.ticker.unique():
+        temp_q = pd.DataFrame()
+        dates_temp = pd.DataFrame(dates_temp3)
+        dates_temp2 = dates_temp.copy()
+        dates_temp = dates_temp2
+        dates_temp["id"] = 2
+        dividend_data["id"] = 2
+        dates_temp = pd.merge(dates_temp, dividend_data[dividend_data.ticker == ticker], on="id", how="outer")
+        dates_temp = dates_temp[(dates_temp.spot_date <= dates_temp.ex_dividend_date) &(dates_temp.ex_dividend_date <= dates_temp.expiry_date)]
+        dates_temp = dates_temp.groupby(["expiry_date"])["amount"].sum().reset_index()
+        dates_temp2 = dates_temp2.merge(dates_temp, on="expiry_date", how="left").fillna(0)
+        temp_q["q"] = dates_temp2["amount"] / intraday_price.loc[intraday_price.ticker == ticker, "close"].values
+        temp_q["ticker"] = ticker
+        temp_q["spot_date"] = dates_temp2["spot_date"]
+        temp_q["expiry_date"] = dates_temp2["expiry_date"]
+        temp_q["t"] = days_q[0]
+        result = result.append(temp_q)
+
+    result = result.merge(universe[["ticker", "index"]], on="ticker", how="left")
+
+    result = uid_maker(result, uid="uid", ticker="ticker", trading_day="t")
+    print(result)
+    # insert_data_to_database(result, get_data_dividend_daily_table_name, how="replace")
+    # report_to_slack("{} : === Dividens Daily Updated ===".format(datetimeNow()))
+
+def interest_update():
+    print("{} : === Interest Update ===".format(datetimeNow()))
+    universe = get_data_by_table_name(get_data_interest_table_name())
+    print(universe)
+    data = pd.DataFrame({"ticker_interest":[],"raw_data":[],
+                    "currency_code":[],"days_to_maturity":[],"ingestion_field":[],
+                    "maturity":[],"updated":[], "rate":[]}, index=[])
+    identifier = "ticker_interest"
+    print("== Calculating Interest Rate ==")
+    for index, row in universe.iterrows():
+        ticker_interest = row["ticker_interest"]
+        currency_code = row["currency_code"]
+        ingestion_field = row["ingestion_field"]
+        days_to_maturity = row["days_to_maturity"]
+        filter_field = ingestion_field.split(",")
+        #result = get_data_static_from_dsws(ticker_interest, identifier, filter_field, use_ticker=False, split_number=1)
+        result = get_data_static_with_string_from_dsws(identifier, ticker_interest, filter_field)
+        print(result)
+        try:
+            if (result.loc[0, "RY"] != "NA"):
+                result["raw_data"] = result.loc[0, "RY"]
+                result = result.drop(columns="RY")
+            else:
+                result["raw_data"] = 0
+                result = result.drop(columns="RY")
+        except Exception as e:
+            print(e)
+
+        try:
+            if (result.loc[0, "IR"] != "NA"):
+                result["raw_data"] = result.loc[0, "IR"]
+                result = result.drop(columns={"IR", "IB", "IO"})
+            elif (result.loc[0, "IB"] != "NA") and (result.loc[0, "IO"] != "NA"):
+                result["raw_data"] = (result.loc[0, "IB"] + result.loc[0, "IO"]) / 2
+                result = result.drop(columns={"IR", "IB", "IO"})
+            elif (result.loc[0, "IB"] != "NA"):
+                result["raw_data"] = result.loc[0, "IB"]
+                result = result.drop(columns={"IR", "IB", "IO"})
+            else:
+                result["raw_data"] = result.loc[0, "IO"]
+                result = result.drop(columns={"IR", "IB", "IO"})
+        except Exception as e:
+            print(e)
+        result["currency_code"] = currency_code
+        result["days_to_maturity"] = days_to_maturity
+        result["ingestion_field"] = ingestion_field
+        result["maturity"] = forwarddate_by_day(days_to_maturity)
+        result["updated"] = dateNow()
+        result["rate"] = result["raw_data"] / 100
+        data = data.append(result)
+    data.reset_index(inplace=True)
+    data = data.drop(columns={"index"})
+    print(data)
+    print("== Interest Rate Calculated ==")
+    upsert_data_to_database(data, get_data_interest_table_name(), "ticker_interest", how="update", Text=True)
+    report_to_slack("{} : === Interest Updated ===".format(datetimeNow()))
+
+def interest_daily_update():
+    def cal_interest_rate(interest_rate_data, days_to_expiry):
+        unique_horizons = pd.DataFrame(days_to_expiry)
+        unique_horizons["id"] = 2
+        unique_currencies = pd.DataFrame(interest_rate_data["currency_code"].unique())
+        unique_currencies["id"] = 2
+        rates = pd.merge(unique_horizons, unique_currencies, on="id", how="outer")
+        rates = rates.rename(columns={"0_y": "currency_code", "0_x": "days_to_expiry"})
+        interest_rate_data = interest_rate_data.rename(columns={"days_to_maturity": "days_to_expiry"})
+        rates = pd.merge(rates, interest_rate_data, on=["days_to_expiry", "currency_code"], how="outer")
+        def funs(df):
+            df = df.sort_values(by="days_to_expiry")
+            df = df.reset_index()
+            nan_index = df["rate"].index[df["rate"].isnull()].to_series().reset_index(drop=True)
+            not_nan_index = df["rate"].index[~df["rate"].isnull()].to_series().reset_index(drop=True)
+            for a in nan_index:
+                temp = not_nan_index.copy()
+                temp[len(temp)] = a
+                temp = temp.sort_values()
+                temp.reset_index(inplace=True, drop=True)
+                ind = temp[temp == a].index
+                ind1 = temp.iloc[ind - 1]
+                ind2 = temp.iloc[ind + 1]
+                rate_1 = df.loc[ind1, "rate"].iloc[0]
+                rate_2 = df.loc[ind2, "rate"].iloc[0]
+                dtm_1 = df.loc[ind1, "days_to_expiry"].iloc[0]
+                dtm_2 = df.loc[ind2, "days_to_expiry"].iloc[0]
+                df.loc[a, "rate"] = rate_1 * (dtm_2 - df.loc[a, "days_to_expiry"])/(dtm_2 - dtm_1) + rate_2* (df.loc[a, "days_to_expiry"] - dtm_1)/(dtm_2 - dtm_1)
+            df = df.set_index("index")
+            return df
+        rates = rates.groupby("currency_code").apply(lambda x: funs(x))
+        rates = rates.reset_index(drop=True)
+        unique_horizons = unique_horizons.rename(columns={0: "days_to_expiry"})
+        unique_horizons = pd.merge(unique_horizons, rates[["days_to_expiry", "rate"]], on="days_to_expiry", how="inner")
+        return unique_horizons["rate"].values
+    
+    print("{} : === Interest Daily Update ===".format(datetimeNow()))
+    interest_rate_data = get_data_by_table_name(get_data_interest_table_name())
+    interest_rate_data = interest_rate_data.rename(columns={"currency": "currency_code"})
+    interest_rate_data = interest_rate_data[interest_rate_data["currency_code"] == args.r_currency]
+
+    days_r = pd.DataFrame(range(1, os.getenv("DAILY_R_DAYS")))
+    result = pd.DataFrame()
+
+    for currency in interest_rate_data.currency_code.unique():
+        temp_r = pd.DataFrame()
+        temp_r["r"] = cal_interest_rate(interest_rate_data[interest_rate_data.currency_code == currency], days_r)
+        temp_r["t"] = days_r
+        temp_r["currency_code"] = currency
+        result = result.append(temp_r)
+    result = uid_maker(result, uid="uid", ticker="currency_code", trading_day="t")
+    insert_data_to_database(result, get_data_interest_daily_table_name(), how="replace")
+    report_to_slack("{} : === Interest Daily Updated ===".format(datetimeNow()))
