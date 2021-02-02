@@ -62,10 +62,9 @@ if __name__ == "__main__":
     ticker=["AAPL.O"]
     # currency_code=None
     #update_vix_from_dsws(vix_id=["CBOEVIX"])
-    #update_data_dss_from_dss(ticker=ticker, currency_code=currency_code)
-    #update_data_dsws_from_dsws(ticker=ticker, currency_code=currency_code)
-    #do_function("master_ohlcvtr_update")
-    #master_ohlctr_update()
+    # update_data_dss_from_dss()
+    # update_data_dsws_from_dsws()
+    # master_ohlctr_update()
     
     #master_tac_update()
     #master_multiple_update()
@@ -73,7 +72,7 @@ if __name__ == "__main__":
     # update_fundamentals_quality_value()
     
     #dividend_updated()
-    dividend_daily_update()
+    #dividend_daily_update()
     #interest_update()
-    #interest_daily_update()
+    interest_daily_update()
     print("Done")

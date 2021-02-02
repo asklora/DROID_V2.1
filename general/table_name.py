@@ -47,13 +47,13 @@ def get_data_dividend_table_name():
     return "data_dividend"
 
 def get_data_dividend_daily_table_name():
-    return "data_dividend_daily"
+    return "data_dividend_daily_rates"
 
 def get_data_interest_table_name():
     return "data_interest"
 
 def get_data_interest_daily_table_name():
-    return "data_interest_daily"
+    return "data_interest_daily_rates"
 
 def get_latest_price_table_name():
     return "latest_price"

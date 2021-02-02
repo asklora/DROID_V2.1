@@ -2,7 +2,7 @@ import pandas as pd
 import sqlalchemy as db
 from sqlalchemy import create_engine
 from general.sql_process import db_read, db_write
-from general.date_process import backdate_by_day
+from general.date_process import backdate_by_day, str_to_date
 from general.data_process import tuple_data
 from general.table_name import (
     get_vix_table_name,
@@ -44,7 +44,7 @@ def execute_query(query, table=universe_table):
 def get_latest_price():
     query = f"select mo.* from master_ohlcvtr mo, "
     query += f"(select master_ohlcvtr.ticker, max(master_ohlcvtr.trading_day) max_date "
-    query += f"from master_ohlcvtr where master_ohlcvtr.close is not null "
+    query += f"from master_ohlcvtr where master_ohlcvtr.close is not null " # and master_ohlcvtr.trading_day <= '2020-09-14'
     query += f"group by master_ohlcvtr.ticker) filter "
     query += f"where mo.ticker=filter.ticker and mo.trading_day=filter.max_date; "
     data = read_query(query, table="latest_price")
@@ -172,6 +172,8 @@ def get_master_ohlcvtr_start_date():
     query = f"SELECT min(trading_day) as start_date FROM {master_ohlcvtr_table} WHERE day_status is null"
     data = read_query(query, table=master_ohlcvtr_table)
     data = data.loc[0, "start_date"]
+    data = str(data)
+    data = str_to_date(data)
     if(data == None):
         data = backdate_by_day(7)
     return data

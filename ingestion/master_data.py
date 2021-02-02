@@ -13,6 +13,7 @@ from general.date_process import (
     str_to_date,
     dateNow)
 import pandas as pd
+from pandas.tseries.offsets import BDay
 import numpy as np
 from sklearn.preprocessing import robust_scale, minmax_scale, MinMaxScaler
 from general.slack import report_to_slack
@@ -118,6 +119,7 @@ def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, m
         result = result.rename(columns={"RI": "total_return_index", "level_1" : "trading_day"})
         result = uid_maker(result, uid="dsws_id", ticker="ticker", trading_day="trading_day")
         print(result)
+        result = result[["dsws_id", "ticker", "trading_day", "total_return_index"]]
         upsert_data_to_database(result, get_data_dsws_table_name(), "dsws_id", how="update", Text=True)
         report_to_slack("{} : === DSWS Updated ===".format(datetimeNow()))
 
@@ -365,12 +367,15 @@ def dividend_daily_update():
     intraday_price = get_latest_price()
     dividend_data = dividend_data[dividend_data.ticker.isin(universe.ticker)]
     dividend_data = dividend_data.merge(universe[["ticker", "currency_code"]], on="ticker", how="left")
-    days_q = pd.DataFrame(range(1, os.getenv("DAILY_Q_DAYS")))
+    dividend_data["ex_dividend_date"] = pd.to_datetime(dividend_data["ex_dividend_date"])
+    days_q = pd.DataFrame(range(1, int(os.getenv("DAILY_Q_DAYS"))))
     dates_temp = days_q
     dates_temp["spot_date"] = str_to_date(dateNow())
     def calculate_expiry(row):
-        return (row["spot_date"] + relativedelta(days=row[0])).date()
+        return (row["spot_date"] + BDay(row[0]))
     dates_temp["expiry_date"] = dates_temp.apply(calculate_expiry, axis=1)
+    dates_temp["spot_date"] = pd.to_datetime(dates_temp["spot_date"])
+    dates_temp["expiry_date"] = pd.to_datetime(dates_temp["expiry_date"])
     dates_temp3 = dates_temp.copy()
     result = pd.DataFrame()
     for ticker in dividend_data.ticker.unique():
@@ -381,7 +386,7 @@ def dividend_daily_update():
         dates_temp["id"] = 2
         dividend_data["id"] = 2
         dates_temp = pd.merge(dates_temp, dividend_data[dividend_data.ticker == ticker], on="id", how="outer")
-        dates_temp = dates_temp[(dates_temp.spot_date <= dates_temp.ex_dividend_date) &(dates_temp.ex_dividend_date <= dates_temp.expiry_date)]
+        dates_temp = dates_temp[(dates_temp.spot_date <= dates_temp.ex_dividend_date) & (dates_temp.ex_dividend_date <= dates_temp.expiry_date)]
         dates_temp = dates_temp.groupby(["expiry_date"])["amount"].sum().reset_index()
         dates_temp2 = dates_temp2.merge(dates_temp, on="expiry_date", how="left").fillna(0)
         temp_q["q"] = dates_temp2["amount"] / intraday_price.loc[intraday_price.ticker == ticker, "close"].values
@@ -390,13 +395,88 @@ def dividend_daily_update():
         temp_q["expiry_date"] = dates_temp2["expiry_date"]
         temp_q["t"] = days_q[0]
         result = result.append(temp_q)
-
-    result = result.merge(universe[["ticker", "index"]], on="ticker", how="left")
-
-    result = uid_maker(result, uid="uid", ticker="ticker", trading_day="t")
+    result = result.merge(universe[["ticker", "currency_code"]], on="ticker", how="left")
+    result = uid_maker(result, uid="uid", ticker="ticker", trading_day="t", date=False)
     print(result)
-    # insert_data_to_database(result, get_data_dividend_daily_table_name, how="replace")
-    # report_to_slack("{} : === Dividens Daily Updated ===".format(datetimeNow()))
+    #insert_data_to_database(result, get_data_dividend_daily_table_name, how="replace")
+    upsert_data_to_database(result, get_data_dividend_daily_table_name(), "uid", how="update", Text=True)
+    report_to_slack("{} : === Dividens Daily Updated ===".format(datetimeNow()))
+
+# def cal_q_daily(args):
+#     # This script is written based on the following requirement page:
+#     # https://loratechai.atlassian.net/wiki/spaces/ARYA/pages/96830039/r+and+q+daily+scripts
+
+#     # Downloading the required data
+#     # interest_rate_data = get_interest_rate_data(args)
+#     # interest_rate_data = interest_rate_data.rename(columns={'currency': 'currency_code'})
+#     dividends_data = get_dividends_data(args)
+#     args.tickers_list = get_tickers_list_from_aws()['ticker'].tolist()
+#     intraday_price = get_intraday_prices(args)
+#     droid_universe_df = get_droid_universe()
+
+#     # Filtering the data based on the input index
+#     droid_universe_df = droid_universe_df[droid_universe_df.is_active == True]
+#     dividends_data = dividends_data[dividends_data.ticker.isin(droid_universe_df.ticker)]
+#     dividends_data = dividends_data.merge(droid_universe_df[['ticker','index']], on='ticker', how='left')
+#     if args.q_index != 'all':
+#         dividends_data = dividends_data[dividends_data['index'] == args.q_index]
+#         if len(dividends_data) == 0:
+#             print('The entered index does not exist!')
+#             sys.exit()
+
+#     days_q = pd.DataFrame(range(1, args.daily_q_days))
+#     t_q = days_q / 365
+#     dates_temp = days_q
+#     dates_temp['spot_date'] = datetime.date.today()
+
+#     def calculate_expiry(row):
+#         return (row['spot_date'] + BDay(row[0])).date()
+
+#     dates_temp['expiry_date'] = dates_temp.apply(calculate_expiry, axis=1)
+
+#     dates_temp3 = dates_temp.copy()
+
+#     # Calculating q
+#     q_final = pd.DataFrame()
+#     for ticker in dividends_data.ticker.unique():
+#         temp_q = pd.DataFrame()
+#         dates_temp = pd.DataFrame(dates_temp3)
+#         dates_temp2 = dates_temp.copy()
+#         dates_temp = dates_temp2
+#         dates_temp['id'] = 2
+#         dividends_data['id'] = 2
+
+#         dates_temp = pd.merge(dates_temp, dividends_data[dividends_data.ticker == ticker], on='id', how='outer')
+
+#         dates_temp = dates_temp[(dates_temp.spot_date <= dates_temp.ex_dividend_date) &
+#                                 (dates_temp.ex_dividend_date <= dates_temp.expiry_date)]
+
+#         dates_temp = dates_temp.groupby(['expiry_date'])['amount'].sum().reset_index()
+
+#         dates_temp2 = dates_temp2.merge(dates_temp, on='expiry_date', how='left').fillna(0)
+
+#         temp_q['q'] = dates_temp2['amount'] / intraday_price.loc[intraday_price.ticker == ticker, 'close'].values
+
+#         temp_q['ticker'] = ticker
+#         temp_q['spot_date'] = dates_temp2['spot_date']
+#         temp_q['expiry_date'] = dates_temp2['expiry_date']
+#         temp_q['t'] = t_q[0]
+#         # temp_q['when_created'] = dt.fromtimestamp(time.time())
+#         temp_q['uid'] = temp_q.apply(divRatesUid, axis=1, raw=True)
+
+#         q_final = q_final.append(temp_q)
+
+#     q_final = q_final.merge(droid_universe_df[['ticker', 'index']], on='ticker', how='left')
+
+#     # writing the finalized dataframes to AWS
+#     db_url = global_vars.DB_DROID_URL_WRITE
+#     engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
+#     with engine.connect() as conn:
+#         q_final.to_sql(con=conn, name=args.daily_dividends_table_name, schema='public', method='multi',
+#                          chunksize=int(len(q_final) / 2), if_exists='replace', index=False)
+#     report_to_slack("{} : === Executive, daily dividends rates(q) calculated! ===".format(str(dt.now())), args)
+#     print('Executive, daily dividends rates(q) calculated!')
+
 
 def interest_update():
     print("{} : === Interest Update ===".format(datetimeNow()))
