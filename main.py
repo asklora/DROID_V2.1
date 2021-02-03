@@ -7,7 +7,7 @@ from ingestion.universe import (
     update_lot_size_from_dss,
     update_currency_code_from_dss,
     populate_universe_consolidated_by_isin_sedol_from_dsws,
-    update_country_from_dsws, 
+    update_industry_from_dsws, 
     update_company_desc_from_dsws,
     update_worldscope_identifier_from_dsws
     )
@@ -42,6 +42,12 @@ def update_master_data(ticker=None, currency_code=None):
     master_tac_update()
     master_multiple_update()
     #do_function("universe_update_last_ingestion")
+    dividend_updated(ticker=ticker, currency_code=currency_code)
+    dividend_daily_update()
+    interest_update()
+    interest_daily_update(currency_code=currency_code)
+    update_fundamentals_score_from_dsws(ticker=ticker, currency_code=currency_code)
+    update_fundamentals_quality_value(ticker=ticker, currency_code=currency_code)
 
 def update_currency_data():
     update_utc_offset_from_timezone()
@@ -54,26 +60,14 @@ def update_universe_data(ticker=None):
     update_entity_type_from_dsws(ticker=ticker)
     update_lot_size_from_dss(ticker=ticker)
     update_currency_code_from_dss(ticker=ticker)
-    update_country_from_dsws(ticker=ticker)
+    update_industry_from_dsws(ticker=ticker)
     update_company_desc_from_dsws(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    ticker=["AAPL.O"]
-    # currency_code=None
-    #update_vix_from_dsws(vix_id=["CBOEVIX"])
-    #update_data_dss_from_dss(ticker=ticker, currency_code=currency_code)
-    #update_data_dsws_from_dsws(ticker=ticker, currency_code=currency_code)
-    #do_function("master_ohlcvtr_update")
-    #master_ohlctr_update()
-    
-    #master_tac_update()
-    #master_multiple_update()
-    # update_fundamentals_score_from_dsws()
-    # update_fundamentals_quality_value()
-    
-    #dividend_updated()
-    dividend_daily_update()
-    #interest_update()
-    #interest_daily_update()
+    ticker = ["AAPL.O"]
+    master_tac_update()
+    master_multiple_update()
+    # ticker=["AAPL.O", "MSFT.O"]
+    # currency_code=["USD"]
     print("Done")

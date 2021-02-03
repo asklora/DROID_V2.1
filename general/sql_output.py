@@ -106,6 +106,14 @@ def fill_null_quandl_symbol():
     data = read_query(query, table=get_universe_table_name())
     return data
 
+def delete_data_on_database(table, condition, delete_ticker=False):
+    old_date = dateNow()
+    query = f"delete from {table} where {condition} "
+    if(delete_ticker):
+        query += f" and ticker not in (select ticker from {get_universe_table_name()} where is_active=True)"
+    data = read_query(query, table=table)
+    return data
+
 def delete_old_dividends_on_database():
     old_date = dateNow()
     query = f"delete from {get_data_dividend_table_name()} where ex_dividend_date <= '{old_date}'"

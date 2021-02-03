@@ -6,7 +6,10 @@ from general.date_process import (
     datetimeNow, 
     dlp_start_date, 
     dlp_start_date_buffer)
-from general.sql_output import insert_data_to_database, upsert_data_to_database
+from general.sql_output import delete_data_on_database, insert_data_to_database, upsert_data_to_database
+from ingestion.master_tac import ForwardBackwardFillNull
+from general.slack import report_to_slack
+from general.table_name import get_master_multiple_table_name
 
 def dataframe_to_pivot( data, universe, index, column, values, indexes=None):
     result = data.pivot_table(index=index, columns=column, values=values, aggfunc="first", dropna=False)
@@ -32,6 +35,9 @@ def master_multiple_update():
 
     print("Getting OHLCVTR Data")
     data = get_master_ohlcvtr_data(start_date)
+
+    print("Fill Null Data Forward & Backward")
+    data = ForwardBackwardFillNull(data, ["total_return_index"], columns_deletion=True)
     
     print("OHLCTR Done")
     data = data.rename(columns={"total_return_index" : "tri"})
@@ -86,4 +92,8 @@ def master_multiple_update():
     result = result.drop(columns=["open", "high", "low", "close", "volume"])
     
     print(datetimeNow() + " === Master Multiple Calculate Done ===")
-    insert_data_to_database(result, "master_multiple", how="replace")
+    # insert_data_to_database(result, "master_multiple", how="replace")
+    upsert_data_to_database(result, get_master_multiple_table_name(), "uid", how="update", Text=True)
+    delete_data_on_database(get_master_multiple_table_name(), f"trading_day < '{dlp_start_date_buffer()}'", delete_ticker=True)
+    report_to_slack("{} : === Master TAC Update Updated ===".format(datetimeNow()))
+    del result
