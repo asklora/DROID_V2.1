@@ -1,6 +1,7 @@
 from config.celery import app
 
-
+from ingestion.master_data import interest_update
 @app.task
 def tasktest():
-    print('task queue pc4')
+    interest_update()
+    return "success"

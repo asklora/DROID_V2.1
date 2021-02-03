@@ -6,7 +6,9 @@ from celery import Celery
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 app = Celery('core.services')
-
+app.conf.task_routes = {
+    'core.services.pc4tasks.*': {'queue': 'pc4'}
+    }
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
 # - namespace='CELERY' means all celery-related configuration keys
