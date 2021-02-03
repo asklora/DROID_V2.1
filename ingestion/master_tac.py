@@ -1,9 +1,11 @@
 import pandas as pd
 from talib import RSI, STOCHF
 from general.data_process import uid_maker
-from general.date_process import droid_start_date
+from general.date_process import backdate_by_month, datetimeNow, droid_start_date, backdate_by_day
+from general.slack import report_to_slack
+from general.table_name import get_master_tac_table_name
 from general.sql_query import get_master_ohlcvtr_data
-from general.sql_output import insert_data_to_database, upsert_data_to_database
+from general.sql_output import delete_data_on_database, insert_data_to_database, upsert_data_to_database
 
 def ForwardBackwardFillNull(data, columns_field, columns_deletion=False):
     data = data.sort_values(by="trading_day", ascending=False)
@@ -59,7 +61,7 @@ def get_stochf(df):
 
 def master_tac_update():
     print("Getting OHLCVTR Data")
-    data = get_master_ohlcvtr_data(droid_start_date())
+    data = get_master_ohlcvtr_data(backdate_by_day(2))
     print(data)
     print("OHLCTR Done")
     #data = data.rename(columns={"ticker_id" : "ticker", "currency_code_id" : "currency_code"})
@@ -104,5 +106,8 @@ def master_tac_update():
     print(result)
     print("Calculate TAC Done")
     print(result)
-    insert_data_to_database(result, "master_tac", how="replace")
-    upsert_data_to_database(result, "master_tac", "uid", how="update", Text=True)
+    #insert_data_to_database(result, "master_tac", how="replace")
+    upsert_data_to_database(result, get_master_tac_table_name(), "uid", how="update", Text=True)
+    delete_data_on_database(get_master_tac_table_name(), f"trading_day < '{droid_start_date()}'", delete_ticker=True)
+    report_to_slack("{} : === Master TAC Update Updated ===".format(datetimeNow()))
+    del result

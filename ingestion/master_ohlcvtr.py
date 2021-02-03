@@ -6,7 +6,7 @@ from general.data_process import uid_maker
 from general.sql_process import do_function
 from general.date_process import backdate_by_day, dateNow, dlp_start_date, datetimeNow
 from general.sql_query import get_master_ohlcvtr_data, get_master_ohlcvtr_start_date
-from general.sql_output import insert_data_to_database, upsert_data_to_database
+from general.sql_output import delete_data_on_database, insert_data_to_database, upsert_data_to_database
 from general.table_name import get_master_ohlcvtr_table_name
 from ingestion.master_tac import master_tac_update, ForwardBackwardFillNull
 from ingestion.universe import update_currency_code_from_dss
@@ -143,6 +143,7 @@ def master_ohlctr_update():
     if(len(master_ohlcvtr_data) > 0):
         master_ohlcvtr_data = master_ohlcvtr_data.loc[master_ohlcvtr_data["trading_day"] >= upsert_date] 
         upsert_data_to_database(master_ohlcvtr_data, get_master_ohlcvtr_table_name(), "uid", how="update", Text=True)
+        delete_data_on_database(get_master_ohlcvtr_table_name(), f"trading_day < '{dlp_start_date()}'", delete_ticker=True)
         report_to_slack("{} : === Master OHLCVTR Update Updated ===".format(datetimeNow()))
         del master_ohlcvtr_data
         #master_tac_update()

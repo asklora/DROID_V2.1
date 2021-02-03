@@ -59,8 +59,7 @@ class ReportDatapoint(models.Model):
 
 class MasterMultiple(models.Model):  # Master Daily Change to Master Multiply
     uid = models.CharField(max_length=30, primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
-                               db_column='ticker', related_name='master_multiple_ticker')
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,db_column='ticker', related_name='master_multiple_ticker')
     trading_day = models.DateField(blank=True, null=True)
     open_multiple = models.FloatField(blank=True, null=True)
     high_multiple = models.FloatField(blank=True, null=True)
@@ -107,10 +106,8 @@ class MasterOhlcvtr(models.Model):  # OHLCVTR DATA Change to master_ohlcvtr
 
 class MasterTac(models.Model):  # Master TAC Change to master_tac
     uid = models.CharField(max_length=30, primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
-                               db_column='ticker', related_name='master_tac_ticker')
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE,
-                                      db_column='currency_code', related_name='master_tac_currency_code')
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column='ticker', related_name='master_tac_ticker')
+    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column='currency_code', related_name='master_tac_currency_code')
     trading_day = models.DateField(blank=True, null=True)
     volume = models.FloatField(blank=True, null=True)
     total_return_index = models.FloatField(blank=True, null=True)

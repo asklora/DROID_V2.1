@@ -24,12 +24,9 @@ class Subinterval(models.Model):
 
 
 class IndexPerformance(models.Model):
-    uid = models.CharField(primary_key=True, unique=True,
-                           editable=False, max_length=200)
-    index_currency= models.ForeignKey(
-        Currency, on_delete=models.CASCADE, related_name='index_currency_performance', db_column='index_currency')
-    subinterval = models.ForeignKey(
-        Subinterval, on_delete=models.CASCADE, related_name='weekdata_performance')
+    uid = models.CharField(primary_key=True, unique=True,editable=False, max_length=200)
+    index_currency= models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='index_currency_performance', db_column='index_currency')
+    subinterval = models.ForeignKey(Subinterval, on_delete=models.CASCADE, related_name='weekdata_performance')
     types = models.CharField(max_length=200, null=True, blank=True)
     spot_date = models.DateField(null=True, blank=True)
     forward_date = models.DateField(null=True, blank=True)

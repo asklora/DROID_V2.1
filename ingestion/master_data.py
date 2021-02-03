@@ -152,7 +152,8 @@ def update_fred_data_from_fred():
     result["data"] = np.where(result["data"]== ".", 0, result["data"])
     result["data"] = result["data"].astype(float)
     if(len(result)) > 0 :
-        insert_data_to_database(result, get_fred_table_name(), how="replace")
+        upsert_data_to_database(result, get_fred_table_name(), "uid", how="update", Text=True)
+        #insert_data_to_database(result, get_fred_table_name(), how="replace")
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
 def update_quandl_orats_from_quandl(ticker=None, quandl_symbol=None):
@@ -184,10 +185,12 @@ def update_quandl_orats_from_quandl(ticker=None, quandl_symbol=None):
         "slope","deriv","slope_inf", "deriv_inf"]]
     if(len(result)) > 0 :
         print(result)
-        if type(ticker) != type(None) or type(quandl_symbol) != type(None):
-            upsert_data_to_database(result, get_quandl_table_name(), "uid", how="update", Text=True)
-        else:
-            insert_data_to_database(result, get_quandl_table_name(), how="replace")
+        # if type(ticker) != type(None) or type(quandl_symbol) != type(None):
+        #     upsert_data_to_database(result, get_quandl_table_name(), "uid", how="update", Text=True)
+        # else:
+        #     upsert_data_to_database(result, get_quandl_table_name(), "uid", how="update", Text=True)
+        #     #insert_data_to_database(result, get_quandl_table_name(), how="replace")
+        upsert_data_to_database(result, get_quandl_table_name(), "uid", how="update", Text=True)
         do_function("data_vol_surface_update")
         report_to_slack("{} : === Quandl Updated ===".format(datetimeNow()))
     # do_function("calculate_latest_vol_updates_us")
