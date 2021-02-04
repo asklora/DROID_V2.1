@@ -36,6 +36,7 @@ ADDITIONAL_APPS = [
     'psqlextra',
     'django_celery_results',
     'rest_framework',
+    'import_export',
 ]
 CORE_APPS = [
     'core.bot',
@@ -47,6 +48,7 @@ CORE_APPS = [
     'core.master',
     'core.topstock',
     'core.Clients',
+    'core.signals',
 ]
 
 INSTALLED_APPS = DJANGO_DEFAULT_APPS + ADDITIONAL_APPS + CORE_APPS
@@ -93,7 +95,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 ROOT_URLCONF = 'config.urls'
-STATIC_URL = '/static/'
+STATIC_URL = 'files/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'files/staticfiles')
 AUTH_USER_MODEL = 'user.User'
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -188,3 +191,4 @@ CELERY_BROKER_URL = 'amqp://pc-cohive:admin@3.34.60.18:5672'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
+CELERY_IMPORTS = ['core.services.pc4tasks']

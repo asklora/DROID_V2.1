@@ -2,6 +2,7 @@ from django.db import models
 from .manager import ConsolidatedManager
 from core.djangomodule.general import generate_id
 from django.db import IntegrityError
+from django.utils import timezone
 
 
 
@@ -148,16 +149,12 @@ class UniverseConsolidated(models.Model):
     is_active = models.BooleanField(default=True)
     created = models.DateField(blank=True, null=True)
     updated = models.DateField(blank=True, null=True)
-    
     isin = models.CharField(max_length=500, blank=True, null=True)
     use_isin = models.BooleanField(default=False)
-
     cusip = models.CharField(max_length=500, blank=True, null=True)
     use_cusip = models.BooleanField(default=False)
-
     sedol = models.CharField(max_length=500, blank=True, null=True)
     use_sedol = models.BooleanField(default=False)
-
     use_manual = models.BooleanField(default=False)
     permid = models.CharField(max_length=500, blank=True, null=True)
     consolidated_ticker = models.CharField(max_length=50,blank=True, null=True)
@@ -166,6 +163,9 @@ class UniverseConsolidated(models.Model):
     def save(self, *args, **kwargs):
         if not self.uid:
             self.uid = generate_id(8)
+            if not self.created:
+                self.created = timezone.now()
+                self.updated = timezone.now()
             # using your function as above or anything else
         success = False
         failures = 0
@@ -181,12 +181,16 @@ class UniverseConsolidated(models.Model):
                     self.uid = generate_id(8)
             else:
                 success = True
+                self.updated = timezone.now()
     class Meta:
         managed = True
         db_table = 'universe_consolidated'
 
     def __str__(self):
-        return self.consolidated_ticker
+        if self.consolidated_ticker:
+            return self.consolidated_ticker
+        else:
+            return self.origin_ticker
 
 
 class Universe(models.Model):

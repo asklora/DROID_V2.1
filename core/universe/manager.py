@@ -8,7 +8,10 @@ class ConsolidatedManager(models.Manager):
     def get_isin_code(self, ticker=None):
 
         if ticker:
-            populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=ticker)
-            do_function("universe_populate")
-            return True
-        return False
+            try:
+                populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=ticker)
+                do_function("universe_populate")
+                return True
+            except Exception as e:
+                print(e)
+                return False
