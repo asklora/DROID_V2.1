@@ -212,11 +212,11 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
     identifier = "ticker"
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
     print(universe)
-    filter_field = ["WC05255","WC05480","WC18100A","WC18262A","WC08005",
+    filter_field = ["EPS1TR12","WC05480","WC18100A","WC18262A","WC08005",
         "WC18309A","WC18311A","WC18199A","WC08372","WC05510","WC08636A",
         "BPS1FD12","EBD1FD12","EVT1FD12","EPS1FD12","SAL1FD12","CAP1FD12"]
     
-    column_name = {"WC05255": "eps", "WC05480": "bps", "WC18100A": "ev",
+    column_name = {"EPS1TR12": "eps", "WC05480": "bps", "WC18100A": "ev",
         "WC18262A": "ttm_rev","WC08005": "mkt_cap","WC18309A": "ttm_ebitda",
         "WC18311A": "ttm_capex","WC18199A": "net_debt","WC08372": "roe",
         "WC05510": "cfps","WC08636A": "peg","BPS1FD12" : "bps1fd12",
