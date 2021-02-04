@@ -22,7 +22,7 @@ from general.data_process import tuple_data, uid_maker, remove_null
 from general.sql_query import (
     get_data_by_table_name, 
     get_data_by_table_name_with_condition,
-    get_latest_price,
+    get_latest_price, get_pred_mean,
     get_vix, 
     get_fundamentals_score,
     get_active_universe,
@@ -255,11 +255,13 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     universe_rating = universe_rating.drop(columns=["fundamentals_value", "fundamentals_quality", "updated"])
     print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
     calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth", 
-                        "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic"]
+                        "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred"]
     fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
     print(fundamentals_score)
     close_price = get_last_close_industry_code(ticker=ticker, currency_code=currency_code)
     print(close_price)
+    pred_mean = get_pred_mean()
+    print(pred_mean)
     fundamentals_score = close_price.merge(fundamentals_score, how="left", on="ticker")
     fundamentals_score["earnings_yield"] = fundamentals_score["eps"] / fundamentals_score["close"]
     fundamentals_score["book_to_price"] = fundamentals_score["bps"] / fundamentals_score["close"]
@@ -274,9 +276,10 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals_score["fwd_ey"] = fundamentals_score["eps1fd12"]  / fundamentals_score["close"]
     fundamentals_score["fwd_sales_to_price"] = fundamentals_score["sal1fd12"]  / fundamentals_score["mkt_cap"]
     fundamentals_score["fwd_roic"] = (fundamentals_score["ebd1fd12"] - fundamentals_score["cap1fd12"]) / (fundamentals_score["mkt_cap"] + fundamentals_score["net_debt"])
+    fundamentals_score["earnings_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] - fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
     fundamentals = fundamentals_score[["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", 
         "roic", "roe", "cf_to_price", "eps_growth", "currency_code", "ticker", "industry_code","fwd_bps",
-        "fwd_ebitda_to_ev","fwd_ey", "fwd_sales_to_price", "fwd_roic"]]
+        "fwd_ebitda_to_ev","fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred"]]
     print(fundamentals)
 
     calculate_column_score = []
@@ -311,33 +314,37 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         print(df_industry)
         fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)))
         fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)))
-
-        fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0.4, fundamentals[column_minmax_currency_code])
-
-        fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
+        if(column == "earnings_pred"):
+            fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0, fundamentals[column_minmax_currency_code])
+            fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0, fundamentals[column_minmax_industry])
+        else:
+            fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0.4, fundamentals[column_minmax_currency_code])
+            fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
 
     #TWELVE points - everthing average yields 0.5 X 12 = 6.0 score
     fundamentals["fundamentals_value"] = ((fundamentals["earnings_yield_minmax_currency_code"]) + 
-                                    fundamentals["earnings_yield_minmax_industry"] + 
-                                    fundamentals["book_to_price_minmax_currency_code"] + 
-                                    fundamentals["book_to_price_minmax_industry"] + 
-                                    fundamentals["ebitda_to_ev_minmax_currency_code"] + 
-                                    fundamentals["ebitda_to_ev_minmax_industry"] +
-                                    fundamentals["fwd_bps_minmax_industry"] + 
-                                    fundamentals["fwd_ebitda_to_ev_minmax_currency_code"] + 
-                                    fundamentals["fwd_ebitda_to_ev_minmax_industry"] + 
-                                    fundamentals["fwd_ey_minmax_currency_code"]+ 
-                                    fundamentals["roe_minmax_industry"]+ 
-                                    fundamentals["cf_to_price_minmax_currency_code"]).round(1)
-    fundamentals["fundamentals_quality"] = ((fundamentals["roic_minmax_currency_code"]) + 
-                                      fundamentals["roic_minmax_industry"]+
-                                      fundamentals["cf_to_price_minmax_industry"]+
-                                      fundamentals["eps_growth_minmax_currency_code"] + 
-                                      fundamentals["eps_growth_minmax_industry"] + 
-                                      (fundamentals["fwd_ey_minmax_industry"] *2) + 
-                                      fundamentals["fwd_sales_to_price_minmax_industry"]+ 
-                                      (fundamentals["fwd_roic_minmax_industry"] *2) +
-                                      fundamentals["earnings_yield_minmax_industry"]).round(1)
+        fundamentals["earnings_yield_minmax_industry"] + 
+        fundamentals["book_to_price_minmax_currency_code"] + 
+        fundamentals["book_to_price_minmax_industry"] + 
+        fundamentals["ebitda_to_ev_minmax_currency_code"] + 
+        fundamentals["ebitda_to_ev_minmax_industry"] +
+        fundamentals["fwd_bps_minmax_industry"] + 
+        fundamentals["fwd_ebitda_to_ev_minmax_currency_code"] + 
+        fundamentals["fwd_ebitda_to_ev_minmax_industry"] + 
+        fundamentals["fwd_ey_minmax_currency_code"]+ 
+        fundamentals["roe_minmax_industry"]+ 
+        fundamentals["cf_to_price_minmax_currency_code"]).round(1)
+    fundamentals['fundamentals_quality'] = ((fundamentals['roic_minmax_currency_code']) + 
+        fundamentals['roic_minmax_industry']+
+        fundamentals['cf_to_price_minmax_industry']+
+        fundamentals['eps_growth_minmax_currency_code'] + 
+        fundamentals['eps_growth_minmax_industry'] + 
+        (fundamentals['fwd_ey_minmax_industry']) + 
+        fundamentals['fwd_sales_to_price_minmax_industry']+ 
+        (fundamentals['fwd_roic_minmax_industry']) +
+        fundamentals['earnings_yield_minmax_industry'] +
+        fundamentals['earnings_pred_minmax_industry'] +
+        fundamentals['earnings_pred_minmax_currency_code'] ).round(1)
 
     print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
     if(len(fundamentals)) > 0 :
