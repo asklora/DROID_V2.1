@@ -230,3 +230,10 @@ def get_last_close_industry_code(ticker=None, currency_code=None):
     query += f"and filter.max_date=mo.trading_day)"
     data = read_query(query, table=master_ohlcvtr_table)
     return data
+
+def get_pred_mean():
+    query = f"select distinct avlpf.ticker, avlpf.pred_mean, avlpf.testing_period::date from ai_value_lgbm_pred_final avlpf, "
+    query += f"(select ticker, max(testing_period::date) as max_date from ai_value_lgbm_pred_final group by ticker) filter "
+    query += f"where filter.ticker=avlpf.ticker and filter.max_date=avlpf.testing_period;"
+    data = read_query(query, table=master_ohlcvtr_table)
+    return data
