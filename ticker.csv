@@ -1,0 +1,5 @@
+origin_ticker,use_isin,use_manual,source_id
+AAL.O,True,True,DSS
+ADP.PA,True,False,DSS
+AIR.PA,True,False,DSS
+AIR.HK,True,False,DSS
