@@ -51,6 +51,7 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
         consolidated_ticker = result.loc[result["consolidated_ticker"].notnull()]
         consolidated_ticker["is_active"] = True
         null_consolidated_ticker = result.loc[result["consolidated_ticker"].isnull()]
+        #null_consolidated_ticker = remove_null(null_consolidated_ticker)
         null_consolidated_ticker["is_active"] = False
         for index, row in null_consolidated_ticker.iterrows():
             origin_ticker = row["origin_ticker"]
@@ -58,7 +59,7 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
             sedol = row["sedol"]
             #find the same isin
             same_isin = consolidated_ticker.loc[consolidated_ticker["isin"] == isin]
-            if(len(same_isin) > 0 and isin != np.nan):
+            if(len(same_isin) > 0 and isin != "NA"):
                 #find the same sedol
                 same_sedol = same_isin.loc[same_isin["sedol"] == sedol]
                 if(len(same_sedol) == 0 and isin != "NA"):
