@@ -80,8 +80,8 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
             result = manual_universe
         result["updated"] = dateNow()
         print(result)
-        update_universe_consolidated_data_to_database(result, get_universe_consolidated_table_name())
-        #upsert_data_to_database(result, get_universe_table_name(), "id", how="update", Int=True)
+        #update_universe_consolidated_data_to_database(result, get_universe_consolidated_table_name())
+        upsert_data_to_database(result, get_universe_table_name(), "uid", how="update", Text=True)
         report_to_slack("{} : === Ticker ISIN Updated ===".format(datetimeNow()))
 
 def update_ticker_name_from_dsws(ticker=None):
