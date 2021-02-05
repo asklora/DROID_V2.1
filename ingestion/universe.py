@@ -31,42 +31,53 @@ from general.table_name import (
 def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
     print("{} : === Ticker ISIN Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe_consolidated_by_field(isin=True, ticker=ticker)
-    universe = universe.drop(columns=["isin", "consolidated_ticker", "sedol", "is_active", "cusip", "permid", "updated"])
-    print(universe)
-    identifier="origin_ticker"
-    filter_field = ["ISIN", "SECD", "WC06004", "IPID"]
-    result, error_ticker = get_data_static_from_dsws(universe[["origin_ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
-    result = result.rename(columns={"ISIN": "isin", "index":"origin_ticker", "SECD": "sedol", "WC06004": "cusip", "IPID": "permid"})
-    print(result)
+    manual_universe = universe.copy()
+    manual_universe = manual_universe.loc[manual_universe["use_manual"] == True]
+    manual_universe = manual_universe.drop(columns=["consolidated_ticker"])
+    manual_universe["consolidated_ticker"] = manual_universe["origin_ticker"]
 
-    isin_list = result[["isin"]]
-    isin_list = isin_list.drop_duplicates(keep="first", inplace=False)
-    result2, error_ticker = get_data_static_from_dsws(isin_list, "isin", ["RIC", "SECD"], use_ticker=False, split_number=min(len(isin_list), 40))
-    result2 = result2.rename(columns={"RIC": "consolidated_ticker", "index":"isin", "SECD": "sedol"})
-    print(result2)
-    result = result.merge(result2, how="left", on=["isin", "sedol"])
-    print(result)
+    universe = universe.loc[universe["use_manual"] == False]
+    if(len(universe) > 0):
+        universe = universe.drop(columns=["isin", "consolidated_ticker", "sedol", "is_active", "cusip", "permid", "updated"])
+        print(universe)
+        identifier="origin_ticker"
+        filter_field = ["ISIN", "SECD", "WC06004", "IPID"]
+        result, error_ticker = get_data_static_from_dsws(universe[["origin_ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
+        result = result.rename(columns={"ISIN": "isin", "index":"origin_ticker", "SECD": "sedol", "WC06004": "cusip", "IPID": "permid"})
+        print(result)
 
-    if(len(result)) > 0 :
-        consolidated_ticker = result.loc[result["consolidated_ticker"].notnull()]
-        consolidated_ticker["is_active"] = True
-        null_consolidated_ticker = result.loc[result["consolidated_ticker"].isnull()]
-        #null_consolidated_ticker = remove_null(null_consolidated_ticker)
-        null_consolidated_ticker["is_active"] = False
-        for index, row in null_consolidated_ticker.iterrows():
-            origin_ticker = row["origin_ticker"]
-            isin = row["isin"]
-            sedol = row["sedol"]
-            #find the same isin
-            same_isin = consolidated_ticker.loc[consolidated_ticker["isin"] == isin]
-            if(len(same_isin) > 0 and isin != "NA"):
-                #find the same sedol
-                same_sedol = same_isin.loc[same_isin["sedol"] == sedol]
-                if(len(same_sedol) == 0 and isin != "NA"):
-                    null_consolidated_ticker.loc[index, "consolidated_ticker"] = origin_ticker
-                    null_consolidated_ticker.loc[index, "is_active"] = True
-        result = consolidated_ticker.append(null_consolidated_ticker)
-        result = universe.merge(result, how="left", on=["origin_ticker"])
+        isin_list = result[["isin"]]
+        isin_list = isin_list.drop_duplicates(keep="first", inplace=False)
+        result2, error_ticker = get_data_static_from_dsws(isin_list, "isin", ["RIC", "SECD"], use_ticker=False, split_number=min(len(isin_list), 40))
+        result2 = result2.rename(columns={"RIC": "consolidated_ticker", "index":"isin", "SECD": "sedol"})
+        print(result2)
+        result = result.merge(result2, how="left", on=["isin", "sedol"])
+        print(result)
+
+        if(len(result)) > 0 :
+            consolidated_ticker = result.loc[result["consolidated_ticker"].notnull()]
+            consolidated_ticker["is_active"] = True
+            null_consolidated_ticker = result.loc[result["consolidated_ticker"].isnull()]
+            #null_consolidated_ticker = remove_null(null_consolidated_ticker)
+            null_consolidated_ticker["is_active"] = False
+            for index, row in null_consolidated_ticker.iterrows():
+                origin_ticker = row["origin_ticker"]
+                isin = row["isin"]
+                sedol = row["sedol"]
+                #find the same isin
+                same_isin = consolidated_ticker.loc[consolidated_ticker["isin"] == isin]
+                if(len(same_isin) > 0 and isin != "NA"):
+                    #find the same sedol
+                    same_sedol = same_isin.loc[same_isin["sedol"] == sedol]
+                    if(len(same_sedol) == 0 and isin != "NA"):
+                        null_consolidated_ticker.loc[index, "consolidated_ticker"] = origin_ticker
+                        null_consolidated_ticker.loc[index, "is_active"] = True
+            result = consolidated_ticker.append(null_consolidated_ticker)
+            result = universe.merge(result, how="left", on=["origin_ticker"])
+            if(len(manual_universe) > 0):
+                result = result.append(manual_universe)
+        else:
+            result = manual_universe
         result["updated"] = dateNow()
         print(result)
         update_universe_consolidated_data_to_database(result, get_universe_consolidated_table_name())
