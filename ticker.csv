@@ -3,3 +3,7 @@ AAL.O,True,True,DSS
 ADP.PA,True,False,DSS
 AIR.PA,True,False,DSS
 AIR.HK,True,False,DSS
+TRXC.N,True,False,DSS
+TRXC.N,True,True,DSS
+LINI.DE,True,True,DSS
+LIN,True,False,DSS

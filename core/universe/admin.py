@@ -21,13 +21,23 @@ class UniverseResource(resources.ModelResource):
         import_id_fields = ('uid',)
 
     def after_save_instance(self,instance, using_transactions, dry_run, **kwargs):
+        duplicate = UniverseConsolidated.objects.filter(
+            origin_ticker=instance.origin_ticker, 
+            use_isin=instance.use_isin,
+            use_manual=instance.use_manual
+        )
         try:
             ticker = Universe.objects.get(ticker=instance.origin_ticker)
+            if duplicate.count() > 1:
+                instance.delete()
             get_isin_populate_universe.delay(ticker.ticker,self.user)
-            super(UniverseResource, self).after_save_instance(instance, using_transactions, dry_run, **kwargs)
         except Universe.DoesNotExist:
-            get_isin_populate_universe.delay(instance.origin_ticker,self.user)
-            super(UniverseResource, self).after_save_instance(instance, using_transactions, dry_run, **kwargs)
+            if duplicate.count() > 1:
+                existing_ticker=duplicate.first().origin_ticker
+                instance.delete()
+                get_isin_populate_universe.delay(existing_ticker,self.user)
+            else:
+                get_isin_populate_universe.delay(instance.origin_ticker,self.user)
 
 
     def before_import_row(self,row, row_number=None, **kwargs):
