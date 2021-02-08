@@ -8,14 +8,14 @@ from core.djangomodule.models import BaseTimeStampModel
 class Client(BaseTimeStampModel):
     uid = models.CharField(max_length=255,primary_key=True,editable=False)
     client_name = models.CharField(max_length=255)
-    client_base_currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='client_currency')
+    client_base_currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name="client_currency")
     client_base_commision = models.FloatField(null=True,blank=True)
     use_currency = models.BooleanField(default=True)
     client_credentials = models.JSONField(null=True,blank=True)
 
     class Meta:
         managed = True
-        db_table = 'client'
+        db_table = "client"
 
     def __str__(self):
         return self.client_name
@@ -41,15 +41,15 @@ class Client(BaseTimeStampModel):
     
 class UserClient(BaseTimeStampModel):
     uid = models.CharField(max_length=255,primary_key=True,editable=False)
-    user =models.OneToOneField(User, on_delete=models.CASCADE, related_name='client_user')
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='client_related')
+    user =models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_user")
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="client_related")
     extra_data = models.JSONField(null=True,blank=True)
 
     def __str__(self):
         return self.uid
     class Meta:
         managed = True
-        db_table = 'user_clients'
+        db_table = "user_clients"
     def save(self, *args, **kwargs):
         if not self.uid:
             self.uid = generate_id(12)
@@ -77,22 +77,22 @@ class UniverseClient(BaseTimeStampModel):
         managed = True
         db_table = "universe_client"
         get_latest_by = "created"
-        unique_together = ['ticker', 'client']
+        unique_together = ["ticker", "client"]
 
     
 class ClientTopStock(BaseTimeStampModel):
-    WAIT='Inactive'
-    ACTIVE='Active'
-    FINISHED='Completed'
+    WAIT="Inactive"
+    ACTIVE="Active"
+    FINISHED="Completed"
     status_choices = (
-        (WAIT, 'Inactive'),
-        (ACTIVE, 'Active'),
-        (FINISHED, 'Completed'),
+        (WAIT, "Inactive"),
+        (ACTIVE, "Active"),
+        (FINISHED, "Completed"),
 
     )
     uid = models.CharField(max_length=255,primary_key=True,editable=False)
-    client = models.ForeignKey(Client,on_delete=models.CASCADE, related_name='client_top_stock',db_column='client')
-    ticker =models.ForeignKey(Universe,on_delete=models.CASCADE, related_name='universe_top_stock',db_column='ticker')
+    client = models.ForeignKey(Client,on_delete=models.CASCADE, related_name="client_top_stock",db_column="client")
+    ticker =models.ForeignKey(Universe,on_delete=models.CASCADE, related_name="universe_top_stock",db_column="ticker")
     use_signal= models.BooleanField(default=False)
     spot_date=models.DateField(null=True,blank=True)
     expiry_date=models.DateField(null=True,blank=True)
@@ -137,13 +137,13 @@ class ClientTopStock(BaseTimeStampModel):
     
     class Meta:
         managed = True
-        db_table = 'client_top_stock'
+        db_table = "client_top_stock"
         verbose_name_plural = "Client Generated Top stock"
 
     
 class ClientBotPerformance(BaseTimeStampModel):
     order = models.ForeignKey(
-        ClientTopStock, on_delete=models.CASCADE, related_name='portfolio_perfomance')
+        ClientTopStock, on_delete=models.CASCADE, related_name="portfolio_perfomance")
     last_live_price = models.FloatField(null=True, blank=True)
     current_pnl_ret = models.FloatField(null=True, blank=True)
     current_pnl_amt = models.FloatField(null=True, blank=True)
@@ -155,5 +155,5 @@ class ClientBotPerformance(BaseTimeStampModel):
 
     class Meta:
         managed = True
-        db_table = 'client_bot_history'
+        db_table = "client_bot_history"
         verbose_name_plural = "Client Bot History"

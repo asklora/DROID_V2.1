@@ -1,6 +1,7 @@
 import pandas as pd
 import sqlalchemy as db
 from sqlalchemy import create_engine
+from multiprocessing import cpu_count
 from general.sql_process import db_read, db_write
 from general.date_process import backdate_by_day, str_to_date
 from general.data_process import tuple_data
@@ -23,9 +24,12 @@ currency_table = get_currency_table_name()
 fundamentals_score_table = get_fundamental_score_table_name()
 universe_rating_table = get_universe_rating_table_name()
 
-def read_query(query, table=universe_table):
+def read_query(query, table=universe_table, cpu_count=False):
     print(f"Get Data From Database on {table} table")
-    engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    if(cpu_count):
+        engine = create_engine(db_read, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
+    else:
+        engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
         data = pd.read_sql(query, con=conn)
     engine.dispose()

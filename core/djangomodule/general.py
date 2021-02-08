@@ -8,14 +8,14 @@ class UploadTo:
         self.name = name
 
     def __call__(self, instance, filename):
-        ext = filename.split('.')[-1]
+        ext = filename.split(".")[-1]
         filename = f"{instance.app.creator.first_name.upper()}_{instance.app.creator.last_name.upper()}_{self.name}_{instance.app.uid}.{ext}"
-        return '{0}/{1}'.format(instance.app.app_type.name, filename)
+        return "{0}/{1}".format(instance.app.app_type.name, filename)
 
 
 
 def generate_id(digit):
-    r_id = base64.b64encode(os.urandom(digit)).decode('ascii')
+    r_id = base64.b64encode(os.urandom(digit)).decode("ascii")
     r_id = r_id.replace(
-        '/', '').replace('_', '').replace('+', '').replace('=', '').strip()
+        "/", "").replace("_", "").replace("+", "").replace("=", "").strip()
     return r_id

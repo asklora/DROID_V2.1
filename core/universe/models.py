@@ -16,7 +16,7 @@ class Region(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'region'
+        db_table = "region"
 
 
 class Vix(models.Model):
@@ -24,13 +24,13 @@ class Vix(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'vix'
+        db_table = "vix"
 
 
 class Currency(models.Model):
     currency_code = models.CharField(primary_key=True, max_length=30)
-    region_id = models.ForeignKey(Region, on_delete=models.CASCADE,db_column='region_id', related_name='currency_region_id')
-    vix_id = models.ForeignKey(Vix, on_delete=models.CASCADE, db_column='vix_id', related_name='currency_vix_id')
+    region_id = models.ForeignKey(Region, on_delete=models.CASCADE,db_column="region_id", related_name="currency_region_id")
+    vix_id = models.ForeignKey(Vix, on_delete=models.CASCADE, db_column="vix_id", related_name="currency_vix_id")
 
     ric = models.CharField(blank=True, null=True, max_length=255)
     currency_name = models.CharField(blank=True, null=True, max_length=255)
@@ -55,41 +55,41 @@ class Currency(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'currency'
+        db_table = "currency"
 
 
 class CurrencyCalendars(models.Model):
     uid = models.TextField(primary_key=True)
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column='currency_code',related_name='currency_calendar_currency_code', blank=True, null=True)
+    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code",related_name="currency_calendar_currency_code", blank=True, null=True)
     non_working_day = models.DateField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = True
-        db_table = 'currency_calendar'
+        db_table = "currency_calendar"
 
 
 class Country(models.Model):
     country_code = models.TextField(primary_key=True)
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column='currency_code',related_name='country_currency_code', blank=True, null=True)
+    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code",related_name="country_currency_code", blank=True, null=True)
     country_name = models.TextField(blank=True, null=True)
     ds_country_code = models.TextField(blank=True, null=True)
     is_open = models.BooleanField(default=False)
 
     class Meta:
         managed = True
-        db_table = 'country'
+        db_table = "country"
 
 
 # class CountryCalendars(models.Model):
 #     uid = models.TextField(primary_key=True)
-#     country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column='country_code',related_name='country_calendar_country_code', blank=True, null=True)
+#     country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column="country_code",related_name="country_calendar_country_code", blank=True, null=True)
 #     non_working_day = models.DateField(blank=True, null=True)
 #     description = models.TextField(blank=True, null=True)
 
 #     class Meta:
 #         managed = False
-#         db_table = 'country_calendar'
+#         db_table = "country_calendar"
 
 
 class IndustryGroup(models.Model):
@@ -102,18 +102,18 @@ class IndustryGroup(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'industry_group'
+        db_table = "industry_group"
 
 
 class Industry(models.Model):
     industry_code = models.CharField(max_length=100, primary_key=True)
     industry_name = models.CharField(max_length=100, blank=True, null=True)
     industry_group_code = models.ForeignKey(IndustryGroup, on_delete=models.CASCADE,
-    db_column='industry_group_code',related_name='industry_industry_group_code', blank=True, null=True)
+    db_column="industry_group_code",related_name="industry_industry_group_code", blank=True, null=True)
 
     class Meta:
         managed = True
-        db_table = 'industry'
+        db_table = "industry"
 
     def __str__(self):
         return self.industry_name
@@ -125,7 +125,7 @@ class IndustryWorldscope(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'industry_worldscope'
+        db_table = "industry_worldscope"
 
 
 
@@ -136,7 +136,7 @@ class Source(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'source'
+        db_table = "source"
 
     def __str__(self):
         return self.source_name
@@ -144,7 +144,7 @@ class Source(models.Model):
 
 class UniverseConsolidated(models.Model):
     uid = models.CharField(primary_key=True,max_length=20,editable=False)
-    source_id = models.ForeignKey(Source, on_delete=models.CASCADE, db_column='source_id', related_name='universe_source_id', blank=True, null=True)
+    source_id = models.ForeignKey(Source, on_delete=models.CASCADE, db_column="source_id", related_name="universe_source_id", blank=True, null=True)
     origin_ticker = models.CharField(max_length=50, blank=False, null=False)
     is_active = models.BooleanField(default=True)
     created = models.DateField(blank=True, null=True)
@@ -184,7 +184,7 @@ class UniverseConsolidated(models.Model):
                 self.updated = timezone.now()
     class Meta:
         managed = True
-        db_table = 'universe_consolidated'
+        db_table = "universe_consolidated"
 
     def __str__(self):
         if self.consolidated_ticker:
@@ -197,10 +197,10 @@ class Universe(models.Model):
     # objects = models.Manager()
     # manager = UniverseManager()
     ticker = models.CharField(max_length=255,primary_key=True)
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column='currency_code', related_name='universe_currency_code', blank=True, null=True)
-    #country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column='country_code', related_name='universe_country_code', blank=True, null=True)
-    industry_code = models.ForeignKey(Industry, on_delete=models.CASCADE, db_column='industry_code', related_name='universe_industry_code', blank=True, null=True)
-    wc_industry_code = models.ForeignKey(IndustryWorldscope, on_delete=models.CASCADE,db_column='wc_industry_code', related_name='universe_wc_industry_code', blank=True, null=True)
+    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code", related_name="universe_currency_code", blank=True, null=True)
+    #country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column="country_code", related_name="universe_country_code", blank=True, null=True)
+    industry_code = models.ForeignKey(Industry, on_delete=models.CASCADE, db_column="industry_code", related_name="universe_industry_code", blank=True, null=True)
+    wc_industry_code = models.ForeignKey(IndustryWorldscope, on_delete=models.CASCADE,db_column="wc_industry_code", related_name="universe_wc_industry_code", blank=True, null=True)
 
     created = models.DateField(blank=True, null=True)
     updated = models.DateField(blank=True, null=True)
@@ -222,12 +222,11 @@ class Universe(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'universe'
+        db_table = "universe"
 
 
 class UniverseRating(models.Model):
-    ticker = models.OneToOneField(Universe, on_delete=models.CASCADE,
-                                  db_column='ticker', related_name='ticker_rating_ticker', primary_key=True)
+    ticker = models.OneToOneField(Universe, on_delete=models.CASCADE,db_column="ticker", related_name="ticker_rating_ticker", primary_key=True)
     fundamentals_quality = models.FloatField(blank=True, null=True)
     fundamentals_value = models.FloatField(blank=True, null=True)
     dlp_1m = models.FloatField(blank=True, null=True)
@@ -240,19 +239,19 @@ class UniverseRating(models.Model):
         return self.ticker.ticker
 
     class Meta:
-        db_table = 'universe_rating'
+        db_table = "universe_rating"
         managed = True
 
 
 class UniverseExcluded(models.Model):
     ticker = models.OneToOneField(Universe, primary_key=True, on_delete=models.CASCADE,
-                                  db_column='ticker', related_name='universe_excluded_ticker')
+                                  db_column="ticker", related_name="universe_excluded_ticker")
     exclude_dss = models.BooleanField(default=False)
     exclude_dsws = models.BooleanField(default=False)
 
     class Meta:
         managed = True
-        db_table = 'universe_excluded'
+        db_table = "universe_excluded"
 
     def __str__(self):
         return self.ticker.ticker

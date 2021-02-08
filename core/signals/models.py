@@ -7,7 +7,7 @@ from django.db.models import Value
 
 
 class LoggerSignal(BaseTimeStampModel):
-    logger_id = models.ForeignKey(ClientTopStock,on_delete=models.CASCADE,related_name='logger')
+    logger_id = models.ForeignKey(ClientTopStock,on_delete=models.CASCADE,related_name="logger")
     market_status = models.BooleanField(default=True)
     response = models.JSONField(null=True,blank=True,default=dict)
     status_code = models.IntegerField(null=True,blank=True)
@@ -22,4 +22,4 @@ class LoggerSignal(BaseTimeStampModel):
     
     class Meta:
         managed = True
-        db_table = 'signal_logger'
+        db_table = "signal_logger"
