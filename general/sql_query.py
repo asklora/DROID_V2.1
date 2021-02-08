@@ -24,9 +24,9 @@ currency_table = get_currency_table_name()
 fundamentals_score_table = get_fundamental_score_table_name()
 universe_rating_table = get_universe_rating_table_name()
 
-def read_query(query, table=universe_table, cpu_count=False):
+def read_query(query, table=universe_table, cpu_counts=False):
     print(f"Get Data From Database on {table} table")
-    if(cpu_count):
+    if(cpu_counts):
         engine = create_engine(db_read, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
     else:
         engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
