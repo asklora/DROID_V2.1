@@ -67,6 +67,11 @@ def get_fundamental_score_table_name():
 def get_fred_table_name():
     return "data_fred"
 
+def get_top_stock_models_table_name():
+    return "top_stock_models"
+
+def get_top_stock_models_stock_table_name():
+    return "top_stock_models_stock"
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 
