@@ -9,14 +9,14 @@ import pandas as pd
 import sqlalchemy as db
 from pandas.tseries.offsets import BDay, Week
 
-import global_vars
+from dlpa import global_vars
 
-if platform.system() == 'Linux':
-    path = '/home/loratech/PycharmProjects/data/'
+if platform.system() == "Linux":
+    path = "data/"
     if not os.path.exists(path):
         os.makedirs(path)
 else:
-    path = 'C:/dlpa_master/'
+    path = "C:/dlpa_master/"
     Path(path).mkdir(parents=True, exist_ok=True)
 
 os.chdir(path)
@@ -28,29 +28,29 @@ def data_download(args, update_date=None, main_flag=None):
     #     table0 = global_vars.main_input_data_table_name
     #     db_url = global_vars.DB_PROD_URL
     #
-    # # table0 = 'daily_multiple_check'
-    if main_flag == 'master_daily':
-        db_url = global_vars.DB_PROD_URL_READ
+    # # table0 = "daily_multiple_check"
+    if main_flag == "master_daily":
+        db_url = global_vars.db_read
         table0 = global_vars.main_input_data_table_name
 
-    elif main_flag == 'master_daily_rv':
-        db_url = global_vars.DB_PROD_URL_READ
-        table0 = 'master_daily_rv'
+    elif main_flag == "master_daily_rv":
+        db_url = global_vars.db_read
+        table0 = "master_daily_rv"
 
-    elif main_flag == 'master_daily_tac':
-        db_url = global_vars.DB_PROD_URL_READ
-        table0 = 'master_ohlctr'
+    elif main_flag == "master_daily_tac":
+        db_url = global_vars.db_read
+        table0 = global_vars.master_ohlcv_table_name
 
-    # if main_flag == 'master_daily_beta_adj':
+    # if main_flag == "master_daily_beta_adj":
     else:
-        db_url = global_vars.DB_TEST_URL_READ
-        table0 = 'master_daily_beta_adjusted_2'
+        db_url = global_vars.db_read
+        table0 = "master_daily_beta_adjusted_2"
 
 
     engine = db.create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
 
-    origin = '2002-01-01'
-    origin = datetime.strptime(origin, '%Y-%m-%d')
+    origin = "2002-01-01"
+    origin = datetime.strptime(origin, "%Y-%m-%d")
 
     if update_date is not None:
         datee1 = update_date.date()
@@ -60,17 +60,7 @@ def data_download(args, update_date=None, main_flag=None):
     with engine.connect() as conn:
         metadata = db.MetaData()
         table01 = db.Table(table0, metadata, autoload=True, autoload_with=conn)
-
-        # query = db.select([table0.columns.ticker, table0.columns.trading_day, table0.columns.open, table0.columns.high,
-        #                    table0.columns.low, table0.columns.close, table0.columns.volume]).where(
-        #     table0.columns.trading_day >= datee1.strftime('%Y-%m-%d'))
-        query = db.select(['*']).where(table01.columns.trading_day >= datee1.strftime('%Y-%m-%d'))
-        # else:
-        #     query = db.select(
-        #         [table0.columns.ticker, table0.columns.trading_day, table0.columns.open_multiple, table0.columns.high_multiple,
-        #          table0.columns.low_multiple, table0.columns.close_multiple, table0.columns.volume_adj]).where(
-        #         table0.columns.trading_day >= datee1.strftime('%Y-%m-%d'))
-
+        query = db.select(["*"]).where(table01.columns.trading_day >= datee1.strftime("%Y-%m-%d"))
         ResultProxy = conn.execute(query)
         ResultSet = ResultProxy.fetchall()
         columns_list = ResultProxy.keys()
@@ -78,14 +68,14 @@ def data_download(args, update_date=None, main_flag=None):
     full_df = pd.DataFrame(ResultSet)
     full_df.columns = columns_list
     # if full_df.shape[1] == 7:
-    #     full_df.columns = ['ticker', 'date', 'open_multiple', 'high_multiple', 'low_multiple',
-    #                        'close_multiple', 'volume']
-    print(f'Finish downloading from table {table0}')
+    #     full_df.columns = ["ticker", "date", "open_multiple", "high_multiple", "low_multiple",
+    #                        "close_multiple", "volume"]
+    print(f"Finish downloading from table {table0}")
     return full_df
 
 
 def indices_download(args, update_date=None):
-    db_url = global_vars.DB_PROD_URL_READ
+    db_url = global_vars.db_read
     engine = db.create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
 
     table0 = global_vars.latest_universe_table_name
@@ -94,7 +84,7 @@ def indices_download(args, update_date=None):
         metadata = db.MetaData()
         table0 = db.Table(table0, metadata, autoload=True, autoload_with=conn)
 
-        query = db.select([table0.columns.ticker, table0.columns.index_id]).where(table0.columns.is_active.is_(True))
+        query = db.select([table0.columns.ticker, table0.columns.currency_code]).where(table0.columns.is_active.is_(True))
         ResultProxy = conn.execute(query)
         ResultSet = ResultProxy.fetchall()
         columns_list = ResultProxy.keys()
@@ -102,8 +92,8 @@ def indices_download(args, update_date=None):
     indices_df = pd.DataFrame(ResultSet)
     indices_df.columns = columns_list
     # if indices_df.shape[1] == 2:
-    #     indices_df.columns = ['ticker', 'index']
-    indices_df.rename(columns={'index_id': 'index'}, inplace=True)
+    #     indices_df.columns = ["ticker", "index"]
+    #indices_df.rename(columns={"index_id": "index"}, inplace=True)
 
     return indices_df
 
@@ -112,7 +102,7 @@ def load_data(args):
     update_lookback = args.update_lookback
     update = bool(args.update)
 
-    indices_file = Path('/home/loratech/PycharmProjects/data/' + 'indices_df.pkl')
+    indices_file = Path("data/indices_df.pkl")
 
     if args.db_full_update:
         if indices_file.exists():
@@ -121,7 +111,7 @@ def load_data(args):
     def update_df(args, flag, df_file):
         full_df = pd.read_pickle(df_file)
         temp = pd.DataFrame()
-        temp['time'] = full_df['trading_day'].astype('datetime64[ns]')
+        temp["time"] = full_df["trading_day"].astype("datetime64[ns]")
         max_date = temp.time.max()
         if args.data_period == 0:
             d = Week(args.update_lookback)
@@ -131,14 +121,14 @@ def load_data(args):
         updated_df = data_download(args, main_flag=flag, update_date=update_date)
 
         if updated_df.shape[1] != 0:
-            full_df['time'] = full_df['trading_day'].astype('datetime64[ns]')
-            full_df.drop(full_df[(full_df['time'] >= update_date)].index, inplace=True)
+            full_df["time"] = full_df["trading_day"].astype("datetime64[ns]")
+            full_df.drop(full_df[(full_df["time"] >= update_date)].index, inplace=True)
             full_df.reset_index(drop=True, inplace=True)
-            del full_df['time']
+            del full_df["time"]
             full_df = full_df.append(updated_df)
             full_df.reset_index(drop=True, inplace=True)
             full_df.to_pickle(df_file)
-            print(f'Finish writing to {df_file}')
+            print(f"Finish writing to {df_file}")
         else:
             print(f"We don't have data for {df_file}.")
             sys.exit()
@@ -146,7 +136,7 @@ def load_data(args):
         return full_df
 
     def load_df(args, flag, file_name):
-        df_file_path = Path('/home/loratech/PycharmProjects/data/' + file_name)
+        df_file_path = Path("data/" + file_name)
         if args.db_full_update:
             if df_file_path.exists():
                 os.remove(df_file_path)
@@ -156,23 +146,23 @@ def load_data(args):
                 full_df = update_df(args, flag, df_file_path)
             else:
                 full_df = pd.read_pickle(df_file_path)
-                print(f'Finish writing to {file_name}')
+                print(f"Finish writing to {file_name}")
 
         else:
             full_df = data_download(args, main_flag=flag)
             full_df.to_pickle(df_file_path)
-            print(f'Finish writing to {file_name}')
+            print(f"Finish writing to {file_name}")
 
         return full_df
 
     if args.master_daily_df:
-        full_df_daily = load_df(args, 'master_daily', 'full_df_daily.pkl')
+        full_df_daily = load_df(args, global_vars.main_input_data_table_name, "full_df_daily.pkl")
 
     if args.master_daily_rv_df:
-        full_df_rv_daily = load_df(args, 'master_daily_rv', 'full_df_rv_daily.pkl')
+        full_df_rv_daily = load_df(args, "master_daily_rv", "full_df_rv_daily.pkl")
 
     if args.master_daily_beta_adj_df:
-        full_df_beta_adj_daily = load_df(args, 'master_daily_beta_adj', 'full_df_beta_adj_daily.pkl')
+        full_df_beta_adj_daily = load_df(args, "master_daily_beta_adj", "full_df_beta_adj_daily.pkl")
 
     if indices_file.exists():
         if update:

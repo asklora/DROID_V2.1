@@ -8,19 +8,19 @@ from datetime import datetime as dt
 import tensorflow as tf
 from pandas.tseries.offsets import BDay, Week
 
-from hypers.hypers import hypers
+from dlpa.hypers.hypers import hypers
 
 
 def gpu_mac_address(args):
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_number)
 
-    gpus = tf.config.experimental.list_physical_devices('GPU')
+    gpus = tf.config.experimental.list_physical_devices("GPU")
     if gpus:
         try:
             # Currently, memory growth needs to be the same across GPUs
             for gpu in gpus:
                 tf.config.experimental.set_memory_growth(gpu, True)
-            logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+            logical_gpus = tf.config.experimental.list_logical_devices("GPU")
             print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
         except RuntimeError as e:
             # Memory growth must be set before GPUs have been initialized
@@ -32,17 +32,17 @@ def gpu_mac_address(args):
     # pc#2 = 0x309c23270a79
     # pc #1 = 0x49226d8eb81
 
-    if str(hex(uuid.getnode())) == '0xd861c24963':
+    if str(hex(uuid.getnode())) == "0xd861c24963":
         args.pc_number = "Iman"
-    if str(hex(uuid.getnode())) == '0xc9d92c510e5':
+    if str(hex(uuid.getnode())) == "0xc9d92c510e5":
         args.pc_number = "PC4"
-    if str(hex(uuid.getnode())) == '0xac1f6b153eba':
+    if str(hex(uuid.getnode())) == "0xac1f6b153eba":
         args.pc_number = "PC3"
-    if str(hex(uuid.getnode())) == '0x309c23270a79':
+    if str(hex(uuid.getnode())) == "0x309c23270a79":
         args.pc_number = "PC2"
-    if str(hex(uuid.getnode())) == '0x49226d8eb81':
+    if str(hex(uuid.getnode())) == "0x49226d8eb81":
         args.pc_number = "PC1"
-    if str(hex(uuid.getnode())) == '0xb06ebf5cd358':
+    if str(hex(uuid.getnode())) == "0xb06ebf5cd358":
         args.pc_number = "Stephen"
 
 def jump_period(args):
@@ -50,7 +50,7 @@ def jump_period(args):
     # start date and the end date, which are created by the code to get the needed data for model training and testing
     # form the main dataframe.
 
-    args.forward_date = dt.strptime(f'{args.forward_year} {args.forward_week} {args.forward_day}', '%G %V %u')
+    args.forward_date = dt.strptime(f"{args.forward_year} {args.forward_week} {args.forward_day}", "%G %V %u")
 
     if args.data_period == 0:
         # We need to add 1 business day to the start since the week starts from it. e.g. test -> Fri => start-> Mon
@@ -61,7 +61,7 @@ def jump_period(args):
         args.end_date = args.forward_date + BDay(args.test_num)
 
     if args.start_date > dt.fromtimestamp(time.time()):
-        sys.exit('The start date is after today!')
+        sys.exit("The start date is after today!")
 
     flag = True
     jump_value = Week(0)
@@ -96,7 +96,7 @@ def jump_period(args):
         hypers(args)
 
         if args.go_live:
-            sys.exit('Finished!')
+            sys.exit("Finished!")
         if args.data_period == 0:
             jump_value = Week(args.period_jump)
         else:

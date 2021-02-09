@@ -12,14 +12,19 @@ from hyperopt import fmin, tpe, hp
 from hyperopt.pyll.base import scope
 from pandas.tseries.offsets import Week, BDay
 
-from data.data_download import load_data
-from data.data_preprocess import dataset_p, normalize_candles_dlpm, dataset_prep, normalize_candles_dlpm_temp, \
-    create_train_test_valid_ohlcv, create_tac_prices, create_rv_df, create_beta_df
-from global_vars import aws_columns_list
-from hypers.model_parameters_load import load_model_data
-from model.model_dlpa import full_model as dlpa
-from model.model_dlpm import full_model as dlpm
-from model.model_simple import full_model as simple
+from dlpa.data.data_download import load_data
+from dlpa.data.data_preprocess import (
+    dataset_p, 
+    normalize_candles_dlpm, 
+    dataset_prep, 
+    normalize_candles_dlpm_temp, 
+    create_train_test_valid_ohlcv, 
+    create_rv_df)
+from dlpa.global_vars import aws_columns_list
+from dlpa.hypers.model_parameters_load import load_model_data
+from dlpa.model.model_dlpa import full_model as dlpa
+from dlpa.model.model_dlpm import full_model as dlpm
+from dlpa.model.model_simple import full_model as simple
 
 
 # from data.data_preprocess import standardize_on_all_stocks_each_ohlcv,normalize_on_all_stocks_each_ohlcv
@@ -32,104 +37,124 @@ def hypers(args):
     # Range of values that hyperopt is trained on.
     if args.train_num != 0:
         space = {
-            'batch_size': scope.int(hp.quniform('batch_size', 7, 9, 1)),  # => 2**x batch sizes 2 exponential
+            "batch_size": scope.int(hp.quniform("batch_size", 7, 9, 1)),  # => 2**x batch sizes 2 exponential
         }
         # Lookback period
         if args.data_period == 0:  # weekly forecast
             if args.future:
                 if args.num_periods_to_predict == 4:
-                    temp_dic = {'lookback': hp.choice('lookback', [30])}  # 30 week lookback~ 7 months
+                    temp_dic = {"lookback": hp.choice("lookback", [30])}  # 30 week lookback~ 7 months
                     space.update(temp_dic)
                 else:
-                    temp_dic = {'lookback': hp.choice('lookback', [56])}  # 56 week lookback~ 13 months
+                    temp_dic = {"lookback": hp.choice("lookback", [56])}  # 56 week lookback~ 13 months
                     space.update(temp_dic)
             else:
-                temp_dic = {'lookback': hp.choice('lookback', [15])}  # 15 week lookback
+                temp_dic = {"lookback": hp.choice("lookback", [15])}  # 15 week lookback
                 space.update(temp_dic)
         else:  # daily forecast
-            temp_dic = {'lookback': hp.choice('lookback', [20])}  # 20 day lookback
+            temp_dic = {"lookback": hp.choice("lookback", [20])}  # 20 day lookback
             space.update(temp_dic)
         # use 5X5 weekly OHLCV candles or just use weekly (or daily) close returns
         if args.use_candles:
             temp_dic = {
-                'cnn_kernel_size': hp.choice('cnn_kernel_size', [128, 256])}  # larger number of kernels better
+                "cnn_kernel_size": hp.choice("cnn_kernel_size", [128, 256])}  # larger number of kernels better
             space.update(temp_dic)
         else:  # just weekly/daily returns
-            temp_dic = {'cnn_kernel_size': hp.choice('cnn_kernel_size', [0])}
+            temp_dic = {"cnn_kernel_size": hp.choice("cnn_kernel_size", [0])}
             space.update(temp_dic)
 
         if args.model_type == 0:  # DLPA MODEL----------------------
-            temp_dic = {'learning_rate': hp.choice('lr', [3, 5])}  # => 1e-x - learning rate
+            temp_dic = {"learning_rate": hp.choice("lr", [3, 5])}  # => 1e-x - learning rate
             space.update(temp_dic)
             # Attention model
             # TODO test DLPA for chart pattern forecasts
             space_update = {
-                'num_hidden': hp.choice('num_hidden', [5, 9]),  # more hidden layers
-                'num_hidden_att': hp.choice('num_hidden_att', [5, 9]),  # not significant
-                'dropout': hp.choice('dropout', [0, 0.25]),  # low dropout - already underfitting
+                "num_hidden": hp.choice("num_hidden", [5, 9]),  # more hidden layers
+                "num_hidden_att": hp.choice("num_hidden_att", [5, 9]),  # not significant
+                "dropout": hp.choice("dropout", [0, 0.25]),  # low dropout - already underfitting
             }
             space.update(space_update)
 
         elif args.model_type == 1:  # DLPM MODEL----------------------
-            temp_dic = {'learning_rate': hp.choice('lr', [5])}  # => 1e-x - learning rate
+            temp_dic = {"learning_rate": hp.choice("lr", [5])}  # => 1e-x - learning rate
             space.update(temp_dic)
             # uses TWO inputs - candle AND weekly returns (wr)
-            if space['cnn_kernel_size'] != 0:  # candles used - RECOMMEND
+            if space["cnn_kernel_size"] != 0:  # candles used - RECOMMEND
                 if args.future:
                     space_update = {
-                        'gru_nodes_mult': hp.choice('gru_nodes_mult', [0, 1]),
-                        'wr_gru_nodes_mult': hp.choice('wr_gru_nodes_mult', [0]),
-                        'gru_drop': hp.choice('gru_drop', [0, 0.25]),  # no dropout - already underfitting
-                        'wr_gru_drop': hp.choice('wr_gru_drop', [0, 0.25]),  # no dropout - already underfitting
-                        'gru_nodes': hp.choice('gru_nodes', [4, 8]),  # candle GRU nodes
-                        'wr_gru_nodes': hp.choice('wr_gru_nodes', [4, 8]),  # weekly return GRU nodes
+                        "gru_nodes_mult": hp.choice("gru_nodes_mult", [0, 1]),
+                        "wr_gru_nodes_mult": hp.choice("wr_gru_nodes_mult", [0]),
+                        "gru_drop": hp.choice("gru_drop", [0, 0.25]),  # no dropout - already underfitting
+                        "wr_gru_drop": hp.choice("wr_gru_drop", [0, 0.25]),  # no dropout - already underfitting
+                        "gru_nodes": hp.choice("gru_nodes", [4, 8]),  # candle GRU nodes
+                        "wr_gru_nodes": hp.choice("wr_gru_nodes", [4, 8]),  # weekly return GRU nodes
                     }
                 else:
                     space_update = {
-                        'gru_nodes_mult': hp.choice('gru_nodes_mult', [0, 1]),
-                        'wr_gru_nodes_mult': hp.choice('wr_gru_nodes_mult', [0]),
-                        'gru_drop': hp.choice('gru_drop', [0, 0.25]),  # no dropout - already underfitting
-                        'wr_gru_drop': hp.choice('wr_gru_drop', [0, 0.25]),  # no dropout - already underfitting
-                        'gru_nodes': hp.choice('gru_nodes', [4, 8]),  # candle GRU nodes
-                        'wr_gru_nodes': hp.choice('wr_gru_nodes', [4, 8]),  # weekly return GRU nodes
+                        "gru_nodes_mult": hp.choice("gru_nodes_mult", [0, 1]),
+                        "wr_gru_nodes_mult": hp.choice("wr_gru_nodes_mult", [0]),
+                        "gru_drop": hp.choice("gru_drop", [0, 0.25]),  # no dropout - already underfitting
+                        "wr_gru_drop": hp.choice("wr_gru_drop", [0, 0.25]),  # no dropout - already underfitting
+                        "gru_nodes": hp.choice("gru_nodes", [4, 8]),  # candle GRU nodes
+                        "wr_gru_nodes": hp.choice("wr_gru_nodes", [4, 8]),  # weekly return GRU nodes
                     }
             else:  # no candles - NOT RECOMMEND - DO NOT USE
                 space_update = {
-                    'wr_gru_nodes_mult': hp.choice('wr_gru_nodes_mult', [0, 1]),
-                    'wr_gru_drop': hp.choice('wr_gru_drop', [0, 0.25]),  # no dropout - already underfitting
+                    "wr_gru_nodes_mult": hp.choice("wr_gru_nodes_mult", [0, 1]),
+                    "wr_gru_drop": hp.choice("wr_gru_drop", [0, 0.25]),  # no dropout - already underfitting
                 }
             space.update(space_update)
 
         else:  # SIMPLE MODEL(args.model_type == 2)----------------------
-            temp_dic = {'learning_rate': hp.choice('lr', [3, 5])}  # => 1e-x - learning rate
+            temp_dic = {"learning_rate": hp.choice("lr", [3, 5])}  # => 1e-x - learning rate
             space.update(temp_dic)
             # uses simple ANN either to CNN or weekly/daily returns
             if args.future:
                 space_update = {
-                    'num_layers': hp.choice('num_layers', [4, 8]),
-                    'num_nodes': hp.choice('num_nodes', [8]),  # nodes/layer
-                    'dropout': hp.choice('dropout', [0.25, 0.5]),  # model is overfitting
+                    "num_layers": hp.choice("num_layers", [4, 8]),
+                    "num_nodes": hp.choice("num_nodes", [8]),  # nodes/layer
+                    "dropout": hp.choice("dropout", [0.25, 0.5]),  # model is overfitting
                 }
             else:
                 space_update = {
-                    'num_layers': hp.choice('num_layers', [4, 8]),
-                    'num_nodes': hp.choice('num_nodes', [8]),  # nodes/layer
-                    'dropout': hp.choice('dropout', [0.25, 0.5]),  # model is overfitting
+                    "num_layers": hp.choice("num_layers", [4, 8]),
+                    "num_nodes": hp.choice("num_nodes", [8]),  # nodes/layer
+                    "dropout": hp.choice("dropout", [0.25, 0.5]),  # model is overfitting
                 }
             space.update(space_update)
 
     else:
-        space = {'temp_var': hp.choice('temp_var', [1])}
+        space = {"temp_var": hp.choice("temp_var", [1])}
 
     args.aws_columns_list = aws_columns_list
 
-    # You can set the number of recent weeks for updating as load_data's argument.
+    # You can set the number of recent weeks for updating as load_data"s argument.
     # For example load_data(3) means that the function will update the most recent 3 weeks from sql server too.
-    # 'Update = false' means that if there is a local database it won't connect to AWS anymore.
+    # "Update = false" means that if there is a local database it won"t connect to AWS anymore.
+
+    def limit_df(df, low_limit, high_limit):
+        df = df.copy()
+        df.loc[df < low_limit] = low_limit
+        df.loc[df > high_limit] = high_limit
+        return df
+
     if args.rv_1 or args.rv_2:
         full_df, indices_df = load_data(args)
 
         full_df_rv = create_rv_df(full_df, indices_df, args)
+
+        full_df_rv.open_multiple = limit_df(full_df_rv.open_multiple, 0.5, 2)
+        full_df_rv.high_multiple = limit_df(full_df_rv.high_multiple, 0.5, 2)
+        full_df_rv.low_multiple = limit_df(full_df_rv.low_multiple, 0.5, 2)
+        full_df_rv.close_multiple = limit_df(full_df_rv.close_multiple, 0.5, 2)
+
+        full_df_rv.open_multiple = full_df_rv.open_multiple - 1
+        full_df_rv.high_multiple = full_df_rv.high_multiple - 1
+        full_df_rv.low_multiple = full_df_rv.low_multiple - 1
+        full_df_rv.close_multiple = full_df_rv.close_multiple - 1
+
+        args.full_df_rv = full_df_rv
+        del full_df_rv
 
         # full_df_min = full_df.trading_day.min()
         # full_df_rv_min = full_df_rv.trading_day.min()
@@ -147,7 +172,7 @@ def hypers(args):
         # full_df_beta_adj = create_beta_df(full_df, indices_df, args)
 
         try:
-            full_df_beta_adj.trading_day = full_df_beta_adj['trading_day'].dt.strftime('%Y-%m-%d')
+            full_df_beta_adj.trading_day = full_df_beta_adj["trading_day"].dt.strftime("%Y-%m-%d")
         except:
             pass
         full_df_min = full_df.trading_day.min()
@@ -161,17 +186,26 @@ def hypers(args):
         full_df = full_df[(full_df.trading_day >= date_min) & (full_df.trading_day <= date_max)]
         full_df_beta_adj = full_df_beta_adj[(full_df_beta_adj.trading_day >= date_min) & (full_df_beta_adj.trading_day <= date_max)]
 
+        full_df_beta_adj.open_multiple = limit_df(full_df_beta_adj.open_multiple, 0.5, 2)
+        full_df_beta_adj.high_multiple = limit_df(full_df_beta_adj.high_multiple, 0.5, 2)
+        full_df_beta_adj.low_multiple = limit_df(full_df_beta_adj.low_multiple, 0.5, 2)
+        full_df_beta_adj.close_multiple = limit_df(full_df_beta_adj.close_multiple, 0.5, 2)
+
+        full_df_beta_adj.open_multiple = full_df_beta_adj.open_multiple - 1
+        full_df_beta_adj.high_multiple = full_df_beta_adj.high_multiple - 1
+        full_df_beta_adj.low_multiple = full_df_beta_adj.low_multiple - 1
+        full_df_beta_adj.close_multiple = full_df_beta_adj.close_multiple - 1
+
+        args.full_df_beta_adj = full_df_beta_adj
+        del full_df_beta_adj
+
         # aa= pd.concat([full_df, full_df_beta_adj]).drop_duplicates(keep=False)
     else:
         full_df, indices_df = load_data(args)
 
     args.indices_df = indices_df
 
-    def limit_df(df, low_limit, high_limit):
-        df = df.copy()
-        df.loc[df < low_limit] = low_limit
-        df.loc[df > high_limit] = high_limit
-        return df
+    
 
     if args.rv_1 or args.rv_2 or args.beta_1 or args.beta_2:
         full_df.open_multiple = limit_df(full_df.open_multiple, 0.8, 1.25)
@@ -187,55 +221,27 @@ def hypers(args):
     args.full_df = full_df
     del full_df
 
-    if args.rv_1 or args.rv_2:
-        full_df_rv.open_multiple = limit_df(full_df_rv.open_multiple, 0.5, 2)
-        full_df_rv.high_multiple = limit_df(full_df_rv.high_multiple, 0.5, 2)
-        full_df_rv.low_multiple = limit_df(full_df_rv.low_multiple, 0.5, 2)
-        full_df_rv.close_multiple = limit_df(full_df_rv.close_multiple, 0.5, 2)
-
-        full_df_rv.open_multiple = full_df_rv.open_multiple - 1
-        full_df_rv.high_multiple = full_df_rv.high_multiple - 1
-        full_df_rv.low_multiple = full_df_rv.low_multiple - 1
-        full_df_rv.close_multiple = full_df_rv.close_multiple - 1
-
-        args.full_df_rv = full_df_rv
-        del full_df_rv
-
-    if args.beta_1 or args.beta_2:
-        full_df_beta_adj.open_multiple = limit_df(full_df_beta_adj.open_multiple, 0.5, 2)
-        full_df_beta_adj.high_multiple = limit_df(full_df_beta_adj.high_multiple, 0.5, 2)
-        full_df_beta_adj.low_multiple = limit_df(full_df_beta_adj.low_multiple, 0.5, 2)
-        full_df_beta_adj.close_multiple = limit_df(full_df_beta_adj.close_multiple, 0.5, 2)
-
-        full_df_beta_adj.open_multiple = full_df_beta_adj.open_multiple - 1
-        full_df_beta_adj.high_multiple = full_df_beta_adj.high_multiple - 1
-        full_df_beta_adj.low_multiple = full_df_beta_adj.low_multiple - 1
-        full_df_beta_adj.close_multiple = full_df_beta_adj.close_multiple - 1
-
-        args.full_df_beta_adj = full_df_beta_adj
-        del full_df_beta_adj
-
     # ********************************************************************************************
     # ***************************** PATH creation ************************************************
-    if platform.system() == 'Linux':
-        args.model_path = '/home/loratech/PycharmProjects/models/'
+    if platform.system() == "Linux":
+        args.model_path = "/home/loratech/PycharmProjects/models/"
         if not os.path.exists(args.model_path):
             os.makedirs(args.model_path)
-        args.plot_path = '/home/loratech/PycharmProjects/plots/'
+        args.plot_path = "/home/loratech/PycharmProjects/plots/"
         if not os.path.exists(args.plot_path):
             os.makedirs(args.plot_path)
     else:
-        args.model_path = 'C:/dlpa_master/model/'
+        args.model_path = "C:/dlpa_master/model/"
         Path(args.model_path).mkdir(parents=True, exist_ok=True)
-        args.plot_path = 'C:/dlpa_master/plots/'
+        args.plot_path = "C:/dlpa_master/plots/"
         Path(args.plot_path).mkdir(parents=True, exist_ok=True)
 
-    if platform.system() == 'Linux':
-        args.model_path_clustering = '/home/loratech/PycharmProjects/models/clustering/'
+    if platform.system() == "Linux":
+        args.model_path_clustering = "/home/loratech/PycharmProjects/models/clustering/"
         if not os.path.exists(args.model_path_clustering):
             os.makedirs(args.model_path_clustering)
     else:
-        args.model_path_clustering = 'C:/dlpa_master/model/clustering/'
+        args.model_path_clustering = "C:/dlpa_master/model/clustering/"
         Path(args.model_path_clustering).mkdir(parents=True, exist_ok=True)
 
     # ********************************************************************************************
@@ -246,21 +252,21 @@ def hypers(args):
 
         vars(args).update(hypers)
         if args.data_period == 0:
-            period = 'weekly'
+            period = "weekly"
         else:
-            period = 'daily'
-        args.remote_file_path = '/home/seoul/models/%s_%s/' % (period, str(args.forward_date.date()))
+            period = "daily"
+        args.remote_file_path = "/home/seoul/models/%s_%s/" % (period, str(args.forward_date.date()))
 
         if args.train_num == 0:
             if args.data_period == 0:
-                period = 'weekly'
+                period = "weekly"
             else:
-                period = 'daily'
+                period = "daily"
             temp_forward_date = args.forward_date
             load_model_data(args)
             args.load_date = args.forward_date
             args.forward_date = temp_forward_date
-            args.remote_file_path = '/home/seoul/models/%s_%s/' % (period, str(args.load_date.date()))
+            args.remote_file_path = "/home/seoul/models/%s_%s/" % (period, str(args.load_date.date()))
 
         if args.train_num < args.lookback:
             if args.data_period == 0:
@@ -313,7 +319,7 @@ def hypers(args):
         #
         # def nan_removal(arr, condition, data_type):
         #     if arr is not None:
-        #         if data_type == 'x':
+        #         if data_type == "x":
         #             arr = arr[condition, :, :]
         #         else:
         #             arr = arr[condition, :]
@@ -321,13 +327,13 @@ def hypers(args):
         #     else:
         #         return None
         #
-        # trainX1 = nan_removal(trainX1, cond_train, 'x')
-        # trainX2 = nan_removal(trainX2, cond_train, 'x')
-        # validX1 = nan_removal(validX1, cond_valid, 'x')
-        # validX2 = nan_removal(validX2, cond_valid, 'x')
+        # trainX1 = nan_removal(trainX1, cond_train, "x")
+        # trainX2 = nan_removal(trainX2, cond_train, "x")
+        # validX1 = nan_removal(validX1, cond_valid, "x")
+        # validX2 = nan_removal(validX2, cond_valid, "x")
         #
-        # trainY = nan_removal(trainY, cond_train, 'y')
-        # validY = nan_removal(validY, cond_valid, 'y')
+        # trainY = nan_removal(trainY, cond_train, "y")
+        # validY = nan_removal(validY, cond_valid, "y")
 
         # ********************************************************************************************
         # ********************************* STAGE 1 **************************************************
@@ -375,23 +381,23 @@ def hypers(args):
                     Y_list.append(testY)
 
                 # Finding the common stocks between all the X and Ys in all days of week.
-                common_stocks = reduce(lambda left, right: pd.merge(left, right, on='ticker'), stocks_list_temp)
-                common_stocks = stocks_list_temp_x.merge(common_stocks, on='ticker')
+                common_stocks = reduce(lambda left, right: pd.merge(left, right, on="ticker"), stocks_list_temp)
+                common_stocks = stocks_list_temp_x.merge(common_stocks, on="ticker")
 
                 Y_list2 = []
                 X1_list2 = []
                 X2_list2 = []
 
                 # Finding the stocks that are not common in testX.
-                intersection_x = stocks_list_temp_x.merge(common_stocks, how='outer', on='ticker',
-                                                          indicator=True).query('_merge != "both"').drop('_merge',
+                intersection_x = stocks_list_temp_x.merge(common_stocks, how="outer", on="ticker",
+                                                          indicator=True).query("_merge != 'both'").drop("_merge",
                                                                                                          1).index.tolist()
 
                 # Finding the stocks that are not common in testYs.
                 for i in range(len(Y_list)):
-                    intersection_y = stocks_list_temp[i].merge(common_stocks, how='outer', on='ticker',
-                                                               indicator=True).query('_merge != "both"').drop(
-                        '_merge', 1).index.tolist()
+                    intersection_y = stocks_list_temp[i].merge(common_stocks, how="outer", on="ticker",
+                                                               indicator=True).query("_merge != 'both'").drop(
+                        "_merge", 1).index.tolist()
 
                     # Deleting the not common stocks in testXs and testYs.
                     Y_list2.append(np.delete(Y_list[i], intersection_y, 1))
@@ -471,19 +477,19 @@ def hypers(args):
                 # Finding the common list of stocks between all days of week.
                 result = stock_list_temp[0]
                 for df in stock_list_temp[1:]:
-                    result = pd.merge(result, df, how='inner')
+                    result = pd.merge(result, df, how="inner")
 
                 # Creating unified testXs and testYs.
                 for nn in range(5):
-                    m = result.merge(stock_list_temp[nn], how='outer', suffixes=['', '_'], indicator=True)
+                    m = result.merge(stock_list_temp[nn], how="outer", suffixes=["", "_"], indicator=True)
                     k = 0
-                    for j in range(len(m[m._merge != 'both'])):
+                    for j in range(len(m[m._merge != "both"])):
                         X1_list[nn] = np.delete(X1_list[nn], stock_list_temp[nn][
-                            stock_list_temp[nn].ticker == m[m._merge != 'both'].iloc[j]['ticker']].index - k, 1)
+                            stock_list_temp[nn].ticker == m[m._merge != "both"].iloc[j]["ticker"]].index - k, 1)
                         X2_list[nn] = np.delete(X2_list[nn], stock_list_temp[nn][
-                            stock_list_temp[nn].ticker == m[m._merge != 'both'].iloc[j]['ticker']].index - k, 1)
+                            stock_list_temp[nn].ticker == m[m._merge != "both"].iloc[j]["ticker"]].index - k, 1)
                         Y_list[nn] = np.delete(Y_list[nn], stock_list_temp[nn][
-                            stock_list_temp[nn].ticker == m[m._merge != 'both'].iloc[j]['ticker']].index - k, 1)
+                            stock_list_temp[nn].ticker == m[m._merge != "both"].iloc[j]["ticker"]].index - k, 1)
                         k = k + 1
 
                 testX1 = np.stack(X1_list)

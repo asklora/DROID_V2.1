@@ -6,18 +6,18 @@ import sqlalchemy as db
 from pandas.tseries.offsets import Week, BDay
 from sqlalchemy import text
 
-import global_vars
-from global_vars import production_model_data_table_name, no_top_models
+from dlpa import global_vars
+from dlpa.global_vars import production_model_data_table_name, no_top_models
 
 
 def download_model_data(args):
     # This function is used for downloading the latest available models data for the desired period.
     # E.g. takes the top 10(no_top_models) model and their properties based on their best_valid_acc.
     if args.data_period == 0:
-        period = 'weekly'
+        period = "weekly"
     else:
-        period = 'daily'
-    db_url = global_vars.DB_PROD_URL_READ
+        period = "daily"
+    db_url = global_vars.DB_URL_READ
     engine = db.create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
 
     with engine.connect() as conn:
@@ -34,11 +34,11 @@ def download_model_data(args):
 
     full_df = pd.DataFrame(ResultSet)
     full_df.columns = columns_list
-    # # Getting rid of 'should_use' column
+    # # Getting rid of "should_use" column
     # full_df = full_df.iloc[:, :-1]
     # if len(full_df) > 0:
     #     full_df.columns = args.aws_columns_list
-    full_df = full_df.sort_values(by=['best_valid_acc'], ascending=False)
+    full_df = full_df.sort_values(by=["best_valid_acc"], ascending=False)
     full_df = full_df.head(no_top_models)
 
     return full_df
@@ -51,14 +51,14 @@ def load_model_data(args):
     for items in args.temp_data.iteritems():
         temp_dict[items[0]] = items[1]
     args.train_num = 0
-    if args.data_period == 'weekly':
+    if args.data_period == "weekly":
         args.data_period = 0
     else:
         args.data_period = 1
 
-    if args.model_type == 'DLPA':
+    if args.model_type == "DLPA":
         args.model_type = 0
-    elif args.model_type == 'DLPM':
+    elif args.model_type == "DLPM":
         args.model_type = 1
     else:
         args.model_type = 2
@@ -80,15 +80,15 @@ def load_model_data(args):
 
 
 def candle_type_to_int(a):
-    if a == 'all':
+    if a == "all":
         return 0
-    if a == 'open':
+    if a == "open":
         return 1
-    if a == 'high':
+    if a == "high":
         return 2
-    if a == 'low':
+    if a == "low":
         return 3
-    if a == 'close':
+    if a == "close":
         return 4
-    if a == 'volume':
+    if a == "volume":
         return 5

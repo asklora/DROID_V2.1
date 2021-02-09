@@ -4,13 +4,13 @@ import pandas as pd
 import sqlalchemy as db
 from sqlalchemy import create_engine
 
-import global_vars
+from dlpa import global_vars
 
 
 def add_client_to_aws(Client_name, index_list, no_desired_tickers):
-    to_aws = pd.DataFrame(index_list, columns=['index'])
-    to_aws['Client_name'] = Client_name
-    to_aws['top_X'] = no_desired_tickers
+    to_aws = pd.DataFrame(index_list, columns=["currency_code"])
+    to_aws["Client_name"] = Client_name
+    to_aws["top_X"] = no_desired_tickers
 
     cols = to_aws.columns.tolist()
     cols = [cols[1]] + [cols[0], cols[2]]
@@ -20,11 +20,11 @@ def add_client_to_aws(Client_name, index_list, no_desired_tickers):
                            isolation_level="AUTOCOMMIT")
 
     with engine.connect() as conn:
-        to_aws.to_sql(con=conn, name=global_vars.client_table_name, if_exists='append', index=False)
+        to_aws.to_sql(con=conn, name=global_vars.client_table_name, if_exists="append", index=False)
 
 
-# list_1 = [ '0#.N225', '0#.KS200', '0#.TWII', '0#.HSLI', '0#.CSI300', '0#.FTSE', '0#.SXXE', '0#.SPX']
-# list_2 = ['0#.FTFBMKLCI', '0#.JKLQ45', '0#.SET50', '0#.NSEI', '0#.STI']
+# list_1 = [ "0#.N225", "0#.KS200", "0#.TWII", "0#.HSLI", "0#.CSI300", "0#.FTSE", "0#.SXXE", "0#.SPX"]
+# list_2 = ["0#.FTFBMKLCI", "0#.JKLQ45", "0#.SET50", "0#.NSEI", "0#.STI"]
 #
 # Client_name = "LORATECH"
 #
@@ -52,6 +52,6 @@ def get_client_information(args):
     full_df = pd.DataFrame(ResultSet)
     full_df.columns = columns_list
     # if full_df.shape[1] == 3:
-    #     full_df.columns = ['client_name', 'index', 'top_X']
+    #     full_df.columns = ["client_name", "index", "top_X"]
 
     return full_df

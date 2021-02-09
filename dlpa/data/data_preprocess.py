@@ -13,7 +13,7 @@ from sklearn.cluster import KMeans
 from multiprocessing import Pool
 from sqlalchemy import create_engine
 
-import global_vars
+from dlpa import global_vars
 
 
 def dataset_p(df, args, df2=None):
@@ -33,8 +33,8 @@ def dataset_p(df, args, df2=None):
     # Creating the X return dataset.
     args.candle_type = args.candle_type_returnsX
     if args.cluster_x:
-        args.clustering_model_filename = args.model_path_clustering + 'model_x_' + str(int(time.time())) + '.joblib'
-        args.cluster_centers_filename = args.model_path_clustering + 'centers__x' + str(int(time.time())) + '.npy'
+        args.clustering_model_filename = args.model_path_clustering + "model_x_" + str(int(time.time())) + ".joblib"
+        args.cluster_centers_filename = args.model_path_clustering + "centers__x" + str(int(time.time())) + ".npy"
         df_X1 = cluster_(df, args, args.cluster_no_x)
     else:
         df_X1 = returns_(df, args)
@@ -43,8 +43,8 @@ def dataset_p(df, args, df2=None):
     # Creating the Y return dataset.
     args.candle_type = args.candle_type_returnsY
     if args.cluster_y:
-        args.clustering_model_filename = args.model_path_clustering + 'model_y_' + str(int(time.time())) + '.joblib'
-        args.cluster_centers_filename = args.model_path_clustering + 'centers__y' + str(int(time.time())) + '.npy'
+        args.clustering_model_filename = args.model_path_clustering + "model_y_" + str(int(time.time())) + ".joblib"
+        args.cluster_centers_filename = args.model_path_clustering + "centers__y" + str(int(time.time())) + ".npy"
         df_Y_temp = cluster_(df, args, args.cluster_no_y)
         args.num_bins = args.cluster_no_y
     else:
@@ -59,7 +59,7 @@ def insert_missing_dates(df, args):
 
     # This function insert missing dates. if a date is missing for all the stocks.
 
-    df = df.resample('B').sum()
+    df = df.resample("B").sum()
     df[df == 0] = np.nan
     return df
 
@@ -68,7 +68,7 @@ def insert_missing_stocks(df, col_list):
     # I removed this function by fixing the input data.
 
     # This function insert missing stocks for each candle. We had this issue that the volume
-    # was missing for the whole data so this function makes sure that this won't happen anymore.
+    # was missing for the whole data so this function makes sure that this won"t happen anymore.
     # This function is ran for each candle later and fills the missing stocks for that candles.
 
     df = df.reindex(columns=col_list).fillna(np.nan)
@@ -85,24 +85,24 @@ def data_merging_clipping(df, args):
     # 1- Making the candles datetimeindex pandas and clean them by inserting missing dates and stocks for each candles.
     if args.candle_type == 0:
         # use pandas df to not worry about row,col orders
-        main_open = df.pivot_table(index=df.index, columns='ticker', values='open_multiple', aggfunc='first',
+        main_open = df.pivot_table(index=df.currency_code, columns="ticker", values="open_multiple", aggfunc="first",
                                    dropna=False)
-        # check for any completely missing stock names and fill in so that concat errors don't occur
+        # check for any completely missing stock names and fill in so that concat errors don"t occur
         main_open = insert_missing_dates(main_open, args)
 
-        main_high = df.pivot_table(index=df.index, columns='ticker', values='high_multiple', aggfunc='first',
+        main_high = df.pivot_table(index=df.currency_code, columns="ticker", values="high_multiple", aggfunc="first",
                                    dropna=False)
         main_high = insert_missing_dates(main_high, args)
 
-        main_low = df.pivot_table(index=df.index, columns='ticker', values='low_multiple', aggfunc='first',
+        main_low = df.pivot_table(index=df.currency_code, columns="ticker", values="low_multiple", aggfunc="first",
                                   dropna=False)
         main_low = insert_missing_dates(main_low, args)
 
-        main_close = df.pivot_table(index=df.index, columns='ticker', values='close_multiple', aggfunc='first',
+        main_close = df.pivot_table(index=df.currency_code, columns="ticker", values="close_multiple", aggfunc="first",
                                     dropna=False)
         main_close = insert_missing_dates(main_close, args)
 
-        main_volume = df.pivot_table(index=df.index, columns='ticker', values='volume_adj', aggfunc='first', dropna=False)
+        main_volume = df.pivot_table(index=df.currency_code, columns="ticker", values="volume_adj", aggfunc="first", dropna=False)
         main_volume = insert_missing_dates(main_volume, args)
 
         # Fixing the stocks with missing values for any of the candles for the whole period
@@ -125,7 +125,7 @@ def data_merging_clipping(df, args):
         # b = set(main_low.columns).union(set(main_close.columns))
         # b - set(main_low.columns)
     elif args.candle_type == 1:
-        main_open = df.pivot_table(index=df.index, columns='ticker', values='open_multiple', aggfunc='first',
+        main_open = df.pivot_table(index=df.currency_code, columns="ticker", values="open_multiple", aggfunc="first",
                                    dropna=False)
         main_open = insert_missing_dates(main_open, args)
         datasets = [main_open]
@@ -133,14 +133,14 @@ def data_merging_clipping(df, args):
 
 
     elif args.candle_type == 2:
-        main_high = df.pivot_table(index=df.index, columns='ticker', values='high_multiple', aggfunc='first',
+        main_high = df.pivot_table(index=df.currency_code, columns="ticker", values="high_multiple", aggfunc="first",
                                    dropna=False)
         main_high = insert_missing_dates(main_high, args)
         datasets = [main_high]
         args.stocks_list = main_high.columns
 
     elif args.candle_type == 3:
-        main_low = df.pivot_table(index=df.index, columns='ticker', values='low_multiple', aggfunc='first',
+        main_low = df.pivot_table(index=df.currency_code, columns="ticker", values="low_multiple", aggfunc="first",
                                   dropna=False)
         main_low = insert_missing_dates(main_low, args)
         datasets = [main_low]
@@ -148,10 +148,10 @@ def data_merging_clipping(df, args):
 
     elif args.candle_type == 4:
         if not args.tac_flag:
-            main_close = df.pivot_table(index=df.index, columns='ticker', values='close_multiple', aggfunc='first',
+            main_close = df.pivot_table(index=df.currency_code, columns="ticker", values="close_multiple", aggfunc="first",
                                         dropna=False)
         else:
-            main_close = df.pivot_table(index=df.index, columns='ticker', values='tac_price', aggfunc='first',
+            main_close = df.pivot_table(index=df.currency_code, columns="ticker", values="tac_price", aggfunc="first",
                                         dropna=False)
 
         main_close = insert_missing_dates(main_close, args)
@@ -159,12 +159,12 @@ def data_merging_clipping(df, args):
         args.stocks_list = main_close.columns
 
     elif args.candle_type == 5:
-        main_volume = df.pivot_table(index=df.index, columns='ticker', values='volume', aggfunc='first', dropna=False)
+        main_volume = df.pivot_table(index=df.currency_code, columns="ticker", values="volume", aggfunc="first", dropna=False)
         main_volume = insert_missing_dates(main_volume, args)
         datasets = [main_volume]
     else:
-        sys.exit('Unknown candle_type. It should be either "0" ->all or "1" ->open, or "2" ->high, or "3" ->low, '
-                 'or "4" ->close, or "5" ->volume!')
+        sys.exit("Unknown candle_type. It should be either '0' ->all or '1' ->open, or '2' ->high, or '3' ->low, "
+                 "or '4' ->close, or '4' ->volume!")
     # 2- Creates weekly dataset based on the desired day of week(only for weekly period).
     # 3- Concatenate all the datasets together.
     if args.data_period == 0:
@@ -201,7 +201,7 @@ def data_merging_clipping(df, args):
                 l_t = l_t[..., np.newaxis]
                 l = np.concatenate((l, l_t), axis=2)
     else:
-        sys.exit('Unknown data period. It should be either "0" ->weekly or "1" -> daily!')
+        sys.exit("Unknown data period. It should be either '0' ->weekly or '1' -> daily!")
 
     return l
 
@@ -227,7 +227,7 @@ def returns_(df, args):
         return bb
 
     else:
-        sys.exit('Unknown data period. It should be either "0" ->weekly or "1" -> daily!')
+        sys.exit("Unknown data period. It should be either '0' ->weekly or '1' -> daily!")
 
 
 def cluster_(df, args, cluster_no):
@@ -236,7 +236,7 @@ def cluster_(df, args, cluster_no):
     if args.data_period == 1:
         bb = aa.reshape(-1, aa.shape[-1])
 
-        # We have to fill all the nans with 1(for multiples) since Kmeans can't work with the data that has nans.
+        # We have to fill all the nans with 1(for multiples) since Kmeans can"t work with the data that has nans.
         bb = np.nan_to_num(bb, 1)
 
         clustering_model = KMeans(n_clusters=cluster_no).fit(bb)
@@ -256,7 +256,7 @@ def cluster_(df, args, cluster_no):
     elif args.data_period == 0:
         bb = aa.reshape(-1, aa.shape[-1])
 
-        # We have to fill all the nans with 1(for multiples) since Kmeans won't work with data that has nans.
+        # We have to fill all the nans with 1(for multiples) since Kmeans won"t work with data that has nans.
         bb = np.nan_to_num(bb, 1)
 
         # Adding mean of returns as the 6th column.
@@ -280,7 +280,7 @@ def cluster_(df, args, cluster_no):
 
         return clustering
     else:
-        sys.exit('Unknown data period. It should be either "0" ->weekly or "1" -> daily!')
+        sys.exit("Unknown data period. It should be either '0' ->weekly or '1' -> daily!")
 
 
 def create_Y(df):
@@ -297,7 +297,7 @@ def dataset_prep(df, args):
     # Get rid of the warnings for dataset operations
     pd.options.mode.chained_assignment = None
 
-    df['time'] = df['trading_day'].astype('datetime64[ns]')
+    df["time"] = df["trading_day"].astype("datetime64[ns]")
     max(df.time).weekday()
     # This makes sure that we have enough data to make a whole week for the last week.
     if max(df.time) < args.end_date:
@@ -311,7 +311,7 @@ def dataset_prep(df, args):
     datasett = df[(df.time >= args.start_date) & (df.time <= args.end_date)]
 
     # MAKE TIME INDEX PANDAS
-    datasett = datasett.set_index('time')
+    datasett = datasett.set_index("time")
 
     return datasett
 
@@ -589,7 +589,7 @@ def clean_categorize_ohlcv(input_df11, input_df22, output_dff, args, test_flag=F
 
 def create_train_test_valid_ohlcv(input_dataset11, input_dataset22, output_datasett, args, hypers):
     # This function prepares the train test validation datasets for the ohlcv model. So we will have two input
-    # datasets and one output datasets as function's inputs. The function returns trainX1(weekly returns), trainX2(
+    # datasets and one output datasets as function"s inputs. The function returns trainX1(weekly returns), trainX2(
     # candles) trainY(weekly return), ....
     input_dataset1 = np.copy(input_dataset11)
     input_dataset2 = np.copy(input_dataset22)
@@ -692,7 +692,7 @@ def create_train_test_valid_ohlcv(input_dataset11, input_dataset22, output_datas
         testX1, testX2, testY = None, None, None
 
     # final_prediction is the last batch of the dataset. In other words it is the batch that will be used to predict
-    # the next week return(from now) which means we don't have outputs for it.
+    # the next week return(from now) which means we don"t have outputs for it.
     #
     # 1 should be deducted because of the input y.
     final_prediction1 = input_dataset1[len(input_dataset1) - lookback:len(input_dataset1)]
@@ -799,13 +799,13 @@ def test_data_reshape(df1, df2, args, hypers):
     return df1, df2
 
 def create_tac_prices(full_df, args):
-    full_df['trading_day'] = pd.to_datetime(full_df['trading_day'])
+    full_df["trading_day"] = pd.to_datetime(full_df["trading_day"])
     full_df = full_df.infer_objects()
 
     close_df = full_df.pivot_table(
-        index='trading_day', columns='ticker', values='close_price', aggfunc='first', dropna=False)
+        index="trading_day", columns="ticker", values="close_price", aggfunc="first", dropna=False)
     close_multiple_df = full_df.pivot_table(
-        index='trading_day', columns='ticker', values='close_multiple', aggfunc='first', dropna=False)
+        index="trading_day", columns="ticker", values="close_multiple", aggfunc="first", dropna=False)
 
     close_multiple_df = close_multiple_df.reindex(index=close_df.index)
 
@@ -822,8 +822,8 @@ def create_tac_prices(full_df, args):
     for i in range(len(tac_df) - 2, -1, -1):
         tac_df.iloc[i, :] = tac_df.iloc[i + 1, :] / close_multiple_df.iloc[i + 1, :]
 
-    tac_df['trading_day'] = tac_df.index
-    tac_df = tac_df.melt(id_vars='trading_day', var_name="ticker", value_name="tac_price")
+    tac_df["trading_day"] = tac_df.index
+    tac_df = tac_df.melt(id_vars="trading_day", var_name="ticker", value_name="tac_price")
     close_multiple_df.iloc[-1,0]
     return tac_df
 
@@ -831,20 +831,20 @@ def create_tac_prices(full_df, args):
 def create_rv_df(full_df2, indices_df2, args):
     full_df = full_df2.copy()
     indices_df = indices_df2.copy()
-    indices_df.loc[indices_df['index']=='0#.ETF', 'index'] = '0#.SPX'
-    full_df['trading_day'] = pd.to_datetime(full_df['trading_day'])
-    indices_list = ['.HSLI', '.TWII', '.SXXGR', '.SPX', '.KS200', '.FTSE', '.STI', '.CSI300', '.N225']
-    full_df = full_df.merge(indices_df, on='ticker', how='left')
+    indices_df.loc[indices_df["index"]=="0#.ETF", "index"] = "0#.SPX"
+    full_df["trading_day"] = pd.to_datetime(full_df["trading_day"])
+    indices_list = [".HSLI", ".TWII", ".SXXGR", ".SPX", ".KS200", ".FTSE", ".STI", ".CSI300", ".N225"]
+    full_df = full_df.merge(indices_df, on="ticker", how="left")
 
-    full_df_indices = full_df.loc[full_df.ticker.isin(indices_list),['trading_day', 'index', 'close_multiple',
-                                                                     'open_multiple', 'high_multiple', 'low_multiple']]
-    full_df_indices.rename(columns={'open_multiple': 'open_multiple_ind', 'high_multiple': 'high_multiple_ind',
-                                    'low_multiple': 'low_multiple_ind','close_multiple': 'close_multiple_ind'}, inplace=True)
+    full_df_indices = full_df.loc[full_df.ticker.isin(indices_list),["trading_day", "index", "close_multiple",
+                                                                     "open_multiple", "high_multiple", "low_multiple"]]
+    full_df_indices.rename(columns={"open_multiple": "open_multiple_ind", "high_multiple": "high_multiple_ind",
+                                    "low_multiple": "low_multiple_ind","close_multiple": "close_multiple_ind"}, inplace=True)
 
-    full_df = full_df.merge(full_df_indices, on=['trading_day', 'index'], how='left')
+    full_df = full_df.merge(full_df_indices, on=["trading_day", "index"], how="left")
 
-    full_df[['open_multiple_ind', 'high_multiple_ind', 'low_multiple_ind', 'close_multiple_ind']] =\
-        full_df[['open_multiple_ind', 'high_multiple_ind', 'low_multiple_ind', 'close_multiple_ind']].fillna(value=1)
+    full_df[["open_multiple_ind", "high_multiple_ind", "low_multiple_ind", "close_multiple_ind"]] =\
+        full_df[["open_multiple_ind", "high_multiple_ind", "low_multiple_ind", "close_multiple_ind"]].fillna(value=1)
 
     full_df.open_multiple = full_df.open_multiple - full_df.open_multiple_ind + 1
     full_df.high_multiple = full_df.high_multiple - full_df.high_multiple_ind + 1
@@ -859,28 +859,28 @@ def create_rv_df(full_df2, indices_df2, args):
 def create_beta_df(full_df2, indices_df2, args):
     full_df = full_df2.copy()
     indices_df = indices_df2.copy()
-    full_df = full_df[full_df.trading_day < '2011-01-01']
+    full_df = full_df[full_df.trading_day < "2011-01-01"]
 
-    full_df['trading_day'] = pd.to_datetime(full_df['trading_day'])
-    indices_list = ['.HSLI', '.TWII', '.SXXGR', '.SPX', '.KS200', '.FTSE', '.STI', '.CSI300', '.N225']
-    indices_dict = {'0#.HSLI': '.HSLI', '0#.TWII': '.TWII', '0#.SXXE': '.SXXGR', '0#.SPX': '.SPX',
-                    '0#.KS200': '.KS200', '0#.FTSE': '.FTSE', '0#.STI': '.STI', '0#.CSI300': '.CSI300',
-                    '0#.N225': '.N225', '0#.ETF': '.SPX'}
-    indices_df.loc[indices_df['index']=='0#.ETF', 'index'] = '0#.SPX'
-    full_df = full_df.merge(indices_df, on='ticker', how='left')
+    full_df["trading_day"] = pd.to_datetime(full_df["trading_day"])
+    indices_list = [".HSLI", ".TWII", ".SXXGR", ".SPX", ".KS200", ".FTSE", ".STI", ".CSI300", ".N225"]
+    indices_dict = {"HKD": ".HSLI", "TWD": ".TWII", "EUR": ".SXXGR", "USD": ".SPX",
+                    "KRW": ".KS200", "GBP": ".FTSE", "SGD": ".STI", "CNY": ".CSI300",
+                    "JPY": ".N225"}
+    #indices_df.loc[indices_df["currency_code"]=="0#.ETF", "index"] = "0#.SPX"
+    full_df = full_df.merge(indices_df, on="ticker", how="left")
 
-    tri_df = full_df.pivot_table(index='trading_day', columns='ticker', values='tri', aggfunc='first', dropna=False)
+    tri_df = full_df.pivot_table(index="trading_day", columns="ticker", values="tri", aggfunc="first", dropna=False)
     tri_df_shifted = tri_df.shift(periods=5)
 
     weekly_ret = (tri_df / tri_df_shifted) - 1
-    weekly_ret = weekly_ret.resample('B').sum()
+    weekly_ret = weekly_ret.resample("B").sum()
 
     beta_df = pd.DataFrame(1, columns=weekly_ret.columns, index=weekly_ret.index)
 
     def bet_pool(data_inputs):
         a, indices_df, beta_df = data_inputs
         for col in a.columns:
-            ind = indices_df.loc[indices_df.ticker == col, 'index'].values
+            ind = indices_df.loc[indices_df.ticker == col, "currency_code"].values
             ind_ticker = indices_dict.get(ind[0])
             result = stats.linregress(a[col].values, a[ind_ticker].values)
             beta_df.loc[a.index[-1], col] = (max(min(result.slope, 3), -2.5))  # within range (-2.5, 3)
@@ -896,41 +896,41 @@ def create_beta_df(full_df2, indices_df2, args):
             data_inputs = [a, indices_df, beta_df]
             bet_pool(data_inputs)
 
-    beta_df['trading_day'] = beta_df.index
-    beta_df = beta_df.melt(id_vars='trading_day', var_name="ticker", value_name="beta")
-    full_df = full_df.merge(beta_df, on=['trading_day', 'ticker'], how='left')
+    beta_df["trading_day"] = beta_df.index
+    beta_df = beta_df.melt(id_vars="trading_day", var_name="ticker", value_name="beta")
+    full_df = full_df.merge(beta_df, on=["trading_day", "ticker"], how="left")
 
 
-    # full_df_indices = full_df.loc[full_df.ticker.isin(indices_list),['trading_day', 'index', 'close_multiple',
-    #                                                                  'open_multiple', 'high_multiple', 'low_multiple']]
-    # full_df_indices.rename(columns={'open_multiple': 'open_multiple_ind', 'high_multiple': 'high_multiple_ind',
-    #                                 'low_multiple': 'low_multiple_ind','close_multiple': 'close_multiple_ind'}, inplace=True)
+    # full_df_indices = full_df.loc[full_df.ticker.isin(indices_list),["trading_day", "index", "close_multiple",
+    #                                                                  "open_multiple", "high_multiple", "low_multiple"]]
+    # full_df_indices.rename(columns={"open_multiple": "open_multiple_ind", "high_multiple": "high_multiple_ind",
+    #                                 "low_multiple": "low_multiple_ind","close_multiple": "close_multiple_ind"}, inplace=True)
     #
-    # full_df = full_df.merge(full_df_indices, on=['trading_day', 'index'], how='left')
+    # full_df = full_df.merge(full_df_indices, on=["trading_day", "index"], how="left")
     #
-    # full_df[['open_multiple_ind', 'high_multiple_ind', 'low_multiple_ind', 'close_multiple_ind']] =\
-    #     full_df[['open_multiple_ind', 'high_multiple_ind', 'low_multiple_ind', 'close_multiple_ind']].fillna(value=1)
+    # full_df[["open_multiple_ind", "high_multiple_ind", "low_multiple_ind", "close_multiple_ind"]] =\
+    #     full_df[["open_multiple_ind", "high_multiple_ind", "low_multiple_ind", "close_multiple_ind"]].fillna(value=1)
 
     full_df.open_multiple = ((full_df.open_multiple - 1) / full_df.beta) + 1
     full_df.high_multiple = ((full_df.high_multiple - 1) / full_df.beta) + 1
     full_df.low_multiple = ((full_df.low_multiple - 1) / full_df.beta) + 1
     full_df.close_multiple = ((full_df.close_multiple - 1) / full_df.beta) + 1
 
-    full_df.loc[full_df.ticker.isin(indices_list), 'open_multiple'] = 1
-    full_df.loc[full_df.ticker.isin(indices_list), 'high_multiple'] = 1
-    full_df.loc[full_df.ticker.isin(indices_list), 'low_multiple'] = 1
-    full_df.loc[full_df.ticker.isin(indices_list), 'close_multiple'] = 1
+    full_df.loc[full_df.ticker.isin(indices_list), "open_multiple"] = 1
+    full_df.loc[full_df.ticker.isin(indices_list), "high_multiple"] = 1
+    full_df.loc[full_df.ticker.isin(indices_list), "low_multiple"] = 1
+    full_df.loc[full_df.ticker.isin(indices_list), "close_multiple"] = 1
 
     full_df = full_df.infer_objects()
     args.write_to_db_beta_df = True
     if args.write_to_db_beta_df:
-        table_name = 'master_daily_beta_adjusted_2'  # this is for sample testing,....
+        table_name = "master_daily_beta_adjusted_2"  # this is for sample testing,....
         engine = create_engine(global_vars.DB_DL_TEST_URL, pool_size=multiprocessing.cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
 
         with engine.connect() as conn:
-            full_df.to_sql(con=conn, name=table_name, chunksize=int(len(full_df) / 50), schema='public',
-                            if_exists='replace', index=False, method='multi')
-        print(f'Saved the data to {table_name}!')
+            full_df.to_sql(con=conn, name=table_name, chunksize=int(len(full_df) / 50), schema="public",
+                            if_exists="replace", index=False, method="multi")
+        print(f"Saved the data to {table_name}!")
 
     return full_df
 

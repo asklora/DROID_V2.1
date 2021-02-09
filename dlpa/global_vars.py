@@ -21,12 +21,15 @@ main_input_data_table_name = get_master_multiple_table_name()
 client_table_name = "client_group"
 master_ohlcv_table_name = get_master_ohlcvtr_table_name()
 
+test_model_data_table_name = "test_model_data"
+test_inference_table_name = "test_model_stock_data"
+test_portfolio_table_name = "test_portfolios"
 
 # Portfolio parameters
 no_top_models = 10
 signal_threshold = 0.5
 # aws parameters
-aws_columns_list = ["model_type", "data_period", "when_created", "forward_date", "forward_week", "forward_dow",
+aws_columns_list = ["model_type", "data_period", "created", "forward_date", "forward_week", "forward_dow",
                     "train_dow", "best_train_acc",
                     "best_valid_acc", "test_acc_1", "test_acc_2", "test_acc_3", "test_acc_4",
                     "test_acc_5", "run_time_min", "train_num", "cnn_kernel_size",

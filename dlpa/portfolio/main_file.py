@@ -18,13 +18,13 @@ from pandas.tseries.offsets import BDay, Week
 from sqlalchemy import create_engine, and_
 from sqlalchemy.types import Date
 
-import global_vars
-from global_vars import no_top_models
+from dlpa import global_vars
+from dlpa.global_vars import no_top_models
 
 
 def portfolio_maker(args):
     if args.portfolio_period is None:
-        sys.exit('Please specify portfolio period.!')
+        sys.exit("Please specify portfolio period.!")
 
     if args.go_live:
         d = dt.date.today()
@@ -44,10 +44,10 @@ def portfolio_maker(args):
             sys.exit("Please specify only forward_date or spot_date!")
 
         if args.forward_date is not None:
-            args.forward_date = datetime.strptime(f'{args.forward_date}', '%Y-%m-%d').date()
+            args.forward_date = datetime.strptime(f"{args.forward_date}", "%Y-%m-%d").date()
 
         if args.spot_date is not None:
-            args.spot_date = datetime.strptime(f'{args.spot_date}', '%Y-%m-%d').date()
+            args.spot_date = datetime.strptime(f"{args.spot_date}", "%Y-%m-%d").date()
 
             if args.portfolio_period == 0:
                 args.forward_date = args.spot_date + Week(1)
@@ -60,16 +60,16 @@ def portfolio_maker(args):
     table0 = args.stock_table_name
     table_models = args.model_table_name
 
-    # args.forward_date = datetime.strptime(f'{args.portfolio_year} {args.portfolio_week} {args.portfolio_day}',
-    #                                         '%G %V %u').strftime('%Y-%m-%d')
+    # args.forward_date = datetime.strptime(f"{args.portfolio_year} {args.portfolio_week} {args.portfolio_day}",
+    #                                         "%G %V %u").strftime("%Y-%m-%d")
 
     args.forward_date_0 = str(args.forward_date)
-    args.forward_date_1 = args.forward_date.strftime('%Y-%m-%d')
+    args.forward_date_1 = args.forward_date.strftime("%Y-%m-%d")
 
     if args.portfolio_period == 0:
-        period = 'weekly'
+        period = "weekly"
     else:
-        period = 'daily'
+        period = "daily"
 
     # *************************************************************************************************
     # ****************************** Download the models **********************************************
@@ -97,9 +97,9 @@ def portfolio_maker(args):
     models_df.columns = columns_list
 
     # if models_df.shape[1] is not None:
-    #     models_df.columns = ['data_period', 'when_created', 'forward_date', 'best_train_acc', 'best_valid_acc',
-    #                          'model_type',
-    #                          'model_filename', 'pc_number']
+    #     models_df.columns = ["data_period", "when_created", "forward_date", "best_train_acc", "best_valid_acc",
+    #                          "model_type",
+    #                          "model_filename", "pc_number"]
 
     models_df.fillna(value=0, inplace=True)
     # *************************************************************************************************
@@ -128,33 +128,33 @@ def portfolio_maker(args):
     full_df.columns = columns_list
 
     # if full_df.shape[1] is not None:
-    #     full_df.columns = ['data_period', 'when_created', 'forward_date', 'spot_date', 'index', 'ticker',
-    #                        'predicted_quantile_1',
-    #                        'signal_strength_1', 'model_filename']
+    #     full_df.columns = ["data_period", "when_created", "forward_date", "spot_date", "index", "ticker",
+    #                        "predicted_quantile_1",
+    #                        "signal_strength_1", "model_filename"]
 
     full_df.fillna(value=0, inplace=True)
 
     # *************************************************************************************************
     # ****************************** Pick the top models **********************************************
-    models_df = models_df.sort_values(by=['best_valid_acc'], ascending=False)
-    models_df = models_df.loc[models_df.pc_number.isin(['PC1','PC2','PC3','PC4', 'Stephen'])]
+    models_df = models_df.sort_values(by=["best_valid_acc"], ascending=False)
+    models_df = models_df.loc[models_df.pc_number.isin(["PC1","PC2","PC3","PC4", "Stephen"])]
 
     top_models_list = models_df.model_filename.head(no_top_models)
-    full_df = full_df.loc[full_df['model_filename'].isin(top_models_list)]
+    full_df = full_df.loc[full_df["model_filename"].isin(top_models_list)]
 
     # *************************************************************************************************
     full_df = full_df[full_df.signal_strength_1 > full_df.signal_strength_1.quantile(1 - args.signal_threshold)]
 
     gb = full_df.groupby(
-        ['data_period', 'forward_date', 'index', 'ticker', 'predicted_quantile_1', 'spot_date'])
-    portfolio_1 = gb.size().to_frame(name='counts')
-    portfolio_1 = (portfolio_1.join(gb.agg({'signal_strength_1': 'mean'}).rename(
-        columns={'signal_strength_1': 'signal_strength_mean'})).reset_index())
+        ["data_period", "forward_date", "index", "ticker", "predicted_quantile_1", "spot_date"])
+    portfolio_1 = gb.size().to_frame(name="counts")
+    portfolio_1 = (portfolio_1.join(gb.agg({"signal_strength_1": "mean"}).rename(
+        columns={"signal_strength_1": "signal_strength_mean"})).reset_index())
 
-    # top_stocks = portfolio_1.sort_values(by=['counts', 'signal_strength_mean'], ascending=False)
+    # top_stocks = portfolio_1.sort_values(by=["counts", "signal_strength_mean"], ascending=False)
 
-    # list_1 = [ '0#.N225', '0#.KS200', '0#.TWII', '0#.HSLI', '0#.CSI300', '0#.FTSE', '0#.SXXE', '0#.SPX']
-    # list_2 = ['0#.FTFBMKLCI', '0#.JKLQ45', '0#.SET50', '0#.NSEI', '0#.STI']
+    # list_1 = [ "0#.N225", "0#.KS200", "0#.TWII", "0#.HSLI", "0#.CSI300", "0#.FTSE", "0#.SXXE", "0#.SPX"]
+    # list_2 = ["0#.FTFBMKLCI", "0#.JKLQ45", "0#.SET50", "0#.NSEI", "0#.STI"]
 
     #write out WTS DLP scores to DROID DB
     if args.go_live:
@@ -166,9 +166,9 @@ def portfolio_maker(args):
 
             temprows = portfolio_2
             for index, row in temprows.iterrows():
-                ticker = row['ticker']
-                dlp_rating = row['counts']
-                dlp_ss = row['signal_strength_mean']
+                ticker = row["ticker"]
+                dlp_rating = row["counts"]
+                dlp_ss = row["signal_strength_mean"]
                 query = f"update droid_universe set wts_rating ={dlp_rating} where ticker='{ticker}'"
                 query2 = f"update droid_universe set wts_rating2 ={dlp_ss} where ticker='{ticker}'"
                 result = conn.execute(query)
@@ -177,22 +177,22 @@ def portfolio_maker(args):
         engine.dispose()
 
     def pick_top_stocks(portfolio, index, number_desired_stocks=10):
-        sorted_df = portfolio.sort_values(by=['counts', 'signal_strength_mean'], ascending=False)
+        sorted_df = portfolio.sort_values(by=["counts", "signal_strength_mean"], ascending=False)
 
-        top_buy = sorted_df[(sorted_df.predicted_quantile_1 == 2) & (sorted_df['index'] == index)][
-                      ['forward_date', 'index', 'ticker', 'spot_date']][0:number_desired_stocks]
-        top_hold = sorted_df[(sorted_df.predicted_quantile_1 == 1) & (sorted_df['index'] == index)][
-                       ['forward_date', 'index', 'ticker', 'spot_date']][0:number_desired_stocks]
-        top_sell = sorted_df[(sorted_df.predicted_quantile_1 == 0) & (sorted_df['index'] == index)][
-                       ['forward_date', 'index', 'ticker', 'spot_date']][0:number_desired_stocks]
+        top_buy = sorted_df[(sorted_df.predicted_quantile_1 == 2) & (sorted_df["index"] == index)][
+                      ["forward_date", "index", "ticker", "spot_date"]][0:number_desired_stocks]
+        top_hold = sorted_df[(sorted_df.predicted_quantile_1 == 1) & (sorted_df["index"] == index)][
+                       ["forward_date", "index", "ticker", "spot_date"]][0:number_desired_stocks]
+        top_sell = sorted_df[(sorted_df.predicted_quantile_1 == 0) & (sorted_df["index"] == index)][
+                       ["forward_date", "index", "ticker", "spot_date"]][0:number_desired_stocks]
 
         top_buy.reset_index(inplace=True, drop=True)
         top_hold.reset_index(inplace=True, drop=True)
         top_sell.reset_index(inplace=True, drop=True)
 
-        top_buy['rank'] = top_buy.index + 1
-        top_hold['rank'] = top_hold.index + 1
-        top_sell['rank'] = top_sell.index + 1
+        top_buy["rank"] = top_buy.index + 1
+        top_hold["rank"] = top_hold.index + 1
+        top_sell["rank"] = top_sell.index + 1
         return top_buy, top_hold, top_sell
 
 
@@ -204,40 +204,40 @@ def portfolio_maker(args):
         top_sell = top_sell.append(c)
 
     if args.portfolio_period == 0:
-        top_buy['prediction_period'] = 'weekly'
-        top_hold['prediction_period'] = 'weekly'
-        top_sell['prediction_period'] = 'weekly'
+        top_buy["prediction_period"] = "weekly"
+        top_hold["prediction_period"] = "weekly"
+        top_sell["prediction_period"] = "weekly"
     elif args.portfolio_period == 1:
-        top_buy['prediction_period'] = 'daily'
-        top_hold['prediction_period'] = 'daily'
-        top_sell['prediction_period'] = 'daily'
+        top_buy["prediction_period"] = "daily"
+        top_hold["prediction_period"] = "daily"
+        top_sell["prediction_period"] = "daily"
     else:
-        top_buy['prediction_period'] = 'PIT'
-        top_hold['prediction_period'] = 'PIT'
-        top_sell['prediction_period'] = 'PIT'
+        top_buy["prediction_period"] = "PIT"
+        top_hold["prediction_period"] = "PIT"
+        top_sell["prediction_period"] = "PIT"
 
-    top_buy['when_created'] = datetime.fromtimestamp(time.time())
-    top_hold['when_created'] = datetime.fromtimestamp(time.time())
-    top_sell['when_created'] = datetime.fromtimestamp(time.time())
+    top_buy["when_created"] = datetime.fromtimestamp(time.time())
+    top_hold["when_created"] = datetime.fromtimestamp(time.time())
+    top_sell["when_created"] = datetime.fromtimestamp(time.time())
 
-    top_buy['type'] = 'Buy'
-    top_hold['type'] = 'Hold'
-    top_sell['type'] = 'Sell'
+    top_buy["type"] = "Buy"
+    top_hold["type"] = "Hold"
+    top_sell["type"] = "Sell"
 
-    top_buy['client_name'] = args.client_name
-    top_hold['client_name'] = args.client_name
-    top_sell['client_name'] = args.client_name
+    top_buy["client_name"] = args.client_name
+    top_hold["client_name"] = args.client_name
+    top_sell["client_name"] = args.client_name
 
-    top_buy['top_x'] = args.stock_num
-    top_hold['top_x'] = args.stock_num
-    top_sell['top_x'] = args.stock_num
+    top_buy["top_x"] = args.stock_num
+    top_hold["top_x"] = args.stock_num
+    top_sell["top_x"] = args.stock_num
     
-    top_buy['uid'] = top_buy['spot_date']+top_buy['index']+top_buy['type']+top_buy['ticker']+'|'+top_buy['client_name']
-    top_buy['uid'] = top_buy['uid'].str.replace('0#.','').str.replace('-','').str.replace('.','')
-    top_hold['uid'] = top_hold['spot_date']+top_hold['index']+top_hold['type']+top_hold['ticker']+'|'+top_hold['client_name']
-    top_hold['uid'] = top_hold['uid'].str.replace('0#.','').str.replace('-','').str.replace('.','')
-    top_sell['uid'] = top_sell['spot_date']+top_sell['index']+top_sell['type']+top_sell['ticker']+'|'+top_sell['client_name']
-    top_sell['uid'] = top_sell['uid'].str.replace('0#.','').str.replace('-','').str.replace('.','')
+    top_buy["uid"] = top_buy["spot_date"]+top_buy["index"]+top_buy["type"]+top_buy["ticker"]+"|"+top_buy["client_name"]
+    top_buy["uid"] = top_buy["uid"].str.replace("0#.","").str.replace("-","").str.replace(".","")
+    top_hold["uid"] = top_hold["spot_date"]+top_hold["index"]+top_hold["type"]+top_hold["ticker"]+"|"+top_hold["client_name"]
+    top_hold["uid"] = top_hold["uid"].str.replace("0#.","").str.replace("-","").str.replace(".","")
+    top_sell["uid"] = top_sell["spot_date"]+top_sell["index"]+top_sell["type"]+top_sell["ticker"]+"|"+top_sell["client_name"]
+    top_sell["uid"] = top_sell["uid"].str.replace("0#.","").str.replace("-","").str.replace(".","")
 
     top_buy = top_buy.infer_objects()
     top_hold = top_hold.infer_objects()
@@ -247,41 +247,41 @@ def portfolio_maker(args):
     db_url = global_vars.DB_PROD_URL_WRITE
     engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
     # check table client portfolios for dupes before each top_xxx.to_sql
-    # DELETE WHERE spot_date = top_buy['spot_date'] AND forward_date=top_buy['forward_date'], AND client_name =top_buy['client_name ']  AND index = top_buy['index '] AND type = 'Buy'
+    # DELETE WHERE spot_date = top_buy["spot_date"] AND forward_date=top_buy["forward_date"], AND client_name =top_buy["client_name "]  AND index = top_buy["index "] AND type = "Buy"
     with engine.connect() as conn:
-        temprows = top_buy.loc[top_buy['rank'] == 1]
+        temprows = top_buy.loc[top_buy["rank"] == 1]
         for index, row in temprows.iterrows():
-            spot_date = row['spot_date']
-            forward_date = row['forward_date']
-            client_name = row['client_name']
-            index = row['index']
-            query = f"delete from client_portfolios where spot_date='{spot_date}' AND forward_date='{forward_date}' AND client_name='{client_name}' AND index='{index}'  AND type ='Buy'"
+            spot_date = row["spot_date"]
+            forward_date = row["forward_date"]
+            client_name = row["client_name"]
+            currency_code = row["currency_code"]
+            query = f"delete from client_portfolios where spot_date='{spot_date}' AND forward_date='{forward_date}' AND client_name='{client_name}' AND currency_code='{currency_code}'  AND type ='Buy'"
             #print(query)
             result = conn.execute(query)
             #print(result)
 
     # # check table client portfolios for dupes before each top_hold.to_sql
-    # # DELETE WHERE spot_date = top_hold['spot_date'] AND forward_date=top_hold['forward_date'], AND client_name =top_hold['client_name ']  AND index = top_hold['index '] AND type = 'Hold'
-    # temprows= top_hold.loc[top_buy['rank']==1]
+    # # DELETE WHERE spot_date = top_hold["spot_date"] AND forward_date=top_hold["forward_date"], AND client_name =top_hold["client_name "]  AND index = top_hold["index "] AND type = "Hold"
+    # temprows= top_hold.loc[top_buy["rank"]==1]
     # for index, row in temprows.iterrows():
-    #     spot_date = row['spot_date']
-    #     forward_date = row['forward_date']
-    #     client_name = row['client_name']
-    #     index = row['index']
-    #     query = f"delete from client_portfolios where spot_date='{spot_date}' AND forward_date='{forward_date}' AND client_name='{client_name}' AND index='{index}'  AND type ='Hold'"
+    #     spot_date = row["spot_date"]
+    #     forward_date = row["forward_date"]
+    #     client_name = row["client_name"]
+    #     index = row["index"]
+    #     query = f"delete from client_portfolios where spot_date="{spot_date}" AND forward_date="{forward_date}" AND client_name="{client_name}" AND index="{index}"  AND type ="Hold""
     #     print(query)
     #     result = engine.execute(query)
     #     print(result)
     #
     # # check table client portfolios for dupes before each top_sell.to_sql
-    # # DELETE WHERE spot_date = top_sell['spot_date'] AND forward_date=top_sell['forward_date'], AND client_name =top_sell['client_name ']  AND index = top_sell['index '] AND type = 'Sell'
-    # temprows= top_sell.loc[top_buy['rank']==1]
+    # # DELETE WHERE spot_date = top_sell["spot_date"] AND forward_date=top_sell["forward_date"], AND client_name =top_sell["client_name "]  AND index = top_sell["index "] AND type = "Sell"
+    # temprows= top_sell.loc[top_buy["rank"]==1]
     # for index, row in temprows.iterrows():
-    #     spot_date = row['spot_date']
-    #     forward_date = row['forward_date']
-    #     client_name = row['client_name']
-    #     index = row['index']
-    #     query = f"delete from client_portfolios where spot_date='{spot_date}' AND forward_date='{forward_date}' AND client_name='{client_name}' AND index='{index}'  AND type ='Sell'"
+    #     spot_date = row["spot_date"]
+    #     forward_date = row["forward_date"]
+    #     client_name = row["client_name"]
+    #     index = row["index"]
+    #     query = f"delete from client_portfolios where spot_date="{spot_date}" AND forward_date="{forward_date}" AND client_name="{client_name}" AND index="{index}"  AND type ="Sell""
     #     print(query)
     #     result = engine.execute(query)
     #     print(result)
@@ -292,21 +292,21 @@ def portfolio_maker(args):
     with engine.connect() as conn:
         top_buy.to_sql(con=conn,
         name=table,
-        if_exists='append',
+        if_exists="append",
         index=False,
         dtype={
-            'spot_date': Date,
-            'forward_date': Date
+            "spot_date": Date,
+            "forward_date": Date
             })
-        # top_hold.to_sql(con=conn, name='client_portfolios', if_exists='append', index=False)
-        # top_sell.to_sql(con=conn, name='client_portfolios', if_exists='append', index=False)
+        # top_hold.to_sql(con=conn, name="client_portfolios", if_exists="append", index=False)
+        # top_sell.to_sql(con=conn, name="client_portfolios", if_exists="append", index=False)
 
     return top_buy, top_hold, top_sell
 
     # if args.send_email:
-    #     top_buy.to_csv('top_buy_top_10.csv')
-    #     top_hold.to_csv('top_hold_top_10.csv')
-    #     top_sell.to_csv('top_sell_top_10.csv')
+    #     top_buy.to_csv("top_buy_top_10.csv")
+    #     top_hold.to_csv("top_hold_top_10.csv")
+    #     top_sell.to_csv("top_sell_top_10.csv")
     # ******************************************************
 
     # top_buy, top_hold, top_sell = pick_top_stocks(portfolio_1, list_2[0], 5)
@@ -317,54 +317,54 @@ def portfolio_maker(args):
     #     top_sell = top_sell.append(c)
     #
     # if args.portfolio_period == 0:
-    #     top_buy['prediction_period'] = 'weekly'
-    #     top_hold['prediction_period'] = 'weekly'
-    #     top_sell['prediction_period'] = 'weekly'
+    #     top_buy["prediction_period"] = "weekly"
+    #     top_hold["prediction_period"] = "weekly"
+    #     top_sell["prediction_period"] = "weekly"
     # elif args.portfolio_period == 1:
-    #     top_buy['prediction_period'] = 'daily'
-    #     top_hold['prediction_period'] = 'daily'
-    #     top_sell['prediction_period'] = 'daily'
+    #     top_buy["prediction_period"] = "daily"
+    #     top_hold["prediction_period"] = "daily"
+    #     top_sell["prediction_period"] = "daily"
     # else:
-    #     top_buy['prediction_period'] = 'PIT'
-    #     top_hold['prediction_period'] = 'PIT'
-    #     top_sell['prediction_period'] = 'PIT'
+    #     top_buy["prediction_period"] = "PIT"
+    #     top_hold["prediction_period"] = "PIT"
+    #     top_sell["prediction_period"] = "PIT"
     #
-    # top_buy['when_created'] =datetime.fromtimestamp(time.time())
-    # top_hold['when_created'] =datetime.fromtimestamp(time.time())
-    # top_sell['when_created'] =datetime.fromtimestamp(time.time())
+    # top_buy["when_created"] =datetime.fromtimestamp(time.time())
+    # top_hold["when_created"] =datetime.fromtimestamp(time.time())
+    # top_sell["when_created"] =datetime.fromtimestamp(time.time())
     #
     # if args.send_email:
-    #     top_buy.to_csv('top_buy_top_5.csv')
-    #     top_hold.to_csv('top_hold_top_5.csv')
-    #     top_sell.to_csv('top_sell_top_5.csv')
+    #     top_buy.to_csv("top_buy_top_5.csv")
+    #     top_hold.to_csv("top_hold_top_5.csv")
+    #     top_sell.to_csv("top_sell_top_5.csv")
 
 
 def send_email(args):
-    # csv_list = ['top_buy_top_10.csv','top_hold_top_10.csv','top_sell_top_10.csv','top_buy_top_5.csv','top_hold_top_5.csv','top_sell_top_5.csv']
-    # csv_list = ['top_buy_top_10.csv',  'top_buy_top_5.csv']
+    # csv_list = ["top_buy_top_10.csv","top_hold_top_10.csv","top_sell_top_10.csv","top_buy_top_5.csv","top_hold_top_5.csv","top_sell_top_5.csv"]
+    # csv_list = ["top_buy_top_10.csv",  "top_buy_top_5.csv"]
     USERNAME = "asklora@loratechai.com"
     PASSWORD = "askLORA20$"
 
     if args.portfolio_period == 0:
-        portfolio_period = 'weekly'
+        portfolio_period = "weekly"
     elif args.portfolio_period == 1:
-        portfolio_period = 'daily'
+        portfolio_period = "daily"
     else:
-        portfolio_period = 'PIT'
+        portfolio_period = "PIT"
 
-    mail_content = "Hello, The %s portfolios for %s." % (portfolio_period, args.forward_date.strftime('%Y-%m-%d'))
-    send_from = 'asklora@loratechai.com'
+    mail_content = "Hello, The %s portfolios for %s." % (portfolio_period, args.forward_date.strftime("%Y-%m-%d"))
+    send_from = "asklora@loratechai.com"
 
-    send_to = ['stepchoi@loratechai.com', 'imansaj@loratechai.com', 'info@loratechai.com', 'john.kim@loratechai.com']
-    send_to = ['imansaj@loratechai.com', 'stepchoi@loratechai.com']  # For debugging. Should be commented normally.
+    send_to = ["stepchoi@loratechai.com", "imansaj@loratechai.com", "info@loratechai.com", "john.kim@loratechai.com"]
+    send_to = ["imansaj@loratechai.com", "stepchoi@loratechai.com"]  # For debugging. Should be commented normally.
 
-    subject = "%s portfolios for %s." % (portfolio_period, args.forward_date.strftime('%Y-%m-%d'))
+    subject = "%s portfolios for %s." % (portfolio_period, args.forward_date.strftime("%Y-%m-%d"))
     msg = MIMEMultipart()
-    msg['From'] = send_from
+    msg["From"] = send_from
     x = COMMASPACE.join(send_to)
-    msg['To'] = COMMASPACE.join(send_to)
-    msg['Date'] = formatdate(localtime=True)
-    msg['Subject'] = subject
+    msg["To"] = COMMASPACE.join(send_to)
+    msg["Date"] = formatdate(localtime=True)
+    msg["Subject"] = subject
     for file in args.csv_list:
         path = file
         # Open the files in binary mode.  Let the MIMEImage class automatically
@@ -373,49 +373,49 @@ def send_email(args):
         if ctype is None or encoding is not None:
             # No guess could be made, or the file is encoded (compressed), so
             # use a generic bag-of-bits type.
-            ctype = 'application/octet-stream'
-        maintype, subtype = ctype.split('/', 1)
-        if maintype == 'text':
+            ctype = "application/octet-stream"
+        maintype, subtype = ctype.split("/", 1)
+        if maintype == "text":
             with open(path) as fp:
                 # Note: we should handle calculating the charset
                 outer = MIMEText(fp.read(), _subtype=subtype)
         else:
-            with open(path, 'rb') as fp:
+            with open(path, "rb") as fp:
                 outer = MIMEBase(maintype, subtype)
                 outer.set_payload(fp.read())
             encoders.encode_base64(outer)
-        outer.add_header('Content-Disposition', 'attachment', filename=file)
+        outer.add_header("Content-Disposition", "attachment", filename=file)
         msg.attach(outer)
 
-    msg.attach(MIMEText(mail_content, 'plain'))
+    msg.attach(MIMEText(mail_content, "plain"))
     context = ssl.create_default_context()
 
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        # server = smtplib.SMTP_SSL('smtp.gmail.com', 465) # if
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        # server = smtplib.SMTP_SSL("smtp.gmail.com", 465) # if
         server.ehlo()
         server.starttls(context=context)
         server.login(USERNAME, PASSWORD)
         server.sendmail(send_from, send_to, msg.as_string())  # need as_string
         server.close()
 
-        print('Email sent!')
+        print("Email sent!")
     except Exception as e:
-        print('Something went wrong...')
+        print("Something went wrong...")
         print(e)
 
 
 def get_dates_list_from_aws(args):
-    args.forward_date_start = datetime.strptime(f'{args.forward_date_start}', '%Y-%m-%d').date()
-    args.forward_date_stop = datetime.strptime(f'{args.forward_date_stop}', '%Y-%m-%d').date()
+    args.forward_date_start = datetime.strptime(f"{args.forward_date_start}", "%Y-%m-%d").date()
+    args.forward_date_stop = datetime.strptime(f"{args.forward_date_stop}", "%Y-%m-%d").date()
 
-    args.forward_date_start_1 = args.forward_date_start.strftime('%Y-%m-%d')
-    args.forward_date_stop_1 = args.forward_date_stop.strftime('%Y-%m-%d')
+    args.forward_date_start_1 = args.forward_date_start.strftime("%Y-%m-%d")
+    args.forward_date_stop_1 = args.forward_date_stop.strftime("%Y-%m-%d")
 
     if args.portfolio_period == 0:
-        period = 'weekly'
+        period = "weekly"
     else:
-        period = 'daily'
+        period = "daily"
 
     db_url = global_vars.DB_PROD_URL_READ
     engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
@@ -445,21 +445,21 @@ def get_dates_list_from_aws(args):
     full_df.columns = columns_list
 
     # if full_df.shape[1] is not None:
-    #     full_df.columns = ['data_period', 'when_created', 'forward_date', 'spot_date', 'index', 'ticker',
-    #                        'predicted_quantile_1',
-    #                        'signal_strength_1', 'model_filename']
+    #     full_df.columns = ["data_period", "when_created", "forward_date", "spot_date", "index", "ticker",
+    #                        "predicted_quantile_1",
+    #                        "signal_strength_1", "model_filename"]
 
     full_df.fillna(value=0, inplace=True)
 
-    a = full_df['forward_date'].unique()
+    a = full_df["forward_date"].unique()
     return a
 
 
 def record_DLP_rating(args): #record 4wk and 13wk DLP ratings to DROID DB
     if args.portfolio_period is None:
-        sys.exit('Please specify portfolio period.!')
+        sys.exit("Please specify portfolio period.!")
     if args.num_periods_to_predict<1:
-        sys.exit('Need periods_to_predict <1!')
+        sys.exit("Need periods_to_predict <1!")
     if args.go_live:
         d = dt.date.today()
 
@@ -474,16 +474,16 @@ def record_DLP_rating(args): #record 4wk and 13wk DLP ratings to DROID DB
     table0 = args.stock_table_name
     table_models = args.model_table_name
 
-    # args.forward_date = datetime.strptime(f'{args.portfolio_year} {args.portfolio_week} {args.portfolio_day}',
-    #                                         '%G %V %u').strftime('%Y-%m-%d')
+    # args.forward_date = datetime.strptime(f"{args.portfolio_year} {args.portfolio_week} {args.portfolio_day}",
+    #                                         "%G %V %u").strftime("%Y-%m-%d")
 
     args.forward_date_0 = str(args.forward_date)
-    args.forward_date_1 = args.forward_date.strftime('%Y-%m-%d')
+    args.forward_date_1 = args.forward_date.strftime("%Y-%m-%d")
 
     if args.portfolio_period == 0:
-        period = 'weekly'
+        period = "weekly"
     else:
-        sys.exit('No records for daily DLP scores!')
+        sys.exit("No records for daily DLP scores!")
 
     # *************************************************************************************************
     # ****************************** Download the models **********************************************
@@ -541,20 +541,20 @@ def record_DLP_rating(args): #record 4wk and 13wk DLP ratings to DROID DB
 
     # *************************************************************************************************
     # ****************************** Pick the top models **********************************************
-    models_df = models_df.sort_values(by=['best_valid_acc'], ascending=False) #sort by valid acc
-    models_df = models_df.loc[models_df.pc_number.isin(['PC1','PC2','PC3','PC4', 'Stephen'])]
+    models_df = models_df.sort_values(by=["best_valid_acc"], ascending=False) #sort by valid acc
+    models_df = models_df.loc[models_df.pc_number.isin(["PC1","PC2","PC3","PC4", "Stephen"])]
 
     top_models_list = models_df.model_filename.head(no_top_models) #take top TEN models by valid_acc
-    full_df = full_df.loc[full_df['model_filename'].isin(top_models_list)]
+    full_df = full_df.loc[full_df["model_filename"].isin(top_models_list)]
 
     # *************************************************************************************************
     full_df = full_df[full_df.signal_strength_1 > full_df.signal_strength_1.quantile(1 - args.signal_threshold)]
 
     gb = full_df.groupby(
-        ['data_period', 'forward_date', 'index', 'ticker', 'predicted_quantile_1', 'spot_date'])
-    portfolio_1 = gb.size().to_frame(name='counts')
-    portfolio_1 = (portfolio_1.join(gb.agg({'signal_strength_1': 'mean'}).rename(
-        columns={'signal_strength_1': 'signal_strength_mean'})).reset_index())
+        ["data_period", "forward_date", "index", "ticker", "predicted_quantile_1", "spot_date"])
+    portfolio_1 = gb.size().to_frame(name="counts")
+    portfolio_1 = (portfolio_1.join(gb.agg({"signal_strength_1": "mean"}).rename(
+        columns={"signal_strength_1": "signal_strength_mean"})).reset_index())
 
 
     if args.go_live:
@@ -573,9 +573,9 @@ def record_DLP_rating(args): #record 4wk and 13wk DLP ratings to DROID DB
 
             temprows = portfolio_2
             for index, row in temprows.iterrows():
-                ticker = row['ticker']
-                dlp_rating = row['counts']
-                dlp_ss = row['signal_strength_mean']
+                ticker = row["ticker"]
+                dlp_rating = row["counts"]
+                dlp_ss = row["signal_strength_mean"]
                 if args.num_periods_to_predict == 4:
                     query = f"update droid_universe set dlp_1m ={dlp_rating} where ticker='{ticker}'"
                 elif args.num_periods_to_predict == 1:
@@ -597,10 +597,10 @@ def get_last_dlp_rating_date(args):
         data = pd.read_sql(query, con=conn)
     engine.dispose()
     data = pd.DataFrame(data)
-    if(data.loc[0, 'max_date'] == None):
+    if(data.loc[0, "max_date"] == None):
         return (datetime(2019, 12, 1).date()).strftime("%Y-%m-%d")
     print("DONE")
-    return str(data.loc[0, 'max_date'])
+    return str(data.loc[0, "max_date"])
 
 def dlp_rating_history(args): #record 4wk and 13wk DLP ratings to DROID DB
     #Data Initial
@@ -619,7 +619,7 @@ def dlp_rating_history(args): #record 4wk and 13wk DLP ratings to DROID DB
     while start_date_friday.weekday() != 4:
         start_date_friday -= BDay(1)
 
-    period = 'weekly'
+    period = "weekly"
     args.portfolio_period = 0
 
     #Calculate DLP Rating Historical
@@ -648,8 +648,8 @@ def Test(args):
     production_model_stock_data_table = args.stock_table_name
     db_url = global_vars.DB_DROID_URL_READ
     engine = create_engine(db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    result = pd.DataFrame({'spot_date':[],'index':[],
-                    'ticker_1':[],'ticker_2':[],'ticker_3':[]}, index=[])
+    result = pd.DataFrame({"spot_date":[],"index":[],
+                    "ticker_1":[],"ticker_2":[],"ticker_3":[]}, index=[])
     with engine.connect() as conn:
         metadata = db.MetaData()
         query = f"select distinct index, forward_date from dlp_rating_history where forward_date>='{args.forward_date}' order by forward_date, index"
@@ -658,15 +658,15 @@ def Test(args):
         data = pd.DataFrame(data)
 
         for index, row in data.iterrows():
-            indices = row['index']
-            forward_date = row['forward_date']
+            indices = row["index"]
+            forward_date = row["forward_date"]
             query = f"select ticker, ribbon_score, wts_score, forward_date, index from dlp_rating_history where index='{indices}' and forward_date = '{forward_date}' order by ribbon_score DESC, wts_score DESC limit 3"
             temp_result = pd.read_sql(query, con=conn)
             temp_result = pd.DataFrame(temp_result)
-            temp_result = pd.DataFrame({'spot_date':[forward_date],'index':[indices],
-                'ticker_1':[temp_result.loc[0, 'ticker']],
-                'ticker_2':[temp_result.loc[1, 'ticker']],
-                'ticker_3':[temp_result.loc[2, 'ticker']]}, index=[index])
+            temp_result = pd.DataFrame({"spot_date":[forward_date],"index":[indices],
+                "ticker_1":[temp_result.loc[0, "ticker"]],
+                "ticker_2":[temp_result.loc[1, "ticker"]],
+                "ticker_3":[temp_result.loc[2, "ticker"]]}, index=[index])
             result = result.append(temp_result)
         print(result)
     engine.dispose()
@@ -676,11 +676,11 @@ def Test(args):
     with engine.connect() as conn:
         metadata = db.MetaData()
         for index, row in result.iterrows():
-            indices = row['index']
-            ticker_1 = row['ticker_1']
-            ticker_2 = row['ticker_2']
-            ticker_3 = row['ticker_3']
-            spot_date = row['spot_date']
+            indices = row["index"]
+            ticker_1 = row["ticker_1"]
+            ticker_2 = row["ticker_2"]
+            ticker_3 = row["ticker_3"]
+            spot_date = row["spot_date"]
             query = f"insert into lora_test_picks (spot_date, index, ticker_1, ticker_2, ticker_3) VALUES ('{spot_date}', '{indices}', '{ticker_1}', '{ticker_2}' ,'{ticker_3}') ON CONFLICT DO NOTHING;"
             result = conn.execute(query)
     engine.dispose()
@@ -704,20 +704,20 @@ def process_dlp_rating_history(args):
 
     # *************************************************************************************************
     # ****************************** Pick the top models **********************************************
-    models_df = models_df.sort_values(by=['best_valid_acc'], ascending=False) #sort by valid acc
-    models_df = models_df.loc[models_df.pc_number.isin(['PC1','PC2','PC3','PC4', 'Stephen'])]
+    models_df = models_df.sort_values(by=["best_valid_acc"], ascending=False) #sort by valid acc
+    models_df = models_df.loc[models_df.pc_number.isin(["PC1","PC2","PC3","PC4", "Stephen"])]
 
     top_models_list = models_df.model_filename.head(no_top_models) #take top TEN models by valid_acc
-    full_df = full_df.loc[full_df['model_filename'].isin(top_models_list)]
+    full_df = full_df.loc[full_df["model_filename"].isin(top_models_list)]
 
     # *************************************************************************************************
     full_df = full_df[full_df.signal_strength_1 > full_df.signal_strength_1.quantile(1 - args.signal_threshold)]
 
     gb = full_df.groupby(
-        ['data_period', 'forward_date', 'index', 'ticker', 'predicted_quantile_1', 'spot_date'])
-    portfolio_1 = gb.size().to_frame(name='counts')
-    portfolio_1 = (portfolio_1.join(gb.agg({'signal_strength_1': 'mean'}).rename(
-        columns={'signal_strength_1': 'signal_strength_mean'})).reset_index())
+        ["data_period", "forward_date", "index", "ticker", "predicted_quantile_1", "spot_date"])
+    portfolio_1 = gb.size().to_frame(name="counts")
+    portfolio_1 = (portfolio_1.join(gb.agg({"signal_strength_1": "mean"}).rename(
+        columns={"signal_strength_1": "signal_strength_mean"})).reset_index())
 
     del models_df, full_df, gb, top_models_list
     return portfolio_1
@@ -745,19 +745,19 @@ def insert_data_to_database(args, data):
 
     portfolio_2= data[data.predicted_quantile_1 == 2]
     #Make UID
-    portfolio_2['forward_date'] = portfolio_2['forward_date'].astype(str)
-    portfolio_2['uid']=portfolio_2['forward_date'] + "_" + portfolio_2['ticker']
-    portfolio_2['uid']=portfolio_2['uid'].str.replace(" 00:00:00", "")
-    portfolio_2['uid']=portfolio_2['uid'].str.strip()
-    portfolio_2['forward_date'] = pd.to_datetime(portfolio_2['forward_date'])
+    portfolio_2["forward_date"] = portfolio_2["forward_date"].astype(str)
+    portfolio_2["uid"]=portfolio_2["forward_date"] + "_" + portfolio_2["ticker"]
+    portfolio_2["uid"]=portfolio_2["uid"].str.replace(" 00:00:00", "")
+    portfolio_2["uid"]=portfolio_2["uid"].str.strip()
+    portfolio_2["forward_date"] = pd.to_datetime(portfolio_2["forward_date"])
     engine = create_engine(global_vars.DB_DROID_URL_WRITE, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
         temprows = portfolio_2
         for index, row in temprows.iterrows():
-            ticker = row['ticker']
-            dlp_rating = row['counts']
-            dlp_ss = row['signal_strength_mean']
-            uid = row['uid']
+            ticker = row["ticker"]
+            dlp_rating = row["counts"]
+            dlp_ss = row["signal_strength_mean"]
+            uid = row["uid"]
             if args.num_periods_to_predict == 4:
                 query = f"update dlp_rating_history set dlp_1m ={dlp_rating} where uid='{uid}'"
             elif args.num_periods_to_predict == 1:

@@ -78,7 +78,7 @@ class TopStockModelStock(models.Model):
     num_periods_to_predict = models.IntegerField(null=True,blank=True)
     number_of_quantiles = models.IntegerField(null=True,blank=True)
     predicted_quantile_1 = models.IntegerField(null=True,blank=True)
-    signal_strength_1 = models.BooleanField(null=True,blank=True, default=False)
+    signal_strength_1 = models.FloatField(null=True, blank=True)
     
     pc_number = models.TextField(null=True, blank=True)
 
