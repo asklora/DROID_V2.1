@@ -5,17 +5,20 @@ import tensorflow as tf
 from hyperopt import STATUS_OK
 from keras.callbacks import EarlyStopping
 from tensorflow.python.keras import callbacks
-from tensorflow.python.keras.layers import Input, GRU, Dense, Concatenate, Bidirectional, Attention, \
-    Flatten, Embedding, LeakyReLU, Conv3D
+from tensorflow.python.keras.layers import (
+    Input, GRU, Dense, Concatenate, 
+    Bidirectional, Attention, 
+    Flatten, Embedding, LeakyReLU, 
+    Conv3D)
 from tensorflow.python.keras.models import Model
 
 from dlpa.data.data_output import write_to_sql, write_to_sql_model_data
 from dlpa.data.data_preprocess import test_data_reshape
 from dlpa.model.ec2_fns import save_to_ec2, load_from_ec2
-
+from dlpa.global_vars import epoch
 
 def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX2, testY, final_prediction1,
-               final_prediction2, indices_df, args, hypers):
+               final_prediction2, indices_df, hypers):
     if args.test_num != 0:
         # Removing the nan rows in test datasets
         args.test_mask = np.squeeze(args.test_mask)
@@ -25,9 +28,9 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
         testY = testY[:, args.test_mask, :]
 
     if args.cnn_kernel_size != 0:
-        model, history = model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, args, hypers)
+        model, history = model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hypers)
     else:
-        model, history = model_returns(trainX1, trainY, validX1, validY, args, hypers)
+        model, history = model_returns(trainX1, trainY, validX1, validY, hypers)
 
     if args.train_num != 0:
         if args.save_ec2:
@@ -46,7 +49,7 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
         predict_zeros = np.zeros((testX1.shape[1], 1))
 
         scores = np.zeros(5)
-        tempX1, tempX2 = test_data_reshape(testX1, testX2, args, hypers)
+        tempX1, tempX2 = test_data_reshape(testX1, testX2, hypers)
         # tempX1 = testX1[...,np.newaxis]
         if args.cnn_kernel_size != 0:
             for i in range(len(testX1)):
@@ -68,35 +71,35 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
         args.test_acc_5 = None
 
     if args.train_num != 0:
-        args.best_train_acc = max(history.history["sparse_categorical_accuracy"])
-        args.best_valid_acc = max(history.history["val_sparse_categorical_accuracy"])
+        args.best_train_acc = max(history.history['sparse_categorical_accuracy'])
+        args.best_valid_acc = max(history.history['val_sparse_categorical_accuracy'])
 
-        args.lowest_train_loss = min(history.history["loss"])
-        args.lowest_valid_loss = min(history.history["val_loss"])
+        args.lowest_train_loss = min(history.history['loss'])
+        args.lowest_valid_loss = min(history.history['val_loss'])
 
-        args.best_valid_epoch = (np.asarray(history.history["val_sparse_categorical_accuracy"])).argmax()
-        args.best_train_epoch = (np.asarray(history.history["sparse_categorical_accuracy"])).argmin()
+        args.best_valid_epoch = (np.asarray(history.history['val_sparse_categorical_accuracy'])).argmax()
+        args.best_train_epoch = (np.asarray(history.history['sparse_categorical_accuracy'])).argmin()
 
     if args.save_plots:
         # Accuracy plots
         plt.figure()
-        plt.plot(history.history["sparse_categorical_accuracy"])
-        plt.plot(history.history["val_sparse_categorical_accuracy"])
-        plt.title("model accuracy")
-        plt.ylabel("accuracy")
-        plt.xlabel("epoch")
-        plt.legend(["train", "test"], loc="upper left")
+        plt.plot(history.history['sparse_categorical_accuracy'])
+        plt.plot(history.history['val_sparse_categorical_accuracy'])
+        plt.title('model accuracy')
+        plt.ylabel('accuracy')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
         plt.savefig(args.plot_path + "plot_acc_" + str(int(args.timestamp)) + ".png")
         plt.close()
 
         # Loss plots
         plt.figure()
-        plt.plot(history.history["loss"])
-        plt.plot(history.history["val_loss"])
-        plt.title("model loss")
-        plt.ylabel("loss")
-        plt.xlabel("epoch")
-        plt.legend(["train", "test"], loc="upper left")
+        plt.plot(history.history['loss'])
+        plt.plot(history.history['val_loss'])
+        plt.title('model loss')
+        plt.ylabel('loss')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
         plt.savefig(args.plot_path + "plot_loss_" + str(int(args.timestamp)) + ".png")
         plt.close()
 
@@ -121,7 +124,6 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
             else:
                 predicted_values = model.predict([tempX1[0].astype(float), predict_zeros])
         else:
-            predicted_values = None
             print("test_num is zero. no data is written to aws.")
     if predicted_values is not None:
         # TODO Change entire DLPA repo to fit this output format???
@@ -132,28 +134,28 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
     # Write the model data to AWS
     write_to_sql_model_data(args)
     keras.backend.clear_session()
-    return {"loss": 1 - args.best_valid_acc, "status": STATUS_OK}
+    return {'loss': 1 - args.best_valid_acc, 'status': STATUS_OK}
 
 
-def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, args, hypers):
+def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hypers):
     # The attention based sequence to sequence model for weekly returns + candles.
 
     if args.train_num != 0:
-        learning_rate = 10 ** -int(hypers["learning_rate"])
-        batch_size = 2 ** int(hypers["batch_size"])
-        lookback = int(hypers["lookback"])
+        learning_rate = 10 ** -int(hypers['learning_rate'])
+        batch_size = 2 ** int(hypers['batch_size'])
+        lookback = int(hypers['lookback'])
 
         cnn_kernel_size = int(args.cnn_kernel_size)
 
-        hidden_size = int(hypers["num_hidden"])
-        attention_hidden_size = int(hypers["num_hidden_att"])
-        dropout = float(hypers["dropout"])
+        hidden_size = int(hypers['num_hidden'])
+        attention_hidden_size = int(hypers['num_hidden_att'])
+        dropout = float(hypers['dropout'])
 
-        args.param_name_1 = "num_hidden"
+        args.param_name_1 = 'num_hidden'
         args.param_val_1 = hidden_size
-        args.param_name_2 = "num_hidden_att"
+        args.param_name_2 = 'num_hidden_att'
         args.param_val_2 = attention_hidden_size
-        args.param_name_3 = "dropout"
+        args.param_name_3 = 'dropout'
         args.param_val_3 = dropout
         args.param_name_4 = None
         args.param_val_4 = None
@@ -182,8 +184,8 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, ar
     # ******************************************************************************
     # used for encoder
     encoder_gru = Bidirectional(
-        GRU(hidden_size, return_sequences=True, return_state=True, name="encoder_gru", dropout=dropout),
-        name="bidirectional_encoder")
+        GRU(hidden_size, return_sequences=True, return_state=True, name='encoder_gru', dropout=dropout),
+        name='bidirectional_encoder')
 
     # CNN model
     if args.data_period == 0:  # WEEKLY
@@ -201,32 +203,32 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, ar
 
     if args.candle_type_candles == 0:
         if args.data_period == 0:
-            x_1 = Conv3D(cnn_kernel_size, (1, 1, 5), strides=(1, 1, 5), padding="valid", name="conv1")(input_img)
+            x_1 = Conv3D(cnn_kernel_size, (1, 1, 5), strides=(1, 1, 5), padding='valid', name='conv1')(input_img)
             x_1 = LeakyReLU(alpha=0.1)(x_1)
 
-            x_1 = Conv3D(cnn_kernel_size * 2, (1, 5, 1), strides=(1, 5, 1), padding="valid", name="conv2")(x_1)
+            x_1 = Conv3D(cnn_kernel_size * 2, (1, 5, 1), strides=(1, 5, 1), padding='valid', name='conv2')(x_1)
             x_1 = LeakyReLU(alpha=0.1)(x_1)
         else:
-            x_1 = Conv3D(cnn_kernel_size * 2, (1, 5, 1), strides=(1, 5, 1), padding="valid", name="conv2")(input_img)
+            x_1 = Conv3D(cnn_kernel_size * 2, (1, 5, 1), strides=(1, 5, 1), padding='valid', name='conv2')(input_img)
             x_1 = LeakyReLU(alpha=0.1)(x_1)
     else:
         if args.data_period == 0:
-            x_1 = Conv3D(cnn_kernel_size * 2, (5, 1, 1), strides=(5, 1, 1), padding="valid", name="conv2")(input_img)
+            x_1 = Conv3D(cnn_kernel_size * 2, (5, 1, 1), strides=(5, 1, 1), padding='valid', name='conv2')(input_img)
             x_1 = LeakyReLU(alpha=0.1)(x_1)
         else:
-            x_1 = Conv3D(cnn_kernel_size * 2, (1, 1, 1), strides=(1, 1, 1), padding="valid", name="conv2")(input_img)
+            x_1 = Conv3D(cnn_kernel_size * 2, (1, 1, 1), strides=(1, 1, 1), padding='valid', name='conv2')(input_img)
             x_1 = LeakyReLU(alpha=0.1)(x_1)
 
     flatt = Flatten()
     x_1 = flatt(x_1)
-    CNN_dense = Dense(lookback, activation="relu")
+    CNN_dense = Dense(lookback, activation='relu')
     x_1 = CNN_dense(x_1)
     x_1 = tf.reshape(x_1, (-1, x_1.shape[1], 1))
 
     # Encoder
     if args.embedding_flag:
         # In case we wanted to use embedding.
-        encoder_inputs = Input(shape=(lookback), name="enc_input")
+        encoder_inputs = Input(shape=(lookback), name='enc_input')
         x = Embedding(input_dim=args.unique_num_of_returns, output_dim=hidden_size, input_length=2 * lookback)(
             encoder_inputs)
 
@@ -249,17 +251,17 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, ar
     decoder_initial_state = Concatenate(axis=-1)([encoder_fwd_state, encoder_back_state])
 
     # Since the decoder is filled up one by one the input should be one.
-    decoder_inputs = Input(shape=1, name="dec_input")
+    decoder_inputs = Input(shape=1, name='dec_input')
 
     # used for decoder
-    decoder_gru = GRU(hidden_size * 2, return_sequences=True, return_state=True, name="decoder_gru",
+    decoder_gru = GRU(hidden_size * 2, return_sequences=True, return_state=True, name='decoder_gru',
                       dropout=dropout)
 
     # used for attention
     attn_layer = Attention(attention_hidden_size)
 
     # The final softmax layer for inference.
-    dense = Dense(num_bins, activation="softmax", name="softmax_layer")
+    dense = Dense(num_bins, activation='softmax', name='softmax_layer')
 
     all_outputs = []
     inputs = decoder_inputs
@@ -295,17 +297,17 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, ar
 
     full_model = Model(inputs=[input_img, encoder_inputs, decoder_inputs], outputs=decoder_outputs)
 
-    full_model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy",
-                       metrics=["sparse_categorical_accuracy"])
+    full_model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy',
+                       metrics=['sparse_categorical_accuracy'])
 
     full_model.summary()
 
     # Early stopping for the model
-    es = EarlyStopping(monitor="val_loss", mode="min", verbose=1, patience=30)
+    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=30)
 
     # Checkpoint for saving the model.
     checkpoint = callbacks.ModelCheckpoint(args.model_path + args.model_filename,
-                                           monitor="val_sparse_categorical_accuracy", mode="max", verbose=1,
+                                           monitor='val_sparse_categorical_accuracy', mode='max', verbose=1,
                                            save_best_only=True,
                                            save_weights_only=True, period=1)
     callbacks_list = [checkpoint, es]
@@ -315,14 +317,14 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, ar
             # USE A VALIDATION SET
             history = full_model.fit([trainX2, trainX1, decoder_input_df_no_force], trainY, batch_size=batch_size,
                                      callbacks=callbacks_list,
-                                     epochs=args.epoch,
+                                     epochs=epoch,
                                      validation_data=([validX2, validX1, decoder_input_valid_no_force], validY),
                                      verbose=1)
         else:
             # USE A RANDOM SPLIT
             history = full_model.fit([trainX2, trainX1, decoder_input_df_no_force], trainY, batch_size=batch_size,
                                      callbacks=callbacks_list,
-                                     epochs=args.epoch,
+                                     epochs=epoch,
                                      validation_split=.2,
                                      verbose=1)
     else:
@@ -331,23 +333,23 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, ar
     return full_model, history
 
 
-def model_returns(trainX, trainY, validX, validY, args, hypers):
+def model_returns(trainX, trainY, validX, validY, hypers):
     # The attention based sequence to sequence model for weekly returns.
 
     if args.train_num != 0:
-        batch_size = 2 ** int(hypers["batch_size"])
-        learning_rate = 10 ** -int(hypers["learning_rate"])
-        lookback = int(hypers["lookback"])
+        batch_size = 2 ** int(hypers['batch_size'])
+        learning_rate = 10 ** -int(hypers['learning_rate'])
+        lookback = int(hypers['lookback'])
 
-        hidden_size = int(hypers["num_hidden"])
-        attention_hidden_size = int(hypers["num_hidden_att"])
-        dropout = float(hypers["dropout"])
+        hidden_size = int(hypers['num_hidden'])
+        attention_hidden_size = int(hypers['num_hidden_att'])
+        dropout = float(hypers['dropout'])
 
-        args.param_name_1 = "num_hidden"
+        args.param_name_1 = 'num_hidden'
         args.param_val_1 = hidden_size
-        args.param_name_2 = "num_hidden_att"
+        args.param_name_2 = 'num_hidden_att'
         args.param_val_2 = attention_hidden_size
-        args.param_name_3 = "dropout"
+        args.param_name_3 = 'dropout'
         args.param_val_3 = dropout
         args.param_name_4 = None
         args.param_val_4 = None
@@ -374,8 +376,8 @@ def model_returns(trainX, trainY, validX, validY, args, hypers):
     # ******************************************************************************
     # used for encoder
     encoder_gru = Bidirectional(
-        GRU(hidden_size, return_sequences=True, return_state=True, name="encoder_gru", dropout=dropout),
-        name="bidirectional_encoder")
+        GRU(hidden_size, return_sequences=True, return_state=True, name='encoder_gru', dropout=dropout),
+        name='bidirectional_encoder')
 
     # Encoder
     if args.embedding_flag:
@@ -397,14 +399,14 @@ def model_returns(trainX, trainY, validX, validY, args, hypers):
     decoder_inputs = Input(shape=1)
 
     # used for decoder
-    decoder_gru = GRU(hidden_size * 2, return_sequences=True, return_state=True, name="decoder_gru",
+    decoder_gru = GRU(hidden_size * 2, return_sequences=True, return_state=True, name='decoder_gru',
                       dropout=dropout)
 
     # used for attention
     attn_layer = Attention(attention_hidden_size)
 
     # The final softmax layer for inference.
-    dense = Dense(num_bins, activation="softmax", name="softmax_layer")
+    dense = Dense(num_bins, activation='softmax', name='softmax_layer')
 
     all_outputs = []
     inputs = decoder_inputs
@@ -440,17 +442,17 @@ def model_returns(trainX, trainY, validX, validY, args, hypers):
 
     full_model = Model(inputs=[encoder_inputs, decoder_inputs], outputs=decoder_outputs)
 
-    full_model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy",
-                       metrics=["sparse_categorical_accuracy"])
+    full_model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy',
+                       metrics=['sparse_categorical_accuracy'])
 
     full_model.summary()
 
     # Early stopping for the model
-    es = EarlyStopping(monitor="val_loss", mode="min", verbose=1, patience=30)
+    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=30)
 
     # Checkpoint for saving the model.
     checkpoint = callbacks.ModelCheckpoint(args.model_path + args.model_filename,
-                                           monitor="val_sparse_categorical_accuracy", mode="max", verbose=1,
+                                           monitor='val_sparse_categorical_accuracy', mode='max', verbose=1,
                                            save_best_only=True,
                                            save_weights_only=True, period=1)
     callbacks_list = [checkpoint, es]
@@ -459,13 +461,13 @@ def model_returns(trainX, trainY, validX, validY, args, hypers):
         if validX is not None:
             history = full_model.fit([trainX, decoder_input_df_no_force], trainY, batch_size=batch_size,
                                      callbacks=callbacks_list,
-                                     epochs=args.epoch,
+                                     epochs=epoch,
                                      validation_data=([validX, decoder_input_valid_no_force], validY),
                                      verbose=1)
         else:
             history = full_model.fit([trainX, decoder_input_df_no_force], trainY, batch_size=batch_size,
                                      callbacks=callbacks_list,
-                                     epochs=args.epoch, validation_split=.2,
+                                     epochs=epoch, validation_split=.2,
                                      verbose=1)
     else:
         history = None

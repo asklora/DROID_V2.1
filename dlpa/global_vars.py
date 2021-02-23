@@ -1,3 +1,5 @@
+import platform
+from pathlib import Path
 from general.sql_process import db_read, db_write
 from general.table_name import (
     get_universe_table_name,
@@ -25,6 +27,8 @@ test_model_data_table_name = "test_model_data"
 test_inference_table_name = "test_model_stock_data"
 test_portfolio_table_name = "test_portfolios"
 
+num_bins = 3
+epoch = 25
 # Portfolio parameters
 no_top_models = 10
 signal_threshold = 0.5
@@ -40,3 +44,12 @@ aws_columns_list = ["model_type", "data_period", "created", "forward_date", "for
                     "candle_type_returnsX", "candle_type_returnsY", "candle_type_candles", "seed",
                     "best_valid_epoch", "best_train_epoch", "model_filename",
                     "pc_number", "stock_percentage", "valid_num", "test_num", "num_periods_to_predict"]
+
+if platform.system() == 'Linux':
+    model_path = '/home/loratech/PycharmProjects/models/'
+    plot_path = '/home/loratech/PycharmProjects/plots/'
+    model_path_clustering = '/home/loratech/PycharmProjects/models/clustering/'
+else:
+    model_path = 'C:/dlpa_master/model/'
+    plot_path = 'C:/dlpa_master/plots/'
+    model_path_clustering = 'C:/dlpa_master/model/clustering/'

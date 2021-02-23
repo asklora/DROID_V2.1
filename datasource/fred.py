@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
 import pandas as pd
 
 def read_fred_csv(start_date, end_date):
