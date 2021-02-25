@@ -9,3 +9,4 @@ django-admin startapp master core/master
 django-admin startapp topstock core/topstock
 django-admin startapp Clients core/Clients
 django-admin startapp signals core/signals
+django-admin startapp survey core/survey
