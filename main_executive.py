@@ -9,11 +9,15 @@ from bot.final_model import populate_vol_infer
 from bot.main_file import populate_bot_data
 from general.sql_query import get_active_universe
 from general.table_name import get_bot_data_table_name
-from bot.data_download import get_bot_data_latest_date, get_data_vol_surface_ticker, get_executive_data_download, get_new_tickers
-
+from bot.data_download import (
+    get_backtest_latest_date, 
+    get_bot_data_latest_date, 
+    get_data_vol_surface_ticker, 
+    get_executive_data_download, get_new_ticker_from_bot_backtest, 
+    get_new_tickers, get_new_tickers_from_bot_data, get_volatility_latest_date)
 from general.slack import report_to_slack
 from general.date_process import dateNow, datetimeNow, droid_start_date_buffer, str_to_date, timeNow, droid_start_date
-from global_vars import saved_path, saved_model_path
+from global_vars import saved_model_path
 
 # 	main_exec.py --option_maker_daily --exec_index 0#.FTSE --add_inferred
 # 	main_exec.py --option_maker_daily_ucdc --exec_index 0#.FTSE --add_inferred
@@ -59,13 +63,28 @@ from global_vars import saved_path, saved_model_path
 #     time_to_exp = ["2w", "4w", "1m", "8w", "2m", "3m", "6m"]
 #     report_to_slack("{} : === UCDC STATISTICS COMPLETED ===".format(dateNow()))
 
+def daily_uno(ticker=None, currency_code=None, infer=True):
+    data_prep_daily(ticker=ticker, currency_code=currency_code)
+    if(infer):
+        infer_daily(ticker=ticker, currency_code=currency_code)
+
+def daily_ucdc(ticker=None, currency_code=None, infer=True):
+    data_prep_daily(ticker=ticker, currency_code=currency_code)
+    if(infer):
+        infer_daily(ticker=ticker, currency_code=currency_code)
+
+def daily_classic(ticker=None, currency_code=None):
+    data_prep_daily(ticker=ticker, currency_code=currency_code)
+
 def data_prep_daily(ticker=None, currency_code=None):
     print("{} : === {} DATA PREPERATION STARTED ===".format(dateNow(), currency_code))
     start_date = get_bot_data_latest_date(daily=True)
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
+
     populate_bot_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, daily=True)
+    print("{} : === DATA PREPERATION COMPLETED ===".format(dateNow()))
     if type(ticker) != type(None):
         report_to_slack("{} : === {} DATA PREPERATION COMPLETED ===".format(dateNow(), ticker))
     elif type(currency_code) != type(None):
@@ -73,18 +92,20 @@ def data_prep_daily(ticker=None, currency_code=None):
     else:
         report_to_slack("{} : === DATA PREPERATION DAILY COMPLETED ===".format(dateNow()))
 
-def data_prep_check_new_ticker(currency_code=None):
+def data_prep_check_new_ticker(ticker=None, currency_code=None):
     print("{} : === DATA PREPERATION CHECK NEW TICKER STARTED ===".format(dateNow()))
     start_date = str_to_date(droid_start_date())
     start_date2 = str_to_date(droid_start_date_buffer())
     end_date = str_to_date(dateNow())
+    print(f"The start date is set as: {start_date}")
+    print(f"The end date is set as: {end_date}")
     date_identifier = "trading_day"
-    table_name = get_bot_data_table_name()
-    new_ticker = get_new_tickers(currency_code, start_date, start_date2, date_identifier, table_name)
+    new_ticker = get_new_tickers_from_bot_data(start_date, start_date2, date_identifier, ticker=ticker, currency_code=currency_code)
     if (len(new_ticker) > 0):
         new_ticker = new_ticker["ticker"].tolist()
         print(f"Found {len(new_ticker)} New Ticker {tuple(new_ticker)}")
         populate_bot_data(start_date=start_date, end_date=end_date, ticker=new_ticker, new_ticker=True)
+        print("{} : === DATA PREPERATION CHECK NEW TICKER COMPLETED ===".format(dateNow()))
         report_to_slack("{} : === DATA PREPERATION CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
 def data_prep_history():
@@ -95,7 +116,9 @@ def data_prep_history():
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
     ticker = get_active_universe["ticker"].tolist()
+
     populate_bot_data(start_date=start_date, end_date=end_date, ticker=ticker, history=True)
+    print("{} : === DATA PREPERATION HISTORY COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === DATA PREPERATION HISTORY COMPLETED ===".format(dateNow()))
 
 def infer_daily(ticker=None, currency_code=None):
@@ -104,8 +127,10 @@ def infer_daily(ticker=None, currency_code=None):
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
+    
+    populate_vol_infer(start_date, end_date, ticker=ticker, currency_code=currency_code, daily=True)
 
-    populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, train_model=False, daily=False, history=False)
+    print("{} : === VOLATILITY INFER COMPLETED ===".format(dateNow()))
     if type(ticker) != type(None):
         report_to_slack("{} : === {} VOLATILITY INFER COMPLETED ===".format(dateNow(), ticker))
     elif type(currency_code) != type(None):
@@ -124,224 +149,126 @@ def infer_history():
     main_df = get_executive_data_download(start_date, end_date, ticker=ticker)
     print(main_df)
 
-    populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, train_model=False, daily=False, history=False)
-
+    populate_vol_infer(start_date, end_date, ticker=ticker, history=True)
+    print("{} : === VOLATILITY INFER HISTORY COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === VOLATILITY INFER HISTORY COMPLETED ===".format(dateNow()))
 
 def train_model(ticker=None, currency_code=None):
+    print("{} : === {} VOLATILITY TRAIN MODEL STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
-    print(f"Model Training Start {datetimeNow()}")
     start_date = str_to_date(droid_start_date())
     end_date = str_to_date(dateNow())
-    
-    final_model_fun(main_df)
-    print(f"Finished Model Training  {datetimeNow()}")
+    print(f"The start date is set as: {start_date}")
+    print(f"The end date is set as: {end_date}")
+    populate_vol_infer(start_date, end_date, ticker=ticker, currency_code=currency_code, train_model=False)
+    print("{} : === VOLATILITY TRAIN MODEL COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === VOLATILITY TRAIN MODEL COMPLETED ===".format(dateNow()))
 
-def option_maker_daily(index):
-    start_date = get_bot_data_latest_date(daily=True)
+def option_maker_uno_check_new_ticker(ticker=None, currency_code=None, mod=False, option_maker=False, null_filler=False):
+    print("{} : === OPTION MAKER UNO CHECK NEW TICKER STARTED ===".format(dateNow()))
+
+    start_date = str_to_date(droid_start_date())
+    start_date2 = str_to_date(droid_start_date_buffer())
     end_date = str_to_date(dateNow())
-                if args.exec_index is None:
-                print('Please input the desired index!')
-                sys.exit()
+    print(f"The start date is set as: {start_date}")
+    print(f"The end date is set as: {end_date}")
 
-            args.latest_date = get_latest_date(args)
-            print('Data preparation daily started!')
-            if args.start_date is None:
-                args.start_date = args.latest_date
-            print(f'The start date is set as: {args.start_date}')
+    new_ticker = get_new_ticker_from_bot_backtest(ticker=ticker, currency_code=currency_code, uno=True, mod=mod)
+    print(new_ticker)
+    if (len(new_ticker) > 0):
+        ticker_length = len(new_ticker)
+        print(f"Found {ticker_length} New Ticker")
+        if option_maker:
+            option_fn(args)
+        if null_filler:
+            fill_nulls(args)
+        print("{} : === OPTION MAKER UNO CHECK NEW TICKER COMPLETED ===".format(dateNow()))
+        report_to_slack("{} : === OPTION MAKER UNO CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
-            if args.end_date is None:
-                args.end_date = datetime.date.today()
-            print(f'The end date is set as: {args.end_date}')
+def option_maker_daily_uno(ticker=None, currency_code=None, mod=False, option_maker=False, null_filler=False):
+    print("{} : === {} OPTION MAKER UNO STARTED ===".format(dateNow()))
+    latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, uno=True)
+    start_date = latest_dates_db["max_date"].min()
+    end_date = str_to_date(dateNow())
+    latest_date = get_volatility_latest_date(ticker=ticker, currency_code=currency_code, infer=True)
+    if start_date is None:
+        start_date = latest_date
+    print(f"The start date is set as: {start_date}")
+    print(f"The end date is set as: {end_date}")
+    if not month_horizon:
+            args.month_horizon = [1, 3]
+    if option_maker:
+        option_fn(args)
+        print("Option creation is finished")
+    if null_filler:
+        fill_nulls(args)
 
-            if type(args.start_date) == str:
-                args.start_date = dt.strptime(args.start_date, '%Y-%m-%d').date()
+    print("{} : === OPTION MAKER UNO COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === OPTION MAKER UNO COMPLETED ===".format(dateNow()))
 
-            if type(args.end_date) == str:
-                args.end_date = dt.strptime(args.end_date, '%Y-%m-%d').date()
-            main_fn(args)
+def option_maker_history_uno(mod=False, option_maker=False, null_filler=False):
+    print("{} : === {} OPTION MAKER UNO HISTORY STARTED ===".format(dateNow()))
+    start_date = str_to_date(droid_start_date())
+    end_date = str_to_date(dateNow())
+    if option_maker:
+        option_fn_full(args)
+        print("Option creation full options is finished")
 
-            #Check New Ticker
-            args.start_date = dt.now().date() - relativedelta(years=args.history_num_years)
-            args.start_date2 = dt.now().date() - relativedelta(years=args.history_num_years - 1)
-            args.end_date = dt.now().date()
-            print(f'The start date is set as: {args.start_date}')
-            print(f'The end date is set as: {args.end_date}')
-            date_identifier = "trading_day"
-            table_name = args.executive_data_table_name
-            new_ticker = get_new_tickers_list_from_aws(args, date_identifier, table_name)
-            try:
-                if (len(new_ticker) > 0):
-                    print(new_ticker)
-                    ticker_length = len(new_ticker)
-                    print(f"Found {ticker_length} New Ticker")
-                    args.tickers_list = new_ticker['ticker'].tolist()
-                    args.data_prep_daily = False
-                    args.data_prep_daily_new_ticker = True
-                    main_fn(args)
-            except Exception as e:
-                print(e)
-            report_to_slack("{} : === {} DATA PREPERATION COMPLETED ===".format(str(dt.now()), args.exec_index), args)
-    args.option_maker = True
-            args.null_filler = True
+    if null_filler:
+        fill_nulls(args)
+    
+    print("{} : === OPTION MAKER UNO HISTORY COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === OPTION MAKER UNO HISTORY COMPLETED ===".format(dateNow()))
 
-            if args.exec_index is None:
-                print("Please input the desired index!")
-                sys.exit()
+def option_maker_ucdc_check_new_ticker(ticker=None, currency_code=None, mod=False, option_maker=False, null_filler=False):
+    print("{} : === OPTION MAKER UCDC CHECK NEW TICKER STARTED ===".format(dateNow()))
+    start_date = str_to_date(droid_start_date())
+    start_date2 = str_to_date(droid_start_date_buffer())
+    end_date = str_to_date(dateNow())
+    print(f"The start date is set as: {start_date}")
+    print(f"The end date is set as: {end_date}")
+    new_ticker = get_new_ticker_from_bot_backtest(ticker=ticker, currency_code=currency_code, ucdc=True, mod=mod)
+    print(new_ticker)
+    if (len(new_ticker) > 0):
+        ticker_length = len(new_ticker)
+        print(f"Found {ticker_length} New Ticker")
+        if option_maker:
+            option_fn_ucdc(args)
+        if null_filler:
+            fill_nulls_ucdc(args)
+        print("{} : === OPTION MAKER UCDC CHECK NEW TICKER COMPLETED ===".format(dateNow()))
+        report_to_slack("{} : === OPTION MAKER UCDC CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
-            # The following lines finds the last date of executive data and will use that as the start of the live mode.
-            # This helps if some days are skipped in the live mode.
-            args.latest_dates_db = download_production_executive_max_date(args)
-            # args.start_date = temp_df.spot_date.iloc[0]
-            args.start_date = args.latest_dates_db["spot_date", "max"].min()
+def option_maker_daily_ucdc(ticker=None, currency_code=None, mod=False, option_maker=False, null_filler=False):
+    print("{} : === {} OPTION MAKER UNO STARTED ===".format(dateNow()))
+    latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, ucdc=True)
+    start_date = latest_dates_db["max_date"].min()
+    end_date = str_to_date(dateNow())
+    latest_date = get_volatility_latest_date(ticker=ticker, currency_code=currency_code, infer=True)
+    if start_date is None:
+        start_date = latest_date
+    print(f"The start date is set as: {start_date}")
+    print(f"The end date is set as: {end_date}")
 
-            args.latest_date = get_latest_date(args)
-            print("Option making daily started!")
-            if args.start_date is None:
-                args.start_date = args.latest_date
-            print(f"The start date is set as: {args.start_date}")
+    if option_maker:
+        option_fn_ucdc(args)
 
-            if args.end_date is None:
-                args.end_date = datetime.date.today()
-            print(f"The end date is set as: {args.end_date}")
+    if null_filler:
+        fill_nulls_ucdc(args)
+    print("{} : === OPTION MAKER UNO COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === OPTION MAKER UNO COMPLETED ===".format(dateNow()))
 
-            if type(args.start_date) == str:
-                args.start_date = dt.strptime(args.start_date, "%Y-%m-%d").date()
+def option_maker_history_ucdc(mod=False, option_maker=False, null_filler=False):
+    print("{} : === {} OPTION MAKER UCDC HISTORY STARTED ===".format(dateNow()))
+    start_date = str_to_date(droid_start_date())
+    end_date = str_to_date(dateNow())
 
-            if type(args.end_date) == str:
-                args.end_date = dt.strptime(args.end_date, "%Y-%m-%d").date()
-    if not args.month_horizon:
-                args.month_horizon = [1, 3]
-            args.new_ticker = False
-            if args.option_maker:
-                option_fn(args)
-                print("Option creation is finished")
+    if option_maker:
+        option_fn_ucdc(args)
 
-            if args.null_filler:
-                fill_nulls(args)
-
-            if args.option_maker_daily :
-                args.start_date = dt.now().date() - relativedelta(years=3)
-                table_name = args.executive_production_table_name
-                new_ticker = get_new_tickers_list_detail_from_aws(args, args.start_date, table_name)
-                print(new_ticker)
-                if (len(new_ticker) > 0):
-                    ticker_length = len(new_ticker)
-                    print(f"Found {ticker_length} New Ticker")
-                    args.tickers_list = new_ticker["ticker"].tolist()
-                    args.start_date = dt.now().date() - relativedelta(years=3)
-                    args.end_date = dt.now().date()
-                    args.latest_dates_db = new_ticker
-                    args.new_ticker = True
-                    print(args.tickers_list)
-                    print(args.start_date)
-                    print(args.end_date)
-                    print(args.latest_dates_db)
-                    status = option_fn(args)
-                    if(status):
-                        fill_nulls(args)
-    report_to_slack("{} : === {} Executive UNO Create Option Completed ===".format(str(dt.now()),args.exec_index), args)
-def option_maker_history():
-    if args.start_date is None:
-                args.start_date = datetime.date.today() - relativedelta(years=args.history_num_years)
-            print(f"The start date is set as: {args.start_date}")
-
-            if args.end_date is None:
-                args.end_date = datetime.date.today()
-            print(f"The end date is set as: {args.end_date}")
-
-            if type(args.start_date) == str:
-                args.start_date = dt.strptime(args.start_date, "%Y-%m-%d").date()
-
-            if type(args.end_date) == str:
-                args.end_date = dt.strptime(args.end_date, "%Y-%m-%d").date()
-    args.new_ticker = False
-            if args.option_maker:
-                option_fn_full(args)
-                print("Option creation full options is finished")
-
-            if args.null_filler:
-                fill_nulls(args)
-
-def option_maker_daily_ucdc():
-    args.option_maker = True
-            args.null_filler = True
-
-            if args.exec_index is None:
-                print("Please input the desired index!")
-                sys.exit()
-
-            # The following lines finds the last date of executive data and will use that as the start of the live mode.
-            # This helps if some days are skipped in the live mode.
-            args.latest_dates_db = download_production_executive_max_date(args)
-            # args.start_date = temp_df.spot_date.iloc[0]
-            args.start_date = args.latest_dates_db["spot_date", "max"].min()
-
-            args.latest_date = get_latest_date(args)
-            print("Option making daily started!")
-            if args.start_date is None:
-                args.start_date = args.latest_date
-            print(f"The start date is set as: {args.start_date}")
-
-            if args.end_date is None:
-                args.end_date = datetime.date.today()
-            print(f"The end date is set as: {args.end_date}")
-
-            if type(args.start_date) == str:
-                args.start_date = dt.strptime(args.start_date, "%Y-%m-%d").date()
-
-            if type(args.end_date) == str:
-                args.end_date = dt.strptime(args.end_date, "%Y-%m-%d").date()
-        args.new_ticker = False
-            if args.option_maker:
-                option_fn_ucdc(args)
-                print("Option creation is finished")
-
-            if args.null_filler:
-                fill_nulls_ucdc(args)
-            
-            if args.option_maker_daily_ucdc :
-                args.start_date = dt.now().date() - relativedelta(years=3)
-                table_name = args.executive_production_ucdc_table_name
-                new_ticker = get_new_tickers_list_detail_from_aws(args, args.start_date, table_name)
-                print(new_ticker)
-                if (len(new_ticker) > 0):
-                    ticker_length = len(new_ticker)
-                    print(f"Found {ticker_length} New Ticker")
-                    args.tickers_list = new_ticker["ticker"].tolist()
-                    args.start_date = dt.now().date() - relativedelta(years=3)
-                    args.end_date = dt.now().date()
-                    args.latest_dates_db = new_ticker
-                    args.new_ticker = True
-                    print(args.tickers_list)
-                    print(args.start_date)
-                    print(args.end_date)
-                    print(args.latest_dates_db)
-                    status = option_fn_ucdc(args)
-                    if(status):
-                        fill_nulls_ucdc(args)
-    report_to_slack("{} : === {} Executive UCDC Create Option Completed ===".format(str(dt.now()),args.exec_index), args)
-def option_maker_history_ucdc():
-    if args.start_date is None:
-                args.start_date = datetime.date.today() - relativedelta(years=args.history_num_years)
-            print(f"The start date is set as: {args.start_date}")
-
-            if args.end_date is None:
-                args.end_date = datetime.date.today()
-            print(f"The end date is set as: {args.end_date}")
-
-            if type(args.start_date) == str:
-                args.start_date = dt.strptime(args.start_date, "%Y-%m-%d").date()
-
-            if type(args.end_date) == str:
-                args.end_date = dt.strptime(args.end_date, "%Y-%m-%d").date()
-    if not args.month_horizon:
-                args.month_horizon = [6]
-            args.new_ticker = False
-            if args.option_maker:
-                option_fn_ucdc(args)
-                print("Option creation is finished")
-
-            if args.null_filler:
-                fill_nulls_ucdc(args)
+    if null_filler:
+        fill_nulls_ucdc(args)
+    
+    print("{} : === OPTION MAKER HISTORY COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === OPTION MAKER UCDC HISTORY COMPLETED ===".format(dateNow()))

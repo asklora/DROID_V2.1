@@ -1,3 +1,6 @@
+def get_calendar_table_name():
+    return "currency_calendar"
+
 def get_universe_consolidated_table_name():
     return "universe_consolidated"
 

@@ -1,3 +1,4 @@
+from sqlalchemy.sql.expression import table
 from general.date_process import dateNow, droid_start_date, str_to_date
 import sys
 import datetime as dt
@@ -13,8 +14,8 @@ from global_vars import DB_URL_WRITE, DB_URL_READ
 from general.sql_query import read_query
 from general.data_process import tuple_data
 from general.table_name import (
-    get_bot_data_table_name, get_currency_table_name, 
-    get_data_ibes_monthly_table_name,
+    get_bot_classic_backtest_table_name, get_bot_data_table_name, get_bot_ucdc_backtest_table_name, get_bot_uno_backtest_table_name, get_calendar_table_name, get_currency_table_name, get_data_dividend_table_name, 
+    get_data_ibes_monthly_table_name, get_data_interest_table_name,
     get_data_macro_monthly_table_name, get_data_vix_table_name, 
     get_data_vol_surface_inferred_table_name, 
     get_data_vol_surface_table_name, get_latest_price_table_name, 
@@ -33,6 +34,13 @@ def check_ticker_currency_code_query(ticker=None, currency_code=None):
         query += f"ticker in (select ticker from {get_universe_table_name()} where is_active=True and currency_code in {tuple_data(currency_code)}) "
     return query
 
+def check_start_end_date(start_date=None, end_date=None):
+    if type(start_date) == type(None):
+        start_date = droid_start_date()
+    if type(end_date) == type(None):
+        end_date = dateNow()
+    return start_date, end_date
+    
 def get_bot_data_latest_date(daily=False, history=False):
     if(daily):
         table_name = get_bot_data_table_name()
@@ -45,10 +53,7 @@ def get_bot_data_latest_date(daily=False, history=False):
     return min(data["max_date"])
 
 def get_master_tac_price(start_date=None, end_date=None, ticker=None, currency_code=None):
-    if type(start_date) == type(None):
-        start_date = droid_start_date()
-    if type(end_date) == type(None):
-        end_date = dateNow()
+    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
     table_name = get_master_tac_table_name()
     query = f"select * from {table_name} where trading_day >= {start_date} "
     query += f"and trading_day <= {end_date} "
@@ -90,6 +95,38 @@ def get_data_vol_surface_ticker(ticker=None, currency_code=None):
     data = read_query(query, table_name)
     return data
 
+def get_volatility_latest_date(ticker=None, currency_code=None, infer=True):
+    if(infer):
+        table_name = get_data_vol_surface_inferred_table_name()
+    else:
+        table_name = get_data_vol_surface_table_name()
+    query = f"select ticker, max(spot_date) as max_date from {table_name} "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += "where " + check
+    query += f"group by ticker"
+    data = read_query(query, table=table_name, cpu_counts=True)
+    return data["max_date"].min()
+
+def get_backtest_latest_date(ticker=None, currency_code=None, ucdc=False, uno=False, classic=False, mod=False):
+    if(uno):
+        table_name = get_bot_uno_backtest_table_name()
+    elif(ucdc):
+        table_name = get_bot_ucdc_backtest_table_name()
+    else:
+        table_name = get_bot_classic_backtest_table_name()
+
+    if(mod):
+        table_name += "_mod"
+    
+    query = f"select ticker, max(spot_date) as max_date from {table_name} "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += "where " + check
+    query += f"group by ticker"
+    data = read_query(query, table=table_name, cpu_counts=True)
+    return data
+
 def get_data_vol_surface_inferred_ticker(ticker=None, currency_code=None):
     table_name = get_data_vol_surface_inferred_table_name()
     query = f"select distinct ticker from {table_name} "
@@ -99,7 +136,8 @@ def get_data_vol_surface_inferred_ticker(ticker=None, currency_code=None):
     data = read_query(query, table_name)
     return data
 
-def get_new_tickers(currency_code, start_date, start_date2, date_identifier, table_name):
+def get_new_tickers_from_bot_data(start_date, start_date2, date_identifier, ticker=None, currency_code=None):
+    table_name = get_bot_data_table_name()
     query = f"select du.ticker, coalesce(result1.count_data, 0), coalesce(result2.count_price, 0) "
     query += f"from {get_universe_table_name()} du "
     query += f"left join (select ticker, coalesce(count(cb.{date_identifier}), 0) as count_data "
@@ -107,304 +145,41 @@ def get_new_tickers(currency_code, start_date, start_date2, date_identifier, tab
     query += f"left join (select ticker, coalesce(count(mo.trading_day), 0) as count_price "
     query += f"from {get_master_tac_table_name()} mo where mo.trading_day>='{start_date2}' group by mo.ticker) "
     query += f"result2 on result2.ticker=du.ticker "
-    query += f"where du.is_active=True and du.currency_code in {tuple_data(currency_code)} and "
+    query += f"where du.is_active=True and "
+    if type(ticker) != type(None):
+        query += f"du.ticker in {tuple_data(ticker)} and  "
+    elif type(currency_code) != type(None):
+        query += f"du.currency_code in {tuple_data(currency_code)} and "
     query += f"coalesce(result1.count_data, 0) < coalesce(result2.count_price, 0) - 20 "
     query += f"order by count_data;"
     data = read_query(query, table=get_universe_table_name())
     return data
 
-def get_new_tickers_list_detail_from_aws(args, date_identifier, table_name):
-    tuple_index = str(tuple(args.exec_index)).replace(",)", ")")
-    start_date = datetime.now().date() - relativedelta(years=3)
-    db_url = global_vars.DB_DROID_URL_READ
-    print("Get Data From DROID")
-    engine = create_engine(db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        query = f"select du.ticker, index, result1.uno_min_date, result2.ohlctr_min_date, result1.uno_max_date, result2.ohlctr_max_date "
-        query += f"from {global_vars.droid_universe_table_name} du "
-        query += f"left join (select ticker, min(cb.spot_date)::date as uno_min_date, max(cb.spot_date)::date as uno_max_date from {table_name} cb where cb.spot_date>='{start_date}' group by cb.ticker) result1 on result1.ticker=du.ticker "
-        query += f"left join (select ticker, min(mo.trading_day)::date as ohlctr_min_date, max(mo.trading_day)::date as ohlctr_max_date from {global_vars.tac_data_table_name} mo where mo.trading_day>='{start_date}' group by mo.ticker) result2 on result2.ticker=du.ticker "
-        query += f"where du.is_active=True and du.index in {tuple_index} and "
-        query += f"result1.uno_min_date > result2.ohlctr_min_date + interval '1 years' "
-        query += f"order by du.index;"
-        data = pd.read_sql(query, con=conn)
-    engine.dispose()
-    data = pd.DataFrame(data)
-    print("DONE")
-    return data
-
-def get_tickers_list_from_aws():
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-    table_name = global_vars.droid_universe_table_name
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(table_name, metadata, autoload=True, autoload_with=conn)
-
-        # Only droid universe
-        # query = db.select([table0.columns.ticker, table0.columns.index]).where(and_(table0.columns.executive_droid == True,
-        #                                                       table0.columns.is_active == True))
-
-        # All the universe
-        query = db.select([table0.columns.ticker, table0.columns.index,
-                           table0.columns.industry_code]).where(table0.columns.is_active == True)
-
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-    full_df.columns = columns_list
-
-    if len(full_df) == 0:
-        print("We don't have inferred data.")
-        sys.exit()
-    # print(f"Downloaded tickers list from {table_name}.")
-
-    return full_df
-
-
-
-def get_prices_for_volatility(args):
-    start_date = args.start_date
-    stop_date = args.end_date
-
-    # 2 years for calculation buffer and 1 year for holidays
-    start_date = start_date - relativedelta(years=3)
-
-    start_date = start_date.strftime('%Y-%m-%d')
-    stop_date = stop_date.strftime('%Y-%m-%d')
-
-    db_url = global_vars.DB_PROD_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(args.master_ohlcv_table_name, metadata, autoload=True, autoload_with=conn)
-
-        query = db.select(
-            ['*']).where(and_(table0.columns.trading_day >= start_date,
-                              table0.columns.trading_day <= stop_date, table0.columns.ticker.in_(args.tickers_list)))
-
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        print("We don't have prices.")
-        sys.exit()
-    full_df.columns = columns_list
-    print(f"Downloaded prices from {table0}.")
-    return full_df
-
-
-def get_intraday_prices(args):
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(args.latest_price_updates_table_name, metadata, autoload=True, autoload_with=conn)
-
-        query = table0.select().where(table0.columns.ticker.in_(args.tickers_list))
-
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        print("We don't have latest prices.")
-        sys.exit()
-    full_df.columns = columns_list
-    # print(f"Downloaded prices from {table0}.")
-    return full_df
-
-
-
-def get_latest_date(args):
-    if args.data_prep_daily or args.bot_labeler_infer_daily:
-        table_name = args.droid_vol_surface_parameters_inferred_table_name
-
+def get_new_ticker_from_bot_backtest(ticker=None, currency_code=None, ucdc=False, uno=False, classic=False, mod=False):
+    start_date = droid_start_date()
+    if(uno):
+        table_name = get_bot_uno_backtest_table_name()
+    elif(ucdc):
+        table_name = get_bot_ucdc_backtest_table_name()
     else:
-        # if args.infer_daily:
-        table_name = args.droid_vol_surface_parameters_inferred_table_name
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(table_name, metadata, autoload=True, autoload_with=conn)
-
-        query = db.select([table0.columns.trading_day, table0.columns.ticker])
-
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        print(f"We don't have data in {table_name}.")
-        sys.exit()
-    full_df.columns = columns_list
-    full_df = full_df.groupby(['ticker']).agg({'trading_day': 'max'})
-    return min(full_df['trading_day'])
-
-
-def get_current_stocks_list(args):
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(args.executive_data_table_name, metadata, autoload=True, autoload_with=conn)
-
-        query = db.select([table0.columns.ticker.distinct()])
-
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        print("We don't have inferred data.")
-        sys.exit()
-    return full_df[0]
-
-
-def get_vix_data(args):
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(args.vix_table_name, metadata, autoload=True, autoload_with=conn)
-
-        query = table0.select()
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        print("We don't have vix data.")
-        sys.exit()
-    full_df.columns = columns_list
-
-    return full_df
-
-
-def get_outputs(args):
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(args.vol_surface_parameters_table_name, metadata, autoload=True, autoload_with=conn)
-
-        query = table0.select().where(table0.columns.ticker.in_(args.tickers_list))
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        full_df = pd.DataFrame(index=range(1), columns=columns_list)
-        # sys.exit("We don't have output data.")
-
-    full_df.columns = columns_list
-
-    return full_df
-
-
-def get_indices_data(args):
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(args.indices_table_name, metadata, autoload=True, autoload_with=conn)
-
-        query = table0.select()
-
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        print("We don't have indices data.")
-        sys.exit()
-    full_df.columns = columns_list
-
-    return full_df
-
-def get_interest_rate_data(args):
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(args.interest_rate_table_name, metadata, autoload=True, autoload_with=conn)
-
-        query = table0.select()
-
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        print("We don't have interest rate data.")
-        sys.exit()
-    full_df.columns = columns_list
-
-    return full_df
-
-
-def get_dividends_data(args):
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(args.dividends_table_name, metadata, autoload=True, autoload_with=conn)
-
-        query = table0.select()
-
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        print("We don't have dividends data.")
-        sys.exit()
-    full_df.columns = columns_list
-    full_df = full_df[full_df.ticker.isin(args.active_tickers_list)]
-
-    return full_df
+        table_name = get_bot_classic_backtest_table_name()
+    if(mod):
+        table_name += "_mod"
+    query = f"select du.ticker, index, result1.uno_min_date, result2.ohlctr_min_date, result1.uno_max_date, result2.ohlctr_max_date "
+    query += f"from {get_universe_table_name()} du "
+    query += f"left join (select ticker, min(cb.spot_date)::date as uno_min_date, max(cb.spot_date)::date as uno_max_date "
+    query += f"from {table_name} cb where cb.spot_date>='{start_date}' group by cb.ticker) result1 on result1.ticker=du.ticker  "
+    query += f"left join (select ticker, min(mo.trading_day)::date as ohlctr_min_date, max(mo.trading_day)::date as ohlctr_max_date "
+    query += f"from {get_master_tac_table_name()} mo where mo.trading_day>='{start_date}' group by mo.ticker) result2 "
+    query += f"on result2.ticker=du.ticker  where du.is_active=True and "
+    if type(ticker) != type(None):
+        query += f"du.ticker in {tuple_data(ticker)} and  "
+    elif type(currency_code) != type(None):
+        query += f"du.currency_code in {tuple_data(currency_code)} and "
+    query += f"result1.uno_min_date > result2.ohlctr_min_date + interval '1 years' "
+    query += f"order by du.index;"
+    data = read_query(query, table=get_universe_table_name())
+    return data
 
 def get_macro_data(start_date, end_date):
     query = f"select trading_day, usinter3_esa, usgbill3_esa, \"EMIBOR3._ESA\", jpmshort_esa, \"EMGBOND._ESA\", \"CHGBOND._ESA\", fred_data "
@@ -467,15 +242,89 @@ def get_executive_data_download(start_date, end_date, ticker=None, currency_code
     data = data.merge(stochatic_data, how="left", on=["ticker", "trading_day"])
     return data
 
-def executive_data_download(args):
-    start_date = args.start_date
-    stop_date = args.end_date
+def get_calendar_data(start_date=None, end_date=None, ticker=None, currency_code=None):
+    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
+    table_name = get_calendar_table_name()
+    query = f"select * from {table_name} where non_working_day >= '{start_date}' "
+    query += f"and non_working_day <= '{end_date}' "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += "and " + check
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
 
-    start_date = start_date.strftime('%Y-%m-%d')
-    stop_date = stop_date.strftime('%Y-%m-%d')
+def get_vol_surface_data(start_date=None, end_date=None, ticker=None, currency_code=None, infer=True):
+    if(infer):
+        table_name = get_data_vol_surface_inferred_table_name()
+    else:
+        table_name = get_data_vol_surface_table_name()
+    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
+    query = f"select * from {table_name} where trading_day >= '{start_date}' "
+    query += f"and trading_day <= '{end_date}' "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += "and " + check
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
 
-    args.latest_date = get_latest_date(args)
-    print(args.latest_date)
+def get_interest_rate_data():
+    table_name = get_data_interest_table_name()
+    query = f"select * from {table_name} "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_dividends_data():
+    table_name = get_data_dividend_table_name()
+    query = f"select * from {table_name} "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+
+def get_bot_backtest_data(start_date=None, end_date=None, day_to_exp=None, ticker=None, currency_code=None, uno=False, ucdc=False, classic=False, mod=False):
+    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
+    if(uno):
+        table_name = get_bot_uno_backtest_table_name()
+    elif(ucdc):
+        table_name = get_bot_ucdc_backtest_table_name()
+    else:
+        table_name = get_bot_classic_backtest_table_name()
+    
+    if mod:
+        table_name += '_mod'
+    
+    query = f"select * from {table_name} "
+    query += f" "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += "and " + check
+
+def download_production_executive_null_dates_list(args):
+
+
+    with engine.connect() as conn:
+        metadata = db.MetaData()
+        table0 = db.Table(table_name, metadata, autoload=True, autoload_with=conn)
+        print(args.month_horizon)
+        query = db.select([table0.columns.spot_date]).where(and_(table0.columns.event == None,
+                                                                 table0.columns.ticker.in_(args.tickers_list),
+                                                                 table0.columns.month_to_exp.in_(args.month_horizon),
+                                                                 table0.columns.inferred == flag,
+                                                                 table0.columns.modified == flag_modified))
+        ResultProxy = conn.execute(query)
+        ResultSet = ResultProxy.fetchall()
+        columns_list = ResultProxy.keys()
+    engine.dispose()
+
+    full_df = pd.DataFrame(ResultSet)
+
+    if len(full_df) == 0:
+        print("We don't have null options.")
+        sys.exit()
+    full_df.columns = columns_list
+
+    return full_df.spot_date.unique()
+
+def get_current_stocks_list(args):
     db_url = global_vars.DB_DROID_URL_READ
     engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
 
@@ -483,29 +332,23 @@ def executive_data_download(args):
         metadata = db.MetaData()
         table0 = db.Table(args.executive_data_table_name, metadata, autoload=True, autoload_with=conn)
 
-        if args.train_model or args.bot_labeler_train:
-            query = table0.select().where(and_(table0.columns.ticker.in_(args.tickers_list)))
-            ResultProxy = conn.execute(query)
-            ResultSet = ResultProxy.fetchall()
-            columns_list = ResultProxy.keys()
-            full_df = pd.DataFrame(ResultSet)
-            if len(full_df) == 0:
-                sys.exit("We don't have executive data.")
-            full_df.columns = columns_list
-        else:
-            query = table0.select().where(and_(table0.columns.trading_day >= start_date,
-                                               table0.columns.trading_day <= stop_date,
-                                               table0.columns.ticker.in_(args.tickers_list)))
+        query = db.select([table0.columns.ticker.distinct()])
 
+        ResultProxy = conn.execute(query)
+        ResultSet = ResultProxy.fetchall()
+        columns_list = ResultProxy.keys()
     engine.dispose()
 
-    macro_data = get_macro_data(start_date, stop_date)
-    ibes_data = get_ibes_data(start_date, stop_date, args.tickers_list)
-    stochatic_data = get_stochatic_data(start_date, stop_date, args.tickers_list)
-    full_df["trading_day"] = pd.to_datetime(full_df["trading_day"])
-    full_df = full_df.merge(macro_data, how="left", on=["trading_day"])
-    full_df = full_df.merge(ibes_data, how="left", on=["ticker", "trading_day"])
-    full_df = full_df.merge(stochatic_data, how="left", on=["ticker", "trading_day"])
+    full_df = pd.DataFrame(ResultSet)
+
+    if len(full_df) == 0:
+        print("We don't have inferred data.")
+        sys.exit()
+    return full_df[0]
+
+
+
+
     return full_df
 
 def top_models(args):
@@ -628,29 +471,7 @@ def tac_data_download_null_filler(start_date, args):
     return full_df
 
 
-def download_holidays(args):
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
 
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(args.holidays_table_name, metadata, autoload=True, autoload_with=conn)
-
-        query = table0.select()
-
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        print("We don't have tac data.")
-        sys.exit()
-    full_df.columns = columns_list
-
-    return full_df
 
 
 def download_production_sltp(args):
@@ -678,70 +499,7 @@ def download_production_sltp(args):
     return full_df
 
 
-def get_droid_universe():
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-    table_name = global_vars.droid_universe_table_name
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(table_name, metadata, autoload=True, autoload_with=conn)
-        query = table0.select()
 
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-    full_df.columns = columns_list
-
-    if len(full_df) == 0:
-        print("We don't have inferred data.")
-        sys.exit()
-    # print(f"Downloaded tickers list from {table_name}.")
-
-    return full_df
-
-
-def get_vol_surface_data(args):
-    start_date = args.start_date
-    stop_date = args.end_date
-
-    start_date = start_date.strftime('%Y-%m-%d')
-    stop_date = stop_date.strftime('%Y-%m-%d')
-
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    if args.add_inferred:
-        table_name = args.droid_vol_surface_parameters_inferred_table_name
-    else:
-        table_name = args.vol_surface_parameters_table_name
-
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(table_name, metadata, autoload=True, autoload_with=conn)
-
-        # query = table0.select()
-        query = db.select(
-            ['*']).where(and_(table0.columns.trading_day >= start_date,
-                              table0.columns.trading_day <= stop_date, table0.columns.ticker.in_(args.tickers_list)))
-
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        full_df = pd.DataFrame(index=range(1), columns=columns_list)
-        # sys.exit("We don't have output data.")
-
-    full_df.columns = columns_list
-    full_df = full_df[full_df.ticker.isin(args.tickers_list)]
-
-    return full_df
 
 
 def get_vol_surface_data_inferred(args):
@@ -775,37 +533,6 @@ def get_vol_surface_data_inferred(args):
 
 
 def download_production_executive_max_date(args):
-    # This is done to find the last run of live mode.
-    if args.debug_mode or args.option_maker_history_full or args.option_maker_history_full_ucdc:
-        db_url = global_vars.DB_TEST_URL_READ  # if writing to production_data table, i.e., write out the stocks - keep in "live"
-    else:
-        db_url = global_vars.DB_DROID_URL_READ  # if writing to production_data table, i.e., write out the stocks - keep in "live"
-
-    # engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    table_name = args.executive_production_table_name
-
-    if args.option_maker_history_full:
-        table_name = table_name + '_full'
-    elif args.option_maker_history_full_ucdc:
-        table_name = args.executive_production_ucdc_table_name + '_full'
-    elif args.option_maker_history_ucdc or args.option_maker_daily_ucdc or args.option_maker_live_ucdc:
-        table_name = args.executive_production_ucdc_table_name
-    else:
-        table_name = table_name
-
-    if args.add_inferred:
-        flag = 1
-    else:
-        flag = 0
-
-    if args.modified:
-        table_name = table_name + '_mod'
-        flag_modified = 1
-    else:
-        flag_modified = 0
-
-    # db_url = global_vars.DB_DROID_URL_READ
     engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
 
     # if args.add_inferred:
@@ -922,83 +649,6 @@ def download_production_executive_null(args):
 
     return full_df
 
-
-def download_production_executive_null_dates_list(args):
-    if args.debug_mode or args.option_maker_history_full or args.option_maker_history_full_ucdc:
-        db_url = global_vars.DB_TEST_URL_READ  # if writing to production_data table, i.e., write out the stocks - keep in "live"
-    else:
-        db_url = global_vars.DB_DROID_URL_READ  # if writing to production_data table, i.e., write out the stocks - keep in "live"
-
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    table_name = args.executive_production_table_name
-
-    if args.option_maker_history_full:
-        table_name = table_name + '_full'
-    elif args.option_maker_history_full_ucdc:
-        table_name = args.executive_production_ucdc_table_name + '_full'
-    elif args.option_maker_history_ucdc or args.option_maker_daily_ucdc or args.option_maker_live_ucdc:
-        table_name = args.executive_production_ucdc_table_name
-    else:
-        table_name = table_name
-
-    if args.add_inferred:
-        flag = 1
-    else:
-        flag = 0
-
-    if args.modified:
-        table_name = table_name + '_mod'
-        flag_modified = 1
-    else:
-        flag_modified = 0
-
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(table_name, metadata, autoload=True, autoload_with=conn)
-        print(args.month_horizon)
-        query = db.select([table0.columns.spot_date]).where(and_(table0.columns.event == None,
-                                                                 table0.columns.ticker.in_(args.tickers_list),
-                                                                 table0.columns.month_to_exp.in_(args.month_horizon),
-                                                                 table0.columns.inferred == flag,
-                                                                 table0.columns.modified == flag_modified))
-
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        print("We don't have null options.")
-        sys.exit()
-    full_df.columns = columns_list
-
-    return full_df.spot_date.unique()
-
-
-def get_outputs_tickers(args):
-    db_url = global_vars.DB_DROID_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(args.vol_surface_parameters_table_name, metadata, autoload=True, autoload_with=conn)
-
-        query = table0.select().where(table0.columns.ticker.in_(args.tickers_list))
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = ResultProxy.keys()
-    engine.dispose()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        full_df = pd.DataFrame(index=range(1), columns=columns_list)
-
-    full_df.columns = columns_list
-    return full_df.ticker.unique()
 
 
 def executive_benchmark_data_download(args):

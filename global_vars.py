@@ -51,6 +51,7 @@ r_days=200
 q_days=200
 index_to_etf_file = "bot/index_to_etf.csv"
 run_time_min = time.time()
+modified_delta_list = ['d2', 'v10']
 
 # if platform.system() == "Linux":
 model_path = "/home/loratech/PycharmProjects/models/"
