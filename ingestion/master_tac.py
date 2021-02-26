@@ -5,7 +5,7 @@ from general.date_process import backdate_by_month, datetimeNow, droid_start_dat
 from general.slack import report_to_slack
 from general.table_name import get_master_tac_table_name
 from general.sql_query import get_master_ohlcvtr_data
-from general.sql_output import delete_data_on_database, insert_data_to_database, upsert_data_to_database
+from general.sql_output import delete_data_on_database, upsert_data_to_database
 
 def ForwardBackwardFillNull(data, columns_field, columns_deletion=False):
     data = data.sort_values(by="trading_day", ascending=False)

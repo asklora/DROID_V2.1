@@ -64,14 +64,46 @@ def get_quandl_table_name():
 def get_fundamental_score_table_name():
     return "data_fundamental_score"
 
-def get_fred_table_name():
+def get_data_fred_table_name():
     return "data_fred"
+
+def get_data_ibes_table_name():
+    return "data_ibes"
+
+def get_data_ibes_monthly_table_name():
+    return "data_ibes_monthly"
+
+def get_data_macro_table_name():
+    return "data_macro"
+
+def get_data_macro_monthly_table_name():
+    return "data_macro_monthly"
 
 def get_top_stock_models_table_name():
     return "top_stock_models"
 
 def get_top_stock_models_stock_table_name():
     return "top_stock_models_stock"
+
+#Bot Backtest Table
+def get_bot_uno_backtest_table_name():
+    return "bot_uno_backtest"
+
+def get_bot_ucdc_backtest_table_name():
+    return "bot_ucdc_backtest"
+
+def get_bot_classic_backtest_table_name():
+    return "bot_classic_backtest"
+
+def get_bot_data_table_name():
+    return "bot_data"
+
+def get_data_vol_surface_table_name():
+    return "data_vol_surface"
+
+def get_data_vol_surface_inferred_table_name():
+    return "data_vol_surface_inferred"
+
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 
