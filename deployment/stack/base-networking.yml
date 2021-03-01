@@ -190,7 +190,7 @@ Resources:
             DBSubnetGroupName: !Ref PvsubnetDB
             Engine: postgres
             MasterUsername: postgres
-            MasterUserPassword: askLORA2020$
+            MasterUserPassword: ml2021#LORA
             MultiAZ: false
             Port: 5432
             PubliclyAccessible: false
