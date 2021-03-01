@@ -19,7 +19,7 @@ class Command(BaseCommand):
         # )
         # stack = cloud_formation_client.describe_stacks(StackName=stack_name)
         ec2s = ec2_client.describe_instances(Filters=[{'Name': 'tag:Name','Values': ['bastion',]},])
-        rds = rds_client.describe_db_instances(DBInstanceIdentifier='askloraprivatedb')
+        rds = rds_client.describe_db_instances(DBInstanceIdentifier='droid-v2-test-cluster')
         # print(response)
         df = pd.DataFrame(columns=['InstanceId', 'InstanceType', 'PrivateIpAddress','PublicIpAddress'])
         i = 0
