@@ -182,7 +182,7 @@ Resources:
     rdsDBInstance:
         Type: AWS::RDS::DBInstance
         Properties:
-            DBInstanceIdentifier: askloraprivatedb
+            DBInstanceIdentifier: askloraprivatedb-test
             AllocatedStorage: 20
             DBInstanceClass: db.t3.small
             AvailabilityZone: ap-east-1a
