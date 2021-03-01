@@ -244,8 +244,7 @@ def cal_q(row, dividends_data, dates_temp, prices_temp):
     dates_temp = pd.merge(dates_temp, dividends_data, on='id', how='outer')
     dates_temp['expiry_date'] = row.expiry_date
     dates_temp = dates_temp.rename(columns={0: 'spot_date'})
-    dates_temp = dates_temp[(dates_temp.spot_date <= dates_temp.ex_dividend_date) &
-                              (dates_temp.ex_dividend_date <= dates_temp.expiry_date)]
+    dates_temp = dates_temp[(dates_temp.spot_date <= dates_temp.ex_dividend_date) & (dates_temp.ex_dividend_date <= dates_temp.expiry_date)]
     dates_temp = dates_temp.groupby(['spot_date'])['amount'].sum().reset_index()
     dates_temp2 = dates_temp2.rename(columns={0: 'spot_date'})
     dates_temp2 = dates_temp2.merge(dates_temp, on='spot_date', how='left').fillna(0)

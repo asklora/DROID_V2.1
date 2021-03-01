@@ -1,4 +1,5 @@
 import gc
+from main_executive import check_time_to_exp
 from general.table_name import get_bot_uno_backtest_table_name
 from general.sql_output import truncate_table, upsert_data_to_database
 
@@ -14,10 +15,12 @@ from bot.black_scholes import (
     Up_Out_Call, 
     deltaUnOC)
 from bot.data_download import (
-    get_calendar_data, get_currency_data, get_master_tac_price, 
+    get_bot_backtest_data, 
+    get_bot_backtest_data_date_list, get_calendar_data, get_currency_data, get_master_tac_price, 
     get_vol_surface_data, 
     get_interest_rate_data,
     get_dividends_data, 
+    check_start_end_date,
     download_production_executive_null, 
     tac_data_download_null_filler, 
     download_production_executive_null_dates_list)
@@ -28,19 +31,18 @@ from general.slack import report_to_slack
 
 from global_vars import modified_delta_list
 
-def populate_bot_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, mod=False, infer=True, history=False, daily=False, new_ticker=False):
+def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, infer=True, history=False, daily=False, new_ticker=False):
     if type(start_date) == type(None):
         start_date = droid_start_date()
     if type(end_date) == type(None):
         end_date = dateNow()
 
-       # print("Start the Hunt")
     # The main function which calculates the volatilities and stop loss and take profit and write them to AWS.
     # https://loratechai.atlassian.net/wiki/spaces/ARYA/pages/82379155/Executive+UnO+KO+Barrier+Options+all+python+function+in+black+scholes.py
 
     holidays_df = get_calendar_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
     tac_data2 = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
-    vol_surface_data = get_vol_surface_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, infer=True)
+    vol_surface_data = get_vol_surface_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, infer=infer)
     currency_data = get_currency_data(currency_code=currency_code)
     interest_rate_data = get_interest_rate_data()
     dividends_data = get_dividends_data()
@@ -65,9 +67,9 @@ def populate_bot_backtest(start_date=None, end_date=None, ticker=None, currency_
     # Adding maturities and expiry date
     options_df_temp = pd.DataFrame(columns=options_df.columns)
     print("Calculating Month Exp")
-    for month_exp in args.month_horizon:
+    for time_exp in time_to_exp:
         options_df2 = options_df.copy()
-        options_df2["month_to_exp"] = month_exp
+        options_df2["time_to_exp"] = time_exp
         options_df_temp = options_df_temp.append(options_df2)
         options_df_temp.reset_index(drop=True, inplace=True)
         del options_df2
@@ -78,11 +80,13 @@ def populate_bot_backtest(start_date=None, end_date=None, ticker=None, currency_
     print(options_df)
 
     print("Calculating Expiry Date")
-    for month_exp in args.month_horizon:
-        if month_exp < 1:
-            options_df.loc[options_df["month_to_exp"] == month_exp, "expiry_date"] = options_df["spot_date"] + relativedelta(weeks=(month_exp * 4))
-        else:
-            options_df.loc[options_df["month_to_exp"] == month_exp, "expiry_date"] = options_df["spot_date"] + relativedelta(months=month_exp)
+    for time_exp in time_to_exp:
+        days = int(round((time_exp * 365), 0))
+        options_df.loc[options_df["time_to_exp"] == time_exp, "expiry_date"] = options_df["spot_date"] + relativedelta(days=days)
+        # Code when we use business days
+        # days = int(round((time_exp * 256), 0))
+        # options_df.loc[options_df["time_to_exp"] == month_exp, "expiry_date"] = options_df["spot_date"] + BDay(days)
+
     # *****************************************************************************************************
     # making sure that expiry date is not holiday or weekend
     options_df["expiry_date"] = pd.to_datetime(options_df["expiry_date"])
@@ -248,7 +252,7 @@ def populate_bot_backtest(start_date=None, end_date=None, ticker=None, currency_
 
     # Adding UID
     options_df["uid"] = options_df["ticker"] + "_" + options_df["spot_date"].astype(str) + "_" + \
-        options_df["option_type"].astype(str) + "_" + options_df["month_to_exp"].astype(str)
+        options_df["option_type"].astype(str) + "_" + options_df["time_to_exp"].astype(str)
     options_df["uid"] = options_df["uid"].str.replace("-", "").str.replace(".", "")
     options_df["uid"] = options_df["uid"].str.strip()
 
@@ -284,40 +288,32 @@ def shift5_numba(arr, num, fill_value=np.nan):
         result[:] = arr
     return result
 
-def fill_nulls(args):
+def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, mod=False, history=False, total_no_of_runs=1, run_number=0):
+    time_to_exp = check_time_to_exp(time_to_exp)
+    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
     # This function is used for filling the nulls in executive options database. Checks whether the options are expired
     # or knocked out or not triggered at all.
     tqdm.pandas()
-
-    dates_df_unique = download_production_executive_null_dates_list(args)
-
+    dates_df_unique = get_bot_backtest_data_date_list(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, uno=True, mod=mod, null_filler=True)
     # Dividing the dates to sections for running manually
     dates_df_unique = np.sort(dates_df_unique)
-
-    divison_length = round(len(dates_df_unique) / args.total_no_of_runs)
-
+    divison_length = round(len(dates_df_unique) / total_no_of_runs)
     dates_per_run = [dates_df_unique[x:x + divison_length] for x in range(0, len(dates_df_unique), divison_length)]
     # **************************************************
-
-    args.date_min = min(dates_per_run[args.run_number])
-    args.date_max = max(dates_per_run[args.run_number])
-
+    date_min = min(dates_per_run[run_number])
+    date_max = max(dates_per_run[run_number])
     # Downloading the options that are not triggered from the executive database.
-    null_df = download_production_executive_null(args)
-
+    null_df = get_bot_backtest_data(start_date=date_min, end_date=date_max, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, uno=True, mod=mod, null_filler=True)
     start_date = null_df.spot_date.min()
-
-    tac_data = tac_data_download_null_filler(start_date, args)
-    tac_data = tac_data.sort_values(by=["index", "ticker", "trading_day"], ascending=True)
-    interest_rate_data = get_interest_rate_data(args)
-    interest_rate_data = interest_rate_data.rename(columns={"currency": "currency_code"})
-    indices_data = get_indices_data(args)
-    dividends_data = get_dividends_data(args)
+    #tac_data = tac_data_download_null_filler(start_date, args)
+    tac_data = get_master_tac_price(start_date=date_min, end_date=date_max, ticker=ticker, currency_code=currency_code)
+    tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
+    interest_rate_data = get_interest_rate_data()
+    dividends_data = get_dividends_data()
 
     # ********************************************************************************************
     # ********************************************************************************************
-    prices_df = tac_data.pivot_table(index=tac_data.trading_day, columns="ticker", values="tri_adjusted_price",
-                                     aggfunc="first", dropna=False)
+    prices_df = tac_data.pivot_table(index=tac_data.trading_day, columns="ticker", values="tri_adjusted_price",aggfunc="first", dropna=False)
     prices_df = prices_df.ffill()
     prices_df = prices_df.bfill()
 
@@ -327,7 +323,6 @@ def fill_nulls(args):
     dates_df["spot_date_index"] = dates_df.index
     dates_df["expiry_date_index"] = dates_df.index
     dates_df = dates_df.rename(columns={"trading_day": "spot_date"})
-
     null_df = null_df.merge(dates_df[["spot_date", "spot_date_index"]], on=["spot_date"], how="left")
     dates_df = dates_df.rename(columns={"spot_date": "expiry_date"})
     null_df = null_df.merge(dates_df[["expiry_date", "expiry_date_index"]], on=["expiry_date"], how="left")
@@ -340,29 +335,26 @@ def fill_nulls(args):
 
     prices_np = prices_df.values
     dates_np = dates_df.values
-
     del prices_df, tac_data
     gc.collect()
-
+    table_name = get_bot_uno_backtest_table_name()
+    if mod:
+        table_name += '_mod'
     def exec_fill_fun(row, prices_np, dates_np, null_df):
         # Calculate the desired quantities row by row.
         # Everything is converted to numpy array for faster runtime.
-
         if row.expiry_date_index == -2:
             row.expiry_date_index = prices_np.shape[0] - 1
         prices_temp = prices_np[int(row.spot_date_index):int(row.expiry_date_index+1), int(row.ticker_index)]
         if len(prices_temp) == 0:
             return row
-
         dates_temp = dates_np[int(row.spot_date_index):int(row.expiry_date_index+1), 0]
-
-        t = np.full((len(prices_temp)), ((row["expiry_date"] - dates_temp).astype("timedelta64[D]")) / np.timedelta64(1, "D") / 365)
-
+        t = np.full((len(prices_temp)), ((row["expiry_date"] - dates_temp).astype("timedelta64[D]")) / np.timedelta64(1, "D"))
         strike = np.full((len(prices_temp)), row["strike"])
         barrier = np.full((len(prices_temp)), row["barrier"])
 
         cond = (null_df.ticker == row.ticker) & (null_df.spot_date >= row.spot_date) &\
-               (null_df.spot_date <= row.expiry_date) & (null_df.month_to_exp == row.month_to_exp) &\
+               (null_df.spot_date <= row.expiry_date) & (null_df.time_to_exp == row.time_to_exp) &\
                (null_df.option_type == row.option_type)
 
         dates_df2 = pd.DataFrame(dates_temp, columns=["spot_date"])
@@ -379,45 +371,30 @@ def fill_nulls(args):
         curv_1m = null_df_temp["deriv"].values
         curv_inf = null_df_temp["deriv_inf"].values
 
-        days_to_expiry = np.full((len(prices_temp)),
-                                 ((row["expiry_date"] - dates_temp).astype("timedelta64[D]")) / np.timedelta64(1, "D"))
+        days_to_expiry = np.full((len(prices_temp)),((row["expiry_date"] - dates_temp).astype("timedelta64[D]")) / np.timedelta64(1, "D"))
 
-        r = cal_interest_rate(interest_rate_data[interest_rate_data.currency_code == row.currency_code],
-                              days_to_expiry)
-
+        r = cal_interest_rate(interest_rate_data[interest_rate_data.currency_code == row.currency_code], days_to_expiry)
         q = cal_q(row, dividends_data[dividends_data.ticker == row.ticker], dates_temp, prices_temp)
-
-
-        v1 = find_vol(np.divide(strike, prices_temp), t, atmv_0, atmv_1Y, atmv_inf,
-                      12, skew_1m, skew_inf, curv_1m, curv_inf, r, q)
-
-        v2 = find_vol(np.divide(barrier, prices_temp), t, atmv_0, atmv_1Y, atmv_inf,
-                      12, skew_1m, skew_inf, curv_1m, curv_inf, r, q)
-
+        v1 = find_vol(np.divide(strike, prices_temp), t, atmv_0, atmv_1Y, atmv_inf,12, skew_1m, skew_inf, curv_1m, curv_inf, r, q)
+        v2 = find_vol(np.divide(barrier, prices_temp), t, atmv_0, atmv_1Y, atmv_inf,12, skew_1m, skew_inf, curv_1m, curv_inf, r, q)
         stock_balance = deltaUnOC(prices_temp, strike, barrier, (barrier - strike), t, r, q, v1, v2)
         stock_balance = np.nan_to_num(stock_balance)
-
         last_hedge = np.copy(stock_balance)
         last_hedge = shift5_numba(last_hedge, 1)
         last_hedge = np.nan_to_num(last_hedge)
-
         hedge = 0.05
 
         # Condition
         condition1A = prices_temp > strike
         condition2A = np.abs(last_hedge - stock_balance) <= 0.05
         conditionA = condition1A & condition2A
-
         condition1B = prices_temp <= strike
         condition2B = np.abs(last_hedge - stock_balance) <= 0.01
         conditionB = condition1B & condition2B
-
         condition = conditionA | conditionB
         stock_balance[condition] = 2
         stock_balance = fill_zeros_with_last(stock_balance)
-
         barrier_indices = np.argmax((prices_temp >= row.barrier))
-
         stock_balance2 = np.copy(stock_balance)
         stock_balance2 = shift5_numba(stock_balance2, 1)
         stock_balance2 = np.nan_to_num(stock_balance2)
@@ -500,47 +477,46 @@ def fill_nulls(args):
         return row
 
     logging.basicConfig(filename="logfilename.log", level=logging.INFO)
+
     def fill_zeros_with_last(arr):
         prev = np.arange(len(arr))
         prev[arr == 2] = 2
         prev = np.maximum.accumulate(prev)
         return arr[prev]
-
     def foo(k):
         try:
             # run the null filler for each section of dates
-            date_temp = dates_per_run[args.run_number][k]
+            date_temp = dates_per_run[run_number][k]
             null_df_small = null_df[null_df.spot_date == date_temp]
-            print(f"Filling {dates_per_run[args.run_number][k]}, {k} date from {len(dates_per_run[args.run_number])} dates.")
+            print(f"Filling {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
             null_df_small = null_df_small.progress_apply(lambda x: exec_fill_fun(x, prices_np, dates_np, null_df), axis=1, raw=True)
             null_df_small.drop(["expiry_date_index", "spot_date_index", "ticker_index"], axis=1, inplace=True)
             null_df_small = null_df_small.infer_objects()
-            write_to_aws_executive_production_null(null_df_small, args)
-            print(f"Finished {dates_per_run[args.run_number][k]}, {k} date from {len(dates_per_run[args.run_number])} dates.")
+            table_name = get_bot_uno_backtest_table_name()
+            if mod:
+                table_name += '_mod'
+            upsert_data_to_database(null_df_small, table_name, "uid", how="update", cpu_count=True, Text=True)
+            print(f"Finished {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
 
         except Exception as e:
             print(e)
             logging.error(e)
-            logging.error(f"Error for {dates_per_run[args.run_number][k]}, {k} date from {len(dates_per_run[args.run_number])} dates.")
-            print(f"Error for {dates_per_run[args.run_number][k]}, {k} date from {len(dates_per_run[args.run_number])} dates.")
+            logging.error(f"Error for {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
+            print(f"Error for {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
 
 
-    if len(null_df) > len(dates_per_run[args.run_number]):
-        args.small_dataset = False
-        for i in range(int(len(dates_per_run[args.run_number]))):
+    if len(null_df) > len(dates_per_run[run_number]):
+        for i in range(int(len(dates_per_run[run_number]))):
             foo(i)
     else:
-        args.small_dataset = True
-        if args.option_maker_history:
+        if (history):
             null_df["num_hedges"] = None
         null_df = null_df.progress_apply(exec_fill_fun, axis=1, raw=True)
-
         null_df.drop(["expiry_date_index", "spot_date_index", "ticker_index"], axis=1, inplace=True)
         null_df = null_df.infer_objects()
         if len(null_df) > 0 :
             null_df = null_df.drop_duplicates(subset=["uid"], keep="first", inplace=False)
-            upsert_data_to_database(args, "uid", TEXT, null_df, method="update")
-
+            upsert_data_to_database(null_df, table_name, "uid", how="update", cpu_count=True, Text=True)
     # ********************************************************************************************
     print(f"Filling up the nulls is finished.")
 
