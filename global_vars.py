@@ -52,6 +52,7 @@ q_days=200
 index_to_etf_file = "bot/index_to_etf.csv"
 run_time_min = time.time()
 modified_delta_list = ['d2', 'v10']
+time_to_expiry = [0.03846, 0.07692, 0.08333, 0.15384, 0.16666, 0.25, 0.5] #[2 weeks, 4 weeks, 1 month, 8 weeks, 2 months, 3 months, 6 months]
 
 # if platform.system() == "Linux":
 model_path = "/home/loratech/PycharmProjects/models/"

@@ -279,8 +279,7 @@ def get_dividends_data():
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
-
-def get_bot_backtest_data(start_date=None, end_date=None, day_to_exp=None, ticker=None, currency_code=None, uno=False, ucdc=False, classic=False, mod=False):
+def get_bot_backtest_data(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, uno=False, ucdc=False, classic=False, mod=False, null_filler=False):
     start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
     if(uno):
         table_name = get_bot_uno_backtest_table_name()
@@ -292,15 +291,44 @@ def get_bot_backtest_data(start_date=None, end_date=None, day_to_exp=None, ticke
     if mod:
         table_name += '_mod'
     
-    query = f"select * from {table_name} "
+    query = f"select * from {table_name} where spot_date >= '{start_date}' and spot_date <= '{end_date}' "
     query += f" "
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
-        query += "and " + check
+        query += f"and " + check
+    if(type(time_to_exp) != type(None)):
+        query += f"and time_to_exp in {tuple_data(time_to_exp)} "
+    if(null_filler):
+        query += f"and event is null "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+
+def get_bot_backtest_data_date_list(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, uno=False, ucdc=False, classic=False, mod=False, null_filler=False):
+    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
+    if(uno):
+        table_name = get_bot_uno_backtest_table_name()
+    elif(ucdc):
+        table_name = get_bot_ucdc_backtest_table_name()
+    else:
+        table_name = get_bot_classic_backtest_table_name()
+    
+    if mod:
+        table_name += '_mod'
+    
+    query = f"select distinct spot_date from {table_name} where spot_date >= '{start_date}' and spot_date <= '{end_date}' "
+    query += f" "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += f"and " + check
+    if(type(time_to_exp) != type(None)):
+        query += f"and time_to_exp in {tuple_data(time_to_exp)} "
+    if(null_filler):
+        query += f"and event is null "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data.spot_date.unique()
 
 def download_production_executive_null_dates_list(args):
-
-
     with engine.connect() as conn:
         metadata = db.MetaData()
         table0 = db.Table(table_name, metadata, autoload=True, autoload_with=conn)
@@ -310,6 +338,13 @@ def download_production_executive_null_dates_list(args):
                                                                  table0.columns.month_to_exp.in_(args.month_horizon),
                                                                  table0.columns.inferred == flag,
                                                                  table0.columns.modified == flag_modified))
+        query = table0.select().where(and_(table0.columns.event == None,
+                                    table0.columns.ticker.in_(args.tickers_list),
+                                    table0.columns.month_to_exp.in_(args.month_horizon),
+                                    table0.columns.inferred == flag, 
+                                    table0.columns.spot_date >= args.date_min,
+                                    table0.columns.modified == flag_modified,
+                                    table0.columns.spot_date <= args.date_max))
         ResultProxy = conn.execute(query)
         ResultSet = ResultProxy.fetchall()
         columns_list = ResultProxy.keys()
@@ -323,6 +358,61 @@ def download_production_executive_null_dates_list(args):
     full_df.columns = columns_list
 
     return full_df.spot_date.unique()
+
+def download_production_executive_null(args):
+    if args.debug_mode or args.option_maker_history_full or args.option_maker_history_full_ucdc:
+        db_url = global_vars.DB_TEST_URL_READ  # if writing to production_data table, i.e., write out the stocks - keep in "live"
+    else:
+        db_url = global_vars.DB_DROID_URL_READ  # if writing to production_data table, i.e., write out the stocks - keep in "live"
+
+    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
+
+    table_name = args.executive_production_table_name
+
+    if args.option_maker_history_full:
+        table_name = table_name + '_full'
+    elif args.option_maker_history_full_ucdc:
+        table_name = args.executive_production_ucdc_table_name + '_full'
+    elif args.option_maker_history_ucdc or args.option_maker_daily_ucdc or args.option_maker_live_ucdc:
+        table_name = args.executive_production_ucdc_table_name
+    else:
+        table_name = table_name
+
+    if args.add_inferred:
+        flag = 1
+    else:
+        flag = 0
+
+    if args.modified:
+        table_name = table_name + '_mod'
+        flag_modified = 1
+    else:
+        flag_modified = 0
+
+    with engine.connect() as conn:
+        metadata = db.MetaData()
+        table0 = db.Table(table_name, metadata, autoload=True, autoload_with=conn)
+
+        query = table0.select().where(and_(table0.columns.event == None,
+                                           table0.columns.ticker.in_(args.tickers_list),
+                                           table0.columns.month_to_exp.in_(args.month_horizon),
+                                           table0.columns.inferred == flag, table0.columns.spot_date >= args.date_min,
+                                           table0.columns.modified == flag_modified,
+                                           table0.columns.spot_date <= args.date_max))
+
+        ResultProxy = conn.execute(query)
+        ResultSet = ResultProxy.fetchall()
+        columns_list = ResultProxy.keys()
+    engine.dispose()
+
+    full_df = pd.DataFrame(ResultSet)
+
+    if len(full_df) == 0:
+        print("We don't have null options.")
+        sys.exit()
+    full_df.columns = columns_list
+
+    return full_df
 
 def get_current_stocks_list(args):
     db_url = global_vars.DB_DROID_URL_READ
