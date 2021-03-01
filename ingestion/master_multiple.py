@@ -6,7 +6,7 @@ from general.date_process import (
     datetimeNow, 
     dlp_start_date, 
     dlp_start_date_buffer)
-from general.sql_output import delete_data_on_database, insert_data_to_database, upsert_data_to_database
+from general.sql_output import delete_data_on_database, upsert_data_to_database
 from ingestion.master_tac import ForwardBackwardFillNull
 from general.slack import report_to_slack
 from general.table_name import get_master_multiple_table_name

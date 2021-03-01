@@ -1,5 +1,4 @@
 import time
-import sys
 import functools
 import pandas as pd
 from pytz import timezone
@@ -11,6 +10,9 @@ def get_time_by_timezone(timezone_location):
 
 def droid_start_date():
     return backdate_by_year(4) #backdate_by_year(12)
+
+def droid_start_date_buffer():
+    return backdate_by_year(3) #backdate_by_year(12)
 
 def dlp_start_date_buffer():
     return backdate_by_year(11) #backdate_by_year(11)
@@ -38,6 +40,9 @@ def dateNow():
 
 def datetimeNow():
     return dateNow() + " " + timeNow()
+
+def timestampNow():
+    return datetime.fromtimestamp(time.time())
 
 def backdate_by_day(day):
     return (datetime.now().date() - relativedelta(days=day)).strftime("%Y-%m-%d")
