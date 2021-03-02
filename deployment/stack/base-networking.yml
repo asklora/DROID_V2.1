@@ -179,23 +179,23 @@ Resources:
             InstanceId: !Ref BastionHost
 
 
-    rdsDBInstance:
-        Type: AWS::RDS::DBInstance
-        Properties:
-            DBInstanceIdentifier: askloraprivatedb-test
-            AllocatedStorage: 20
-            DBInstanceClass: db.t3.small
-            AvailabilityZone: ap-east-1a
-            DBName: postgres
-            DBSubnetGroupName: !Ref PvsubnetDB
-            Engine: postgres
-            MasterUsername: postgres
-            MasterUserPassword: ml2021#LORA
-            MultiAZ: false
-            Port: 5432
-            PubliclyAccessible: false
-            VPCSecurityGroups:
-                - !Ref VpcSg
+    # rdsDBInstance:
+    #     Type: AWS::RDS::DBInstance
+    #     Properties:
+    #         DBInstanceIdentifier: askloraprivatedb-test
+    #         AllocatedStorage: 20
+    #         DBInstanceClass: db.t3.small
+    #         AvailabilityZone: ap-east-1a
+    #         DBName: postgres
+    #         DBSubnetGroupName: !Ref PvsubnetDB
+    #         Engine: postgres
+    #         MasterUsername: postgres
+    #         MasterUserPassword: ml2021#LORA
+    #         MultiAZ: false
+    #         Port: 5432
+    #         PubliclyAccessible: false
+    #         VPCSecurityGroups:
+    #             - !Ref VpcSg
     
 Outputs:
     VpcID:
