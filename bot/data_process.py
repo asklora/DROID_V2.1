@@ -12,25 +12,7 @@ from multiprocessing import cpu_count
 from general.slack import report_to_slack
 
 
-def make_multiples(prices_df, args):
-    # This function will make multiples.
-    main_tri = prices_df.pivot_table(index=prices_df.trading_day, columns='ticker', values='total_return_index',
-                                     aggfunc='first',
-                                     dropna=False)
 
-    main_tri_shifted = main_tri.shift(periods=1)
-    main_tri[main_tri == 'H'] = 1
-    main_tri_shifted[main_tri_shifted == 'H'] = 1
-    main_tri = main_tri.astype(float)
-    main_tri_shifted = main_tri_shifted.astype(float)
-
-    tri_df_np = main_tri.values
-    tri_df_shifted_np = main_tri_shifted.values
-
-    close_multiple = np.where(np.isnan(tri_df_np) | np.isnan(tri_df_shifted_np), np.nan, tri_df_np / tri_df_shifted_np)
-    main_multiples = pd.DataFrame(close_multiple, index=main_tri.index, columns=main_tri.columns)
-
-    return main_multiples
 
 
 def move_nans_to_top(df):

@@ -7,9 +7,9 @@ from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
 from datetime import datetime as dt
 import global_vars
-from classic.data_process import get_close_vol
-from classic.data_process import make_multiples, lookback_creator, nearest, move_nans_to_top, Sl_Tp
-from classic.data_transfer import tac_data_download, download_holidays, \
+from bot.data_process import get_close_vol
+from bot.data_process import make_multiples, lookback_creator, nearest, move_nans_to_top, Sl_Tp
+from bot.data_transfer import tac_data_download, download_holidays, \
     write_to_aws_sltp_production, download_production_sltp, download_production_sltp_null, \
     write_to_aws_sltp_production_null, write_to_aws_merge_latest_price, tac_data_download_by_ticker
 from general.slack import report_to_slack
