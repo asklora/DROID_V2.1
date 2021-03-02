@@ -1,28 +1,21 @@
-import os
-import sys
-from dotenv import load_dotenv
-load_dotenv()
 from general.date_process import (
-    relativedelta,
     datetimeNow, 
     backdate_by_day, 
     dlp_start_date, 
     backdate_by_month,
     droid_start_date,
     forwarddate_by_day,
-    str_to_date,
     dateNow)
 import pandas as pd
 from pandas.tseries.offsets import BDay
 import numpy as np
-from sklearn.preprocessing import robust_scale, minmax_scale, MinMaxScaler
+from sklearn.preprocessing import robust_scale, minmax_scale
 from general.slack import report_to_slack
 from general.sql_process import do_function
-from general.data_process import tuple_data, uid_maker, remove_null
+from general.data_process import uid_maker, remove_null
 from general.sql_query import (
     get_data_by_table_name, 
-    get_data_by_table_name_with_condition,
-    get_latest_price, get_pred_mean,
+    get_pred_mean,
     get_vix, 
     get_fundamentals_score,
     get_active_universe,
@@ -33,7 +26,6 @@ from general.sql_query import (
     get_max_last_ingestion_from_universe)
 from general.sql_output import delete_old_dividends_on_database, upsert_data_to_database
 from datasource.dsws import (
-    get_data_static_from_dsws, 
     get_data_history_from_dsws, 
     get_data_history_frequently_from_dsws, 
     get_data_static_with_string_from_dsws,
@@ -42,19 +34,15 @@ from datasource.dss import get_data_from_dss
 from datasource.fred import read_fred_csv
 from datasource.quandl import read_quandl_csv
 from general.table_name import (
-    get_data_vix_table_name, 
     get_universe_rating_table_name,
     get_quandl_table_name,
-    get_fred_table_name,
+    get_data_fred_table_name,
     get_fundamental_score_table_name, 
     get_data_dss_table_name, 
     get_data_dsws_table_name,
-    get_data_dividend_table_name, 
-    get_data_dividend_daily_table_name, 
-    get_data_interest_table_name, 
-    get_data_interest_daily_table_name,
-    get_latest_price_table_name)
-
+    get_data_dividend_table_name,
+    get_data_interest_table_name)
+from global_vars import REPORT_HISTORY, REPORT_INTRADAY
 # data_dividend
 # data_dividend_daily_rates
 # data_fundamental_score
@@ -78,7 +66,7 @@ def update_data_dss_from_dss(ticker=None, currency_code=None, history=False, man
     print(f"Ingestion Start From {start_date}")
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     jsonFileName = "files/file_json/historyAPI.json"
-    result = get_data_from_dss(start_date, end_date, universe["ticker"].to_list(), jsonFileName, report=os.getenv("REPORT_HISTORY"))
+    result = get_data_from_dss(start_date, end_date, universe["ticker"].to_list(), jsonFileName, report=REPORT_HISTORY)
     print(result)
     result = result.drop(columns=["IdentifierType", "Identifier"])
     print(result)
@@ -152,7 +140,7 @@ def update_fred_data_from_fred():
     result["data"] = np.where(result["data"]== ".", 0, result["data"])
     result["data"] = result["data"].astype(float)
     if(len(result)) > 0 :
-        upsert_data_to_database(result, get_fred_table_name(), "uid", how="update", Text=True)
+        upsert_data_to_database(result, get_data_fred_table_name(), "uid", how="update", Text=True)
         #insert_data_to_database(result, get_fred_table_name(), how="replace")
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 

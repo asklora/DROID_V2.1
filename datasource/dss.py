@@ -1,6 +1,3 @@
-import os
-from dotenv import load_dotenv
-load_dotenv()
 import sys
 import requests
 import pandas as pd
@@ -11,7 +8,7 @@ from getpass import GetPassWarning
 from collections import OrderedDict
 from general.date_process import datetimeNow
 from general.slack import report_to_slack
-
+from global_vars import DSS_PASSWORD, DSS_USERNAME, REPORT_INTRADAY, REPORT_HISTORY, URL_Extrations, URL_AuthToken
 # =============================================================================
 
 def getAuthToken():
@@ -20,8 +17,8 @@ def getAuthToken():
     _header = {}
     _header['Prefer'] = 'respond-async'
     _header['Content-Type'] = 'application/json; odata.metadata=minimal'
-    _data = {'Credentials': {'Password': os.getenv("DSS_PASSWORD"), 'Username': os.getenv("DSS_USERNAME")}}
-    resp = requests.post(os.getenv("URL_AuthToken"), json=_data, headers=_header)
+    _data = {'Credentials': {'Password': DSS_PASSWORD, 'Username': DSS_USERNAME}}
+    resp = requests.post(URL_AuthToken, json=_data, headers=_header)
     if resp.status_code != 200:
         print(datetimeNow()+ ' ' + 'ERROR, Get Token failed with ' + str(resp.status_code))
         sys.exit(-1)
@@ -41,7 +38,7 @@ def get_data_from_reuters(start_date, end_date, authToken, jsonFileName, stocks,
     # Step 4
     print(datetimeNow()+ ' ' + '*** Step 4 Append each instrument to the InstrumentIdentifiers array')
     for _inst in stocks:
-        if(report == os.getenv("REPORT_INTRADAY")):
+        if(report == REPORT_INTRADAY):
             _jReqBody["ExtractionRequest"]["IdentifierList"]["InstrumentIdentifiers"].append(
                 {"IdentifierType": "Ric", "Identifier": _inst})
         else:
@@ -53,8 +50,7 @@ def get_data_from_reuters(start_date, end_date, authToken, jsonFileName, stocks,
     _extractReqHeader = makeExtractHeader(_token)
     # Step 5
     print(datetimeNow()+ ' ' + '*** Step 5 Post the T&C Request to DSS REST server and check response status')
-    resp = requests.post(os.getenv("URL_Extrations"), data=None,
-                          json=_jReqBody, headers=_extractReqHeader)
+    resp = requests.post(URL_Extrations, data=None, json=_jReqBody, headers=_extractReqHeader)
     if resp.status_code != 200:
         if resp.status_code != 202:
             message = "Error: Status Code:" + \
@@ -97,7 +93,7 @@ def makeExtractHeader(token):
 
 # =============================================================================
 
-def get_data_from_dss(start_date, end_date, stocks, jsonFileName, report=os.getenv("REPORT_INTRADAY")):
+def get_data_from_dss(start_date, end_date, stocks, jsonFileName, report=REPORT_INTRADAY):
     print(f"Data From {report} Report")
     try:
         # Step 1 Request Authorization Token
