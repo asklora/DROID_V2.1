@@ -77,6 +77,7 @@ class DroidDb(Cloud):
         if snapshot_status == 'available':
             if self.is_testdbexist():
                 self.delete_old_testdb()
+                time.sleep(3)
             self.rds_client.restore_db_cluster_from_snapshot(
                         DBClusterIdentifier='droid-v2-test-cluster',
                         SnapshotIdentifier='droid-v2-snapshot',
@@ -182,7 +183,6 @@ class DroidDb(Cloud):
         -> Reader endpoint
         -> port
         """
-        print(self.is_testdbexist())
         if self.is_testdbexist():
             db = self.rds_client.describe_db_clusters(
                         DBClusterIdentifier='droid-v2-test-cluster',

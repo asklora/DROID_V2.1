@@ -1,21 +1,19 @@
 from django.core.management.base import BaseCommand, CommandError
-import boto3,yaml,json
-import pandas as pd
+from core.djangomodule.network.cloud import DroidDb
 
 
 class Command(BaseCommand):
-
+    def add_arguments(self, parser):
+        # Named (optional) arguments
+        parser.add_argument(
+            '--delete',
+            action='store_true',
+            dest='delete',
+            help='Delete db instead',
+        )
     def handle(self, *args, **options):
-        boto3.setup_default_session(region_name='ap-east-1')
-        rds_client = boto3.client('rds')
-        # snapshot = rds_client.create_db_cluster_snapshot(
-        #                                             DBClusterSnapshotIdentifier='droid-prod',
-        #                                             DBClusterIdentifier='droid-v2-test-cluster',
-        #                                         )
-        replica = rds_client.restore_db_cluster_from_snapshot(
-    DBClusterIdentifier='droid-test',
-    SnapshotIdentifier='droid-prod',
-    Engine='aurora-postgresql'
-)
-        print(replica)
-
+        db = DroidDb()
+        if options['delete']:
+            db.delete_old_testdb()
+        else:
+            db.create_test_db()
