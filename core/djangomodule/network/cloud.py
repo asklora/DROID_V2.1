@@ -13,25 +13,45 @@ class Cloud:
     
     def validate_stack(self,stack_name):
         try:
-            stack = self.cloud_formation_client.describe_stacks(StackName=stack_name)
+            self.cloud_formation_client.describe_stacks(StackName=stack_name)
             print('stack exist')
-            print(stack)
-            return False
-        except Exception as e:
-            print('stack doesnt exist')
             return True
+        except Exception as e:
+            print('stack doesnt exist',e)
+            return False
 
     def create_stack(self, template=None):
         stack_name = 'cloud-formation'
         print('checking existing stack', stack_name)
-        is_exist = self.validate_stack(stack_name)
-        if is_exist:
+        stack_exist = self.validate_stack(stack_name)
+        if not stack_exist:
             print("Creating {}".format(stack_name))
-            response = self.cloud_formation_client.create_stack(
+            self.cloud_formation_client.create_stack(
                 StackName=stack_name,
                 TemplateURL='https://s3.ap-east-1.amazonaws.com/cf-templates-ot7ai6np4d71-ap-east-1/2021060Ktf-base-networking.yml'
             )
-            print(response)
+            
+            while True:
+                stack = self.cloud_formation_client.describe_stacks(
+                            StackName=stack_name
+                        )
+                stack_status = stack['Stacks'][0]['StackStatus']
+                if stack_status == 'CREATE_COMPLETE':
+                    print(f'{datetime.now()} status : ',stack_status)
+                    print('stack created')
+                    break
+                    
+                elif stack_status == 'CREATE_FAILED':
+                    raise ValueError('somethinng went wronng')
+                else:
+                    print(f'{datetime.now()} status : ',stack_status)
+                time.sleep(10)
+        else:
+            stack = self.cloud_formation_client.describe_stacks(
+                            StackName=stack_name
+                        )
+            stack_status = stack['Stacks'][0]['StackStatus']
+            print('stack exist with status ',stack_status)
 
 
 class DroidDb(Cloud):
@@ -54,23 +74,48 @@ class DroidDb(Cloud):
 
             # Wait and re-request the status to check if it already available
             time.sleep(30)
-        # if snapshot == 'available':
-        #    self.rds_client.restore_db_cluster_from_snapshot(
-        #             DBClusterIdentifier='droid-v2-test-cluster',
-        #             SnapshotIdentifier='droid-v2-snapshot',
-        #             Engine='aurora-postgresql')
+        if snapshot_status == 'available':
+            if self.is_testdbexist():
+                self.delete_old_testdb()
+            self.rds_client.restore_db_cluster_from_snapshot(
+                        DBClusterIdentifier='droid-v2-test-cluster',
+                        SnapshotIdentifier='droid-v2-snapshot',
+                        Engine='aurora-postgresql')
+            while True:
+                db_instance =  self.check_testdb_status()
+                if db_instance == 'available':
+                    break
+                    print('db created')
+                    return 'created'
+                elif db_instance == 'creating':
+                    print(f'{datetime.now()} == please wait creating test db instance ...')
+                time.sleep(10)
+                
 
-    
+    def check_testdb_status(self):
+        if self.is_testdbexist():
+            db = self.rds_client.describe_db_clusters(
+            DBClusterIdentifier='droid-v2-test-cluster',)
+            return db['DBClusters'][0]['Status']
+        return "Not Found"
+
     def is_testdbexist(self):
-        pass
-
-    # def get_cluster_reader_url(self):
-    #     pass
+        try:
+            db = self.rds_client.describe_db_clusters(
+                    DBClusterIdentifier='droid-v2-test-cluster',
+                )
+            status  = db['DBClusters'][0]['Status']
+            if status == 'available':
+                return True 
+        except Exception as e:
+            print(e)
+            return False
     
-    
-    # def get_cluster_writer_url(self):
-    #     pass
-    
+    def delete_old_testdb(self):
+        self.rds_client.delete_db_cluster(
+                    DBClusterIdentifier='droid-v2-test-cluster',
+                    SkipFinalSnapshot=True,
+                )
     
     def get_snapshot(self):
         try:
@@ -115,26 +160,32 @@ class DroidDb(Cloud):
 
         
 
-    # @property
-    # def prod_url(self):
-    #     pass
-    
-    # @property
-    # def test_url(self):
-    #     pass
+    @property
+    def prod_url(self):
+        """
+        return 
+        -> endpoint
+        -> Reader endpoint
+        -> port
+        """
+        db = self.rds_client.describe_db_clusters(
+                    DBClusterIdentifier='droid-v2-prod-cluster',
+                )
+        return db['DBClusters'][0]['Endpoint'],db['DBClusters'][0]['ReaderEndpoint'], db['DBClusters'][0]['Port']
 
-# stack = cloud_formation_client.describe_stacks(StackName=stack_name)
-# ec2s = ec2_client.describe_instances(Filters=[{'Name': 'tag:Name','Values': ['bastion',]},])
-# rds = rds_client.describe_db_instances(DBInstanceIdentifier='droid-v2-test-cluster')
-# df = pd.DataFrame(columns=['InstanceId', 'InstanceType', 'PrivateIpAddress','PublicIpAddress'])
-# i = 0
-# for res in ec2s['Reservations']:
-#     df.loc[i, 'InstanceId'] = res['Instances'][0]['InstanceId']
-#     df.loc[i, 'InstanceType'] = res['Instances'][0]['InstanceType']
-#     df.loc[i, 'PrivateIpAddress'] = res['Instances'][0]['PrivateIpAddress']
-#     df.loc[i, 'PublicIpAddress'] = res['Instances'][0]['PublicIpAddress']
-# #     i += 1
-# print (rds['DBInstances'][0]['Endpoint']['Address'])
-# print (rds['DBInstances'][0]['Endpoint']['Port'])
-# print (rds['DBInstances'][0]['MasterUsername'])
-# print(df)
+    
+    @property
+    def test_url(self):
+        """
+        return 
+        -> endpoint
+        -> Reader endpoint
+        -> port
+        """
+        print(self.is_testdbexist())
+        if self.is_testdbexist():
+            db = self.rds_client.describe_db_clusters(
+                        DBClusterIdentifier='droid-v2-test-cluster',
+                    )
+            return db['DBClusters'][0]['Endpoint'],db['DBClusters'][0]['ReaderEndpoint'], db['DBClusters'][0]['Port']
+        # raise ValueError('error connecting database or database not found')

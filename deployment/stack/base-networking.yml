@@ -140,6 +140,14 @@ Resources:
                   FromPort: 22
                   ToPort: 22
                   CidrIp: 0.0.0.0/0
+                - IpProtocol: tcp
+                  FromPort: 80
+                  ToPort: 80
+                  CidrIp: 0.0.0.0/0
+                - IpProtocol: tcp
+                  FromPort: 8080
+                  ToPort: 8080
+                  CidrIp: 0.0.0.0/0
     VpcSg:
         Type: AWS::EC2::SecurityGroup
         Properties:
@@ -164,7 +172,7 @@ Resources:
         Type: AWS::EC2::Instance
         Properties:
             KeyName: asklora-hk
-            ImageId: ami-077c694a31fa99701
+            ImageId: ami-0407ba1760460a483
             InstanceType: c5.xlarge
             SecurityGroupIds:
                 - !Ref RuleSSHec2
