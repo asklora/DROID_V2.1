@@ -1,34 +1,27 @@
 import gc
-from main_executive import check_time_to_exp
-from general.table_name import get_bot_uno_backtest_table_name
-from general.sql_output import truncate_table, upsert_data_to_database
-
-from dateutil.relativedelta import relativedelta
-from general.date_process import dateNow, droid_start_date
+import logging
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-import logging
 from pandas.tseries.offsets import BDay
-from bot.black_scholes import (
-    find_vol, 
-    Up_Out_Call, 
-    deltaUnOC)
+from dateutil.relativedelta import relativedelta
+
+from main_executive import check_time_to_exp
+from general.sql_output import upsert_data_to_database
+from general.date_process import dateNow, droid_start_date
+from general.table_name import get_bot_uno_backtest_table_name
+from bot.preprocess import cal_interest_rate, cal_q
+from bot.black_scholes import (find_vol, Up_Out_Call, deltaUnOC)
 from bot.data_download import (
     get_bot_backtest_data, 
-    get_bot_backtest_data_date_list, get_calendar_data, get_currency_data, get_master_tac_price, 
+    get_bot_backtest_data_date_list, 
+    get_calendar_data, 
+    get_currency_data, 
+    get_master_tac_price, 
     get_vol_surface_data, 
     get_interest_rate_data,
     get_dividends_data, 
-    check_start_end_date,
-    download_production_executive_null, 
-    tac_data_download_null_filler, 
-    download_production_executive_null_dates_list)
-from bot.data_output import (
-    write_to_aws_executive_production_null)
-from bot.preprocess import cal_interest_rate, cal_q
-from general.slack import report_to_slack
-
+    check_start_end_date)
 from global_vars import modified_delta_list
 
 def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, infer=True, history=False, daily=False, new_ticker=False):
@@ -70,6 +63,13 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     for time_exp in time_to_exp:
         options_df2 = options_df.copy()
         options_df2["time_to_exp"] = time_exp
+
+        print("Calculating Expiry Date")
+        days = int(round((time_exp * 365), 0))
+        options_df2["expiry_date"] = options_df2["spot_date"] + relativedelta(days=days)
+        # Code when we use business days
+        # days = int(round((time_exp * 256), 0))
+        # options_df2["expiry_date"] = options_df2["spot_date"] + BDay(days)
         options_df_temp = options_df_temp.append(options_df2)
         options_df_temp.reset_index(drop=True, inplace=True)
         del options_df2
@@ -79,13 +79,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     del options_df_temp
     print(options_df)
 
-    print("Calculating Expiry Date")
-    for time_exp in time_to_exp:
-        days = int(round((time_exp * 365), 0))
-        options_df.loc[options_df["time_to_exp"] == time_exp, "expiry_date"] = options_df["spot_date"] + relativedelta(days=days)
-        # Code when we use business days
-        # days = int(round((time_exp * 256), 0))
-        # options_df.loc[options_df["time_to_exp"] == month_exp, "expiry_date"] = options_df["spot_date"] + BDay(days)
+    
 
     # *****************************************************************************************************
     # making sure that expiry date is not holiday or weekend
@@ -339,7 +333,7 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
     gc.collect()
     table_name = get_bot_uno_backtest_table_name()
     if mod:
-        table_name += '_mod'
+        table_name += "_mod"
     def exec_fill_fun(row, prices_np, dates_np, null_df):
         # Calculate the desired quantities row by row.
         # Everything is converted to numpy array for faster runtime.
@@ -494,7 +488,7 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
             null_df_small = null_df_small.infer_objects()
             table_name = get_bot_uno_backtest_table_name()
             if mod:
-                table_name += '_mod'
+                table_name += "_mod"
             upsert_data_to_database(null_df_small, table_name, "uid", how="update", cpu_count=True, Text=True)
             print(f"Finished {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
 

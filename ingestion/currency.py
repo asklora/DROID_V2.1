@@ -1,13 +1,10 @@
-import os
-from dotenv import load_dotenv
-load_dotenv()
-
 from general.slack import report_to_slack
 from general.date_process import datetimeNow, get_time_by_timezone, string_to_time
 from general.table_name import get_currency_table_name
 from general.sql_query import get_active_currency, get_active_currency_ric_not_null
 from datasource.dss import get_data_from_dss
 from general.sql_output import upsert_data_to_database
+from global_vars import REPORT_HISTORY, REPORT_INTRADAY
 
 def update_currency_price_from_dss():
     print("{} : === Currency Price Ingestion ===".format(datetimeNow()))
@@ -15,7 +12,7 @@ def update_currency_price_from_dss():
     currencylist = currencylist.drop(columns=["last_date", "ask_price", "bid_price"])
     currency = currencylist["ric"]
     jsonFileName = "files/file_json/currency_price.json"
-    result = get_data_from_dss("start_date", "end_date", currency, jsonFileName, report=os.getenv("REPORT_INTRADAY"))
+    result = get_data_from_dss("start_date", "end_date", currency, jsonFileName, report=REPORT_INTRADAY)
     result = result.drop(columns=["IdentifierType", "Identifier"])
     print(result)
     if(len(result) > 0):

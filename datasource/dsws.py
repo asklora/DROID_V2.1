@@ -1,18 +1,14 @@
-import os
-from dotenv import load_dotenv
-load_dotenv()
 import pandas as pd
 import numpy as np
 from pydatastream import Datastream
-from general.date_process import backdate_by_year, count_date_range_by_month
-from tqdm import tqdm
-
+from general.date_process import count_date_range_by_month
+from global_vars import DSS_PASSWORD, DSS_USERNAME, DSWS_PASSWORD, DSWS_PASSWORD2, DSWS_USERNAME, DSWS_USERNAME2
 
 def setDataStream(DSWS=True):
     if(DSWS):
-        DS = Datastream(username=os.getenv("DSWS_USERNAME"), password=os.getenv("DSWS_PASSWORD"))
+        DS = Datastream(username=DSWS_USERNAME, password=DSWS_PASSWORD)
     else:
-        DS = Datastream(username=os.getenv("DSWS_USERNAME2"), password=os.getenv("DSWS_PASSWORD2"))
+        DS = Datastream(username=DSWS_USERNAME2, password=DSWS_PASSWORD2)
     return DS
 
 def get_data_static_with_string_from_dsws(identifier, universe, *field):

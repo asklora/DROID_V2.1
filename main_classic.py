@@ -3,49 +3,18 @@ import sys
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import global_vars
-from classic.statistics import bench_fn
-from classic.data_transfer import (
+from bot.statistics_classic import bench_fn
+from bot.data_transfer import (
     get_tickers_list_from_aws, 
     get_new_tickers_list_from_aws,
     download_production_sltp_max_date, 
     get_tickers_list_classic_from_aws, 
     download_production_classic_max_date)
-from classic.main_file import main_fn, fill_nulls, classic_vol_update
+from bot.main_file_classic import main_fn, fill_nulls, classic_vol_update
 from general.general import timeNow
 from general.slack import report_to_slack
 
-parser = argparse.ArgumentParser()
-
-parser.add_argument('--history', dest='history', action='store_true')
-parser.add_argument('--no_history', dest='history', action='store_false')
-parser.set_defaults(history=False)  # When true will create a production history.
-
-parser.add_argument('--benchmark', dest='benchmark', action='store_true')
-parser.add_argument('--no_benchmark', dest='benchmark', action='store_false')
-parser.set_defaults(benchmark=False)  # When true will create a production history.
-
-parser.add_argument('--monthly', dest='monthly', action='store_true')
-parser.add_argument('--no_monthly', dest='monthly', action='store_false')
-parser.set_defaults(monthly=False)  # When true will create a production history.
-
-parser.add_argument('--lookback_horizon', type=int, default=1)
-parser.add_argument('--monthly_horizon', type=int)
-parser.add_argument('--month_horizon', nargs='+')
-parser.add_argument('--debug_mode', dest='debug_mode', action='store_true')
-parser.add_argument('--no_debug_mode', dest='debug_mode', action='store_false')
-parser.set_defaults(debug_mode=False)  # When true will create a production history.
-
-parser.add_argument('--tac_data_table_name', type=str, default=global_vars.tac_data_table_name)
-parser.add_argument('--holidays_table_name', type=str, default=global_vars.holidays_table_name)
-parser.add_argument('--classic_statistics_table_name', type=str, default=global_vars.classic_statistics_table_name)
-parser.add_argument('--sltp_production_table_name', type=str, default=global_vars.sltp_production_table_name)
-parser.add_argument('--droid_universe_table_name', type=str, default=global_vars.droid_universe_table_name)
-
-parser.add_argument('--slack_api', type=str, default=global_vars.slack_api,help='slack api')
-# *******************  PATHS  **************************************************
-# ******************************************************************************
-args = parser.parse_args()
-
+lookback_horizon = 1
 
 def check_new_ticker(args):
     args.start_date = datetime.now().date() - relativedelta(years=3)

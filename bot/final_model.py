@@ -348,11 +348,6 @@ def bot_infer(infer_df, model_type, rank_columns):
 
     latest_df = final_report[final_report.spot_date == final_report.spot_date.max()].copy()
     latest_df = latest_df.reset_index(drop=True)
-    # for i in range(len(args.Y_columns)):
-    #     temp = latest_df[f"rank_{i+1}"].str.split("_",  expand=True)
-    #     latest_df[f"rank_{i+1}_bot"] = temp.iloc[:, 0]
-    #     latest_df[f"rank_{i+1}_opt"] = temp.iloc[:, 1]
-    #     latest_df[f"rank_{i+1}_mon"] = temp.iloc[:, 2]
     latest_df_final = pd.DataFrame()
     latest_df_final["ticker"] = latest_df.ticker
     latest_df_final["spot_date"] = latest_df.spot_date
@@ -360,18 +355,12 @@ def bot_infer(infer_df, model_type, rank_columns):
     # if latest_df["uno_OTM_3m_pnl_class_prob"] > latest_df["uno_ITM_3m_pnl_class_prob"]:
     latest_df_final.loc[latest_df["uno_OTM_3m_pnl_class_prob"] > latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot"] = "UNO_OTM_3"
     latest_df_final.loc[latest_df["uno_OTM_3m_pnl_class_prob"] <= latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot"] = "UNO_ITM_3"
-    latest_df_final.loc[
-        latest_df["uno_OTM_3m_pnl_class_prob"] > latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot_prob"] = latest_df["uno_OTM_3m_pnl_class_prob"]
-    latest_df_final.loc[
-        latest_df["uno_OTM_3m_pnl_class_prob"] <= latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot_prob"] = latest_df["uno_ITM_3m_pnl_class_prob"]
-
+    latest_df_final.loc[latest_df["uno_OTM_3m_pnl_class_prob"] > latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot_prob"] = latest_df["uno_OTM_3m_pnl_class_prob"]
+    latest_df_final.loc[latest_df["uno_OTM_3m_pnl_class_prob"] <= latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot_prob"] = latest_df["uno_ITM_3m_pnl_class_prob"]
     latest_df_final.loc[latest_df["uno_OTM_1m_pnl_class_prob"] > latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot"] = "UNO_OTM_1"
     latest_df_final.loc[latest_df["uno_OTM_1m_pnl_class_prob"] <= latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot"] = "UNO_ITM_1"
-    latest_df_final.loc[
-        latest_df["uno_OTM_1m_pnl_class_prob"] > latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot_prob"] = latest_df["uno_OTM_1m_pnl_class_prob"]
-    latest_df_final.loc[
-        latest_df["uno_OTM_1m_pnl_class_prob"] <= latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot_prob"] = latest_df["uno_ITM_1m_pnl_class_prob"]
-
+    latest_df_final.loc[latest_df["uno_OTM_1m_pnl_class_prob"] > latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot_prob"] = latest_df["uno_OTM_1m_pnl_class_prob"]
+    latest_df_final.loc[latest_df["uno_OTM_1m_pnl_class_prob"] <= latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot_prob"] = latest_df["uno_ITM_1m_pnl_class_prob"]
     latest_df_final["ucdc_bot"] = "UCDC_ATM_6"
     latest_df_final["ucdc_bot_prob"] = latest_df["ucdc_ATM_6m_pnl_class_prob"]
 

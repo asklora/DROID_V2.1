@@ -1,31 +1,26 @@
 import gc
-from main_executive import check_time_to_exp
-from general.sql_output import upsert_data_to_database
 import logging
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
-
-from bot.black_scholes import (
-    find_vol,
-    Rev_Conv, 
-    deltaRC)
-from bot.data_download import (
-    check_start_end_date, get_bot_backtest_data, get_bot_backtest_data_date_list, tac_data_download, 
-    get_vol_surface_data, 
-    get_interest_rate_data,
-    get_dividends_data, 
-    download_production_executive_null, 
-    tac_data_download_null_filler, 
-    download_production_executive_null_dates_list, 
-    get_calendar_data, 
-    get_currency_data, 
-    get_master_tac_price)
+from main_executive import check_time_to_exp
+from general.sql_output import upsert_data_to_database
+from bot.black_scholes import (find_vol, Rev_Conv, deltaRC)
 from general.table_name import get_bot_ucdc_backtest_table_name
 from general.date_process import dateNow, droid_start_date
 from bot.preprocess import cal_interest_rate, cal_q
+from bot.data_download import (
+    check_start_end_date, 
+    get_bot_backtest_data, 
+    get_bot_backtest_data_date_list, 
+    get_vol_surface_data, 
+    get_interest_rate_data,
+    get_dividends_data, 
+    get_calendar_data, 
+    get_currency_data, 
+    get_master_tac_price)
 from global_vars import modified_delta_list
 
 def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, infer=True, history=False, daily=False, new_ticker=False):
@@ -67,6 +62,13 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     for time_exp in time_to_exp:
         options_df2 = options_df.copy()
         options_df2["time_to_exp"] = time_exp
+        days = int(round((time_exp * 365), 0))
+
+        print("Calculating Expiry Date")
+        options_df2["expiry_date"] = options_df2["spot_date"] + relativedelta(days=days)
+        # Code when we use business days
+        # days = int(round((time_exp * 256), 0))
+        # options_df2["expiry_date"] = options_df2["spot_date"] + BDay(days)
         options_df_temp = options_df_temp.append(options_df2)
         options_df_temp.reset_index(drop=True, inplace=True)
         del options_df2
@@ -75,14 +77,6 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     options_df = options_df_temp.copy()
     del options_df_temp
     print(options_df)
-
-    print("Calculating Expiry Date")
-    for time_exp in time_to_exp:
-        days = int(round((time_exp * 365), 0))
-        options_df.loc[options_df["time_to_exp"] == time_exp, "expiry_date"] = options_df["spot_date"] + relativedelta(days=days)
-        # Code when we use business days
-        # days = int(round((time_exp * 256), 0))
-        # options_df.loc[options_df["time_to_exp"] == month_exp, "expiry_date"] = options_df["spot_date"] + BDay(days)
 
     # *****************************************************************************************************
     # making sure that expiry date is not holiday or weekend
@@ -102,21 +96,21 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     # *************************************************************************************************
     # get_interest_rate vectorized function (r)
 
-    unique_horizons = pd.DataFrame(options_df['days_to_expiry'].unique())
-    unique_horizons['id'] = 2
-    unique_currencies = pd.DataFrame(interest_rate_data['currency_code'].unique())
-    unique_currencies['id'] = 2
+    unique_horizons = pd.DataFrame(options_df["days_to_expiry"].unique())
+    unique_horizons["id"] = 2
+    unique_currencies = pd.DataFrame(interest_rate_data["currency_code"].unique())
+    unique_currencies["id"] = 2
 
-    rates = pd.merge(unique_horizons, unique_currencies, on='id', how='outer')
-    rates = rates.rename(columns={'0_y': 'currency_code', '0_x': 'days_to_expiry'})
-    interest_rate_data = interest_rate_data.rename(columns={'days_to_maturity': 'days_to_expiry'})
-    rates = pd.merge(rates, interest_rate_data, on=['days_to_expiry', 'currency_code'], how='outer')
+    rates = pd.merge(unique_horizons, unique_currencies, on="id", how="outer")
+    rates = rates.rename(columns={"0_y": "currency_code", "0_x": "days_to_expiry"})
+    interest_rate_data = interest_rate_data.rename(columns={"days_to_maturity": "days_to_expiry"})
+    rates = pd.merge(rates, interest_rate_data, on=["days_to_expiry", "currency_code"], how="outer")
 
     def funs(df):
-        df = df.sort_values(by='days_to_expiry')
+        df = df.sort_values(by="days_to_expiry")
         df = df.reset_index()
-        nan_index = df['rate'].index[df['rate'].isnull()].to_series().reset_index(drop=True)
-        not_nan_index = df['rate'].index[~df['rate'].isnull()].to_series().reset_index(drop=True)
+        nan_index = df["rate"].index[df["rate"].isnull()].to_series().reset_index(drop=True)
+        not_nan_index = df["rate"].index[~df["rate"].isnull()].to_series().reset_index(drop=True)
         for a in nan_index:
             temp = not_nan_index.copy()
             temp[len(temp)] = a
@@ -131,20 +125,20 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
             if (ind + 1 > len(df) - 1):
                 ind = len(df) - 2
             ind2 = temp[ind + 1]
-            if (type(df.loc[ind1, 'rate']) == np.float64):
-                rate_1 = df.loc[ind1, 'rate']
-                rate_2 = df.loc[ind2, 'rate']
-                dtm_1 = df.loc[ind1, 'days_to_expiry']
-                dtm_2 = df.loc[ind2, 'days_to_expiry']
+            if (type(df.loc[ind1, "rate"]) == np.float64):
+                rate_1 = df.loc[ind1, "rate"]
+                rate_2 = df.loc[ind2, "rate"]
+                dtm_1 = df.loc[ind1, "days_to_expiry"]
+                dtm_2 = df.loc[ind2, "days_to_expiry"]
             else:
-                rate_1 = df.loc[ind1, 'rate'].iloc[0]
-                rate_2 = df.loc[ind2, 'rate'].iloc[0]
-                dtm_1 = df.loc[ind1, 'days_to_expiry'].iloc[0]
-                dtm_2 = df.loc[ind2, 'days_to_expiry'].iloc[0]
-            df.loc[a, 'rate'] = rate_1 * (dtm_2 - df.loc[a, 'days_to_expiry']) / (dtm_2 - dtm_1) + rate_2 \
-                                * (df.loc[a, 'days_to_expiry'] - dtm_1) / (dtm_2 - dtm_1)
+                rate_1 = df.loc[ind1, "rate"].iloc[0]
+                rate_2 = df.loc[ind2, "rate"].iloc[0]
+                dtm_1 = df.loc[ind1, "days_to_expiry"].iloc[0]
+                dtm_2 = df.loc[ind2, "days_to_expiry"].iloc[0]
+            df.loc[a, "rate"] = rate_1 * (dtm_2 - df.loc[a, "days_to_expiry"]) / (dtm_2 - dtm_1) + rate_2 \
+                                * (df.loc[a, "days_to_expiry"] - dtm_1) / (dtm_2 - dtm_1)
 
-        df = df.set_index('index')
+        df = df.set_index("index")
         return df
 
     rates = rates.groupby("currency_code").apply(lambda x: funs(x))
@@ -170,64 +164,64 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     # *************************************************************************************************
     # Adding OPTION configurations
 
-    v0 = find_vol(1, options_df['t'], options_df['atm_volatility_spot'], options_df['atm_volatility_one_year'],
-                  options_df['atm_volatility_infinity'], 12, options_df['slope'], options_df['slope_inf'],
-                  options_df['deriv'], options_df['deriv_inf'], options_df['r'], options_df['q'])
+    v0 = find_vol(1, options_df["t"], options_df["atm_volatility_spot"], options_df["atm_volatility_one_year"],
+                  options_df["atm_volatility_infinity"], 12, options_df["slope"], options_df["slope_inf"],
+                  options_df["deriv"], options_df["deriv_inf"], options_df["r"], options_df["q"])
 
     v0[v0 <= 0.2] = 0.2
     v0[v0 >= 0.80] = 0.80
-    options_df['vol_t'] = v0 * np.sqrt(options_df['month_to_exp'] / 12)
+    options_df["vol_t"] = v0 * np.sqrt(options_df["month_to_exp"] / 12)
 
-    options_df['option_type'] = 'ATM'
-    options_df['strike_1_type'] = 'II'
-    options_df['strike_2_type'] = 'III'
+    options_df["option_type"] = "ATM"
+    options_df["strike_1_type"] = "II"
+    options_df["strike_2_type"] = "III"
 
     options_df.reset_index(inplace=True, drop=True)
 
     # del options_df1, options_df2, options_df3, options_df4, options_df5, options_df6, options_df7, options_df8
     del options_df2
 
-    options_df.loc[options_df['strike_1_type'] == 'I', 'strike_1'] = options_df['spot_price'] * (1 + options_df['vol_t'] * 0.5)
-    options_df.loc[options_df['strike_1_type'] == 'II', 'strike_1'] = options_df['spot_price']
-    options_df.loc[options_df['strike_1_type'] == 'III', 'strike_1'] = options_df['spot_price'] * (1 - options_df['vol_t'] * 0.5)
-    options_df.loc[options_df['strike_1_type'] == 'IV', 'strike_1'] = options_df['spot_price'] * (1 - options_df['vol_t'] * 1)
+    options_df.loc[options_df["strike_1_type"] == "I", "strike_1"] = options_df["spot_price"] * (1 + options_df["vol_t"] * 0.5)
+    options_df.loc[options_df["strike_1_type"] == "II", "strike_1"] = options_df["spot_price"]
+    options_df.loc[options_df["strike_1_type"] == "III", "strike_1"] = options_df["spot_price"] * (1 - options_df["vol_t"] * 0.5)
+    options_df.loc[options_df["strike_1_type"] == "IV", "strike_1"] = options_df["spot_price"] * (1 - options_df["vol_t"] * 1)
 
-    options_df.loc[options_df['strike_2_type'] == 'I', 'strike_2'] = options_df['spot_price'] * (1 - options_df['vol_t'] * 0.5)
-    options_df.loc[options_df['strike_2_type'] == 'II', 'strike_2'] = options_df['spot_price'] * (1 - options_df['vol_t'] * 1)
-    options_df.loc[options_df['strike_2_type'] == 'III', 'strike_2'] = options_df['spot_price'] * np.maximum((1 - options_df['vol_t'] * 1.25),0.65)
-    options_df.loc[options_df['strike_2_type'] == 'IV', 'strike_2'] = options_df['spot_price'] * (1 - options_df['vol_t'] * 1.5)
-    options_df.loc[options_df['strike_2_type'] == 'V', 'strike_2'] = options_df['spot_price'] * (1 - options_df['vol_t'] * 1.75)
+    options_df.loc[options_df["strike_2_type"] == "I", "strike_2"] = options_df["spot_price"] * (1 - options_df["vol_t"] * 0.5)
+    options_df.loc[options_df["strike_2_type"] == "II", "strike_2"] = options_df["spot_price"] * (1 - options_df["vol_t"] * 1)
+    options_df.loc[options_df["strike_2_type"] == "III", "strike_2"] = options_df["spot_price"] * np.maximum((1 - options_df["vol_t"] * 1.25),0.65)
+    options_df.loc[options_df["strike_2_type"] == "IV", "strike_2"] = options_df["spot_price"] * (1 - options_df["vol_t"] * 1.5)
+    options_df.loc[options_df["strike_2_type"] == "V", "strike_2"] = options_df["spot_price"] * (1 - options_df["vol_t"] * 1.75)
 
-    options_df['v1'] = find_vol(options_df['strike_1'] / options_df['now_price'], options_df['t'],
-                                options_df['atm_volatility_spot'], options_df['atm_volatility_one_year'],
-                                options_df['atm_volatility_infinity'], 12, options_df['slope'], options_df['slope_inf'],
-                                options_df['deriv'], options_df['deriv_inf'], options_df['r'], options_df['q'])
+    options_df["v1"] = find_vol(options_df["strike_1"] / options_df["now_price"], options_df["t"],
+                                options_df["atm_volatility_spot"], options_df["atm_volatility_one_year"],
+                                options_df["atm_volatility_infinity"], 12, options_df["slope"], options_df["slope_inf"],
+                                options_df["deriv"], options_df["deriv_inf"], options_df["r"], options_df["q"])
 
-    options_df['v2'] = find_vol(options_df['strike_2'] / options_df['now_price'], options_df['t'],
-                                options_df['atm_volatility_spot'], options_df['atm_volatility_one_year'],
-                                options_df['atm_volatility_infinity'], 12, options_df['slope'], options_df['slope_inf'],
-                                options_df['deriv'], options_df['deriv_inf'], options_df['r'], options_df['q'])
+    options_df["v2"] = find_vol(options_df["strike_2"] / options_df["now_price"], options_df["t"],
+                                options_df["atm_volatility_spot"], options_df["atm_volatility_one_year"],
+                                options_df["atm_volatility_infinity"], 12, options_df["slope"], options_df["slope_inf"],
+                                options_df["deriv"], options_df["deriv_inf"], options_df["r"], options_df["q"])
 
-    options_df['target_profit'] = -Rev_Conv(options_df['spot_price'], options_df['strike_1'], options_df['strike_2'],
-                                           options_df['t'], options_df['r'], options_df['q'], options_df['v1'],
-                                           options_df['v2'])
+    options_df["target_profit"] = -Rev_Conv(options_df["spot_price"], options_df["strike_1"], options_df["strike_2"],
+                                           options_df["t"], options_df["r"], options_df["q"], options_df["v1"],
+                                           options_df["v2"])
 
-    options_df['target_max_loss'] = options_df['strike_1'] - options_df['strike_2']
+    options_df["target_max_loss"] = options_df["strike_1"] - options_df["strike_2"]
 
-    options_df['stock_balance'] = None
-    options_df['stock_price'] = None
-    options_df['event_date'] = None
-    options_df['event_price'] = None
-    options_df['event'] = None
-    options_df['pnl'] = None
-    options_df['delta_churn'] = None
+    options_df["stock_balance"] = None
+    options_df["stock_price"] = None
+    options_df["event_date"] = None
+    options_df["event_price"] = None
+    options_df["event"] = None
+    options_df["pnl"] = None
+    options_df["delta_churn"] = None
 
-    options_df['expiry_payoff'] = None
-    options_df['expiry_return'] = None
-    options_df['expiry_price'] = None
-    options_df['drawdown_return'] = None
-    options_df['duration'] = None
-    options_df['return'] = None
+    options_df["expiry_payoff"] = None
+    options_df["expiry_return"] = None
+    options_df["expiry_price"] = None
+    options_df["drawdown_return"] = None
+    options_df["duration"] = None
+    options_df["return"] = None
 
     if (mod):
         options_df_temp = pd.DataFrame(columns=options_df.columns)
@@ -313,30 +307,30 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
 
     # ********************************************************************************************
     # ********************************************************************************************
-    prices_df = tac_data.pivot_table(index=tac_data.trading_day, columns='ticker', values='tri_adjusted_price', aggfunc='first', dropna=False)
+    prices_df = tac_data.pivot_table(index=tac_data.trading_day, columns="ticker", values="tri_adjusted_price", aggfunc="first", dropna=False)
     prices_df = prices_df.ffill()
     prices_df = prices_df.bfill()
     dates_df = prices_df.index.to_series()
     dates_df = dates_df.reset_index(drop=True)
     dates_df = pd.DataFrame(dates_df)
-    dates_df['spot_date_index'] = dates_df.index
-    dates_df['expiry_date_index'] = dates_df.index
-    dates_df = dates_df.rename(columns={'trading_day': 'spot_date'})
-    null_df = null_df.merge(dates_df[['spot_date', 'spot_date_index']], on=['spot_date'], how='left')
-    dates_df = dates_df.rename(columns={'spot_date': 'expiry_date'})
-    null_df = null_df.merge(dates_df[['expiry_date', 'expiry_date_index']], on=['expiry_date'], how='left')
-    null_df['expiry_date_index'].fillna(-2, inplace=True)
+    dates_df["spot_date_index"] = dates_df.index
+    dates_df["expiry_date_index"] = dates_df.index
+    dates_df = dates_df.rename(columns={"trading_day": "spot_date"})
+    null_df = null_df.merge(dates_df[["spot_date", "spot_date_index"]], on=["spot_date"], how="left")
+    dates_df = dates_df.rename(columns={"spot_date": "expiry_date"})
+    null_df = null_df.merge(dates_df[["expiry_date", "expiry_date_index"]], on=["expiry_date"], how="left")
+    null_df["expiry_date_index"].fillna(-2, inplace=True)
     prices_ind_df = pd.DataFrame(prices_df.columns)
-    prices_ind_df['ticker_index'] = prices_ind_df.index
-    null_df = null_df.merge(prices_ind_df[['ticker', 'ticker_index']], on=['ticker'])
-    null_df = null_df.sort_values(by='expiry_date', ascending=False)
+    prices_ind_df["ticker_index"] = prices_ind_df.index
+    null_df = null_df.merge(prices_ind_df[["ticker", "ticker_index"]], on=["ticker"])
+    null_df = null_df.sort_values(by="expiry_date", ascending=False)
     prices_np = prices_df.values
     dates_np = dates_df.values
     del prices_df, tac_data
     gc.collect()
     table_name = get_bot_ucdc_backtest_table_name()
     if mod:
-        table_name += '_mod'
+        table_name += "_mod"
 
     def exec_fill_fun(row, prices_np, dates_np, null_df):
         # Calculate the desired quantities row by row.
@@ -349,25 +343,25 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
         if len(prices_temp) == 0:
             return row
         dates_temp = dates_np[int(row.spot_date_index):int(row.expiry_date_index+1), 0]
-        t = np.full((len(prices_temp)), ((row['expiry_date'] - dates_temp).astype('timedelta64[D]')) / np.timedelta64(1, 'D'))
-        strike_1 = np.full((len(prices_temp)), row['strike_1'])
-        strike_2 = np.full((len(prices_temp)), row['strike_2'])
+        t = np.full((len(prices_temp)), ((row["expiry_date"] - dates_temp).astype("timedelta64[D]")) / np.timedelta64(1, "D"))
+        strike_1 = np.full((len(prices_temp)), row["strike_1"])
+        strike_2 = np.full((len(prices_temp)), row["strike_2"])
         cond = (null_df.ticker == row.ticker) & (null_df.spot_date >= row.spot_date) &\
                (null_df.spot_date <= row.expiry_date) & (null_df.time_to_exp == row.time_to_exp) &\
                (null_df.option_type == row.option_type)
-        dates_df2 = pd.DataFrame(dates_temp, columns=['spot_date'])
+        dates_df2 = pd.DataFrame(dates_temp, columns=["spot_date"])
         null_df_temp = null_df[cond]
-        null_df_temp = null_df_temp.drop_duplicates(subset='spot_date', keep="last")
-        null_df_temp = dates_df2.merge(null_df_temp, on='spot_date', how='left')
+        null_df_temp = null_df_temp.drop_duplicates(subset="spot_date", keep="last")
+        null_df_temp = dates_df2.merge(null_df_temp, on="spot_date", how="left")
         null_df_temp = null_df_temp.bfill().ffill()
-        atmv_0 = null_df_temp['atm_volatility_spot'].values
-        atmv_1Y = null_df_temp['atm_volatility_one_year'].values
-        atmv_inf = null_df_temp['atm_volatility_infinity'].values
-        skew_1m = null_df_temp['slope'].values
-        skew_inf = null_df_temp['slope_inf'].values
-        curv_1m = null_df_temp['deriv'].values
-        curv_inf = null_df_temp['deriv_inf'].values
-        days_to_expiry = np.full((len(prices_temp)),((row['expiry_date'] - dates_temp).astype('timedelta64[D]')) / np.timedelta64(1, 'D'))
+        atmv_0 = null_df_temp["atm_volatility_spot"].values
+        atmv_1Y = null_df_temp["atm_volatility_one_year"].values
+        atmv_inf = null_df_temp["atm_volatility_infinity"].values
+        skew_1m = null_df_temp["slope"].values
+        skew_inf = null_df_temp["slope_inf"].values
+        curv_1m = null_df_temp["deriv"].values
+        curv_inf = null_df_temp["deriv_inf"].values
+        days_to_expiry = np.full((len(prices_temp)),((row["expiry_date"] - dates_temp).astype("timedelta64[D]")) / np.timedelta64(1, "D"))
         r = cal_interest_rate(interest_rate_data[interest_rate_data.currency_code == row.currency_code],days_to_expiry)
         q = cal_q(row, dividends_data[dividends_data.ticker == row.ticker], dates_temp, prices_temp)
         v1 = find_vol(np.divide(strike_1, prices_temp), t, atmv_0, atmv_1Y, atmv_inf,12, skew_1m, skew_inf, curv_1m, curv_inf, r, q)
@@ -393,32 +387,32 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
         stock_balance2 = np.nan_to_num(stock_balance2)
         strike_2_indices = np.argmax((prices_temp >= row.strike_2))
 
-        if row['modified'] == 1:
+        if row["modified"] == 1:
             modify_str = row.modify_arg[0]
             modify_int = int(row.modify_arg[1:])
 
-        if dates_temp[-1] == row['expiry_date']:
+        if dates_temp[-1] == row["expiry_date"]:
             # Expiry is triggered.
-            row.event = 'expire'
-            row['stock_balance'] = stock_balance[-1]
-            row['stock_price'] = prices_temp[-1]
-            row['now_price'] = prices_temp[-1]
-            row['event_price'] = prices_temp[-1]
-            row['expiry_price'] = prices_temp[-1]
-            row['event_date'] = dates_temp[-1]
-            row['now_date'] = dates_temp[-1]
-            row['expiry_payoff'] = min(max(row['now_price'] - row['strike_1'], row['strike_2'] - row['strike_1']), 0)
-            row['expiry_return'] = (prices_temp[-1] / prices_temp[0]) - 1
-            row['drawdown_return'] = np.amin(prices_temp) / prices_temp[0] - 1
-            row['duration'] = (row['event_date'] - row['spot_date']).days / 365
-            row['r'] = r[-1]
-            row['q'] = q[-1]
-            row['v1'] = v1[-1]
-            row['v2'] = v2[-1]
-            row['t'] = t[-1]
+            row.event = "expire"
+            row["stock_balance"] = stock_balance[-1]
+            row["stock_price"] = prices_temp[-1]
+            row["now_price"] = prices_temp[-1]
+            row["event_price"] = prices_temp[-1]
+            row["expiry_price"] = prices_temp[-1]
+            row["event_date"] = dates_temp[-1]
+            row["now_date"] = dates_temp[-1]
+            row["expiry_payoff"] = min(max(row["now_price"] - row["strike_1"], row["strike_2"] - row["strike_1"]), 0)
+            row["expiry_return"] = (prices_temp[-1] / prices_temp[0]) - 1
+            row["drawdown_return"] = np.amin(prices_temp) / prices_temp[0] - 1
+            row["duration"] = (row["event_date"] - row["spot_date"]).days / 365
+            row["r"] = r[-1]
+            row["q"] = q[-1]
+            row["v1"] = v1[-1]
+            row["v2"] = v2[-1]
+            row["t"] = t[-1]
             row["num_hedges"] = np.sum(stock_balance2 != stock_balance)
-            if row['modified'] == 1:
-                if modify_str == 'v':
+            if row["modified"] == 1:
+                if modify_str == "v":
                     modify_int = atmv_1Y / modify_int
                     modify_int = modify_int / 100
                 for i in range(3): #check for three days, just re-hedge after three
@@ -427,33 +421,33 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
                 stock_balance[-1] = 0
                 pnl = (stock_balance2 - stock_balance) * prices_temp
                 churn = (stock_balance2 - stock_balance)
-                row['pnl'] = np.nansum(pnl)
+                row["pnl"] = np.nansum(pnl)
                 delta_churn = np.abs(churn)
-                row['delta_churn'] = np.nansum(delta_churn)
+                row["delta_churn"] = np.nansum(delta_churn)
             else:
                 stock_balance[-1] = 0
                 pnl = (stock_balance2 - stock_balance) * prices_temp
                 churn = (stock_balance2 - stock_balance)
-                row['pnl'] = np.nansum(pnl)
+                row["pnl"] = np.nansum(pnl)
                 delta_churn = np.abs(churn)
-                row['delta_churn'] = np.nansum(delta_churn)
-            row['return'] = row['pnl'] / prices_temp[0]
+                row["delta_churn"] = np.nansum(delta_churn)
+            row["return"] = row["pnl"] / prices_temp[0]
         else:
             # No event is triggered.
             row.event = None
-            row['stock_balance'] = 0
-            row['stock_price'] = prices_temp[-1]
-            row['now_price'] = prices_temp[-1]
-            row['event_date'] = None
-            row['now_date'] = dates_temp[-1]
-            row['expiry_payoff'] = None
-            row['v1'] = v1[-1]
-            row['v2'] = v2[-1]
-            row['r'] = r[-1]
-            row['q'] = q[-1]
-            row['pnl'] = None
-            row['delta_churn'] = None
-            row['t'] = t[-1]
+            row["stock_balance"] = 0
+            row["stock_price"] = prices_temp[-1]
+            row["now_price"] = prices_temp[-1]
+            row["event_date"] = None
+            row["now_date"] = dates_temp[-1]
+            row["expiry_payoff"] = None
+            row["v1"] = v1[-1]
+            row["v2"] = v2[-1]
+            row["r"] = r[-1]
+            row["q"] = q[-1]
+            row["pnl"] = None
+            row["delta_churn"] = None
+            row["t"] = t[-1]
             row["num_hedges"] = None
         return row
 
@@ -472,7 +466,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
             null_df_small = null_df[null_df.spot_date == date_temp]
             print(f"Filling {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
             null_df_small = null_df_small.progress_apply(lambda x: exec_fill_fun(x, prices_np, dates_np, null_df), axis=1, raw=True)
-            null_df_small.drop(['expiry_date_index', 'spot_date_index', 'ticker_index'], axis=1, inplace=True)
+            null_df_small.drop(["expiry_date_index", "spot_date_index", "ticker_index"], axis=1, inplace=True)
             null_df_small = null_df_small.infer_objects()
             upsert_data_to_database(null_df_small, table_name, "uid", how="update", cpu_count=True, Text=True)
             print(f"Finished {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
@@ -489,9 +483,9 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
     else:
         if history:
             null_df["num_hedges"] = None
-            null_df.to_csv('null_df_executive.csv')
+            null_df.to_csv("null_df_executive.csv")
         null_df = null_df.progress_apply(exec_fill_fun, axis=1, raw=True)
-        null_df.drop(['expiry_date_index', 'spot_date_index', 'ticker_index'], axis=1, inplace=True)
+        null_df.drop(["expiry_date_index", "spot_date_index", "ticker_index"], axis=1, inplace=True)
         null_df = null_df.infer_objects()
         if len(null_df) > 0 :
             null_df = null_df.drop_duplicates(subset=["uid"], keep="first", inplace=False)
@@ -499,4 +493,4 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
             upsert_data_to_database(null_df, table_name, "uid", how="update", cpu_count=True, Text=True)
     # ********************************************************************************************
     # ********************************************************************************************
-    print(f'Filling up the nulls is finished.')
+    print(f"Filling up the nulls is finished.")

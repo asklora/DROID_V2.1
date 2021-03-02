@@ -10,28 +10,17 @@ from sqlalchemy import create_engine, and_
 from multiprocessing import cpu_count
 
 from general.slack import report_to_slack
+from global_vars import time_to_expiry, bots_list
 
+def check_bot_list(bot_list):
+    if (type(bot_list) == type(None)):
+        bot_list = bots_list
+    return bot_list
 
-def make_multiples(prices_df, args):
-    # This function will make multiples.
-    main_tri = prices_df.pivot_table(index=prices_df.trading_day, columns='ticker', values='total_return_index',
-                                     aggfunc='first',
-                                     dropna=False)
-
-    main_tri_shifted = main_tri.shift(periods=1)
-    main_tri[main_tri == 'H'] = 1
-    main_tri_shifted[main_tri_shifted == 'H'] = 1
-    main_tri = main_tri.astype(float)
-    main_tri_shifted = main_tri_shifted.astype(float)
-
-    tri_df_np = main_tri.values
-    tri_df_shifted_np = main_tri_shifted.values
-
-    close_multiple = np.where(np.isnan(tri_df_np) | np.isnan(tri_df_shifted_np), np.nan, tri_df_np / tri_df_shifted_np)
-    main_multiples = pd.DataFrame(close_multiple, index=main_tri.index, columns=main_tri.columns)
-
-    return main_multiples
-
+def check_time_to_exp(time_to_exp):
+    if (type(time_to_exp) == type(None)):
+        time_to_exp = time_to_expiry
+    return time_to_exp
 
 def move_nans_to_top(df):
     # This function will shift the nans to the top.
