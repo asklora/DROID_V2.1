@@ -10,10 +10,17 @@ from sqlalchemy import create_engine, and_
 from multiprocessing import cpu_count
 
 from general.slack import report_to_slack
+from global_vars import time_to_expiry, bots_list
 
+def check_bot_list(bot_list):
+    if (type(bot_list) == type(None)):
+        bot_list = bots_list
+    return bot_list
 
-
-
+def check_time_to_exp(time_to_exp):
+    if (type(time_to_exp) == type(None)):
+        time_to_exp = time_to_expiry
+    return time_to_exp
 
 def move_nans_to_top(df):
     # This function will shift the nans to the top.

@@ -1,20 +1,17 @@
-from general.table_name import get_bot_classic_backtest_table_name, get_latest_price_table_name
-from general.sql_output import upsert_data_to_database
-from general.data_process import uid_maker
-from bot.preprocess import make_multiples
-from general.date_process import dateNow, droid_start_date, str_to_date
-from bot.data_download import get_bot_backtest_data, get_calendar_data, get_master_tac_price
-import math
+
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from pandas.tseries.offsets import BDay
 from dateutil.relativedelta import relativedelta
-from bot.data_transfer import tac_data_download, download_holidays, \
-    write_to_aws_sltp_production, download_production_sltp, download_production_sltp_null, \
-    write_to_aws_sltp_production_null, write_to_aws_merge_latest_price, tac_data_download_by_ticker
-from general.slack import report_to_slack
-from global_vars import vol_period, classic_business_day, sl_multiplier_1m, tp_multiplier_1m, sl_multiplier_3m, tp_multiplier_3m
+from bot.preprocess import make_multiples
+from general.data_process import uid_maker
+from general.sql_output import upsert_data_to_database
+from general.date_process import dateNow, droid_start_date, str_to_date
+from bot.data_download import get_bot_backtest_data, get_calendar_data, get_master_tac_price
+from general.table_name import get_bot_classic_backtest_table_name, get_latest_price_table_name
+
+from global_vars import classic_business_day, sl_multiplier_1m, tp_multiplier_1m, sl_multiplier_3m, tp_multiplier_3m
 
 def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, history=False):
     if type(start_date) == type(None):

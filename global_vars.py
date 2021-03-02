@@ -51,7 +51,7 @@ r_days=200
 q_days=200
 index_to_etf_file = "bot/index_to_etf.csv"
 run_time_min = time.time()
-modified_delta_list = ['d2', 'v10']
+modified_delta_list = ["d2", "v10"]
 time_to_expiry = [0.03846, 0.07692, 0.08333, 0.15384, 0.16666, 0.25, 0.5] #[2 weeks, 4 weeks, 1 month, 8 weeks, 2 months, 3 months, 6 months]
 vol_period = 21
 classic_business_day = 252
@@ -59,6 +59,11 @@ sl_multiplier_1m = -1.25
 tp_multiplier_1m = 1.5
 sl_multiplier_3m = -1.5
 tp_multiplier_3m = 1.75
+
+#BOT TRAINING
+bot_labeler_training_num_years = 2
+bots_list = ["uno", "ucdc", "classic"]
+model_type = "rf"
 # if platform.system() == "Linux":
 model_path = "/home/loratech/PycharmProjects/models/"
 saved_model_path = "/home/loratech/PycharmProjects/DROID/saved_models/"
