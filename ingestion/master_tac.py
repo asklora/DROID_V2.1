@@ -70,7 +70,7 @@ def master_tac_update():
     print(data)
     data = data.drop(columns=["datapoint_per_day", "datapoint"])
     print("Fill Null Data Forward & Backward")
-    data = ForwardBackwardFillNull(data, ["open", "high", "low", "close", "total_return_index", "day_status"])
+    data = ForwardBackwardFillNull(data, ["open", "high", "low", "close", "total_return_index"])
     print(data)
     print("Calculate TAC")
     result = data.copy()

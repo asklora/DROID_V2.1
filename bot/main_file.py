@@ -14,7 +14,7 @@ from bot.vol_calculations import get_close_vol, get_kurt, get_rogers_satchell, g
 from general.sql_output import truncate_table, upsert_data_to_database
 from general.sql_query import get_active_universe
 from general.date_process import dateNow, droid_start_date
-from global_vars import period, index_to_etf_file
+from global_vars import period, index_to_etf_file, X_columns
 
 def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code=None, daily=False, new_ticker=False, history=False):
     if type(start_date) == type(None):
@@ -53,6 +53,7 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
                          "c2c_vol_126_252", "c2c_vol_252_504", "kurt_0_504", "rs_vol_0_21", "rs_vol_21_42",
                          "rs_vol_42_63", "rs_vol_63_126", "rs_vol_126_252", "rs_vol_252_504", "total_returns_0_1",
                          "total_returns_0_21", "total_returns_0_63", "total_returns_21_126", "total_returns_21_231"]
+
     main_df = pd.DataFrame(columns=main_columns_list)
     # *********************************************************************************
     for trading_day in trading_day_list:

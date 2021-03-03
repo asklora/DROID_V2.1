@@ -94,4 +94,5 @@ X_columns = ["kurt_0_504", "vix_value",
     "c2c_vol_0_21_x", "c2c_vol_21_42_x", "c2c_vol_42_63_x", "c2c_vol_63_126_x", "c2c_vol_126_252_x", "c2c_vol_252_504_x", 
     "usinter3_esa", "usgbill3_esa", "EMIBOR3._ESA", "jpmshort_esa", "EMGBOND._ESA", "CHGBOND._ESA",
     "fred_data", "eps1fd12", "eps1tr12", "cap1fd12", "fast_d", "fast_k", "rsi"]
+    
 Y_columns = [["atm_volatility_spot", "atm_volatility_one_year", "atm_volatility_infinity"], ["slope", "deriv_inf", "deriv", "slope_inf"]]
