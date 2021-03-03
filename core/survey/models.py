@@ -29,7 +29,7 @@ from django.db.models import Value
 class Devices(BaseTimeStampModel): #(db.Model):
     device_id = models.CharField(max_length=128) #db.Column(db.String(128))
     likes_on = models.JSONField(default=dict) #db.Column(db.JSON)
-    location = models.CharField(max_length=128, default=None)
+    location = models.CharField(max_length=128, default="Indonesia")
 
     class Meta:
         managed = True
@@ -58,7 +58,7 @@ class SurveyResults(BaseTimeStampModel): #(db.Model):
     answer = models.JSONField(default=dict) #db.Column(db.JSON)
     investor_type = models.ForeignKey(InvestorTypes,on_delete=models.CASCADE) #db.Column(db.Integer)
     read_policy = models.BooleanField() #db.Column(db.Boolean)
-    devices = models.ForeignKey(Devices,on_delete=models.CASCADE) #db.Column(db.Integer)
+    devices = models.ForeignKey(Devices,on_delete=models.CASCADE, default=2) #db.Column(db.Integer)
     # timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     class Meta:
