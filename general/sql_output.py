@@ -128,7 +128,8 @@ def delete_data_on_database(table, condition, delete_ticker=False):
     query = f"delete from {table} where {condition} "
     if(delete_ticker):
         query += f" and ticker not in (select ticker from {get_universe_table_name()} where is_active=True)"
-    data = read_query(query, table=table)
+    print(query)
+    data = execute_query(query, table=table)
     return data
 
 def delete_old_dividends_on_database():
