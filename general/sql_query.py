@@ -160,7 +160,7 @@ def findnewticker(args):
     return data
 
 def get_master_ohlcvtr_data(trading_day):
-    query = f"select * from {master_ohlcvtr_table} where trading_day>='{trading_day}' and ticker in (select ticker from {universe_table} where is_active=True and ticker in ('AAPL.O', 'MSFT.O'))"
+    query = f"select * from {master_ohlcvtr_table} where trading_day>='{trading_day}' and ticker in (select ticker from {universe_table} where is_active=True)"
     data = read_query(query, table=master_ohlcvtr_table)
     return data
 

@@ -5,11 +5,10 @@ import pandas as pd
 from tqdm import tqdm
 from pandas.tseries.offsets import BDay
 from dateutil.relativedelta import relativedelta
-
-from main_executive import check_time_to_exp
 from general.sql_output import upsert_data_to_database
 from general.date_process import dateNow, droid_start_date
 from general.table_name import get_bot_uno_backtest_table_name
+from bot.data_process import check_time_to_exp
 from bot.preprocess import cal_interest_rate, cal_q
 from bot.black_scholes import (find_vol, Up_Out_Call, deltaUnOC)
 from bot.data_download import (

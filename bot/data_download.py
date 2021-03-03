@@ -51,8 +51,8 @@ def get_bot_data_latest_date(daily=False, history=False):
 def get_master_tac_price(start_date=None, end_date=None, ticker=None, currency_code=None):
     start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
     table_name = get_master_tac_table_name()
-    query = f"select * from {table_name} where trading_day >= {start_date} "
-    query += f"and trading_day <= {end_date} "
+    query = f"select * from {table_name} where trading_day >= '{start_date}' "
+    query += f"and trading_day <= '{end_date}' "
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
         query += "and " + check
