@@ -42,10 +42,6 @@ from bot.option_file_uno import fill_bot_backtest_uno, populate_bot_uno_backtest
 #         args.test_size = 0.25
 #     index_to_etf = pd.read_csv("executive/index_to_etf.csv", names=["index", "etf"])
 #     etf_list = index_to_etf.etf.unique().tolist()
-# def bot_labeler_train():
-# def bot_labeler_infer_history():
-# def bot_labeler_infer_daily():
-# def bot_labeler_infer_live():
 # def bot_labeler_performance_history():
 # def benchmark():
 #     time_to_exp = ["2w", "4w", "1m", "8w", "2m", "3m", "6m"]
@@ -60,8 +56,8 @@ from bot.option_file_uno import fill_bot_backtest_uno, populate_bot_uno_backtest
     # bench_fn(args)
 
 
-def bot_labeler_train(ticker=None, currency_code=None):
-    print("{} : === {} BOT LABELER TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
+def bot_ranking_train(ticker=None, currency_code=None):
+    print("{} : === {} BOT RANKING TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     start_date = str_to_date(droid_start_date())
@@ -69,67 +65,29 @@ def bot_labeler_train(ticker=None, currency_code=None):
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
     populate_vol_infer(start_date, end_date, ticker=ticker, currency_code=currency_code, train_model=True)
-    print("{} : === BOT LABELER TRAIN MODEL COMPLETED ===".format(dateNow()))
-    report_to_slack("{} : === BOT LABELER TRAIN MODEL COMPLETED ===".format(dateNow()))
+    print("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
 
-    main_df = executive_data_download(args)
-    output_tickers = get_outputs_tickers(args)
-    main_df = main_df[main_df.ticker.isin(output_tickers)]
-
-def bot_labeler_infer_history():
-    print("{} : === {} BOT LABELER TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
+def bot_ranking_history(ticker=None, currency_code=None):
+    print("{} : === {} BOT RANKING TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
     # ********************** Data download for Bot labeler inference history **********************
-            print('Bot labeler inference history started!')
-            if args.start_date is None:
-                args.start_date = datetime.date.today() - relativedelta(years=args.history_num_years)
-            print(f'The start date is set as: {args.start_date}')
+    if(type(ticker) == type(None) and type(currency_code) == type(None)):
+        ticker = get_active_universe()["ticker"].tolist()
+    start_date = str_to_date(droid_start_date())
+    end_date = str_to_date(dateNow())
+    print(f"The start date is set as: {start_date}")
+    print(f"The end date is set as: {end_date}")
 
-            if args.end_date is None:
-                args.end_date = datetime.date.today()
-            print(f'The end date is set as: {args.end_date}')
-
-            if type(args.start_date) == str:
-                args.start_date = dt.strptime(args.start_date, '%Y-%m-%d').date()
-
-            if type(args.end_date) == str:
-                args.end_date = dt.strptime(args.end_date, '%Y-%m-%d').date()
-
-            ticker_list = get_tickers_list_from_aws()
-            if args.exec_index is not None:
-                ticker_list = ticker_list.loc[ticker_list["index"].isin(args.exec_index)]
-            args.tickers_list = ticker_list['ticker'].tolist()
-
-            main_df = executive_data_download(args)
-
-def bot_labeler_infer_daily():
-    print("{} : === {} BOT LABELER TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
-    # *************************************** Daily *****************************************
-        if args.bot_labeler_infer_daily:
-            # ********************** Data download for Bot labeler inference daily **********************
-            if args.exec_index is None:
-                print('Please input the desired index!')
-                sys.exit()
-
-            args.latest_date = get_latest_date(args)
-            print(f'{args.exec_index} Bot labeler inference daily started!')
-            if args.start_date is None:
-                args.start_date = args.latest_date
-            print(f'The start date is set as: {args.start_date}')
-
-            if args.end_date is None:
-                args.end_date = datetime.date.today()
-            print(f'The end date is set as: {args.end_date}')
-
-            if type(args.start_date) == str:
-                args.start_date = dt.strptime(args.start_date, '%Y-%m-%d').date()
-
-            if type(args.end_date) == str:
-                args.end_date = dt.strptime(args.end_date, '%Y-%m-%d').date()
-
-            main_df = executive_data_download(args)
+def bot_ranking_daily(ticker=None, currency_code=None):
+    print("{} : === {} BOT RANKING TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
+    start_date = get_bot_data_latest_date(daily=True)
+    end_date = str_to_date(dateNow())
+    print(f"The start date is set as: {start_date}")
+    print(f"The end date is set as: {end_date}")
 
 def training(ticker=None, currency_code=None):
     train_model(ticker=ticker, currency_code=currency_code)
+    bot_ranking_train(ticker=ticker, currency_code=currency_code)
 
 def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0):
     data_prep_daily(ticker=ticker, currency_code=currency_code)

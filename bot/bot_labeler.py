@@ -77,21 +77,19 @@ def populate_bot_labeler(start_date=None, end_date=None, ticker=None, currency_c
         for opt_type in option_type_list:
             print(opt_type)
             for time_exp in time_to_exp:
-                time_exp = str(time_exp).replace(".", "")
+                time_exp_str = str(time_exp).replace(".", "")
                 #if not (opt_type == "classic" and month_exp == 6):
-                Y_columns.extend([f"{bot}_{opt_type}_{time_exp}_pnl_class"])
-                rank_columns.extend([f"{bot}_{opt_type}_{time_exp}_pnl_class_prob"])
+                Y_columns.extend([f"{bot}_{opt_type}_{time_exp_str}_pnl_class"])
+                rank_columns.extend([f"{bot}_{opt_type}_{time_exp_str}_pnl_class_prob"])
                 df2 = df.loc[(df.option_type == opt_type) & (df.time_exp == time_exp), :]
                 df2 = df2[df2["pnl"].notna()]
-                df2.rename(columns={"pnl": f"{bot}_{opt_type}_{time_exp}_pnl",
-                    "pnl_class": f"{bot}_{opt_type}_{time_exp}_pnl_class"}, inplace=True)
-
+                df2.rename(columns={"pnl": f"{bot}_{opt_type}_{time_exp_str}_pnl",
+                    "pnl_class": f"{bot}_{opt_type}_{time_exp_str}_pnl_class"}, inplace=True)
                 df2 = df2.drop_duplicates(["ticker", "spot_date"], keep="last")
-                final_df = final_df.merge(df2[["ticker", "spot_date", f"{bot}_{opt_type}_{time_exp}_pnl_class",
-                    f"{bot}_{opt_type}_{time_exp}_pnl"]], on=["ticker", "spot_date"], how="left")
+                final_df = final_df.merge(df2[["ticker", "spot_date", f"{bot}_{opt_type}_{time_exp_str}_pnl_class",
+                    f"{bot}_{opt_type}_{time_exp_str}_pnl"]], on=["ticker", "spot_date"], how="left")
     final_df = final_df.merge(tac_df[["ticker", "spot_date", "spot_price"]], on=["ticker", "spot_date"], how="left")
     Y_columns = Y_columns
-    X_columns = X_columns
     rank_columns = rank_columns
 
     if history:

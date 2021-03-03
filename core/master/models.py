@@ -275,48 +275,48 @@ class DataQuandl(models.Model):
         return f"{self.ticker}-{self.trading_day}"
 
 
-class DataVolSurface(models.Model):
-    uid = models.TextField(primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
-                               db_column="ticker", related_name="data_vol_surface_ticker")
-    trading_day = models.DateField(blank=True, null=True)
-    stock_price = models.FloatField(blank=True, null=True)
-    atm_volatility_spot = models.FloatField(blank=True, null=True)
-    atm_volatility_one_year = models.FloatField(blank=True, null=True)
-    atm_volatility_infinity = models.FloatField(blank=True, null=True)
-    alpha = models.IntegerField(blank=True, null=True)
-    slope = models.FloatField(blank=True, null=True)
-    deriv = models.FloatField(blank=True, null=True)
-    slope_inf = models.FloatField(blank=True, null=True)
-    deriv_inf = models.FloatField(blank=True, null=True)
+# class DataVolSurface(models.Model):
+#     uid = models.TextField(primary_key=True)
+#     ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
+#                                db_column="ticker", related_name="data_vol_surface_ticker")
+#     trading_day = models.DateField(blank=True, null=True)
+#     stock_price = models.FloatField(blank=True, null=True)
+#     atm_volatility_spot = models.FloatField(blank=True, null=True)
+#     atm_volatility_one_year = models.FloatField(blank=True, null=True)
+#     atm_volatility_infinity = models.FloatField(blank=True, null=True)
+#     alpha = models.IntegerField(blank=True, null=True)
+#     slope = models.FloatField(blank=True, null=True)
+#     deriv = models.FloatField(blank=True, null=True)
+#     slope_inf = models.FloatField(blank=True, null=True)
+#     deriv_inf = models.FloatField(blank=True, null=True)
 
-    class Meta:
-        managed = True
-        db_table = "data_vol_surface"
+#     class Meta:
+#         managed = True
+#         db_table = "data_vol_surface"
 
-    def __str__(self):
-        return f"{self.ticker}-{self.trading_day}"
+#     def __str__(self):
+#         return f"{self.ticker}-{self.trading_day}"
 
 
-class DataVolSurfaceInferred(models.Model):
-    uid = models.TextField(primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
-                               db_column="ticker", related_name="data_vol_surface_inferred_ticker")
-    trading_day = models.DateField(blank=True, null=True)
-    atm_volatility_spot = models.FloatField(blank=True, null=True)
-    atm_volatility_one_year = models.FloatField(blank=True, null=True)
-    atm_volatility_infinity = models.FloatField(blank=True, null=True)
-    slope = models.FloatField(blank=True, null=True)
-    deriv = models.FloatField(blank=True, null=True)
-    slope_inf = models.FloatField(blank=True, null=True)
-    deriv_inf = models.FloatField(blank=True, null=True)
+# class DataVolSurfaceInferred(models.Model):
+#     uid = models.TextField(primary_key=True)
+#     ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
+#                                db_column="ticker", related_name="data_vol_surface_inferred_ticker")
+#     trading_day = models.DateField(blank=True, null=True)
+#     atm_volatility_spot = models.FloatField(blank=True, null=True)
+#     atm_volatility_one_year = models.FloatField(blank=True, null=True)
+#     atm_volatility_infinity = models.FloatField(blank=True, null=True)
+#     slope = models.FloatField(blank=True, null=True)
+#     deriv = models.FloatField(blank=True, null=True)
+#     slope_inf = models.FloatField(blank=True, null=True)
+#     deriv_inf = models.FloatField(blank=True, null=True)
 
-    class Meta:
-        managed = True
-        db_table = "data_vol_surface_inferred"
+#     class Meta:
+#         managed = True
+#         db_table = "data_vol_surface_inferred"
 
-    def __str__(self):
-        return f"{self.ticker}-{self.trading_day}"
+#     def __str__(self):
+#         return f"{self.ticker}-{self.trading_day}"
 
 
 class DataVix(models.Model):

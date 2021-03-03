@@ -219,7 +219,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     options_df["expiry_price"] = None
     options_df["drawdown_return"] = None
     options_df["duration"] = None
-    options_df["return"] = None
+    options_df["bot_return"] = None
 
     if (mod):
         options_df_temp = pd.DataFrame(columns=options_df.columns)
@@ -420,7 +420,7 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
             row["pnl"] = np.nansum(pnl)
             delta_churn = np.abs(churn)
             row["delta_churn"] = np.nansum(delta_churn)
-            row["return"] = row["pnl"] / prices_temp[0]
+            row["bot_return"] = row["pnl"] / prices_temp[0]
             row["num_hedges"] = np.sum(stock_balance2[:barrier_indices+1] != stock_balance[:barrier_indices+1])
 
         elif dates_temp[-1] == row["expiry_date"]:
@@ -448,7 +448,7 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
             row["pnl"] = np.nansum(pnl)
             delta_churn = np.abs(churn)
             row["delta_churn"] = np.nansum(delta_churn)
-            row["return"] = row["pnl"] / prices_temp[0]
+            row["bot_return"] = row["pnl"] / prices_temp[0]
             row["num_hedges"] = np.sum(stock_balance2 != stock_balance)
 
         else:

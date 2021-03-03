@@ -203,10 +203,10 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     main_df = main_df.merge(etf_df, on=["etf", "trading_day"], how="left")
     main_df.drop(["uid", "stock_price", "parameter_set_date", "alpha", "slope_x", "slope_inf_x", "deriv_x","deriv_inf_x", "etf"], axis=1, inplace=True)
     
-    temp = get_active_universe()
-    temp = temp[["ticker", "industry_code"]]
-    temp[temp.industry_code == "NA"] = 0
-    main_df = main_df.merge(temp, on=["ticker"], how="left")
+    # temp = get_active_universe()
+    # temp = temp[["ticker", "industry_code"]]
+    # temp[temp.industry_code == "NA"] = 0
+    # main_df = main_df.merge(temp, on=["ticker"], how="left")
 
     main_df["uid"] = uid_maker(main_df, uid="uid", ticker="ticker", trading_day="trading_day")
 

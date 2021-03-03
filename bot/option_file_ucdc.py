@@ -221,7 +221,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     options_df["expiry_price"] = None
     options_df["drawdown_return"] = None
     options_df["duration"] = None
-    options_df["return"] = None
+    options_df["bot_return"] = None
 
     if (mod):
         options_df_temp = pd.DataFrame(columns=options_df.columns)
@@ -431,7 +431,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
                 row["pnl"] = np.nansum(pnl)
                 delta_churn = np.abs(churn)
                 row["delta_churn"] = np.nansum(delta_churn)
-            row["return"] = row["pnl"] / prices_temp[0]
+            row["bot_return"] = row["pnl"] / prices_temp[0]
         else:
             # No event is triggered.
             row.event = None

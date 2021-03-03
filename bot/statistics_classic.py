@@ -44,8 +44,8 @@ def bench_fn(args):
         # ******************************************************************************************
         # These will be used for counting the occurrences.
         # df['return_sign'] = np.sign(df['return'])
-        df.loc[df['event'] == 'SL', 'sl_num'] = 1
-        df.loc[df['event'] == 'TP', 'tp_num'] = 1
+        df.loc[df['event'] == 'stop_loss', 'sl_num'] = 1
+        df.loc[df['event'] == 'take_profit', 'tp_num'] = 1
         df.loc[df['return'] > 0, 'return_pos'] = 1
         df.loc[df['return'] < 0, 'return_neg'] = 1
 

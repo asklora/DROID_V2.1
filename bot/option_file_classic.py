@@ -61,10 +61,10 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
             sl_multiplier = sl_multiplier_3m
             tp_multiplier = tp_multiplier_3m
         main_pred2["vol_period"] = vol_period
-
+        main_pred2["time_to_exp"] = time_exp
         # Calculating stop loss and take profit levels.
-        main_pred2["SL"] = (sl_multiplier * main_pred2["classic_vol"] * time_exp ** 0.5 + 1) * main_pred2["spot_price"]
-        main_pred2["TP"] = (tp_multiplier * main_pred2["classic_vol"] * time_exp ** 0.5 + 1) * main_pred2["spot_price"]
+        main_pred2["stop_loss"] = (sl_multiplier * main_pred2["classic_vol"] * time_exp ** 0.5 + 1) * main_pred2["spot_price"]
+        main_pred2["take_profit"] = (tp_multiplier * main_pred2["classic_vol"] * time_exp ** 0.5 + 1) * main_pred2["spot_price"]
 
         print("Calculating Expiry Date")
         days = int(round((time_exp * 365), 0))
@@ -102,7 +102,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     main_pred["expiry_price"] = None
     main_pred["drawdown_return"] = None
     main_pred["event"] = None
-    main_pred["return"] = None
+    main_pred["bot_return"] = None
     main_pred["duration"] = None
     main_pred["pnl"] = None
 
@@ -155,11 +155,11 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
         if len(prices_temp) == 0:
             return row
         # Finding the index that take profit is triggered.
-        tp_indices = np.argmax((prices_temp >= row.TP).values)
+        tp_indices = np.argmax((prices_temp >= row.take_profit).values)
         if tp_indices == 0:
             tp_indices = -1
         # Finding the index that stop loss is triggered.
-        sl_indices = np.argmax((prices_temp <= row.SL).values)
+        sl_indices = np.argmax((prices_temp <= row.stop_loss).values)
         if sl_indices == 0:
             sl_indices = -1
         days = int(round((row.time_to_exp * 365), 0))
@@ -172,13 +172,13 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
             if (prices_temp.index[-1] < temp_date) & (temp_date > str_to_date(dateNow()) - BDay(1)):
                 # If the expiry date hasn"t arrived yet.
                 row.event = None
-                row["return"] = None
+                row["bot_return"] = None
                 row.event_date = None
                 row.event_price = None
             else:
                 # If none of the events are triggered and expiry date has arrived.
                 row.event = "NT"
-                row["return"] = prices_temp[-1] / prices_temp[0] - 1
+                row["bot_return"] = prices_temp[-1] / prices_temp[0] - 1
                 row.event_date = prices_temp.index[-1]
                 row.event_price = prices_temp[-1]
                 row.expiry_price = prices_temp[-1]
@@ -190,7 +190,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
             if sl_indices > tp_indices:
                 # If stop loss is triggered.
                 row.event = "SL"
-                row["return"] = prices_temp[sl_indices] / prices_temp[0] - 1
+                row["bot_return"] = prices_temp[sl_indices] / prices_temp[0] - 1
                 row.event_date = prices_temp.index[sl_indices]
                 row.event_price = prices_temp[sl_indices]
                 row.expiry_price = prices_temp[-1]
@@ -201,7 +201,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
             else:
                 # If take profit is triggered.
                 row.event = "TP"
-                row["return"] = prices_temp[tp_indices] / prices_temp[0] - 1
+                row["bot_return"] = prices_temp[tp_indices] / prices_temp[0] - 1
                 row.event_date = prices_temp.index[tp_indices]
                 row.event_price = prices_temp[tp_indices]
                 row.expiry_price = prices_temp[-1]
