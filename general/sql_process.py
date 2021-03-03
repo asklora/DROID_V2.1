@@ -1,9 +1,19 @@
 import os
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
+from core.djangomodule.network.cloud import DroidDb
+
+
 load_dotenv()
-db_read = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+os.getenv("DBHOSTREAD")+":"+os.getenv("DBPORT")+"/"+os.getenv("DBUSER")
-db_write = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+os.getenv("DBHOSTWRITE")+":"+os.getenv("DBPORT")+"/"+os.getenv("DBUSER")
+
+db = DroidDb()
+
+if os.getenv("DROID_DEBUG") == True:
+    read_endpoint,write_endpoint,port = db.test_url
+else:
+    read_endpoint,write_endpoint,port = db.prod_url
+db_read = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+read_endpoint+":"+str(port)+"/"+os.getenv("DBUSER")
+db_write = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+write_endpoint+":"+str(port)+"/"+os.getenv("DBUSER")
 
 def do_function(func):
     engine = create_engine(db_write)

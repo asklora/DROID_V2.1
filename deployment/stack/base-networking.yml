@@ -140,6 +140,14 @@ Resources:
                   FromPort: 22
                   ToPort: 22
                   CidrIp: 0.0.0.0/0
+                - IpProtocol: tcp
+                  FromPort: 80
+                  ToPort: 80
+                  CidrIp: 0.0.0.0/0
+                - IpProtocol: tcp
+                  FromPort: 8080
+                  ToPort: 8080
+                  CidrIp: 0.0.0.0/0
     VpcSg:
         Type: AWS::EC2::SecurityGroup
         Properties:
@@ -164,7 +172,7 @@ Resources:
         Type: AWS::EC2::Instance
         Properties:
             KeyName: asklora-hk
-            ImageId: ami-077c694a31fa99701
+            ImageId: ami-0407ba1760460a483
             InstanceType: c5.xlarge
             SecurityGroupIds:
                 - !Ref RuleSSHec2
@@ -179,23 +187,23 @@ Resources:
             InstanceId: !Ref BastionHost
 
 
-    rdsDBInstance:
-        Type: AWS::RDS::DBInstance
-        Properties:
-            DBInstanceIdentifier: askloraprivatedb
-            AllocatedStorage: 20
-            DBInstanceClass: db.t3.small
-            AvailabilityZone: ap-east-1a
-            DBName: postgres
-            DBSubnetGroupName: !Ref PvsubnetDB
-            Engine: postgres
-            MasterUsername: postgres
-            MasterUserPassword: askLORA2020$
-            MultiAZ: false
-            Port: 5432
-            PubliclyAccessible: false
-            VPCSecurityGroups:
-                - !Ref VpcSg
+    # rdsDBInstance:
+    #     Type: AWS::RDS::DBInstance
+    #     Properties:
+    #         DBInstanceIdentifier: askloraprivatedb-test
+    #         AllocatedStorage: 20
+    #         DBInstanceClass: db.t3.small
+    #         AvailabilityZone: ap-east-1a
+    #         DBName: postgres
+    #         DBSubnetGroupName: !Ref PvsubnetDB
+    #         Engine: postgres
+    #         MasterUsername: postgres
+    #         MasterUserPassword: ml2021#LORA
+    #         MultiAZ: false
+    #         Port: 5432
+    #         PubliclyAccessible: false
+    #         VPCSecurityGroups:
+    #             - !Ref VpcSg
     
 Outputs:
     VpcID:

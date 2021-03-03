@@ -1,32 +1,21 @@
-import os
-from dotenv import load_dotenv
-load_dotenv()
-import numpy as np
-import pandas as pd
 from general.date_process import (
-    datetimeNow, 
-    droid_start_date, 
-    backdate_by_day, 
+    datetimeNow,
     dateNow)
 from general.slack import report_to_slack
-from general.data_process import uid_maker, remove_null
+from general.data_process import remove_null
 from general.sql_query import (
-    get_vix,
     get_active_universe, 
     get_active_universe_consolidated_by_field,
     get_active_universe_company_description_null)
-from general.sql_output import upsert_data_to_database, fill_null_company_desc_with_ticker_name, update_universe_consolidated_data_to_database
-from datasource.dsws import get_data_static_from_dsws, get_data_history_from_dsws
+from general.sql_output import upsert_data_to_database, fill_null_company_desc_with_ticker_name
+from datasource.dsws import get_data_static_from_dsws
 from datasource.dss import get_data_from_dss
 from general.table_name import (
-    get_vix_table_name,
     get_universe_table_name, 
-    get_universe_consolidated_table_name,
     get_industry_table_name,
-    get_country_table_name,
     get_industry_worldscope_table_name,
-    get_universe_consolidated_table_name
     )
+from global_vars import REPORT_HISTORY, REPORT_INTRADAY
 
 def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
     print("{} : === Ticker ISIN Start Ingestion ===".format(datetimeNow()))
@@ -125,7 +114,7 @@ def update_lot_size_from_dss(ticker=None):
     universe = universe.drop(columns=["lot_size"])
     ticker = "/" + universe["ticker"]
     jsonFileName = "files/file_json/lot_size.json"
-    result = get_data_from_dss("start_date", "end_date", ticker, jsonFileName, report=os.getenv("REPORT_INTRADAY"))
+    result = get_data_from_dss("start_date", "end_date", ticker, jsonFileName, report=REPORT_INTRADAY)
     result = result.drop(columns=["IdentifierType", "Identifier"])
     print(result)
     if (len(result) > 0 ):
@@ -148,7 +137,7 @@ def update_currency_code_from_dss(ticker=None):
     universe = universe.drop(columns=["currency_code"])
     ticker = "/" + universe["ticker"]
     jsonFileName = "files/file_json/currency.json"
-    result = get_data_from_dss("start_date", "end_date", ticker, jsonFileName, report=os.getenv("REPORT_INTRADAY"))
+    result = get_data_from_dss("start_date", "end_date", ticker, jsonFileName, report=REPORT_INTRADAY)
     result = result.drop(columns=["IdentifierType", "Identifier"])
     print(result)
     if (len(result) > 0 ):

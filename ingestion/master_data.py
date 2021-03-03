@@ -1,28 +1,21 @@
-import os
-import sys
-from dotenv import load_dotenv
-load_dotenv()
 from general.date_process import (
-    relativedelta,
     datetimeNow, 
     backdate_by_day, 
     dlp_start_date, 
     backdate_by_month,
     droid_start_date,
     forwarddate_by_day,
-    str_to_date,
     dateNow)
 import pandas as pd
 from pandas.tseries.offsets import BDay
 import numpy as np
-from sklearn.preprocessing import robust_scale, minmax_scale, MinMaxScaler
+from sklearn.preprocessing import robust_scale, minmax_scale
 from general.slack import report_to_slack
 from general.sql_process import do_function
-from general.data_process import tuple_data, uid_maker, remove_null
+from general.data_process import uid_maker, remove_null
 from general.sql_query import (
     get_data_by_table_name, 
-    get_data_by_table_name_with_condition,
-    get_latest_price, get_pred_mean,
+    get_pred_mean,
     get_vix, 
     get_fundamentals_score,
     get_active_universe,
@@ -31,9 +24,8 @@ from general.sql_query import (
     get_active_universe_by_entity_type, 
     get_universe_rating,
     get_max_last_ingestion_from_universe)
-from general.sql_output import delete_old_dividends_on_database, upsert_data_to_database, insert_data_to_database
+from general.sql_output import delete_old_dividends_on_database, upsert_data_to_database
 from datasource.dsws import (
-    get_data_static_from_dsws, 
     get_data_history_from_dsws, 
     get_data_history_frequently_from_dsws, 
     get_data_static_with_string_from_dsws,
@@ -42,19 +34,15 @@ from datasource.dss import get_data_from_dss
 from datasource.fred import read_fred_csv
 from datasource.quandl import read_quandl_csv
 from general.table_name import (
-    get_data_vix_table_name, 
     get_universe_rating_table_name,
     get_quandl_table_name,
-    get_fred_table_name,
+    get_data_fred_table_name,
     get_fundamental_score_table_name, 
     get_data_dss_table_name, 
     get_data_dsws_table_name,
-    get_data_dividend_table_name, 
-    get_data_dividend_daily_table_name, 
-    get_data_interest_table_name, 
-    get_data_interest_daily_table_name,
-    get_latest_price_table_name)
-
+    get_data_dividend_table_name,
+    get_data_interest_table_name)
+from global_vars import REPORT_HISTORY, REPORT_INTRADAY
 # data_dividend
 # data_dividend_daily_rates
 # data_fundamental_score
@@ -78,7 +66,7 @@ def update_data_dss_from_dss(ticker=None, currency_code=None, history=False, man
     print(f"Ingestion Start From {start_date}")
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     jsonFileName = "files/file_json/historyAPI.json"
-    result = get_data_from_dss(start_date, end_date, universe["ticker"].to_list(), jsonFileName, report=os.getenv("REPORT_HISTORY"))
+    result = get_data_from_dss(start_date, end_date, universe["ticker"].to_list(), jsonFileName, report=REPORT_HISTORY)
     print(result)
     result = result.drop(columns=["IdentifierType", "Identifier"])
     print(result)
@@ -152,7 +140,7 @@ def update_fred_data_from_fred():
     result["data"] = np.where(result["data"]== ".", 0, result["data"])
     result["data"] = result["data"].astype(float)
     if(len(result)) > 0 :
-        upsert_data_to_database(result, get_fred_table_name(), "uid", how="update", Text=True)
+        upsert_data_to_database(result, get_data_fred_table_name(), "uid", how="update", Text=True)
         #insert_data_to_database(result, get_fred_table_name(), how="replace")
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
@@ -375,49 +363,6 @@ def dividend_updated(ticker=None, currency_code=None):
         upsert_data_to_database(result, get_data_dividend_table_name(), "uid", how="update", Text=True)
         report_to_slack("{} : === Dividens Updated ===".format(datetimeNow()))
 
-def dividend_daily_update():
-    print("{} : === Dividens Daily Update ===".format(datetimeNow()))
-    dividend_data = get_data_by_table_name(get_data_dividend_table_name())
-    universe = get_active_universe()
-    #intraday_price = get_data_by_table_name(get_latest_price_table_name())
-    intraday_price = get_latest_price()
-    dividend_data = dividend_data[dividend_data.ticker.isin(universe.ticker)]
-    dividend_data = dividend_data.merge(universe[["ticker", "currency_code"]], on="ticker", how="left")
-    dividend_data["ex_dividend_date"] = pd.to_datetime(dividend_data["ex_dividend_date"])
-    days_q = pd.DataFrame(range(1, int(os.getenv("DAILY_Q_DAYS"))))
-    dates_temp = days_q
-    dates_temp["spot_date"] = str_to_date(dateNow())
-    def calculate_expiry(row):
-        return (row["spot_date"] + BDay(row[0]))
-    dates_temp["expiry_date"] = dates_temp.apply(calculate_expiry, axis=1)
-    dates_temp["spot_date"] = pd.to_datetime(dates_temp["spot_date"])
-    dates_temp["expiry_date"] = pd.to_datetime(dates_temp["expiry_date"])
-    dates_temp3 = dates_temp.copy()
-    result = pd.DataFrame()
-    for ticker in dividend_data.ticker.unique():
-        temp_q = pd.DataFrame()
-        dates_temp = pd.DataFrame(dates_temp3)
-        dates_temp2 = dates_temp.copy()
-        dates_temp = dates_temp2
-        dates_temp["id"] = 2
-        dividend_data["id"] = 2
-        dates_temp = pd.merge(dates_temp, dividend_data[dividend_data.ticker == ticker], on="id", how="outer")
-        dates_temp = dates_temp[(dates_temp.spot_date <= dates_temp.ex_dividend_date) & (dates_temp.ex_dividend_date <= dates_temp.expiry_date)]
-        dates_temp = dates_temp.groupby(["expiry_date"])["amount"].sum().reset_index()
-        dates_temp2 = dates_temp2.merge(dates_temp, on="expiry_date", how="left").fillna(0)
-        temp_q["q"] = dates_temp2["amount"] / intraday_price.loc[intraday_price.ticker == ticker, "close"].values
-        temp_q["ticker"] = ticker
-        temp_q["spot_date"] = dates_temp2["spot_date"]
-        temp_q["expiry_date"] = dates_temp2["expiry_date"]
-        temp_q["t"] = days_q[0]
-        result = result.append(temp_q)
-    result = result.merge(universe[["ticker", "currency_code"]], on="ticker", how="left")
-    result = uid_maker(result, uid="uid", ticker="ticker", trading_day="t", date=False)
-    print(result)
-    #insert_data_to_database(result, get_data_dividend_daily_table_name, how="replace")
-    upsert_data_to_database(result, get_data_dividend_daily_table_name(), "uid", how="update", Text=True)
-    report_to_slack("{} : === Dividens Daily Updated ===".format(datetimeNow()))
-
 def interest_update():
     print("{} : === Interest Update ===".format(datetimeNow()))
     universe = get_data_by_table_name(get_data_interest_table_name())
@@ -474,60 +419,3 @@ def interest_update():
     print("== Interest Rate Calculated ==")
     upsert_data_to_database(data, get_data_interest_table_name(), "ticker_interest", how="update", Text=True)
     report_to_slack("{} : === Interest Updated ===".format(datetimeNow()))
-
-def interest_daily_update(currency_code=None):
-    def cal_interest_rate(interest_rate_data, days_to_expiry):
-        unique_horizons = pd.DataFrame(days_to_expiry)
-        unique_horizons["id"] = 2
-        unique_currencies = pd.DataFrame(interest_rate_data["currency_code"].unique())
-        unique_currencies["id"] = 2
-        rates = pd.merge(unique_horizons, unique_currencies, on="id", how="outer")
-        rates = rates.rename(columns={"0_y": "currency_code", "0_x": "days_to_expiry"})
-        interest_rate_data = interest_rate_data.rename(columns={"days_to_maturity": "days_to_expiry"})
-        rates = pd.merge(rates, interest_rate_data, on=["days_to_expiry", "currency_code"], how="outer")
-        def funs(df):
-            df = df.sort_values(by="days_to_expiry")
-            df = df.reset_index()
-            nan_index = df["rate"].index[df["rate"].isnull()].to_series().reset_index(drop=True)
-            not_nan_index = df["rate"].index[~df["rate"].isnull()].to_series().reset_index(drop=True)
-            for a in nan_index:
-                temp = not_nan_index.copy()
-                temp[len(temp)] = a
-                temp = temp.sort_values()
-                temp.reset_index(inplace=True, drop=True)
-                ind = temp[temp == a].index
-                ind1 = temp.iloc[ind - 1]
-                ind2 = temp.iloc[ind + 1]
-                rate_1 = df.loc[ind1, "rate"].iloc[0]
-                rate_2 = df.loc[ind2, "rate"].iloc[0]
-                dtm_1 = df.loc[ind1, "days_to_expiry"].iloc[0]
-                dtm_2 = df.loc[ind2, "days_to_expiry"].iloc[0]
-                df.loc[a, "rate"] = rate_1 * (dtm_2 - df.loc[a, "days_to_expiry"])/(dtm_2 - dtm_1) + rate_2* (df.loc[a, "days_to_expiry"] - dtm_1)/(dtm_2 - dtm_1)
-            df = df.set_index("index")
-            return df
-        rates = rates.groupby("currency_code").apply(lambda x: funs(x))
-        rates = rates.reset_index(drop=True)
-        unique_horizons = unique_horizons.rename(columns={0: "days_to_expiry"})
-        unique_horizons = pd.merge(unique_horizons, rates[["days_to_expiry", "rate"]], on="days_to_expiry", how="inner")
-        return unique_horizons["rate"].values
-    
-    print("{} : === Interest Daily Update ===".format(datetimeNow()))
-    if(type(currency_code) == type(None)):
-        interest_rate_data = get_data_by_table_name(get_data_interest_table_name())
-    else:
-        interest_rate_data = get_data_by_table_name_with_condition(get_data_interest_table_name(), f" currency_code in {tuple_data(currency_code)}")
-
-    days_r = pd.DataFrame(range(1, int(os.getenv("DAILY_R_DAYS"))))
-    result = pd.DataFrame()
-
-    for currency in interest_rate_data.currency_code.unique():
-        temp_r = pd.DataFrame()
-        temp_r["r"] = cal_interest_rate(interest_rate_data[interest_rate_data.currency_code == currency], days_r)
-        temp_r["t"] = days_r[0]
-        temp_r["currency_code"] = currency
-        result = result.append(temp_r)
-    result = uid_maker(result, uid="uid", ticker="currency_code", trading_day="t", date=False)
-    print(result)
-    # insert_data_to_database(result, get_data_interest_daily_table_name(), how="replace")
-    upsert_data_to_database(result, get_data_interest_daily_table_name(), "uid", how="update", Text=True)
-    report_to_slack("{} : === Interest Daily Updated ===".format(datetimeNow()))

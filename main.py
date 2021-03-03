@@ -65,9 +65,10 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    ticker = ["AAPL.O"]
-    master_tac_update()
-    master_multiple_update()
+    update_utc_offset_from_timezone()
+    # ticker = ["AAPL.O"]
+    # master_tac_update()
+    # master_multiple_update()
     # ticker=["AAPL.O", "MSFT.O"]
     # currency_code=["USD"]
     print("Done")

@@ -3,11 +3,13 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from environs import Env
+from core.djangomodule.network.cloud import DroidDb
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
 env = Env()
-
+db = DroidDb()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
@@ -120,6 +122,12 @@ ELASTICSEARCH_DSL = {
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
+db_debug= env.bool("DROID_DEBUG")
+if db_debug == True:
+    read_endpoint,write_endpoint,port = db.test_url
+else:
+    read_endpoint,write_endpoint,port = db.prod_url
+
 DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
 DB_ENGINE = 'psqlextra.backend'
 DATABASES = {
@@ -128,16 +136,16 @@ DATABASES = {
         'NAME': os.getenv('DBNAME'),  # dbname
         'USER': os.getenv('DBUSER'),
         'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': os.getenv('DBHOST'),
-        'PORT': os.getenv('DBPORT'),
+        'HOST': read_endpoint,
+        'PORT': port,
     },
     'aurora_read': {
         'ENGINE': DB_ENGINE,
         'NAME': os.getenv('DBNAME'),  # dbname
         'USER': os.getenv('DBUSER'),
         'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': os.getenv('DBHOSTREAD'),
-        'PORT': os.getenv('DBPORT'),
+        'HOST': read_endpoint,
+        'PORT': port,
 
     },
     'aurora_write': {
@@ -145,8 +153,8 @@ DATABASES = {
         'NAME': os.getenv('DBNAME'),  # dbname
         'USER': os.getenv('DBUSER'),
         'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': os.getenv('DBHOSTWRITE'),
-        'PORT': os.getenv('DBPORT'),
+        'HOST': write_endpoint,
+        'PORT': port,
 
     },
 

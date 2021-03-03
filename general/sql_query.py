@@ -36,15 +36,7 @@ def read_query(query, table=universe_table, cpu_counts=False):
     data = pd.DataFrame(data)
     print("Total Data = " + str(len(data)))
     return data
-
-def execute_query(query, table=universe_table):
-    print(f"Execute Query to Table {table}")
-    engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        result = conn.execute(query)
-    engine.dispose()
-    return True
-
+    
 def get_latest_price():
     query = f"select mo.* from master_ohlcvtr mo, "
     query += f"(select master_ohlcvtr.ticker, max(master_ohlcvtr.trading_day) max_date "
