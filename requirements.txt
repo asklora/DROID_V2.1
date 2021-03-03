@@ -84,7 +84,7 @@ multidict==4.7.5
 multiprocess==0.70.11.1
 networkx==2.4
 numba==0.50.1
-numpy==1.18.4
+numpy==1.20.0
 oauthlib==3.1.0
 odfpy==1.4.1
 openpyxl==3.0.6
