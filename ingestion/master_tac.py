@@ -74,6 +74,7 @@ def master_tac_update():
     print(data)
     print("Calculate TAC")
     result = data.copy()
+    result = result.drop(columns=["day_status"])
     data = data[["uid", "ticker", "trading_day", "volume", "currency_code", "day_status"]]
 
     result =  result.rename(columns={"close":"tri_adj_close",
