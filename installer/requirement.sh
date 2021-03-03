@@ -12,3 +12,6 @@ cd ta-lib/
 ./configure --prefix=/usr
 make
 sudo make install
+export AWS_ACCESS_KEY_ID=AKIA2XEOTUNGWEQ43TB6
+export AWS_SECRET_ACCESS_KEY=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
+export AWS_DEFAULT_REGION=ap-east-1
