@@ -112,7 +112,7 @@ def FillDayStatus(data):
     return data
 
 def master_ohlctr_update():
-    do_function("master_ohlcvtr_update")
+    # do_function("master_ohlcvtr_update")
     print("Get Start Date")
     start_date = dlp_start_date()
     print(f"Calculation Start From {start_date}")

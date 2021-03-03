@@ -152,7 +152,7 @@ def data_prep_history():
     print("Data preparation history started!")
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
-    ticker = get_active_universe["ticker"].tolist()
+    ticker = get_active_universe()["ticker"].tolist()
 
     populate_bot_data(start_date=start_date, end_date=end_date, ticker=ticker, history=True)
     print("{} : === DATA PREPERATION HISTORY COMPLETED ===".format(dateNow()))
@@ -186,7 +186,7 @@ def infer_history():
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
 
-    ticker = get_active_universe["ticker"].tolist()
+    ticker = get_active_universe()["ticker"].tolist()
     main_df = get_executive_data_download(start_date, end_date, ticker=ticker)
     print(main_df)
 

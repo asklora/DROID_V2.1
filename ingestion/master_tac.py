@@ -61,7 +61,7 @@ def get_stochf(df):
 
 def master_tac_update():
     print("Getting OHLCVTR Data")
-    data = get_master_ohlcvtr_data(backdate_by_day(2))
+    data = get_master_ohlcvtr_data(droid_start_date())
     print(data)
     print("OHLCTR Done")
     #data = data.rename(columns={"ticker_id" : "ticker", "currency_code_id" : "currency_code"})
