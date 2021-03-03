@@ -66,10 +66,10 @@ def remove_holidays(prices_df):
 
 def remove_holidays_forward(prices_df):
     # This function will remove holidays for forward calculation of volatility.
-    prices_df.loc[prices_df.day_status == "holiday", "open"] = "H"
-    prices_df.loc[prices_df.day_status == "holiday", "high"] = "H"
-    prices_df.loc[prices_df.day_status == "holiday", "low"] = "H"
-    prices_df.loc[prices_df.day_status == "holiday", "close"] = "H"
+    prices_df.loc[prices_df.day_status == "holiday", "tri_adj_open"] = "H"
+    prices_df.loc[prices_df.day_status == "holiday", "tri_adj_high"] = "H"
+    prices_df.loc[prices_df.day_status == "holiday", "tri_adj_low"] = "H"
+    prices_df.loc[prices_df.day_status == "holiday", "tri_adj_close"] = "H"
     prices_df.loc[prices_df.day_status == "holiday", "total_return_index"] = "H"
 
     main_tri = prices_df.pivot_table(index=prices_df.trading_day, columns="ticker", values="total_return_index",
