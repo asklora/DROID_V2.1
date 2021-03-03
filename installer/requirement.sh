@@ -3,7 +3,7 @@ if ! [ -x "$(command -v jq)" ]; then
   echo 'Error: jq is not installed.' >&2
   sudo apt-get install jq
 fi
-if ! [ -x "$(command -v jq)" ]; then
+if ! [ -x "$(command -v aws)" ]; then
   echo 'Error: aws is not installed.' >&2
   sudo apt-get install awscli
 fi
@@ -12,6 +12,6 @@ cd ta-lib/
 ./configure --prefix=/usr
 make
 sudo make install
-export AWS_ACCESS_KEY_ID=AKIA2XEOTUNGWEQ43TB6
-export AWS_SECRET_ACCESS_KEY=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
-export AWS_DEFAULT_REGION=ap-east-1
+aws configure set aws_access_key_id AKIA2XEOTUNGWEQ43TB6
+aws configure set aws_secret_access_key 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
+aws configure set default.region ap-east-1
