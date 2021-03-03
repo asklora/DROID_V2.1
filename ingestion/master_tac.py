@@ -14,7 +14,7 @@ def ForwardBackwardFillNull(data, columns_field, columns_deletion=False):
     if(columns_deletion):
         data_detail = data.drop(columns=columns_field)
     else:
-        data_detail = data[["uid", "ticker", "trading_day", "volume", "currency_code"]]
+        data_detail = data[["uid", "ticker", "trading_day", "volume", "currency_code", "day_status"]]
     universe = data["ticker"].drop_duplicates()
     universe =universe.tolist()
     for column in columns_field:
