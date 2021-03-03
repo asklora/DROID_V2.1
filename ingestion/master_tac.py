@@ -68,13 +68,13 @@ def master_tac_update():
     print("Delete Holiday Status")
     data = DeleteHolidayStatus(data)
     print(data)
-    data = data.drop(columns=["datapoint_per_day", "datapoint", "day_status"])
+    data = data.drop(columns=["datapoint_per_day", "datapoint"])
     print("Fill Null Data Forward & Backward")
     data = ForwardBackwardFillNull(data, ["open", "high", "low", "close", "total_return_index"])
     print(data)
     print("Calculate TAC")
     result = data.copy()
-    data = data[["uid", "ticker", "trading_day", "volume", "currency_code"]]
+    data = data[["uid", "ticker", "trading_day", "volume", "currency_code", "day_status"]]
 
     result =  result.rename(columns={"close":"tri_adj_close",
         "low":"tri_adj_low",

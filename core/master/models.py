@@ -118,6 +118,7 @@ class MasterTac(models.Model):  # Master TAC Change to master_tac
     rsi = models.FloatField(blank=True, null=True)
     fast_k = models.FloatField(blank=True, null=True)
     fast_d = models.FloatField(blank=True, null=True)
+    day_status = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = True

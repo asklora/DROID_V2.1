@@ -67,7 +67,7 @@ if __name__ == "__main__":
     # ticker = ["AAPL.O"]
     # do_function("master_ohlcvtr_update")
     # master_ohlctr_update()
-    # master_tac_update()
+    master_tac_update()
     master_multiple_update()
     # ticker=["AAPL.O", "MSFT.O"]
     # currency_code=["USD"]
