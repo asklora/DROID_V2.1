@@ -5,6 +5,14 @@ import time
 import platform
 from pathlib import Path
 # Databases" URL
+# DBNAME="postgres"
+# DBUSER="postgres"
+# DBPASSWORD="ml2021#LORA"
+# DROID_DEBUG="False"
+# DBHOST="droid-v2-prod-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com"
+# DBHOSTWRITE="droid-v2-prod-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com"
+# DBHOSTREAD="droid-v2-prod-cluster.cluster-ro-cy4dofwtnffp.ap-east-1.rds.amazonaws.com"
+
 DB_URL_READ = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+os.getenv("DBHOSTREAD")+":"+os.getenv("DBPORT")+"/"+os.getenv("DBUSER")
 DB_URL_WRITE = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+os.getenv("DBHOSTWRITE")+":"+os.getenv("DBPORT")+"/"+os.getenv("DBUSER")
 

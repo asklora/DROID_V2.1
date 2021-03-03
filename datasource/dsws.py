@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from pydatastream import Datastream
 from general.date_process import count_date_range_by_month
-from global_vars import DSS_PASSWORD, DSS_USERNAME, DSWS_PASSWORD, DSWS_PASSWORD2, DSWS_USERNAME, DSWS_USERNAME2
+from global_vars import DSWS_PASSWORD, DSWS_PASSWORD2, DSWS_USERNAME, DSWS_USERNAME2
 
 def setDataStream(DSWS=True):
     if(DSWS):
