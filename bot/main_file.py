@@ -2,6 +2,7 @@ from general.data_process import uid_maker
 from general.table_name import get_bot_data_table_name
 import numpy as np
 import pandas as pd
+pd.options.mode.chained_assignment = None
 from pandas.tseries.offsets import BDay
 from bot.data_download import (
     get_currency_data, 
