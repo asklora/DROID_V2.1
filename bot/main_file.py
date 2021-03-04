@@ -1,6 +1,7 @@
 from general.data_process import uid_maker
 from general.table_name import get_bot_data_table_name
 import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 import pandas as pd
 pd.options.mode.chained_assignment = None
 from pandas.tseries.offsets import BDay
