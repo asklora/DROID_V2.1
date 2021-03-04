@@ -141,13 +141,13 @@ def data_prep_check_new_ticker(ticker=None, currency_code=None):
     if (len(new_ticker) > 0):
         new_ticker = new_ticker["ticker"].tolist()
         print(f"Found {len(new_ticker)} New Ticker {tuple(new_ticker)}")
-        populate_bot_data(start_date=start_date, end_date=end_date, ticker=new_ticker, new_ticker=True)
+        populate_bot_data(start_date=start_date2, end_date=end_date, ticker=new_ticker, new_ticker=True)
         print("{} : === DATA PREPERATION CHECK NEW TICKER COMPLETED ===".format(dateNow()))
         report_to_slack("{} : === DATA PREPERATION CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
 def data_prep_history():
     print("{} : === DATA PREPERATION HISTORY STARTED ===".format(dateNow()))
-    start_date = str_to_date(droid_start_date())
+    start_date = str_to_date(droid_start_date_buffer())
     end_date = str_to_date(dateNow())
     print("Data preparation history started!")
     print(f"The start date is set as: {start_date}")
