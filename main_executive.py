@@ -141,13 +141,13 @@ def data_prep_check_new_ticker(ticker=None, currency_code=None):
     if (len(new_ticker) > 0):
         new_ticker = new_ticker["ticker"].tolist()
         print(f"Found {len(new_ticker)} New Ticker {tuple(new_ticker)}")
-        populate_bot_data(start_date=start_date, end_date=end_date, ticker=new_ticker, new_ticker=True)
+        populate_bot_data(start_date=start_date2, end_date=end_date, ticker=new_ticker, new_ticker=True)
         print("{} : === DATA PREPERATION CHECK NEW TICKER COMPLETED ===".format(dateNow()))
         report_to_slack("{} : === DATA PREPERATION CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
 def data_prep_history():
     print("{} : === DATA PREPERATION HISTORY STARTED ===".format(dateNow()))
-    start_date = str_to_date(droid_start_date())
+    start_date = str_to_date(droid_start_date_buffer())
     end_date = str_to_date(dateNow())
     print("Data preparation history started!")
     print(f"The start date is set as: {start_date}")
@@ -180,8 +180,8 @@ def infer_daily(ticker=None, currency_code=None):
         report_to_slack("{} : === VOLATILITY INFER DAILY COMPLETED ===".format(dateNow()))
 
 def infer_history():
-    print("{} : === {} VOLATILITY INFER HISTORY STARTED ===".format(dateNow()))
-    start_date = str_to_date(droid_start_date())
+    print("{} : === VOLATILITY INFER HISTORY STARTED ===".format(dateNow()))
+    start_date = str_to_date(droid_start_date_buffer())
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -200,7 +200,7 @@ def infer_history():
 
 
 def train_model(ticker=None, currency_code=None):
-    print("{} : === {} VOLATILITY TRAIN MODEL STARTED ===".format(dateNow()))
+    print("{} : === VOLATILITY TRAIN MODEL STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     start_date = str_to_date(droid_start_date())
@@ -237,7 +237,7 @@ def option_maker_classic_check_new_ticker(ticker=None, currency_code=None, time_
         report_to_slack("{} : === OPTION MAKER CLASSIC CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
 def option_maker_daily_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False):
-    print("{} : === {} OPTION MAKER CLASSIC STARTED ===".format(dateNow()))
+    print("{} : === OPTION MAKER CLASSIC STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, classic=True)
     start_date = latest_dates_db["max_date"].min()
     end_date = str_to_date(dateNow())
@@ -252,7 +252,7 @@ def option_maker_daily_classic(ticker=None, currency_code=None, time_to_exp=None
     report_to_slack("{} : === OPTION MAKER CLASSIC COMPLETED ===".format(dateNow()))
 
 def option_maker_history_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False):
-    print("{} : === {} OPTION MAKER CLASSIC HISTORY STARTED ===".format(dateNow()))
+    print("{} : === OPTION MAKER CLASSIC HISTORY STARTED ===".format(dateNow()))
     start_date = droid_start_date()
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
@@ -290,7 +290,7 @@ def option_maker_uno_check_new_ticker(ticker=None, currency_code=None, time_to_e
         report_to_slack("{} : === OPTION MAKER UNO CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
 def option_maker_daily_uno(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
-    print("{} : === {} OPTION MAKER UNO STARTED ===".format(dateNow()))
+    print("{} : === OPTION MAKER UNO STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, uno=True)
     start_date = latest_dates_db["max_date"].min()
     end_date = str_to_date(dateNow())
@@ -308,7 +308,7 @@ def option_maker_daily_uno(ticker=None, currency_code=None, time_to_exp=None, mo
     report_to_slack("{} : === OPTION MAKER UNO COMPLETED ===".format(dateNow()))
 
 def option_maker_history_uno(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
-    print("{} : === {} OPTION MAKER UNO HISTORY STARTED ===".format(dateNow()))
+    print("{} : === OPTION MAKER UNO HISTORY STARTED ===".format(dateNow()))
     start_date = str_to_date(droid_start_date())
     end_date = str_to_date(dateNow())
     if option_maker:
@@ -343,7 +343,7 @@ def option_maker_ucdc_check_new_ticker(ticker=None, currency_code=None, time_to_
         report_to_slack("{} : === OPTION MAKER UCDC CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
 def option_maker_daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
-    print("{} : === {} OPTION MAKER UNO STARTED ===".format(dateNow()))
+    print("{} : === OPTION MAKER UNO STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, ucdc=True)
     start_date = latest_dates_db["max_date"].min()
     end_date = str_to_date(dateNow())
@@ -361,7 +361,7 @@ def option_maker_daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, m
     report_to_slack("{} : === OPTION MAKER UNO COMPLETED ===".format(dateNow()))
 
 def option_maker_history_ucdc(currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
-    print("{} : === {} OPTION MAKER UCDC HISTORY STARTED ===".format(dateNow()))
+    print("{} : === OPTION MAKER UCDC HISTORY STARTED ===".format(dateNow()))
     start_date = str_to_date(droid_start_date())
     end_date = str_to_date(dateNow())
     if option_maker:
