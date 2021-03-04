@@ -19,7 +19,7 @@ def execute_query(query, table=None):
 
 def truncate_table(table_name):
     query = f"truncate table {table_name}"
-    data = read_query(query, table=table_name)
+    data = execute_query(query, table=table_name)
     return True
 
 # def insert_data_to_database(data, table, how="replace"):
