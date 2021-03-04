@@ -141,17 +141,13 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         total_returns_21_126 = get_total_return(lookback_creator(main_tri, period, 6 * period + 1))
         total_returns_21_231 = get_total_return(lookback_creator(main_tri, period, 231 + 1))
 
-        technicals_list = [c2c_vol_0_21, c2c_vol_21_42, c2c_vol_42_63, c2c_vol_63_126,
-                           c2c_vol_126_252, c2c_vol_252_504, kurt_0_504, rs_vol_0_21, rs_vol_21_42,
-                           rs_vol_42_63, rs_vol_63_126, rs_vol_126_252, rs_vol_252_504, total_returns_0_1,
-                           total_returns_0_21, total_returns_0_63, total_returns_21_126, total_returns_21_231]
+        technicals_list = [c2c_vol_0_21, c2c_vol_21_42, c2c_vol_42_63, c2c_vol_63_126, c2c_vol_126_252, c2c_vol_252_504, kurt_0_504, 
+            rs_vol_0_21, rs_vol_21_42, rs_vol_42_63, rs_vol_63_126, rs_vol_126_252, rs_vol_252_504, 
+            total_returns_0_1, total_returns_0_21, total_returns_0_63, total_returns_21_126, total_returns_21_231]
 
-        technicals_names_list = ["c2c_vol_0_21", "c2c_vol_21_42", "c2c_vol_42_63", "c2c_vol_63_126",
-                                 "c2c_vol_126_252", "c2c_vol_252_504", "kurt_0_504", "rs_vol_0_21", "rs_vol_21_42",
-                                 "rs_vol_42_63", "rs_vol_63_126", "rs_vol_126_252", "rs_vol_252_504",
-                                 "total_returns_0_1", "total_returns_0_21", "total_returns_0_63",
-                                 "total_returns_21_126",
-                                 "total_returns_21_231"]
+        technicals_names_list = ["c2c_vol_0_21", "c2c_vol_21_42", "c2c_vol_42_63", "c2c_vol_63_126", "c2c_vol_126_252", "c2c_vol_252_504", "kurt_0_504", 
+            "rs_vol_0_21", "rs_vol_21_42", "rs_vol_42_63", "rs_vol_63_126", "rs_vol_126_252", "rs_vol_252_504",
+            "total_returns_0_1", "total_returns_0_21", "total_returns_0_63", "total_returns_21_126", "total_returns_21_231"]
 
         def series_to_pandas(df):
             aa = pd.DataFrame(df[df.index.isin(valid_tickers_list)])
@@ -160,8 +156,10 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
 
         for i in range(len(technicals_list)):
             tech_temp = series_to_pandas(technicals_list[i])
-            temp_df[technicals_names_list[i]] = np.where(tech_temp["ticker"] == temp_df["ticker"], tech_temp[0],
-                                                         temp_df[technicals_names_list[i]])
+            tech_temp = tech_temp.rename(columns={0 : technicals_names_list[i]})
+            temp_df = temp_df.drop(columns=[technicals_names_list[i]])
+            temp_df = temp_df.merge(tech_temp, how="left", on=["ticker"])
+            #temp_df[technicals_names_list[i]] = np.where(tech_temp["ticker"] == temp_df["ticker"], tech_temp[0], temp_df[technicals_names_list[i]])
         main_df = main_df.append(temp_df)
         print(f"{trading_day} is finished.")
     main_df = main_df.merge(prices_df[["vix_value", "ticker", "trading_day"]], on=["ticker", "trading_day"], how="left")
