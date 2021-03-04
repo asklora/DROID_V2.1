@@ -329,3 +329,60 @@ class DataVix(models.Model):
     class Meta:
         managed = True
         db_table = "data_vix"
+
+
+# macro_data
+# usinter3_esa
+# CHGDP...C_ESA
+# JPGDP...D_ESA
+# USGDP...D_ESA
+# EMGDP...D_ESA
+# usgbill3_esa
+# EMIBOR3._ESA
+# jpmshort_esa
+# EMGBOND._ESA
+# CHGBOND._ESA
+# period_end
+# fred_data
+
+# macro_data_monthly
+# usinter3_esa
+# usgbill3_esa
+# EMIBOR3._ESA
+# jpmshort_esa
+# EMGBOND._ESA
+# CHGBOND._ESA
+# trading_day
+# fred_data
+# CHGDP...C_ESA
+# JPGDP...D_ESA
+# USGDP...D_ESA
+# EMGDP...D_ESA
+# period_end
+
+# ibes_data
+# ticker
+# period_end
+# epsi1md
+# i0eps
+# cap1fd12
+# ebd1fd12
+# eps1fd12
+# eps1tr12
+# uid
+
+# ibes_data_monthly
+# ticker
+# trading_day
+# eps1fd12
+# eps1tr12
+# uid
+# cap1fd12
+# epsi1md
+# i0eps
+# ebd1fd12
+# period_end
+
+# fred_data
+# trading_day
+# data

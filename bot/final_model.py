@@ -180,7 +180,7 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
         final_inferred["ticker"] = ticker_list
 
         # Adding UID
-        final_inferred["uid"] = uid_maker(final_inferred, uid="uid", ticker="ticker", trading_day="trading_day")
+        final_inferred = uid_maker(final_inferred, uid="uid", ticker="ticker", trading_day="trading_day")
         final_inferred = final_inferred.infer_objects()
 
         final_inferred = final_inferred[final_inferred.atm_volatility_one_year > 0.1]
