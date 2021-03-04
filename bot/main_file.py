@@ -10,7 +10,7 @@ from bot.data_download import (
     get_data_vix_price, 
     get_data_vol_surface_ticker, 
     get_latest_price, 
-    get_master_tac_price)
+    get_master_tac_price, get_vol_surface_data)
 from bot.preprocess import remove_holidays, lookback_creator, remove_holidays_forward
 from bot.vol_calculations import get_close_vol, get_kurt, get_rogers_satchell, get_total_return
 from general.sql_output import truncate_table, upsert_data_to_database
@@ -38,7 +38,7 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         prices_df = pd.concat([prices_df, last_price], axis=0, join="outer")
 
     #Get Vol Surface Parameter Ticker That Not Infer
-    outputs_df = get_data_vol_surface_ticker(ticker=ticker, currency_code=currency_code)
+    outputs_df = get_vol_surface_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, infer=False)
 
     #Prepare All Data for Calculation
     dates_df = prices_df.pivot_table(index="trading_day", columns="ticker", values="day_status", aggfunc="first",dropna=False)
