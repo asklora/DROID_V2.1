@@ -181,7 +181,7 @@ def infer_daily(ticker=None, currency_code=None):
 
 def infer_history():
     print("{} : === {} VOLATILITY INFER HISTORY STARTED ===".format(dateNow()))
-    start_date = str_to_date(droid_start_date())
+    start_date = str_to_date(droid_start_date_buffer())
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
