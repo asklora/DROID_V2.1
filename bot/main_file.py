@@ -13,16 +13,16 @@ from bot.preprocess import remove_holidays, lookback_creator, remove_holidays_fo
 from bot.vol_calculations import get_close_vol, get_kurt, get_rogers_satchell, get_total_return
 from general.sql_output import truncate_table, upsert_data_to_database
 from general.sql_query import get_active_universe
-from general.date_process import dateNow, droid_start_date
+from general.date_process import dateNow, droid_start_date, droid_start_date_buffer
 from global_vars import period, index_to_etf_file, X_columns
 
 def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code=None, daily=False, new_ticker=False, history=False):
     if type(start_date) == type(None):
-        start_date = droid_start_date()
+        start_date = droid_start_date_buffer()
     if type(end_date) == type(None):
         end_date = dateNow()
     # Get all the prices for the above dates +-4 weeks to make sure all the nans are covered by back filling
-    prices_df = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
+    prices_df = get_master_tac_price(start_date=droid_start_date(), end_date=dateNow(), ticker=ticker, currency_code=currency_code)
 
     #Adding Latest Price to Master TAC
     if (daily):
