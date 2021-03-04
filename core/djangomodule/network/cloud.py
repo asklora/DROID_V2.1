@@ -188,4 +188,5 @@ class DroidDb(Cloud):
                         DBClusterIdentifier='droid-v2-test-cluster',
                     )
             return db['DBClusters'][0]['Endpoint'],db['DBClusters'][0]['ReaderEndpoint'], db['DBClusters'][0]['Port']
-        # raise ValueError('error connecting database or database not found')
+        else:
+            raise ValueError('error connecting database or database not found, Please create new one')
