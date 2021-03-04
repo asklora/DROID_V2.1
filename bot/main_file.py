@@ -14,7 +14,7 @@ from bot.vol_calculations import get_close_vol, get_kurt, get_rogers_satchell, g
 from general.sql_output import truncate_table, upsert_data_to_database
 from general.sql_query import get_active_universe
 from general.date_process import dateNow, droid_start_date, droid_start_date_buffer
-from global_vars import period, index_to_etf_file, X_columns
+from global_vars import period, currency_code_to_etf_file, X_columns
 
 def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code=None, daily=False, new_ticker=False, history=False):
     if type(start_date) == type(None):
@@ -167,16 +167,16 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     Y_columns_temp = ["slope", "atm_volatility_spot", "atm_volatility_one_year", "atm_volatility_infinity", "deriv_inf",
                       "deriv", "slope_inf", "ticker", "trading_day"]
 
-    index_to_etf = pd.read_csv(index_to_etf_file, names=["index", "etf"])
-    droid_universe_df = get_active_universe()
-    droid_universe_df = droid_universe_df.merge(index_to_etf, on="index")
-    etf_list = index_to_etf.etf.unique()
+    currency_code_to_etf = pd.read_csv(currency_code_to_etf_file, names=["currency_code", "etf"])
+    universe_df = get_active_universe()
+    universe_df = universe_df.merge(currency_code_to_etf, on="currency_code")
+    etf_list = currency_code_to_etf.etf.unique()
 
     main_df2 = main_df.copy()
     main_df = main_df2.copy()
 
     # Adding index vols to the main dataframe
-    main_df = main_df.merge(droid_universe_df[["etf", "ticker"]], on="ticker", how="inner")
+    main_df = main_df.merge(universe_df[["etf", "ticker"]], on="ticker", how="inner")
     etf_df = main_df[main_df.ticker.isin(etf_list)].copy()
 
     # main_df = main_df[~main_df.ticker.isin(etf_list)]
