@@ -166,8 +166,7 @@ class DataInterest(models.Model):
 
 class DataDividendDailyRates(models.Model):
     uid = models.TextField(primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
-                               db_column="ticker", related_name="data_dividend_daily_rates_ticker")
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="data_dividend_daily_rates_ticker")
     currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE,
                                       db_column="currency_code", related_name="data_dividend_daily_rates_currency_code")
     q = models.FloatField(blank=True, null=True)
@@ -276,50 +275,6 @@ class DataQuandl(models.Model):
         return f"{self.ticker}-{self.trading_day}"
 
 
-# class DataVolSurface(models.Model):
-#     uid = models.TextField(primary_key=True)
-#     ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
-#                                db_column="ticker", related_name="data_vol_surface_ticker")
-#     trading_day = models.DateField(blank=True, null=True)
-#     stock_price = models.FloatField(blank=True, null=True)
-#     atm_volatility_spot = models.FloatField(blank=True, null=True)
-#     atm_volatility_one_year = models.FloatField(blank=True, null=True)
-#     atm_volatility_infinity = models.FloatField(blank=True, null=True)
-#     alpha = models.IntegerField(blank=True, null=True)
-#     slope = models.FloatField(blank=True, null=True)
-#     deriv = models.FloatField(blank=True, null=True)
-#     slope_inf = models.FloatField(blank=True, null=True)
-#     deriv_inf = models.FloatField(blank=True, null=True)
-
-#     class Meta:
-#         managed = True
-#         db_table = "data_vol_surface"
-
-#     def __str__(self):
-#         return f"{self.ticker}-{self.trading_day}"
-
-
-# class DataVolSurfaceInferred(models.Model):
-#     uid = models.TextField(primary_key=True)
-#     ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
-#                                db_column="ticker", related_name="data_vol_surface_inferred_ticker")
-#     trading_day = models.DateField(blank=True, null=True)
-#     atm_volatility_spot = models.FloatField(blank=True, null=True)
-#     atm_volatility_one_year = models.FloatField(blank=True, null=True)
-#     atm_volatility_infinity = models.FloatField(blank=True, null=True)
-#     slope = models.FloatField(blank=True, null=True)
-#     deriv = models.FloatField(blank=True, null=True)
-#     slope_inf = models.FloatField(blank=True, null=True)
-#     deriv_inf = models.FloatField(blank=True, null=True)
-
-#     class Meta:
-#         managed = True
-#         db_table = "data_vol_surface_inferred"
-
-#     def __str__(self):
-#         return f"{self.ticker}-{self.trading_day}"
-
-
 class DataVix(models.Model):
     uid = models.TextField(primary_key=True)
     vix_id = models.ForeignKey(Vix, on_delete=models.CASCADE, db_column="vix_id", related_name="data_vix_vix_id")
@@ -330,59 +285,92 @@ class DataVix(models.Model):
         managed = True
         db_table = "data_vix"
 
+class Macro(models.Model):
+    period_end = models.DateField(primary_key=True)
+    chgdp = models.FloatField(blank=True, null=True)
+    jpgdp = models.FloatField(blank=True, null=True)
+    usgdp = models.FloatField(blank=True, null=True)
+    emgdp = models.FloatField(blank=True, null=True)
+    emibor3 = models.FloatField(blank=True, null=True)
+    emgbond = models.FloatField(blank=True, null=True)
+    chgbond = models.FloatField(blank=True, null=True)
+    usinter3 = models.FloatField(blank=True, null=True)
+    usgbill3 = models.FloatField(blank=True, null=True)
+    jpmshort = models.FloatField(blank=True, null=True)
+    fred_data = models.FloatField(blank=True, null=True)
+    class Meta:
+        managed = True
+        db_table = "data_macro"
 
-# macro_data
-# usinter3_esa
-# CHGDP...C_ESA
-# JPGDP...D_ESA
-# USGDP...D_ESA
-# EMGDP...D_ESA
-# usgbill3_esa
-# EMIBOR3._ESA
-# jpmshort_esa
-# EMGBOND._ESA
-# CHGBOND._ESA
-# period_end
-# fred_data
+    def __str__(self):
+        return f"{self.trading_day}"
 
-# macro_data_monthly
-# usinter3_esa
-# usgbill3_esa
-# EMIBOR3._ESA
-# jpmshort_esa
-# EMGBOND._ESA
-# CHGBOND._ESA
-# trading_day
-# fred_data
-# CHGDP...C_ESA
-# JPGDP...D_ESA
-# USGDP...D_ESA
-# EMGDP...D_ESA
-# period_end
 
-# ibes_data
-# ticker
-# period_end
-# epsi1md
-# i0eps
-# cap1fd12
-# ebd1fd12
-# eps1fd12
-# eps1tr12
-# uid
+class MacroMonthly(models.Model):
+    trading_day = models.DateField(primary_key=True)
+    period_end = models.DateField(blank=True, null=True)
+    chgdp = models.FloatField(blank=True, null=True)
+    jpgdp = models.FloatField(blank=True, null=True)
+    usgdp = models.FloatField(blank=True, null=True)
+    emgdp = models.FloatField(blank=True, null=True)
+    emibor3 = models.FloatField(blank=True, null=True)
+    emgbond = models.FloatField(blank=True, null=True)
+    chgbond = models.FloatField(blank=True, null=True)
+    usinter3 = models.FloatField(blank=True, null=True)
+    usgbill3 = models.FloatField(blank=True, null=True)
+    jpmshort = models.FloatField(blank=True, null=True)
+    fred_data = models.FloatField(blank=True, null=True)
+    class Meta:
+        managed = True
+        db_table = "data_macro_monthly"
 
-# ibes_data_monthly
-# ticker
-# trading_day
-# eps1fd12
-# eps1tr12
-# uid
-# cap1fd12
-# epsi1md
-# i0eps
-# ebd1fd12
-# period_end
+    def __str__(self):
+        return f"{self.trading_day}"
 
-# fred_data
-# trading_day
-# data
+
+class Ibes(models.Model):
+    uid = models.TextField(primary_key=True)
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="data_ibes_ticker")
+    period_end = models.DateField(blank=True, null=True)
+    epsi1md = models.FloatField(blank=True, null=True)
+    i0eps = models.FloatField(blank=True, null=True)
+    cap1fd12 = models.FloatField(blank=True, null=True)
+    ebd1fd12 = models.FloatField(blank=True, null=True)
+    eps1fd12 = models.FloatField(blank=True, null=True)
+    eps1tr12 = models.FloatField(blank=True, null=True)
+    class Meta:
+        managed = True
+        db_table = "data_ibes"
+
+    def __str__(self):
+        return f"{self.ticker}-{self.period_end}"
+
+
+class IbesMonthly(models.Model):
+    uid = models.TextField(primary_key=True)
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="data_ibes_monthly_ticker")
+    trading_day = models.DateField(blank=True, null=True)
+    period_end = models.FloatField(blank=True, null=True)
+    eps1fd12 = models.FloatField(blank=True, null=True)
+    eps1tr12 = models.FloatField(blank=True, null=True)
+    cap1fd12 = models.FloatField(blank=True, null=True)
+    epsi1md = models.FloatField(blank=True, null=True)
+    i0eps = models.FloatField(blank=True, null=True)
+    ebd1fd12 = models.FloatField(blank=True, null=True)
+    class Meta:
+        managed = True
+        db_table = "data_ibes_monthly"
+
+    def __str__(self):
+        return f"{self.ticker}-{self.trading_day}"
+
+
+class Fred(models.Model):
+    trading_day = models.DateField(primary_key=True)
+    data = models.FloatField(blank=True, null=True)
+    class Meta:
+        managed = True
+        db_table = "data_fred"
+
+    def __str__(self):
+        return f"{self.trading_day}"
