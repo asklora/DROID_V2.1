@@ -178,7 +178,7 @@ def get_new_ticker_from_bot_backtest(ticker=None, currency_code=None, ucdc=False
     return data
 
 def get_macro_data(start_date, end_date):
-    query = f"select trading_day, usinter3_esa, usgbill3_esa, \"EMIBOR3._ESA\", jpmshort_esa, \"EMGBOND._ESA\", \"CHGBOND._ESA\", fred_data "
+    query = f"select trading_day, usinter3, usgbill3, emibor3, jpmshort, emgbond, chgbond, fred_data "
     query += f"from {get_data_macro_monthly_table_name()} where trading_day >= '{start_date}' and trading_day <= '{end_date}' "
     data = read_query(query, get_data_macro_monthly_table_name(), cpu_counts=False)
     data["ticker"] = "MSFT.O"
@@ -191,7 +191,7 @@ def get_macro_data(start_date, end_date):
     result = result[result["trading_day"].apply(lambda x: x.weekday() not in [5, 6])]
     data["trading_day"] = pd.to_datetime(data["trading_day"])
     result = result.merge(data, how="left", on=["ticker", "trading_day"])
-    for col in ["usinter3_esa", "usgbill3_esa", "EMIBOR3._ESA", "jpmshort_esa", "EMGBOND._ESA", "CHGBOND._ESA", "fred_data"]:
+    for col in ["usinter3", "usgbill3", "emibor3", "jpmshort", "emgbond", "chgbond", "fred_data"]:
         result[col] = result[col].bfill().ffill()
     result = result.drop(columns="ticker")
     return result
