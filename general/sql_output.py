@@ -1,5 +1,6 @@
 import sqlalchemy as db
 from sqlalchemy import create_engine
+from multiprocessing import cpu_count as cpucount
 from sqlalchemy.types import DATE, BIGINT, TEXT, INTEGER, BOOLEAN, Integer
 from general.sql_process import db_read, db_write
 from pangres import upsert
@@ -19,7 +20,7 @@ def execute_query(query, table=None):
 
 def truncate_table(table_name):
     query = f"truncate table {table_name}"
-    data = read_query(query, table=table_name)
+    data = execute_query(query, table=table_name)
     return True
 
 # def insert_data_to_database(data, table, how="replace"):
@@ -57,7 +58,7 @@ def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=Fa
         data_type={primary_key:TEXT}
     
     if(cpu_count):
-        engine = create_engine(db_write, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
+        engine = create_engine(db_write, pool_size=cpucount(), max_overflow=-1, isolation_level="AUTOCOMMIT")
     else:
         engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
     upsert(engine=engine,

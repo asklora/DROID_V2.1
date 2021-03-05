@@ -8,3 +8,6 @@ passenger_wsgi.py
 env/
 ta-lib/
 db.sqlite3
+*.csv
+*.zip
+!currency_code_to_etf.csv

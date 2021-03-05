@@ -95,7 +95,7 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
                 main_infer_copy = main_infer_copy.loc[main_infer_copy[col] != np.inf]
 
             X_train = main_train_copy[X_col_list]
-            Y_train = main_train_copy[Y_columns]
+            Y_train = main_train_copy[Y_columns_list]
 
             X_infer = main_infer_copy[X_col_list]
 
@@ -180,7 +180,7 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
         final_inferred["ticker"] = ticker_list
 
         # Adding UID
-        final_inferred["uid"] = uid_maker(final_inferred, uid="uid", ticker="ticker", trading_day="trading_day")
+        final_inferred = uid_maker(final_inferred, uid="uid", ticker="ticker", trading_day="trading_day")
         final_inferred = final_inferred.infer_objects()
 
         final_inferred = final_inferred[final_inferred.atm_volatility_one_year > 0.1]
@@ -199,8 +199,8 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
             final_inferred.to_csv("vol_history_infered.csv")
             truncate_table(table_name)
             upsert_data_to_database(final_inferred, table_name, "uid", how="update", cpu_count=True, Text=True)
-    do_function("calculate_latest_vol_updates_not_us")
-    do_function("calculate_latest_vol_updates_us")
+    # do_function("calculate_latest_vol_updates_not_us")
+    # do_function("calculate_latest_vol_updates_us")
     finish = timeNow()
     print(finish)
     print("Finished!")

@@ -84,7 +84,7 @@ multidict==4.7.5
 multiprocess==0.70.11.1
 networkx==2.4
 numba==0.50.1
-numpy==1.20.0
+numpy==1.18.4
 oauthlib==3.1.0
 odfpy==1.4.1
 openpyxl==3.0.6
@@ -134,6 +134,7 @@ slackclient==2.5.0
 SQLAlchemy==1.3.16
 sqlparse==0.4.1
 structlog==20.1.0
+TA-Lib==0.4.19
 tablib==3.0.0
 tabulate==0.8.7
 tensorboard==2.2.2
