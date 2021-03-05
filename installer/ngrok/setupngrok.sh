@@ -16,7 +16,7 @@ echo $setup
 echo "[Unit]
 Description=ngrok script
 [Service]
-ExecStart=/usr/local/bin/ngrok --all --region=ap --config=$setup
+ExecStart=/usr/local/bin/ngrok start --all --region=ap --config=$setup
 Restart=always
 [Install]
 WantedBy=multi-user.target" | sudo tee /opt/ngrok/systemd/system/ngrok.service
