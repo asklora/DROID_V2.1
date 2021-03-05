@@ -1,0 +1,16 @@
+---
+# This playbook deploys the whole application stack in this site.
+
+# Apply common configuration to all hosts
+- name: connect to Instance(s) 
+  hosts: instance
+  remote_user: ubuntu
+  tasks:
+    - name: test task
+      command: touch ansiblefile.txt
+    - name: pull from git
+      git:
+        repo: https://redloratech:r3dpapermo0n@github.com/stepchoi/DROID_V2.1.git
+        dest: /home/ubuntu/DROID_V2.1
+        update: yes
+        version: master
