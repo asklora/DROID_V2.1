@@ -10,7 +10,7 @@ sudo mv ngrok /usr/local/bin
 
 # create directory
 sudo mkdir -p /opt/ngrok/systemd/system/
-setup="$(pwd)/installer/ngrok/config/pc4/ngrok.yml"
+setup="$(pwd)/installer/ngrok/config/$1/ngrok.yml"
 echo $setup
 # create systemd script
 echo "[Unit]
