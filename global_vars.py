@@ -73,10 +73,10 @@ bot_labeler_training_num_years = 2
 bots_list = ["uno", "ucdc", "classic"]
 model_type = "rf"
 # if platform.system() == "Linux":
-model_path = "/home/loratech/PycharmProjects/models/"
-saved_model_path = "/home/loratech/PycharmProjects/DROID/saved_models/"
-plot_path = "/home/loratech/PycharmProjects/plots/"
-model_path_clustering = "/home/loratech/PycharmProjects/models/clustering/"
+model_path = "models/"
+saved_model_path = "saved_models/"
+plot_path = "plots/"
+model_path_clustering = "clustering/"
 # else:
 #     model_path = "C:/dlpa_master/model/"
 #     saved_model_path = "C:/dlpa_master/model/saved_models/"
