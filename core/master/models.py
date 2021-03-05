@@ -350,7 +350,7 @@ class IbesMonthly(models.Model):
     uid = models.TextField(primary_key=True)
     ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="data_ibes_monthly_ticker")
     trading_day = models.DateField(blank=True, null=True)
-    period_end = models.FloatField(blank=True, null=True)
+    period_end = models.DateField(blank=True, null=True)
     eps1fd12 = models.FloatField(blank=True, null=True)
     eps1tr12 = models.FloatField(blank=True, null=True)
     cap1fd12 = models.FloatField(blank=True, null=True)
