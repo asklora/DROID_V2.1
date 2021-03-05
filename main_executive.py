@@ -14,7 +14,7 @@ from bot.option_file_classic import fill_bot_backtest_classic, populate_bot_clas
 from bot.option_file_ucdc import fill_bot_backtest_ucdc, populate_bot_ucdc_backtest
 from bot.option_file_uno import fill_bot_backtest_uno, populate_bot_uno_backtest
 from global_vars import folder_check
-folder_check()
+
 # 	main.py --bot_backtest_updates --bot_index 0#.FTSE
 # 	main_exec.py --bot_labeler_infer_daily --exec_index 0#.FTSE
 # 	main.py --latest_bot_ranking --bot_index 0#.FTSE
@@ -164,6 +164,7 @@ def data_prep_history():
 # ************************************************************************************************************************************************************************************
 
 def infer_daily(ticker=None, currency_code=None):
+    folder_check()
     print("{} : === {} VOLATILITY INFER STARTED ===".format(dateNow(), currency_code))
     start_date = get_bot_data_latest_date(daily=True)
     end_date = str_to_date(dateNow())
@@ -181,6 +182,7 @@ def infer_daily(ticker=None, currency_code=None):
         report_to_slack("{} : === VOLATILITY INFER DAILY COMPLETED ===".format(dateNow()))
 
 def infer_history():
+    folder_check()
     print("{} : === VOLATILITY INFER HISTORY STARTED ===".format(dateNow()))
     start_date = str_to_date(droid_start_date_buffer())
     end_date = str_to_date(dateNow())
@@ -201,6 +203,7 @@ def infer_history():
 
 
 def train_model(ticker=None, currency_code=None):
+    folder_check()
     print("{} : === VOLATILITY TRAIN MODEL STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
