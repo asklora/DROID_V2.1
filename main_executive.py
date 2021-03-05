@@ -187,8 +187,8 @@ def infer_history():
     print(f"The end date is set as: {end_date}")
 
     ticker = get_active_universe()["ticker"].tolist()
-    main_df = get_executive_data_download(start_date, end_date, ticker=ticker)
-    print(main_df)
+    # main_df = get_executive_data_download(start_date, end_date, ticker=ticker)
+    # print(main_df)
 
     populate_vol_infer(start_date, end_date, ticker=ticker, history=True)
     print("{} : === VOLATILITY INFER HISTORY COMPLETED ===".format(dateNow()))
