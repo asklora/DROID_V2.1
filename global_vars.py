@@ -72,11 +72,12 @@ tp_multiplier_3m = 1.75
 bot_labeler_training_num_years = 2
 bots_list = ["uno", "ucdc", "classic"]
 model_type = "rf"
-# if platform.system() == "Linux":
+
 model_path = "models/"
 saved_model_path = "saved_models/"
 plot_path = "plots/"
 model_path_clustering = "clustering/"
+
 # else:
 #     model_path = "C:/dlpa_master/model/"
 #     saved_model_path = "C:/dlpa_master/model/saved_models/"
@@ -96,3 +97,8 @@ X_columns = ["kurt_0_504", "vix_value",
     "fred_data", "eps1fd12", "eps1tr12", "cap1fd12", "fast_d", "fast_k", "rsi"]
     
 Y_columns = [["atm_volatility_spot", "atm_volatility_one_year", "atm_volatility_infinity"], ["slope", "deriv_inf", "deriv", "slope_inf"]]
+
+def folder_check():
+    if platform.system() == 'Linux':
+        if not os.path.exists(saved_model_path):
+            os.makedirs(saved_model_path)
