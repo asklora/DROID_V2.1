@@ -95,7 +95,7 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
                 main_infer_copy = main_infer_copy.loc[main_infer_copy[col] != np.inf]
 
             X_train = main_train_copy[X_col_list]
-            Y_train = main_train_copy[Y_columns]
+            Y_train = main_train_copy[Y_columns_list]
 
             X_infer = main_infer_copy[X_col_list]
 
