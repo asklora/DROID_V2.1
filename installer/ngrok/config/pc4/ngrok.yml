@@ -1,0 +1,7 @@
+authtoken: 1gFlJlbS26QqQkExOrp4MdJKiaE_2ZBrGGPT5MphGRCJwD5Lh
+tunnels:
+  ssh:
+    regio: ap
+    proto: tcp
+    addr: 22
+    remote_addr: 1.tcp.ap.ngrok.io:20782
