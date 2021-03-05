@@ -1,5 +1,6 @@
 #!/bin/bash
 # download
+sudo apt-get openssh-server
 wget  https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -O ngrok-stable-linux-amd64.zip
 
 # unzip
