@@ -1,5 +1,6 @@
 #!/bin/bash
 # download
+sudo apt-get openssh-server
 wget  https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -O ngrok-stable-linux-amd64.zip
 
 # unzip
@@ -10,7 +11,7 @@ sudo mv ngrok /usr/local/bin
 
 # create directory
 sudo mkdir -p /opt/ngrok/systemd/system/
-setup="$(pwd)/installer/ngrok/config/pc4/ngrok.yml"
+setup="$(pwd)/installer/ngrok/config/$1/ngrok.yml"
 echo $setup
 # create systemd script
 echo "[Unit]
