@@ -12,11 +12,9 @@ jobs:
     - run: 'echo "$SSH_KEY" > asklora-hk.pem'
       shell: bash
       env:
-        SSH_KEY: ${{secrets.SSH_KEY}}
+        SSH_KEY: ${{secrets.BASTIONKEY}}
     - run: 'chmod 400 asklora-hk.pem'
       shell: bash
-      env:
-        SSH_KEY: ${{secrets.SSH_KEY}}
     - uses: actions/checkout@v2
     - name: Lint Ansible Playbook
       # replace "master" with any valid ref
