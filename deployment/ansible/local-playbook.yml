@@ -3,6 +3,7 @@
 - name: connect to local pc
   hosts: local-pc
   remote_user: loratech
+  # task is pulling from repo
   tasks:
     - name: pull from git
       git:

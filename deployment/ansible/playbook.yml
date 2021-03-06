@@ -1,11 +1,12 @@
 ---
 # This playbook deploys the whole application stack in this site.
 
-# Apply common configuration to all hosts
+# Apply common configuration to bastion hosts
 - name: connect to Instance(s) 
   hosts: instance
   remote_user: ubuntu
   tasks:
+  # task is pulling from repo
     - name: pull from git
       git:
         repo: https://redloratech:r3dpapermo0n@github.com/stepchoi/DROID_V2.1.git
