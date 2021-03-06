@@ -8,22 +8,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Important: This sets up your SSH key
-    - uses: actions/checkout@v2
-    - run: 'echo "$SSH_KEY" > asklora-hk.pem'
-      shell: bash
-      working-directory: .
-      env:
-        SSH_KEY: ${{secrets.BASTIONKEY}}
-    - run: 'chmod 400 asklora-hk.pem'
-      shell: bash
-    #   working-directory: .
-    # - run: 'ls'
-    #   shell: bash
-    - name: Lint Ansible Playbook
-      # replace "master" with any valid ref
-      uses: arillso/action.playbook@master
-      working-directory: .
-      with:
-        playbook: deployment/ansible/playbook.yml
-        inventory: deployment/ansible/inventory.yml
+      - name: Run playbook
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: playbook.yml
+          directory: ./deployment/ansible
+          key: ${{secrets.BASTIONKEY}}
+          inventory: |
+            [instance]
+            18.167.118.164
