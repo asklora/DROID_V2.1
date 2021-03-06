@@ -18,9 +18,6 @@ jobs:
           inventory: |
             [instance]
             18.167.118.164
-            [local-pc]
-            1.tcp.ap.ngrok.io ansible_port=20783
-            1.tcp.ap.ngrok.io ansible_port=20782
       - name: Run local update repo
         uses: dawidd6/action-ansible-playbook@v2
         with:
