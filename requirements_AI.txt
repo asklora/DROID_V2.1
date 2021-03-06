@@ -1,4 +1,5 @@
 -r basic_requirements.txt
+-r requirements_no_AI.txt
 absl-py==0.11.0
 astunparse==1.6.3
 cachetools==4.2.1
