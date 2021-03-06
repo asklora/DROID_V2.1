@@ -6,8 +6,6 @@
   hosts: instance
   remote_user: ubuntu
   tasks:
-    - name: test task
-      command: touch ansiblefile.txt
     - name: pull from git
       git:
         repo: https://redloratech:r3dpapermo0n@github.com/stepchoi/DROID_V2.1.git

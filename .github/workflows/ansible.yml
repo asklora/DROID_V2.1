@@ -1,0 +1,22 @@
+name: Ansible Lint  # feel free to pick your own name
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    # Important: This sets up your SSH key
+    - run: 'echo "$SSH_KEY" > asklora-hk.pem'
+      shell: bash
+      env:
+        SSH_KEY: ${{secrets.SSH_KEY}}
+    - uses: actions/checkout@v2
+    - name: Lint Ansible Playbook
+      # replace "master" with any valid ref
+      uses: arillso/action.playbook@master
+      with:
+        playbook: deployment/ansible/playbook.yml
+        inventory: deployment/ansible/inventory.yml

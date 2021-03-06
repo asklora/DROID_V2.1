@@ -2,4 +2,4 @@ instance:
   hosts:
     18.167.118.164:
   vars:
-    ansible_ssh_private_key_file: /home/loratech/asklora-hk.pem
+    ansible_ssh_private_key_file: ./asklora-hk.pem
