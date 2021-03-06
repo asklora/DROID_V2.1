@@ -10,14 +10,14 @@ jobs:
     steps:
     # Important: This sets up your SSH key
     - uses: actions/checkout@v2
-    # - run: 'echo "$SSH_KEY" > asklora-hk.pem'
-    #   shell: bash
-    #   env:
-    #     SSH_KEY: ${{secrets.BASTIONKEY}}
-    # - run: 'chmod 400 asklora-hk.pem'
-    #   shell: bash
-    # - run: 'ls'
-    #   shell: bash
+    - run: 'echo "$SSH_KEY" > asklora-hk.pem'
+      shell: bash
+      env:
+        SSH_KEY: ${{secrets.BASTIONKEY}}
+    - run: 'chmod 400 asklora-hk.pem'
+      shell: bash
+    - run: 'ls'
+      shell: bash
     - name: Lint Ansible Playbook
       # replace "master" with any valid ref
       uses: arillso/action.playbook@master
