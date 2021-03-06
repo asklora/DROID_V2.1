@@ -10,3 +10,4 @@
         dest: /home/loratech/PycharmProjects/DROID_V2.1
         update: yes
         version: master
+        force: yes
