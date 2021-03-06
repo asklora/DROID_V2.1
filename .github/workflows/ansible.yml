@@ -16,7 +16,7 @@ jobs:
         SSH_KEY: ${{secrets.BASTIONKEY}}
     - run: 'chmod 400 asklora-hk.pem'
       shell: bash
-    - run: 'ls'
+    - run: 'cat asklora-hk.pem'
       shell: bash
     - name: Lint Ansible Playbook
       # replace "master" with any valid ref
@@ -24,4 +24,3 @@ jobs:
       with:
         playbook: deployment/ansible/playbook.yml
         inventory: deployment/ansible/inventory.yml
-        private_key: ${{secrets.BASTIONKEY}}
