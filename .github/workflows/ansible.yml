@@ -23,7 +23,7 @@ jobs:
     - name: Lint Ansible Playbook
       # replace "master" with any valid ref
       uses: arillso/action.playbook@master
+      working-directory: .
       with:
         playbook: deployment/ansible/playbook.yml
         inventory: deployment/ansible/inventory.yml
-        private_key: asklora-hk.pem
