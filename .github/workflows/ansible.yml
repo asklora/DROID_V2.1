@@ -9,10 +9,17 @@ jobs:
 
     steps:
     # Important: This sets up your SSH key
-    - uses: "finnp/create-file-action@master"
+    - run: 'echo "$SSH_KEY" > asklora-hk.pem'
+      shell: bash
+      working-directory: .
       env:
-        FILE_NAME: "asklora-hk.pem"
-        FILE_DATA: "${{secrets.BASTIONKEY}}"
+        SSH_KEY: ${{secrets.BASTIONKEY}}
+    - run: 'chmod 400 asklora-hk.pem'
+      shell: bash
+      working-directory: .
+    - run: 'ls'
+      shell: bash
+      working-directory: .
     - uses: actions/checkout@v2
     - name: Lint Ansible Playbook
       # replace "master" with any valid ref
