@@ -9,7 +9,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Run playbook
+      - name: Run instance update repo
         uses: dawidd6/action-ansible-playbook@v2
         with:
           playbook: playbook.yml
@@ -18,3 +18,16 @@ jobs:
           inventory: |
             [instance]
             18.167.118.164
+            [local-pc]
+            1.tcp.ap.ngrok.io ansible_port=20783
+            1.tcp.ap.ngrok.io ansible_port=20782
+      - name: Run local update repo
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: local-playbook.yml
+          directory: ./deployment/ansible
+          key: ${{secrets.LOCALKEY}}
+          inventory: |
+            [local-pc]
+            1.tcp.ap.ngrok.io ansible_port=20783
+            1.tcp.ap.ngrok.io ansible_port=20782
