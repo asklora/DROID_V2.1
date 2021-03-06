@@ -9,21 +9,19 @@ jobs:
 
     steps:
     # Important: This sets up your SSH key
+    - uses: actions/checkout@v2
     - run: 'echo "$SSH_KEY" > asklora-hk.pem'
       shell: bash
-      working-directory: .
       env:
         SSH_KEY: ${{secrets.BASTIONKEY}}
     - run: 'chmod 400 asklora-hk.pem'
       shell: bash
-      working-directory: .
     - run: 'ls'
       shell: bash
-      working-directory: .
-    - uses: actions/checkout@v2
     - name: Lint Ansible Playbook
       # replace "master" with any valid ref
       uses: arillso/action.playbook@master
       with:
         playbook: deployment/ansible/playbook.yml
         inventory: deployment/ansible/inventory.yml
+        # private_key: ${{secrets.BASTIONKEY}}
