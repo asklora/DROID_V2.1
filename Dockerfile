@@ -8,4 +8,4 @@ RUN installer/requirement.sh
 RUN pip3 install -r requirements_no_AI.txt
 EXPOSE 8000
 #ENTRYPOINT [ "python manage.py runserver" ]
-CMD [ "python manage.py runserver" ]
+CMD [ "python code/manage.py runserver" ]
