@@ -247,7 +247,6 @@ def get_calendar_data(start_date=None, end_date=None, ticker=None, currency_code
         query += f"and currency_code in (select distinct currency_code from {get_universe_table_name()} where is_active=True and ticker in {tuple_data(ticker)}) "
     elif type(currency_code) != type(None):
         query += f"and currency_code in (select distinct currency_code from {get_universe_table_name()} where is_active=True and currency_code in {tuple_data(currency_code)}) "
-    return query
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
