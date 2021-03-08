@@ -42,7 +42,7 @@ def new_ticker_ingestion(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
     update_quandl_orats_from_quandl(ticker=ticker)
-    if(type(ticker) == Series or type(ticker) == list):
+    if isinstance(ticker,Series) or isinstance(ticker,list):
         for tick in ticker:
             update_data_dss_from_dss(ticker=tick)
             update_data_dsws_from_dsws(ticker=tick)
