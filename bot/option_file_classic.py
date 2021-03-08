@@ -115,8 +115,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     main_pred["uid"] = main_pred["uid"].str.strip()
 
     # Filtering the results for faster writing to AWS.
-    main_pred2 = main_pred[main_pred.spot_date >= start_date - BDay(0)]
-    main_pred2 = main_pred
+    main_pred2 = main_pred[main_pred.spot_date >= start_date].copy()
 
     # ********************************************************************************************
     # Updating latest_price_updates classic_vol column.
