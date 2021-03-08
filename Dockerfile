@@ -6,7 +6,7 @@ COPY . /code/
 RUN apt update
 RUN installer/requirement.sh
 RUN pip3 install -r requirements_no_AI.txt
-EXPOSE 8000
+EXPOSE 80
 RUN echo $PWD
 RUN ./run-django.sh
 #ENTRYPOINT [ "python manage.py runserver" ]
