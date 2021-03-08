@@ -6,8 +6,10 @@ from general.sql_query import get_active_universe
 from bot.data_download import (
     get_backtest_latest_date, 
     get_bot_data_latest_date, 
-    get_executive_data_download, get_new_ticker_from_bot_backtest, 
-     get_new_tickers_from_bot_data, get_volatility_latest_date)
+    get_executive_data_download, 
+    get_new_ticker_from_bot_backtest, 
+     get_new_tickers_from_bot_data, 
+     get_volatility_latest_date)
 from general.slack import report_to_slack
 from general.date_process import dateNow, droid_start_date_buffer, str_to_date, droid_start_date
 from bot.option_file_classic import fill_bot_backtest_classic, populate_bot_classic_backtest
@@ -256,6 +258,8 @@ def option_maker_daily_classic(ticker=None, currency_code=None, time_to_exp=None
     report_to_slack("{} : === OPTION MAKER CLASSIC COMPLETED ===".format(dateNow()))
 
 def option_maker_history_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False):
+    if(type(ticker) == type(None) and type(currency_code) == type(None)):
+        ticker = get_active_universe()["ticker"].tolist()
     print("{} : === OPTION MAKER CLASSIC HISTORY STARTED ===".format(dateNow()))
     start_date = droid_start_date()
     end_date = str_to_date(dateNow())

@@ -1,4 +1,5 @@
 
+from bot.data_process import check_time_to_exp
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -14,6 +15,7 @@ from general.table_name import get_bot_classic_backtest_table_name, get_latest_p
 from global_vars import classic_business_day, sl_multiplier_1m, tp_multiplier_1m, sl_multiplier_3m, tp_multiplier_3m
 
 def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, history=False):
+    time_to_exp = check_time_to_exp(time_to_exp)
     if type(start_date) == type(None):
         start_date = droid_start_date()
     if type(end_date) == type(None):
@@ -142,6 +144,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
 
 # *********************** Filling up the Null values **************************
 def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, mod=False):
+    time_to_exp = check_time_to_exp(time_to_exp)
     tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     null_df = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, classic=True, mod=mod, null_filler=True)
