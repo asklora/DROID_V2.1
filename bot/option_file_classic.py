@@ -29,6 +29,8 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     # dividends_data = get_dividends_data()
     # ******************************* Calculating the vols *************************************
     holidays_df = get_calendar_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
+    holidays_df["non_working_day"] = pd.to_datetime(holidays_df["non_working_day"])
+    print(holidays_df)
     tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
     main_multiples = make_multiples(tac_data)
 

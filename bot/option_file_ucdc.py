@@ -85,7 +85,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     options_df.loc[cond, "expiry_date"] = options_df.loc[cond, "expiry_date"] - BDay(1)
 
     while(True):
-        cond = options_df["expiry_date"].isin(holidays_df["non_working_day"].to_list())
+        cond = options_df["expiry_date"].isin(holidays_df["non_working_day"])
         options_df.loc[cond, "expiry_date"] = options_df.loc[cond, "expiry_date"] - BDay(1)
         if(cond.all() == False):
             break
