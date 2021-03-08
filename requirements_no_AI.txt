@@ -67,7 +67,7 @@ numba==0.50.1
 numpy==1.18.4
 odfpy==1.4.1
 openpyxl==3.0.6
-opt-einsum==3.2.1
+opt-einsum==3.3.0
 pandas==1.0.3
 pangres==2.1
 parso==0.7.0
