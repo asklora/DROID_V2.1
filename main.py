@@ -29,6 +29,8 @@ from ingestion.currency import (
     update_utc_offset_from_timezone
     )
 from global_vars import DB_URL_READ, DB_URL_WRITE
+
+
 def new_ticker_ingestion(ticker=None):
     update_ticker_name_from_dsws(ticker=ticker)
     update_entity_type_from_dsws(ticker=ticker)
