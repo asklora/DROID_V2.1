@@ -5,8 +5,8 @@ from main_executive import data_prep_daily, data_prep_history, infer_daily, infe
 if __name__ == "__main__":
     # do_function("data_vol_surface_update")
     ticker = get_active_universe()["ticker"].tolist()
-    data_prep_daily(ticker=ticker)
-    infer_daily(ticker=ticker)
+    # data_prep_daily(ticker=ticker)
+    # infer_daily(ticker=ticker)
     # data_prep_history()
     # train_model()
     # infer_history()
