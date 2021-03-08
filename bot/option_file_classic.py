@@ -129,7 +129,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     aa.columns = aa.columns.droplevel(1)
     if len(aa) > 0:
         aa["spot_date"] = spot_date
-        aa = uid_maker(uid="uid", ticker="ticker", trading_day="spot_date")
+        aa = uid_maker(aa, uid="uid", ticker="ticker", trading_day="spot_date")
         if not history:
             upsert_data_to_database(aa, get_latest_price_table_name(), "uid", how="update", cpu_count=True, Text=True)
         # ********************************************************************************************
