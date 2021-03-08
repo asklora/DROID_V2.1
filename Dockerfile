@@ -6,7 +6,10 @@ WORKDIR /code
 COPY . /code/
 RUN apt update
 RUN installer/requirement.sh
-RUN pip3 install -r requirements_no_AI.txt
+RUN pip3 install -r requirements.txt
+RUN pip3 uninstall numpy -y
+RUN pip3 install numpy
+#RUN pip3 install -r requirements_no_AI.txt
 EXPOSE 8000
 #=======
 #COPY . /droid-v2
