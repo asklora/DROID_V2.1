@@ -91,7 +91,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     main_pred.loc[cond, "expiry_date"] = main_pred.loc[cond, "expiry_date"] - BDay(1)
 
     while(True):
-        cond = main_pred["expiry_date"].isin(holidays_df["non_working_day"])
+        cond = main_pred["expiry_date"].isin(holidays_df["non_working_day"].to_list())
         main_pred.loc[cond, "expiry_date"] = main_pred.loc[cond, "expiry_date"] - BDay(1)
         if(cond.all() == False):
             break

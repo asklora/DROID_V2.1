@@ -87,7 +87,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     options_df.loc[cond, "expiry_date"] = options_df.loc[cond, "expiry_date"] - BDay(1)
 
     while(True):
-        cond = options_df["expiry_date"].isin(holidays_df["non_working_day"])
+        cond = options_df["expiry_date"].isin(holidays_df["non_working_day"].to_list())
         options_df.loc[cond, "expiry_date"] = options_df.loc[cond, "expiry_date"] - BDay(1)
         if(cond.all() == False):
             break
