@@ -44,10 +44,10 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
 
     c2c_vol_0_502["spot_date"] = c2c_vol_0_502.index
     main_pred = c2c_vol_0_502.melt(id_vars="spot_date", var_name="ticker", value_name="classic_vol")
-    main_pred = main_pred.merge(tac_data[["ticker", "trading_day", "tri_adjusted_price"]], how="inner", 
+    main_pred = main_pred.merge(tac_data[["ticker", "trading_day", "tri_adj_close"]], how="inner", 
         left_on=["spot_date", "ticker"], right_on=["trading_day", "ticker"])
     del main_pred["trading_day"]
-    main_pred.rename(columns={"tri_adjusted_price": "spot_price"}, inplace=True)
+    main_pred.rename(columns={"tri_adj_close": "spot_price"}, inplace=True)
 
     # ********************************************************************************************
     # Adding vol periods to main dataframe.

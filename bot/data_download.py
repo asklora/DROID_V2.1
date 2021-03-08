@@ -243,9 +243,11 @@ def get_calendar_data(start_date=None, end_date=None, ticker=None, currency_code
     table_name = get_calendar_table_name()
     query = f"select * from {table_name} where non_working_day >= '{start_date}' "
     query += f"and non_working_day <= '{end_date}' "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
-    if(check != ""):
-        query += "and " + check
+    if type(ticker) != type(None):
+        query += f"and currency_code in (select distinct currency_code from {get_universe_table_name()} where is_active=True and ticker in {tuple_data(ticker)}) "
+    elif type(currency_code) != type(None):
+        query += f"and currency_code in (select distinct currency_code from {get_universe_table_name()} where is_active=True and currency_code in {tuple_data(currency_code)}) "
+    return query
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
