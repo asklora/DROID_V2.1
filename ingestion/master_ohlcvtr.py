@@ -58,7 +58,7 @@ def FillMissingDay(data, start, end):
     daily = pd.date_range(start, end, freq="D")
     indexes = pd.MultiIndex.from_product([result["ticker"].unique(), daily], names=["ticker", "trading_day"])
     result = result.set_index(["ticker", "trading_day"]).reindex(indexes).reset_index().ffill(limit=1)
-    result = uid_maker(result, "uid", "ticker", "trading_day")
+    result = uid_maker(result)
     result = FilterWeekend(result)
     data["trading_day"] = pd.to_datetime(data["trading_day"])
     result = result.merge(data, how="left", on=["uid", "ticker", "trading_day"])

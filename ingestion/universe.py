@@ -85,8 +85,8 @@ def update_ticker_name_from_dsws(ticker=None):
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"WC06003": "ticker_name", "NAME" : "ticker_fullname", "index":"ticker"})
-        result["ticker_name"]=result["ticker_name"].str.replace("'", "").strip()
-        result["ticker_fullname"]=result["ticker_fullname"].str.replace("'", "").strip()
+        result["ticker_name"]=result["ticker_name"].str.replace("'", "", regex=True).strip()
+        result["ticker_fullname"]=result["ticker_fullname"].str.replace("'", "", regex=True).strip()
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
@@ -123,7 +123,7 @@ def update_lot_size_from_dss(ticker=None):
             "RIC": "ticker",
             "Lot Size": "lot_size"
         })
-        result["ticker"]=result["ticker"].str.replace("/", "")
+        result["ticker"]=result["ticker"].str.replace("/", "", regex=True)
         result["ticker"]=result["ticker"].str.strip()
         result = remove_null(result, "lot_size")
         result = universe.merge(result, how="left", on=["ticker"])
@@ -146,7 +146,7 @@ def update_currency_code_from_dss(ticker=None):
             "RIC": "ticker",
             "Currency Code": "currency_code"
         })
-        result["ticker"]=result["ticker"].str.replace("/", "")
+        result["ticker"]=result["ticker"].str.replace("/", "", regex=True)
         result["ticker"]=result["ticker"].str.strip()
         result = remove_null(result, "currency_code")
         result = universe.merge(result, how="left", on=["ticker"])
