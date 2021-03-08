@@ -1,1 +1,1 @@
-nohup python manage.py runserver 80
+python manage.py runserver
