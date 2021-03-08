@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 from general.sql_output import upsert_data_to_database
 from general.date_process import dateNow, droid_start_date
 from general.table_name import get_bot_uno_backtest_table_name
-from bot.data_process import check_time_to_exp
+from bot.data_process import check_start_end_date, check_time_to_exp
 from bot.preprocess import cal_interest_rate, cal_q
 from bot.black_scholes import (find_vol, Up_Out_Call, deltaUnOC)
 from bot.data_download import (
@@ -19,8 +19,7 @@ from bot.data_download import (
     get_master_tac_price, 
     get_vol_surface_data, 
     get_interest_rate_data,
-    get_dividends_data, 
-    check_start_end_date)
+    get_dividends_data)
 from global_vars import modified_delta_list
 
 def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, infer=True, history=False, daily=False, new_ticker=False):
@@ -246,7 +245,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     # Adding UID
     options_df["uid"] = options_df["ticker"] + "_" + options_df["spot_date"].astype(str) + "_" + \
         options_df["option_type"].astype(str) + "_" + options_df["time_to_exp"].astype(str)
-    options_df["uid"] = options_df["uid"].str.replace("-", "").str.replace(".", "")
+    options_df["uid"] = options_df["uid"].str.replace("-", "", regex=True).str.replace(".", "", regex=True)
     options_df["uid"] = options_df["uid"].str.strip()
 
     options_df = options_df[options_df.atm_volatility_one_year > 0.1]
@@ -283,7 +282,7 @@ def shift5_numba(arr, num, fill_value=np.nan):
 
 def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, mod=False, history=False, total_no_of_runs=1, run_number=0):
     time_to_exp = check_time_to_exp(time_to_exp)
-    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
+    start_date, end_date = check_start_end_date(start_date, end_date)
     # This function is used for filling the nulls in executive options database. Checks whether the options are expired
     # or knocked out or not triggered at all.
     tqdm.pandas()

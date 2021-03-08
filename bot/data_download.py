@@ -1,3 +1,4 @@
+from bot.data_process import check_start_end_date
 import pandas as pd
 from general.sql_query import read_query
 from general.data_process import tuple_data
@@ -29,13 +30,6 @@ def check_ticker_currency_code_query(ticker=None, currency_code=None):
     elif type(currency_code) != type(None):
         query += f"ticker in (select ticker from {get_universe_table_name()} where is_active=True and currency_code in {tuple_data(currency_code)}) "
     return query
-
-def check_start_end_date(start_date=None, end_date=None):
-    if type(start_date) == type(None):
-        start_date = droid_start_date()
-    if type(end_date) == type(None):
-        end_date = dateNow()
-    return start_date, end_date
     
 def get_bot_data_latest_date(daily=False, history=False):
     if(daily):
@@ -49,7 +43,7 @@ def get_bot_data_latest_date(daily=False, history=False):
     return min(data["max_date"])
 
 def get_master_tac_price(start_date=None, end_date=None, ticker=None, currency_code=None):
-    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
+    start_date, end_date = check_start_end_date(start_date, end_date)
     table_name = get_master_tac_table_name()
     query = f"select * from {table_name} where trading_day >= '{start_date}' "
     query += f"and trading_day <= '{end_date}' "
@@ -239,7 +233,7 @@ def get_executive_data_download(start_date, end_date, ticker=None, currency_code
     return data
 
 def get_calendar_data(start_date=None, end_date=None, ticker=None, currency_code=None):
-    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
+    start_date, end_date = check_start_end_date(start_date, end_date)
     table_name = get_calendar_table_name()
     query = f"select * from {table_name} where non_working_day >= '{start_date}' "
     query += f"and non_working_day <= '{end_date}' "
@@ -255,7 +249,7 @@ def get_vol_surface_data(start_date=None, end_date=None, ticker=None, currency_c
         table_name = get_data_vol_surface_inferred_table_name()
     else:
         table_name = get_data_vol_surface_table_name()
-    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
+    start_date, end_date = check_start_end_date(start_date, end_date)
     query = f"select * from {table_name} where trading_day >= '{start_date}' "
     query += f"and trading_day <= '{end_date}' "
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
@@ -277,7 +271,7 @@ def get_dividends_data():
     return data
 
 def get_bot_backtest_data(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, uno=False, ucdc=False, classic=False, mod=False, null_filler=False):
-    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
+    start_date, end_date = check_start_end_date(start_date, end_date)
     if(uno):
         table_name = get_bot_uno_backtest_table_name()
     elif(ucdc):
@@ -301,7 +295,7 @@ def get_bot_backtest_data(start_date=None, end_date=None, time_to_exp=None, tick
     return data
 
 def get_bot_backtest_data_date_list(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, uno=False, ucdc=False, classic=False, mod=False, null_filler=False):
-    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
+    start_date, end_date = check_start_end_date(start_date, end_date)
     if(uno):
         table_name = get_bot_uno_backtest_table_name()
     elif(ucdc):

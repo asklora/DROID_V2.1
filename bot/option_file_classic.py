@@ -1,5 +1,5 @@
 
-from bot.data_process import check_time_to_exp
+from bot.data_process import check_start_end_date, check_time_to_exp
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -16,10 +16,7 @@ from global_vars import classic_business_day, sl_multiplier_1m, tp_multiplier_1m
 
 def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, history=False):
     time_to_exp = check_time_to_exp(time_to_exp)
-    if type(start_date) == type(None):
-        start_date = droid_start_date()
-    if type(end_date) == type(None):
-        end_date = dateNow()
+    start_date, end_date = check_start_end_date(start_date, end_date)
     # The main function which calculates the volatilities and stop loss and take profit and write them to AWS.
     
     tac_data2 = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
@@ -114,7 +111,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     # Adding UID
     main_pred["uid"] = main_pred["ticker"] + "_" + main_pred["spot_date"].astype(str) + "_" + \
         main_pred["time_to_exp"].astype(str)
-    main_pred["uid"] = main_pred["uid"].str.replace("-", "").str.replace(".", "")
+    main_pred["uid"] = main_pred["uid"].str.replace("-", "", regex=True).str.replace(".", "", regex=True)
     main_pred["uid"] = main_pred["uid"].str.strip()
 
     # Filtering the results for faster writing to AWS.

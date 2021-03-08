@@ -10,9 +10,8 @@ from general.table_name import get_bot_ucdc_backtest_table_name
 from general.date_process import dateNow, droid_start_date
 from bot.black_scholes import (find_vol, Rev_Conv, deltaRC)
 from bot.preprocess import cal_interest_rate, cal_q
-from bot.data_process import check_time_to_exp
+from bot.data_process import check_start_end_date, check_time_to_exp
 from bot.data_download import (
-    check_start_end_date, 
     get_bot_backtest_data, 
     get_bot_backtest_data_date_list, 
     get_vol_surface_data, 
@@ -247,7 +246,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     # Adding UID
     options_df["uid"] = options_df["ticker"] + "_" + options_df["spot_date"].astype(str) + "_" + \
         options_df["option_type"].astype(str) + "_" + options_df["time_to_exp"].astype(str)
-    options_df["uid"] = options_df["uid"].str.replace("-", "").str.replace(".", "")
+    options_df["uid"] = options_df["uid"].str.replace("-", "", regex=True).str.replace(".", "", regex=True)
     options_df["uid"] = options_df["uid"].str.strip()
 
     options_df = options_df[options_df.atm_volatility_one_year > 0.1]
@@ -283,7 +282,7 @@ def shift5_numba(arr, num, fill_value=np.nan):
 
 def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, mod=False, history=False, total_no_of_runs=1, run_number=0):
     time_to_exp = check_time_to_exp(time_to_exp)
-    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
+    start_date, end_date = check_start_end_date(start_date, end_date)
     # This function is used for filling the nulls in executive options database. Checks whether the options are expired
     # or knocked out or not triggered at all.
     tqdm.pandas()
