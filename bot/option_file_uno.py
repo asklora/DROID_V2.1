@@ -50,8 +50,8 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     options_df = options_df.merge(vol_surface_data,on=["ticker", "trading_day"])
     options_df.drop(["trading_day"], axis=1, inplace=True)
 
-    if not infer:
-        options_df.drop(["stock_price", "parameter_set_date", "alpha"], axis=1, inplace=True)
+    # if not infer:
+    #     options_df.drop(["stock_price", "parameter_set_date", "alpha"], axis=1, inplace=True)
     options_df = options_df.sort_values(by="spot_date", ascending=False)
 
     # *****************************************************************************************************
