@@ -166,7 +166,7 @@ def bench_fn(args):
     # new changes uid
     bench_df_main['bot_type'] = 'CLASSIC'
     bench_df_main['uid'] = bench_df_main['bot_type']+"-"+bench_df_main['ticker']+bench_df_main['lookback'].astype(str)+bench_df_main['month_to_exp'].astype(str)
-    bench_df_main['uid'] = bench_df_main['uid'].str.replace('.', '')
+    bench_df_main['uid'] = bench_df_main['uid'].str.replace('.', '', regex=True)
 
     if args.debug_mode:
         db_url = global_vars.DB_TEST_URL_WRITE  # if writing to production_data table, i.e., write out the stocks - keep in "live"

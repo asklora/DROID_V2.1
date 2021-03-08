@@ -277,9 +277,9 @@ def find_rank(row, rank_columns):
     row2 = row[rank_columns].sort_values(ascending=False)
 
     for i in range(len(rank_columns)):
-        row[f"rank_{i + 1}"] = row2.index[i].replace("_pnl_class_prob", "")
-        rank_name = row2.index[i].replace("_class_prob", "")
-        rank_name2 = row2.index[i].replace("_class_prob", "_class_original")
+        row[f"rank_{i + 1}"] = row2.index[i].replace("_pnl_class_prob", "", regex=True)
+        rank_name = row2.index[i].replace("_class_prob", "", regex=True)
+        rank_name2 = row2.index[i].replace("_class_prob", "_class_original", regex=True)
         row[f"pnl_class_prob_rank_{i + 1}"] = row2[i]
         row[f"pnl_class_original_rank_{i + 1}"] = row[rank_name2]
         row[f"pnl_avg_rank_{i + 1}"] = row[rank_name] / row.spot_price

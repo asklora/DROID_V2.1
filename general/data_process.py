@@ -28,7 +28,7 @@ def tuple_data(data):
     elif(type(data) == list):
         data = tuple(data)
     elif(type(data) == str):
-        data = data.replace("(", "").replace(")", "").replace("[", "").replace("]", "")
+        data = data.replace("(", "", regex=True).replace(")", "", regex=True).replace("[", "", regex=True).replace("]", "", regex=True)
         data = data.split(",")
         data = tuple(data)
     data = str(data)

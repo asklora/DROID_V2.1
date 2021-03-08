@@ -77,7 +77,7 @@ def populate_bot_labeler(start_date=None, end_date=None, ticker=None, currency_c
         for opt_type in option_type_list:
             print(opt_type)
             for time_exp in time_to_exp:
-                time_exp_str = str(time_exp).replace(".", "")
+                time_exp_str = str(time_exp).replace(".", "", regex=True)
                 #if not (opt_type == "classic" and month_exp == 6):
                 Y_columns.extend([f"{bot}_{opt_type}_{time_exp_str}_pnl_class"])
                 rank_columns.extend([f"{bot}_{opt_type}_{time_exp_str}_pnl_class_prob"])

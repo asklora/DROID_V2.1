@@ -267,7 +267,7 @@ def download_production_sltp(args):
 
 def download_production_sltp_null(args):
     month_to_exp = tuple(args.month_horizon)
-    month_to_exp = str(month_to_exp).replace(",)", ")")
+    month_to_exp = str(month_to_exp).replace(",)", ")", regex=True)
     if args.debug_mode:
         db_url = global_vars.DB_TEST_URL_READ
     else:
