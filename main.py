@@ -1,5 +1,6 @@
 import os
 import sys
+from pandas.core.series import Series
 from general.sql_process import do_function
 from ingestion.universe import (
     update_ticker_name_from_dsws, 
@@ -39,13 +40,20 @@ def new_ticker_ingestion(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
     update_quandl_orats_from_quandl(ticker=ticker)
-    update_data_dss_from_dss(ticker=ticker)
-    update_data_dsws_from_dsws(ticker=ticker)
+    if(type(ticker) == Series or type(ticker) == list):
+        for tick in ticker:
+            update_data_dss_from_dss(ticker=tick)
+            update_data_dsws_from_dsws(ticker=tick)
+            dividend_updated(ticker=tick)
+    else:
+        update_data_dss_from_dss(ticker=ticker)
+        update_data_dsws_from_dsws(ticker=ticker)
+        dividend_updated(ticker=ticker)
     do_function("master_ohlcvtr_update")
     master_ohlctr_update()
     master_tac_update()
     master_multiple_update()
-    dividend_updated(ticker=ticker)
+    
 
 def update_master_data(ticker=None, currency_code=None):
     update_quandl_orats_from_quandl(ticker=[])
