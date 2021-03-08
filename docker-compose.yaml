@@ -1,8 +1,8 @@
 version: '3'
 
 services:
-  web:
-    container_name: django
+  dev:
+    container_name: droid-v2-dev
     build: ./
     command: sh -c "python manage.py runserver 0.0.0.0:8000"
     ports:
