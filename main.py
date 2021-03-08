@@ -40,7 +40,6 @@ def new_ticker_ingestion(ticker=None):
     update_industry_from_dsws(ticker=ticker)
     update_company_desc_from_dsws(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
-
     update_quandl_orats_from_quandl(ticker=ticker)
     if isinstance(ticker,Series) or isinstance(ticker,list):
         for tick in ticker:
