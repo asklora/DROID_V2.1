@@ -51,8 +51,6 @@ jdcal==1.4.1
 jedi==0.17.1
 jmespath==0.10.0
 joblib==1.0.1
-Keras-Preprocessing==1.1.0
-keras-tuner==1.0.1
 kiwisolver==1.2.0
 kombu==5.0.2
 lightgbm==2.3.1
