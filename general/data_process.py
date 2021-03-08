@@ -32,5 +32,5 @@ def tuple_data(data):
         data = data.split(",")
         data = tuple(data)
     data = str(data)
-    data = data.replace(",)", ")", regex=True)
+    data = data.replace(",)", ")")
     return data
