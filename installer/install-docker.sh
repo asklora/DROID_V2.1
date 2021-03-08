@@ -15,6 +15,7 @@ sudo apt update
 sudo apt --yes --no-install-recommends install docker-ce docker-ce-cli containerd.io
 sudo usermod --append --groups docker "$USER"
 sudo systemctl enable docker
+sudo chown $USER /var/run/docker.sock
 printf '\nDocker installed successfully\n\n'
 
 printf 'Waiting for Docker to start...\n\n'
