@@ -61,7 +61,7 @@ def update_data_dss_from_dss(ticker=None, currency_code=None, history=False, man
     else:
         start_date = get_max_last_ingestion_from_universe(ticker=ticker, currency_code=currency_code)
         if(start_date=="None"):
-            start_date = backdate_by_day(3)
+            start_date = dlp_start_date()
     
     print(f"Ingestion Start From {start_date}")
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -96,7 +96,7 @@ def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, m
     else:
         start_date = get_max_last_ingestion_from_universe(ticker=ticker, currency_code=currency_code)
         if(start_date=="None"):
-            start_date = backdate_by_day(3)
+            start_date = dlp_start_date()
     
     print(f"Ingestion Start From {start_date}")
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)

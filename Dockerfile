@@ -1,8 +1,9 @@
 FROM python:3.8
-COPY . /droid-v2
-WORKDIR /droid-v2
-RUN pip install --upgrade pip
-RUN pip install -r requirements_no_AI.txt
+ENV PYTHONUNBUFFERED 1
+RUN mkdir /code
+WORKDIR /code
+COPY . /code/
+RUN apt update
+RUN installer/requirement.sh
+RUN python_dependency.sh
 EXPOSE 8000
-ENTRYPOINT [ "python" ]
-CMD [ "./manage.py runserver" ]

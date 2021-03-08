@@ -68,10 +68,10 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
 
         print("Calculating Expiry Date")
         days = int(round((time_exp * 365), 0))
-        main_pred2["expiry_date"] = main_pred2["spot_date"] + relativedelta(days=days)
+        main_pred2["expiry_date"] = main_pred2["spot_date"] + relativedelta(days=(days-1))
         # Code when we use business days
         # days = int(round((time_exp * 256), 0))
-        # main_pred2["expiry_date"] = options_df2["spot_date"] + BDay(days)
+        # main_pred2["expiry_date"] = options_df2["spot_date"] + BDay(days-1)
 
         main_pred_temp = main_pred_temp.append(main_pred2)
         main_pred_temp.reset_index(drop=True, inplace=True)
@@ -85,8 +85,11 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
 
     # making sure that expiry date is not holiday or weekend
     main_pred["expiry_date"] = pd.to_datetime(main_pred["expiry_date"])
-    cond = main_pred["expiry_date"].apply(lambda x: x.weekday()) > 4
-    main_pred.loc[cond, "expiry_date"] = main_pred.loc[cond, "expiry_date"] - BDay(1)
+    while(True):
+        cond = main_pred["expiry_date"].apply(lambda x: x.weekday()) > 4
+        main_pred.loc[cond, "expiry_date"] = main_pred.loc[cond, "expiry_date"] - BDay(1)
+        if(cond.all() == False):
+            break
 
     while(True):
         cond = main_pred["expiry_date"].isin(holidays_df["non_working_day"].to_list())

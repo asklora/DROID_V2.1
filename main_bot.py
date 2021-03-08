@@ -1,6 +1,6 @@
 from general.sql_query import get_active_universe
 from general.sql_process import do_function
-from main_executive import data_prep_daily, data_prep_history, infer_daily, infer_history, option_maker_history_classic, train_model
+from main_executive import data_prep_daily, data_prep_history, infer_daily, infer_history, option_maker_daily_ucdc, option_maker_history_classic, option_maker_history_uno, train_model
 
 if __name__ == "__main__":
     # do_function("data_vol_surface_update")
@@ -10,4 +10,6 @@ if __name__ == "__main__":
     # data_prep_history()
     # train_model()
     # infer_history()
-    option_maker_history_classic(option_maker=True, null_filler=False)
+    option_maker_history_classic(option_maker=True, null_filler=True)
+    option_maker_history_uno(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=True, null_filler=False, infer=True)
+    option_maker_daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=True, null_filler=False, infer=True)

@@ -71,7 +71,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
         options_df_temp = options_df_temp.append(options_df2)
         options_df_temp.reset_index(drop=True, inplace=True)
         del options_df2
-
+    options_df["expiry_date"] = options_df["expiry_date"] - BDay(1)
     del options_df
     options_df = options_df_temp.copy()
     del options_df_temp
