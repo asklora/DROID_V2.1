@@ -14,6 +14,7 @@ from general.table_name import (
     get_universe_table_name, 
     get_industry_table_name,
     get_industry_worldscope_table_name,
+    get_universe_consolidated_table_name
     )
 from global_vars import REPORT_HISTORY, REPORT_INTRADAY
 
@@ -70,7 +71,7 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
         result["updated"] = dateNow()
         print(result)
         #update_universe_consolidated_data_to_database(result, get_universe_consolidated_table_name())
-        upsert_data_to_database(result, get_universe_table_name(), "uid", how="update", Text=True)
+        upsert_data_to_database(result, get_universe_consolidated_table_name(), "uid", how="update", Text=True)
         report_to_slack("{} : === Ticker ISIN Updated ===".format(datetimeNow()))
 
 def update_ticker_name_from_dsws(ticker=None):

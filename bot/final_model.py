@@ -27,9 +27,9 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
     cols_temp_2 = X_columns.copy()
 
     main_df = get_executive_data_download(start_date, end_date, ticker=ticker, currency_code=currency_code)
-    output_tickers = get_data_vol_surface_ticker(ticker=ticker, currency_code=currency_code)
-    # Just taking the rows that we have output for them.
-    main_df = main_df[main_df.ticker.isin(output_tickers)]
+    # output_tickers = get_data_vol_surface_ticker(ticker=ticker, currency_code=currency_code)
+    # # Just taking the rows that we have output for them.
+    # main_df = main_df[main_df.ticker.isin(output_tickers["ticker"])]
 
     temp_y_rf = []
     
