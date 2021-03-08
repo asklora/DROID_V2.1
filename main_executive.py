@@ -261,7 +261,7 @@ def option_maker_history_classic(ticker=None, currency_code=None, time_to_exp=No
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     print("{} : === OPTION MAKER CLASSIC HISTORY STARTED ===".format(dateNow()))
-    start_date = droid_start_date()
+    start_date = str_to_date(droid_start_date())
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
