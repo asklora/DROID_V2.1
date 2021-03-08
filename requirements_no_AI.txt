@@ -110,7 +110,7 @@ threadpoolctl==2.1.0
 toml==0.10.2
 tqdm==4.46.0
 traitlets==4.3.3
-typing-extensions==3.7.4.2
+typing-extensions==3.7.4.3
 vine==5.0.0
 wcwidth==0.2.5
 wrapt==1.12.1
