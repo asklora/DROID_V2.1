@@ -148,7 +148,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
 
     # *************************************************************************************************
     # currency_data = rates.merge(currency_data, on="currency_code")
-    options_df = options_df.merge(currency_data[["days_to_expiry", "rate", "currency_code"]], on=["days_to_expiry","currency_code"])
+    options_df = options_df.merge(rates[["days_to_expiry", "rate", "currency_code"]], on=["days_to_expiry","currency_code"])
     options_df = options_df.rename(columns={"rate": "r"})
     # *************************************************************************************************
 
