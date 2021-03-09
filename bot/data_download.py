@@ -90,7 +90,7 @@ def get_volatility_latest_date(ticker=None, currency_code=None, infer=True):
         table_name = get_data_vol_surface_inferred_table_name()
     else:
         table_name = get_data_vol_surface_table_name()
-    query = f"select ticker, max(spot_date) as max_date from {table_name} "
+    query = f"select ticker, max(trading_day) as max_date from {table_name} "
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
         query += "where " + check
