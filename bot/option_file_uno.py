@@ -41,7 +41,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     tac_data = tac_data2[tac_data2.ticker.isin(vol_surface_data.ticker.unique())]
     options_df = pd.DataFrame()
     options_df["ticker"] = tac_data.ticker
-    options_df["index"] = tac_data.currency_code
+    options_df["currency_code"] = tac_data.currency_code
     options_df["now_date"] = tac_data.trading_day
     options_df["trading_day"] = tac_data.trading_day
     options_df["spot_date"] = tac_data.trading_day
@@ -139,15 +139,15 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
                 dtm_2 = df.loc[ind2, "days_to_expiry"].iloc[0]
             df.loc[a, "rate"] = rate_1 * (dtm_2 - df.loc[a, "days_to_expiry"])/(dtm_2 - dtm_1) + rate_2\
                                 * (df.loc[a, "days_to_expiry"] - dtm_1)/(dtm_2 - dtm_1)
-        df = df.set_index("currency_code")
+        df = df.set_index("index")
         return df
 
     rates = rates.groupby("currency_code").apply(lambda x: funs(x))
-    rates = rates.reset_index(drop=True)
+    rates = rates.drop(columns="currency_code")
 
     # *************************************************************************************************
     currency_data = rates.merge(currency_data, on="currency_code")
-    options_df = options_df.merge(currency_data[["days_to_expiry", "rate", "currency_code"]], on=["days_to_expiry","index"])
+    options_df = options_df.merge(currency_data[["days_to_expiry", "rate", "currency_code"]], on=["days_to_expiry","currency_code"])
     options_df = options_df.rename(columns={"rate": "r"})
     # *************************************************************************************************
 
