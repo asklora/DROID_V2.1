@@ -57,7 +57,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     # *****************************************************************************************************
     # Adding maturities and expiry date
     options_df_temp = pd.DataFrame(columns=options_df.columns)
-    print("Calculating Month Exp")
+    print("Calculating Time Exp")
     for time_exp in time_to_exp:
         options_df2 = options_df.copy()
         options_df2["time_to_exp"] = time_exp
@@ -173,7 +173,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
 
     v0[v0 <= 0.2] = 0.2
     v0[v0 >= 0.80] = 0.80
-    options_df["vol_t"] = v0 * np.sqrt(options_df["month_to_exp"] / 12)
+    options_df["vol_t"] = v0 * np.sqrt(options_df["time_to_exp"])
 
     options_df["option_type"] = "ATM"
     options_df["strike_1_type"] = "II"

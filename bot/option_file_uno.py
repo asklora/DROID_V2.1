@@ -57,7 +57,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     # *****************************************************************************************************
     # Adding maturities and expiry date
     options_df_temp = pd.DataFrame(columns=options_df.columns)
-    print("Calculating Month Exp")
+    print("Calculating Time Exp")
     for time_exp in time_to_exp:
         options_df2 = options_df.copy()
         options_df2["time_to_exp"] = time_exp
@@ -172,7 +172,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
 
     v0[v0 <= 0.2] = 0.2
     v0[v0 >= 0.80] = 0.80
-    options_df["vol_t"] = v0 * np.sqrt(options_df["month_to_exp"] / 12)
+    options_df["vol_t"] = v0 * np.sqrt(options_df["time_to_exp"])
 
     options_df6 = options_df.copy()
 
