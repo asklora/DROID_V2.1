@@ -19,7 +19,21 @@ if __name__ == "__main__":
     # infer_history()
     # option_maker_history_classic(currency_code="USD", option_maker=True, null_filler=False)
     # option_maker_history_classic(currency_code="EUR", option_maker=True, null_filler=False)
-    option_maker_history_uno(currency_code="USD", option_maker=True, null_filler=False, infer=False)
-    option_maker_history_uno(currency_code="EUR", option_maker=True, null_filler=False, infer=True)
-    option_maker_history_ucdc(currency_code="USD", option_maker=True, null_filler=False, infer=False)
-    option_maker_history_ucdc(currency_code="EUR", option_maker=True, null_filler=False, infer=True)
+    option_maker_history_uno(currency_code="USD", option_maker=False, null_filler=True, infer=False, total_no_of_runs=32, run_number=0)
+    option_maker_history_uno(currency_code="EUR", option_maker=False, null_filler=True, infer=True, total_no_of_runs=32, run_number=0)
+    
+    option_maker_history_ucdc(currency_code="USD", option_maker=False, null_filler=True, infer=False, total_no_of_runs=32, run_number=1)
+    option_maker_history_ucdc(currency_code="EUR", option_maker=False, null_filler=True, infer=True, total_no_of_runs=32, run_number=1)
+
+    option_maker_history_ucdc(currency_code="USD", option_maker=False, null_filler=True, infer=False, total_no_of_runs=32, run_number=2)
+    option_maker_history_ucdc(currency_code="EUR", option_maker=False, null_filler=True, infer=True, total_no_of_runs=32, run_number=2)
+
+    option_maker_history_ucdc(currency_code="USD", option_maker=False, null_filler=True, infer=False, total_no_of_runs=32, run_number=3)
+    option_maker_history_ucdc(currency_code="EUR", option_maker=False, null_filler=True, infer=True, total_no_of_runs=32, run_number=3)
+
+    option_maker_history_ucdc(currency_code="USD", option_maker=False, null_filler=True, infer=False, total_no_of_runs=32, run_number=4)
+    option_maker_history_ucdc(currency_code="EUR", option_maker=False, null_filler=True, infer=True, total_no_of_runs=32, run_number=4)
+
+    option_maker_history_ucdc(currency_code="USD", option_maker=False, null_filler=True, infer=False, total_no_of_runs=32, run_number=5)
+    option_maker_history_ucdc(currency_code="EUR", option_maker=False, null_filler=True, infer=True, total_no_of_runs=32, run_number=5)
+    
