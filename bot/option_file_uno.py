@@ -144,6 +144,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
 
     rates = rates.groupby("currency_code").apply(lambda x: funs(x))
     rates = rates.drop(columns="currency_code")
+    rates = rates.reset_index()
 
     # *************************************************************************************************
     # currency_data = rates.merge(currency_data, on="currency_code")

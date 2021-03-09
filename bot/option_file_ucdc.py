@@ -145,6 +145,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
 
     rates = rates.groupby("currency_code").apply(lambda x: funs(x))
     rates = rates.drop(columns="currency_code")
+    rates = rates.reset_index()
 
     # *************************************************************************************************
     # currency_data = rates.merge(currency_data, on="currency_code")
