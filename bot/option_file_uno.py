@@ -484,7 +484,7 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
             date_temp = dates_per_run[run_number][k]
             null_df_small = null_df[null_df.spot_date == date_temp]
             print(f"Filling {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
-            null_df_small = null_df_small.progress_apply(lambda x: exec_fill_fun(x, prices_np, dates_np, null_df), axis=1, raw=True)
+            null_df_small = null_df_small.progress_apply(lambda x: exec_fill_fun(x, prices_np, dates_np, null_df), axis=1, raw=False)
             null_df_small.drop(["expiry_date_index", "spot_date_index", "ticker_index"], axis=1, inplace=True)
             null_df_small = null_df_small.infer_objects()
             table_name = get_bot_uno_backtest_table_name()

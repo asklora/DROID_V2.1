@@ -376,7 +376,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
         last_hedge = np.nan_to_num(last_hedge)
 
         #hedge = (v1 + v2) / 15
-        if row["currency"] in ["USD", "EUR"]:
+        if row["currency_code"] in ["USD", "EUR"]:
             hedge = 0.05
         else:
             hedge = 0.01
@@ -468,7 +468,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
             date_temp = dates_per_run[run_number][k]
             null_df_small = null_df[null_df.spot_date == date_temp]
             print(f"Filling {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
-            null_df_small = null_df_small.progress_apply(lambda x: exec_fill_fun(x, prices_np, dates_np, null_df), axis=1, raw=True)
+            null_df_small = null_df_small.progress_apply(lambda x: exec_fill_fun(x, prices_np, dates_np, null_df), axis=1, raw=False)
             null_df_small.drop(["expiry_date_index", "spot_date_index", "ticker_index"], axis=1, inplace=True)
             null_df_small = null_df_small.infer_objects()
             upsert_data_to_database(null_df_small, table_name, "uid", how="update", cpu_count=True, Text=True)
