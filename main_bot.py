@@ -6,7 +6,7 @@ from main_executive import (
     infer_daily, 
     infer_history, 
     option_maker_daily_ucdc, 
-    option_maker_history_classic, 
+    option_maker_history_classic, option_maker_history_ucdc, 
     option_maker_history_uno, train_model)
 
 if __name__ == "__main__":
@@ -21,5 +21,5 @@ if __name__ == "__main__":
     # option_maker_history_classic(currency_code="EUR", option_maker=True, null_filler=False)
     option_maker_history_uno(currency_code="USD", option_maker=True, null_filler=False, infer=False)
     option_maker_history_uno(currency_code="EUR", option_maker=True, null_filler=False, infer=True)
-    option_maker_daily_ucdc(currency_code="USD", option_maker=True, null_filler=False, infer=False)
-    option_maker_daily_ucdc(currency_code="EUR", option_maker=True, null_filler=False, infer=True)
+    option_maker_history_ucdc(currency_code="USD", option_maker=True, null_filler=False, infer=False)
+    option_maker_history_ucdc(currency_code="EUR", option_maker=True, null_filler=False, infer=True)
