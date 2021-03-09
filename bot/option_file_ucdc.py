@@ -310,7 +310,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
 
     # ********************************************************************************************
     # ********************************************************************************************
-    prices_df = tac_data.pivot_table(index=tac_data.trading_day, columns="ticker", values="tri_adjusted_price", aggfunc="first", dropna=False)
+    prices_df = tac_data.pivot_table(index=tac_data.trading_day, columns="ticker", values="tri_adj_close", aggfunc="first", dropna=False)
     prices_df = prices_df.ffill()
     prices_df = prices_df.bfill()
     dates_df = prices_df.index.to_series()
