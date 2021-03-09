@@ -1,7 +1,9 @@
 import gc
 import logging
 import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 import pandas as pd
+pd.options.mode.chained_assignment = None
 from tqdm import tqdm
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay

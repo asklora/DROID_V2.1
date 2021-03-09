@@ -1,7 +1,7 @@
-
-from bot.data_process import check_start_end_date, check_time_to_exp
 import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 import pandas as pd
+pd.options.mode.chained_assignment = None
 from tqdm import tqdm
 from pandas.tseries.offsets import BDay
 from dateutil.relativedelta import relativedelta
@@ -11,7 +11,7 @@ from general.sql_output import upsert_data_to_database
 from general.date_process import dateNow, droid_start_date, str_to_date
 from bot.data_download import get_bot_backtest_data, get_calendar_data, get_master_tac_price
 from general.table_name import get_bot_classic_backtest_table_name, get_latest_price_table_name
-
+from bot.data_process import check_start_end_date, check_time_to_exp
 from global_vars import classic_business_day, sl_multiplier_1m, tp_multiplier_1m, sl_multiplier_3m, tp_multiplier_3m
 
 def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, history=False):
