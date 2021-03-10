@@ -216,6 +216,7 @@ class Universe(models.Model):
     icb_code = models.CharField(max_length=500, blank=True, null=True)
     fiscal_year_end = models.CharField(max_length=500, blank=True, null=True)
     entity_type = models.TextField(blank=True, null=True)
+    ticker_symbol = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.ticker
