@@ -1,7 +1,8 @@
 import numpy as np
 import scipy.stats as si
 from scipy.optimize import newton
-
+import scipy.special as sc
+sc.seterr(all="ignore")
 
 def BS_call(S, K, T, r, q, sigma):
     # S: spot price

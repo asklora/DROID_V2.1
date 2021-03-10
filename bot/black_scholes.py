@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.stats as si
 from scipy.optimize import newton
+import scipy.special as sc
+sc.seterr(all="ignore")
 from multiprocessing import cpu_count
 import gc
 from sqlalchemy import create_engine

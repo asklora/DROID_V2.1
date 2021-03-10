@@ -6,7 +6,8 @@ from main_executive import (
     infer_daily, 
     infer_history, 
     option_maker_daily_ucdc, 
-    option_maker_history_classic, option_maker_history_ucdc, 
+    option_maker_history_classic, 
+    option_maker_history_ucdc, 
     option_maker_history_uno, train_model)
 
 if __name__ == "__main__":
