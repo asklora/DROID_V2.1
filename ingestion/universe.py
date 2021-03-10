@@ -1,5 +1,5 @@
 from general.date_process import (
-    datetimeNow,
+    backdate_by_day, datetimeNow,
     dateNow)
 from general.slack import report_to_slack
 from general.data_process import remove_null
@@ -153,6 +153,29 @@ def update_currency_code_from_dss(ticker=None):
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
+
+def update_ticker_symbol_from_dss(ticker=None):
+    print("{} : === Ticker Symbol Start Ingestion ===".format(datetimeNow()))
+    identifier="ticker"
+    universe = get_active_universe(ticker=ticker)
+    universe = universe.drop(columns=["ticker_symbol"])
+    start_date = backdate_by_day(1)
+    end_date = dateNow()
+    jsonFileName = "files/file_json/ticker_symbol.json"
+    result = get_data_from_dss(start_date, end_date, universe["ticker"], jsonFileName, report=REPORT_HISTORY)
+    print(result)
+    result = result.drop(columns=["IdentifierType", "Identifier"])
+    print(result)
+    if (len(result) > 0 ):
+        result = result.rename(columns={
+            "RIC": "ticker",
+            "Ticker": "ticker_symbol"
+        })
+        result = remove_null(result, "ticker_symbol")
+        result = universe.merge(result, how="left", on=["ticker"])
+        print(result)
+        # upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+        report_to_slack("{} : === Ticker Symbol Updated ===".format(datetimeNow()))
 
 def update_company_desc_from_dsws(ticker=None):
     print("{} : === Company Description Ingestion ===".format(datetimeNow()))

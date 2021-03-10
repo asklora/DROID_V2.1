@@ -9,7 +9,7 @@ from ingestion.universe import (
     update_currency_code_from_dss,
     populate_universe_consolidated_by_isin_sedol_from_dsws,
     update_industry_from_dsws, 
-    update_company_desc_from_dsws,
+    update_company_desc_from_dsws, update_ticker_symbol_from_dss,
     update_worldscope_identifier_from_dsws
     )
 
@@ -90,12 +90,9 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    #update_utc_offset_from_timezone()
-    # ticker = ["AAPL.O"]
-    do_function("master_ohlcvtr_update")
-    master_ohlctr_update()
-    master_tac_update()
-    master_multiple_update()
-    # ticker=["AAPL.O", "MSFT.O"]
-    # currency_code=["USD"]
+    update_ticker_symbol_from_dss()
+    # do_function("master_ohlcvtr_update")
+    # master_ohlctr_update()
+    # master_tac_update()
+    # master_multiple_update()
     print("Done")
