@@ -77,11 +77,12 @@ class DroidDb(Cloud):
         if snapshot_status == 'available':
             if self.is_testdbexist():
                 self.delete_old_testdb()
-                time.sleep(3)
+                time.sleep(10)
             self.rds_client.restore_db_cluster_from_snapshot(
                         DBClusterIdentifier='droid-v2-test-cluster',
                         SnapshotIdentifier='droid-v2-snapshot',
                         Engine='aurora-postgresql')
+            time.sleep(5)
             while True:
                 db_instance =  self.check_testdb_status()
                 if db_instance == 'available':
@@ -90,6 +91,8 @@ class DroidDb(Cloud):
                     return 'created'
                 elif db_instance == 'creating':
                     print(f'{datetime.now()} == please wait creating test db instance ...')
+                else:
+                    print(f'{datetime.now()} == please wait creating test db instance status {db_instance}')
                 time.sleep(10)
                 
 
@@ -106,7 +109,7 @@ class DroidDb(Cloud):
                     DBClusterIdentifier='droid-v2-test-cluster',
                 )
             status  = db['DBClusters'][0]['Status']
-            if status == 'available':
+            if status == 'available' or status == 'creating':
                 return True 
         except Exception as e:
             print(e)
@@ -159,7 +162,20 @@ class DroidDb(Cloud):
                 print('snapshot status: ',snapshot)
             time.sleep(10)
 
-        
+    def create_read_replica(self):
+        rr =  self.rds_client.restore_db_cluster_to_point_in_time(
+                                    DBClusterIdentifier='droid-v2-prod-cluster-clone',
+                                    RestoreType='copy-on-write',
+                                    SourceDBClusterIdentifier='droid-v2-prod-cluster',
+                                    UseLatestRestorableTime=True
+                                )
+        print(rr)
+        # res = self.rds_client.restore_db_instance_from_db_snapshot(
+        #     DBInstanceIdentifier='droid-v2-test-cluster-replica',
+        #     DBSnapshotIdentifier='droid-v2-snapshot',
+        #     DBInstanceClass='db.t3.medium'
+        # )
+        # print(res)
 
     @property
     def prod_url(self):

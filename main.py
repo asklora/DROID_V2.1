@@ -34,6 +34,7 @@ from global_vars import DB_URL_READ, DB_URL_WRITE
 
 def new_ticker_ingestion(ticker=None):
     update_ticker_name_from_dsws(ticker=ticker)
+    update_ticker_symbol_from_dss()
     update_entity_type_from_dsws(ticker=ticker)
     update_lot_size_from_dss(ticker=ticker)
     update_currency_code_from_dss(ticker=ticker)
@@ -90,7 +91,7 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    update_ticker_symbol_from_dss()
+    # update_ticker_symbol_from_dss()
     # do_function("master_ohlcvtr_update")
     # master_ohlctr_update()
     # master_tac_update()
