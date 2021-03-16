@@ -11,8 +11,8 @@ import pandas as pd
 from pandas.tseries.offsets import BDay
 
 import global_vars
-from executive.bot_labeler import main_fun, bot_stats_report
-from executive.data_download import (
+from bot.bot_labeler import main_fun, bot_stats_report
+from bot.data_download import (
     get_new_tickers_list_detail_from_aws,
     get_latest_date,
     get_tickers_list_from_aws,
@@ -22,17 +22,17 @@ from executive.data_download import (
     get_active_tickers_list,
     get_outputs_tickers,
     option_stats_func)
-from executive.data_output import gpu_mac_address
-from executive.final_model import final_model_fun
-from executive.main_file import main_fn
-from executive.option_file import option_fn, fill_nulls
-from executive.option_file_full import option_fn_full
-from executive.option_file_UCDC import option_fn_full as option_fn_ucdc, fill_nulls_ucdc
-from executive.option_file_full_UCDC import option_fn_full as option_fn_full_ucdc
-from executive.preprocess import cal_q_daily, cal_r_daily
-from executive.statistcs_uno import bench_fn as bench_fn_uno
-from executive.statistcs_ucdc import bench_fn as bench_fn_ucdc
-from general.general import timeNow
+from bot.data_output import gpu_mac_address
+from bot.final_model import final_model_fun
+from bot.main_file import main_fn
+from bot.option_file_uno import option_fn, fill_nulls
+from bot.option_file_full import option_fn_full
+from bot.option_file_ucdc import option_fn_full as option_fn_ucdc, fill_nulls_ucdc
+from bot.option_file_full_UCDC import option_fn_full as option_fn_full_ucdc
+from bot.preprocess import cal_q_daily, cal_r_daily
+from bot.statistcs_uno import bench_fn as bench_fn_uno
+from bot.statistcs_ucdc import bench_fn as bench_fn_ucdc
+from general.date_process import timeNow
 from general.slack import report_to_slack
 
 parser = argparse.ArgumentParser()

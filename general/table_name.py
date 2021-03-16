@@ -113,6 +113,9 @@ def get_data_vol_surface_table_name():
 def get_data_vol_surface_inferred_table_name():
     return "data_vol_surface_inferred"
 
+def get_bot_statistic_table_name():
+    return "bot_statistic"
+
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 

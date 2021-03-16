@@ -241,3 +241,33 @@ class VolSurfaceInferred(models.Model):
 
     def __str__(self):
         return self.ticker
+    
+class BotStatistic(models.Model):
+    uid = models.TextField(primary_key=True)
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column='ticker', related_name='bot_statistic_ticker')
+    option_type = models.TextField(blank=True, null=True)
+    bot_type = models.TextField(blank=True, null=True)
+    lookback = models.BigIntegerField(blank=True, null=True)
+    time_to_exp = models.FloatField(blank=True, null=True)
+    avg_days = models.FloatField(blank=True, null=True)
+    pct_profit = models.FloatField(blank=True, null=True)
+    pct_losses = models.FloatField(blank=True, null=True)
+    avg_profit = models.FloatField(blank=True, null=True)
+    avg_loss = models.FloatField(blank=True, null=True)
+    avg_return = models.FloatField(blank=True, null=True)
+    pct_max_profit = models.FloatField(blank=True, null=True)
+    pct_max_loss = models.FloatField(blank=True, null=True)
+    ann_avg_return = models.FloatField(blank=True, null=True)
+    ann_avg_return_bm = models.FloatField(blank=True, null=True)
+    avg_return_bm = models.FloatField(blank=True, null=True)
+    max_loss_bot = models.FloatField(blank=True, null=True)
+    max_loss_bm = models.FloatField(blank=True, null=True)
+    avg_days_max_profit = models.FloatField(blank=True, null=True)
+    avg_days_max_loss = models.FloatField(blank=True, null=True)
+    
+    class Meta:
+        managed = True
+        db_table = 'bot_statistic'
+
+    def __str__(self):
+        return f'{self.ticker}-{self.bot_type}'
