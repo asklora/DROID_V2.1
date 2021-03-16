@@ -16,7 +16,11 @@ def get_isin_populate_universe(ticker,user_id):
                 if ticker_cons.use_manual:
                     symbol = ticker_cons.origin_ticker
                 else:
-                    symbol = ticker_cons.consolidated_ticker
+                    if ticker_cons.consolidated_ticker:
+                        symbol = ticker_cons.consolidated_ticker
+                    else:
+                        symbol = ticker_cons.origin_ticker
+
                 if populate:
                     relation = UniverseClient.objects.filter(client=user.client_user.client_id,ticker=symbol)
                     if relation.exists():

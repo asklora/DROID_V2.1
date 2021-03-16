@@ -123,10 +123,13 @@ ELASTICSEARCH_DSL = {
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 db_debug= env.bool("DROID_DEBUG")
-if db_debug == True:
+if db_debug:
     read_endpoint,write_endpoint,port = db.test_url
 else:
     read_endpoint,write_endpoint,port = db.prod_url
+
+print(f'using read: {read_endpoint}')
+print(f'using write: {write_endpoint}')
 
 DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
 DB_ENGINE = 'psqlextra.backend'

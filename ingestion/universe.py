@@ -32,13 +32,13 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
         print(universe)
         identifier="origin_ticker"
         filter_field = ["ISIN", "SECD", "WC06004", "IPID"]
-        result, error_ticker = get_data_static_from_dsws(universe[["origin_ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
+        result, error_ticker = get_data_static_from_dsws(universe[["origin_ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 20))
         result = result.rename(columns={"ISIN": "isin", "index":"origin_ticker", "SECD": "sedol", "WC06004": "cusip", "IPID": "permid"})
         print(result)
 
         isin_list = result[["isin"]]
         isin_list = isin_list.drop_duplicates(keep="first", inplace=False)
-        result2, error_ticker = get_data_static_from_dsws(isin_list, "isin", ["RIC", "SECD"], use_ticker=False, split_number=min(len(isin_list), 40))
+        result2, error_ticker = get_data_static_from_dsws(isin_list, "isin", ["RIC", "SECD"], use_ticker=False, split_number=min(len(isin_list), 20))
         result2 = result2.rename(columns={"RIC": "consolidated_ticker", "index":"isin", "SECD": "sedol"})
         print(result2)
         result = result.merge(result2, how="left", on=["isin", "sedol"])
