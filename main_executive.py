@@ -1,13 +1,9 @@
-from bot.data_process import check_bot_list, check_time_to_exp
-import sys
-from pandas.tseries.offsets import BDay
 from bot.final_model import populate_vol_infer
 from bot.main_file import populate_bot_data
 from general.sql_query import get_active_universe
 from bot.data_download import (
     get_backtest_latest_date, 
     get_bot_data_latest_date, 
-    get_executive_data_download, 
     get_new_ticker_from_bot_backtest, 
      get_new_tickers_from_bot_data, 
      get_volatility_latest_date)
@@ -16,52 +12,21 @@ from general.date_process import dateNow, droid_start_date_buffer, str_to_date, 
 from bot.option_file_classic import fill_bot_backtest_classic, populate_bot_classic_backtest
 from bot.option_file_ucdc import fill_bot_backtest_ucdc, populate_bot_ucdc_backtest
 from bot.option_file_uno import fill_bot_backtest_uno, populate_bot_uno_backtest
+from bot.statistic_classic import populate_classic_statistic
+from bot.statistic_ucdc import populate_ucdc_statistic
+from bot.statistic_uno import populate_uno_statistic
+from bot.data_process import check_bot_list, check_time_to_exp
 from global_vars import folder_check
 
-# 	main.py --bot_backtest_updates --bot_index 0#.FTSE
 # 	main_exec.py --bot_labeler_infer_daily --exec_index 0#.FTSE
-# 	main.py --latest_bot_ranking --bot_index 0#.FTSE
 
-# 	main.py --bot_backtest_updates --bot_index 0#.SPX
 # 	main_exec.py --bot_labeler_infer_daily --exec_index 0#.SPX
-# 	main.py --latest_bot_ranking --bot_index 0#.SPX
-# 	main_exec.py --benchmark
-# 	main_exec.py --benchmark_ucdc
 
-# option_training:
-# 	main_exec.py --train_model
-# 	main_exec.py --bot_labeler_train
-# 	@/sbin/shutdown -r now
-    
-# def initial_data():
-#     args.
-#     args.active_tickers_list = get_active_tickers_list(args)
-#     pd.options.mode.chained_assignment = None
-#     gpu_mac_address(args)
-#     if args.go_production:
-#         args.valid_size = 0.2
-#         args.test_size = 0.0
-#     else:
-#         args.valid_size = 0.15
-#         args.test_size = 0.25
-#     index_to_etf = pd.read_csv("executive/index_to_etf.csv", names=["index", "etf"])
-#     etf_list = index_to_etf.etf.unique().tolist()
 # def bot_labeler_performance_history():
-# def benchmark():
-#     time_to_exp = ["2w", "4w", "1m", "8w", "2m", "3m", "6m"]
-#     report_to_slack("{} : === UNO STATISTICS COMPLETED ===".format(dateNow()))
-# def benchmark_ucdc():
-#     time_to_exp = ["2w", "4w", "1m", "8w", "2m", "3m", "6m"]
-#     report_to_slack("{} : === UCDC STATISTICS COMPLETED ===".format(dateNow()))
-# def benchmark_classic():
-#     time_to_exp = ["2w", "4w", "1m", "8w", "2m", "3m", "6m"]
-#     report_to_slack("{} : === UCDC STATISTICS COMPLETED ===".format(dateNow()))
-    # start = timeNow()
-    # bench_fn(args)
 
 
 def bot_ranking_train(ticker=None, currency_code=None):
-    print("{} : === {} BOT RANKING TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
+    print("{} : === BOT RANKING TRAIN MODEL STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     start_date = str_to_date(droid_start_date())
@@ -71,6 +36,7 @@ def bot_ranking_train(ticker=None, currency_code=None):
     populate_vol_infer(start_date, end_date, ticker=ticker, currency_code=currency_code, train_model=True)
     print("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
+
 
 def bot_ranking_history(ticker=None, currency_code=None):
     print("{} : === {} BOT RANKING TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
@@ -82,6 +48,7 @@ def bot_ranking_history(ticker=None, currency_code=None):
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
 
+
 def bot_ranking_daily(ticker=None, currency_code=None):
     print("{} : === {} BOT RANKING TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
     start_date = get_bot_data_latest_date(daily=True)
@@ -89,9 +56,11 @@ def bot_ranking_daily(ticker=None, currency_code=None):
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
 
+
 def training(ticker=None, currency_code=None):
     train_model(ticker=ticker, currency_code=currency_code)
     bot_ranking_train(ticker=ticker, currency_code=currency_code)
+
 
 def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0):
     data_prep_daily(ticker=ticker, currency_code=currency_code)
@@ -101,6 +70,7 @@ def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, opt
     option_maker_uno_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
     option_maker_daily_uno(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
 
+
 def daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, infer=True, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0):
     data_prep_daily(ticker=ticker, currency_code=currency_code)
     data_prep_check_new_ticker(ticker=ticker, currency_code=currency_code)
@@ -109,14 +79,15 @@ def daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, infer=True, op
     option_maker_ucdc_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
     option_maker_daily_ucdc(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
 
+
 def daily_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=True, null_filler=True):
     option_maker_classic_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
     option_maker_daily_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
 
+
 # ************************************************************************************************************************************************************************************
 # *************************** DATA PREPARATION ***************************************************************************************************************************************
 # ************************************************************************************************************************************************************************************
-
 def data_prep_daily(ticker=None, currency_code=None):
     print("{} : === {} DATA PREPERATION STARTED ===".format(dateNow(), currency_code))
     start_date = get_bot_data_latest_date(daily=True)
@@ -132,6 +103,7 @@ def data_prep_daily(ticker=None, currency_code=None):
         report_to_slack("{} : === {} DATA PREPERATION COMPLETED ===".format(dateNow(), currency_code))
     else:
         report_to_slack("{} : === DATA PREPERATION DAILY COMPLETED ===".format(dateNow()))
+
 
 def data_prep_check_new_ticker(ticker=None, currency_code=None):
     print("{} : === DATA PREPERATION CHECK NEW TICKER STARTED ===".format(dateNow()))
@@ -149,6 +121,7 @@ def data_prep_check_new_ticker(ticker=None, currency_code=None):
         print("{} : === DATA PREPERATION CHECK NEW TICKER COMPLETED ===".format(dateNow()))
         report_to_slack("{} : === DATA PREPERATION CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
+
 def data_prep_history():
     print("{} : === DATA PREPERATION HISTORY STARTED ===".format(dateNow()))
     start_date = str_to_date(droid_start_date_buffer())
@@ -162,10 +135,10 @@ def data_prep_history():
     print("{} : === DATA PREPERATION HISTORY COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === DATA PREPERATION HISTORY COMPLETED ===".format(dateNow()))
 
+
 # ************************************************************************************************************************************************************************************
 # *************************** VOLATILITY INFER ***************************************************************************************************************************************
 # ************************************************************************************************************************************************************************************
-
 def infer_daily(ticker=None, currency_code=None):
     folder_check()
     print("{} : === {} VOLATILITY INFER STARTED ===".format(dateNow(), currency_code))
@@ -184,6 +157,7 @@ def infer_daily(ticker=None, currency_code=None):
     else:
         report_to_slack("{} : === VOLATILITY INFER DAILY COMPLETED ===".format(dateNow()))
 
+
 def infer_history():
     folder_check()
     print("{} : === VOLATILITY INFER HISTORY STARTED ===".format(dateNow()))
@@ -200,11 +174,10 @@ def infer_history():
     print("{} : === VOLATILITY INFER HISTORY COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === VOLATILITY INFER HISTORY COMPLETED ===".format(dateNow()))
 
+
 # ************************************************************************************************************************************************************************************
 # *************************** MODEL TRAINING *****************************************************************************************************************************************
 # ************************************************************************************************************************************************************************************
-
-
 def train_model(ticker=None, currency_code=None):
     folder_check()
     print("{} : === VOLATILITY TRAIN MODEL STARTED ===".format(dateNow()))
@@ -222,7 +195,6 @@ def train_model(ticker=None, currency_code=None):
 # ************************************************************************************************************************************************************************************
 # *************************** OPTION MAKER CLASSIC ***********************************************************************************************************************************
 # ************************************************************************************************************************************************************************************
-#    
 def option_maker_classic_check_new_ticker(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False):
     time_to_exp = check_time_to_exp(time_to_exp)
     print("{} : === OPTION MAKER CLASSIC CHECK NEW TICKER STARTED ===".format(dateNow()))
@@ -244,6 +216,7 @@ def option_maker_classic_check_new_ticker(ticker=None, currency_code=None, time_
         print("{} : === OPTION MAKER CLASSIC CHECK NEW TICKER COMPLETED ===".format(dateNow()))
         report_to_slack("{} : === OPTION MAKER CLASSIC CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
+
 def option_maker_daily_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False):
     print("{} : === OPTION MAKER CLASSIC STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, classic=True)
@@ -258,6 +231,7 @@ def option_maker_daily_classic(ticker=None, currency_code=None, time_to_exp=None
         fill_bot_backtest_classic(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, mod=mod)
     print("{} : === OPTION MAKER CLASSIC COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === OPTION MAKER CLASSIC COMPLETED ===".format(dateNow()))
+
 
 def option_maker_history_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False):
     time_to_exp = check_time_to_exp(time_to_exp)
@@ -276,10 +250,10 @@ def option_maker_history_classic(ticker=None, currency_code=None, time_to_exp=No
     print("{} : === OPTION MAKER CLASSIC HISTORY COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === OPTION MAKER CLASSIC HISTORY COMPLETED ===".format(dateNow()))
 
+
 # ************************************************************************************************************************************************************************************
 # *************************** OPTION MAKER UNO ***************************************************************************************************************************************
 # ************************************************************************************************************************************************************************************
-
 def option_maker_uno_check_new_ticker(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
     time_to_exp = check_time_to_exp(time_to_exp)
     print("{} : === OPTION MAKER UNO CHECK NEW TICKER STARTED ===".format(dateNow()))
@@ -301,6 +275,7 @@ def option_maker_uno_check_new_ticker(ticker=None, currency_code=None, time_to_e
         print("{} : === OPTION MAKER UNO CHECK NEW TICKER COMPLETED ===".format(dateNow()))
         report_to_slack("{} : === OPTION MAKER UNO CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
+
 def option_maker_daily_uno(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
     time_to_exp = check_time_to_exp(time_to_exp)
     print("{} : === OPTION MAKER UNO STARTED ===".format(dateNow()))
@@ -320,6 +295,7 @@ def option_maker_daily_uno(ticker=None, currency_code=None, time_to_exp=None, mo
     print("{} : === OPTION MAKER UNO COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === OPTION MAKER UNO COMPLETED ===".format(dateNow()))
 
+
 def option_maker_history_uno(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
     time_to_exp = check_time_to_exp(time_to_exp)
     print("{} : === OPTION MAKER UNO HISTORY STARTED ===".format(dateNow()))
@@ -332,6 +308,7 @@ def option_maker_history_uno(ticker=None, currency_code=None, time_to_exp=None, 
         fill_bot_backtest_uno(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, history=True, total_no_of_runs=total_no_of_runs, run_number=run_number)
     print("{} : === OPTION MAKER UNO HISTORY COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === OPTION MAKER UNO HISTORY COMPLETED ===".format(dateNow()))
+
 
 # ************************************************************************************************************************************************************************************
 # *************************** OPTION MAKER UCDC **************************************************************************************************************************************
@@ -357,6 +334,7 @@ def option_maker_ucdc_check_new_ticker(ticker=None, currency_code=None, time_to_
             print("{} : === OPTION MAKER UCDC CHECK NEW TICKER COMPLETED ===".format(dateNow()))
         report_to_slack("{} : === OPTION MAKER UCDC CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
+
 def option_maker_daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
     time_to_exp = check_time_to_exp(time_to_exp)
     print("{} : === OPTION MAKER UNO STARTED ===".format(dateNow()))
@@ -376,6 +354,7 @@ def option_maker_daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, m
     print("{} : === OPTION MAKER UNO COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === OPTION MAKER UNO COMPLETED ===".format(dateNow()))
 
+
 def option_maker_history_ucdc(currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
     time_to_exp = check_time_to_exp(time_to_exp)
     print("{} : === OPTION MAKER UCDC HISTORY STARTED ===".format(dateNow()))
@@ -388,3 +367,30 @@ def option_maker_history_ucdc(currency_code=None, time_to_exp=None, mod=False, o
         fill_bot_backtest_ucdc(start_date=start_date, end_date=end_date, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, history=True, total_no_of_runs=total_no_of_runs, run_number=run_number)
     print("{} : === OPTION MAKER UCDC HISTORY COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === OPTION MAKER UCDC HISTORY COMPLETED ===".format(dateNow()))
+
+
+# ************************************************************************************************************************************************************************************
+# *************************** BOT STATISTIC ******************************************************************************************************************************************
+# ************************************************************************************************************************************************************************************
+def bot_statistic_classic(ticker=None, currency_code=None, time_to_exp=None):
+    print("{} : === BOT STATISTIC CLASSIC STARTED ===".format(dateNow()))
+    time_to_exp = check_time_to_exp(time_to_exp)
+    populate_classic_statistic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
+    print("{} : === BOT STATISTIC CLASSIC COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === BOT STATISTIC CLASSIC COMPLETED ===".format(dateNow()))
+
+
+def bot_statistic_ucdc(ticker=None, currency_code=None, time_to_exp=None):
+    print("{} : === BOT STATISTIC UCDC STARTED ===".format(dateNow()))
+    time_to_exp = check_time_to_exp(time_to_exp)
+    populate_ucdc_statistic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
+    print("{} : === BOT STATISTIC UCDC COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === BOT STATISTIC UCDC COMPLETED ===".format(dateNow()))
+
+
+def bot_statistic_uno(ticker=None, currency_code=None, time_to_exp=None):
+    print("{} : === BOT STATISTIC UNO STARTED ===".format(dateNow()))
+    time_to_exp = check_time_to_exp(time_to_exp)
+    populate_uno_statistic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
+    print("{} : === BOT STATISTIC UNO COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === BOT STATISTIC UNO COMPLETED ===".format(dateNow()))

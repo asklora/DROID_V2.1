@@ -237,29 +237,29 @@ def write_to_aws_executive_production(main_pred, args):
 
     # print(f'Saved the data to {table_name}!')
 
-def upsert_data_to_db(args, index, index_type, data, table_name, method="update"):
-    if args.debug_mode:
-        db_url = global_vars.DB_TEST_URL_WRITE
-    else:
-        db_url = global_vars.DB_DROID_URL_WRITE
+# def upsert_data_to_db(args, index, index_type, data, table_name, method="update"):
+#     if args.debug_mode:
+#         db_url = global_vars.DB_TEST_URL_WRITE
+#     else:
+#         db_url = global_vars.DB_DROID_URL_WRITE
 
-    if args.modified:
-        table_name = table_name + "_mod"
-    print(f'=== Upsert data {table_name} to database ===')
-    data = data.set_index(index)
-    print(data)
-    dtype={
-        index:index_type,
-    }
-    engine = create_engine(db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    upsert(engine=engine,
-            df=data,
-            chunksize=10000,
-            table_name=table_name,
-            if_row_exists=method,
-            dtype=dtype)
-    print("DATA INSERTED TO " + table_name)
-    engine.dispose()
+#     if args.modified:
+#         table_name = table_name + "_mod"
+#     print(f'=== Upsert data {table_name} to database ===')
+#     data = data.set_index(index)
+#     print(data)
+#     dtype={
+#         index:index_type,
+#     }
+#     engine = create_engine(db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
+#     upsert(engine=engine,
+#             df=data,
+#             chunksize=10000,
+#             table_name=table_name,
+#             if_row_exists=method,
+#             dtype=dtype)
+#     print("DATA INSERTED TO " + table_name)
+#     engine.dispose()
 
 # def upsert_data_to_database(args, index, index_type, data, method="update"):
 #     if args.debug_mode or args.option_maker_history_full or args.option_maker_history_full_ucdc:

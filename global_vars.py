@@ -61,6 +61,7 @@ currency_code_to_etf_file = "files/file_csv/currency_code_to_etf.csv"
 run_time_min = time.time()
 modified_delta_list = ["d2", "v10"]
 time_to_expiry = [0.03846, 0.07692, 0.08333, 0.15384, 0.16666, 0.25, 0.5] #[2 weeks, 4 weeks, 1 month, 8 weeks, 2 months, 3 months, 6 months]
+statistics_lookback_list = [6, 12, 36]
 vol_period = 21
 classic_business_day = 252
 sl_multiplier_1m = -1.25
