@@ -56,7 +56,7 @@ def populate_classic_statistic(ticker=None, currency_code=None, time_to_exp=None
         days_events.reset_index(inplace=True)
         bench_df["avg_days"] = days_events["duration_days","mean"]
 
-        returns = df.groupby(["ticker", "time_to_exp"]).agg({"return": ["count","mean", "min"], "return_pos": ["sum"],
+        returns = df.groupby(["ticker", "time_to_exp"]).agg({"bot_return": ["count","mean", "min"], "return_pos": ["sum"],
                                                               "return_neg": ["sum"], "sl_num": ["sum"], "tp_num": ["sum"],
                                                               "duration": ["mean"], "bm": ["mean","min"], "expiry_return": ["mean"], "drawdown_return": ["min"]})
         returns.reset_index(inplace=True)
@@ -66,10 +66,10 @@ def populate_classic_statistic(ticker=None, currency_code=None, time_to_exp=None
         bench_df["time_to_exp"] = returns["time_to_exp", ""]
 
         # pct_profit = (returns >0) / num_rows
-        bench_df["pct_profit"] = returns["return_pos", "sum"] / returns["return", "count"]
+        bench_df["pct_profit"] = returns["return_pos", "sum"] / returns["bot_return", "count"]
 
         # pct_losses = (returns < 0) / num_rows
-        bench_df["pct_losses"] = returns["return_neg", "sum"] / returns["return", "count"]
+        bench_df["pct_losses"] = returns["return_neg", "sum"] / returns["bot_return", "count"]
 
         # avg_profit = avg return where returns >0
         bench_df["avg_profit"] = ret_pos_neg["return_pos"]
@@ -78,16 +78,16 @@ def populate_classic_statistic(ticker=None, currency_code=None, time_to_exp=None
         bench_df["avg_loss"] = ret_pos_neg["return_neg"]
 
         # avg_return = avg return
-        bench_df["avg_return"] = returns["return", "mean"]
+        bench_df["avg_return"] = returns["bot_return", "mean"]
 
         # pct_tp (out of all cases) = num of TP rows / all rows
-        bench_df["pct_max_profit"] = returns["tp_num", "sum"] / returns["return", "count"]
+        bench_df["pct_max_profit"] = returns["tp_num", "sum"] / returns["bot_return", "count"]
 
         # pct_sl (out of all cases) = num of SL rows / all rows
-        bench_df["pct_max_loss"] = returns["sl_num", "sum"] / returns["return", "count"]
+        bench_df["pct_max_loss"] = returns["sl_num", "sum"] / returns["bot_return", "count"]
 
         # ann_avg_return = average  = avg_return / duration
-        bench_df["ann_avg_return"] = returns["return", "mean"] / returns["duration", "mean"]
+        bench_df["ann_avg_return"] = returns["bot_return", "mean"] / returns["duration", "mean"]
 
         # ann_avg_return_bm = avg_bm_return = average expiry_return’s (X 12 for 1M and X4 for 3M)
         bench_df["ann_avg_return_bm"] = returns["expiry_return", "mean"]
@@ -110,7 +110,7 @@ def populate_classic_statistic(ticker=None, currency_code=None, time_to_exp=None
         bench_df.fillna({"avg_days_max_profit": 0, "avg_days_max_loss": 0}, inplace=True)
 
         # max_loss_plan = min (return)
-        bench_df["max_loss_bot"] = returns["return", "min"]
+        bench_df["max_loss_bot"] = returns["bot_return", "min"]
 
         # max_loss_bm = min (bm_returns)
         bench_df["max_loss_bm"] = returns["drawdown_return","min"]

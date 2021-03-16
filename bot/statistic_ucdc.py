@@ -55,7 +55,7 @@ def populate_ucdc_statistic(ticker=None, currency_code=None, time_to_exp=None):
         days_events.reset_index(inplace=True)
         bench_df["avg_days"] = days_events["duration_days","mean"]
 
-        returns = df.groupby(["ticker", "time_to_exp"]).agg({"return": ["count","mean", "min"], "return_pos": ["sum"],
+        returns = df.groupby(["ticker", "time_to_exp"]).agg({"bot_return": ["count","mean", "min"], "return_pos": ["sum"],
                                                               "return_neg": ["sum"],
                                                               "duration": ["mean"], "bm": ["mean","min"],
                                                               "expiry_payoff_zero": ["sum"],
@@ -68,10 +68,10 @@ def populate_ucdc_statistic(ticker=None, currency_code=None, time_to_exp=None):
         bench_df["time_to_exp"] = returns["time_to_exp", ""]
 
         # pct_profit = (returns >0) / num_rows
-        bench_df["pct_profit"] = returns["return_pos", "sum"] / returns["return", "count"]
+        bench_df["pct_profit"] = returns["return_pos", "sum"] / returns["bot_return", "count"]
 
         # pct_losses = (returns < 0) / num_rows
-        bench_df["pct_losses"] = returns["return_neg", "sum"] / returns["return", "count"]
+        bench_df["pct_losses"] = returns["return_neg", "sum"] / returns["bot_return", "count"]
 
         # avg_profit = avg return where returns >0
         bench_df["avg_profit"] = ret_pos_neg["return_pos"]
@@ -80,16 +80,16 @@ def populate_ucdc_statistic(ticker=None, currency_code=None, time_to_exp=None):
         bench_df["avg_loss"] = ret_pos_neg["return_neg"]
 
         # avg_return = avg return
-        bench_df["avg_return"] = returns["return", "mean"]
+        bench_df["avg_return"] = returns["bot_return", "mean"]
 
         # pct_max_profit = rows(expiry_payoff = 0) / num_rows
-        bench_df["pct_max_profit"] = returns["expiry_payoff_zero", "sum"] / returns["return", "count"]
+        bench_df["pct_max_profit"] = returns["expiry_payoff_zero", "sum"] / returns["bot_return", "count"]
 
         # pct_max_loss = rows(expiry_payoff <= (strike2 - strike1)*.99)/ num_rows
-        bench_df["pct_max_loss"] = returns["expiry_payoff_max_loss", "sum"] / returns["return", "count"]
+        bench_df["pct_max_loss"] = returns["expiry_payoff_max_loss", "sum"] / returns["bot_return", "count"]
 
         # ann_avg_return = average  = avg_return / duration
-        bench_df["ann_avg_return"] = returns["return", "mean"] / returns["duration", "mean"]
+        bench_df["ann_avg_return"] = returns["bot_return", "mean"] / returns["duration", "mean"]
 
         # ann_avg_return_bm = avg_bm_return = average expiry_return’s (X 12 for 1M and X4 for 3M)
         bench_df["ann_avg_return_bm"] = returns["expiry_return", "mean"]
@@ -102,7 +102,7 @@ def populate_ucdc_statistic(ticker=None, currency_code=None, time_to_exp=None):
         bench_df["avg_return_bm"] = returns["expiry_return", "mean"]
 
         # max_loss_bot = min (return)
-        bench_df["max_loss_bot"] = returns["return","min"]
+        bench_df["max_loss_bot"] = returns["bot_return","min"]
 
         # max_loss_bm = min (bm_returns)
         bench_df["max_loss_bm"] = returns["drawdown_return","min"]
