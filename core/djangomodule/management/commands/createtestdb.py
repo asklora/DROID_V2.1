@@ -16,4 +16,4 @@ class Command(BaseCommand):
         if options['delete']:
             db.delete_old_testdb()
         else:
-            db.create_test_db(create_new=True)
+            db.create_test_db()
