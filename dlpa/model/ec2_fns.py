@@ -1,5 +1,7 @@
 import sys
+
 import paramiko as paramiko
+
 
 def save_to_ec2(args):
     # This function saves the model to EC2
@@ -7,7 +9,8 @@ def save_to_ec2(args):
         c = paramiko.SSHClient()
         c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         print("connecting...")
-        c.connect(hostname="13.209.141.35", username="seoul", key_filename="dlpa/extra/model_saving_key.pem")
+        c.connect(hostname="13.209.141.35", username="seoul", key_filename="/home/loratech/PycharmProjects/DLPA/extra"
+                                                                           "/model_saving_key.pem")
         # c.connect(hostname="15.165.8.208", username="seoul", key_filename="/home/loratech/PycharmProjects/DLPA/extra"
         #                                                                    "/model_saving_key.pem")
         print("connected!")
@@ -31,7 +34,8 @@ def load_from_ec2(args):
         c = paramiko.SSHClient()
         c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         print("connecting...")
-        c.connect(hostname="13.209.141.35", username="seoul", key_filename="dlpa/extra/model_saving_key.pem")
+        c.connect(hostname="13.209.141.35", username="seoul", key_filename="/home/loratech/PycharmProjects/DLPA/extra"
+                                                                           "/model_saving_key.pem")
         # c.connect(hostname="15.165.8.208", username="seoul", key_filename="/home/loratech/PycharmProjects/DLPA/extra"
         #                                                                    "/model_saving_key.pem")
         print("connected!")

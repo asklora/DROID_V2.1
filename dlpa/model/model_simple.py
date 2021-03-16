@@ -5,19 +5,17 @@ import tensorflow as tf
 from hyperopt import STATUS_OK
 from keras.callbacks import EarlyStopping
 from tensorflow.python.keras import callbacks
-from tensorflow.python.keras.layers import (
-    Input, Dense, Concatenate,
-    LeakyReLU, Reshape, Dropout, 
-    Conv3D, Flatten)
+from tensorflow.python.keras.layers import Input, Dense, Concatenate, \
+    LeakyReLU, Reshape, Dropout, Conv3D, Flatten
 from tensorflow.python.keras.models import Model
 
-from dlpa.data.data_output import write_to_sql, write_to_sql_model_data
-from dlpa.data.data_preprocess import test_data_reshape
-from dlpa.model.ec2_fns import save_to_ec2, load_from_ec2
-from dlpa.global_vars import epoch
+from data.data_output import write_to_sql, write_to_sql_model_data
+from data.data_preprocess import test_data_reshape
+from model.ec2_fns import save_to_ec2, load_from_ec2
+
 
 def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX2, testY, final_prediction1,
-               final_prediction2, indices_df, hypers):
+               final_prediction2, indices_df, args, hypers):
     if args.test_num != 0:
         # Removing the nan rows in test datasets
         args.test_mask = np.squeeze(args.test_mask)
@@ -135,7 +133,7 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
     return {'loss': 1 - args.best_valid_acc, 'status': STATUS_OK}
 
 
-def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hypers):
+def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, args, hypers):
     if args.train_num != 0:
         batch_size = 2 ** int(hypers['batch_size'])
         learning_rate = 10 ** -int(hypers['learning_rate'])
@@ -268,7 +266,7 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hy
     return model, history
 
 
-def model_returns(trainX1, trainY, validX1, validY, hypers):
+def model_returns(trainX1, trainY, validX1, validY, args, hypers):
     if args.train_num != 0:
         batch_size = 2 ** int(hypers['batch_size'])
         learning_rate = 10 ** -int(hypers['learning_rate'])

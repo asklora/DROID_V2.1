@@ -8,10 +8,10 @@ from datetime import datetime as dt
 import tensorflow as tf
 from pandas.tseries.offsets import BDay, Week
 
-from dlpa.hypers.hypers import hypers
+from hypers.hypers import hypers
 
 
-def gpu_mac_address():
+def gpu_mac_address(args):
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_number)
 
     gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -45,7 +45,7 @@ def gpu_mac_address():
     if str(hex(uuid.getnode())) == '0xb06ebf5cd358':
         args.pc_number = "Stephen"
 
-def jump_period():
+def jump_period(args):
     # Overall we have three dates. The main one is test date which is given by the user. The auxiliary ones are the
     # start date and the end date, which are created by the code to get the needed data for model training and testing
     # form the main dataframe.

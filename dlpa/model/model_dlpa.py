@@ -5,20 +5,17 @@ import tensorflow as tf
 from hyperopt import STATUS_OK
 from keras.callbacks import EarlyStopping
 from tensorflow.python.keras import callbacks
-from tensorflow.python.keras.layers import (
-    Input, GRU, Dense, Concatenate, 
-    Bidirectional, Attention, 
-    Flatten, Embedding, LeakyReLU, 
-    Conv3D)
+from tensorflow.python.keras.layers import Input, GRU, Dense, Concatenate, Bidirectional, Attention, \
+    Flatten, Embedding, LeakyReLU, Conv3D
 from tensorflow.python.keras.models import Model
 
-from dlpa.data.data_output import write_to_sql, write_to_sql_model_data
-from dlpa.data.data_preprocess import test_data_reshape
-from dlpa.model.ec2_fns import save_to_ec2, load_from_ec2
-from dlpa.global_vars import epoch
+from data.data_output import write_to_sql, write_to_sql_model_data
+from data.data_preprocess import test_data_reshape
+from model.ec2_fns import save_to_ec2, load_from_ec2
+
 
 def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX2, testY, final_prediction1,
-               final_prediction2, indices_df, hypers):
+               final_prediction2, indices_df, args, hypers):
     if args.test_num != 0:
         # Removing the nan rows in test datasets
         args.test_mask = np.squeeze(args.test_mask)
@@ -28,9 +25,9 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
         testY = testY[:, args.test_mask, :]
 
     if args.cnn_kernel_size != 0:
-        model, history = model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hypers)
+        model, history = model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, args, hypers)
     else:
-        model, history = model_returns(trainX1, trainY, validX1, validY, hypers)
+        model, history = model_returns(trainX1, trainY, validX1, validY, args, hypers)
 
     if args.train_num != 0:
         if args.save_ec2:
@@ -49,7 +46,7 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
         predict_zeros = np.zeros((testX1.shape[1], 1))
 
         scores = np.zeros(5)
-        tempX1, tempX2 = test_data_reshape(testX1, testX2, hypers)
+        tempX1, tempX2 = test_data_reshape(testX1, testX2, args, hypers)
         # tempX1 = testX1[...,np.newaxis]
         if args.cnn_kernel_size != 0:
             for i in range(len(testX1)):
@@ -137,7 +134,7 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
     return {'loss': 1 - args.best_valid_acc, 'status': STATUS_OK}
 
 
-def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hypers):
+def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, args, hypers):
     # The attention based sequence to sequence model for weekly returns + candles.
 
     if args.train_num != 0:
@@ -317,14 +314,14 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hy
             # USE A VALIDATION SET
             history = full_model.fit([trainX2, trainX1, decoder_input_df_no_force], trainY, batch_size=batch_size,
                                      callbacks=callbacks_list,
-                                     epochs=epoch,
+                                     epochs=args.epoch,
                                      validation_data=([validX2, validX1, decoder_input_valid_no_force], validY),
                                      verbose=1)
         else:
             # USE A RANDOM SPLIT
             history = full_model.fit([trainX2, trainX1, decoder_input_df_no_force], trainY, batch_size=batch_size,
                                      callbacks=callbacks_list,
-                                     epochs=epoch,
+                                     epochs=args.epoch,
                                      validation_split=.2,
                                      verbose=1)
     else:
@@ -333,7 +330,7 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hy
     return full_model, history
 
 
-def model_returns(trainX, trainY, validX, validY, hypers):
+def model_returns(trainX, trainY, validX, validY, args, hypers):
     # The attention based sequence to sequence model for weekly returns.
 
     if args.train_num != 0:
@@ -461,13 +458,13 @@ def model_returns(trainX, trainY, validX, validY, hypers):
         if validX is not None:
             history = full_model.fit([trainX, decoder_input_df_no_force], trainY, batch_size=batch_size,
                                      callbacks=callbacks_list,
-                                     epochs=epoch,
+                                     epochs=args.epoch,
                                      validation_data=([validX, decoder_input_valid_no_force], validY),
                                      verbose=1)
         else:
             history = full_model.fit([trainX, decoder_input_df_no_force], trainY, batch_size=batch_size,
                                      callbacks=callbacks_list,
-                                     epochs=epoch, validation_split=.2,
+                                     epochs=args.epoch, validation_split=.2,
                                      verbose=1)
     else:
         history = None
