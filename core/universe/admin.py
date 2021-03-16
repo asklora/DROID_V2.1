@@ -34,11 +34,11 @@ class UniverseResource(resources.ModelResource):
         )
             try:
                 ticker = Universe.objects.get(ticker=instance.origin_ticker)
-                if duplicate.count() >= 1:
+                if duplicate.count() > 1:
                     instance.delete()
                 # get_isin_populate_universe.delay(ticker.ticker,self.user)
             except Universe.DoesNotExist:
-                if duplicate.count() >= 1:
+                if duplicate.count() > 1:
                     # existing_ticker=duplicate.first().origin_ticker
                     instance.delete()
                     # get_isin_populate_universe.delay(existing_ticker,self.user)
