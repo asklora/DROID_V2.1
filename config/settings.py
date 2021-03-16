@@ -52,6 +52,7 @@ CORE_APPS = [
     'core.Clients',
     'core.signals',
     'core.survey',
+    'core.orders_api',
 ]
 
 INSTALLED_APPS = DJANGO_DEFAULT_APPS + ADDITIONAL_APPS + CORE_APPS
@@ -123,7 +124,7 @@ ELASTICSEARCH_DSL = {
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 db_debug= env.bool("DROID_DEBUG")
-if db_debug == True:
+if db_debug:
     read_endpoint,write_endpoint,port = db.test_url
 else:
     read_endpoint,write_endpoint,port = db.prod_url
