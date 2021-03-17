@@ -114,6 +114,44 @@ signal_threshold = 0.5
 candle_type_candles = 0 # this should DEFAULT TO 0 - use all candles
 candle_type_returnsY = 4 # this should DEFAULT TO 4 - use close
 candle_type_returnsX = 4 # this should DEFAULT TO 4 - use close
+
+model_type=1  # use DLPM
+epoch=25  # 25 epochs seem enough (more takes too much time)
+Hyperopt_runs=10 # don't need more than 20
+forward_year=0
+forward_week=1 #v2 default = 1
+forward_dayt=5  #v2 default = 5
+dow=5
+data_period=0  # the period to forecast - one week ahead of one day ahead?
+stage=0  # not going to explore other stages yet
+stock_percentage=1.0
+train_num=390 # number of periods to train before test period (and valid periods if >0) 390 for weekly 1250 for daily
+valid_num=0 # valid_num = 0 => random shuffle 20%, else chronological periods before test period
+test_num=1  # test_num should BE 1.
+period_jump=1 # JUMP <>1 for model tuning and sampling - should go to 1 for prod
+update_lookback=2 # how many EXTRA periods to update?
+num_periods_to_predict=1 # needs to be >1 for --future
+num_bins=3
+num_nans_to_skip=1# Nan FILTERING
+seed=123
+best_train_acc=1e-1
+best_valid_acc=1e-1
+test_acc_1=0
+test_acc_2=0
+test_acc_3=0
+test_acc_4=0
+test_acc_5=0
+lowest_train_loss=1e-1
+lowest_valid_loss=1e-1
+best_valid_epoch=1
+lowest_train_epoch=1
+unique_num_of_returns=1
+unique_num_of_outputs=1
+timestamp=time.time()
+gpu_number=0
+pc_number='unknown'
+db_end_date=datetime.today() - BDay(2)
+
 aws_columns_list = ["model_type", "data_period", "when_created", "forward_date", "forward_week", "forward_dow",
                     "train_dow", "best_train_acc",
                     "best_valid_acc", "test_acc_1", "test_acc_2", "test_acc_3", "test_acc_4",

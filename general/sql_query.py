@@ -147,7 +147,7 @@ def get_universe_by_region(region_code):
 
 def get_active_universe_company_description_null(ticker=None):
     if type(ticker) != type(None):
-        query = f"select * from {universe_table} where is_active=True ticker in {tuple_data(ticker)} order by ticker;"
+        query = f"select * from {universe_table} where is_active=True and ticker in {tuple_data(ticker)} order by ticker;"
     else:
         query = f"select * from {universe_table} where is_active=True and "
         query += f"company_description is null or company_description = 'NA' or company_description = 'N/A' order by ticker;"
