@@ -5,5 +5,5 @@ WORKDIR /code
 COPY . /code/
 RUN apt update
 RUN ./requirement.sh
-RUN installer/python_dependency.sh
+RUN ./python_dependency.sh
 EXPOSE 8000
