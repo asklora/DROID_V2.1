@@ -121,7 +121,7 @@ def fill_null_company_desc_with_ticker_name():
 def fill_null_quandl_symbol():
     query = f"update {get_universe_table_name()} set quandl_symbol=split_part(ticker, '.', 1) "
     query += f"WHERE is_active=True and quandl_symbol is null and currency_code = 'USD'"
-    data = read_query(query, table=get_universe_table_name())
+    data = execute_query(query, table=get_universe_table_name())
     return data
 
 def delete_data_on_database(table, condition, delete_ticker=False):
@@ -136,5 +136,5 @@ def delete_data_on_database(table, condition, delete_ticker=False):
 def delete_old_dividends_on_database():
     old_date = dateNow()
     query = f"delete from {get_data_dividend_table_name()} where ex_dividend_date <= '{old_date}'"
-    data = read_query(query, table=get_data_dividend_table_name())
+    data = execute_query(query, table=get_data_dividend_table_name())
     return data
