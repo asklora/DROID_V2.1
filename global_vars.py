@@ -4,6 +4,7 @@ load_dotenv()
 import time
 import platform
 from pathlib import Path
+from datetime import datetime
 # Databases" URL
 # DBNAME="postgres"
 # DBUSER="postgres"
@@ -150,7 +151,7 @@ unique_num_of_outputs=1
 timestamp=time.time()
 gpu_number=0
 pc_number='unknown'
-db_end_date=datetime.today() - BDay(2)
+# db_end_date=datetime.today() - BDay(2)
 
 aws_columns_list = ["model_type", "data_period", "when_created", "forward_date", "forward_week", "forward_dow",
                     "train_dow", "best_train_acc",
