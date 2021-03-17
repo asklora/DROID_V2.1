@@ -39,6 +39,7 @@ ADDITIONAL_APPS = [
     'django_celery_results',
     'rest_framework',
     'import_export',
+    'django_celery_beat',
 ]
 CORE_APPS = [
     'core.bot',

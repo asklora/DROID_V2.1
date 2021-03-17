@@ -16,7 +16,7 @@ class UniverseResource(resources.ModelResource):
 
     class Meta:
         model = UniverseConsolidated
-        fields = ('uid','origin_ticker', 'use_isin','use_manual','created','source_id')
+        fields = ('uid','origin_ticker', 'use_isin','use_manual','created','source_id','has_data')
         import_id_fields = ('uid',)
     
     
@@ -53,6 +53,7 @@ class UniverseResource(resources.ModelResource):
     def before_import_row(self,row, row_number=None, **kwargs):
         row['uid'] = generate_id(8)
         row['created'] = timezone.now()
+        row['has_data'] = False
         self.user = kwargs['user'].id
         # return super(UniverseResource, self).before_import_row(row, **kwargs)
 
