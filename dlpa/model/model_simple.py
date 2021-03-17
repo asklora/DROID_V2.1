@@ -9,10 +9,10 @@ from tensorflow.python.keras.layers import Input, Dense, Concatenate, \
     LeakyReLU, Reshape, Dropout, Conv3D, Flatten
 from tensorflow.python.keras.models import Model
 
-from data.data_output import write_to_sql, write_to_sql_model_data
-from data.data_preprocess import test_data_reshape
-from model.ec2_fns import save_to_ec2, load_from_ec2
-
+from dlpa.data.data_output import write_to_sql, write_to_sql_model_data
+from dlpa.data.data_preprocess import test_data_reshape
+from dlpa.model.ec2_fns import save_to_ec2, load_from_ec2
+from global_vars import candle_type_candles
 
 def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX2, testY, final_prediction1,
                final_prediction2, indices_df, args, hypers):
@@ -175,12 +175,12 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, ar
     # 4D data
     # CNN model
     if args.data_period == 0:  # WEEKLY
-        if args.candle_type_candles == 0:
+        if candle_type_candles == 0:
             input_shape = (lookback, 5, 5, 1)  # looback, 5 days/wk, OHLCV, 1
         else:
             input_shape = (lookback, 1, 5, 1)  # looback, 5 days/wk, rets, 1
     else:  # DAILY
-        if args.candle_type_candles == 0:
+        if candle_type_candles == 0:
             input_shape = (lookback, 5, 1, 1)  # looback, 1 day, OHLCV, 1
         else:
             input_shape = (lookback, 1, 1, 1)  # looback, 1 day, rets, 1
@@ -188,7 +188,7 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, ar
     input_img = Input(shape=input_shape)
 
     # Conv3D on 4D data
-    if args.candle_type_candles == 0:
+    if candle_type_candles == 0:
         if args.data_period == 0:
             x_1 = Conv3D(cnn_kernel_size, (1, 1, 5), strides=(1, 1, 5), padding='valid', name='conv1')(input_img)
             x_1 = LeakyReLU(alpha=0.1)(x_1)

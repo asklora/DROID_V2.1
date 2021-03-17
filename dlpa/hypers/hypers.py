@@ -12,14 +12,19 @@ from hyperopt import fmin, tpe, hp
 from hyperopt.pyll.base import scope
 from pandas.tseries.offsets import Week, BDay
 
-from data.data_download import load_data
-from data.data_preprocess import dataset_p, normalize_candles_dlpm, dataset_prep, normalize_candles_dlpm_temp, \
-    create_train_test_valid_ohlcv, create_tac_prices, create_rv_df, create_beta_df
+from dlpa.data.data_download import load_data
+from dlpa.data.data_preprocess import (
+    dataset_p, 
+    normalize_candles_dlpm, 
+    dataset_prep, 
+    normalize_candles_dlpm_temp, 
+    create_train_test_valid_ohlcv, 
+    create_rv_df)
 from global_vars import aws_columns_list
-from hypers.model_parameters_load import load_model_data
-from model.model_dlpa import full_model as dlpa
-from model.model_dlpm import full_model as dlpm
-from model.model_simple import full_model as simple
+from dlpa.hypers.model_parameters_load import load_model_data
+from dlpa.model.model_dlpa import full_model as dlpa
+from dlpa.model.model_dlpm import full_model as dlpm
+from dlpa.model.model_simple import full_model as simple
 
 
 # from data.data_preprocess import standardize_on_all_stocks_each_ohlcv,normalize_on_all_stocks_each_ohlcv

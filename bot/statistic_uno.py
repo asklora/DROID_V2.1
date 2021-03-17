@@ -130,7 +130,7 @@ def populate_uno_statistic(ticker=None, currency_code=None, time_to_exp=None):
     lookback_horizon = max(statistics_lookback_list)
     start_date = backdate_by_month(lookback_horizon)
     end_date = dateNow()
-    df = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, classic=True, not_null=True)
+    df = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, uno=True, not_null=True)
     print(df)
 
     option_type_list = df.option_type.unique()

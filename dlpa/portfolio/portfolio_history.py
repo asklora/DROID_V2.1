@@ -9,8 +9,8 @@ from sqlalchemy import create_engine
 from datetime import datetime
 
 import global_vars
-from portfolio.client import get_client_information
-from portfolio.history_main_file import portfolio_maker, get_prices_from_aws, get_dates_list_from_aws,get_indices
+from dlpa.portfolio.client import get_client_information
+from dlpa.portfolio.history_main_file import portfolio_maker, get_prices_from_aws, get_dates_list_from_aws,get_indices
 
 parser = argparse.ArgumentParser(description='Loratech')
 # *******************  DATA PERIOD  ********************************************

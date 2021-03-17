@@ -100,6 +100,28 @@ X_columns = ["kurt_0_504", "vix_value",
 Y_columns = [["atm_volatility_spot", "atm_volatility_one_year", "atm_volatility_infinity"], ["slope", "deriv_inf", "deriv", "slope_inf"]]
 
 def folder_check():
-    if platform.system() == 'Linux':
+    if platform.system() == "Linux":
         if not os.path.exists(saved_model_path):
             os.makedirs(saved_model_path)
+
+
+#DLPA
+EC2_hostname="13.209.141.35"
+EC2_username="seoul"
+EC2_model_key_file="dlpa/extra/model_saving_key.pem"
+no_top_models = 10
+signal_threshold = 0.5
+candle_type_candles = 0 # this should DEFAULT TO 0 - use all candles
+candle_type_returnsY = 4 # this should DEFAULT TO 4 - use close
+candle_type_returnsX = 4 # this should DEFAULT TO 4 - use close
+aws_columns_list = ["model_type", "data_period", "when_created", "forward_date", "forward_week", "forward_dow",
+                    "train_dow", "best_train_acc",
+                    "best_valid_acc", "test_acc_1", "test_acc_2", "test_acc_3", "test_acc_4",
+                    "test_acc_5", "run_time_min", "train_num", "cnn_kernel_size",
+                    "batch_size", "learning_rate", "lookback",
+                    "epoch", "param_name_1", "param_val_1", "param_name_2", "param_val_2", "param_name_3",
+                    "param_val_3", "param_name_4", "param_val_4", "param_name_5", "param_val_5",
+                    "num_bins", "num_nans_to_skip", "accuracy_for_embedding",
+                    "candle_type_returnsX", "candle_type_returnsY", "candle_type_candles", "seed",
+                    "best_valid_epoch", "best_train_epoch", "model_filename",
+                    "pc_number", "stock_percentage", "valid_num", "test_num", "num_periods_to_predict"]

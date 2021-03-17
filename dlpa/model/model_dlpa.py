@@ -9,13 +9,13 @@ from tensorflow.python.keras.layers import Input, GRU, Dense, Concatenate, Bidir
     Flatten, Embedding, LeakyReLU, Conv3D
 from tensorflow.python.keras.models import Model
 
-from data.data_output import write_to_sql, write_to_sql_model_data
-from data.data_preprocess import test_data_reshape
-from model.ec2_fns import save_to_ec2, load_from_ec2
-
+from dlpa.data.data_output import write_to_sql, write_to_sql_model_data
+from dlpa.data.data_preprocess import test_data_reshape
+from dlpa.model.ec2_fns import save_to_ec2, load_from_ec2
+from global_vars import candle_type_candles
 
 def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX2, testY, final_prediction1,
-               final_prediction2, indices_df, args, hypers):
+               final_prediction2, indices_df, hypers):
     if args.test_num != 0:
         # Removing the nan rows in test datasets
         args.test_mask = np.squeeze(args.test_mask)
@@ -31,12 +31,12 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
 
     if args.train_num != 0:
         if args.save_ec2:
-            save_to_ec2(args)
+            save_to_ec2(remote_file_path, model_path, model_filename)
 
     if args.train_num != 0:
         model.load_weights(args.model_path + args.model_filename)
     else:
-        load_from_ec2(args)
+        load_from_ec2(remote_file_path, model_path, model_filename)
         model.load_weights(args.model_path + args.model_filename)
     # ******************************************************************************
     # ************************* Output to AWS **************************************
@@ -134,7 +134,7 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
     return {'loss': 1 - args.best_valid_acc, 'status': STATUS_OK}
 
 
-def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, args, hypers):
+def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hypers):
     # The attention based sequence to sequence model for weekly returns + candles.
 
     if args.train_num != 0:
@@ -186,19 +186,19 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, ar
 
     # CNN model
     if args.data_period == 0:  # WEEKLY
-        if args.candle_type_candles == 0:
+        if candle_type_candles == 0:
             input_shape = (lookback, 5, 5, 1)  # lookback, 5 days/wk, OHLCV, 1
         else:
             input_shape = (lookback, 1, 5, 1)  # lookback, 5 days/wk, rets, 1
     else:  # DAILY
-        if args.candle_type_candles == 0:
+        if candle_type_candles == 0:
             input_shape = (lookback, 5, 1, 1)  # lookback, 1 day, OHLCV, 1
         else:
             input_shape = (lookback, 1, 1, 1)  # lookback, 1 day, rets, 1
 
     input_img = Input(shape=input_shape)
 
-    if args.candle_type_candles == 0:
+    if candle_type_candles == 0:
         if args.data_period == 0:
             x_1 = Conv3D(cnn_kernel_size, (1, 1, 5), strides=(1, 1, 5), padding='valid', name='conv1')(input_img)
             x_1 = LeakyReLU(alpha=0.1)(x_1)
@@ -330,7 +330,7 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, ar
     return full_model, history
 
 
-def model_returns(trainX, trainY, validX, validY, args, hypers):
+def model_returns(trainX, trainY, validX, validY, hypers):
     # The attention based sequence to sequence model for weekly returns.
 
     if args.train_num != 0:

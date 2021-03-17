@@ -116,6 +116,15 @@ def get_data_vol_surface_inferred_table_name():
 def get_bot_statistic_table_name():
     return "bot_statistic"
 
+#DLPA
+def get_top_stock_models_table_name():
+    return "top_stock_models"
+
+def get_top_stock_models_stock_table_name():
+    return "top_stock_models_stock"
+
+
+
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 

@@ -8,13 +8,13 @@ import numpy as np
 from pandas.tseries.offsets import BDay
 
 import global_vars
-from hypers.hyper_run import gpu_mac_address, jump_period
+from dlpa.hypers.hyper_run import gpu_mac_address, jump_period
 # ******************************************************************************
 # *******************  PARAMETERS  *********************************************
 # ******************************************************************************
 # from hypers.portfolio_parameters_load import load_parameters
-from hypers.hypers import hypers
-from hypers.model_parameters_load import download_model_data
+from dlpa.hypers.hypers import hypers
+from dlpa.hypers.model_parameters_load import download_model_data
 
 parser = argparse.ArgumentParser()
 # *******************  DATA PERIOD  ********************************************
@@ -369,10 +369,8 @@ if __name__ == "__main__":
             hypers(args)
         sys.exit('Finished inferring!')
 
-
-
     # This function sets the gpu number and records the mc address.
-    gpu_mac_address(args)
+    pc_number = gpu_mac_address(args)
 
     # This function jumps the whole code by the given number of periods.
     jump_period(args)
