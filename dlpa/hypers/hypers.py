@@ -32,17 +32,17 @@ from dlpa.model.model_simple import full_model as simple
 # from data.data_preprocess import remove_outliers_on_all_stocks_each_ohlcv,remove_outliers_on_each_stocks_each_ohlcv
 
 
-def hypers(args):
+def hypers(model_type, train_num, num_periods_to_predict, data_period, rv_1=False, rv_2=False, tomorrow=False, future=False, live=False, full_update=False, use_candles=True):
     # global full_df, indices_df, full_df_rv
     # Range of values that hyperopt is trained on.
-    if args.train_num != 0:
+    if train_num != 0:
         space = {
             'batch_size': scope.int(hp.quniform('batch_size', 7, 9, 1)),  # => 2**x batch sizes 2 exponential
         }
         # Lookback period
-        if args.data_period == 0:  # weekly forecast
-            if args.future:
-                if args.num_periods_to_predict == 4:
+        if data_period == 0:  # weekly forecast
+            if future:
+                if num_periods_to_predict == 4:
                     temp_dic = {'lookback': hp.choice('lookback', [30])}  # 30 week lookback~ 7 months
                     space.update(temp_dic)
                 else:
@@ -55,7 +55,7 @@ def hypers(args):
             temp_dic = {'lookback': hp.choice('lookback', [20])}  # 20 day lookback
             space.update(temp_dic)
         # use 5X5 weekly OHLCV candles or just use weekly (or daily) close returns
-        if args.use_candles:
+        if use_candles:
             temp_dic = {
                 'cnn_kernel_size': hp.choice('cnn_kernel_size', [128, 256])}  # larger number of kernels better
             space.update(temp_dic)
@@ -63,7 +63,7 @@ def hypers(args):
             temp_dic = {'cnn_kernel_size': hp.choice('cnn_kernel_size', [0])}
             space.update(temp_dic)
 
-        if args.model_type == 0:  # DLPA MODEL----------------------
+        if model_type == 0:  # DLPA MODEL----------------------
             temp_dic = {'learning_rate': hp.choice('lr', [3, 5])}  # => 1e-x - learning rate
             space.update(temp_dic)
             # Attention model
@@ -75,12 +75,12 @@ def hypers(args):
             }
             space.update(space_update)
 
-        elif args.model_type == 1:  # DLPM MODEL----------------------
+        elif model_type == 1:  # DLPM MODEL----------------------
             temp_dic = {'learning_rate': hp.choice('lr', [5])}  # => 1e-x - learning rate
             space.update(temp_dic)
             # uses TWO inputs - candle AND weekly returns (wr)
             if space['cnn_kernel_size'] != 0:  # candles used - RECOMMEND
-                if args.future:
+                if future:
                     space_update = {
                         'gru_nodes_mult': hp.choice('gru_nodes_mult', [0, 1]),
                         'wr_gru_nodes_mult': hp.choice('wr_gru_nodes_mult', [0]),
@@ -109,7 +109,7 @@ def hypers(args):
             temp_dic = {'learning_rate': hp.choice('lr', [3, 5])}  # => 1e-x - learning rate
             space.update(temp_dic)
             # uses simple ANN either to CNN or weekly/daily returns
-            if args.future:
+            if future:
                 space_update = {
                     'num_layers': hp.choice('num_layers', [4, 8]),
                     'num_nodes': hp.choice('num_nodes', [8]),  # nodes/layer
@@ -126,15 +126,15 @@ def hypers(args):
     else:
         space = {'temp_var': hp.choice('temp_var', [1])}
 
-    args.aws_columns_list = aws_columns_list
+    aws_columns_list = aws_columns_list
 
     # You can set the number of recent weeks for updating as load_data's argument.
     # For example load_data(3) means that the function will update the most recent 3 weeks from sql server too.
     # 'Update = false' means that if there is a local database it won't connect to AWS anymore.
-    if args.rv_1 or args.rv_2:
-        full_df, indices_df = load_data(args)
+    if rv_1 or rv_2:
+        full_df, indices_df = load_data()
 
-        full_df_rv = create_rv_df(full_df, indices_df, args)
+        full_df_rv = create_rv_df(full_df, indices_df)
 
         # full_df_min = full_df.trading_day.min()
         # full_df_rv_min = full_df_rv.trading_day.min()
