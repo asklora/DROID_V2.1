@@ -7,6 +7,7 @@ if ! [ -x "$(command -v aws)" ]; then
   
   apt-get install -yq awscli
 fi
+apt update
 cd installer && tar -xzf ta-lib-0.4.0-src.tar.gz
 cd ta-lib
 ./configure --prefix=/usr
