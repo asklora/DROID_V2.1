@@ -91,7 +91,8 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=ticker)
+    # populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=ticker)
+    update_quandl_orats_from_quandl(ticker='MSFT.O')
     # update_ticker_symbol_from_dss()
     # do_function("master_ohlcvtr_update")
     # master_ohlctr_update()
