@@ -123,7 +123,8 @@ def get_top_stock_models_table_name():
 def get_top_stock_models_stock_table_name():
     return "top_stock_models_stock"
 
-
+def get_client_table_name():
+    return "client"
 
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr

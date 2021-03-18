@@ -7,14 +7,11 @@ from pandas.tseries.offsets import BDay
 from dlpa.hypers.hyper_run import gpu_mac_address, jump_period
 from dlpa.hypers.hypers import hypers
 from dlpa.hypers.model_parameters_load import download_model_data
-from global_vars import aws_columns_list, seed, period_jump, model_type, data_period, gpu_number, num_periods_to_predict
+from global_vars import aws_columns_list, seed, period_jump, model_type, data_period, gpu_number, num_periods_to_predict, pickle_update, update_lookback
 
 def main_process(gpu_number = gpu_number, num_periods_to_predict = num_periods_to_predict, rv_1=False, rv_2=False, tomorrow=False, future=False, live=False, full_update=False):
     if rv_1 or rv_2:
-        master_daily_df = True
-        master_daily_rv_df = False
-        master_daily_tac_df = False
-        master_daily_beta_adj_df = False
+        master_multiple = False
     
     if tomorrow:
         # This will predict tomorrow instead of today in daily mode.
@@ -35,7 +32,7 @@ def main_process(gpu_number = gpu_number, num_periods_to_predict = num_periods_t
         production_output_flag = True
         # args.go_portfolio = False
         d = datetime.date.today()
-        update = True
+        pickle_update = True
         valid_num = 0
         test_num = 0
         dow = 5
@@ -64,7 +61,7 @@ def main_process(gpu_number = gpu_number, num_periods_to_predict = num_periods_t
 
         for index, row in model_data.iterrows():
             temp_data = row
-            hypers()
+            hypers(model_type, train_num, num_periods_to_predict, data_period, update_lookback, rv_1=rv_1, rv_2=rv_2, tomorrow=tomorrow, future=future, live=live, full_update=full_update, use_candles=True, master_multiple=master_multiple, pickle_update=pickle_update)
         sys.exit('Finished inferring!')
     
     # This function sets the gpu number and records the mc address.
