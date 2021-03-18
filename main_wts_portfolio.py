@@ -10,7 +10,7 @@ def main_process(forward_date_start=None, forward_date_stop=None, num_periods_to
     if live:
         if future:
             portfolio_period = 0
-            record_DLP_rating()
+            record_DLP_rating(portfolio_period, num_periods_to_predict, live=live)
         else:
             for num in stock_num_list:
                 stock_num = num
