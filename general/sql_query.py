@@ -141,7 +141,7 @@ def get_active_universe_by_quandl_symbol(null_symbol=False, ticker=None, quandl_
     query += f"order by ticker"
     data = read_query(query, table=universe_table)
     if(len(data) < 1):
-        query += f"select ticker, split_part(ticker, '.', 1) as quandl_symbol from {universe_table} where is_active=True "
+        query = f"select ticker, split_part(ticker, '.', 1) as quandl_symbol from {universe_table} where is_active=True "
         
         data = read_query(query, table=universe_table)
     return data
