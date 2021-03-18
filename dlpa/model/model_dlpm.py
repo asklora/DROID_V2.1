@@ -5,19 +5,17 @@ import tensorflow as tf
 from hyperopt import STATUS_OK
 from keras.callbacks import EarlyStopping
 from tensorflow.python.keras import callbacks
-from tensorflow.python.keras.layers import (
-    Input, GRU, Dense, Concatenate,
-    Flatten, LeakyReLU, Reshape, 
-    Conv3D)
+from tensorflow.python.keras.layers import Input, GRU, Dense, Concatenate, \
+    Flatten, LeakyReLU, Reshape, Conv3D
 from tensorflow.python.keras.models import Model
 
 from dlpa.data.data_output import write_to_sql, write_to_sql_model_data
 from dlpa.data.data_preprocess import test_data_reshape
 from dlpa.model.ec2_fns import save_to_ec2, load_from_ec2
-from dlpa.global_vars import epoch
+from global_vars import candle_type_candles
 
 def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX2, testY, final_prediction1,
-               final_prediction2, indices_df, hypers):
+               final_prediction2, indices_df, args, hypers):
     if args.test_num != 0:
         # Removing the nan rows in test datasets
         args.test_mask = np.squeeze(args.test_mask)
@@ -137,7 +135,7 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
     return {'loss': 1 - args.best_valid_acc, 'status': STATUS_OK}
 
 
-def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hypers):
+def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, args, hypers):
     if args.train_num != 0:
         batch_size = 2 ** int(hypers['batch_size'])
         learning_rate = 10 ** -int(hypers['learning_rate'])
@@ -189,13 +187,13 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hy
     # so for 3 dim data, need 4D data with Conv3D
     # 4D data
     if args.data_period == 0:  # WEEKLY
-        if args.candle_type_candles == 0:  # RECOMMEND
+        if candle_type_candles == 0:  # RECOMMEND
             input_shape = (lookback, 5, 5, 1)  # lookback, 5 days/wk, OHLCV, 1
         else:
             input_shape = (lookback, 1, 5, 1)  # lookback, 5 days/wk, rets, 1
             print('DLPM NOT RECOMMENDED WITHOUT OHLCV CANDLES!!!!!!!')  # DON'T RECOMMEND DLPM without candles
     else:  # DAILY
-        if args.candle_type_candles == 0:  # RECOMMEND
+        if candle_type_candles == 0:  # RECOMMEND
             input_shape = (lookback, 5, 1, 1)  # lookback, 1 day, OHLCV, 1
         else:
             input_shape = (lookback, 1, 1, 1)  # lookback, 1 day, rets, 1
@@ -204,7 +202,7 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hy
     input_img = Input(shape=input_shape)
     input_img2 = Input(shape=(lookback, 1))
     # Conv3D on 4D data
-    if args.candle_type_candles == 0:
+    if candle_type_candles == 0:
         if args.data_period == 0:
             x_1 = Conv3D(cnn_kernel_size, (1, 1, 5), strides=(1, 1, 5), padding='valid', name='conv1')(input_img)
             x_1 = LeakyReLU(alpha=0.1)(x_1)
@@ -291,14 +289,14 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hy
                 [trainX2, trainX1], trainY,
                 validation_data=([validX2, validX1], validY),
                 batch_size=batch_size,
-                epochs=epoch,
+                epochs=args.epoch,
                 callbacks=callbacks_list)
         else:
             history = model.fit(
                 [trainX2, trainX1], trainY,
                 validation_split=.2,
                 batch_size=batch_size,
-                epochs=epoch,
+                epochs=args.epoch,
                 callbacks=callbacks_list)
     else:
         history = None
@@ -306,7 +304,7 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hy
 
 
 # DON'T USE DLPM WITHOUT CANDLES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def model_returns(trainX1, trainY, validX1, validY, hypers):  # DLPM with ONLY whole period returns
+def model_returns(trainX1, trainY, validX1, validY, args, hypers):  # DLPM with ONLY whole period returns
     print('DLPM NOT RECOMMENDED WITHOUT CANDLES!!!!!!!')  # DON'T RECOMMEND DLPM without candles
     if args.train_num != 0:
         batch_size = 2 ** int(hypers['batch_size'])
@@ -404,14 +402,14 @@ def model_returns(trainX1, trainY, validX1, validY, hypers):  # DLPM with ONLY w
                 [trainX1], trainY,
                 validation_data=(validX1, validY),
                 batch_size=batch_size,
-                epochs=epoch,
+                epochs=args.epoch,
                 callbacks=callbacks_list)
         else:
             history = model.fit(
                 [trainX1], trainY,
                 validation_split=.2,
                 batch_size=batch_size,
-                epochs=epoch,
+                epochs=args.epoch,
                 callbacks=callbacks_list)
     else:
         history = None

@@ -1,23 +1,21 @@
 import sys
 import paramiko as paramiko
+from global_vars import EC2_hostname, EC2_username, EC2_model_key_file
 
-def save_to_ec2(args):
+def save_to_ec2(remote_file_path, model_path, model_filename):
     # This function saves the model to EC2
     try:
         c = paramiko.SSHClient()
         c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         print("connecting...")
-        c.connect(hostname="13.209.141.35", username="seoul", key_filename="dlpa/extra/model_saving_key.pem")
-        # c.connect(hostname="15.165.8.208", username="seoul", key_filename="/home/loratech/PycharmProjects/DLPA/extra"
-        #                                                                    "/model_saving_key.pem")
+        c.connect(hostname=EC2_hostname, username=EC2_username, key_filename=EC2_model_key_file)
         print("connected!")
 
         ftp_client = c.open_sftp()
 
-        mkdir_p(ftp_client, args.remote_file_path)
-        # stdin, stdout, stderr = c.exec_command('mkdir %s'%(args.remote_file_path))
+        mkdir_p(ftp_client, remote_file_path)
 
-        ftp_client.put(args.model_path + args.model_filename, args.remote_file_path + args.model_filename)
+        ftp_client.put(model_path + model_filename, remote_file_path + model_filename)
         ftp_client.close()
         c.close()
         print("Model saved to EC2!")
@@ -25,19 +23,17 @@ def save_to_ec2(args):
         sys.exit("Connection Failed!!!")
 
 
-def load_from_ec2(args):
+def load_from_ec2(remote_file_path, model_path, model_filename):
     # This function loads the model from EC2
     try:
         c = paramiko.SSHClient()
         c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         print("connecting...")
-        c.connect(hostname="13.209.141.35", username="seoul", key_filename="dlpa/extra/model_saving_key.pem")
-        # c.connect(hostname="15.165.8.208", username="seoul", key_filename="/home/loratech/PycharmProjects/DLPA/extra"
-        #                                                                    "/model_saving_key.pem")
+        c.connect(hostname=EC2_hostname, username=EC2_username, key_filename=EC2_model_key_file)
         print("connected!")
 
         ftp_client = c.open_sftp()
-        ftp_client.get(args.remote_file_path + args.model_filename, args.model_path + args.model_filename)
+        ftp_client.get(remote_file_path + model_filename, model_path + model_filename)
         ftp_client.close()
         c.close()
         print("Model loaded from EC2!")

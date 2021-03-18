@@ -1,5 +1,5 @@
 from general.date_process import (
-    datetimeNow,
+    backdate_by_day, datetimeNow,
     dateNow)
 from general.slack import report_to_slack
 from general.data_process import remove_null
@@ -32,13 +32,13 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
         print(universe)
         identifier="origin_ticker"
         filter_field = ["ISIN", "SECD", "WC06004", "IPID"]
-        result, error_ticker = get_data_static_from_dsws(universe[["origin_ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
+        result, error_ticker = get_data_static_from_dsws(universe[["origin_ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 20))
         result = result.rename(columns={"ISIN": "isin", "index":"origin_ticker", "SECD": "sedol", "WC06004": "cusip", "IPID": "permid"})
         print(result)
 
         isin_list = result[["isin"]]
         isin_list = isin_list.drop_duplicates(keep="first", inplace=False)
-        result2, error_ticker = get_data_static_from_dsws(isin_list, "isin", ["RIC", "SECD"], use_ticker=False, split_number=min(len(isin_list), 40))
+        result2, error_ticker = get_data_static_from_dsws(isin_list, "isin", ["RIC", "SECD"], use_ticker=False, split_number=min(len(isin_list), 20))
         result2 = result2.rename(columns={"RIC": "consolidated_ticker", "index":"isin", "SECD": "sedol"})
         print(result2)
         result = result.merge(result2, how="left", on=["isin", "sedol"])
@@ -85,8 +85,8 @@ def update_ticker_name_from_dsws(ticker=None):
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"WC06003": "ticker_name", "NAME" : "ticker_fullname", "index":"ticker"})
-        result["ticker_name"]=result["ticker_name"].str.replace("'", "", regex=True).strip()
-        result["ticker_fullname"]=result["ticker_fullname"].str.replace("'", "", regex=True).strip()
+        result["ticker_name"]=result["ticker_name"].str.replace("'", "", regex=True)
+        result["ticker_fullname"]=result["ticker_fullname"].str.replace("'", "", regex=True)
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
@@ -153,6 +153,29 @@ def update_currency_code_from_dss(ticker=None):
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
+
+def update_ticker_symbol_from_dss(ticker=None):
+    print("{} : === Ticker Symbol Start Ingestion ===".format(datetimeNow()))
+    identifier="ticker"
+    universe = get_active_universe(ticker=ticker)
+    universe = universe.drop(columns=["ticker_symbol"])
+    start_date = backdate_by_day(1)
+    end_date = dateNow()
+    jsonFileName = "files/file_json/ticker_symbol.json"
+    result = get_data_from_dss(start_date, end_date, universe["ticker"], jsonFileName, report=REPORT_HISTORY)
+    print(result)
+    result = result.drop(columns=["IdentifierType", "Identifier"])
+    print(result)
+    if (len(result) > 0 ):
+        result = result.rename(columns={
+            "RIC": "ticker",
+            "Ticker": "ticker_symbol"
+        })
+        result = remove_null(result, "ticker_symbol")
+        result = universe.merge(result, how="left", on=["ticker"])
+        print(result)
+        upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+        report_to_slack("{} : === Ticker Symbol Updated ===".format(datetimeNow()))
 
 def update_company_desc_from_dsws(ticker=None):
     print("{} : === Company Description Ingestion ===".format(datetimeNow()))

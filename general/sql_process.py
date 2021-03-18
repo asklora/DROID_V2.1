@@ -7,8 +7,8 @@ from core.djangomodule.network.cloud import DroidDb
 load_dotenv()
 
 db = DroidDb()
-
-if os.getenv("DROID_DEBUG") == True:
+debug=os.getenv("DROID_DEBUG")
+if debug:
     read_endpoint,write_endpoint,port = db.test_url
 else:
     read_endpoint,write_endpoint,port = db.prod_url

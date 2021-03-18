@@ -14,32 +14,35 @@ from pandas.tseries.offsets import Week, BDay
 
 from dlpa.data.data_download import load_data
 from dlpa.data.data_preprocess import (
-    dataset_p, normalize_candles_dlpm, 
-    dataset_prep, normalize_candles_dlpm_temp,
-    create_train_test_valid_ohlcv, create_rv_df)
-from dlpa.global_vars import aws_columns_list
+    dataset_p, 
+    normalize_candles_dlpm, 
+    dataset_prep, 
+    normalize_candles_dlpm_temp, 
+    create_train_test_valid_ohlcv, 
+    create_rv_df)
+from global_vars import aws_columns_list
 from dlpa.hypers.model_parameters_load import load_model_data
 from dlpa.model.model_dlpa import full_model as dlpa
 from dlpa.model.model_dlpm import full_model as dlpm
 from dlpa.model.model_simple import full_model as simple
-from dlpa.global_vars import model_path, plot_path, model_path_clustering
+
 
 # from data.data_preprocess import standardize_on_all_stocks_each_ohlcv,normalize_on_all_stocks_each_ohlcv
 # from data.data_preprocess import standardize_on_each_stocks_each_ohlcv,normalize_on_each_stocks_each_ohlcv
 # from data.data_preprocess import remove_outliers_on_all_stocks_each_ohlcv,remove_outliers_on_each_stocks_each_ohlcv
 
 
-def hypers():
+def hypers(model_type, train_num, num_periods_to_predict, data_period, rv_1=False, rv_2=False, tomorrow=False, future=False, live=False, full_update=False, use_candles=True):
     # global full_df, indices_df, full_df_rv
     # Range of values that hyperopt is trained on.
-    if args.train_num != 0:
+    if train_num != 0:
         space = {
             'batch_size': scope.int(hp.quniform('batch_size', 7, 9, 1)),  # => 2**x batch sizes 2 exponential
         }
         # Lookback period
-        if args.data_period == 0:  # weekly forecast
-            if args.future:
-                if args.num_periods_to_predict == 4:
+        if data_period == 0:  # weekly forecast
+            if future:
+                if num_periods_to_predict == 4:
                     temp_dic = {'lookback': hp.choice('lookback', [30])}  # 30 week lookback~ 7 months
                     space.update(temp_dic)
                 else:
@@ -52,7 +55,7 @@ def hypers():
             temp_dic = {'lookback': hp.choice('lookback', [20])}  # 20 day lookback
             space.update(temp_dic)
         # use 5X5 weekly OHLCV candles or just use weekly (or daily) close returns
-        if args.use_candles:
+        if use_candles:
             temp_dic = {
                 'cnn_kernel_size': hp.choice('cnn_kernel_size', [128, 256])}  # larger number of kernels better
             space.update(temp_dic)
@@ -60,7 +63,7 @@ def hypers():
             temp_dic = {'cnn_kernel_size': hp.choice('cnn_kernel_size', [0])}
             space.update(temp_dic)
 
-        if args.model_type == 0:  # DLPA MODEL----------------------
+        if model_type == 0:  # DLPA MODEL----------------------
             temp_dic = {'learning_rate': hp.choice('lr', [3, 5])}  # => 1e-x - learning rate
             space.update(temp_dic)
             # Attention model
@@ -72,12 +75,12 @@ def hypers():
             }
             space.update(space_update)
 
-        elif args.model_type == 1:  # DLPM MODEL----------------------
+        elif model_type == 1:  # DLPM MODEL----------------------
             temp_dic = {'learning_rate': hp.choice('lr', [5])}  # => 1e-x - learning rate
             space.update(temp_dic)
             # uses TWO inputs - candle AND weekly returns (wr)
             if space['cnn_kernel_size'] != 0:  # candles used - RECOMMEND
-                if args.future:
+                if future:
                     space_update = {
                         'gru_nodes_mult': hp.choice('gru_nodes_mult', [0, 1]),
                         'wr_gru_nodes_mult': hp.choice('wr_gru_nodes_mult', [0]),
@@ -106,7 +109,7 @@ def hypers():
             temp_dic = {'learning_rate': hp.choice('lr', [3, 5])}  # => 1e-x - learning rate
             space.update(temp_dic)
             # uses simple ANN either to CNN or weekly/daily returns
-            if args.future:
+            if future:
                 space_update = {
                     'num_layers': hp.choice('num_layers', [4, 8]),
                     'num_nodes': hp.choice('num_nodes', [8]),  # nodes/layer
@@ -123,15 +126,15 @@ def hypers():
     else:
         space = {'temp_var': hp.choice('temp_var', [1])}
 
-    args.aws_columns_list = aws_columns_list
+    aws_columns_list = aws_columns_list
 
     # You can set the number of recent weeks for updating as load_data's argument.
     # For example load_data(3) means that the function will update the most recent 3 weeks from sql server too.
     # 'Update = false' means that if there is a local database it won't connect to AWS anymore.
-    if args.rv_1 or args.rv_2:
-        full_df, indices_df = load_data(args)
+    if rv_1 or rv_2:
+        full_df, indices_df = load_data()
 
-        full_df_rv = create_rv_df(full_df, indices_df, args)
+        full_df_rv = create_rv_df(full_df, indices_df)
 
         # full_df_min = full_df.trading_day.min()
         # full_df_rv_min = full_df_rv.trading_day.min()
@@ -220,16 +223,25 @@ def hypers():
     # ********************************************************************************************
     # ***************************** PATH creation ************************************************
     if platform.system() == 'Linux':
-        if not os.path.exists(model_path):
-            os.makedirs(model_path)
-        if not os.path.exists(plot_path):
-            os.makedirs(plot_path)
-        if not os.path.exists(model_path_clustering):
-            os.makedirs(model_path_clustering)
+        args.model_path = '/home/loratech/PycharmProjects/models/'
+        if not os.path.exists(args.model_path):
+            os.makedirs(args.model_path)
+        args.plot_path = '/home/loratech/PycharmProjects/plots/'
+        if not os.path.exists(args.plot_path):
+            os.makedirs(args.plot_path)
     else:
-        Path(model_path).mkdir(parents=True, exist_ok=True)
-        Path(plot_path).mkdir(parents=True, exist_ok=True)
-        Path(model_path_clustering).mkdir(parents=True, exist_ok=True)
+        args.model_path = 'C:/dlpa_master/model/'
+        Path(args.model_path).mkdir(parents=True, exist_ok=True)
+        args.plot_path = 'C:/dlpa_master/plots/'
+        Path(args.plot_path).mkdir(parents=True, exist_ok=True)
+
+    if platform.system() == 'Linux':
+        args.model_path_clustering = '/home/loratech/PycharmProjects/models/clustering/'
+        if not os.path.exists(args.model_path_clustering):
+            os.makedirs(args.model_path_clustering)
+    else:
+        args.model_path_clustering = 'C:/dlpa_master/model/clustering/'
+        Path(args.model_path_clustering).mkdir(parents=True, exist_ok=True)
 
     # ********************************************************************************************
     # ********************************************************************************************
@@ -527,7 +539,7 @@ def hypers():
     gc.collect()
 
 
-def model_filename_creator():
+def model_filename_creator(args):
     if args.model_type == 0:
         type = "DLPA"
     elif args.model_type == 1:
@@ -538,7 +550,7 @@ def model_filename_creator():
     return type + "_" + str(args.pc_number) + "_gpu" + str(args.gpu_number) + "_" + str(int(time.time())) + ".hdf5"
 
 
-def no_train_dataset_creator(dow):
+def no_train_dataset_creator(args, dow):
     # Creates a small dataset for test datasets.
     start_date_temp = args.start_date
     forward_date_temp = args.forward_date

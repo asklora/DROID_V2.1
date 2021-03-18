@@ -159,6 +159,7 @@ class UniverseConsolidated(models.Model):
     permid = models.CharField(max_length=500, blank=True, null=True)
     consolidated_ticker = models.CharField(max_length=50,blank=True, null=True)
     ingestion_manager = ConsolidatedManager()
+    has_data = models.BooleanField(default=False)
     objects = models.Manager()
     def save(self, *args, **kwargs):
         if not self.uid:
@@ -216,6 +217,7 @@ class Universe(models.Model):
     icb_code = models.CharField(max_length=500, blank=True, null=True)
     fiscal_year_end = models.CharField(max_length=500, blank=True, null=True)
     entity_type = models.TextField(blank=True, null=True)
+    ticker_symbol = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.ticker

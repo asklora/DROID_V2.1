@@ -39,6 +39,7 @@ ADDITIONAL_APPS = [
     'django_celery_results',
     'rest_framework',
     'import_export',
+    'django_celery_beat',
 ]
 CORE_APPS = [
     'core.bot',
@@ -128,6 +129,9 @@ if db_debug:
     read_endpoint,write_endpoint,port = db.test_url
 else:
     read_endpoint,write_endpoint,port = db.prod_url
+
+print(f'using read: {read_endpoint}')
+print(f'using write: {write_endpoint}')
 
 DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
 DB_ENGINE = 'psqlextra.backend'

@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
-
+import scipy.special as sc
+sc.seterr(all="ignore")
 
 # all days ASCENDING e.g. 0 is the most oldest day
 

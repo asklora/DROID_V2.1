@@ -374,3 +374,25 @@ class Fred(models.Model):
 
     def __str__(self):
         return f"{self.trading_day}"
+
+class LatestPrice(models.Model):
+    ticker = models.OneToOneField(Universe, on_delete=models.CASCADE,db_column="ticker", related_name="latest_price_ticker", primary_key=True)
+    classic_vol = models.FloatField(blank=True, null=True)
+    open = models.FloatField(blank=True, null=True)
+    high = models.FloatField(blank=True, null=True)
+    low = models.FloatField(blank=True, null=True)
+    close = models.FloatField(blank=True, null=True)
+    intraday_date = models.DateField(blank=True, null=True)
+    intraday_ask = models.FloatField(blank=True, null=True)
+    intraday_bid = models.FloatField(blank=True, null=True)
+    latest_price_change = models.FloatField(blank=True, null=True)
+    intraday_time = models.TextField(blank=True, null=True)
+    last_date = models.DateField(blank=True, null=True)
+    capital_change = models.FloatField(blank=True, null=True)
+    
+    class Meta:
+        managed = True
+        db_table = "latest_price"
+
+    def __str__(self):
+        return f"{self.ticker}"

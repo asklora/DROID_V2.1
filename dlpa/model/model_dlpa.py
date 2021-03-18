@@ -5,17 +5,14 @@ import tensorflow as tf
 from hyperopt import STATUS_OK
 from keras.callbacks import EarlyStopping
 from tensorflow.python.keras import callbacks
-from tensorflow.python.keras.layers import (
-    Input, GRU, Dense, Concatenate, 
-    Bidirectional, Attention, 
-    Flatten, Embedding, LeakyReLU, 
-    Conv3D)
+from tensorflow.python.keras.layers import Input, GRU, Dense, Concatenate, Bidirectional, Attention, \
+    Flatten, Embedding, LeakyReLU, Conv3D
 from tensorflow.python.keras.models import Model
 
 from dlpa.data.data_output import write_to_sql, write_to_sql_model_data
 from dlpa.data.data_preprocess import test_data_reshape
 from dlpa.model.ec2_fns import save_to_ec2, load_from_ec2
-from dlpa.global_vars import epoch
+from global_vars import candle_type_candles
 
 def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX2, testY, final_prediction1,
                final_prediction2, indices_df, hypers):
@@ -28,18 +25,18 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
         testY = testY[:, args.test_mask, :]
 
     if args.cnn_kernel_size != 0:
-        model, history = model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hypers)
+        model, history = model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, args, hypers)
     else:
-        model, history = model_returns(trainX1, trainY, validX1, validY, hypers)
+        model, history = model_returns(trainX1, trainY, validX1, validY, args, hypers)
 
     if args.train_num != 0:
         if args.save_ec2:
-            save_to_ec2(args)
+            save_to_ec2(remote_file_path, model_path, model_filename)
 
     if args.train_num != 0:
         model.load_weights(args.model_path + args.model_filename)
     else:
-        load_from_ec2(args)
+        load_from_ec2(remote_file_path, model_path, model_filename)
         model.load_weights(args.model_path + args.model_filename)
     # ******************************************************************************
     # ************************* Output to AWS **************************************
@@ -49,7 +46,7 @@ def full_model(trainX1, trainX2, trainY, validX1, validX2, validY, testX1, testX
         predict_zeros = np.zeros((testX1.shape[1], 1))
 
         scores = np.zeros(5)
-        tempX1, tempX2 = test_data_reshape(testX1, testX2, hypers)
+        tempX1, tempX2 = test_data_reshape(testX1, testX2, args, hypers)
         # tempX1 = testX1[...,np.newaxis]
         if args.cnn_kernel_size != 0:
             for i in range(len(testX1)):
@@ -189,19 +186,19 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hy
 
     # CNN model
     if args.data_period == 0:  # WEEKLY
-        if args.candle_type_candles == 0:
+        if candle_type_candles == 0:
             input_shape = (lookback, 5, 5, 1)  # lookback, 5 days/wk, OHLCV, 1
         else:
             input_shape = (lookback, 1, 5, 1)  # lookback, 5 days/wk, rets, 1
     else:  # DAILY
-        if args.candle_type_candles == 0:
+        if candle_type_candles == 0:
             input_shape = (lookback, 5, 1, 1)  # lookback, 1 day, OHLCV, 1
         else:
             input_shape = (lookback, 1, 1, 1)  # lookback, 1 day, rets, 1
 
     input_img = Input(shape=input_shape)
 
-    if args.candle_type_candles == 0:
+    if candle_type_candles == 0:
         if args.data_period == 0:
             x_1 = Conv3D(cnn_kernel_size, (1, 1, 5), strides=(1, 1, 5), padding='valid', name='conv1')(input_img)
             x_1 = LeakyReLU(alpha=0.1)(x_1)
@@ -317,14 +314,14 @@ def model_returns_candles(trainX1, trainX2, trainY, validX1, validX2, validY, hy
             # USE A VALIDATION SET
             history = full_model.fit([trainX2, trainX1, decoder_input_df_no_force], trainY, batch_size=batch_size,
                                      callbacks=callbacks_list,
-                                     epochs=epoch,
+                                     epochs=args.epoch,
                                      validation_data=([validX2, validX1, decoder_input_valid_no_force], validY),
                                      verbose=1)
         else:
             # USE A RANDOM SPLIT
             history = full_model.fit([trainX2, trainX1, decoder_input_df_no_force], trainY, batch_size=batch_size,
                                      callbacks=callbacks_list,
-                                     epochs=epoch,
+                                     epochs=args.epoch,
                                      validation_split=.2,
                                      verbose=1)
     else:
@@ -461,13 +458,13 @@ def model_returns(trainX, trainY, validX, validY, hypers):
         if validX is not None:
             history = full_model.fit([trainX, decoder_input_df_no_force], trainY, batch_size=batch_size,
                                      callbacks=callbacks_list,
-                                     epochs=epoch,
+                                     epochs=args.epoch,
                                      validation_data=([validX, decoder_input_valid_no_force], validY),
                                      verbose=1)
         else:
             history = full_model.fit([trainX, decoder_input_df_no_force], trainY, batch_size=batch_size,
                                      callbacks=callbacks_list,
-                                     epochs=epoch, validation_split=.2,
+                                     epochs=args.epoch, validation_split=.2,
                                      verbose=1)
     else:
         history = None

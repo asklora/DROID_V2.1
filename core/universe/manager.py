@@ -10,7 +10,7 @@ class ConsolidatedManager(models.Manager):
         if ticker:
             try:
                 populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=ticker)
-                # do_function("universe_populate")
+                do_function("universe_populate")
                 return True
             except Exception as e:
                 print(e)

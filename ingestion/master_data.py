@@ -61,7 +61,7 @@ def update_data_dss_from_dss(ticker=None, currency_code=None, history=False, man
     else:
         start_date = get_max_last_ingestion_from_universe(ticker=ticker, currency_code=currency_code)
         if(start_date=="None"):
-            start_date = backdate_by_day(3)
+            start_date = dlp_start_date()
     
     print(f"Ingestion Start From {start_date}")
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -96,7 +96,7 @@ def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, m
     else:
         start_date = get_max_last_ingestion_from_universe(ticker=ticker, currency_code=currency_code)
         if(start_date=="None"):
-            start_date = backdate_by_day(3)
+            start_date = dlp_start_date()
     
     print(f"Ingestion Start From {start_date}")
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -166,12 +166,12 @@ def update_quandl_orats_from_quandl(ticker=None, quandl_symbol=None):
         if (len(data_from_quandl) > 0):
             result = result.append(data_from_quandl)
     print("=== Getting data from Quandl DONE ===")
-    result = result[["uid", "ticker", "trading_day","stockpx",
-        "iv30","iv60","iv90",
-        "m1atmiv", "m1dtex","m2atmiv","m2dtex",
-        "m3atmiv","m3dtex","m4atmiv","m4dtex",
-        "slope","deriv","slope_inf", "deriv_inf"]]
-    if(len(result)) > 0 :
+    if(len(result) > 0):
+        result = result[["uid", "ticker", "trading_day","stockpx",
+            "iv30","iv60","iv90",
+            "m1atmiv", "m1dtex","m2atmiv","m2dtex",
+            "m3atmiv","m3dtex","m4atmiv","m4dtex",
+            "slope","deriv","slope_inf", "deriv_inf"]]
         print(result)
         # if type(ticker) != type(None) or type(quandl_symbol) != type(None):
         #     upsert_data_to_database(result, get_quandl_table_name(), "uid", how="update", Text=True)
@@ -181,17 +181,17 @@ def update_quandl_orats_from_quandl(ticker=None, quandl_symbol=None):
         upsert_data_to_database(result, get_quandl_table_name(), "uid", how="update", Text=True)
         do_function("data_vol_surface_update")
         report_to_slack("{} : === Quandl Updated ===".format(datetimeNow()))
-    # do_function("calculate_latest_vol_updates_us")
+        # do_function("calculate_latest_vol_updates_us")
 
-    # report_to_slack("{} : === Quandl Ingested ===".format(str(datetime.now())), args)
-    # print("=== Quandl Orats DONE ===")
-    # try:
-    #     r = requests.get(f"{args.urlAPIAsklora}/api-helper/calc_latest_bot/?index=US")
-    #     if r.status_code == 200:
-    #         report_to_slack("{} : === LATEST BOT UPDATES QUANDL SUCCESS === : ".format(str(datetime.now())), args)
-    # except Exception as e:
-    #     report_to_slack("{} : === LATEST BOT UPDATES QUANDL ERROR === : {}".format(str(datetime.now()), e), args)
-    #     print(e)
+        # report_to_slack("{} : === Quandl Ingested ===".format(str(datetime.now())), args)
+        # print("=== Quandl Orats DONE ===")
+        # try:
+        #     r = requests.get(f"{args.urlAPIAsklora}/api-helper/calc_latest_bot/?index=US")
+        #     if r.status_code == 200:
+        #         report_to_slack("{} : === LATEST BOT UPDATES QUANDL SUCCESS === : ".format(str(datetime.now())), args)
+        # except Exception as e:
+        #     report_to_slack("{} : === LATEST BOT UPDATES QUANDL ERROR === : {}".format(str(datetime.now()), e), args)
+        #     print(e)
 
 def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
     print("{} : === Fundamentals Score Start Ingestion ===".format(datetimeNow()))

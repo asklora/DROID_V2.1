@@ -90,7 +90,7 @@ def get_volatility_latest_date(ticker=None, currency_code=None, infer=True):
         table_name = get_data_vol_surface_inferred_table_name()
     else:
         table_name = get_data_vol_surface_table_name()
-    query = f"select ticker, max(spot_date) as max_date from {table_name} "
+    query = f"select ticker, max(trading_day) as max_date from {table_name} "
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
         query += "where " + check
@@ -270,14 +270,16 @@ def get_dividends_data():
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
-def get_bot_backtest_data(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, uno=False, ucdc=False, classic=False, mod=False, null_filler=False):
+def get_bot_backtest_data(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, uno=False, ucdc=False, classic=False, mod=False, null_filler=False, not_null=False):
     start_date, end_date = check_start_end_date(start_date, end_date)
     if(uno):
         table_name = get_bot_uno_backtest_table_name()
     elif(ucdc):
         table_name = get_bot_ucdc_backtest_table_name()
-    else:
+    elif(classic):
         table_name = get_bot_classic_backtest_table_name()
+    else:
+        table_name = get_bot_uno_backtest_table_name()
     
     if mod:
         table_name += '_mod'
@@ -291,6 +293,8 @@ def get_bot_backtest_data(start_date=None, end_date=None, time_to_exp=None, tick
         query += f"and time_to_exp in {tuple_data(time_to_exp)} "
     if(null_filler):
         query += f"and event is null "
+    if(not_null):
+        query += f"and event is not null "
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
