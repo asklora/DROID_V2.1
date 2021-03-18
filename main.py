@@ -51,10 +51,10 @@ def new_ticker_ingestion(ticker=None):
         update_data_dss_from_dss(ticker=ticker,history=True)
         update_data_dsws_from_dsws(ticker=ticker,history=True)
         dividend_updated(ticker=ticker)
-    do_function("master_ohlcvtr_update")
-    master_ohlctr_update()
-    master_tac_update()
-    master_multiple_update()
+    # do_function("master_ohlcvtr_update")
+    # master_ohlctr_update()
+    # master_tac_update()
+    # master_multiple_update()
     
 
 def update_master_data(ticker=None, currency_code=None):
