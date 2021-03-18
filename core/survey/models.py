@@ -33,7 +33,7 @@ class InvestorTypes(BaseTimeStampModel): #(db.Model):
 		db_table = "survey_investor_types"
    
 class SurveyResults(BaseTimeStampModel): #(db.Model):
-	email = models.CharField(max_length=128, unique=True) #db.Column(db.String(128))
+	email = models.CharField(max_length=128, unique=True, null=True, blank=True, default=None) #db.Column(db.String(128))
 	answer = models.JSONField(default=dict) #db.Column(db.JSON)
 	investor_type = models.ForeignKey(InvestorTypes,on_delete=models.CASCADE) #db.Column(db.Integer)
 	read_policy = models.BooleanField() #db.Column(db.Boolean)
