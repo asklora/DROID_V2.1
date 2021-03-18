@@ -20,7 +20,7 @@ class BotBacktest(models.Model):
         db_table = "bot_backtest"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 class ClassicBacktest(models.Model):
     uid = models.TextField(primary_key=True)
@@ -47,7 +47,7 @@ class ClassicBacktest(models.Model):
         db_table = "bot_classic_backtest"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 class UnoBacktest(models.Model):
     uid = models.TextField(primary_key=True)
@@ -100,7 +100,7 @@ class UnoBacktest(models.Model):
         db_table = "bot_uno_backtest"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 class UcdcBacktest(models.Model):
     uid = models.TextField(primary_key=True)
@@ -155,7 +155,9 @@ class UcdcBacktest(models.Model):
         db_table = "bot_ucdc_backtest"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
+
+
 class BotData(models.Model):
     uid = models.TextField(primary_key=True)
     ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="bot_data_ticker")
@@ -204,7 +206,7 @@ class BotData(models.Model):
         db_table = "bot_data"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 class VolSurface(models.Model):
     uid = models.TextField(primary_key=True)
@@ -222,7 +224,7 @@ class VolSurface(models.Model):
         db_table = "data_vol_surface"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 class VolSurfaceInferred(models.Model):
     uid = models.TextField(primary_key=True)
@@ -240,7 +242,7 @@ class VolSurfaceInferred(models.Model):
         db_table = "data_vol_surface_inferred"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
     
 class BotStatistic(models.Model):
     uid = models.TextField(primary_key=True)
@@ -270,4 +272,4 @@ class BotStatistic(models.Model):
         db_table = 'bot_statistic'
 
     def __str__(self):
-        return f'{self.ticker}-{self.bot_type}'
+        return f'{self.ticker.ticker}-{self.bot_type}'

@@ -22,7 +22,7 @@ class DataDss(models.Model):
         db_table = "data_dss"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 
 class DataDsws(models.Model):
@@ -39,7 +39,7 @@ class DataDsws(models.Model):
         db_table = "data_dsws"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 
 class ReportDatapoint(models.Model):
@@ -54,7 +54,7 @@ class ReportDatapoint(models.Model):
         db_table = "report_datapoint"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 
 class MasterMultiple(models.Model):  # Master Daily Change to Master Multiply
@@ -74,7 +74,7 @@ class MasterMultiple(models.Model):  # Master Daily Change to Master Multiply
         db_table = "master_multiple"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 
 class MasterOhlcvtr(models.Model):  # OHLCVTR DATA Change to master_ohlcvtr
@@ -101,7 +101,7 @@ class MasterOhlcvtr(models.Model):  # OHLCVTR DATA Change to master_ohlcvtr
         db_table = "master_ohlcvtr"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 
 class MasterTac(models.Model):  # Master TAC Change to master_tac
@@ -125,7 +125,7 @@ class MasterTac(models.Model):  # Master TAC Change to master_tac
         db_table = "master_tac"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 
 class DataDividend(models.Model):
@@ -142,7 +142,7 @@ class DataDividend(models.Model):
         db_table = "data_dividend"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 
 class DataInterest(models.Model):
@@ -179,7 +179,7 @@ class DataDividendDailyRates(models.Model):
         db_table = "data_dividend_daily_rates"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 
 class DataInterestDailyRates(models.Model):
@@ -211,7 +211,7 @@ class DataSplit(models.Model):
         db_table = "data_split"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 
 class DataFundamentalScore(models.Model):
@@ -240,7 +240,7 @@ class DataFundamentalScore(models.Model):
         db_table = "data_fundamental_score"
 
     def __str__(self):
-        return self.ticker
+        return self.ticker.ticker
 
 
 class DataQuandl(models.Model):
@@ -272,7 +272,7 @@ class DataQuandl(models.Model):
         db_table = "data_quandl"
 
     def __str__(self):
-        return f"{self.ticker}-{self.trading_day}"
+        return f"{self.ticker.ticker}-{self.trading_day}"
 
 
 class DataVix(models.Model):
@@ -284,6 +284,8 @@ class DataVix(models.Model):
     class Meta:
         managed = True
         db_table = "data_vix"
+    def __str__(self):
+        return self.uid
 
 class Macro(models.Model):
     period_end = models.DateField(primary_key=True)
@@ -343,7 +345,7 @@ class Ibes(models.Model):
         db_table = "data_ibes"
 
     def __str__(self):
-        return f"{self.ticker}-{self.period_end}"
+        return f"{self.ticker.ticker}-{self.period_end}"
 
 
 class IbesMonthly(models.Model):
@@ -362,7 +364,7 @@ class IbesMonthly(models.Model):
         db_table = "data_ibes_monthly"
 
     def __str__(self):
-        return f"{self.ticker}-{self.trading_day}"
+        return f"{self.ticker.ticker}-{self.trading_day}"
 
 
 class Fred(models.Model):
@@ -395,4 +397,4 @@ class LatestPrice(models.Model):
         db_table = "latest_price"
 
     def __str__(self):
-        return f"{self.ticker}"
+        return f"{self.ticker.ticker}"
