@@ -81,7 +81,7 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
         try:
             result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date)
             if(split_number == 1):
-                result[identifier] = universe
+                result[identifier] = universelist
             print(result)
             chunk_data.append(result)
         except Exception as e:
