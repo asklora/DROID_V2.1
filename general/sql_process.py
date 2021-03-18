@@ -2,12 +2,12 @@ import os
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 from core.djangomodule.network.cloud import DroidDb
-
-
+from environs import Env
+env = Env()
 load_dotenv()
 
 db = DroidDb()
-debug=os.getenv("DROID_DEBUG")
+debug=env.bool("DROID_DEBUG")
 if debug:
     read_endpoint,write_endpoint,port = db.test_url
 else:
