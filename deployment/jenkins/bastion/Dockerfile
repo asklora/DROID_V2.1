@@ -4,6 +4,6 @@ RUN mkdir /code
 WORKDIR /code
 COPY . /code/
 CMD echo $PWD
-RUN /code/installer/requirement.sh
-RUN /code/installer/python_dependency.sh
+RUN ../../../requirement.sh
+RUN ../../../installer/python_dependency.sh
 EXPOSE 8000
