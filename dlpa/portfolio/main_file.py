@@ -1,4 +1,5 @@
 import datetime as dt
+from general.sql_query import read_query
 import mimetypes
 import smtplib
 import ssl
@@ -19,8 +20,8 @@ from sqlalchemy import create_engine, and_
 from sqlalchemy.types import Date
 
 import global_vars
-from global_vars import no_top_models
-
+from global_vars import no_top_models, portfolio_period
+from general.table_name import get_top_stock_models_stock_table_name, get_top_stock_models_table_name
 
 def portfolio_maker(args):
     if args.portfolio_period is None:
@@ -405,82 +406,47 @@ def send_email(args):
         print(e)
 
 
-def get_dates_list_from_aws(args):
-    args.forward_date_start = datetime.strptime(f'{args.forward_date_start}', '%Y-%m-%d').date()
-    args.forward_date_stop = datetime.strptime(f'{args.forward_date_stop}', '%Y-%m-%d').date()
-
-    args.forward_date_start_1 = args.forward_date_start.strftime('%Y-%m-%d')
-    args.forward_date_stop_1 = args.forward_date_stop.strftime('%Y-%m-%d')
-
-    if args.portfolio_period == 0:
-        period = 'weekly'
+def get_dates_list_from_aws(forward_date_start, forward_date_stop, portfolio_period=portfolio_period):
+    if portfolio_period == 0:
+        period = "weekly"
     else:
-        period = 'daily'
+        period = "daily"
 
-    db_url = global_vars.DB_PROD_URL_READ
-    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
+    table_name = get_top_stock_models_stock_table_name()
+    query = f"select * from {table_name} where data_period = '{period}' and forward_date>='{forward_date_start}' and forward_date<= '{forward_date_stop}'"
+    data = read_query(query, table_name, cpu_counts=True)
+    data.fillna(value=0, inplace=True)
 
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        table0 = db.Table(args.stock_table_name, metadata, autoload=True, autoload_with=conn)
-
-        query = db.select(
-            [table0.columns.data_period, table0.columns.when_created, table0.columns.forward_date,
-             table0.columns.spot_date, table0.columns.index,
-             table0.columns.ticker,
-             table0.columns.predicted_quantile_1, table0.columns.signal_strength_1,
-             table0.columns.model_filename]).where(and_(
-            table0.columns.data_period == period, table0.columns.forward_date >= args.forward_date_start_1,
-            table0.columns.forward_date <= args.forward_date_stop_1))
-
-        ResultProxy = conn.execute(query)
-        ResultSet = ResultProxy.fetchall()
-        columns_list = conn.execute(query).keys()
-
-    full_df = pd.DataFrame(ResultSet)
-
-    if len(full_df) == 0:
-        sys.exit(str(
-            "We don't have inferred data for the %s with data period %s." % (args.forward_date_start, args.portfolio_period)))
-    full_df.columns = columns_list
-
-    # if full_df.shape[1] is not None:
-    #     full_df.columns = ['data_period', 'when_created', 'forward_date', 'spot_date', 'index', 'ticker',
-    #                        'predicted_quantile_1',
-    #                        'signal_strength_1', 'model_filename']
-
-    full_df.fillna(value=0, inplace=True)
-
-    a = full_df['forward_date'].unique()
-    return a
+    data = data["forward_date"].unique()
+    return data
 
 
-def record_DLP_rating(args): #record 4wk and 13wk DLP ratings to DROID DB
-    if args.portfolio_period is None:
+def record_DLP_rating(portfolio_period, num_periods_to_predict, live=False): #record 4wk and 13wk DLP ratings to DROID DB
+    if portfolio_period is None:
         sys.exit('Please specify portfolio period.!')
-    if args.num_periods_to_predict<1:
+    if num_periods_to_predict<1:
         sys.exit('Need periods_to_predict <1!')
-    if args.go_live:
+    if live:
         d = dt.date.today()
 
         while d.weekday() != 4:
             d += BDay(1)
-        args.forward_date = d
+        forward_date = d
 
 
     db_url = global_vars.DB_PROD_URL_READ
     engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
 
-    table0 = args.stock_table_name
-    table_models = args.model_table_name
+    stock_table_name = get_top_stock_models_stock_table_name()
+    model_table_name = get_top_stock_models_table_name()
 
     # args.forward_date = datetime.strptime(f'{args.portfolio_year} {args.portfolio_week} {args.portfolio_day}',
     #                                         '%G %V %u').strftime('%Y-%m-%d')
 
-    args.forward_date_0 = str(args.forward_date)
-    args.forward_date_1 = args.forward_date.strftime('%Y-%m-%d')
+    forward_date_0 = str(forward_date)
+    forward_date_1 = forward_date.strftime('%Y-%m-%d')
 
-    if args.portfolio_period == 0:
+    if portfolio_period == 0:
         period = 'weekly'
     else:
         sys.exit('No records for daily DLP scores!')
