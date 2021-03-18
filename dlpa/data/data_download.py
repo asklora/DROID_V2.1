@@ -8,15 +8,15 @@ from pandas.tseries.offsets import BDay, Week
 from general.sql_query import read_query, get_active_currency
 from general.table_name import get_master_multiple_table_name, get_master_tac_table_name
 
-if platform.system() == "Linux":
-    path = "/home/loratech/PycharmProjects/data/"
-    if not os.path.exists(path):
-        os.makedirs(path)
-else:
-    path = "C:/dlpa_master/"
-    Path(path).mkdir(parents=True, exist_ok=True)
+# if platform.system() == "Linux":
+#     path = "/home/loratech/PycharmProjects/data/"
+#     if not os.path.exists(path):
+#         os.makedirs(path)
+# else:
+#     path = "C:/dlpa_master/"
+#     Path(path).mkdir(parents=True, exist_ok=True)
 
-os.chdir(path)
+# os.chdir(path)
 
 
 def get_price_data(update_date=datetime.strptime("2002-01-01", "%Y-%m-%d"), tac=False):
