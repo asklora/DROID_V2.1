@@ -4,6 +4,7 @@ services:
   dev:
     container_name: droid-v2-dev
     build: ./
+    command: sh -c "python ../manage.py makemigrations"
     command: sh -c "python ../manage.py migrate"
     command: sh -c "python ../manage.py runserver 0.0.0.0:8000"
     ports:
