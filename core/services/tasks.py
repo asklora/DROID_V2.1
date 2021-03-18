@@ -58,7 +58,8 @@ def get_isin_populate_universe(ticker,user_id):
             if not universe.exists():
                 new_ticker.append(symbol)
             do_function("universe_populate")
-            new_ticker_ingestion(ticker=new_ticker)
+            if len(new_ticker) > 0:
+                new_ticker_ingestion(ticker=new_ticker)
             if populate:
                 relation = UniverseClient.objects.filter(client=user.client_user.client_id,ticker=symbol)
                 if relation.exists():
