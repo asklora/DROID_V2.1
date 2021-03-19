@@ -9,7 +9,7 @@ if ! [ -x "$(command -v aws)" ]; then
 fi
 apt update
 echo "+++++++++++++++++++++++++++"
-ls --all
+ls -la *
 echo "+++++++++++++++++++++++++++"
 tar -xzf installer/ta-lib-0.4.0-src.tar.gz
 cd installer/ta-lib
