@@ -69,7 +69,7 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, 
         else:
             df["delta_churn"] = df["delta_churn"].astype(float)
             df["ret"] = df["bot_return"] - df["delta_churn"] * 0.005 # 0.5% slippage/comms
-        df = df[["ticker", "pnl", "ret", "option_type", "month_to_exp", "spot_date", "spot_price"]]
+        df = df[["ticker", "pnl", "ret", "option_type", "time_to_exp", "spot_date", "spot_price"]]
         df.loc[df.ret >= bot_labeler_threshold, "pnl_class"] = 1 #greater than threshold to deem "profitable"
         df.loc[df.ret < bot_labeler_threshold, "pnl_class"] = 0 #greater than threshold to deem "profitable"
         option_type_list = df.option_type.unique()
@@ -93,11 +93,11 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, 
 
     if history:
         infer_df, latest_df = bot_infer(final_df, model_type, rank_columns)
-        infer_df = infer_df.merge(tac_df[["ticker", "index", "spot_date"]], on=["ticker", "spot_date"], how="left")
+        infer_df = infer_df.merge(tac_df[["ticker", "currency_code", "spot_date"]], on=["ticker", "spot_date"], how="left")
         infer_df["spot_date"] = infer_df["spot_date"].astype(str)
         infer_df["uid"] = infer_df["spot_date"] + "_" + infer_df["ticker"]
         infer_df["spot_date"] = pd.to_datetime(infer_df["spot_date"])
-        latest_df = latest_df.merge(tac_df[["ticker", "index", "spot_date"]], on=["ticker", "spot_date"], how="left")
+        latest_df = latest_df.merge(tac_df[["ticker", "currency_code", "spot_date"]], on=["ticker", "spot_date"], how="left")
         data = []
         max_date = final_df.spot_date.max()
         max_training_date = max_date - relativedelta(years=1)
@@ -132,11 +132,11 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, 
         model_trainer(final_df, None, model_type, just_train=True)
     else:
         infer_df, latest_df = bot_infer(final_df, model_type, rank_columns)
-        infer_df = infer_df.merge(tac_df[["ticker", "index", "spot_date"]], on=["ticker", "spot_date"], how="left")
+        infer_df = infer_df.merge(tac_df[["ticker", "currency_code", "spot_date"]], on=["ticker", "spot_date"], how="left")
         infer_df["spot_date"] = infer_df["spot_date"].astype(str)
         infer_df["uid"]=infer_df["spot_date"] + "_" + infer_df["ticker"]
         infer_df["spot_date"] = pd.to_datetime(infer_df["spot_date"])
-        latest_df = latest_df.merge(tac_df[["ticker", "index", "spot_date"]], on=["ticker", "spot_date"], how="left")
+        latest_df = latest_df.merge(tac_df[["ticker", "currency_code", "spot_date"]], on=["ticker", "spot_date"], how="left")
         try:
             upsert_data_to_database(infer_df, get_bot_ranking_table_name(), "uid", how="update", cpu_count=True, Text=True)
         except Exception as e:
