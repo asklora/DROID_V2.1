@@ -36,14 +36,10 @@ class UniverseResource(resources.ModelResource):
                 ticker = Universe.objects.get(ticker=instance.origin_ticker)
                 if duplicate.count() > 1:
                     instance.delete()
-                # get_isin_populate_universe.delay(ticker.ticker,self.user)
             except Universe.DoesNotExist:
                 if duplicate.count() > 1:
-                    # existing_ticker=duplicate.first().origin_ticker
                     instance.delete()
-                    # get_isin_populate_universe.delay(existing_ticker,self.user)
-                # else:
-                    # get_isin_populate_universe.delay(instance.origin_ticker,self.user)
+
         else:
             # self.ticker.append(instance.origin_ticker)
             # crudinstance(instance.uid,instance.__class__.__name__)
@@ -78,6 +74,7 @@ class AddTickerAdmin(ImportExportModelAdmin):
         return HttpResponseRedirect(url)
     def save_model( self, request, obj, form, change ):
         #pre save stuff here
+        # butuh di benerin
         try:
             ticker = Universe.objects.get(ticker=obj.origin_ticker)
             get_isin_populate_universe.delay(ticker.ticker,request.user.id)
