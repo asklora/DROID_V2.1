@@ -80,7 +80,7 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, 
                 #if not (opt_type == "classic" and month_exp == 6):
                 Y_columns.extend([f"{bot}_{opt_type}_{time_exp_str}_pnl_class"])
                 rank_columns.extend([f"{bot}_{opt_type}_{time_exp_str}_pnl_class_prob"])
-                df2 = df.loc[(df.option_type == opt_type) & (df.time_exp == time_exp), :]
+                df2 = df.loc[(df.option_type == opt_type) & (df.time_to_exp == time_exp), :]
                 df2 = df2[df2["pnl"].notna()]
                 df2.rename(columns={"pnl": f"{bot}_{opt_type}_{time_exp_str}_pnl",
                     "pnl_class": f"{bot}_{opt_type}_{time_exp_str}_pnl_class"}, inplace=True)
