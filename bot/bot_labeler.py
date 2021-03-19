@@ -7,16 +7,15 @@ import pandas as pd
 from tqdm import tqdm
 from joblib import dump, load
 from pandas.tseries.offsets import BDay
-import global_vars
 from bot.data_download import (
     get_bot_backtest_data, get_bot_ranking_data, get_data_vol_surface_ticker, get_executive_data_download, get_master_tac_price,
     get_uno_backtest)
 from dateutil.relativedelta import relativedelta
 
 from bot.final_model import model_trainer, bot_infer, find_rank
-from global_vars import X_columns, Y_columns, bots_list, model_type
+from global_vars import X_columns, Y_columns, bots_list, model_type, bot_labeler_threshold
 
-def populate_bot_labeler(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, bot_list=None, bot_labeler_train = False, history=False):
+def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, ticker=None, currency_code=None, time_to_exp=None, mod=False, bot_list=None, bot_labeler_train = False, history=False):
     # ************************************************************************
     # *********************** Data download **********************************
     main_df = get_executive_data_download(start_date, end_date, ticker=ticker, currency_code=currency_code)
@@ -45,13 +44,10 @@ def populate_bot_labeler(start_date=None, end_date=None, ticker=None, currency_c
 
     main_df_copy_no_fund.rename(columns={"trading_day": "spot_date"}, inplace=True)
     tac_df.rename(columns={"trading_day": "spot_date", "tri_adj_close": "spot_price"}, inplace=True)
-
-    bots_list = bots_list
     final_df = main_df_copy_no_fund
 
     Y_columns = []
     rank_columns = []
-    print(bots_list)
     for bot in bots_list:
         print(bot)
         # Download and preprocess the output data for each bot.
@@ -71,8 +67,8 @@ def populate_bot_labeler(start_date=None, end_date=None, ticker=None, currency_c
             df["delta_churn"] = df["delta_churn"].astype(float)
             df["ret"] = df["return"] - df["delta_churn"] * 0.005 # 0.5% slippage/comms
         df = df[["ticker", "pnl", "ret", "option_type", "month_to_exp", "spot_date", "spot_price"]]
-        df.loc[df.ret >= global_vars.bot_labeler_threshold, "pnl_class"] = 1 #greater than threshold to deem "profitable"
-        df.loc[df.ret < global_vars.bot_labeler_threshold, "pnl_class"] = 0 #greater than threshold to deem "profitable"
+        df.loc[df.ret >= bot_labeler_threshold, "pnl_class"] = 1 #greater than threshold to deem "profitable"
+        df.loc[df.ret < bot_labeler_threshold, "pnl_class"] = 0 #greater than threshold to deem "profitable"
         option_type_list = df.option_type.unique()
         for opt_type in option_type_list:
             print(opt_type)
