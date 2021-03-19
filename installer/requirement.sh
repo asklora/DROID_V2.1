@@ -9,9 +9,6 @@ if ! [ -x "$(command -v aws)" ]; then
 fi
 apt update
 tar -xzf ./installer/ta-lib-0.4.0-src.tar.gz
-echo "+++++++++++++++++++++++++++"
-ls -la *
-echo "+++++++++++++++++++++++++++"
 cd ./ta-lib
 ./configure --prefix=/usr
 make

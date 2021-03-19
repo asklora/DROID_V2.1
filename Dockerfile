@@ -1,7 +1,6 @@
 FROM python:3.8
 ENV PYTHONUNBUFFERED 1
 RUN mkdir /code
-RUN ls -la *
 WORKDIR /code
 COPY . /code/
 RUN pwd
