@@ -12,7 +12,7 @@ tar -xzf ./installer/ta-lib-0.4.0-src.tar.gz
 echo "+++++++++++++++++++++++++++"
 ls -la *
 echo "+++++++++++++++++++++++++++"
-cd ./installer/ta-lib
+cd ./ta-lib
 ./configure --prefix=/usr
 make
 make install
