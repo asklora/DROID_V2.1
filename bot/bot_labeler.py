@@ -61,14 +61,14 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, 
         else:
             df = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, classic=True, mod=mod)
         
-        df["return"] = df["return"].astype(float)
+        df["bot_return"] = df["bot_return"].astype(float)
         print(df)
         if bot == "classic":
             df["option_type"] = "classic"
-            df["ret"] = df["return"] - 0.01  #0.5% X 2 (in/out) slippage/comms
+            df["ret"] = df["bot_return"] - 0.01  #0.5% X 2 (in/out) slippage/comms
         else:
             df["delta_churn"] = df["delta_churn"].astype(float)
-            df["ret"] = df["return"] - df["delta_churn"] * 0.005 # 0.5% slippage/comms
+            df["ret"] = df["bot_return"] - df["delta_churn"] * 0.005 # 0.5% slippage/comms
         df = df[["ticker", "pnl", "ret", "option_type", "month_to_exp", "spot_date", "spot_price"]]
         df.loc[df.ret >= bot_labeler_threshold, "pnl_class"] = 1 #greater than threshold to deem "profitable"
         df.loc[df.ret < bot_labeler_threshold, "pnl_class"] = 0 #greater than threshold to deem "profitable"
