@@ -1,8 +1,0 @@
-FROM python:3.8
-ENV PYTHONUNBUFFERED 1
-RUN mkdir /code
-WORKDIR /code
-COPY . /code/
-RUN ./requirement.sh
-RUN ./python_dependency.sh
-EXPOSE 8000

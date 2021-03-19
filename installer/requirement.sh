@@ -8,8 +8,11 @@ if ! [ -x "$(command -v aws)" ]; then
   apt-get install -yq awscli
 fi
 apt update
-tar -xzf ta-lib-0.4.0-src.tar.gz
-cd ta-lib
+echo "+++++++++++++++++++++++++++"
+ls --all
+echo "+++++++++++++++++++++++++++"
+tar -xzf installer/ta-lib-0.4.0-src.tar.gz
+cd installer/ta-lib
 ./configure --prefix=/usr
 make
 make install
