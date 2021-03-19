@@ -1,5 +1,6 @@
 echo "=========================="
 echo $PWD
+ls --all
 echo "=========================="
 if [ -f /var/lib/jenkins ];
 then 
