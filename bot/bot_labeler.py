@@ -8,12 +8,15 @@ from tqdm import tqdm
 from joblib import dump, load
 from pandas.tseries.offsets import BDay
 from bot.data_download import (
-    get_bot_backtest_data, get_bot_ranking_data, get_data_vol_surface_ticker, get_executive_data_download, get_master_tac_price,
-    get_uno_backtest)
+    get_bot_backtest_data, 
+    get_bot_ranking_data, 
+    get_data_vol_surface_ticker, 
+    get_executive_data_download, 
+    get_master_tac_price)
 from dateutil.relativedelta import relativedelta
 
 from bot.final_model import model_trainer, bot_infer, find_rank
-from global_vars import X_columns, Y_columns, bots_list, model_type, bot_labeler_threshold
+from global_vars import X_columns, bots_list, model_type, bot_labeler_threshold
 
 def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, ticker=None, currency_code=None, time_to_exp=None, mod=False, bot_list=None, bot_labeler_train = False, history=False):
     # ************************************************************************
