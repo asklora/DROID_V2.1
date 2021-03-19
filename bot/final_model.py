@@ -205,7 +205,7 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
     print(finish)
     print("Finished!")
 
-def model_trainer(train_df, infer_df, model_type, just_train=False):
+def model_trainer(train_df, infer_df, model_type, Y_columns=Y_columns[0], just_train=False):
     # This function will train the model either for history or for future inference.
     final_report = pd.DataFrame()
     for col in Y_columns:

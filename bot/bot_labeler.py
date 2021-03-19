@@ -107,7 +107,7 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, 
         while max_training_date < str_to_date(dateNow()):
             train_df = final_df[final_df.spot_date <= max_training_date]
             infer_df = final_df[(final_df.spot_date > max_training_date) & (final_df.spot_date <= max_training_date + BDay(5))]
-            report = model_trainer(train_df, infer_df, model_type, just_train=False)
+            report = model_trainer(train_df, infer_df, model_type, Y_columns=Y_columns, just_train=False)
             report = report.apply(lambda x: find_rank(x, rank_columns), axis=1)
             columns_list = report.columns
             final_columns = ["ticker", "spot_date", "spot_price", "when_created", "model_type"]
@@ -129,7 +129,7 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, 
         upsert_data_to_database(data, get_bot_ranking_table_name(), "uid", how="update", cpu_count=True, Text=True)
         upsert_data_to_database(latest_df, get_bot_latest_ranking_table_name(), "ticker", how="update", cpu_count=True, Text=True)
     elif bot_labeler_train:
-        model_trainer(final_df, None, model_type, just_train=True)
+        model_trainer(final_df, None, model_type, Y_columns=Y_columns, just_train=True)
     else:
         infer_df, latest_df = bot_infer(final_df, model_type, rank_columns)
         infer_df = infer_df.merge(tac_df[["ticker", "currency_code", "spot_date"]], on=["ticker", "spot_date"], how="left")
