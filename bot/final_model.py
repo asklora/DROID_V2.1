@@ -210,15 +210,15 @@ def model_trainer(train_df, infer_df, model_type, Y_columns=Y_columns[0], just_t
     final_report = pd.DataFrame()
     for col in Y_columns:
         train_df_copy = train_df.copy()
-        if(type(infer_df) != type(None)):
-            infer_df_copy = infer_df.copy()
-        # Remove infinite row
         for col in train_df_copy.columns:
             train_df_copy = train_df_copy.loc[train_df_copy[col] != np.inf]
 
-        for col in infer_df_copy.columns:
-            infer_df_copy = infer_df_copy.loc[infer_df_copy[col] != np.inf]
-
+        infer_df_copy=None
+        if(type(infer_df) != type(None)):
+            infer_df_copy = infer_df.copy()
+            for col in infer_df_copy.columns:
+                infer_df_copy = infer_df_copy.loc[infer_df_copy[col] != np.inf]
+        # Remove infinite row
         X_train = train_df_copy[X_columns]
         Y_train = train_df_copy[Y_columns]
         if not just_train:
