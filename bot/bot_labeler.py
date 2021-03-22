@@ -16,9 +16,9 @@ from bot.data_download import (
 from dateutil.relativedelta import relativedelta
 
 from bot.final_model import model_trainer, bot_infer, find_rank
-from global_vars import X_columns, bots_list, model_type, bot_labeler_threshold, time_to_expiry
+from global_vars import X_columns, bots_list, labeler_model_type, bot_labeler_threshold, time_to_expiry
 
-def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, ticker=None, currency_code=None, time_to_exp=time_to_expiry, mod=False, bots_list=bots_list, bot_labeler_train = False, history=False):
+def populate_bot_labeler(start_date=None, end_date=None, model_type=labeler_model_type, ticker=None, currency_code=None, time_to_exp=time_to_expiry, mod=False, bots_list=bots_list, bot_labeler_train = False, history=False):
     # ************************************************************************
     # *********************** Data download **********************************
     main_df = get_executive_data_download(start_date, end_date, ticker=ticker, currency_code=currency_code)
