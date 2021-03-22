@@ -356,6 +356,8 @@ def bot_infer(infer_df, model_type, rank_columns):
     final_report = final_report.apply(lambda x: find_rank2(x, rank_columns), axis=1)
     print(final_report)
     final_report.to_csv("final_report_process.csv")
+    import sys
+    sys.exit(1)
     latest_df = final_report[final_report.spot_date == final_report.spot_date.max()].copy()
     latest_df = latest_df.reset_index(drop=True)
     latest_df_final = pd.DataFrame()
