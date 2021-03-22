@@ -85,8 +85,11 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, 
                 df2.rename(columns={"pnl": f"{bot}_{opt_type}_{time_exp_str}_pnl",
                     "pnl_class": f"{bot}_{opt_type}_{time_exp_str}_pnl_class"}, inplace=True)
                 df2 = df2.drop_duplicates(["ticker", "spot_date"], keep="last")
+                df2["spot_date"] = pd.to_datetime(df2["spot_date"])
+                final_df["spot_date"] = pd.to_datetime(final_df["spot_date"])
                 final_df = final_df.merge(df2[["ticker", "spot_date", f"{bot}_{opt_type}_{time_exp_str}_pnl_class",
                     f"{bot}_{opt_type}_{time_exp_str}_pnl"]], on=["ticker", "spot_date"], how="left")
+    tac_df["spot_date"] = pd.to_datetime(tac_df["spot_date"])
     final_df = final_df.merge(tac_df[["ticker", "spot_date", "spot_price"]], on=["ticker", "spot_date"], how="left")
     Y_columns = Y_columns
     rank_columns = rank_columns
