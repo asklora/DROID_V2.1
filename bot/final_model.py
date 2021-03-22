@@ -209,22 +209,30 @@ def model_trainer(train_df, infer_df, model_type, Y_columns=Y_columns[0], just_t
     # This function will train the model either for history or for future inference.
     final_report = pd.DataFrame()
     for col in Y_columns:
+        train_df_copy = train_df.copy()
+        infer_df_copy = infer_df.copy()
+        # Remove infinite row
+        for col in train_df_copy.columns:
+            train_df_copy = train_df_copy.loc[train_df_copy[col] != np.inf]
 
-        X_train = train_df[X_columns]
-        Y_train = train_df[Y_columns]
+        for col in infer_df_copy.columns:
+            infer_df_copy = infer_df_copy.loc[infer_df_copy[col] != np.inf]
+
+        X_train = train_df_copy[X_columns]
+        Y_train = train_df_copy[Y_columns]
         if not just_train:
-            X_infer = infer_df[X_columns]
+            X_infer = infer_df_copy[X_columns]
             # Y_infer = infer_df[args.Y_columns]
 
-            final_report["ticker"] = infer_df.loc[:, "ticker"]
-            final_report["spot_date"] = infer_df.loc[:, "spot_date"]
-            final_report["spot_price"] = infer_df.loc[:, "spot_price"]
+            final_report["ticker"] = infer_df_copy.loc[:, "ticker"]
+            final_report["spot_date"] = infer_df_copy.loc[:, "spot_date"]
+            final_report["spot_price"] = infer_df_copy.loc[:, "spot_price"]
 
             for col2 in Y_columns:
                 col22 = col2[:-6]
-                final_report[col22] = infer_df.loc[:, col22]
+                final_report[col22] = infer_df_copy.loc[:, col22]
 
-            final_report[col + "_original"] = infer_df[col]
+            final_report[col + "_original"] = infer_df_copy[col]
 
         X_train = X_train[Y_train[col].notna()]
         Y_train = Y_train[Y_train[col].notna()]
@@ -343,9 +351,11 @@ def bot_infer(infer_df, model_type, rank_columns):
         final_report[col + "_prob"] = (reg.predict_proba(X_infer))[:, 1]
         final_report["model_type"] = model_type
         final_report["when_created"] = timestampNow()
-
+    print(final_report)
+    final_report.to_csv("final_report.csv")
     final_report = final_report.apply(lambda x: find_rank2(x, rank_columns), axis=1)
-
+    print(final_report)
+    final_report.to_csv("final_report_process.csv")
     latest_df = final_report[final_report.spot_date == final_report.spot_date.max()].copy()
     latest_df = latest_df.reset_index(drop=True)
     latest_df_final = pd.DataFrame()
