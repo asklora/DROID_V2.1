@@ -72,6 +72,7 @@ tp_multiplier_3m = 1.75
 
 #BOT TRAINING
 bot_labeler_training_num_years = 2
+bot_labeler_threshold = 0.02
 bots_list = ["uno", "ucdc", "classic"]
 model_type = "rf"
 
