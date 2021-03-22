@@ -192,7 +192,7 @@ def hypers(model_type, train_num, num_periods_to_predict, data_period, update_lo
     # ********************************************************************************************
     # ********************************************************************************************
 
-    def hyper_fn(hypers, full_df, forward_date, lookback, valid_num, test_num):
+    def hyper_fn(hypers):
         # global full_df, indices_df, full_df_rv
         vars("").update(hypers)
         if data_period == 0:
