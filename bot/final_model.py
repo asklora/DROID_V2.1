@@ -327,7 +327,7 @@ def find_rank3(row):
 
     return row
 
-def bot_infer(infer_df, model_type, rank_columns):
+def bot_infer(infer_df, model_type, rank_columns, Y_columns):
     # This function is used for bot ranking daily and live.
     final_report = pd.DataFrame()
     for col in Y_columns:
