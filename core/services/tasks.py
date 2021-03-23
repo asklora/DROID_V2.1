@@ -3,6 +3,13 @@ from core.universe.models import Universe,UniverseConsolidated
 from core.Clients.models import UniverseClient
 from core.user.models import User
 from main import new_ticker_ingestion
+from general.sql_process import do_function
+
+@app.task
+def crudinstance(instance_id,model_name,method=None):
+    if method == "delete":
+        model = eval(model_name)
+        model.objects.get(uid=instance_id).delete()
 
 @app.task
 def get_isin_populate_universe(ticker,user_id):
@@ -11,8 +18,10 @@ def get_isin_populate_universe(ticker,user_id):
     symbols =[]
     try:
         populate = UniverseConsolidated.ingestion_manager.get_isin_code(ticker=ticker)
+        triger_sql_populate_once = 0
         if isinstance(ticker, list):
             for tick in ticker:
+                triger_sql_populate_once +=1
                 ticker_cons = UniverseConsolidated.objects.filter(origin_ticker=tick).distinct('origin_ticker').get()
                 if ticker_cons.use_manual:
                     symbol = ticker_cons.origin_ticker
@@ -21,27 +30,39 @@ def get_isin_populate_universe(ticker,user_id):
                         symbol = ticker_cons.consolidated_ticker
                     else:
                         symbol = ticker_cons.origin_ticker
-                symbols.append(symbol)
+                universe = Universe.objects.filter(ticker=symbol)
+                if not universe.exists():
+                    symbols.append(symbol)
+                if triger_sql_populate_once == 1:
+                    do_function("universe_populate")
                 if populate:
                     relation = UniverseClient.objects.filter(client=user.client_user.client_id,ticker=symbol)
                     if relation.exists():
                         res_celery.append({"result":f"relation {user.client_user.client_id} and {tick} exist"})
                     else:
                         UniverseClient.objects.create(client_id=user.client_user.client_id,ticker_id=symbol)
+                        
                         res_celery.append({"result":f"relation {user.client_user.client_id} and {tick} created"})
-
-            new_ticker_ingestion(ticker=symbols)
+            
+            if len(symbols )> 0:
+                new_ticker_ingestion(ticker=symbols)
             return res_celery
         else:
+            new_ticker =[]
             ticker_cons = UniverseConsolidated.objects.filter(origin_ticker=ticker).distinct('origin_ticker').get()
             if ticker_cons.use_manual:
                 symbol = ticker_cons.origin_ticker
             else:
                 symbol = ticker_cons.consolidated_ticker
+            universe = Universe.objects.filter(ticker=symbol)
+            if not universe.exists():
+                new_ticker.append(symbol)
+            do_function("universe_populate")
+            if len(new_ticker) > 0:
+                new_ticker_ingestion(ticker=new_ticker)
             if populate:
                 relation = UniverseClient.objects.filter(client=user.client_user.client_id,ticker=symbol)
                 if relation.exists():
-                    new_ticker_ingestion(ticker=symbol)
                     return {"result":f"relation {user.client_user.client_id} and {ticker} exist"}
                 else:
                     new_ticker_ingestion(ticker=symbol)

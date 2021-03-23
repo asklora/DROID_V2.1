@@ -1,3 +1,4 @@
+from bot.bot_labeler import populate_bot_labeler
 from bot.final_model import populate_vol_infer
 from bot.main_file import populate_bot_data
 from general.sql_query import get_active_universe
@@ -16,50 +17,40 @@ from bot.statistic_classic import populate_classic_statistic
 from bot.statistic_ucdc import populate_ucdc_statistic
 from bot.statistic_uno import populate_uno_statistic
 from bot.data_process import check_bot_list, check_time_to_exp
-from global_vars import folder_check
+from global_vars import folder_check, time_to_expiry
 
 # 	main_exec.py --bot_labeler_infer_daily --exec_index 0#.FTSE
 
 # 	main_exec.py --bot_labeler_infer_daily --exec_index 0#.SPX
 
-# def bot_labeler_performance_history():
-
-
-def bot_ranking_train(ticker=None, currency_code=None):
-    print("{} : === BOT RANKING TRAIN MODEL STARTED ===".format(dateNow()))
-    if(type(ticker) == type(None) and type(currency_code) == type(None)):
-        ticker = get_active_universe()["ticker"].tolist()
-    start_date = str_to_date(droid_start_date())
-    end_date = str_to_date(dateNow())
-    print(f"The start date is set as: {start_date}")
-    print(f"The end date is set as: {end_date}")
-    populate_vol_infer(start_date, end_date, ticker=ticker, currency_code=currency_code, train_model=True)
-    print("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
-    report_to_slack("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
-
-
-def bot_ranking_history(ticker=None, currency_code=None):
+def bot_ranking_history(ticker=None, currency_code=None, mod=False):
+    folder_check()
     print("{} : === {} BOT RANKING TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
     # ********************** Data download for Bot labeler inference history **********************
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     start_date = str_to_date(droid_start_date())
     end_date = str_to_date(dateNow())
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, mod=mod, history=True)
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
 
 
-def bot_ranking_daily(ticker=None, currency_code=None):
+def bot_ranking_daily(ticker=None, currency_code=None, mod=False):
+    folder_check()
     print("{} : === {} BOT RANKING TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
+    if(type(ticker) == type(None) and type(currency_code) == type(None)):
+        ticker = get_active_universe()["ticker"].tolist()
     start_date = get_bot_data_latest_date(daily=True)
     end_date = str_to_date(dateNow())
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, mod=mod)
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
 
 
 def training(ticker=None, currency_code=None):
     train_model(ticker=ticker, currency_code=currency_code)
-    bot_ranking_train(ticker=ticker, currency_code=currency_code)
+    train_lebeler_model(ticker=ticker, currency_code=currency_code)
 
 
 def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0):
@@ -178,6 +169,18 @@ def infer_history():
 # ************************************************************************************************************************************************************************************
 # *************************** MODEL TRAINING *****************************************************************************************************************************************
 # ************************************************************************************************************************************************************************************
+def train_lebeler_model(ticker=None, currency_code=None):
+    folder_check()
+    time_to_exp = check_time_to_exp(time_to_expiry)
+    print("{} : === BOT RANKING TRAIN MODEL STARTED ===".format(dateNow()))
+    if(type(ticker) == type(None) and type(currency_code) == type(None)):
+        ticker = get_active_universe()["ticker"].tolist()
+    start_date = str_to_date(droid_start_date())
+    end_date = str_to_date(dateNow())
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, bot_labeler_train = True)
+    print("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
+
 def train_model(ticker=None, currency_code=None):
     folder_check()
     print("{} : === VOLATILITY TRAIN MODEL STARTED ===".format(dateNow()))

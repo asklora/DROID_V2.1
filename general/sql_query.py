@@ -56,8 +56,10 @@ def get_data_by_table_name_with_condition(table, condition):
     data = read_query(query, table=table)
     return data
 
-def get_active_currency():
+def get_active_currency(currency_code=None):
     query = f"select * from {currency_table} where is_active=True"
+    if type(currency_code) != type(None):
+        query += f" and currency_code in {tuple_data(currency_code)}"
     #query = f"select currency_code, ric, utc_timezone_location from {currency_table} where is_active=True"
     data = read_query(query, table=currency_table)
     return data
@@ -95,7 +97,7 @@ def get_active_universe(ticker=None, currency_code=None):
     if type(ticker) != type(None):
         query += f" and ticker in {tuple_data(ticker)} "
 
-    if type(currency_code) != type(None):
+    elif type(currency_code) != type(None):
         query += f" and currency_code in {tuple_data(currency_code)} "
 
     query += f"order by ticker"
@@ -110,7 +112,7 @@ def get_active_universe_by_entity_type(ticker=None, currency_code=None, null_ent
         query += f"and entity_type is not null "
     if type(ticker) != type(None):
         query += f"and ticker in {tuple_data(ticker)} "
-    if type(currency_code) != type(None):
+    elif type(currency_code) != type(None):
         query += f"and currency_code in {tuple_data(currency_code)} " 
     query += f"order by ticker"
     data = read_query(query, table=universe_table)
@@ -131,13 +133,20 @@ def get_active_universe_by_quandl_symbol(null_symbol=False, ticker=None, quandl_
         if type(ticker) != type(None):
             query += f"and ticker in {tuple_data(ticker)} "
     
-        if type(quandl_symbol) != type(None):
+        elif type(quandl_symbol) != type(None):
             query += f"and quandl_symbol in {tuple_data(quandl_symbol)} "
 
     else:
-        query = f"select * from {universe_table} where is_active=True and quandl_symbol is null and country_code='US' "
+        query = f"select * from {universe_table} where is_active=True and quandl_symbol is null and currency_code='USD' "
     query += f"order by ticker"
     data = read_query(query, table=universe_table)
+    if(len(data) < 1):
+        query = f"select ticker, split_part(ticker, '.', 1) as quandl_symbol from {universe_table} where is_active=True "
+        if type(ticker) != type(None):
+            query += f"and ticker in {tuple_data(ticker)} "
+        elif type(quandl_symbol) != type(None):
+            query += f"and quandl_symbol in {tuple_data(quandl_symbol)} "
+        data = read_query(query, table=universe_table)
     return data
 
 def get_universe_by_region(region_code):

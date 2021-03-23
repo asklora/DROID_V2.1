@@ -44,17 +44,17 @@ def new_ticker_ingestion(ticker=None):
     update_quandl_orats_from_quandl(ticker=ticker)
     if isinstance(ticker,Series) or isinstance(ticker,list):
         for tick in ticker:
-            update_data_dss_from_dss(ticker=tick)
-            update_data_dsws_from_dsws(ticker=tick)
+            update_data_dss_from_dss(ticker=tick,history=True)
+            update_data_dsws_from_dsws(ticker=tick,history=True)
             dividend_updated(ticker=tick)
     else:
-        update_data_dss_from_dss(ticker=ticker)
-        update_data_dsws_from_dsws(ticker=ticker)
+        update_data_dss_from_dss(ticker=ticker,history=True)
+        update_data_dsws_from_dsws(ticker=ticker,history=True)
         dividend_updated(ticker=ticker)
-    do_function("master_ohlcvtr_update")
-    master_ohlctr_update()
-    master_tac_update()
-    master_multiple_update()
+    # do_function("master_ohlcvtr_update")
+    # master_ohlctr_update()
+    # master_tac_update()
+    # master_multiple_update()
     
 
 def update_master_data(ticker=None, currency_code=None):
@@ -92,7 +92,8 @@ def update_universe_data(ticker=None):
 
 if __name__ == "__main__":
     # populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=ticker)
-    update_quandl_orats_from_quandl(ticker='MSFT.O')
+    # update_quandl_orats_from_quandl(ticker='MSFT.O')
+    update_data_dsws_from_dsws(ticker=["1COV.F"], history=True)
     # update_ticker_symbol_from_dss()
     # do_function("master_ohlcvtr_update")
     # master_ohlctr_update()

@@ -120,7 +120,7 @@ def populate_ucdc_statistic(ticker=None, currency_code=None, time_to_exp=None):
     df = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, ucdc=True, not_null=True)
     print(df)
 
-    option_type_list = df.option_type.unique()
+    option_type_list = ["ATM"]
     bench_df_main = pd.DataFrame()
 
     for option_t in option_type_list:

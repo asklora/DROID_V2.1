@@ -12,7 +12,7 @@ class Region(models.Model):
     ingestion_time = models.TimeField(blank=True, null=True)
 
     def __str__(self):
-        return self.region_name
+        return self.region_id
 
     class Meta:
         managed = True
@@ -25,7 +25,8 @@ class Vix(models.Model):
     class Meta:
         managed = True
         db_table = "vix"
-
+    def __str__(self):
+        return self.vix_id
 
 class Currency(models.Model):
     currency_code = models.CharField(primary_key=True, max_length=30)
@@ -67,7 +68,8 @@ class CurrencyCalendars(models.Model):
     class Meta:
         managed = True
         db_table = "currency_calendar"
-
+    def __str__(self):
+        return self.uid
 
 class Country(models.Model):
     country_code = models.TextField(primary_key=True)
@@ -79,8 +81,9 @@ class Country(models.Model):
     class Meta:
         managed = True
         db_table = "country"
-
-
+    def __str__(self):
+        return self.country_code
+    
 # class CountryCalendars(models.Model):
 #     uid = models.TextField(primary_key=True)
 #     country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column="country_code",related_name="country_calendar_country_code", blank=True, null=True)
@@ -98,7 +101,7 @@ class IndustryGroup(models.Model):
     industry_group_img = models.FileField(blank=True, null=True)
 
     def __str__(self):
-        return self.industry_group_name
+        return self.industry_group_code
 
     class Meta:
         managed = True
@@ -116,7 +119,7 @@ class Industry(models.Model):
         db_table = "industry"
 
     def __str__(self):
-        return self.industry_name
+        return self.industry_code
 
 
 class IndustryWorldscope(models.Model):
@@ -126,7 +129,8 @@ class IndustryWorldscope(models.Model):
     class Meta:
         managed = True
         db_table = "industry_worldscope"
-
+    def __str__(self):
+        return self.wc_industry_code
 
 
 
@@ -139,7 +143,7 @@ class Source(models.Model):
         db_table = "source"
 
     def __str__(self):
-        return self.source_name
+        return self.source_id
 
 
 class UniverseConsolidated(models.Model):
@@ -238,7 +242,7 @@ class UniverseRating(models.Model):
     updated = models.DateField(blank=True, null=True)
 
     def __str__(self):
-        return self.ticker.ticker
+        return str(self.ticker.ticker)
 
     class Meta:
         db_table = "universe_rating"
@@ -256,4 +260,4 @@ class UniverseExcluded(models.Model):
         db_table = "universe_excluded"
 
     def __str__(self):
-        return self.ticker.ticker
+        return str(self.ticker.ticker)

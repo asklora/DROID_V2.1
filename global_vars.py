@@ -72,8 +72,9 @@ tp_multiplier_3m = 1.75
 
 #BOT TRAINING
 bot_labeler_training_num_years = 2
+bot_labeler_threshold = 0.02
 bots_list = ["uno", "ucdc", "classic"]
-model_type = "rf"
+labeler_model_type = "rf"
 
 model_path = "models/"
 saved_model_path = "saved_models/"
@@ -100,10 +101,10 @@ X_columns = ["kurt_0_504", "vix_value",
     
 Y_columns = [["atm_volatility_spot", "atm_volatility_one_year", "atm_volatility_infinity"], ["slope", "deriv_inf", "deriv", "slope_inf"]]
 
-def folder_check():
+def folder_check(path=saved_model_path):
     if platform.system() == "Linux":
-        if not os.path.exists(saved_model_path):
-            os.makedirs(saved_model_path)
+        if not os.path.exists(path):
+            os.makedirs(path)
 
 
 #DLPA
@@ -115,10 +116,10 @@ signal_threshold = 0.5
 candle_type_candles = 0 # this should DEFAULT TO 0 - use all candles
 candle_type_returnsY = 4 # this should DEFAULT TO 4 - use close
 candle_type_returnsX = 4 # this should DEFAULT TO 4 - use close
-
+pickle_update = False
 model_type=1  # use DLPM
 epoch=25  # 25 epochs seem enough (more takes too much time)
-Hyperopt_runs=10 # don't need more than 20
+Hyperopt_runs=10 # don"t need more than 20
 forward_year=0
 forward_week=1 #v2 default = 1
 forward_dayt=5  #v2 default = 5
@@ -150,7 +151,7 @@ unique_num_of_returns=1
 unique_num_of_outputs=1
 timestamp=time.time()
 gpu_number=0
-pc_number='unknown'
+pc_number="unknown"
 # db_end_date=datetime.today() - BDay(2)
 
 aws_columns_list = ["model_type", "data_period", "when_created", "forward_date", "forward_week", "forward_dow",
@@ -164,3 +165,16 @@ aws_columns_list = ["model_type", "data_period", "when_created", "forward_date",
                     "candle_type_returnsX", "candle_type_returnsY", "candle_type_candles", "seed",
                     "best_valid_epoch", "best_train_epoch", "model_filename",
                     "pc_number", "stock_percentage", "valid_num", "test_num", "num_periods_to_predict"]
+
+
+#WTS Poprtfolio
+# 0 -> weekly,
+# 1 -> daily,
+# 2 -> Point in time (PIT),
+portfolio_period=0
+client_name="LORATECH"
+signal_threshold = 0.5
+seed=123
+mode="client"
+port=64891
+num_periods_to_predict=1

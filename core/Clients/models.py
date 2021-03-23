@@ -78,6 +78,8 @@ class UniverseClient(BaseTimeStampModel):
         db_table = "universe_client"
         get_latest_by = "created"
         unique_together = ["ticker", "client"]
+    def __str__(self):
+        return f'{self.ticker.ticker}-{self.client.client_name}'
 
     
 class ClientTopStock(BaseTimeStampModel):
@@ -140,7 +142,10 @@ class ClientTopStock(BaseTimeStampModel):
         db_table = "client_top_stock"
         verbose_name_plural = "Client Generated Top stock"
 
-    
+    def __str__(self):
+        return f'{self.ticker.ticker}-{self.client.client_name}'
+
+
 class ClientBotPerformance(BaseTimeStampModel):
     order = models.ForeignKey(
         ClientTopStock, on_delete=models.CASCADE, related_name="portfolio_perfomance")
@@ -157,3 +162,5 @@ class ClientBotPerformance(BaseTimeStampModel):
         managed = True
         db_table = "client_bot_history"
         verbose_name_plural = "Client Bot History"
+    def __str__(self):
+        return f'{self.order.uid}'

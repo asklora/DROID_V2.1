@@ -16,30 +16,30 @@ from sqlalchemy import create_engine
 import global_vars
 
 
-def dataset_p(df, args, df2=None):
+def dataset_p(df, df2=None):
     # The main function. This function creates the candles and return datasets.
 
     # Creating the candles dataset.
-    if args.cnn_kernel_size != 0:
-        args.data_type = 0  # 0->X_Candles or 1->X_returns or 2->Y_returns
-        args.candle_type = args.candle_type_candles
-        if args.rv_1 or args.beta_1:
-            df_X0 = data_merging_clipping(df2, args)
-            df_X0 = data_merging_clipping(df, dow, candle_type, data_period, tac_flag=False)
+    if cnn_kernel_size != 0:
+        data_type = 0  # 0->X_Candles or 1->X_returns or 2->Y_returns
+        candle_type = candle_type_candles
+        if rv_1:
+            df_X0 = data_merging_clipping(df2)
+            df_X0 = data_merging_clipping(df2, dow, candle_type, data_period, tac_flag=False)
         else:
-            df_X0 = data_merging_clipping(df, args)
+            df_X0 = data_merging_clipping(df)
             df_X0 = data_merging_clipping(df, dow, candle_type, data_period, tac_flag=False)
     else:
         df_X0 = None
 
     # Creating the X return dataset.
-    args.candle_type = args.candle_type_returnsX
-    if args.cluster_x:
-        args.clustering_model_filename = args.model_path_clustering + "model_x_" + str(int(time.time())) + ".joblib"
-        args.cluster_centers_filename = args.model_path_clustering + "centers__x" + str(int(time.time())) + ".npy"
-        df_X1 = cluster_(df, args, args.cluster_no_x)
+    candle_type = candle_type_returnsX
+    if cluster_x:
+        clustering_model_filename = model_path_clustering + "model_x_" + str(int(time.time())) + ".joblib"
+        cluster_centers_filename = model_path_clustering + "centers__x" + str(int(time.time())) + ".npy"
+        df_X1 = cluster_(df, cluster_no_x)
     else:
-        df_X1 = returns_(df, args)
+        df_X1 = returns_(df)
 
 
     # Creating the Y return dataset.
@@ -198,20 +198,20 @@ def data_merging_clipping(df, dow, candle_type, data_period, tac_flag=False):
 def returns_(df, tac_flag=False):
     if not tac_flag:
         # This function creates return dataset from given dataframe.
-        aa = data_merging_clipping(df, args) + 1
+        aa = data_merging_clipping(df) + 1
         aa, stocks_list = data_merging_clipping(df, dow, candle_type, data_period, tac_flag=False)
         aa += 1
     else:
-        aa = data_merging_clipping(df, args)
+        aa = data_merging_clipping(df)
         aa, stocks_list = data_merging_clipping(df, dow, candle_type, data_period, tac_flag=False)
         
 
-    if args.data_period == 1:
+    if data_period == 1:
         bb = aa - 1
         bb = np.reshape(bb, (bb.shape[0], bb.shape[1]))
         return bb
-    elif args.data_period == 0:
-        if not args.tac_flag:
+    elif data_period == 0:
+        if not tac_flag:
             bb = np.nanprod(aa, axis=3) - 1
         else:
             bb = np.nanmean(aa, axis=3)
@@ -223,7 +223,7 @@ def returns_(df, tac_flag=False):
         sys.exit("Unknown data period. It should be either \"0\" ->weekly or \"1\" -> daily!")
 
 
-def cluster_(df, args, cluster_no):
+def cluster_(df, cluster_no):
     # This function clusters the data. If used it will be replaced by returns.
     aa = data_merging_clipping(df, args) + 1
     aa, stocks_list = data_merging_clipping(df, dow, candle_type, data_period, tac_flag=False)
@@ -286,7 +286,7 @@ def create_Y(df):
     return e
 
 
-def dataset_prep(df, args):
+def dataset_prep(df, data_period, start_date, end_date):
     # This function slices the downloaded data for the desired date range.
 
     # Get rid of the warnings for dataset operations
@@ -295,15 +295,11 @@ def dataset_prep(df, args):
     df["time"] = df["trading_day"].astype("datetime64[ns]")
     max(df.time).weekday()
     # This makes sure that we have enough data to make a whole week for the last week.
-    if max(df.time) < args.end_date:
-        if args.data_period == 0:
-            args.end_date = args.end_date - Week(1)
-    # if max(df.time).weekday() != args.end_date.weekday():
-    #     if args.data_period == 0:
-    #         args.end_date = args.end_date - Week(1)
-
+    if max(df.time) < end_date:
+        if data_period == 0:
+            end_date = end_date - Week(1)
     # Slicing the data for the desired time frame.
-    datasett = df[(df.time >= args.start_date) & (df.time <= args.end_date)]
+    datasett = df[(df.time >= start_date) & (df.time <= end_date)]
 
     # MAKE TIME INDEX PANDAS
     datasett = datasett.set_index("time")
@@ -480,7 +476,7 @@ def remove_outliers_on_each_stocks_each_ohlcv(nump, int1=5):
 # ******************************************************************************
 # ******************************************************************************
 
-def create_dataset(input_df, output_df, args):
+def create_dataset(input_df, output_df):
     # This function creates the lookback data batches.
     dataX, dataY = [], []
     for i in range(len(input_df) - args.lookback - args.num_periods_to_predict + 1):
@@ -508,7 +504,7 @@ def equal_bin(input_df, num_bins):
     return idx[input_df.argsort().argsort()]
 
 
-def clean_categorize_ohlcv(input_df11, input_df22, output_dff, args, test_flag=False):
+def clean_categorize_ohlcv(input_df11, input_df22, output_dff, test_flag=False):
     # This function gets three dataframes. They are X1 (weekly returns), X2 (candles), Y (weekly return).
     # Like trainX1, trainX2  and trainY.
     if input_df11 is not None:
@@ -582,7 +578,7 @@ def clean_categorize_ohlcv(input_df11, input_df22, output_dff, args, test_flag=F
     return input_df1, input_df2, output_df
 
 
-def create_train_test_valid_ohlcv(input_dataset11, input_dataset22, output_datasett, args, hypers):
+def create_train_test_valid_ohlcv(input_dataset11, input_dataset22, output_datasett):
     # This function prepares the train test validation datasets for the ohlcv model. So we will have two input
     # datasets and one output datasets as function"s inputs. The function returns trainX1(weekly returns), trainX2(
     # candles) trainY(weekly return), ....
@@ -789,7 +785,7 @@ def shuffle(x, y, z, axis=0):
     return shuffled_x, shuffled_y, shuffled_z
 
 
-def test_data_reshape(df1, df2, args, hypers):
+def test_data_reshape(df1, df2):
     df1 = df1[..., np.newaxis]
     return df1, df2
 
@@ -826,15 +822,15 @@ def create_tac_prices(full_df, args):
 def create_rv_df(full_df2, indices_df2):
     full_df = full_df2.copy()
     indices_df = indices_df2.copy()
-    indices_df.loc[indices_df["index"]=="0#.ETF", "index"] = "0#.SPX"
+    # indices_df.loc[indices_df["index"]=="0#.ETF", "index"] = "0#.SPX"
     full_df["trading_day"] = pd.to_datetime(full_df["trading_day"])
     indices_list = [".HSLI", ".TWII", ".SXXGR", ".SPX", ".KS200", ".FTSE", ".STI", ".CSI300", ".N225"]
     full_df = full_df.merge(indices_df, on="ticker", how="left")
 
-    full_df_indices = full_df.loc[full_df.ticker.isin(indices_list),["trading_day", "index", "close_multiple","open_multiple", "high_multiple", "low_multiple"]]
+    full_df_indices = full_df.loc[full_df.ticker.isin(indices_list),["trading_day", "currency_code", "close_multiple","open_multiple", "high_multiple", "low_multiple"]]
     full_df_indices.rename(columns={"open_multiple": "open_multiple_ind", "high_multiple": "high_multiple_ind","low_multiple": "low_multiple_ind","close_multiple": "close_multiple_ind"}, inplace=True)
 
-    full_df = full_df.merge(full_df_indices, on=["trading_day", "index"], how="left")
+    full_df = full_df.merge(full_df_indices, on=["trading_day", "currency_code"], how="left")
 
     full_df[["open_multiple_ind", "high_multiple_ind", "low_multiple_ind", "close_multiple_ind"]] = full_df[["open_multiple_ind", "high_multiple_ind", "low_multiple_ind", "close_multiple_ind"]].fillna(value=1)
 
