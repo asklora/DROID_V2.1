@@ -5,5 +5,5 @@ WORKDIR /code
 COPY . /code/
 RUN apt update
 RUN installer/requirement.sh
-RUN python_dependency.sh
+RUN pip install -r requirements_AI.txt
 EXPOSE 8000
