@@ -336,6 +336,9 @@ def bot_infer(infer_df, model_type, rank_columns, Y_columns):
         final_report["ticker"] = infer_df.loc[:, "ticker"]
         final_report["spot_date"] = infer_df.loc[:, "spot_date"]
 
+        for cols in X_infer.columns:
+            X_infer = X_infer.loc[X_infer[cols] != np.inf]
+
         X_infer = X_infer.bfill().ffill()
         X_infer = X_infer.fillna(0)
 
