@@ -23,21 +23,27 @@ from global_vars import folder_check, time_to_expiry
 
 # 	main_exec.py --bot_labeler_infer_daily --exec_index 0#.SPX
 
-def bot_ranking_history(ticker=None, currency_code=None):
+def bot_ranking_history(ticker=None, currency_code=None, mod=False):
+    folder_check()
     print("{} : === {} BOT RANKING TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
     # ********************** Data download for Bot labeler inference history **********************
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     start_date = str_to_date(droid_start_date())
     end_date = str_to_date(dateNow())
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, mod=mod, history=True)
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
 
 
-def bot_ranking_daily(ticker=None, currency_code=None):
+def bot_ranking_daily(ticker=None, currency_code=None, mod=False):
+    folder_check()
     print("{} : === {} BOT RANKING TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
+    if(type(ticker) == type(None) and type(currency_code) == type(None)):
+        ticker = get_active_universe()["ticker"].tolist()
     start_date = get_bot_data_latest_date(daily=True)
     end_date = str_to_date(dateNow())
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, mod=mod)
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
 
@@ -164,6 +170,7 @@ def infer_history():
 # *************************** MODEL TRAINING *****************************************************************************************************************************************
 # ************************************************************************************************************************************************************************************
 def train_lebeler_model(ticker=None, currency_code=None):
+    folder_check()
     time_to_exp = check_time_to_exp(time_to_expiry)
     print("{} : === BOT RANKING TRAIN MODEL STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):

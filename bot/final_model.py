@@ -17,7 +17,7 @@ from general.sql_query import get_active_universe
 from general.sql_output import truncate_table, upsert_data_to_database
 from general.table_name import get_data_vol_surface_inferred_table_name
 
-from global_vars import random_state, saved_model_path, model_filename, X_columns, Y_columns
+from global_vars import random_state, saved_model_path, model_filename, X_columns, Y_columns, time_to_expiry
 
 def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, train_model=False, daily=False, history=False):
     cols_temp_1 = X_columns.copy()
@@ -209,22 +209,31 @@ def model_trainer(train_df, infer_df, model_type, Y_columns=Y_columns[0], just_t
     # This function will train the model either for history or for future inference.
     final_report = pd.DataFrame()
     for col in Y_columns:
+        train_df_copy = train_df.copy()
+        for cols in train_df_copy.columns:
+            train_df_copy = train_df_copy.loc[train_df_copy[cols] != np.inf]
 
-        X_train = train_df[X_columns]
-        Y_train = train_df[Y_columns]
+        infer_df_copy=None
+        if(type(infer_df) != type(None)):
+            infer_df_copy = infer_df.copy()
+            for cols in infer_df_copy.columns:
+                infer_df_copy = infer_df_copy.loc[infer_df_copy[cols] != np.inf]
+        # Remove infinite row
+        X_train = train_df_copy[X_columns]
+        Y_train = train_df_copy[Y_columns]
         if not just_train:
-            X_infer = infer_df[X_columns]
+            X_infer = infer_df_copy[X_columns]
             # Y_infer = infer_df[args.Y_columns]
 
-            final_report["ticker"] = infer_df.loc[:, "ticker"]
-            final_report["spot_date"] = infer_df.loc[:, "spot_date"]
-            final_report["spot_price"] = infer_df.loc[:, "spot_price"]
+            final_report["ticker"] = infer_df_copy.loc[:, "ticker"]
+            final_report["spot_date"] = infer_df_copy.loc[:, "spot_date"]
+            final_report["spot_price"] = infer_df_copy.loc[:, "spot_price"]
 
             for col2 in Y_columns:
                 col22 = col2[:-6]
-                final_report[col22] = infer_df.loc[:, col22]
+                final_report[col22] = infer_df_copy.loc[:, col22]
 
-            final_report[col + "_original"] = infer_df[col]
+            final_report[col + "_original"] = infer_df_copy[col]
 
         X_train = X_train[Y_train[col].notna()]
         Y_train = Y_train[Y_train[col].notna()]
@@ -289,10 +298,13 @@ def find_rank(row, rank_columns):
     return row
 
 
-def find_rank2(row, rank_columns):
+def sort_to_rank(row, rank_columns, time_to_exp):
     # This function finds the rank for each bot.
 
     row2 = row[rank_columns].sort_values(ascending=False)
+
+    for time_exp in time_to_exp:
+        time_exp_str = str(time_exp).replace(".", "")
 
     for i in range(len(rank_columns)):
         row[f"rank_{i + 1}"] = row2.index[i].replace("_pnl_class_prob", "")
@@ -318,7 +330,7 @@ def find_rank3(row):
 
     return row
 
-def bot_infer(infer_df, model_type, rank_columns):
+def bot_infer(infer_df, model_type, rank_columns, Y_columns, time_to_exp=time_to_expiry):
     # This function is used for bot ranking daily and live.
     final_report = pd.DataFrame()
     for col in Y_columns:
@@ -326,6 +338,9 @@ def bot_infer(infer_df, model_type, rank_columns):
 
         final_report["ticker"] = infer_df.loc[:, "ticker"]
         final_report["spot_date"] = infer_df.loc[:, "spot_date"]
+
+        for cols in X_infer.columns:
+            X_infer = X_infer.loc[X_infer[cols] != np.inf]
 
         X_infer = X_infer.bfill().ffill()
         X_infer = X_infer.fillna(0)
@@ -343,27 +358,25 @@ def bot_infer(infer_df, model_type, rank_columns):
         final_report[col + "_prob"] = (reg.predict_proba(X_infer))[:, 1]
         final_report["model_type"] = model_type
         final_report["when_created"] = timestampNow()
-
-    final_report = final_report.apply(lambda x: find_rank2(x, rank_columns), axis=1)
-
+    final_report = final_report.apply(lambda x: sort_to_rank(x, rank_columns), axis=1)
+    final_report.to_csv("final_report_process.csv")
+    
     latest_df = final_report[final_report.spot_date == final_report.spot_date.max()].copy()
     latest_df = latest_df.reset_index(drop=True)
     latest_df_final = pd.DataFrame()
     latest_df_final["ticker"] = latest_df.ticker
     latest_df_final["spot_date"] = latest_df.spot_date
-
+    import sys
+    sys.exit(1)
     # if latest_df["uno_OTM_3m_pnl_class_prob"] > latest_df["uno_ITM_3m_pnl_class_prob"]:
-    latest_df_final.loc[latest_df["uno_OTM_3m_pnl_class_prob"] > latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot"] = "UNO_OTM_3"
-    latest_df_final.loc[latest_df["uno_OTM_3m_pnl_class_prob"] <= latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot"] = "UNO_ITM_3"
-    latest_df_final.loc[latest_df["uno_OTM_3m_pnl_class_prob"] > latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot_prob"] = latest_df["uno_OTM_3m_pnl_class_prob"]
-    latest_df_final.loc[latest_df["uno_OTM_3m_pnl_class_prob"] <= latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot_prob"] = latest_df["uno_ITM_3m_pnl_class_prob"]
-    latest_df_final.loc[latest_df["uno_OTM_1m_pnl_class_prob"] > latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot"] = "UNO_OTM_1"
-    latest_df_final.loc[latest_df["uno_OTM_1m_pnl_class_prob"] <= latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot"] = "UNO_ITM_1"
-    latest_df_final.loc[latest_df["uno_OTM_1m_pnl_class_prob"] > latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot_prob"] = latest_df["uno_OTM_1m_pnl_class_prob"]
-    latest_df_final.loc[latest_df["uno_OTM_1m_pnl_class_prob"] <= latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot_prob"] = latest_df["uno_ITM_1m_pnl_class_prob"]
-    latest_df_final["ucdc_bot"] = "UCDC_ATM_6"
-    latest_df_final["ucdc_bot_prob"] = latest_df["ucdc_ATM_6m_pnl_class_prob"]
-
+    for time_exp in time_to_exp:
+        time_exp_str = str(time_exp).replace(".", "")
+        latest_df_final.loc[latest_df[f"uno_OTM_{time_exp_str}_pnl_class_prob"] >  latest_df[f"uno_ITM_{time_exp_str}_pnl_class_prob"], f"uno_{time_exp_str}_bot"] = f"UNO_OTM_{time_exp_str}"
+        latest_df_final.loc[latest_df[f"uno_OTM_{time_exp_str}_pnl_class_prob"] <= latest_df[f"uno_ITM_{time_exp_str}_pnl_class_prob"], f"uno_{time_exp_str}_bot"] = f"UNO_ITM_{time_exp_str}"
+        latest_df_final.loc[latest_df[f"uno_OTM_{time_exp_str}_pnl_class_prob"] >  latest_df[f"uno_ITM_{time_exp_str}_pnl_class_prob"], f"uno_{time_exp_str}_bot_prob"] = latest_df[f"uno_OTM_{time_exp_str}_pnl_class_prob"]
+        latest_df_final.loc[latest_df[f"uno_OTM_{time_exp_str}_pnl_class_prob"] <= latest_df[f"uno_ITM_{time_exp_str}_pnl_class_prob"], f"uno_{time_exp_str}_bot_prob"] = latest_df[f"uno_ITM_{time_exp_str}_pnl_class_prob"]
+    import sys
+    sys.exit(1)
     latest_df_final = latest_df_final.apply(lambda x: find_rank3(x), axis=1)
     for i in range(3):
         x= latest_df_final[f"rank_{i+1}"]

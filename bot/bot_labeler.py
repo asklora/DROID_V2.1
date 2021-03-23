@@ -16,15 +16,15 @@ from bot.data_download import (
 from dateutil.relativedelta import relativedelta
 
 from bot.final_model import model_trainer, bot_infer, find_rank
-from global_vars import X_columns, bots_list, model_type, bot_labeler_threshold
+from global_vars import X_columns, bots_list, labeler_model_type, bot_labeler_threshold, time_to_expiry
 
-def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, ticker=None, currency_code=None, time_to_exp=None, mod=False, bot_list=None, bot_labeler_train = False, history=False):
+def populate_bot_labeler(start_date=None, end_date=None, model_type=labeler_model_type, ticker=None, currency_code=None, time_to_exp=time_to_expiry, mod=False, bots_list=bots_list, bot_labeler_train = False, history=False):
     # ************************************************************************
     # *********************** Data download **********************************
     main_df = get_executive_data_download(start_date, end_date, ticker=ticker, currency_code=currency_code)
     output_tickers = get_data_vol_surface_ticker(ticker=ticker, currency_code=currency_code)
     # Just taking the rows that we have output for them.
-    main_df = main_df[main_df.ticker.isin(output_tickers)]
+    main_df = main_df[main_df.ticker.isin(output_tickers["ticker"])]
     # ***************************************************************************************************
     # ******************************************** Data preprocessing ***********************************
     # ***************************************************************************************************
@@ -85,14 +85,17 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=model_type, 
                 df2.rename(columns={"pnl": f"{bot}_{opt_type}_{time_exp_str}_pnl",
                     "pnl_class": f"{bot}_{opt_type}_{time_exp_str}_pnl_class"}, inplace=True)
                 df2 = df2.drop_duplicates(["ticker", "spot_date"], keep="last")
+                df2["spot_date"] = pd.to_datetime(df2["spot_date"])
+                final_df["spot_date"] = pd.to_datetime(final_df["spot_date"])
                 final_df = final_df.merge(df2[["ticker", "spot_date", f"{bot}_{opt_type}_{time_exp_str}_pnl_class",
                     f"{bot}_{opt_type}_{time_exp_str}_pnl"]], on=["ticker", "spot_date"], how="left")
+    tac_df["spot_date"] = pd.to_datetime(tac_df["spot_date"])
     final_df = final_df.merge(tac_df[["ticker", "spot_date", "spot_price"]], on=["ticker", "spot_date"], how="left")
     Y_columns = Y_columns
     rank_columns = rank_columns
 
     if history:
-        infer_df, latest_df = bot_infer(final_df, model_type, rank_columns)
+        infer_df, latest_df = bot_infer(final_df, model_type, rank_columns, Y_columns, time_to_exp=time_to_exp)
         infer_df = infer_df.merge(tac_df[["ticker", "currency_code", "spot_date"]], on=["ticker", "spot_date"], how="left")
         infer_df["spot_date"] = infer_df["spot_date"].astype(str)
         infer_df["uid"] = infer_df["spot_date"] + "_" + infer_df["ticker"]
