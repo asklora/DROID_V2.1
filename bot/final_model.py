@@ -17,7 +17,7 @@ from general.sql_query import get_active_universe
 from general.sql_output import truncate_table, upsert_data_to_database
 from general.table_name import get_data_vol_surface_inferred_table_name
 
-from global_vars import random_state, saved_model_path, model_filename, X_columns, Y_columns, time_to_expiry
+from global_vars import random_state, saved_model_path, model_filename, X_columns, Y_columns, time_to_expiry, bots_list
 
 def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, train_model=False, daily=False, history=False):
     cols_temp_1 = X_columns.copy()
@@ -300,26 +300,31 @@ def find_rank(row, rank_columns):
 
 def sort_to_rank(row, rank_columns, time_to_exp):
     # This function finds the rank for each bot.
-
-    row2 = row[rank_columns].sort_values(ascending=False)
-
     for time_exp in time_to_exp:
         time_exp_str = str(time_exp).replace(".", "")
-
-    for i in range(len(rank_columns)):
-        row[f"rank_{i + 1}"] = row2.index[i].replace("_pnl_class_prob", "")
-
+        rank_columns_temp = []
+        for cols in rank_columns:
+            if(cols.split("_")[2] == time_exp_str):
+                rank_columns_temp.append(cols)
+        row2 = row[rank_columns_temp].sort_values(ascending=False)
+        for i in range(len(rank_columns_temp)):
+            row[f"rank_{i + 1}_{time_exp_str}"] = row2.index[i].replace("_pnl_class_prob", "")
     return row
 
 
-def find_rank3(row):
+def find_rank3(row, time_to_exp, bots_list):
     # This function finds the rank for each bot.
     temp = pd.DataFrame()
-    temp.loc[0, "bot"] = row["uno_3m_bot"]
+    i = 0
+    for time_exp in time_to_exp:
+        temp.loc[i, "bot"] = row[f"uno_{time_exp}_bot"]
+        temp.loc[i, "prob"] = row[f"uno_{time_exp}_bot_prob"]
+        i+=1
+    
     temp.loc[1, "bot"] = row["uno_1m_bot"]
     temp.loc[2, "bot"] = row["ucdc_bot"]
 
-    temp.loc[0, "prob"] = row["uno_3m_bot_prob"]
+    
     temp.loc[1, "prob"] = row["uno_1m_bot_prob"]
     temp.loc[2, "prob"] = row["ucdc_bot_prob"]
 
@@ -330,7 +335,7 @@ def find_rank3(row):
 
     return row
 
-def bot_infer(infer_df, model_type, rank_columns, Y_columns, time_to_exp=time_to_expiry):
+def bot_infer(infer_df, model_type, rank_columns, Y_columns, time_to_exp=time_to_expiry, bots_list=bots_list):
     # This function is used for bot ranking daily and live.
     final_report = pd.DataFrame()
     for col in Y_columns:
@@ -358,16 +363,13 @@ def bot_infer(infer_df, model_type, rank_columns, Y_columns, time_to_exp=time_to
         final_report[col + "_prob"] = (reg.predict_proba(X_infer))[:, 1]
         final_report["model_type"] = model_type
         final_report["when_created"] = timestampNow()
-    final_report = final_report.apply(lambda x: sort_to_rank(x, rank_columns), axis=1)
+    final_report = final_report.apply(lambda x: sort_to_rank(x, rank_columns, time_to_exp), axis=1)
     final_report.to_csv("final_report_process.csv")
-    
     latest_df = final_report[final_report.spot_date == final_report.spot_date.max()].copy()
     latest_df = latest_df.reset_index(drop=True)
     latest_df_final = pd.DataFrame()
     latest_df_final["ticker"] = latest_df.ticker
     latest_df_final["spot_date"] = latest_df.spot_date
-    import sys
-    sys.exit(1)
     # if latest_df["uno_OTM_3m_pnl_class_prob"] > latest_df["uno_ITM_3m_pnl_class_prob"]:
     for time_exp in time_to_exp:
         time_exp_str = str(time_exp).replace(".", "")
@@ -375,9 +377,12 @@ def bot_infer(infer_df, model_type, rank_columns, Y_columns, time_to_exp=time_to
         latest_df_final.loc[latest_df[f"uno_OTM_{time_exp_str}_pnl_class_prob"] <= latest_df[f"uno_ITM_{time_exp_str}_pnl_class_prob"], f"uno_{time_exp_str}_bot"] = f"UNO_ITM_{time_exp_str}"
         latest_df_final.loc[latest_df[f"uno_OTM_{time_exp_str}_pnl_class_prob"] >  latest_df[f"uno_ITM_{time_exp_str}_pnl_class_prob"], f"uno_{time_exp_str}_bot_prob"] = latest_df[f"uno_OTM_{time_exp_str}_pnl_class_prob"]
         latest_df_final.loc[latest_df[f"uno_OTM_{time_exp_str}_pnl_class_prob"] <= latest_df[f"uno_ITM_{time_exp_str}_pnl_class_prob"], f"uno_{time_exp_str}_bot_prob"] = latest_df[f"uno_ITM_{time_exp_str}_pnl_class_prob"]
+
+    latest_df_final = latest_df_final.apply(lambda x: find_rank3(x, time_to_exp), axis=1)
+    print(latest_df_final)
+    latest_df_final.to_csv("latest_df_final.csv")
     import sys
     sys.exit(1)
-    latest_df_final = latest_df_final.apply(lambda x: find_rank3(x), axis=1)
     for i in range(3):
         x= latest_df_final[f"rank_{i+1}"]
         temp = latest_df_final[f"rank_{i+1}"].str.split("_",  expand=True)
