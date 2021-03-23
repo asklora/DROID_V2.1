@@ -95,7 +95,7 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=labeler_mode
     rank_columns = rank_columns
 
     if history:
-        infer_df, latest_df = bot_infer(final_df, model_type, rank_columns, Y_columns, time_to_exp=time_to_exp)
+        infer_df, latest_df = bot_infer(final_df, model_type, rank_columns, Y_columns, time_to_exp=time_to_exp, bots_list=bots_list)
         infer_df = infer_df.merge(tac_df[["ticker", "currency_code", "spot_date"]], on=["ticker", "spot_date"], how="left")
         infer_df["spot_date"] = infer_df["spot_date"].astype(str)
         infer_df["uid"] = infer_df["spot_date"] + "_" + infer_df["ticker"]
@@ -134,7 +134,7 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=labeler_mode
     elif bot_labeler_train:
         model_trainer(final_df, None, model_type, Y_columns=Y_columns, just_train=True)
     else:
-        infer_df, latest_df = bot_infer(final_df, model_type, rank_columns)
+        infer_df, latest_df = bot_infer(final_df, model_type, rank_columns, time_to_exp=time_to_exp, bots_list=bots_list)
         infer_df = infer_df.merge(tac_df[["ticker", "currency_code", "spot_date"]], on=["ticker", "spot_date"], how="left")
         infer_df["spot_date"] = infer_df["spot_date"].astype(str)
         infer_df["uid"]=infer_df["spot_date"] + "_" + infer_df["ticker"]
