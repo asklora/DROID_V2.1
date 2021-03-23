@@ -8,6 +8,8 @@ from import_export import resources
 from django.dispatch import receiver
 from django.utils import timezone
 from django.shortcuts import HttpResponseRedirect,reverse
+import time
+
 
 class UniverseResource(resources.ModelResource):
     user = None
@@ -76,8 +78,14 @@ class AddTickerAdmin(ImportExportModelAdmin):
     def save_model( self, request, obj, form, change ):
         #pre save stuff here
         try:
-            ticker = Universe.objects.get(ticker=obj.origin_ticker)
-            get_isin_populate_universe.delay(ticker.ticker,request.user.id)
+            if obj.use_manual:
+                symbol = obj.origin_ticker
+                get_isin_populate_universe.delay(obj.origin_ticker,request.user.id)
+            else:
+                get_isin_populate_universe.delay(obj.origin_ticker,request.user.id)
+                time.sleep(7)
+                symbol = obj.consolidated_ticker
+            ticker = Universe.objects.get(ticker=symbol)
             return super(AddTickerAdmin, self).save_model(request, obj, form, change)
         except Universe.DoesNotExist:
             obj.save()
