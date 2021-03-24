@@ -277,6 +277,7 @@ class BotStatistic(models.Model):
 class BotRanking(models.Model):
     uid = models.TextField(primary_key=True)
     ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column='ticker', related_name='bot_ranking_ticker')
+    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code", related_name="bot_ranking_currency_code")
     spot_date = models.DateField(blank=True, null=True)
     model_type = models.TextField(blank=True, null=True)
     created = models.DateField(blank=True, null=True)
