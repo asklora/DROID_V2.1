@@ -19,12 +19,11 @@ from bot.statistic_uno import populate_uno_statistic
 from bot.data_process import check_bot_list, check_time_to_exp
 from global_vars import folder_check, time_to_expiry
 
-
 def training(ticker=None, currency_code=None):
     train_model(ticker=ticker, currency_code=currency_code)
     train_lebeler_model(ticker=ticker, currency_code=currency_code)
 
-
+# follow currency schedule
 def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0):
     data_prep_daily(ticker=ticker, currency_code=currency_code)
     data_prep_check_new_ticker(ticker=ticker, currency_code=currency_code)
@@ -34,7 +33,7 @@ def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, opt
     option_maker_daily_uno(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
     bot_ranking_daily(ticker=None, currency_code=None, mod=False)
 
-
+# follow currency schedule
 def daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, infer=True, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0):
     data_prep_daily(ticker=ticker, currency_code=currency_code)
     data_prep_check_new_ticker(ticker=ticker, currency_code=currency_code)
@@ -45,6 +44,7 @@ def daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, infer=True, op
     bot_ranking_daily(ticker=None, currency_code=None, mod=False)
 
 
+# follow currency schedule
 def daily_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=True, null_filler=True):
     option_maker_classic_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
     option_maker_daily_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)

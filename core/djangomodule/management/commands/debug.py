@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from core.services.pc4tasks import tasktest
+from core.services.ingestiontask import dailyupdate
 from core.universe.models import Universe,UniverseConsolidated
 from core.Clients.models import UniverseClient
 from core.user.models import User
@@ -773,4 +773,5 @@ ticker_list=[
 class Command(BaseCommand):
     
     def handle(self, *args, **options):
-        UniverseConsolidated.ingestion_manager.get_isin_code(ticker_list)
+        # UniverseConsolidated.ingestion_manager.get_isin_code(ticker_list)
+        dailyupdate.apply_async(['USD'],queue='ingestion')

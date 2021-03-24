@@ -203,4 +203,4 @@ CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@18.167.118.164:5672'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_IMPORTS = ['core.services.pc4tasks']
+CELERY_IMPORTS = ['core.services.ingestiontask']
