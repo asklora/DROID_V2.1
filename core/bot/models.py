@@ -358,9 +358,10 @@ class BotType(models.Model):
 class BotOptionType(models.Model):
     bot_id = models.TextField(primary_key=True)
     bot_type = models.ForeignKey(BotType, on_delete=models.CASCADE, db_column='bot_type', related_name='bot_option_type_bot_type')
-    bot_option_type = models.DateField(blank=True, null=True)
+    bot_option_type = models.TextField(blank=True, null=True)
     bot_option_name = models.TextField(blank=True, null=True)
     time_to_exp = models.FloatField(blank=True, null=True)
+    time_to_exp_str = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = True

@@ -102,7 +102,7 @@ def get_bot_ranking_table_name():
     return "bot_ranking"
 
 def get_bot_latest_ranking_table_name():
-    return "bot_latest_ranking"
+    return "latest_bot_ranking"
 
 def get_bot_data_table_name():
     return "bot_data"

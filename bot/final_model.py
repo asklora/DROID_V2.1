@@ -281,23 +281,31 @@ def model_trainer(train_df, infer_df, model_type, Y_columns=Y_columns[0], just_t
         return final_report
 
 
-def find_rank(data):
+def find_rank(data, time_to_exp):
     # This function finds the rank for each bot.
-    result = pd.DataFrame(columns=[])
-    row2 = row[rank_columns].sort_values(ascending=False)
-
-    for i in range(len(rank_columns)):
-        row[f"rank_{i + 1}"] = row2.index[i].replace("_pnl_class_prob", "", regex=True)
-        rank_name = row2.index[i].replace("_class_prob", "", regex=True)
-        rank_name2 = row2.index[i].replace("_class_prob", "_class_original", regex=True)
-        row[f"pnl_class_prob_rank_{i + 1}"] = row2[i]
-        row[f"pnl_class_original_rank_{i + 1}"] = row[rank_name2]
-        row[f"pnl_avg_rank_{i + 1}"] = row[rank_name] / row.spot_price
-        row[f"pnl_rank_{i + 1}"] = row[rank_name]
-        row[f"acc_rank_{i + 1}"] = row[rank_name + "_class_original"]
-
-    return data
-
+    result = pd.DataFrame({"ticker":[], "spot_date":[], "bot_type":[], "bot_option_type":[], "time_to_exp_str":[], 
+    "ranking":[], "bot_id":[]}, index=[])
+    for index, row in data.iterrows():
+        ticker = row["ticker"]
+        spot_date = row["spot_date"]
+        for cols in data.columns:
+            column = cols.split("_")
+            if(column[0] == "rank"):
+                ranking = column[1]
+                time_to_exp_str = column[2]
+                bot = row[cols].split("_")
+                bot_type = bot[0].upper()
+                bot_option_type = bot[1]
+                bot_id = bot_type + "_" + bot_option_type + "_" + time_to_exp_str
+                data_temp = pd.DataFrame({"ticker":[ticker], "spot_date":[spot_date], "bot_type":[bot_type], 
+                "bot_option_type":[bot_option_type], "time_to_exp_str":[time_to_exp_str], 
+                "ranking":[ranking], "bot_id":[bot_id]}, index=[0])
+                result = result.append(data_temp)
+    result["time_to_exp"] = 0
+    for time_exp in time_to_exp:
+        time_exp_str = str(time_exp).replace(".", "")
+        result["time_to_exp"] = np.where(result["time_to_exp_str"] == time_exp_str, time_exp, result["time_to_exp"])
+    return result
 
 def sort_to_rank(row, rank_columns, time_to_exp):
     # This function finds the rank for each bot.
@@ -310,30 +318,6 @@ def sort_to_rank(row, rank_columns, time_to_exp):
         row2 = row[rank_columns_temp].sort_values(ascending=False)
         for i in range(len(rank_columns_temp)):
             row[f"rank_{i + 1}_{time_exp_str}"] = row2.index[i].replace("_pnl_class_prob", "")
-    return row
-
-
-def find_rank3(row, time_to_exp, bots_list):
-    # This function finds the rank for each bot.
-    temp = pd.DataFrame()
-    i = 0
-    for time_exp in time_to_exp:
-        temp.loc[i, "bot"] = row[f"uno_{time_exp}_bot"]
-        temp.loc[i, "prob"] = row[f"uno_{time_exp}_bot_prob"]
-        i+=1
-    
-    temp.loc[1, "bot"] = row["uno_1m_bot"]
-    temp.loc[2, "bot"] = row["ucdc_bot"]
-
-    
-    temp.loc[1, "prob"] = row["uno_1m_bot_prob"]
-    temp.loc[2, "prob"] = row["ucdc_bot_prob"]
-
-    temp = temp.sort_values(by="prob", ascending=False, ignore_index=True)
-
-    for i in range(3):
-        row[f"rank_{i+1}"] = temp.loc[i, "bot"]
-
     return row
 
 def bot_infer(infer_df, model_type, rank_columns, Y_columns, time_to_exp=time_to_expiry, bots_list=bots_list):
@@ -369,9 +353,8 @@ def bot_infer(infer_df, model_type, rank_columns, Y_columns, time_to_exp=time_to
     latest_df = final_report[final_report.spot_date == final_report.spot_date.max()].copy()
     latest_df = latest_df.reset_index(drop=True)
     latest_df = find_rank(latest_df)
+    latest_df = latest_df.reset_index(drop=True)
     print(latest_df)
     latest_df.to_csv("latest_df.csv")
-    import sys
-    sys.exit(1)
     return final_report, latest_df
 
