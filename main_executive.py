@@ -54,7 +54,7 @@ def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, opt
     if(infer):
         infer_daily(ticker=ticker, currency_code=currency_code)
     #Latest Bot Update Populate
-    
+
     #Option Maker & Null Filler UNO
     option_maker_uno_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
     option_maker_daily_uno(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
@@ -64,7 +64,7 @@ def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, opt
     #Update Bot Backtest
     do_function("bot_backtest_updates")
     #Populate Bot Ranking
-    bot_ranking_daily(ticker=None, currency_code=None, mod=False)
+    bot_ranking_daily(ticker=ticker, currency_code=currency_code, mod=mod)
     #Update Bot Ranking to Latest Bot Update
     do_function("bot_backtest_updates")
     if(type(currency_code) == list):
@@ -76,7 +76,8 @@ def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, opt
 def daily_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=True, null_filler=True):
     option_maker_classic_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
     option_maker_daily_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
-    bot_ranking_daily(ticker=None, currency_code=None, mod=False)
+    bot_ranking_daily(ticker=ticker, currency_code=currency_code, mod=mod)
+    bot_statistic_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
 
 
 # ************************************************************************************************************************************************************************************
