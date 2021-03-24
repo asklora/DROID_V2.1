@@ -359,6 +359,7 @@ class BotOptionType(models.Model):
     bot_id = models.TextField(primary_key=True)
     bot_type = models.ForeignKey(BotType, on_delete=models.CASCADE, db_column='bot_type', related_name='bot_option_type_bot_type')
     bot_option_type = models.DateField(blank=True, null=True)
+    bot_option_name = models.TextField(blank=True, null=True)
     time_to_exp = models.FloatField(blank=True, null=True)
 
     class Meta:
@@ -375,7 +376,7 @@ class LatestBotRanking(models.Model):
     bot_id = models.ForeignKey(BotOptionType, on_delete=models.CASCADE, db_column='bot_id', related_name='latest_bot_ranking_bot_id')
     spot_date = models.DateField(blank=True, null=True)
     bot_type = models.TextField(blank=True, null=True)
-    bot_option_type = models.DateField(blank=True, null=True)
+    bot_option_type = models.TextField(blank=True, null=True)
     time_to_exp = models.FloatField(blank=True, null=True)
     time_to_exp_str = models.TextField(blank=True, null=True)
     ranking = models.IntegerField(blank=True, null=True)
