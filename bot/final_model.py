@@ -352,7 +352,7 @@ def bot_infer(infer_df, model_type, rank_columns, Y_columns, time_to_exp=time_to
     final_report.to_csv("final_report_process.csv")
     latest_df = final_report[final_report.spot_date == final_report.spot_date.max()].copy()
     latest_df = latest_df.reset_index(drop=True)
-    latest_df = find_rank(latest_df)
+    latest_df = find_rank(latest_df, time_to_exp)
     latest_df = latest_df.reset_index(drop=True)
     print(latest_df)
     latest_df.to_csv("latest_df.csv")
