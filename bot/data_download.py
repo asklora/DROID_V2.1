@@ -9,10 +9,10 @@ from general.table_name import (
     get_bot_ranking_table_name, 
     get_bot_ucdc_backtest_table_name, 
     get_bot_uno_backtest_table_name, 
-    get_calendar_table_name, 
-    get_currency_table_name, 
+    get_calendar_table_name, get_currency_calendar_table_name, 
+    get_currency_table_name, get_data_dividend_daily_rates_table_name, 
     get_data_dividend_table_name, 
-    get_data_ibes_monthly_table_name, 
+    get_data_ibes_monthly_table_name, get_data_interest_daily_rates_table_name, 
     get_data_interest_table_name,
     get_data_macro_monthly_table_name, 
     get_data_vix_table_name, 
@@ -325,5 +325,28 @@ def get_bot_backtest_data_date_list(start_date=None, end_date=None, time_to_exp=
 def get_bot_ranking_data():
     table_name = get_bot_ranking_table_name()
     query = f"select * from {table_name} "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_data_interest_daily(condition=None):
+    table_name = get_data_interest_daily_rates_table_name()
+    query = f"select * from {table_name} "
+    if(type(condition) != type(None)):
+        query+= f" where {condition}"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_data_dividend_daily_rates(condition=None):
+    table_name = get_data_dividend_daily_rates_table_name()
+    query = f"select * from {table_name} "
+    if(type(condition) != type(None)):
+        query+= f" where {condition}"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_holiday_by_day_and_currency_code(non_working_day, currency_code):
+    table_name = get_currency_calendar_table_name()
+    query = f"select * from {table_name} "
+    query+= f" where non_working_day='{non_working_day}' and currency_code in {tuple_data(currency_code)}"
     data = read_query(query, table_name, cpu_counts=True)
     return data

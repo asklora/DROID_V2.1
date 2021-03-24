@@ -243,10 +243,27 @@ class VolSurfaceInferred(models.Model):
 
     def __str__(self):
         return self.ticker.ticker
-    
+
+class LatestVol(models.Model):
+    ticker = models.OneToOneField(Universe, on_delete=models.CASCADE,db_column="ticker", related_name="latest_vol_ticker", primary_key=True)
+    trading_day = models.DateField(blank=True, null=True)
+    atm_volatility_spot = models.FloatField(blank=True, null=True)
+    atm_volatility_one_year = models.FloatField(blank=True, null=True)
+    atm_volatility_infinity = models.FloatField(blank=True, null=True)
+    slope = models.FloatField(blank=True, null=True)
+    deriv = models.FloatField(blank=True, null=True)
+    slope_inf = models.FloatField(blank=True, null=True)
+    deriv_inf = models.FloatField(blank=True, null=True)
+    class Meta:
+        managed = True
+        db_table = "latest_vol"
+
+    def __str__(self):
+        return self.ticker.ticker
+
 class BotStatistic(models.Model):
     uid = models.TextField(primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column='ticker', related_name='bot_statistic_ticker')
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="bot_statistic_ticker")
     option_type = models.TextField(blank=True, null=True)
     bot_type = models.TextField(blank=True, null=True)
     lookback = models.BigIntegerField(blank=True, null=True)
@@ -269,14 +286,14 @@ class BotStatistic(models.Model):
     
     class Meta:
         managed = True
-        db_table = 'bot_statistic'
+        db_table = "bot_statistic"
 
     def __str__(self):
-        return f'{self.ticker.ticker}-{self.bot_type}'
+        return f"{self.ticker.ticker}-{self.bot_type}"
     
 class BotRanking(models.Model):
     uid = models.TextField(primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column='ticker', related_name='bot_ranking_ticker')
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="bot_ranking_ticker")
     currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code", related_name="bot_ranking_currency_code")
     spot_date = models.DateField(blank=True, null=True)
     model_type = models.TextField(blank=True, null=True)
@@ -340,10 +357,10 @@ class BotRanking(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'bot_ranking'
+        db_table = "bot_ranking"
 
     def __str__(self):
-        return f'{self.ticker.ticker}-{self.spot_date}'
+        return f"{self.ticker.ticker}-{self.spot_date}"
 
 class BotType(models.Model):
     bot_type = models.TextField(primary_key=True)
@@ -351,14 +368,14 @@ class BotType(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'bot_type'
+        db_table = "bot_type"
 
     def __str__(self):
-        return f'{self.bot_type}'
+        return f"{self.bot_type}"
 
 class BotOptionType(models.Model):
     bot_id = models.TextField(primary_key=True)
-    bot_type = models.ForeignKey(BotType, on_delete=models.CASCADE, db_column='bot_type', related_name='bot_option_type_bot_type')
+    bot_type = models.ForeignKey(BotType, on_delete=models.CASCADE, db_column="bot_type", related_name="bot_option_type_bot_type")
     bot_option_type = models.TextField(blank=True, null=True)
     bot_option_name = models.TextField(blank=True, null=True)
     time_to_exp = models.FloatField(blank=True, null=True)
@@ -366,16 +383,16 @@ class BotOptionType(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'bot_option_type'
+        db_table = "bot_option_type"
 
     def __str__(self):
-        return f'{self.bot_type}-{self.bot_option_type}-{self.time_to_exp}'
+        return f"{self.bot_type}-{self.bot_option_type}-{self.time_to_exp}"
 
 
 class LatestBotRanking(models.Model):
     uid = models.TextField(primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column='ticker', related_name='latest_bot_ranking_ticker')
-    bot_id = models.ForeignKey(BotOptionType, on_delete=models.CASCADE, db_column='bot_id', related_name='latest_bot_ranking_bot_id')
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="latest_bot_ranking_ticker")
+    bot_id = models.ForeignKey(BotOptionType, on_delete=models.CASCADE, db_column="bot_id", related_name="latest_bot_ranking_bot_id")
     spot_date = models.DateField(blank=True, null=True)
     bot_type = models.TextField(blank=True, null=True)
     bot_option_type = models.TextField(blank=True, null=True)
@@ -385,7 +402,55 @@ class LatestBotRanking(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'latest_bot_ranking'
+        db_table = "latest_bot_ranking"
 
     def __str__(self):
-        return f'{self.ticker.ticker}-{self.bot_id}'
+        return f"{self.ticker.ticker}-{self.bot_id}"
+
+class LatestBotUpdate(models.Model):
+    uid = models.TextField(primary_key=True)
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="latest_bot_update_ticker")
+    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code", related_name="latest_bot_update_currency_code")
+    bot_id = models.ForeignKey(BotOptionType, on_delete=models.CASCADE, db_column="bot_id", related_name="latest_bot_update_bot_id")
+    spot_price = models.FloatField(blank=True, null=True)
+    spot_date = models.DateField(blank=True, null=True)
+    potential_max_loss = models.FloatField(blank=True, null=True)
+    targeted_profit = models.FloatField(blank=True, null=True)
+    bot_type = models.TextField(blank=True, null=True)
+    bot_option_type = models.TextField(blank=True, null=True)
+    time_to_exp = models.FloatField(blank=True, null=True)
+    time_to_exp_str = models.TextField(blank=True, null=True)
+    v0 = models.FloatField(blank=True, null=True)
+    vol_t_003846 = models.FloatField(blank=True, null=True)
+    vol_t_007692 = models.FloatField(blank=True, null=True)
+    vol_t_008333 = models.FloatField(blank=True, null=True)
+    vol_t_015384 = models.FloatField(blank=True, null=True)
+    vol_t_016666 = models.FloatField(blank=True, null=True)
+    vol_t_025 = models.FloatField(blank=True, null=True)
+    vol_t_05 = models.FloatField(blank=True, null=True)
+    classic_vol = models.FloatField(blank=True, null=True)
+    option_price = models.FloatField(blank=True, null=True)
+    strike = models.FloatField(blank=True, null=True)
+    strike_2 = models.FloatField(blank=True, null=True)
+    barrier = models.FloatField(blank=True, null=True)
+    delta = models.FloatField(blank=True, null=True)
+    rebate = models.FloatField(blank=True, null=True)
+    t = models.IntegerField(blank=True, null=True)
+    r = models.FloatField(blank=True, null=True)
+    q = models.FloatField(blank=True, null=True)
+    v1 = models.FloatField(blank=True, null=True)
+    v2 = models.FloatField(blank=True, null=True)
+    expiry_003846 = models.DateField(blank=True, null=True)
+    expiry_007692 = models.DateField(blank=True, null=True)
+    expiry_008333 = models.DateField(blank=True, null=True)
+    expiry_015384 = models.DateField(blank=True, null=True)
+    expiry_016666 = models.DateField(blank=True, null=True)
+    expiry_025 = models.DateField(blank=True, null=True)
+    expiry_05 = models.DateField(blank=True, null=True)
+    ranking = models.IntegerField(blank=True, null=True)
+    class Meta:
+        managed = True
+        db_table = "latest_bot_update"
+
+    def __str__(self):
+        return f"{self.ticker.ticker}-{self.bot_id}"

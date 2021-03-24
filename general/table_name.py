@@ -16,6 +16,9 @@ def get_country_table_name():
 def get_currency_table_name():
     return "currency"
 
+def get_currency_calendar_table_name():
+    return "currency_calendar"
+
 def get_industry_table_name():
     return "industry"
 
@@ -125,6 +128,21 @@ def get_top_stock_models_stock_table_name():
 
 def get_client_table_name():
     return "client"
+
+def get_data_dividend_table_name():
+    return "data_dividend"
+
+def get_data_dividend_daily_rates_table_name():
+    return "data_dividend_daily_rates"
+
+def get_data_interest_table_name():
+    return "data_interest"
+
+def get_data_interest_daily_rates_table_name():
+    return "data_interest_daily_rates"
+
+def get_latest_vol_table_name():
+    return "latest_vol"
 
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr

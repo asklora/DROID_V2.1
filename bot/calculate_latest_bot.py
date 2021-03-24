@@ -1,99 +1,15 @@
-import sys
-import json
-import base64
+from general.sql_query import get_active_universe
+from bot.data_download import get_data_dividend_daily_rates, get_data_interest_daily, get_holiday_by_day_and_currency_code
+from threading import Condition
 import pandas as pd
 import numpy as np
-import time as tm
-import sqlalchemy as db
-from sqlalchemy import create_engine
-from sqlalchemy.types import Date, BIGINT, TEXT
 from datetime import datetime
-from general.slack import report_to_slack
-from general.general import dateNow, timeNow, forwarddate_by_month, backdate_by_day, datetimeNow
-from data_source.DSWS import get_company_des_from_dsws
-from universe import DroidUniverse
-from pangres import upsert
+from general.date_process import timeNow, datetimeNow
 import numpy as np
-from datetime import datetime, timezone, time, timedelta, date
 from dateutil.relativedelta import relativedelta
-import executive.black_scholes as  uno
-from universe import DroidUniverse, droid_universe_by_index, droid_universe_by_country_code
-
-droid_universe_table = 'droid_universe'
-latest_bot_updates_table = 'latest_bot_updates'
-latest_vol_updates_table = 'latest_vol_updates'
-calendar_table = 'calendar'
-bot_option_type_table = 'bot_option_type'
-latest_vol_updates_table = 'latest_vol_updates'
-latest_price_updates_table = 'latest_price_updates'
-daily_div_rates_table = 'daily_div_rates'
-daily_interest_rates_table = 'daily_interest_rates'
-indices_table = 'indices'
-
-def get_currency_code(args, index):
-    tuple_index = tuple(index.to_list())
-    #tuple_index = "('0#.SPX')"
-    engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        query = f"select index, currency_code from {indices_table} where index in {tuple_index}"
-        data = pd.read_sql(query, con=conn)
-    engine.dispose()
-    data = pd.DataFrame(data)
-    return data
-
-def get_daily_div_rates(args, t, ticker):
-    tuple_ticker = tuple(ticker.to_list())
-    #tuple_ticker = "('MSFT.O')"
-    engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        query = f"select ticker, q from {daily_div_rates_table} where t={t} and ticker in {tuple_ticker}"
-        data = pd.read_sql(query, con=conn)
-    engine.dispose()
-    data = pd.DataFrame(data)
-    return data
-
-def get_daily_interest_rates(args, currency_code, t):
-    tuple_currency_code = tuple(currency_code.to_list())
-    #tuple_currency_code = "('USD')"
-    engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        query = f"select currency_code, r from {daily_interest_rates_table} where t={t} and currency_code in {tuple_currency_code}"
-        data = pd.read_sql(query, con=conn)
-    engine.dispose()
-    data = pd.DataFrame(data)
-    return data
-
-def insert_data_to_database(args, result):
-    print('=== Upsert Data To Database ===')
-    result = result.set_index('uid')
-    dtype={
-        "uid":TEXT,
-        "ticker":TEXT
-    }
-    engines_droid = create_engine(args.db_url_droid_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    upsert(engine=engines_droid,
-           df=result,
-           table_name=latest_bot_updates_table,
-           if_row_exists='update',
-           dtype=dtype)
-    print("DATA UPDATED TO " + latest_bot_updates_table)
-    engines_droid.dispose()
-    del result
-
-def get_holiday_by_country_code(args, country_code, non_working_day):
-    #print('=== Get Active Droid Universe ===')
-    engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        metadata = db.MetaData()
-        query = f"select * from {calendar_table} where country_code='{country_code}' and non_working_day='{non_working_day}'"
-        data = pd.read_sql(query, con=conn)
-    engine.dispose()
-    data = pd.DataFrame(data)
-    return data
-
+import bot.black_scholes as  uno
+from general.sql_output import upsert_data_to_database
+from global_vars import time_to_expiry
 def get_bot_option_type(args):
     engine = create_engine(args.db_url_droid_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
@@ -124,32 +40,27 @@ def get_latest_vol_updates(args):
     data = pd.DataFrame(data)
     return data
 
-def get_expiry_date(args, country_code):
-    expiry_1 = datetime.now().date() + relativedelta(months=1) - relativedelta(days=1)
-    expiry_3 = datetime.now().date() + relativedelta(months=3) - relativedelta(days=1)
-    expiry_6 = datetime.now().date() + relativedelta(months=6) - relativedelta(days=1)
-
-    expiry_list = [expiry_1, expiry_3, expiry_6]
-
-    del expiry_1, expiry_3, expiry_6
-
-    for i in range(len(expiry_list)):
+def get_expiry_date(currency_code, time_to_exp):
+    expiry_dict = {}
+    for time_exp in time_to_exp:
+        time_exp_str = str(time_exp).replace(".", "")
+        days = int(round((time_exp * 365), 0))
+        expiry = datetime.now().date() + relativedelta(days=(days-1))
+        # days = int(round((time_exp * 256), 0))
+        # expiry = datetime.now().date() + BDay(days-1)
+        column = f"expiry_{time_exp_str}"
+        expiry_dict.update({column: expiry})
+    for column, expiry_date in expiry_dict.items():
         while True:
             holiday = False
-            non_working_day = expiry_list[i].strftime("%Y-%m-%d")
-            data = get_holiday_by_country_code(args, country_code, non_working_day)
+            data = get_holiday_by_day_and_currency_code(expiry_date, currency_code)
             if(len(data) > 0):
                 holiday = True
-            if ((holiday == False) and expiry_list[i].weekday() < 5):
+            if ((holiday == False) and expiry_date.weekday() < 5):
                 break
             else:
-                expiry_list[i] = expiry_list[i] - relativedelta(days=1)
-
-    expiry_1 = expiry_list[0].strftime("%Y-%m-%d")
-    expiry_3 = expiry_list[1].strftime("%Y-%m-%d")
-    expiry_6 = expiry_list[2].strftime("%Y-%m-%d")
-    del expiry_list
-    return expiry_1, expiry_3, expiry_6
+                expiry_date = expiry_date - relativedelta(days=1)
+    return expiry_dict
 
 def get_Classic(data, bot_horizon_month):
     # REQUIREMENT FOR CLASSIC
@@ -171,33 +82,36 @@ def get_Classic(data, bot_horizon_month):
     data["targeted_profit"] = (dur * data["classic_vol"])
     return data
 
-def get_trq(args, data, bot_horizon_month):
+def get_trq(data, bot_horizon_month):
     if bot_horizon_month == 1:
-        expiry = data['expiry_1'].iloc[0]
+        expiry = data["expiry_1"].iloc[0]
     elif bot_horizon_month == 3:
-        expiry = data['expiry_3'].iloc[0]
+        expiry = data["expiry_3"].iloc[0]
     elif bot_horizon_month == 6:
-        expiry = data['expiry_6'].iloc[0]
+        expiry = data["expiry_6"].iloc[0]
 
     expiry = datetime.strptime(expiry, "%Y-%m-%d")
-    daydiff = (expiry.date() - datetime.now().date()).days
-    t = daydiff / 365
-    if t == 0:
-        t = 0.0027397260273972603
+    t = (expiry.date() - datetime.now().date()).days
     #print(f"{expiry.date()} - {datetime.now().date()} = {daydiff}")
     #print(f"Horizon {bot_horizon_month} = {t}")
     data["t"] = t
 
-    result_q = get_daily_div_rates(args, t, data["ticker"])
+    # result_q = get_daily_div_rates(args, t, data["ticker"])
+    ticker = data["ticker"]
+
+    result_q = get_data_dividend_daily_rates(condition=f" t={t} and ticker='{ticker}'")
+    result_q = result_q[["ticker", "q"]]
     if len(result_q) > 0:
-        data = data.merge(result_q, how='left', on="ticker")
+        data = data.merge(result_q, how="left", on="ticker")
     else :
         data["q"] = 0
     del result_q
 
-    result_r = get_daily_interest_rates(args, data["currency_code"], t)
+    currency_code = data["currency_code"]
+    result_r = get_data_interest_daily(condition=f" t={t} and currency_code='{currency_code}'")
+    result_r = result_r[["ticker", "r"]]
     if len(result_r) > 0:
-        data = data.merge(result_r, how='left', on='currency_code')
+        data = data.merge(result_r, how="left", on="currency_code")
     else :
         data["r"] = 0
     del result_r
@@ -231,14 +145,14 @@ def get_strike_barrier_rebate(data, bot_horizon_month, bot_option_type, bot_grou
         vol = "vol_t_6"
 
     if bot_group == "UNO":
-        if bot_option_type == 'OTM':
+        if bot_option_type == "OTM":
             data["strike"] = data["spot_price"] * (1 + data[vol] * 0.5)
-        elif bot_option_type == 'ITM':
+        elif bot_option_type == "ITM":
             data["strike"] = data["spot_price"] * (1 - data[vol] * 0.5)
 
-        if bot_option_type == 'OTM':
+        if bot_option_type == "OTM":
             data["barrier"] = data["spot_price"] * (1 + data[vol] * 2)
-        elif bot_option_type == 'ITM':
+        elif bot_option_type == "ITM":
             data["barrier"] = data["spot_price"] * (1 + data[vol] * 1.5)
     
         data["rebate"] = data["barrier"] - data["strike"]
@@ -289,53 +203,36 @@ def get_loss_profit(data, bot_group):
         data["targeted_profit"] = -1 * data["option_price"] / data["spot_price"]
     return data
 
-def calculate_latest_bot_by_index(args, indices):
+def populate_latest_bot_update(ticker=None, currency_code=None, time_to_exp=time_to_expiry):
     print("== Start Calculating == " + str(timeNow()))
-    if(indices == 'ALL'):
-        data = DroidUniverse(args)
-    elif(indices == 'US'):
-        data = droid_universe_by_country_code(args, 'US', method=True)
-    elif(indices == 'NOTUS'):
-        data = droid_universe_by_country_code(args, 'US', method=False)
-    else:
-        data = droid_universe_by_index(args, indices)
-
-    universe = data[["ticker", "country_code", "index"]]
+    data = get_active_universe(ticker=ticker, currency_code=currency_code)
+    universe = data[["ticker", "currency_code"]]
     del data
-    
-    print("== Getting Currency Code == " + str(timeNow()))
-    currency_code = get_currency_code(args, universe["index"])
-    universe = universe.merge(currency_code, how='left', on='index')
-    universe = universe.drop(columns=["index"])
-    del currency_code
-    
     print("== Calculating Expiry Date == " + str(timeNow()))
-    #Calculating Expiry_1, Expiry_3, Expiry_6 for Different Country Code
-    expiry_date = pd.DataFrame({'country_code':[],'expiry_1':[],'expiry_3':[],'expiry_6':[]}, index=[])
-    country_code = universe['country_code'].drop_duplicates(keep='last').tolist()
-    for item in country_code:
-        try:
-            expiry_1, expiry_3, expiry_6 = get_expiry_date(args, item)
-            temp = [[item, expiry_1, expiry_3, expiry_6]] 
-            temp = pd.DataFrame(temp, columns = ['country_code', 'expiry_1', 'expiry_3', 'expiry_6'])
-            expiry_date = expiry_date.append(temp)
-            del temp
-        except Exception as e:
-            print(e)
-    universe = universe.merge(expiry_date, how='left', on='country_code')
-    del country_code, expiry_date
-
+    expiry_date = pd.DataFrame()
+    currency_code = universe["currency_code"].drop_duplicates(keep="last").tolist()
+    for currency in currency_code:
+        expiry_dict = get_expiry_date(currency_code, time_to_exp)
+        temp = pd.DataFrame()
+        temp["currency_code"] = [currency]
+        for column, exp_date in expiry_dict.items():
+            temp[column] = [exp_date]
+        expiry_date = expiry_date.append(temp)
+    universe = universe.merge(expiry_date, how="left", on="currency_code")
+    del currency_code, expiry_date
+    
     print("== Getting Volatility Data == " + str(timeNow()))
     #Getting Volatility
     latest_vol_updates = get_latest_vol_updates(args)
-    universe = universe.merge(latest_vol_updates, how='left', on='ticker')
+    universe = universe.merge(latest_vol_updates, how="left", on="ticker")
     universe = universe.drop(columns=["uid", "trading_day"])
     del latest_vol_updates
-
+    import sys
+    sys.exit(1)
     print("== Getting Price Data == " + str(timeNow()))
     #Getting Volatility
     latest_price_updates = get_latest_price_updates(args)
-    universe = universe.merge(latest_price_updates, how='left', on='ticker')
+    universe = universe.merge(latest_price_updates, how="left", on="ticker")
     del latest_price_updates
     #universe.to_csv("Test.csv")
     print(universe)
@@ -375,9 +272,9 @@ def calculate_latest_bot_by_index(args, indices):
         result["month_horizon"] = bot_horizon_month
         result["option_type"] = bot_option_type
         result["bot_type"] = bot_type
-        result['uid'] = result['ticker'] + "_" + bot_type + "_" + bot_option_type 
-        result['uid'] = result['uid'].str.replace("-", "", regex=True).str.replace(".", "", regex=True).str.replace(" ", "", regex=True)
-        result['uid'] = result['uid'].str.strip()
+        result["uid"] = result["ticker"] + "_" + bot_type + "_" + bot_option_type 
+        result["uid"] = result["uid"].str.replace("-", "", regex=True).str.replace(".", "", regex=True).str.replace(" ", "", regex=True)
+        result["uid"] = result["uid"].str.strip()
         #result.to_csv(f"Result {bot_type} {bot_option_type}.csv")
         print(result)
         #Inserting Data to Database

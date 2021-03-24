@@ -1,3 +1,4 @@
+from bot.calculate_latest_bot import populate_latest_bot_update
 from general.sql_query import get_active_universe
 from general.sql_process import do_function
 from main_executive import (
@@ -13,7 +14,8 @@ from main_executive import (
 if __name__ == "__main__":
     print("Start Process")
     # train_lebeler_model()
-    bot_ranking_history(ticker=None, currency_code=None)
+    populate_latest_bot_update(currency_code="EUR")
+    # bot_ranking_history(ticker=None, currency_code=None)
     # bot_statistic_classic()
     # bot_statistic_ucdc(currency_code="EUR")
     # bot_statistic_uno(currency_code="EUR")
