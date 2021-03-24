@@ -367,3 +367,22 @@ class BotOptionType(models.Model):
 
     def __str__(self):
         return f'{self.bot_type}-{self.bot_option_type}-{self.time_to_exp}'
+
+
+class LatestBotRanking(models.Model):
+    uid = models.TextField(primary_key=True)
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column='ticker', related_name='latest_bot_ranking_ticker')
+    bot_id = models.ForeignKey(BotOptionType, on_delete=models.CASCADE, db_column='bot_id', related_name='latest_bot_ranking_bot_id')
+    spot_date = models.DateField(blank=True, null=True)
+    bot_type = models.TextField(blank=True, null=True)
+    bot_option_type = models.DateField(blank=True, null=True)
+    time_to_exp = models.FloatField(blank=True, null=True)
+    time_to_exp_str = models.TextField(blank=True, null=True)
+    ranking = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'latest_bot_ranking'
+
+    def __str__(self):
+        return f'{self.ticker.ticker}-{self.bot_id}'
