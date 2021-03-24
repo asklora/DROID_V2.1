@@ -3,7 +3,7 @@ version: '3'
 services:
   dev:
     container_name: droid-v2-dev
-    build: ./
-    command: sh -c "python manage.py runserver 0.0.0.0:8000"
+    build: .
+    command: sh -c "python /code/manage.py runserver 0.0.0.0:8000"
     ports:
       - 8000:8000

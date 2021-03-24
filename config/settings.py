@@ -53,6 +53,7 @@ CORE_APPS = [
     'core.Clients',
     'core.signals',
     'core.survey',
+    'core.orders_api',
 ]
 
 INSTALLED_APPS = DJANGO_DEFAULT_APPS + ADDITIONAL_APPS + CORE_APPS
