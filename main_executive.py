@@ -45,7 +45,7 @@ def training(ticker=None, currency_code=None):
     train_model(ticker=ticker, currency_code=currency_code)
     train_lebeler_model(ticker=ticker, currency_code=currency_code)
 
-
+# follow currency schedule
 def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0):
     #Data Preparation
     data_prep_daily(ticker=ticker, currency_code=currency_code)
@@ -72,6 +72,7 @@ def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, opt
             bot_statistic_ucdc(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
             bot_statistic_uno(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
 
+# follow currency schedule
 def daily_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=True, null_filler=True):
     option_maker_classic_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
     option_maker_daily_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
