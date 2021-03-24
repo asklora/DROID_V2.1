@@ -19,34 +19,6 @@ from bot.statistic_uno import populate_uno_statistic
 from bot.data_process import check_bot_list, check_time_to_exp
 from global_vars import folder_check, time_to_expiry
 
-# 	main_exec.py --bot_labeler_infer_daily --exec_index 0#.FTSE
-
-# 	main_exec.py --bot_labeler_infer_daily --exec_index 0#.SPX
-
-def bot_ranking_history(ticker=None, currency_code=None, mod=False):
-    folder_check()
-    print("{} : === {} BOT RANKING TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
-    # ********************** Data download for Bot labeler inference history **********************
-    if(type(ticker) == type(None) and type(currency_code) == type(None)):
-        ticker = get_active_universe()["ticker"].tolist()
-    start_date = str_to_date(droid_start_date())
-    end_date = str_to_date(dateNow())
-    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, mod=mod, history=True)
-    print(f"The start date is set as: {start_date}")
-    print(f"The end date is set as: {end_date}")
-
-
-def bot_ranking_daily(ticker=None, currency_code=None, mod=False):
-    folder_check()
-    print("{} : === {} BOT RANKING TRAIN MODEL STARTED ===".format(dateNow(), currency_code))
-    if(type(ticker) == type(None) and type(currency_code) == type(None)):
-        ticker = get_active_universe()["ticker"].tolist()
-    start_date = get_bot_data_latest_date(daily=True)
-    end_date = str_to_date(dateNow())
-    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, mod=mod)
-    print(f"The start date is set as: {start_date}")
-    print(f"The end date is set as: {end_date}")
-
 
 def training(ticker=None, currency_code=None):
     train_model(ticker=ticker, currency_code=currency_code)
@@ -60,6 +32,7 @@ def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, opt
         infer_daily(ticker=ticker, currency_code=currency_code)
     option_maker_uno_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
     option_maker_daily_uno(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
+    bot_ranking_daily(ticker=None, currency_code=None, mod=False)
 
 
 def daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, infer=True, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0):
@@ -69,11 +42,42 @@ def daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, infer=True, op
         infer_daily(ticker=ticker, currency_code=currency_code)
     option_maker_ucdc_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
     option_maker_daily_ucdc(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
+    bot_ranking_daily(ticker=None, currency_code=None, mod=False)
 
 
 def daily_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=True, null_filler=True):
     option_maker_classic_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
     option_maker_daily_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
+    bot_ranking_daily(ticker=None, currency_code=None, mod=False)
+
+
+# ************************************************************************************************************************************************************************************
+# *************************** MODEL TRAINING *****************************************************************************************************************************************
+# ************************************************************************************************************************************************************************************
+def train_lebeler_model(ticker=None, currency_code=None):
+    folder_check()
+    time_to_exp = check_time_to_exp(time_to_expiry)
+    print("{} : === BOT RANKING TRAIN MODEL STARTED ===".format(dateNow()))
+    if(type(ticker) == type(None) and type(currency_code) == type(None)):
+        ticker = get_active_universe()["ticker"].tolist()
+    start_date = str_to_date(droid_start_date())
+    end_date = str_to_date(dateNow())
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, bot_labeler_train = True)
+    print("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
+
+def train_model(ticker=None, currency_code=None):
+    folder_check()
+    print("{} : === VOLATILITY TRAIN MODEL STARTED ===".format(dateNow()))
+    if(type(ticker) == type(None) and type(currency_code) == type(None)):
+        ticker = get_active_universe()["ticker"].tolist()
+    start_date = str_to_date(droid_start_date())
+    end_date = str_to_date(dateNow())
+    print(f"The start date is set as: {start_date}")
+    print(f"The end date is set as: {end_date}")
+    populate_vol_infer(start_date, end_date, ticker=ticker, currency_code=currency_code, train_model=True)
+    print("{} : === VOLATILITY TRAIN MODEL COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === VOLATILITY TRAIN MODEL COMPLETED ===".format(dateNow()))
 
 
 # ************************************************************************************************************************************************************************************
@@ -164,35 +168,6 @@ def infer_history():
     populate_vol_infer(start_date, end_date, ticker=ticker, history=True)
     print("{} : === VOLATILITY INFER HISTORY COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === VOLATILITY INFER HISTORY COMPLETED ===".format(dateNow()))
-
-
-# ************************************************************************************************************************************************************************************
-# *************************** MODEL TRAINING *****************************************************************************************************************************************
-# ************************************************************************************************************************************************************************************
-def train_lebeler_model(ticker=None, currency_code=None):
-    folder_check()
-    time_to_exp = check_time_to_exp(time_to_expiry)
-    print("{} : === BOT RANKING TRAIN MODEL STARTED ===".format(dateNow()))
-    if(type(ticker) == type(None) and type(currency_code) == type(None)):
-        ticker = get_active_universe()["ticker"].tolist()
-    start_date = str_to_date(droid_start_date())
-    end_date = str_to_date(dateNow())
-    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, bot_labeler_train = True)
-    print("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
-    report_to_slack("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
-
-def train_model(ticker=None, currency_code=None):
-    folder_check()
-    print("{} : === VOLATILITY TRAIN MODEL STARTED ===".format(dateNow()))
-    if(type(ticker) == type(None) and type(currency_code) == type(None)):
-        ticker = get_active_universe()["ticker"].tolist()
-    start_date = str_to_date(droid_start_date())
-    end_date = str_to_date(dateNow())
-    print(f"The start date is set as: {start_date}")
-    print(f"The end date is set as: {end_date}")
-    populate_vol_infer(start_date, end_date, ticker=ticker, currency_code=currency_code, train_model=True)
-    print("{} : === VOLATILITY TRAIN MODEL COMPLETED ===".format(dateNow()))
-    report_to_slack("{} : === VOLATILITY TRAIN MODEL COMPLETED ===".format(dateNow()))
 
 
 # ************************************************************************************************************************************************************************************
@@ -397,3 +372,34 @@ def bot_statistic_uno(ticker=None, currency_code=None, time_to_exp=None):
     populate_uno_statistic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
     print("{} : === BOT STATISTIC UNO COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === BOT STATISTIC UNO COMPLETED ===".format(dateNow()))
+
+
+# ************************************************************************************************************************************************************************************
+# *************************** BOT STATISTIC ******************************************************************************************************************************************
+# ************************************************************************************************************************************************************************************
+def bot_ranking_history(ticker=None, currency_code=None, mod=False):
+    folder_check()
+    print("{} : === BOT RANKING HISTORY STARTED ===".format(dateNow()))
+    if(type(ticker) == type(None) and type(currency_code) == type(None)):
+        ticker = get_active_universe()["ticker"].tolist()
+    start_date = str_to_date(droid_start_date())
+    end_date = str_to_date(dateNow())
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, mod=mod, history=True)
+    print(f"The start date is set as: {start_date}")
+    print(f"The end date is set as: {end_date}")
+    print("{} : === BOT RANKING HISTORY COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === BOT RANKING HISTORY COMPLETED ===".format(dateNow()))
+
+
+def bot_ranking_daily(ticker=None, currency_code=None, mod=False):
+    folder_check()
+    print("{} : === BOT RANKING DAILY STARTED ===".format(dateNow()))
+    if(type(ticker) == type(None) and type(currency_code) == type(None)):
+        ticker = get_active_universe()["ticker"].tolist()
+    start_date = get_bot_data_latest_date(daily=True)
+    end_date = str_to_date(dateNow())
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, mod=mod)
+    print(f"The start date is set as: {start_date}")
+    print(f"The end date is set as: {end_date}")
+    print("{} : === BOT RANKING DAILY COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === BOT RANKING DAILY COMPLETED ===".format(dateNow()))
