@@ -10,7 +10,7 @@ from sklearn.ensemble import RandomForestClassifier
 from bot.preprocess import rounding_fun
 from bot.data_download import get_data_vol_surface_ticker, get_executive_data_download
 
-from general.date_process import timeNow, timestampNow
+from general.date_process import dateNow, timeNow, timestampNow
 from general.data_process import uid_maker
 from general.sql_process import do_function
 from general.sql_query import get_active_universe
@@ -347,14 +347,12 @@ def bot_infer(infer_df, model_type, rank_columns, Y_columns, time_to_exp=time_to
 
         final_report[col + "_prob"] = (reg.predict_proba(X_infer))[:, 1]
         final_report["model_type"] = model_type
-        final_report["when_created"] = timestampNow()
+        final_report["created"] = dateNow()
     final_report = final_report.apply(lambda x: sort_to_rank(x, rank_columns, time_to_exp), axis=1)
-    final_report.to_csv("final_report_process.csv")
     latest_df = final_report[final_report.spot_date == final_report.spot_date.max()].copy()
     latest_df = latest_df.reset_index(drop=True)
     latest_df = find_rank(latest_df, time_to_exp)
     latest_df = latest_df.reset_index(drop=True)
     print(latest_df)
-    latest_df.to_csv("latest_df.csv")
     return final_report, latest_df
 

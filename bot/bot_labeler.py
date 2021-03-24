@@ -102,9 +102,11 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=labeler_mode
         infer_df, latest_df = bot_infer(final_df, model_type, rank_columns, Y_columns, time_to_exp=time_to_exp, bots_list=bots_list)
         infer_df = infer_df.merge(tac_df, on=["ticker"], how="left")
         infer_df = uid_maker(infer_df, uid="uid", ticker="ticker", trading_day="spot_date")
-        latest_df = uid_maker(latest_df, uid="uid", ticker="ticker", trading_day="spot_date")
+        latest_df["uid"]=latest_df["ticker"] + "_" + latest_df["bot_id"]
+        print(infer_df)
+        print(latest_df)
         upsert_data_to_database(infer_df, get_bot_ranking_table_name(), "uid", how="update", cpu_count=True, Text=True)
-        upsert_data_to_database(latest_df, get_bot_latest_ranking_table_name(), "ticker", how="update", cpu_count=True, Text=True)
+        upsert_data_to_database(latest_df, get_bot_latest_ranking_table_name(), "uid", how="update", cpu_count=True, Text=True)
 
 def bot_stats_report():
     tqdm.pandas()
