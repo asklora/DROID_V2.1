@@ -1,5 +1,5 @@
 from django.db import models
-from .manager import ConsolidatedManager
+from .manager import ConsolidatedManager,UniverseManager
 from core.djangomodule.general import generate_id
 from django.db import IntegrityError
 from django.utils import timezone
@@ -165,6 +165,8 @@ class UniverseConsolidated(models.Model):
     ingestion_manager = ConsolidatedManager()
     has_data = models.BooleanField(default=False)
     objects = models.Manager()
+    
+    
     def save(self, *args, **kwargs):
         if not self.uid:
             self.uid = generate_id(8)
@@ -199,8 +201,8 @@ class UniverseConsolidated(models.Model):
 
 
 class Universe(models.Model):
-    # objects = models.Manager()
-    # manager = UniverseManager()
+    objects = models.Manager()
+    manager = UniverseManager()
     ticker = models.CharField(max_length=255,primary_key=True)
     currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code", related_name="universe_currency_code", blank=True, null=True)
     #country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column="country_code", related_name="universe_country_code", blank=True, null=True)

@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin,messages
 from .models import UniverseConsolidated,Universe
 from .forms import AddTicker
 from core.services.tasks import get_isin_populate_universe
@@ -8,6 +8,7 @@ from import_export import resources
 from django.dispatch import receiver
 from django.utils import timezone
 from django.shortcuts import HttpResponseRedirect,reverse
+import time
 
 
 class UniverseResource(resources.ModelResource):
@@ -61,34 +62,45 @@ class AddTickerAdmin(ImportExportModelAdmin):
     model = UniverseConsolidated
     resource_class = UniverseResource
     search_fields = ('origin_ticker','consolidated_ticker')
-    # ordering = ('email',)
+    
+    
     def process_result(self, result, request):
         self.generate_log_entries(result, request)
         self.add_success_message(result, request)
         resources = self.get_import_resource_class()
         # post_import.send(sender=None, model=self.model)
         get_isin_populate_universe.delay(resources.ticker,request.user.id)
-        # print(self.get_import_resource_class().ticker)
         url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
                       current_app=self.admin_site.name)
         return HttpResponseRedirect(url)
+    
+    
     def save_model( self, request, obj, form, change ):
         #pre save stuff here
-        # butuh di benerin
         try:
-            ticker = Universe.objects.get(ticker=obj.origin_ticker)
-            get_isin_populate_universe.delay(ticker.ticker,request.user.id)
+            if obj.use_manual:
+                symbol = obj.origin_ticker
+                get_isin_populate_universe.delay(obj.origin_ticker,request.user.id)
+            else:
+                get_isin_populate_universe.delay(obj.origin_ticker,request.user.id)
+                time.sleep(7)
+                symbol = obj.consolidated_ticker
+            ticker = Universe.objects.get(ticker=symbol)
             return super(AddTickerAdmin, self).save_model(request, obj, form, change)
         except Universe.DoesNotExist:
             obj.save()
             get_isin_populate_universe.delay(obj.origin_ticker,request.user.id)
             return super(AddTickerAdmin, self).save_model(request, obj, form, change)
-        #post save stuff here
+
+
 class UniverseAdmin(admin.ModelAdmin):
     model = Universe
     list_filter = ('created', 'currency_code')
 
 
     search_fields = ('ticker',)
+
+
+
 admin.site.register(UniverseConsolidated, AddTickerAdmin)
 admin.site.register(Universe,UniverseAdmin)

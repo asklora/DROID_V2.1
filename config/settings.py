@@ -43,7 +43,6 @@ ADDITIONAL_APPS = [
 ]
 CORE_APPS = [
     'core.bot',
-    'core.portfolio',
     'core.services',
     'core.universe',
     'core.user',
@@ -53,7 +52,6 @@ CORE_APPS = [
     'core.Clients',
     'core.signals',
     'core.survey',
-    'core.orders_api',
 ]
 
 INSTALLED_APPS = DJANGO_DEFAULT_APPS + ADDITIONAL_APPS + CORE_APPS

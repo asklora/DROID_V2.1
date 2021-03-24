@@ -29,7 +29,7 @@ from ingestion.currency import (
     update_currency_price_from_dss, 
     update_utc_offset_from_timezone
     )
-from global_vars import DB_URL_READ, DB_URL_WRITE
+# from global_vars import DB_URL_READ, DB_URL_WRITE
 
 
 def new_ticker_ingestion(ticker=None):

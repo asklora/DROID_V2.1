@@ -7,3 +7,13 @@ services:
     command: sh -c "python ../manage.py runserver 0.0.0.0:8000"
     ports:
       - 8000:8000
+  rabbit:
+    image: "rabbitmq:3.6.6-management"
+    hostname: "rabbit"
+    environment:
+      RABBITMQ_DEFAULT_USER: "rabbitmq"
+      RABBITMQ_DEFAULT_PASS: "rabbitmq"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
