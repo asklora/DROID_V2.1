@@ -1,3 +1,4 @@
+from general.data_process import uid_maker
 from general.date_process import dateNow, str_to_date
 from general.table_name import get_bot_latest_ranking_table_name, get_bot_ranking_table_name
 from general.sql_output import upsert_data_to_database
@@ -93,61 +94,17 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=labeler_mode
     final_df = final_df.merge(tac_df[["ticker", "spot_date", "spot_price"]], on=["ticker", "spot_date"], how="left")
     Y_columns = Y_columns
     rank_columns = rank_columns
-
-    if history:
-        infer_df, latest_df = bot_infer(final_df, model_type, rank_columns, Y_columns, time_to_exp=time_to_exp, bots_list=bots_list)
-        infer_df = infer_df.merge(tac_df[["ticker", "currency_code", "spot_date"]], on=["ticker", "spot_date"], how="left")
-        infer_df["spot_date"] = infer_df["spot_date"].astype(str)
-        infer_df["uid"] = infer_df["spot_date"] + "_" + infer_df["ticker"]
-        infer_df["spot_date"] = pd.to_datetime(infer_df["spot_date"])
-        latest_df = latest_df.merge(tac_df[["ticker", "currency_code", "spot_date"]], on=["ticker", "spot_date"], how="left")
-        data = []
-        max_date = final_df.spot_date.max()
-        max_training_date = max_date - relativedelta(years=1)
-        while max_training_date.weekday() != 4:
-            max_training_date = max_training_date - BDay(1)
-
-        while max_training_date < str_to_date(dateNow()):
-            train_df = final_df[final_df.spot_date <= max_training_date]
-            infer_df = final_df[(final_df.spot_date > max_training_date) & (final_df.spot_date <= max_training_date + BDay(5))]
-            report = model_trainer(train_df, infer_df, model_type, Y_columns=Y_columns, just_train=False)
-            report = report.apply(lambda x: find_rank(x, rank_columns), axis=1)
-            columns_list = report.columns
-            final_columns = ["ticker", "spot_date", "spot_price", "when_created", "model_type"]
-            for col in columns_list:
-                if "rank" in col:
-                    final_columns.extend([col])
-            report = report[final_columns]
-            if (len(data) == 0):
-                data = report
-            else:
-                data = data.append(report)
-            max_training_date = max_training_date + BDay(5)
-        data["spot_date"] = data["spot_date"].astype(str)
-        data["uid"] = data["spot_date"] + data["ticker"]
-        data["spot_date"] = pd.to_datetime(data["spot_date"])
-        data = data.drop_duplicates(subset="uid", keep="first")
-        print(data)
-        data.to_csv("data_bot_labeler_performance_history.csv")
-        upsert_data_to_database(data, get_bot_ranking_table_name(), "uid", how="update", cpu_count=True, Text=True)
-        upsert_data_to_database(latest_df, get_bot_latest_ranking_table_name(), "ticker", how="update", cpu_count=True, Text=True)
-    elif bot_labeler_train:
+    tac_df = tac_df[["ticker", "currency_code"]]
+    tac_df = tac_df.drop_duplicates(subset=["ticker"], keep="first")
+    if bot_labeler_train:
         model_trainer(final_df, None, model_type, Y_columns=Y_columns, just_train=True)
     else:
-        infer_df, latest_df = bot_infer(final_df, model_type, rank_columns, time_to_exp=time_to_exp, bots_list=bots_list)
-        infer_df = infer_df.merge(tac_df[["ticker", "currency_code", "spot_date"]], on=["ticker", "spot_date"], how="left")
-        infer_df["spot_date"] = infer_df["spot_date"].astype(str)
-        infer_df["uid"]=infer_df["spot_date"] + "_" + infer_df["ticker"]
-        infer_df["spot_date"] = pd.to_datetime(infer_df["spot_date"])
+        infer_df, latest_df = bot_infer(final_df, model_type, rank_columns, Y_columns, time_to_exp=time_to_exp, bots_list=bots_list)
+        infer_df = infer_df.merge(tac_df, on=["ticker"], how="left")
+        infer_df = uid_maker(infer_df, uid="uid", ticker="ticker", trading_day="spot_date")
         latest_df = latest_df.merge(tac_df[["ticker", "currency_code", "spot_date"]], on=["ticker", "spot_date"], how="left")
-        try:
-            upsert_data_to_database(infer_df, get_bot_ranking_table_name(), "uid", how="update", cpu_count=True, Text=True)
-        except Exception as e:
-            print(e)
-        try:
-            upsert_data_to_database(latest_df, get_bot_latest_ranking_table_name(), "ticker", how="update", cpu_count=True, Text=True)
-        except Exception as e:
-            print(e)
+        upsert_data_to_database(infer_df, get_bot_ranking_table_name(), "uid", how="update", cpu_count=True, Text=True)
+        upsert_data_to_database(latest_df, get_bot_latest_ranking_table_name(), "ticker", how="update", cpu_count=True, Text=True)
 
 def bot_stats_report():
     tqdm.pandas()

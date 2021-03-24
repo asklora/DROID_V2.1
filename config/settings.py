@@ -43,7 +43,6 @@ ADDITIONAL_APPS = [
 ]
 CORE_APPS = [
     'core.bot',
-    'core.portfolio',
     'core.services',
     'core.universe',
     'core.user',
