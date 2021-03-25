@@ -235,7 +235,7 @@ def update_worldscope_identifier_from_dsws(ticker=None):
     universe = universe.drop(columns=["worldscope_identifier", "icb_code", "fiscal_year_end"])
     identifier="ticker"
     filter_field = ["WC06035", "WC07040", "WC05352"]
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 10))
     print(result)
     if (len(result) > 0):
         result = result.rename(columns={"WC06035": "worldscope_identifier", "WC07040": "icb_code", "WC05352": "fiscal_year_end", "index" : "ticker"})

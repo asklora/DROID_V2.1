@@ -14,7 +14,7 @@ from main_executive import (
 if __name__ == "__main__":
     print("Start Process")
     # train_lebeler_model()
-    populate_latest_bot_update(currency_code="USD")
+    # populate_latest_bot_update(currency_code="USD")
     # bot_ranking_history(ticker=None, currency_code=None)
     # bot_statistic_classic()
     # bot_statistic_ucdc(currency_code="EUR")

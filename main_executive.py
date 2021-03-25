@@ -30,9 +30,11 @@ def daily_uno(ticker=None, currency_code=None, time_to_exp=time_to_expiry, infer
     #Data Preparation
     data_prep_daily(ticker=ticker, currency_code=currency_code)
     data_prep_check_new_ticker(ticker=ticker, currency_code=currency_code)
+    do_function("latest_bot_data")
     #Populate Volatility Infer
     if(infer):
         infer_daily(ticker=ticker, currency_code=currency_code)
+        do_function("latest_vol")
     #Latest Bot Update Populate
     populate_latest_bot_update(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
     #Option Maker & Null Filler UNO

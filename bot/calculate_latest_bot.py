@@ -43,7 +43,7 @@ def get_Classic(data, time_exp):
     # Code when we use business days
     # month = int(round((time_exp * 256), 0)) / 22
     month = int(round((time_exp * 365), 0)) / 30
-    dur = time_exp^0.5 * min((0.75 + (month * 0.25)) , 2)
+    dur = pow(time_exp, 0.5) * min((0.75 + (month * 0.25)) , 2)
     data["potential_max_loss"] = - (dur * data["classic_vol"] * 1.25)
     data["targeted_profit"] = (dur * data["classic_vol"])
     return data

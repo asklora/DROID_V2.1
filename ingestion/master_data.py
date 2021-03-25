@@ -34,7 +34,7 @@ from datasource.dss import get_data_from_dss
 from datasource.fred import read_fred_csv
 from datasource.quandl import read_quandl_csv
 from general.table_name import (
-    get_universe_rating_table_name,
+    get_data_vix_table_name, get_universe_rating_table_name,
     get_quandl_table_name,
     get_data_fred_table_name,
     get_fundamental_score_table_name, 
@@ -129,8 +129,8 @@ def update_vix_from_dsws(vix_id=None, history=False):
         result = uid_maker(result, uid="uid", ticker="vix_id", trading_day="trading_day")
         result["vix_id"] = result["vix_id"] 
         print(result)
-        # upsert_data_to_database(result, get_data_vix_table_name(), "uid", how="update", Text=True)
-        # report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
+        upsert_data_to_database(result, get_data_vix_table_name(), "uid", how="update", Text=True)
+        report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
 def update_fred_data_from_fred():
     print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
@@ -141,7 +141,6 @@ def update_fred_data_from_fred():
     result["data"] = result["data"].astype(float)
     if(len(result)) > 0 :
         upsert_data_to_database(result, get_data_fred_table_name(), "uid", how="update", Text=True)
-        #insert_data_to_database(result, get_fred_table_name(), how="replace")
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
 def update_quandl_orats_from_quandl(ticker=None, quandl_symbol=None):
@@ -173,25 +172,10 @@ def update_quandl_orats_from_quandl(ticker=None, quandl_symbol=None):
             "m3atmiv","m3dtex","m4atmiv","m4dtex",
             "slope","deriv","slope_inf", "deriv_inf"]]
         print(result)
-        # if type(ticker) != type(None) or type(quandl_symbol) != type(None):
-        #     upsert_data_to_database(result, get_quandl_table_name(), "uid", how="update", Text=True)
-        # else:
-        #     upsert_data_to_database(result, get_quandl_table_name(), "uid", how="update", Text=True)
-        #     #insert_data_to_database(result, get_quandl_table_name(), how="replace")
         upsert_data_to_database(result, get_quandl_table_name(), "uid", how="update", Text=True)
         do_function("data_vol_surface_update")
+        do_function("latest_vol")
         report_to_slack("{} : === Quandl Updated ===".format(datetimeNow()))
-        # do_function("calculate_latest_vol_updates_us")
-
-        # report_to_slack("{} : === Quandl Ingested ===".format(str(datetime.now())), args)
-        # print("=== Quandl Orats DONE ===")
-        # try:
-        #     r = requests.get(f"{args.urlAPIAsklora}/api-helper/calc_latest_bot/?index=US")
-        #     if r.status_code == 200:
-        #         report_to_slack("{} : === LATEST BOT UPDATES QUANDL SUCCESS === : ".format(str(datetime.now())), args)
-        # except Exception as e:
-        #     report_to_slack("{} : === LATEST BOT UPDATES QUANDL ERROR === : {}".format(str(datetime.now()), e), args)
-        #     print(e)
 
 def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
     print("{} : === Fundamentals Score Start Ingestion ===".format(datetimeNow()))
@@ -233,9 +217,6 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
     if(len(universe)) > 0 :
         upsert_data_to_database(result, get_fundamental_score_table_name(), "ticker", how="update", Text=True)
         report_to_slack("{} : === Fundamentals Score Updated ===".format(datetimeNow()))
-
-#get_fundamentals_score(ticker=None, currency_code=None)
-#get_last_close_industry_code(ticker=None, currency_code=None)
 
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
@@ -322,17 +303,18 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         fundamentals["fwd_ey_minmax_currency_code"]+ 
         fundamentals["roe_minmax_industry"]+ 
         fundamentals["cf_to_price_minmax_currency_code"]).round(1)
-    fundamentals['fundamentals_quality'] = ((fundamentals['roic_minmax_currency_code']) + 
-        fundamentals['roic_minmax_industry']+
-        fundamentals['cf_to_price_minmax_industry']+
-        fundamentals['eps_growth_minmax_currency_code'] + 
-        fundamentals['eps_growth_minmax_industry'] + 
-        (fundamentals['fwd_ey_minmax_industry']) + 
-        fundamentals['fwd_sales_to_price_minmax_industry']+ 
-        (fundamentals['fwd_roic_minmax_industry']) +
-        fundamentals['earnings_yield_minmax_industry'] +
-        fundamentals['earnings_pred_minmax_industry'] +
-        fundamentals['earnings_pred_minmax_currency_code'] ).round(1)
+    
+    fundamentals["fundamentals_quality"] = ((fundamentals["roic_minmax_currency_code"]) + 
+        fundamentals["roic_minmax_industry"]+
+        fundamentals["cf_to_price_minmax_industry"]+
+        fundamentals["eps_growth_minmax_currency_code"] + 
+        fundamentals["eps_growth_minmax_industry"] + 
+        (fundamentals["fwd_ey_minmax_industry"]) + 
+        fundamentals["fwd_sales_to_price_minmax_industry"]+ 
+        (fundamentals["fwd_roic_minmax_industry"]) +
+        fundamentals["earnings_yield_minmax_industry"] +
+        fundamentals["earnings_pred_minmax_industry"] +
+        fundamentals["earnings_pred_minmax_currency_code"] ).round(1)
 
     print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
     if(len(fundamentals)) > 0 :
