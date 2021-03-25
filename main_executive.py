@@ -21,27 +21,6 @@ from bot.statistic_uno import populate_uno_statistic
 from bot.data_process import check_bot_list, check_time_to_exp
 from global_vars import folder_check, time_to_expiry
 
-# option_maker_gbp:
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main_exec.py --data_prep_daily --exec_index 0#.FTSE
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main_exec.py --infer_daily --exec_index 0#.FTSE
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main.py --latest_bot_updates --bot_index 0#.FTSE
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main_exec.py --option_maker_daily --exec_index 0#.FTSE --add_inferred
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main_exec.py --option_maker_daily_ucdc --exec_index 0#.FTSE --add_inferred
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main.py --bot_backtest_updates --bot_index 0#.FTSE
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main_exec.py --bot_labeler_infer_daily --exec_index 0#.FTSE
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main.py --latest_bot_ranking --bot_index 0#.FTSE
-
-# option_maker_usd1:
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main_exec.py --data_prep_daily --exec_index 0#.SPX
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main.py --latest_bot_updates --bot_index 0#.SPX
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main_exec.py --option_maker_daily --exec_index 0#.SPX
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main_exec.py --option_maker_daily_ucdc --exec_index 0#.SPX
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main.py --bot_backtest_updates --bot_index 0#.SPX
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main_exec.py --bot_labeler_infer_daily --exec_index 0#.SPX
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main.py --latest_bot_ranking --bot_index 0#.SPX
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main_exec.py --benchmark
-# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID/main_exec.py --benchmark_ucdc
-
 def training(ticker=None, currency_code=None):
     train_model(ticker=ticker, currency_code=currency_code)
     train_lebeler_model(ticker=ticker, currency_code=currency_code)
