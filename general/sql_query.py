@@ -6,7 +6,7 @@ from general.sql_process import db_read, db_write
 from general.date_process import backdate_by_day, str_to_date
 from general.data_process import tuple_data
 from general.table_name import (
-    get_vix_table_name,
+    get_latest_price_table_name, get_master_tac_table_name, get_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
     get_universe_rating_table_name,
@@ -23,6 +23,14 @@ vix_table = get_vix_table_name()
 currency_table = get_currency_table_name()
 fundamentals_score_table = get_fundamental_score_table_name()
 universe_rating_table = get_universe_rating_table_name()
+
+def check_ticker_currency_code_query(ticker=None, currency_code=None):
+    query = ""
+    if type(ticker) != type(None):
+        query += f"ticker in (select ticker from {get_universe_table_name()} where is_active=True and ticker in {tuple_data(ticker)}) "
+    elif type(currency_code) != type(None):
+        query += f"ticker in (select ticker from {get_universe_table_name()} where is_active=True and currency_code in {tuple_data(currency_code)}) "
+    return query
 
 def read_query(query, table=universe_table, cpu_counts=False):
     print(f"Get Data From Database on {table} table")
@@ -241,4 +249,32 @@ def get_pred_mean():
     query += f"(select ticker, max(testing_period::date) as max_date from ai_value_lgbm_pred_final group by ticker) filter "
     query += f"where filter.ticker=avlpf.ticker and filter.max_date=avlpf.testing_period;"
     data = read_query(query, table=master_ohlcvtr_table)
+    return data
+
+def get_yesterday_close_price(ticker=None, currency_code=None):
+    query = f"select tac.ticker, tac.trading_day, tac.tri_adj_close as yesterday_close from {get_master_tac_table_name()} tac "
+    query += f"inner join (select mo.ticker, max(mo.trading_day) as max_date from {get_master_tac_table_name()} mo where mo.tri_adj_close is not null group by mo.ticker) result "
+    query += f"on tac.ticker=result.ticker and tac.trading_day=result.max_date "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += f"where tac." + check
+    data = read_query(query, table=master_ohlcvtr_table)
+    return data
+
+def get_latest_price_data(ticker=None, currency_code=None):
+    table_name = get_latest_price_table_name()
+    query = f"select * from {table_name} "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += f"where " + check
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_latest_price_capital_change(ticker=None, currency_code=None):
+    table_name = get_latest_price_table_name()
+    query = f"select * from {table_name} where capital_change is not null "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += f"and " + check
+    data = read_query(query, table_name, cpu_counts=True)
     return data

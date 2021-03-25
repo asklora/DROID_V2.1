@@ -1,3 +1,4 @@
+from bot.data_download import get_latest_price
 from general.date_process import (
     datetimeNow, 
     backdate_by_day, 
@@ -14,7 +15,7 @@ from general.slack import report_to_slack
 from general.sql_process import do_function
 from general.data_process import uid_maker, remove_null
 from general.sql_query import (
-    get_data_by_table_name, 
+    get_data_by_table_name, get_latest_price_capital_change, get_latest_price_data, 
     get_pred_mean,
     get_vix, 
     get_fundamentals_score,
@@ -23,8 +24,8 @@ from general.sql_query import (
     get_active_universe_by_quandl_symbol,
     get_active_universe_by_entity_type, 
     get_universe_rating,
-    get_max_last_ingestion_from_universe)
-from general.sql_output import delete_old_dividends_on_database, upsert_data_to_database
+    get_max_last_ingestion_from_universe, get_yesterday_close_price)
+from general.sql_output import clean_latest_price, delete_old_dividends_on_database, update_all_data_by_capital_change, update_capital_change, upsert_data_to_database
 from datasource.dsws import (
     get_data_history_from_dsws, 
     get_data_history_frequently_from_dsws, 
@@ -34,7 +35,7 @@ from datasource.dss import get_data_from_dss
 from datasource.fred import read_fred_csv
 from datasource.quandl import read_quandl_csv
 from general.table_name import (
-    get_data_vix_table_name, get_universe_rating_table_name,
+    get_data_vix_table_name, get_latest_price_table_name, get_universe_rating_table_name,
     get_quandl_table_name,
     get_data_fred_table_name,
     get_fundamental_score_table_name, 
@@ -401,3 +402,70 @@ def interest_update():
     print("== Interest Rate Calculated ==")
     upsert_data_to_database(data, get_data_interest_table_name(), "ticker_interest", how="update", Text=True)
     report_to_slack("{} : === Interest Updated ===".format(datetimeNow()))
+
+def split_order_and_performance(ticker=None, currency_code=None):
+    latest_price_updates = get_latest_price_capital_change(ticker=ticker, currency_code=currency_code)
+    if(len(latest_price_updates) > 0): 
+        print("Total Split = " + str(len(latest_price_updates)))
+        print("Start Splitting Price in Data")
+        split_data = latest_price_updates[["ticker", "last_date", "capital_change"]]
+        split_data = split_data.loc[split_data["capital_change"] > 0]
+        print(split_data)
+        for index, row in split_data.iterrows():
+            ticker = row["ticker"]
+            print(ticker)
+            last_date = row["last_date"]
+            capital_change = row["capital_change"]
+            update_all_data_by_capital_change(ticker, last_date, capital_change)
+            update_capital_change(ticker)
+            report_to_slack("{} : === PRICE SPLIT ON TICKER {} with CAPITAL CHANGE {} ===".format(str(dateNow()), ticker, capital_change))
+            
+def populate_latest_price(ticker=None, currency_code=None):
+    jsonFileName = "files/file_json/latest_price.json"
+    start_date = backdate_by_day(1)
+    end_date = dateNow()
+    latest_price = get_latest_price_data(ticker=ticker, currency_code=currency_code)
+    latest_price = latest_price[["ticker", "classic_vol"]]
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    ticker = universe["ticker"]
+    data = get_data_from_dss(start_date, end_date, ticker, jsonFileName, report=REPORT_HISTORY)
+    percentage_change =  get_yesterday_close_price(ticker=ticker, currency_code=currency_code)
+    data  =data.drop(columns=["IdentifierType", "Identifier"])
+    if(len(data) > 0):
+        data = data.rename(columns={
+            "RIC": "ticker",
+            "Trade Date": "last_date",
+            "Open Price": "open",
+            "Low Price": "low",
+            "High Price": "high",
+            "Universal Close Price": "close",
+            "Adjustment Value - Capital Change" : "capital_change"
+        })
+        data["ticker"]=data["ticker"].str.replace("/", "", regex=True)
+        data["ticker"]=data["ticker"].str.strip()
+        data = pd.DataFrame(data)
+        holiday = data.copy()
+        holiday = data.dropna(subset=["close"])
+        if(len(holiday) == 0):
+            report_to_slack("{} : === {} is Holiday. Latest Price Not Updated ===".format(dateNow(), currency_code))
+            return False
+        data["last_date"] = pd.to_datetime(data["last_date"])
+        result = data.merge(percentage_change, how="left", on="ticker")
+        result = result.merge(latest_price, on=["ticker"], how="left")
+        result["yesterday_close"] = np.where(result["yesterday_close"].isnull(), 0, result["yesterday_close"])
+        result["latest_price_change"] = round(((result["close"] - result["yesterday_close"]) / result["yesterday_close"]) * 100, 4)
+        result = result.drop(columns=["yesterday_close", "trading_day"])
+        result = result.dropna(subset=["close"])
+        result = remove_null(result, "latest_price_change")
+        if(len(result) > 0):
+            result["intraday_bid"] = result["close"]
+            result["intraday_ask"] = result["close"]
+            result["intraday_time"] = datetimeNow()
+            result["intraday_date"] = result["last_date"]
+            result = result.sort_values(by="last_date", ascending=True)
+            result = result.drop_duplicates(subset="ticker", keep="last")
+            print(result)
+            upsert_data_to_database(data, get_latest_price_table_name(), "ticker", how="update", Text=True)
+            clean_latest_price()
+            report_to_slack("{} : === {} Latest Price Updated ===".format(dateNow(), currency_code))
+            split_order_and_performance(ticker=ticker, currency_code=currency_code)

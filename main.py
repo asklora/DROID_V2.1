@@ -18,7 +18,7 @@ from ingestion.master_ohlcvtr import master_ohlctr_update
 from ingestion.master_multiple import master_multiple_update
 from ingestion.master_data import (
     interest_update,
-    dividend_updated,
+    dividend_updated, populate_latest_price,
     update_data_dss_from_dss,
     update_data_dsws_from_dsws,
     update_vix_from_dsws, 
@@ -42,6 +42,7 @@ def new_ticker_ingestion(ticker=None):
     update_company_desc_from_dsws(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
     update_quandl_orats_from_quandl(ticker=ticker)
+    populate_latest_price(ticker=ticker)
     if isinstance(ticker,Series) or isinstance(ticker,list):
         for tick in ticker:
             update_data_dss_from_dss(ticker=tick,history=True)
@@ -64,9 +65,6 @@ def update_ohlcvtr(ticker=None, currency_code=None):
     master_tac_update()
     master_multiple_update()
 
-
-
-    
 def update_master_data(ticker=None, currency_code=None):
     update_quandl_orats_from_quandl(ticker=[])
     update_vix_from_dsws()
@@ -101,7 +99,9 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    ticker=['AFXG.F']
+    # ticker=['AFXG.F']
+    populate_latest_price(ticker="MSFT.O")
+    # update_currency_code_from_dss(ticker="MSFT.O")
     # ticker = None
     # update_ticker_name_from_dsws(ticker=ticker)
     # update_ticker_symbol_from_dss(ticker=ticker)
@@ -111,8 +111,8 @@ if __name__ == "__main__":
     # update_industry_from_dsws(ticker=ticker)
     # update_company_desc_from_dsws(ticker=ticker)
     # update_worldscope_identifier_from_dsws(ticker=ticker)
-    update_data_dss_from_dss(ticker=ticker, history=True)
-    update_data_dsws_from_dsws(ticker=ticker, history=True)
+    # update_data_dss_from_dss(ticker=ticker, history=True)
+    # update_data_dsws_from_dsws(ticker=ticker, history=True)
     # populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=ticker)
     # update_quandl_orats_from_quandl(ticker='MSFT.O')
     # update_data_dsws_from_dsws(ticker=["1COV.F"], history=True)

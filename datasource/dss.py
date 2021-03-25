@@ -113,5 +113,3 @@ def get_data_from_dss(start_date, end_date, stocks, jsonFileName, report=REPORT_
         report_to_slack("{} === Exception DSS Ingestion Error: {}".format(datetimeNow(), ex))
         sys.exit(1)
         
-
-

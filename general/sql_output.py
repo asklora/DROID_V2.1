@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
 from general.date_process import dateNow
 from general.sql_query import read_query
-from general.table_name import get_data_dividend_table_name, get_universe_table_name
+from general.table_name import get_data_dividend_table_name, get_data_report_split_table_name, get_latest_price_table_name, get_universe_table_name
 
 def execute_query(query, table=None):
     print(f"Execute Query to Table {table}")
@@ -129,7 +129,6 @@ def delete_data_on_database(table, condition, delete_ticker=False):
     query = f"delete from {table} where {condition} "
     if(delete_ticker):
         query += f" and ticker not in (select ticker from {get_universe_table_name()} where is_active=True)"
-    print(query)
     data = execute_query(query, table=table)
     return data
 
@@ -138,3 +137,48 @@ def delete_old_dividends_on_database():
     query = f"delete from {get_data_dividend_table_name()} where ex_dividend_date <= '{old_date}'"
     data = execute_query(query, table=get_data_dividend_table_name())
     return data
+
+def clean_latest_price():
+    table_name = get_latest_price_table_name()
+    query = f"delete from {table_name} where ticker not in (select ticker from universe where is_active = True)"
+    data = execute_query(query, table=table_name)
+    return data
+
+def update_capital_change(ticker):
+    table_name = get_latest_price_table_name()
+    query = f"update {table_name} set capital_change = null where ticker='{ticker}'"
+    data = execute_query(query, table=table_name)
+    return data
+
+def update_all_data_by_capital_change(ticker, trading_day, capital_change):
+    table_name = get_data_report_split_table_name()
+    query = f"update {table_name} set "
+    query += f"data_type = 'DSS', capital_change={capital_change} where ticker = '{ticker}';"
+    data = execute_query(query, table=table_name)
+
+    table_name = get_data_report_split_table_name()
+    query = f"update user_portfolio set "
+    query += f"entry_price = entry_price * {capital_change}, "
+    query += f"max_loss_price = max_loss_price * {capital_change}, "
+    query += f"target_profit_price = target_profit_price * {capital_change}, "
+    query += f"share_num = share_num / {capital_change} "
+    query += f"where stock_selected = '{ticker}' and spot_date < '{trading_day}' and status = False;"
+    data = execute_query(query, table=table_name)
+
+    table_name = get_data_report_split_table_name()
+    query = f"update user_portfolio_performance_history set "
+    query += f"last_spot_price = last_spot_price * {capital_change}, "
+    query += f"last_live_price = last_live_price * {capital_change}, "
+    query += f"share_num = share_num / {capital_change} "
+    query += f"from (select order_id from user_portfolio where stock_selected='{ticker}' and status = False) result "
+    query += f"where user_portfolio_performance_history.created < '{trading_day}' and "
+    query += f"user_portfolio_performance_history.order_id=result.order_id;"
+    data = execute_query(query, table=table_name)
+
+    table_name = get_data_report_split_table_name()
+    query = f"update executive_uno_option_price set "
+    query += f"strike = strike * {capital_change}, "
+    query += f"barrier = barrier * {capital_change} "
+    query += f"from (select order_id from user_portfolio where stock_selected='{ticker}' and status = False) result "
+    query += f"where executive_uno_option_price.portfolio_id=result.order_id;"
+    data = execute_query(query, table=table_name)
