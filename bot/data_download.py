@@ -155,7 +155,7 @@ def get_new_ticker_from_bot_backtest(ticker=None, currency_code=None, ucdc=False
         table_name = get_bot_classic_backtest_table_name()
     if(mod):
         table_name += "_mod"
-    query = f"select du.ticker, index, result1.uno_min_date, result2.ohlctr_min_date, result1.uno_max_date, result2.ohlctr_max_date "
+    query = f"select du.ticker, du.currency_code, result1.uno_min_date, result2.ohlctr_min_date, result1.uno_max_date, result2.ohlctr_max_date "
     query += f"from {get_universe_table_name()} du "
     query += f"left join (select ticker, min(cb.spot_date)::date as uno_min_date, max(cb.spot_date)::date as uno_max_date "
     query += f"from {table_name} cb where cb.spot_date>='{start_date}' group by cb.ticker) result1 on result1.ticker=du.ticker  "
@@ -167,7 +167,7 @@ def get_new_ticker_from_bot_backtest(ticker=None, currency_code=None, ucdc=False
     elif type(currency_code) != type(None):
         query += f"du.currency_code in {tuple_data(currency_code)} and "
     query += f"result1.uno_min_date > result2.ohlctr_min_date + interval '1 years' "
-    query += f"order by du.index;"
+    query += f"order by du.currency_code;"
     data = read_query(query, table=get_universe_table_name())
     return data
 
