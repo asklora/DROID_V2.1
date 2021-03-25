@@ -5,7 +5,7 @@ from general.data_process import tuple_data
 from general.date_process import dateNow, droid_start_date, str_to_date
 from general.table_name import (
     get_bot_classic_backtest_table_name, 
-    get_bot_data_table_name, 
+    get_bot_data_table_name, get_bot_latest_ranking_table_name, get_bot_option_type_table_name, 
     get_bot_ranking_table_name, 
     get_bot_ucdc_backtest_table_name, 
     get_bot_uno_backtest_table_name, 
@@ -18,7 +18,7 @@ from general.table_name import (
     get_data_vix_table_name, 
     get_data_vol_surface_inferred_table_name, 
     get_data_vol_surface_table_name, 
-    get_latest_price_table_name, 
+    get_latest_price_table_name, get_latest_vol_table_name, 
     get_universe_table_name,
     get_master_tac_table_name
 )
@@ -328,6 +328,12 @@ def get_bot_ranking_data():
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+def get_latest_bot_ranking_data():
+    table_name = get_bot_latest_ranking_table_name()
+    query = f"select * from {table_name} "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
 def get_data_interest_daily(condition=None):
     table_name = get_data_interest_daily_rates_table_name()
     query = f"select * from {table_name} "
@@ -348,5 +354,29 @@ def get_holiday_by_day_and_currency_code(non_working_day, currency_code):
     table_name = get_currency_calendar_table_name()
     query = f"select * from {table_name} "
     query+= f" where non_working_day='{non_working_day}' and currency_code in {tuple_data(currency_code)}"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_latest_vol(condition=None):
+    table_name = get_latest_vol_table_name()
+    query = f"select * from {table_name} "
+    if(type(condition) != type(None)):
+        query+= f" where {condition}"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_latest_price(condition=None):
+    table_name = get_latest_price_table_name()
+    query = f"select * from {table_name} "
+    if(type(condition) != type(None)):
+        query+= f" where {condition}"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_bot_option_type(condition=None):
+    table_name = get_bot_option_type_table_name()
+    query = f"select * from {table_name} "
+    if(type(condition) != type(None)):
+        query+= f" where {condition}"
     data = read_query(query, table_name, cpu_counts=True)
     return data

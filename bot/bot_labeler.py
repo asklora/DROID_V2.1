@@ -23,9 +23,9 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=labeler_mode
     # ************************************************************************
     # *********************** Data download **********************************
     main_df = get_executive_data_download(start_date, end_date, ticker=ticker, currency_code=currency_code)
-    output_tickers = get_data_vol_surface_ticker(ticker=ticker, currency_code=currency_code)
-    # Just taking the rows that we have output for them.
-    main_df = main_df[main_df.ticker.isin(output_tickers["ticker"])]
+    # output_tickers = get_data_vol_surface_ticker(ticker=ticker, currency_code=currency_code)
+    # # Just taking the rows that we have output for them.
+    # main_df = main_df[main_df.ticker.isin(output_tickers["ticker"])]
     # ***************************************************************************************************
     # ******************************************** Data preprocessing ***********************************
     # ***************************************************************************************************

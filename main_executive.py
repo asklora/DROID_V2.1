@@ -1,3 +1,4 @@
+from bot.calculate_latest_bot import populate_latest_bot_update
 from bot.bot_labeler import populate_bot_labeler
 from bot.final_model import populate_vol_infer
 from bot.main_file import populate_bot_data
@@ -46,7 +47,7 @@ def training(ticker=None, currency_code=None):
     train_lebeler_model(ticker=ticker, currency_code=currency_code)
 
 # follow currency schedule
-def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0):
+def daily_uno(ticker=None, currency_code=None, time_to_exp=time_to_expiry, infer=True, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0):
     #Data Preparation
     data_prep_daily(ticker=ticker, currency_code=currency_code)
     data_prep_check_new_ticker(ticker=ticker, currency_code=currency_code)
@@ -54,7 +55,7 @@ def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, opt
     if(infer):
         infer_daily(ticker=ticker, currency_code=currency_code)
     #Latest Bot Update Populate
-
+    populate_latest_bot_update(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
     #Option Maker & Null Filler UNO
     option_maker_uno_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
     option_maker_daily_uno(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
@@ -66,14 +67,14 @@ def daily_uno(ticker=None, currency_code=None, time_to_exp=None, infer=True, opt
     #Populate Bot Ranking
     bot_ranking_daily(ticker=ticker, currency_code=currency_code, mod=mod)
     #Update Bot Ranking to Latest Bot Update
-    do_function("bot_backtest_updates")
+    do_function("latest_bot_update")
     if(type(currency_code) == list):
         if any("USD" in s for s in currency_code):
             bot_statistic_ucdc(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
             bot_statistic_uno(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
 
 # follow currency schedule
-def daily_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=True, null_filler=True):
+def daily_classic(ticker=None, currency_code=None, time_to_exp=time_to_expiry, mod=False, option_maker=True, null_filler=True):
     option_maker_classic_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
     option_maker_daily_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
     bot_ranking_daily(ticker=ticker, currency_code=currency_code, mod=mod)

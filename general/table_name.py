@@ -144,6 +144,12 @@ def get_data_interest_daily_rates_table_name():
 def get_latest_vol_table_name():
     return "latest_vol"
 
+def get_latest_bot_update_table_name():
+    return "latest_bot_update"
+
+def get_bot_option_type_table_name():
+    return "bot_option_type"
+
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 

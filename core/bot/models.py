@@ -454,3 +454,52 @@ class LatestBotUpdate(models.Model):
 
     def __str__(self):
         return f"{self.ticker.ticker}-{self.bot_id}"
+
+class LatestBotData(models.Model):
+    ticker = models.OneToOneField(Universe, on_delete=models.CASCADE,db_column="ticker", related_name="latest_bot_data_ticker", primary_key=True)
+    trading_day = models.DateField(blank=True, null=True)
+    c2c_vol_0_21 = models.FloatField(blank=True, null=True)
+    c2c_vol_21_42 = models.FloatField(blank=True, null=True)
+    c2c_vol_42_63 = models.FloatField(blank=True, null=True)
+    c2c_vol_63_126 = models.FloatField(blank=True, null=True)
+    c2c_vol_126_252 = models.FloatField(blank=True, null=True)
+    c2c_vol_252_504 = models.FloatField(blank=True, null=True)
+    kurt_0_504 = models.FloatField(blank=True, null=True)
+    rs_vol_0_21 = models.FloatField(blank=True, null=True)
+    rs_vol_21_42 = models.FloatField(blank=True, null=True)
+    rs_vol_42_63 = models.FloatField(blank=True, null=True)
+    rs_vol_63_126 = models.FloatField(blank=True, null=True)
+    rs_vol_126_252 = models.FloatField(blank=True, null=True)
+    rs_vol_252_504 = models.FloatField(blank=True, null=True)
+    total_returns_0_1 = models.FloatField(blank=True, null=True)
+    total_returns_0_21 = models.FloatField(blank=True, null=True)
+    total_returns_0_63 = models.FloatField(blank=True, null=True)
+    total_returns_21_126 = models.FloatField(blank=True, null=True)
+    total_returns_21_231 = models.FloatField(blank=True, null=True)
+    vix_value = models.FloatField(blank=True, null=True)
+    atm_volatility_spot = models.FloatField(blank=True, null=True)
+    atm_volatility_one_year = models.FloatField(blank=True, null=True)
+    atm_volatility_infinity = models.FloatField(blank=True, null=True)
+    slope = models.FloatField(blank=True, null=True)
+    deriv = models.FloatField(blank=True, null=True)
+    slope_inf = models.FloatField(blank=True, null=True)
+    deriv_inf = models.FloatField(blank=True, null=True)
+    atm_volatility_spot_x = models.FloatField(blank=True, null=True)
+    atm_volatility_one_year_x = models.FloatField(blank=True, null=True)
+    atm_volatility_infinity_x = models.FloatField(blank=True, null=True)
+    total_returns_0_63_x = models.FloatField(blank=True, null=True)
+    total_returns_21_126_x = models.FloatField(blank=True, null=True)
+    total_returns_0_21_x = models.FloatField(blank=True, null=True)
+    total_returns_21_231_x = models.FloatField(blank=True, null=True)
+    c2c_vol_0_21_x = models.FloatField(blank=True, null=True)
+    c2c_vol_21_42_x = models.FloatField(blank=True, null=True)
+    c2c_vol_42_63_x = models.FloatField(blank=True, null=True)
+    c2c_vol_63_126_x = models.FloatField(blank=True, null=True)
+    c2c_vol_126_252_x = models.FloatField(blank=True, null=True)
+    c2c_vol_252_504_x = models.FloatField(blank=True, null=True)
+    class Meta:
+        managed = True
+        db_table = "latest_bot_data"
+
+    def __str__(self):
+        return self.ticker.ticker

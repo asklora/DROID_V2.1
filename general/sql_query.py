@@ -98,7 +98,7 @@ def get_active_universe(ticker=None, currency_code=None):
         query += f" and ticker in {tuple_data(ticker)} "
 
     elif type(currency_code) != type(None):
-        query += f" and currency_code in {tuple_data(currency_code)} "
+        query += f" and currency_code in {tuple_data(currency_code)} and currency_code is not null "
 
     query += f"order by ticker"
     data = read_query(query, table=universe_table)

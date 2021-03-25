@@ -349,7 +349,9 @@ def bot_infer(infer_df, model_type, rank_columns, Y_columns, time_to_exp=time_to
         final_report["model_type"] = model_type
         final_report["created"] = dateNow()
     final_report = final_report.apply(lambda x: sort_to_rank(x, rank_columns, time_to_exp), axis=1)
-    latest_df = final_report[final_report.spot_date == final_report.spot_date.max()].copy()
+    final_report = final_report.sort_values(by='spot_date', ascending=False)
+    latest_df = final_report.copy()
+    latest_df = latest_df.drop_duplicates(subset=["ticker"], keep='first', inplace=False)
     latest_df = latest_df.reset_index(drop=True)
     latest_df = find_rank(latest_df, time_to_exp)
     latest_df = latest_df.reset_index(drop=True)
