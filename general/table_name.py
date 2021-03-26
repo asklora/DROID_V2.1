@@ -88,6 +88,9 @@ def get_data_macro_table_name():
 def get_data_macro_monthly_table_name():
     return "data_macro_monthly"
 
+def get_data_worldscope_summary_table_name():
+    return "data_worldscope_summary"
+    
 def get_top_stock_models_table_name():
     return "top_stock_models"
 

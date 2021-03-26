@@ -377,6 +377,53 @@ class Fred(models.Model):
     def __str__(self):
         return f"{self.trading_day}"
 
+class WorldscopeSummary(models.Model):
+    uid = models.TextField(primary_key=True)
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="data_worldscope_summary_ticker")
+    worldscope_identifier = models.TextField(blank=True, null=True)
+    year = models.IntegerField(blank=True, null=True)
+    frequency_number = models.IntegerField(blank=True, null=True)
+    fiscal_quarter_end = models.IntegerField(blank=True, null=True)
+    period_end = models.DateField(blank=True, null=True)
+    report_date = models.DateField(blank=True, null=True)
+    fn_2001 = models.FloatField(blank=True, null=True)
+    fn_2101 = models.FloatField(blank=True, null=True)
+    fn_2201 = models.FloatField(blank=True, null=True)
+    fn_2501 = models.FloatField(blank=True, null=True)
+    fn_3101 = models.FloatField(blank=True, null=True)
+    fn_5085 = models.FloatField(blank=True, null=True)
+    fn_8001 = models.FloatField(blank=True, null=True)
+    fn_18100 = models.FloatField(blank=True, null=True)
+    fn_18158 = models.FloatField(blank=True, null=True)
+    fn_18199 = models.FloatField(blank=True, null=True)
+    fn_18262 = models.FloatField(blank=True, null=True)
+    fn_18263 = models.FloatField(blank=True, null=True)
+    fn_18264 = models.FloatField(blank=True, null=True)
+    fn_18265 = models.FloatField(blank=True, null=True)
+    fn_18266 = models.FloatField(blank=True, null=True)
+    fn_18267 = models.FloatField(blank=True, null=True)
+    fn_18269 = models.FloatField(blank=True, null=True)
+    fn_18304 = models.FloatField(blank=True, null=True)
+    fn_18308 = models.FloatField(blank=True, null=True)
+    fn_18309 = models.FloatField(blank=True, null=True)
+    fn_18310 = models.FloatField(blank=True, null=True)
+    fn_18311 = models.FloatField(blank=True, null=True)
+    fn_18312 = models.FloatField(blank=True, null=True)
+    fn_18313 = models.FloatField(blank=True, null=True)
+    fn_3501 = models.FloatField(blank=True, null=True)
+    fn_3255 = models.FloatField(blank=True, null=True)
+    fn_18271 = models.FloatField(blank=True, null=True)
+    fn_2999 = models.FloatField(blank=True, null=True)
+    fn_5192 = models.FloatField(blank=True, null=True)
+    
+
+    class Meta:
+        managed = True
+        db_table = "data_worldscope_summary"
+
+    def __str__(self):
+        return f"{self.ticker}-{self.period_end}"
+
 class LatestPrice(models.Model):
     ticker = models.OneToOneField(Universe, on_delete=models.CASCADE,db_column="ticker", related_name="latest_price_ticker", primary_key=True)
     classic_vol = models.FloatField(blank=True, null=True)

@@ -29,6 +29,11 @@ from ingestion.currency import (
     update_currency_price_from_dss, 
     update_utc_offset_from_timezone
     )
+from ingestion.ai_value import (
+    update_ibes_data_monthly_from_dsws, 
+    update_macro_data_monthly_from_dsws, 
+    update_worldscope_quarter_summary_from_dsws)
+
 # from global_vars import DB_URL_READ, DB_URL_WRITE
 
 
@@ -87,6 +92,11 @@ def update_currency_data():
     update_utc_offset_from_timezone()
     update_currency_price_from_dss()
 
+def monthly_update(currency_code):
+    update_ibes_data_monthly_from_dsws(currency_code = currency_code)
+    update_macro_data_monthly_from_dsws()
+    update_worldscope_quarter_summary_from_dsws(currency_code = currency_code)
+
 def update_universe_data(ticker=None):
     populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=ticker)
     # do_function("universe_populate")
@@ -99,8 +109,10 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
+    ticker="MSFT.O"
+    # update_worldscope_quarter_summary_from_dsws(ticker = ticker)
     # ticker=['AFXG.F']
-    populate_latest_price(ticker="MSFT.O")
+    # populate_latest_price(ticker="MSFT.O")
     # update_currency_code_from_dss(ticker="MSFT.O")
     # ticker = None
     # update_ticker_name_from_dsws(ticker=ticker)

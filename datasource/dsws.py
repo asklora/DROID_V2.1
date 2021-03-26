@@ -124,15 +124,21 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
     print("== Getting Data From DSWS ==")
     chunk_data = []
     error_universe = []
-    ticker_list = universe[identifier].tolist()
-    if use_ticker:
-        ticker = ["<" + tick + ">" for tick in ticker_list]
+    if(type(universe) == list):
+        splitting_df = universe
     else:
-        ticker = ticker_list
-    split = len(ticker)/split_number
-    splitting_df = np.array_split(ticker, split)
-    for universe in splitting_df:
-        universelist = ",".join([str(elem) for elem in universe])
+        ticker_list = universe[identifier].tolist()
+        if use_ticker:
+            ticker = ["<" + tick + ">" for tick in ticker_list]
+        else:
+            ticker = ticker_list
+        split = len(ticker)/split_number
+        splitting_df = np.array_split(ticker, split)
+    for univ in splitting_df:
+        if (type(universe) != list):
+            universelist = ",".join([str(elem) for elem in univ])
+        else:
+            universelist = [univ]
         try:
             if(monthly):
                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="M")
@@ -145,6 +151,9 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
                 result = result.groupby(identifier, as_index=False).last()
             if use_ticker:
                 result[identifier] = universelist.replace("<", "").replace(">", "")
+            else:
+                if (type(universe) == list):
+                    result[identifier] = univ
             chunk_data.append(result)
         except Exception as e:
             if use_ticker:
@@ -166,7 +175,7 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
     print(data)
     return data, error_universe
 
-def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False):
+def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False, worldscope=False):
     DS = setDataStream()
     print("== Getting Data From DSWS ==")
     chunk_data = []
@@ -203,6 +212,8 @@ def get_data_history_frequently_by_field_from_dsws(start_date, end_date, univers
                 if (fundamentals_score):
                     result[identifier] = ticker
                     result = result.groupby("ticker", as_index=False).last()
+                elif (worldscope):
+                    result[identifier] = ticker
                 if (len(chunck_field) == 0) :
                     chunck_field = result
                 else:

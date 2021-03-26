@@ -6,7 +6,7 @@ from general.sql_process import db_read, db_write
 from general.date_process import backdate_by_day, str_to_date
 from general.data_process import tuple_data
 from general.table_name import (
-    get_latest_price_table_name, get_master_tac_table_name, get_vix_table_name,
+    get_data_ibes_monthly_table_name, get_data_macro_monthly_table_name, get_latest_price_table_name, get_master_tac_table_name, get_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
     get_universe_rating_table_name,
@@ -276,5 +276,32 @@ def get_latest_price_capital_change(ticker=None, currency_code=None):
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
         query += f"and " + check
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_data_ibes_monthly(start_date):
+    table_name = get_data_ibes_monthly_table_name()
+    query = f"select * from {table_name} "
+    query += f"where trading_day in (select max(mcm.trading_day) "
+    query += f"from {table_name} mcm where mcm.trading_day>='{start_date}' "
+    query += f"group by mcm.period_end, ticker); "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_ibes_new_ticker():
+    table_name = universe_table
+    query = f"select * from {table_name} "
+    query += f"where is_active=True and "
+    query += f"entity_type is not null and "
+    query += f"ticker not in (select ticker from {get_data_ibes_monthly_table_name()} group by ticker having count(ticker) >= 48)"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_data_macro_monthly(start_date):
+    table_name = get_data_macro_monthly_table_name()
+    query = f"select * from {table_name} "
+    query += f"where trading_day in (select max(mcm.trading_day) "
+    query += f"from {table_name} mcm where mcm.trading_day>='{start_date}' "
+    query += f"group by mcm.period_end); "
     data = read_query(query, table_name, cpu_counts=True)
     return data
