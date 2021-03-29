@@ -204,6 +204,7 @@ def update_macro_data_monthly_from_dsws():
     result = data_monthly.merge(data_quarterly, how="left", on=["year", "quarter"])
     result = result.drop(columns=["month", "year", "quarter"])
     print(result)
+    result = result.dropna(subset=["period_end"])
     upsert_data_to_database(result, get_data_macro_monthly_table_name(), "trading_day", how="update", Text=True)
     report_to_slack("{} : === Data MACRO Monthly Update Updated ===".format(datetimeNow()))
     populate_macro_table()
