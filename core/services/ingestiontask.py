@@ -1,8 +1,16 @@
 from config.celery import app
 from datetime import datetime
-from main import update_ohlcvtr,update_quandl_orats_from_quandl
+from main import (
+    update_ohlcvtr,
+    update_quandl_orats_from_quandl,
+    update_lot_size_from_dss,
+    )
 from core.universe.models import Universe
 import sys
+
+
+
+
 @app.task
 def dailyupdateohlcvtr(currency):
     now = datetime.now()
@@ -30,3 +38,34 @@ def updatequandldsws():
         return {'result':f'quandle {now.date()} updated'}
     except Exception as e:
         return {'err':str(e)}
+
+# lotsize sat 13 00
+@app.task
+def updatelotsize(currency):
+    now = datetime.now()
+    original_stdout = sys.stdout
+    ticker = Universe.manager.get_ticker_list_by_currency(currency)
+    try:
+        with open(f'quandle_daily_{now}.txt', 'w') as f:
+                sys.stdout = f # Change the standard output to the file we created.
+                update_lot_size_from_dss(ticker=ticker)
+                sys.stdout = original_stdout
+        return {'result':f'quandle {now.date()} updated'}
+    except Exception as e:
+        return {'err':str(e)}
+
+# everyday 21 15
+@app.task
+def updaterate(currency):
+    now = datetime.now()
+    original_stdout = sys.stdout
+    ticker = Universe.manager.get_ticker_list_by_currency(currency)
+    try:
+        with open(f'quandle_daily_{now}.txt', 'w') as f:
+                sys.stdout = f # Change the standard output to the file we created.
+                update_lot_size_from_dss(ticker=ticker)
+                sys.stdout = original_stdout
+        return {'result':f'quandle {now.date()} updated'}
+    except Exception as e:
+        return {'err':str(e)}
+
