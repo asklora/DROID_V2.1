@@ -61,7 +61,7 @@ def new_ticker_ingestion(ticker=None):
     # master_ohlctr_update()
     # master_tac_update()
     # master_multiple_update()
-    
+
 def update_ohlcvtr(ticker=None, currency_code=None):
     update_data_dss_from_dss(ticker=ticker, currency_code=currency_code)
     update_data_dsws_from_dsws(ticker=ticker, currency_code=currency_code)
