@@ -1,3 +1,7 @@
+from general.date_process import dateNow
+from general.sql_query import get_active_universe, get_universe_by_region
+from general.sql_output import fill_null_quandl_symbol
+from bot.preprocess import dividend_daily_update, interest_daily_update
 import os
 import sys
 from pandas.core.series import Series
@@ -33,8 +37,120 @@ from ingestion.ai_value import (
     update_ibes_data_monthly_from_dsws, 
     update_macro_data_monthly_from_dsws, 
     update_worldscope_quarter_summary_from_dsws)
-
+from general.sql_query import read_query
 # from global_vars import DB_URL_READ, DB_URL_WRITE
+
+#Mon-Sat at 13:45
+def quandl():
+    fill_null_quandl_symbol()
+    update_quandl_orats_from_quandl()
+
+#Mon-Sat at 21:00
+def vix():
+    update_vix_from_dsws()
+    interest_update()
+    dividend_daily_update()
+    interest_daily_update()
+
+#Mon-Fri at 16:30
+def daily_na():
+    ticker = get_universe_by_region("na")
+    ticker = ticker["ticker"].to_list()
+    update_data_dss_from_dss(ticker=ticker)
+    update_data_dsws_from_dsws(ticker=ticker)
+    do_function("master_ohlcvtr_update")
+    master_ohlctr_update()
+    master_tac_update()
+    master_multiple_update()
+
+#Tue-Sat at 00:30
+def daily_ws():
+    ticker = get_universe_by_region("ws")
+    ticker = ticker["ticker"].to_list()
+    update_data_dss_from_dss(ticker=ticker)
+    update_data_dsws_from_dsws(ticker=ticker)
+    do_function("master_ohlcvtr_update")
+    master_ohlctr_update()
+    master_tac_update()
+    master_multiple_update()
+
+#Sat at 03:15
+def weekly():
+    update_ticker_name_from_dsws()
+    do_function("latest_universe")
+    update_lot_size_from_dss()
+    update_ticker_symbol_from_dss()
+    update_entity_type_from_dsws()
+    daily_na()
+    daily_ws()
+    update_ibes_data_monthly_from_dsws()
+    update_macro_data_monthly_from_dsws()
+
+#Sun at 20:00
+def timezones():
+    update_utc_offset_from_timezone()
+
+#First Saturday Every Month at 03:00
+def monthly():
+    update_entity_type_from_dsws()
+    update_ibes_data_monthly_from_dsws()
+    update_macro_data_monthly_from_dsws()
+    update_ticker_name_from_dsws()
+    do_function("latest_universe")
+    update_ticker_symbol_from_dss()
+    update_worldscope_identifier_from_dsws()
+    daily_na()
+    daily_ws()
+    update_company_desc_from_dsws()
+    fill_null_quandl_symbol()
+    dividend_updated()
+
+#Sun at 03:30
+def dlpa_weekly():
+    print("Run DLPA")
+    # main_portfolio.py --live --portfolio_period 0
+
+    query = f"select distinct on (index, ticker, spot_date, forward_date) index, ticker, spot_date, forward_date "
+    query += f"from client_portfolios where forward_tri is null and forward_return is null "
+    query += f"and index_forward_price is not null and index_forward_return is not null "
+    query += f"and (forward_date::date + interval '1 days')::date <= NOW()"
+    client_portfolios_missing = read_query(query, table="client_portfolios")
+
+    query = f"select distinct on (index, spot_date, forward_date) index, spot_date, forward_date "
+    query += f"from client_portfolios where forward_tri is null and forward_return is null "
+    query += f"and index_forward_price is null and index_forward_return is null "
+    query += f"and (forward_date::date + interval '1 days')::date <= NOW()"
+    client_portfolios_holiday = read_query(query, table="client_portfolios")
+
+    #Select Data from dss_ohlcvtr and append.
+    for index, row in client_portfolios_missing.head().iterrows():
+        ticker = row["ticker"]
+        spot_date = row["spot_date"]
+        forward_date = row["forward_date"]
+        print("{} : === This ticker {} is null on {} to {}===".format(dateNow(), ticker, spot_date, forward_date))
+
+    #Holiday report
+    for index, row in client_portfolios_holiday.head().iterrows():
+        indices = row["index"]
+        spot_date = row["spot_date"]
+        forward_date = row["forward_date"]
+        print("{} : === This index {} is Holiday from {} to {}===".format(dateNow(), indices, spot_date, forward_date))
+
+        # report_to_slack("{} : === Start filled_holiday_client_portfolios ===".format(str(datetime.now())), args)
+        do_function("filled_holiday_client_portfolios")
+
+        # report_to_slack("{} : === Start migrate_client_portfolios ===".format(str(datetime.now())), args)
+        do_function("migrate_client_portfolios")
+        
+
+        # report_to_slack("{} : === FINISH CLIENT PORTFOLIO ===".format(str(datetime.now())), args)
+        do_function("latest_universe")
+    
+    #Post to Linkedin
+    #Post to Facebook
+
+
+
 
 
 def new_ticker_ingestion(ticker=None):
@@ -111,7 +227,7 @@ def update_universe_data(ticker=None):
 if __name__ == "__main__":
     ticker="MSFT.O"
     # update_worldscope_quarter_summary_from_dsws(ticker = ticker)
-    # ticker=['AFXG.F']
+    # ticker=["AFXG.F"]
     # populate_latest_price(ticker="MSFT.O")
     # update_currency_code_from_dss(ticker="MSFT.O")
     # ticker = None
@@ -126,7 +242,7 @@ if __name__ == "__main__":
     # update_data_dss_from_dss(ticker=ticker, history=True)
     # update_data_dsws_from_dsws(ticker=ticker, history=True)
     # populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=ticker)
-    # update_quandl_orats_from_quandl(ticker='MSFT.O')
+    # update_quandl_orats_from_quandl(ticker="MSFT.O")
     # update_data_dsws_from_dsws(ticker=["1COV.F"], history=True)
     # update_ticker_symbol_from_dss()
     # do_function("master_ohlcvtr_update")
