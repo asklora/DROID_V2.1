@@ -1,0 +1,12 @@
+FROM python:3.8
+ENV PYTHONUNBUFFERED 1
+RUN mkdir /code
+WORKDIR /code
+COPY installer/requirements_AI.txt /code/
+RUN pip install -r requirements_AI.txt
+# RUN apt install libcurl4-openssl-dev libssl-dev
+# RUN pip uninstall -y pycurl
+# RUN export PYCURL_SSL_LIBRARY=nss
+# RUN pip install --compile pycurl==7.43.0.2
+
+COPY . /code/
