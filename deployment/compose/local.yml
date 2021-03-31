@@ -1,0 +1,13 @@
+version: "3.7"
+services:
+  celery:
+    container_name: Celery
+    build:
+      context: ./
+      dockerfile: Dockerfile.celery
+    command: sh deployment/entrycelerylocal.sh
+    env_file: .env
+    volumes:
+      - ./:/code
+    restart: always
+
