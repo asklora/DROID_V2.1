@@ -29,7 +29,8 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     #Adding Latest Price to Master TAC
     if (daily):
         intraday_price = get_latest_price(ticker=ticker, currency_code=currency_code)
-        last_date = intraday_price.last_date.max()
+        intraday_price["last_date"] = pd.to_datetime(intraday_price["last_date"])
+        last_date = intraday_price["last_date"].max()
         last_price = intraday_price[["open", "high", "low", "close", "ticker"]]
         if prices_df.trading_day.max() <= last_date:
             prices_df = prices_df.drop(prices_df[prices_df.trading_day == last_date].index)
