@@ -365,7 +365,7 @@ def get_latest_vol(condition=None):
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
-def get_latest_price(condition=None):
+def get_latest_price_by_condition(condition=None):
     table_name = get_latest_price_table_name()
     query = f"select * from {table_name} "
     if(type(condition) != type(None)):

@@ -58,7 +58,7 @@ def daily_uno(ticker=None, currency_code=None, time_to_exp=time_to_expiry, infer
 def daily_classic(ticker=None, currency_code=None, time_to_exp=time_to_expiry, mod=False, option_maker=True, null_filler=True):
     option_maker_classic_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
     option_maker_daily_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
-    bot_ranking_daily(ticker=ticker, currency_code=currency_code, mod=mod)
+    bot_ranking_daily()
     bot_statistic_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
 
 
@@ -119,9 +119,8 @@ def data_prep_check_new_ticker(ticker=None, currency_code=None):
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
     date_identifier = "trading_day"
-    new_ticker = get_new_tickers_from_bot_data(start_date, start_date2, date_identifier, ticker=ticker, currency_code=currency_code)
+    new_ticker = get_new_tickers_from_bot_data(start_date, start_date2, date_identifier, ticker=ticker, currency_code=currency_code)["ticker"].to_list()
     if (len(new_ticker) > 0):
-        new_ticker = new_ticker["ticker"].tolist()
         print(f"Found {len(new_ticker)} New Ticker {tuple(new_ticker)}")
         populate_bot_data(start_date=start_date2, end_date=end_date, ticker=new_ticker, new_ticker=True)
         print("{} : === DATA PREPERATION CHECK NEW TICKER COMPLETED ===".format(dateNow()))
@@ -192,13 +191,13 @@ def option_maker_classic_check_new_ticker(ticker=None, currency_code=None, time_
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
-    new_ticker = get_new_ticker_from_bot_backtest(ticker=ticker, currency_code=currency_code, uno=True, mod=mod)
+    new_ticker = get_new_ticker_from_bot_backtest(ticker=ticker, currency_code=currency_code, uno=True, mod=mod)["ticker"].to_list()
     print(new_ticker)
     if (len(new_ticker) > 0):
         ticker_length = len(new_ticker)
         print(f"Found {ticker_length} New Ticker")
         if option_maker:
-            populate_bot_classic_backtest(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod)
+            populate_bot_classic_backtest(start_date=start_date, end_date=end_date, ticker=new_ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod)
             print("Option creation is finished")
         if null_filler:
             fill_bot_backtest_classic(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=new_ticker, currency_code=currency_code, mod=mod)
@@ -251,7 +250,7 @@ def option_maker_uno_check_new_ticker(ticker=None, currency_code=None, time_to_e
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
-    new_ticker = get_new_ticker_from_bot_backtest(ticker=ticker, currency_code=currency_code, uno=True, mod=mod)
+    new_ticker = get_new_ticker_from_bot_backtest(ticker=ticker, currency_code=currency_code, uno=True, mod=mod)["ticker"].to_list()
     print(new_ticker)
     if (len(new_ticker) > 0):
         ticker_length = len(new_ticker)
@@ -310,7 +309,7 @@ def option_maker_ucdc_check_new_ticker(ticker=None, currency_code=None, time_to_
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
-    new_ticker = get_new_ticker_from_bot_backtest(ticker=ticker, currency_code=currency_code, ucdc=True, mod=mod)
+    new_ticker = get_new_ticker_from_bot_backtest(ticker=ticker, currency_code=currency_code, ucdc=True, mod=mod)["ticker"].to_list()
     print(new_ticker)
     if (len(new_ticker) > 0):
         ticker_length = len(new_ticker)
@@ -319,7 +318,7 @@ def option_maker_ucdc_check_new_ticker(ticker=None, currency_code=None, time_to_
             populate_bot_ucdc_backtest(start_date=start_date, end_date=end_date, ticker=new_ticker, time_to_exp=time_to_exp, mod=mod, infer=infer, new_ticker=True)
             print("Option creation is finished")
         if null_filler:
-            fill_bot_backtest_ucdc(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, total_no_of_runs=total_no_of_runs, run_number=run_number)
+            fill_bot_backtest_ucdc(start_date=start_date, end_date=end_date, ticker=new_ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, total_no_of_runs=total_no_of_runs, run_number=run_number)
             print("{} : === OPTION MAKER UCDC CHECK NEW TICKER COMPLETED ===".format(dateNow()))
         report_to_slack("{} : === OPTION MAKER UCDC CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 

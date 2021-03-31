@@ -1,4 +1,3 @@
-from bot.data_download import get_latest_price
 from general.date_process import (
     datetimeNow, 
     backdate_by_day, 
