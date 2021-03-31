@@ -137,6 +137,26 @@ def monthly():
     #Sat at 05:06
     update_worldscope_quarter_summary_from_dsws(currency_code=["USD"])
 
+def latest_price():
+    #Mon-Fri at 06:50
+    populate_latest_price(currency_code=["JPY"])
+    #Mon-Fri at 07:30
+    populate_latest_price(currency_code=["KRW"])
+    #Mon-Fri at 07:40
+    populate_latest_price(currency_code=["TWD"])
+    #Mon-Fri at 08:00
+    populate_latest_price(currency_code=["CNY"])
+    #Mon-Fri at 09:50
+    populate_latest_price(currency_code=["HKD"])
+    #Mon-Fri at 09:50
+    populate_latest_price(currency_code=["SGD"])
+    #Mon-Fri at 17:30
+    populate_latest_price(currency_code=["GBP"])
+    #Mon-Fri at 18:10
+    populate_latest_price(currency_code=["EUR"])
+    #Mon-Fri at 22:00
+    populate_latest_price(currency_code=["USD"])
+
 def uno_ucdc():
     #Mon-Fri at 07:05
     daily_uno_ucdc(currency_code=["JPY"])
@@ -154,7 +174,7 @@ def uno_ucdc():
     daily_uno_ucdc(currency_code=["GBP"])
     #Mon-Fri at 18:25
     daily_uno_ucdc(currency_code=["EUR"])
-    #Mon-Fri at 22:20
+    #Mon-Fri at 22:15
     daily_uno_ucdc(currency_code=["USD"], infer=False)
 
 #Classic WS
