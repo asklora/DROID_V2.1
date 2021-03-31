@@ -124,20 +124,20 @@ def monthly():
     fill_null_quandl_symbol()
     dividend_updated()
 
-    #Sat at 05:00
-    update_worldscope_quarter_summary_from_dsws(currency_code=["JPY"])
-    #Sat at 05:01
-    update_worldscope_quarter_summary_from_dsws(currency_code=["KRW"])
-    #Sat at 05:02
-    update_worldscope_quarter_summary_from_dsws(currency_code=["TWD"])
-    #Sat at 05:03
-    update_worldscope_quarter_summary_from_dsws(currency_code=["CNY"])
-    #Sat at 05:04
-    update_worldscope_quarter_summary_from_dsws(currency_code=["SGD", "GBP", "HKD"])
-    #Sat at 05:05
-    update_worldscope_quarter_summary_from_dsws(currency_code=["EUR"])
-    #Sat at 05:06
-    update_worldscope_quarter_summary_from_dsws(currency_code=["USD"])
+    # #Sat at 05:00
+    # update_worldscope_quarter_summary_from_dsws(currency_code=["JPY"])
+    # #Sat at 05:01
+    # update_worldscope_quarter_summary_from_dsws(currency_code=["KRW"])
+    # #Sat at 05:02
+    # update_worldscope_quarter_summary_from_dsws(currency_code=["TWD"])
+    # #Sat at 05:03
+    # update_worldscope_quarter_summary_from_dsws(currency_code=["CNY"])
+    # #Sat at 05:04
+    # update_worldscope_quarter_summary_from_dsws(currency_code=["SGD", "GBP", "HKD"])
+    # #Sat at 05:05
+    # update_worldscope_quarter_summary_from_dsws(currency_code=["EUR"])
+    # #Sat at 05:06
+    # update_worldscope_quarter_summary_from_dsws(currency_code=["USD"])
 
 def latest_price():
     #Mon-Fri at 06:50
