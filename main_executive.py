@@ -26,7 +26,7 @@ def training(ticker=None, currency_code=None):
     train_lebeler_model(ticker=ticker, currency_code=currency_code)
 
 # follow currency schedule
-def daily_uno(ticker=None, currency_code=None, time_to_exp=time_to_expiry, infer=True, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0):
+def daily_uno_ucdc(ticker=None, currency_code=None, time_to_exp=time_to_expiry, infer=True, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0):
     #Data Preparation
     data_prep_daily(ticker=ticker, currency_code=currency_code)
     data_prep_check_new_ticker(ticker=ticker, currency_code=currency_code)

@@ -1,3 +1,4 @@
+from main_executive import daily_classic, daily_uno_ucdc
 from general.date_process import dateNow
 from general.sql_query import get_active_universe, get_universe_by_region
 from general.sql_output import fill_null_quandl_symbol
@@ -86,6 +87,22 @@ def weekly():
     update_ibes_data_monthly_from_dsws()
     update_macro_data_monthly_from_dsws()
 
+    #Sat at 04:00
+    update_fundamentals_score_from_dsws(currency_code=["JPY"])
+    #Sat at 04:01
+    update_fundamentals_score_from_dsws(currency_code=["KRW"])
+    #Sat at 04:02
+    update_fundamentals_score_from_dsws(currency_code=["TWD"])
+    #Sat at 04:03
+    update_fundamentals_score_from_dsws(currency_code=["CNY"])
+    #Sat at 04:04
+    update_fundamentals_score_from_dsws(currency_code=["SGD", "GBP", "HKD"])
+    #Sat at 04:05
+    update_fundamentals_score_from_dsws(currency_code=["EUR"])
+    #Sat at 04:06
+    update_fundamentals_score_from_dsws(currency_code=["USD"])
+    update_fundamentals_quality_value()
+
 #Sun at 20:00
 def timezones():
     update_utc_offset_from_timezone()
@@ -104,6 +121,56 @@ def monthly():
     update_company_desc_from_dsws()
     fill_null_quandl_symbol()
     dividend_updated()
+
+    #Sat at 05:00
+    update_worldscope_quarter_summary_from_dsws(currency_code=["JPY"])
+    #Sat at 05:01
+    update_worldscope_quarter_summary_from_dsws(currency_code=["KRW"])
+    #Sat at 05:02
+    update_worldscope_quarter_summary_from_dsws(currency_code=["TWD"])
+    #Sat at 05:03
+    update_worldscope_quarter_summary_from_dsws(currency_code=["CNY"])
+    #Sat at 05:04
+    update_worldscope_quarter_summary_from_dsws(currency_code=["SGD", "GBP", "HKD"])
+    #Sat at 05:05
+    update_worldscope_quarter_summary_from_dsws(currency_code=["EUR"])
+    #Sat at 05:06
+    update_worldscope_quarter_summary_from_dsws(currency_code=["USD"])
+
+def uno_ucdc():
+    #Mon-Fri at 07:05
+    daily_uno_ucdc(currency_code=["JPY"])
+    #Mon-Fri at 07:45
+    daily_uno_ucdc(currency_code=["KRW"])
+    #Mon-Fri at 07:55
+    daily_uno_ucdc(currency_code=["TWD"])
+    #Mon-Fri at 08:15
+    daily_uno_ucdc(currency_code=["CNY"])
+    #Mon-Fri at 09:05
+    daily_uno_ucdc(currency_code=["HKD"])
+    #Mon-Fri at 10:05
+    daily_uno_ucdc(currency_code=["SGD"])
+    #Mon-Fri at 17:45
+    daily_uno_ucdc(currency_code=["GBP"])
+    #Mon-Fri at 18:25
+    daily_uno_ucdc(currency_code=["EUR"])
+    #Mon-Fri at 22:20
+    daily_uno_ucdc(currency_code=["USD"], infer=False)
+
+#Classic WS
+#Tue-Sat at 01:35
+def classic_ws():
+    ticker = get_universe_by_region("ws")
+    ticker = ticker["ticker"].to_list()
+    daily_classic(ticker=None)
+
+#Classic NA
+#Mon-Fri at 05:35
+def classic_na():
+    ticker = get_universe_by_region("na")
+    ticker = ticker["ticker"].to_list()
+    daily_classic(ticker=None)
+
 
 #Sun at 03:30
 def dlpa_weekly():

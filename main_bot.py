@@ -2,7 +2,7 @@ from bot.calculate_latest_bot import populate_latest_bot_update
 from general.sql_query import get_active_universe
 from general.sql_process import do_function
 from main_executive import (
-    bot_ranking_history, bot_statistic_classic, bot_statistic_ucdc, bot_statistic_uno, daily_classic, daily_uno, data_prep_daily, 
+    bot_ranking_history, bot_statistic_classic, bot_statistic_ucdc, bot_statistic_uno, daily_classic, daily_uno_ucdc, data_prep_daily, 
     data_prep_history, 
     infer_daily, 
     infer_history, 
@@ -14,7 +14,7 @@ from main_executive import (
 if __name__ == "__main__":
     print("Start Process")
     daily_classic(currency_code=["EUR"], option_maker=True, null_filler=True)
-    daily_uno(currency_code=["EUR"], infer=True, option_maker=True, null_filler=True)
+    daily_uno_ucdc(currency_code=["EUR"], infer=True, option_maker=True, null_filler=True)
     # train_lebeler_model()
     # populate_latest_bot_update(currency_code="USD")
     # bot_ranking_history(ticker=None, currency_code=None)
