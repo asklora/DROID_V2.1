@@ -58,7 +58,7 @@ def daily_uno(ticker=None, currency_code=None, time_to_exp=time_to_expiry, infer
 def daily_classic(ticker=None, currency_code=None, time_to_exp=time_to_expiry, mod=False, option_maker=True, null_filler=True):
     option_maker_classic_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
     option_maker_daily_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
-    bot_ranking_daily(ticker=ticker, currency_code=currency_code, mod=mod)
+    bot_ranking_daily()
     bot_statistic_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
 
 
