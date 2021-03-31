@@ -37,7 +37,7 @@ def read_query(query, table=universe_table, cpu_counts=False):
     if(cpu_counts):
         engine = create_engine(db_read, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
     else:
-        engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
+        engine = create_engine("", max_overflow=-1, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
         data = pd.read_sql(query, con=conn)
     engine.dispose()
