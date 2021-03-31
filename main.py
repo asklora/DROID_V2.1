@@ -89,21 +89,21 @@ def weekly():
     update_ibes_data_monthly_from_dsws()
     update_macro_data_monthly_from_dsws()
 
-    #Sat at 04:00
-    update_fundamentals_score_from_dsws(currency_code=["JPY"])
-    #Sat at 04:01
-    update_fundamentals_score_from_dsws(currency_code=["KRW"])
-    #Sat at 04:02
-    update_fundamentals_score_from_dsws(currency_code=["TWD"])
-    #Sat at 04:03
-    update_fundamentals_score_from_dsws(currency_code=["CNY"])
-    #Sat at 04:04
-    update_fundamentals_score_from_dsws(currency_code=["SGD", "GBP", "HKD"])
-    #Sat at 04:05
-    update_fundamentals_score_from_dsws(currency_code=["EUR"])
-    #Sat at 04:06
-    update_fundamentals_score_from_dsws(currency_code=["USD"])
-    update_fundamentals_quality_value()
+    # #Sat at 04:00
+    # update_fundamentals_score_from_dsws(currency_code=["JPY"])
+    # #Sat at 04:01
+    # update_fundamentals_score_from_dsws(currency_code=["KRW"])
+    # #Sat at 04:02
+    # update_fundamentals_score_from_dsws(currency_code=["TWD"])
+    # #Sat at 04:03
+    # update_fundamentals_score_from_dsws(currency_code=["CNY"])
+    # #Sat at 04:04
+    # update_fundamentals_score_from_dsws(currency_code=["SGD", "GBP", "HKD"])
+    # #Sat at 04:05
+    # update_fundamentals_score_from_dsws(currency_code=["EUR"])
+    # #Sat at 04:06
+    # update_fundamentals_score_from_dsws(currency_code=["USD"])
+    
 
 #Sun at 20:00
 def timezones():

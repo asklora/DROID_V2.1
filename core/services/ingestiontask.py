@@ -1,3 +1,4 @@
+from ingestion.master_data import update_fundamentals_quality_value
 from config.celery import app
 from datetime import datetime
 from main import (
@@ -210,6 +211,8 @@ def get_fundamentals_score(currency):
         with open(f"logger/fundamental_score_{currency}_{now}.txt", "w") as f:
             sys.stdout = f # Change the standard output to the file we created.
             update_fundamentals_score_from_dsws(currency_code=currency) # triger ingestion function
+            if (currency == ["USD"]):
+                update_fundamentals_quality_value()
             sys.stdout = original_stdout
         return {"result":f"fundamental_score is updated"}
     except Exception as e:
