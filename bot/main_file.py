@@ -72,7 +72,6 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
                                            (prices_df["trading_day"] <= trading_day + BDay(125 * 2))]
 
         main_open, main_high, main_low, main_close, main_tri, main_multiples = remove_holidays(prices_df_temp)
-        main_multiples_f = remove_holidays_forward(prices_df_temp_forward)
 
         main_open = main_open.bfill().ffill()
         main_high = main_high.bfill().ffill()
@@ -80,7 +79,6 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         main_close = main_close.bfill().ffill()
         main_tri = main_tri.bfill().ffill()
         main_multiples = main_multiples.bfill().ffill()
-        main_multiples_f = main_multiples_f.bfill().ffill()
 
         main_open = main_open.replace(to_replace=0, method="ffill")
         main_high = main_high.replace(to_replace=0, method="ffill")
@@ -88,7 +86,6 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         main_close = main_close.replace(to_replace=0, method="ffill")
         main_tri = main_tri.replace(to_replace=0, method="ffill")
         main_multiples = main_multiples.replace(to_replace=0, method="ffill")
-        main_multiples_f = main_multiples_f.replace(to_replace=0, method="ffill")
 
         # **********************************************************************************************
         # In case any stock did not exist for a period of time, and all the values for that period are just H.
@@ -99,7 +96,6 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         main_low = main_low[main_close.columns]
         main_tri = main_tri[main_close.columns]
         main_multiples = main_multiples[main_close.columns]
-        main_multiples_f = main_multiples_f[main_close.columns]
         # **********************************************************************************************
         c2c_vol_0_21 = get_close_vol(lookback_creator(main_multiples, 0, period))
         c2c_vol_21_42 = get_close_vol(lookback_creator(main_multiples, period, 2 * period))
@@ -107,10 +103,6 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         c2c_vol_63_126 = get_close_vol(lookback_creator(main_multiples, 3 * period, 6 * period))
         c2c_vol_126_252 = get_close_vol(lookback_creator(main_multiples, 6 * period, 12 * period))
         c2c_vol_252_504 = get_close_vol(lookback_creator(main_multiples, 12 * period, 24 * period))
-
-        # c2c_vol_forward_0_21 = get_close_vol(forward_creator(main_multiples_f, 0, period))
-        # c2c_vol_forward_0_63 = get_close_vol(forward_creator(main_multiples_f, 0, 3 * period))
-        # c2c_vol_forward_0_126 = get_close_vol(forward_creator(main_multiples_f, 0, 6 * period))
 
         kurt_0_504 = get_kurt(lookback_creator(main_multiples, 0, 24 * period))
         rs_vol_0_21 = get_rogers_satchell(lookback_creator(main_open, 0, period),
