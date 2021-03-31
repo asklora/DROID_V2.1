@@ -34,6 +34,7 @@ django-environ==0.4.5
 django-import-export==2.5.0
 django-postgres-extra==2.0.2
 djangorestframework==3.12.2
+dnspython==1.16.0
 docutils==0.15.2
 enforce==0.3.4
 environs==9.2.0
