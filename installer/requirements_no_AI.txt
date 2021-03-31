@@ -34,6 +34,7 @@ django-environ==0.4.5
 django-import-export==2.5.0
 django-postgres-extra==2.0.2
 djangorestframework==3.12.2
+dnspython==1.16.0
 docutils==0.15.2
 enforce==0.3.4
 environs==9.2.0
@@ -87,6 +88,7 @@ pycodestyle==2.6.0
 PyDatastream==0.6.2
 Pygments==2.6.1
 PyJWT==2.0.0
+pymongo==3.11.3
 python-dateutil==2.8.0
 python-dotenv==0.13.0
 python-editor==1.0.4
