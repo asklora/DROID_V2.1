@@ -214,3 +214,25 @@ def get_fundamentals_score(currency):
         return {"result":f"fundamental_score is updated"}
     except Exception as e:
         return {"err":str(e)}
+
+@app.task
+def get_daily_uno_ucdc(currency,infer=True):
+    """
+    follow currency time
+
+    """
+    now = datetime.now()
+    if infer == True or infer == "True":
+        infer = True
+    else:
+        infer = False
+
+    try:
+        original_stdout = sys.stdout # Save a reference to the original standard output
+        with open(f"logger/daily_uno_ucdc_{currency}_{now}.txt", "w") as f:
+            sys.stdout = f # Change the standard output to the file we created.
+            daily_uno_ucdc(currency_code=currency,infer=infer) # triger ingestion function
+            sys.stdout = original_stdout
+        return {"result":f"daily_uno_ucdc {currency} is updated"}
+    except Exception as e:
+        return {"err":str(e)}
