@@ -4,8 +4,8 @@ services:
     container_name: Celery
     build:
       context: ./
-      dockerfile: Dockerfile.celery
-    command: sh deployment/entrycelerylocal.sh
+      dockerfile: ./deployment/jenkins/pc1/Dockerfile
+    command: sh deployment/jenkins/pc1/entrycelerylocal.sh
     env_file: .env
     volumes:
       - ./:/code

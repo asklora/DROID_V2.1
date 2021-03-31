@@ -1,15 +1,13 @@
 from config.celery import app
 from datetime import datetime
 from main import (
-    update_lot_size_from_dss,
-    quandl,
-    vix,
-    daily_na,
-    daily_ws,
-    weekly,
-    timezones,
-    monthly,
-    dlpa_weekly,
+    update_lot_size_from_dss,quandl,
+    vix,daily_na,daily_ws,
+    weekly,timezones,monthly,
+    dlpa_weekly,populate_latest_price,
+    update_worldscope_quarter_summary_from_dsws,
+    daily_uno_ucdc,classic_ws,classic_na,
+    update_fundamentals_score_from_dsws
     )
 from core.universe.models import Universe
 import sys
@@ -163,5 +161,56 @@ def get_dlpa_weekly():
             dlpa_weekly() # triger ingestion function
             sys.stdout = original_stdout
         return {'result':f'dlpa_weekly is updated'}
+    except Exception as e:
+        return {'err':str(e)}
+
+@app.task
+def get_latest_price(currency):
+    """
+    follow currency time
+
+    """
+    now = datetime.now()
+    try:
+        original_stdout = sys.stdout # Save a reference to the original standard output
+        with open(f'logger/latest_price_weekly_{now}.txt', 'w') as f:
+            sys.stdout = f # Change the standard output to the file we created.
+            populate_latest_price(currency_code=currency) # triger ingestion function
+            sys.stdout = original_stdout
+        return {'result':f'latest_price is updated'}
+    except Exception as e:
+        return {'err':str(e)}
+
+@app.task
+def get_worldscope_quarter_summary(currency):
+    """
+    follow currency time
+
+    """
+    now = datetime.now()
+    try:
+        original_stdout = sys.stdout # Save a reference to the original standard output
+        with open(f'logger/worldscope_quarter_{now}.txt', 'w') as f:
+            sys.stdout = f # Change the standard output to the file we created.
+            update_worldscope_quarter_summary_from_dsws(currency_code=currency) # triger ingestion function
+            sys.stdout = original_stdout
+        return {'result':f'worldscope_quarter is updated'}
+    except Exception as e:
+        return {'err':str(e)}
+
+@app.task
+def get_fundamentals_score(currency):
+    """
+    follow currency time
+
+    """
+    now = datetime.now()
+    try:
+        original_stdout = sys.stdout # Save a reference to the original standard output
+        with open(f'logger/fundamental_score_{now}.txt', 'w') as f:
+            sys.stdout = f # Change the standard output to the file we created.
+            update_fundamentals_score_from_dsws(currency_code=currency) # triger ingestion function
+            sys.stdout = original_stdout
+        return {'result':f'fundamental_score is updated'}
     except Exception as e:
         return {'err':str(e)}

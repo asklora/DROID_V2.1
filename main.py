@@ -182,14 +182,14 @@ def uno_ucdc():
 def classic_ws():
     ticker = get_universe_by_region("ws")
     ticker = ticker["ticker"].to_list()
-    daily_classic(ticker=None)
+    daily_classic(ticker=ticker)
 
 #Classic NA
 #Mon-Fri at 05:35
 def classic_na():
     ticker = get_universe_by_region("na")
     ticker = ticker["ticker"].to_list()
-    daily_classic(ticker=None)
+    daily_classic(ticker=ticker)
 
 
 #Sun at 03:30

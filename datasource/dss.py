@@ -102,7 +102,6 @@ def get_data_from_dss(start_date, end_date, stocks, jsonFileName, report=REPORT_
         except GetPassWarning as e:
             print(datetimeNow()+ ' ' + e)
             report_to_slack("{} === Exception AuthToken Error: {}".format(datetimeNow(), e))
-            sys.exit(1)
         print(datetimeNow()+ ' ' + "Auth Token received")
         print("get data")
         data = get_data_from_reuters(start_date, end_date, authToken, jsonFileName, stocks, report)
@@ -111,5 +110,5 @@ def get_data_from_dss(start_date, end_date, stocks, jsonFileName, report=REPORT_
     except Exception as ex:
         print(ex)
         report_to_slack("{} === Exception DSS Ingestion Error: {}".format(datetimeNow(), ex))
-        sys.exit(1)
+        
         
