@@ -173,7 +173,7 @@ def get_latest_price(currency):
     now = datetime.now()
     try:
         original_stdout = sys.stdout # Save a reference to the original standard output
-        with open(f'logger/latest_price_weekly_{now}.txt', 'w') as f:
+        with open(f'logger/latest_price_{currency}_{now}.txt', 'w') as f:
             sys.stdout = f # Change the standard output to the file we created.
             populate_latest_price(currency_code=currency) # triger ingestion function
             sys.stdout = original_stdout
@@ -190,7 +190,7 @@ def get_worldscope_quarter_summary(currency):
     now = datetime.now()
     try:
         original_stdout = sys.stdout # Save a reference to the original standard output
-        with open(f'logger/worldscope_quarter_{now}.txt', 'w') as f:
+        with open(f'logger/worldscope_quarter_{currency}_{now}.txt', 'w') as f:
             sys.stdout = f # Change the standard output to the file we created.
             update_worldscope_quarter_summary_from_dsws(currency_code=currency) # triger ingestion function
             sys.stdout = original_stdout
@@ -207,7 +207,7 @@ def get_fundamentals_score(currency):
     now = datetime.now()
     try:
         original_stdout = sys.stdout # Save a reference to the original standard output
-        with open(f'logger/fundamental_score_{now}.txt', 'w') as f:
+        with open(f'logger/fundamental_score_{currency}_{now}.txt', 'w') as f:
             sys.stdout = f # Change the standard output to the file we created.
             update_fundamentals_score_from_dsws(currency_code=currency) # triger ingestion function
             sys.stdout = original_stdout
