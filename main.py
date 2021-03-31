@@ -63,6 +63,7 @@ def daily_na():
     master_ohlctr_update()
     master_tac_update()
     master_multiple_update()
+    daily_classic(ticker=ticker)
 
 #Tue-Sat at 00:30
 def daily_ws():
@@ -74,6 +75,7 @@ def daily_ws():
     master_ohlctr_update()
     master_tac_update()
     master_multiple_update()
+    daily_classic(ticker=ticker)
 
 #Sat at 03:15
 def weekly():
@@ -176,21 +178,6 @@ def uno_ucdc():
     daily_uno_ucdc(currency_code=["EUR"])
     #Mon-Fri at 22:15
     daily_uno_ucdc(currency_code=["USD"], infer=False)
-
-#Classic WS
-#Tue-Sat at 01:35
-def classic_ws():
-    ticker = get_universe_by_region("ws")
-    ticker = ticker["ticker"].to_list()
-    daily_classic(ticker=ticker)
-
-#Classic NA
-#Mon-Fri at 05:35
-def classic_na():
-    ticker = get_universe_by_region("na")
-    ticker = ticker["ticker"].to_list()
-    daily_classic(ticker=ticker)
-
 
 #Sun at 03:30
 def dlpa_weekly():
