@@ -6,7 +6,7 @@ from main import (
     weekly,timezones,monthly,
     dlpa_weekly,populate_latest_price,
     update_worldscope_quarter_summary_from_dsws,
-    daily_uno_ucdc,classic_ws,classic_na,
+    daily_uno_ucdc,
     update_fundamentals_score_from_dsws
     )
 from core.universe.models import Universe
