@@ -1,4 +1,5 @@
 from datetime import datetime
+from ingestion.mongo_migration import mongo_universe_update, mongo_currency_update, mongo_latest_price_update, mongo_price_update
 from general.sql_query import read_query
 from bot.data_download import get_latest_price
 import json
@@ -63,4 +64,6 @@ def delete_to_mongo():
 
 if __name__ == "__main__":
     # insert_to_mongo()
-    update_to_mongo()
+    # mongo_universe_update()
+    # mongo_latest_price_update()
+    mongo_price_update()

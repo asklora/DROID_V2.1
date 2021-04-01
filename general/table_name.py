@@ -1,3 +1,6 @@
+def get_region_table_name():
+    return "region"
+
 def get_calendar_table_name():
     return "currency_calendar"
 
@@ -21,6 +24,9 @@ def get_currency_calendar_table_name():
 
 def get_industry_table_name():
     return "industry"
+
+def get_industry_group_table_name():
+    return "industry_group"
 
 def get_industry_worldscope_table_name():
     return "industry_worldscope"

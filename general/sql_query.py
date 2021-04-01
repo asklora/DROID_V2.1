@@ -3,10 +3,10 @@ import sqlalchemy as db
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general.sql_process import db_read, db_write
-from general.date_process import backdate_by_day, str_to_date
+from general.date_process import backdate_by_day, dateNow, droid_start_date, str_to_date
 from general.data_process import tuple_data
 from general.table_name import (
-    get_data_ibes_monthly_table_name, get_data_macro_monthly_table_name, get_latest_price_table_name, get_master_tac_table_name, get_vix_table_name,
+    get_data_ibes_monthly_table_name, get_data_macro_monthly_table_name, get_industry_group_table_name, get_industry_table_name, get_latest_price_table_name, get_master_tac_table_name, get_region_table_name, get_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
     get_universe_rating_table_name,
@@ -24,6 +24,26 @@ currency_table = get_currency_table_name()
 fundamentals_score_table = get_fundamental_score_table_name()
 universe_rating_table = get_universe_rating_table_name()
 
+def read_query(query, table=universe_table, cpu_counts=False):
+    print(f"Get Data From Database on {table} table")
+    if(cpu_counts):
+        engine = create_engine(db_read, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
+    else:
+        engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    with engine.connect() as conn:
+        data = pd.read_sql(query, con=conn)
+    engine.dispose()
+    data = pd.DataFrame(data)
+    print("Total Data = " + str(len(data)))
+    return data
+
+def check_start_end_date(start_date, end_date):
+    if type(start_date) == type(None):
+        start_date = str_to_date(droid_start_date())
+    if type(end_date) == type(None):
+        end_date = str_to_date(dateNow())
+    return start_date, end_date
+    
 def check_ticker_currency_code_query(ticker=None, currency_code=None):
     query = ""
     if type(ticker) != type(None):
@@ -32,19 +52,12 @@ def check_ticker_currency_code_query(ticker=None, currency_code=None):
         query += f"ticker in (select ticker from {get_universe_table_name()} where is_active=True and currency_code in {tuple_data(currency_code)}) "
     return query
 
-def read_query(query, table=universe_table, cpu_counts=False):
-    print(f"Get Data From Database on {table} table")
-    if(cpu_counts):
-        engine = create_engine(db_read, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-    else:
-        engine = create_engine("", max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        data = pd.read_sql(query, con=conn)
-    engine.dispose()
-    data = pd.DataFrame(data)
-    print("Total Data = " + str(len(data)))
+def get_region():
+    table_name = get_region_table_name()
+    query = f"select * from {table_name}"
+    data = read_query(query, table=table_name)
     return data
-    
+
 def get_latest_price():
     query = f"select mo.* from master_ohlcvtr mo, "
     query += f"(select master_ohlcvtr.ticker, max(master_ohlcvtr.trading_day) max_date "
@@ -102,14 +115,21 @@ def get_all_universe():
 
 def get_active_universe(ticker=None, currency_code=None):
     query = f"select * from {universe_table} where is_active=True "
-    if type(ticker) != type(None):
-        query += f" and ticker in {tuple_data(ticker)} "
-
-    elif type(currency_code) != type(None):
-        query += f" and currency_code in {tuple_data(currency_code)} and currency_code is not null "
-
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += f"and " + check
     query += f"order by ticker"
     data = read_query(query, table=universe_table)
+    return data
+
+def get_universe_rating(ticker=None, currency_code=None):
+    table_name = get_universe_rating_table_name()
+    query = f"select * from {table_name} "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += f"where " + check
+    query += f" order by ticker"
+    data = read_query(query, table=table_name)
     return data
 
 def get_active_universe_by_entity_type(ticker=None, currency_code=None, null_entity_type=False):
@@ -118,10 +138,9 @@ def get_active_universe_by_entity_type(ticker=None, currency_code=None, null_ent
         query += f"and entity_type is null "
     else:
         query += f"and entity_type is not null "
-    if type(ticker) != type(None):
-        query += f"and ticker in {tuple_data(ticker)} "
-    elif type(currency_code) != type(None):
-        query += f"and currency_code in {tuple_data(currency_code)} " 
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += f"and " + check
     query += f"order by ticker"
     data = read_query(query, table=universe_table)
     return data
@@ -196,18 +215,6 @@ def get_vix(vix_id=None):
     if type(vix_id) != type(None):
         query += f" where vix_id in {tuple_data(vix_id)}"
     data = read_query(query, table=vix_table)
-    return data
-
-def get_universe_rating(ticker=None, currency_code=None):
-    query = f"select * from {universe_rating_table} "
-    if type(ticker) != type(None):
-        query += f" where ticker in (select ticker from {universe_table} where is_active=True and ticker in {tuple_data(ticker)}) "
-    elif type(currency_code) != type(None):
-        query += f" where ticker in (select ticker from {universe_table} where is_active=True and currency_code in {tuple_data(currency_code)}) "
-    else:
-        query += f" where ticker in (select ticker from {universe_table} where is_active=True) "
-    query += f"order by ticker"
-    data = read_query(query, table=universe_rating_table)
     return data
 
 def get_fundamentals_score(ticker=None, currency_code=None):
@@ -303,5 +310,28 @@ def get_data_macro_monthly(start_date):
     query += f"where trading_day in (select max(mcm.trading_day) "
     query += f"from {table_name} mcm where mcm.trading_day>='{start_date}' "
     query += f"group by mcm.period_end); "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_industry():
+    table_name = get_industry_table_name()
+    query = f"select * from {table_name} "
+    data = read_query(query, table=table_name)
+    return data
+
+def get_industry_group():
+    table_name = get_industry_group_table_name()
+    query = f"select * from {table_name} "
+    data = read_query(query, table=table_name)
+    return data
+
+def get_master_tac_data(start_date=None, end_date=None, ticker=None, currency_code=None):
+    start_date, end_date = check_start_end_date(start_date, end_date)
+    table_name = get_master_tac_table_name()
+    query = f"select * from {table_name} where trading_day >= '{start_date}' "
+    query += f"and trading_day <= '{end_date}' "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += "and " + check
     data = read_query(query, table_name, cpu_counts=True)
     return data

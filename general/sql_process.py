@@ -10,9 +10,9 @@ db = DroidDb()
 
 debug=env.bool("DROID_DEBUG")
 if debug:
-    read_endpoint,write_endpoint,port = db.test_url
+    read_endpoint, write_endpoint, port = db.test_url
 else:
-    read_endpoint,write_endpoint,port = db.prod_url
+    read_endpoint, write_endpoint, port = db.prod_url
 db_read = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+read_endpoint+":"+str(port)+"/"+os.getenv("DBUSER")
 db_write = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+write_endpoint+":"+str(port)+"/"+os.getenv("DBUSER")
 
