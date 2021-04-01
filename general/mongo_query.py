@@ -15,23 +15,32 @@ def connects(table):
     db_connect = client["latest_data"][table]
     return db_connect
 
-def insert_to_mongo(data, index, table):
+def insert_to_mongo(data, index, table, dict=False):
     db_connect = connects(table)
-    data = change_date_to_str(data)
-    data_dict = data.to_dict("records")
+    if(dict):
+        data_dict = data
+    else:
+        data = change_date_to_str(data)
+        data_dict = data.to_dict("records")
     db_connect.insert_many(data_dict)
 
-def update_to_mongo(data, index, table):
+def update_to_mongo(data, index, table, dict=False):
     db_connect = connects(table)
-    data = change_date_to_str(data)
-    data_dict = data.to_dict("records")
+    if(dict):
+        data_dict = data
+    else:
+        data = change_date_to_str(data)
+        data_dict = data.to_dict("records")
     for new_data in data_dict:
         db_connect.delete_one({index: new_data[index]})
         db_connect.insert_one(new_data)
 
-def delete_to_mongo(data, index, table):
+def delete_to_mongo(data, index, table, dict=False):
     db_connect = connects(table)
-    data = change_date_to_str(data)
-    data_dict = data.to_dict("records")
+    if(dict):
+        data_dict = data
+    else:
+        data = change_date_to_str(data)
+        data_dict = data.to_dict("records")
     for new_data in data_dict:
         db_connect.delete_one({index: new_data[index]})
