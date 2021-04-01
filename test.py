@@ -64,6 +64,6 @@ def delete_to_mongo():
 
 if __name__ == "__main__":
     # insert_to_mongo()
-    # mongo_universe_update()
+    mongo_universe_update()
     # mongo_latest_price_update()
-    mongo_price_update()
+    # mongo_price_update()
