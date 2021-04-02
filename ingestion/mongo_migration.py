@@ -43,12 +43,14 @@ def mongo_universe_update():
     price = price.rename(columns={"tri_adj_close" : "price"})
     price = change_date_to_str(price)
     print(price)
+    price_df = pd.DataFrame({"ticker":[], "price_data":[]}, index=[])
     for tick in result["ticker"].unique():
         price_data = price.loc[price["ticker"] == tick]
         price_data = price_data.sort_values(by="trading_day", ascending=False)
         price_data = price_data[["trading_day", "price"]].to_dict("records")
         price_data = pd.DataFrame({"ticker":[tick], "price_data":[price_data]}, index=[0])
-        result = result.merge(price_data, on="ticker", how="left")
+        price_df = price_df.append(price_data)
+    result = result.merge(price_df, on="ticker", how="left")
     print(result)
     update_to_mongo(data=result, index="ticker", table="universe", dict=False)
 
@@ -57,7 +59,7 @@ def mongo_universe_rating_update():
     rating = get_universe_rating()
     result = rating[["ticker", "fundamentals_quality", "fundamentals_value", "dlp_1m", "dlp_3m", "wts_rating", "wts_rating2"]]
     print(result)
-    update_to_mongo(data=result, index="ticker", table="universe", dict=False)
+    update_to_mongo(data=result, index="ticker", table="universe_rating", dict=False)
 
 def mongo_latest_price_update():
     result = get_latest_price_data()
@@ -103,21 +105,26 @@ def mongo_statistic_backtest_update():
     universe = get_active_universe()
     bot_option_type = get_bot_option_type()
     backtest_data = get_bot_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, bot_id=None)
-    backtest_data = backtest_data[[""potential_max_loss", "targeted_profit", "bot_type", "bot_option_type""]]
-    bot_data = bot_data.merge(bot_option_type, on="bot_id", how="left")
+    backtest_data = backtest_data[["ticker", "bot_id", "spot_price", "spot_date", "potential_max_loss", "targeted_profit", "bot_return"]]
+    backtest_data.loc[backtest_data["bot_return"] >= 0, "event"] = "TP"
+    backtest_data.loc[backtest_data["bot_return"] < 0, "event"] = "SL"
+    backtest_data.loc[backtest_data["bot_return"] < 0, "event"] = "RUN"
 
-    bot_data = change_date_to_str(bot_data)
-    for tick in universe["ticker"].unique():
-        result = bot_data.loc[bot_data["ticker"] == tick]
-        result = result.sort_values(by="ranking", ascending=False)
-        result = result[["potential_max_loss", "targeted_profit", "bot_type", "bot_option_type", "bot_option_name", "expiry_date", "ranking"]]
-        result = result.to_dict("records")
-        result = pd.DataFrame({"ticker":[tick], "bot_data":[result]}, index=[0])
-        update_to_mongo(data=result, index="ticker", table="bot_data", dict=False)
+    bot_statistic = get_bot_statistic_data(ticker=None, currency_code=None)
+    
+#     bot_data = change_date_to_str(bot_data)
+#     for tick in universe["ticker"].unique():
+#         result = bot_data.loc[bot_data["ticker"] == tick]
+#         result = result.sort_values(by="ranking", ascending=False)
+#         result = result[["potential_max_loss", "targeted_profit", "bot_type", "bot_option_type", "bot_option_name", "expiry_date", "ranking"]]
+#         result = result.to_dict("records")
+#         result = pd.DataFrame({"ticker":[tick], "bot_data":[result]}, index=[0])
+#         update_to_mongo(data=result, index="ticker", table="bot_data", dict=False)
 #     bot_backtest
 # uid
 # spot_date
 # bot_type
+# bot_id
 # option_type
 # time_to_exp
 # spot_price
