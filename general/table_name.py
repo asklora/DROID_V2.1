@@ -104,6 +104,9 @@ def get_top_stock_models_stock_table_name():
     return "top_stock_models_stock"
 
 #Bot Backtest Table
+def get_bot_backtest_table_name():
+    return "bot_backtest"
+
 def get_bot_uno_backtest_table_name():
     return "bot_uno_backtest"
 

@@ -4,9 +4,11 @@ from general.sql_query import read_query
 from general.data_process import tuple_data
 from general.date_process import dateNow, droid_start_date, str_to_date
 from general.table_name import (
+    get_bot_backtest_table_name,
     get_bot_classic_backtest_table_name, 
     get_bot_data_table_name, get_bot_latest_ranking_table_name, get_bot_option_type_table_name, 
-    get_bot_ranking_table_name, 
+    get_bot_ranking_table_name,
+    get_bot_statistic_table_name, 
     get_bot_ucdc_backtest_table_name, 
     get_bot_uno_backtest_table_name, 
     get_calendar_table_name, get_currency_calendar_table_name, 
@@ -17,7 +19,8 @@ from general.table_name import (
     get_data_macro_monthly_table_name, 
     get_data_vix_table_name, 
     get_data_vol_surface_inferred_table_name, 
-    get_data_vol_surface_table_name, 
+    get_data_vol_surface_table_name,
+    get_latest_bot_update_table_name, 
     get_latest_price_table_name, get_latest_vol_table_name, 
     get_universe_table_name,
     get_master_tac_table_name
@@ -55,6 +58,25 @@ def get_master_tac_price(start_date=None, end_date=None, ticker=None, currency_c
 
 def get_latest_price(ticker=None, currency_code=None):
     table_name = get_latest_price_table_name()
+    query = f"select * from {table_name} "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += "where " + check
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+
+def get_latest_bot_update_data(ticker=None, currency_code=None):
+    table_name = get_latest_bot_update_table_name()
+    query = f"select * from {table_name} "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += "where " + check
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_bot_statistic_data(ticker=None, currency_code=None):
+    table_name = get_bot_statistic_table_name()
     query = f"select * from {table_name} "
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
@@ -378,5 +400,19 @@ def get_bot_option_type(condition=None):
     query = f"select * from {table_name} "
     if(type(condition) != type(None)):
         query+= f" where {condition}"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_bot_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, bot_id=None):
+    table_name = get_bot_backtest_table_name()
+    start_date, end_date = check_start_end_date(start_date, end_date)
+    table_name = get_master_tac_table_name()
+    query = f"select * from {table_name} where trading_day >= '{start_date}' "
+    query += f"and trading_day <= '{end_date}' "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += f"and " + check
+    if(type(bot_id) != type(None)):
+        query += f"and bot_id='{bot_id}'"
     data = read_query(query, table_name, cpu_counts=True)
     return data
