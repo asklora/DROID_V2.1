@@ -5,6 +5,7 @@ from general.sql_output import fill_null_quandl_symbol
 from bot.preprocess import dividend_daily_update, interest_daily_update
 import os
 import sys
+import pandas as pd
 from pandas.core.series import Series
 from general.sql_process import do_function
 from ingestion.universe import (
@@ -299,7 +300,9 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    ticker="MSFT.O"
+    ticker = pd.DataFrame({"ticker":["005930.KS"]}, index=[0])
+    # ticker="A"
+    # update_ticker_symbol_from_dss(ticker=ticker)
     # update_worldscope_quarter_summary_from_dsws(ticker = ticker)
     # ticker=["AFXG.F"]
     # populate_latest_price(ticker="MSFT.O")

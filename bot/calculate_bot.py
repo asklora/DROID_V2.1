@@ -1,55 +1,55 @@
 import math
-import json
-import base64
 import numpy as np
-import pandas as pd
-import sqlalchemy as db
-from sqlalchemy import create_engine
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from pandas.tseries.offsets import BDay
+from general.data_process import tuple_data
+from general.sql_query import read_query
+from general.table_name import (
+    get_currency_calendar_table_name, 
+    get_data_dividend_daily_rates_table_name, 
+    get_data_interest_daily_rates_table_name, 
+    get_data_vol_surface_inferred_table_name,
+    get_data_vol_surface_table_name,
+    get_latest_price_table_name,
+    get_latest_vol_table_name, 
+    get_master_tac_table_name)
+from bot import black_scholes
 
-def get_q(identyfier, t):
-    result = {'ticker': identyfier, 't': t}
-    encoded_result = base64.b64encode(json.dumps(result).encode()).decode()
-    try:
-        value = DailyDivRates.objects.get(uid=encoded_result)
-    except DailyDivRates.DoesNotExist:
-        result = {'ticker': identyfier, 't': 0.0027397260273972603}
-        encoded_result = base64.b64encode(json.dumps(result).encode()).decode()
-        try:
-            value = DailyDivRates.objects.get(uid=encoded_result)
-            return value.q
-        except DailyDivRates.DoesNotExist:
-            val = 0
-            return val
-    return value.q
+def get_q(ticker, t):
+    table_name = get_data_dividend_daily_rates_table_name()
+    query = f"select * from {table_name} where t = {t} and ticker='{ticker}'"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data.loc[0, "q"]
 
+def get_r(currency_code, t):
+    table_name = get_data_interest_daily_rates_table_name()
+    query = f"select * from {table_name} where t = {t} and currency_code='{currency_code}'"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data.loc[0, "r"]
 
-def get_r(identyfier, t):
-    result = {'currency_code': identyfier, 't': t}
-    encoded_result = base64.b64encode(json.dumps(result).encode()).decode()
-    try :
-        value = DailyInterestRates.objects.get(uid=encoded_result)
-    except DailyInterestRates.DoesNotExist:
-        result = {'currency_code': identyfier, 't': 0.0027397260273972603}
-        encoded_result = base64.b64encode(json.dumps(result).encode()).decode()
-        try :
-            value = DailyInterestRates.objects.get(uid=encoded_result)
-        except DailyDivRates.DoesNotExist:
-            value = 0
-            return value
-    return value.r
+def get_spot_date(spot_date, ticker):
+    table_name = get_master_tac_table_name()
+    query = f"select max(trading_day) as max_date from {table_name} where ticker = {ticker} and spot_date>='{spot_date}' and day_status='trading_day'"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data.loc[0, "max_date"]
 
-def get_expiry_date(spot_date, country_code, months):
-    if (months < 0 or months == 4):
-        if months == 4:
-            months = 1
-        expiry = datetime.strptime(spot_date, "%Y-%m-%d").date() + relativedelta(weeks=float(months) * 4) - relativedelta(days=1)
-    else:
-        expiry = datetime.strptime(spot_date, "%Y-%m-%d").date() + relativedelta(months=int(months)) - relativedelta(days=1)
+def get_holiday(non_working_day, currency_code):
+    table_name = get_currency_calendar_table_name()
+    query = f"select * from {table_name} "
+    query+= f" where non_working_day='{non_working_day}' and currency_code in {tuple_data(currency_code)}"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_expiry_date(time_to_exp, spot_date, currency_code):
+    days = int(round((time_to_exp * 365), 0))
+    expiry = spot_date + relativedelta(days=(days-1))
+    # days = int(round((time_to_exp * 256), 0))
+    # expiry = spot_date + BDay(days-1)
+
     while True:
         holiday = False
-        data = BussinessCalendars.objects.filter(country_code=country_code, non_working_day=expiry.strftime("%Y-%m-%d"))
+        data = get_holiday(expiry.strftime("%Y-%m-%d"), currency_code)
         if(len(data) > 0):
             holiday = True
         if ((holiday == False) and expiry.weekday() < 5):
@@ -57,11 +57,6 @@ def get_expiry_date(spot_date, country_code, months):
         else:
             expiry = expiry - relativedelta(days=1)
     return expiry
-
-def get_spot_date(spot_date, ticker):
-    price_data = MasterOhlctr.objects.filter(ticker=ticker, trading_day__lte=spot_date, day_status="trading_day").order_by("-trading_day")
-    spot_date = price_data[0].trading_day
-    return spot_date
 
 def get_strike_barrier(price, vol, bot_option_type, bot_group):
     if bot_group == "UNO":
@@ -80,15 +75,14 @@ def get_strike_barrier(price, vol, bot_option_type, bot_group):
         strike = price
         strike_2 = price* (1 - vol * 1.5)
         return float(strike), float(strike_2)
-
     return False
 
 def get_v1_v2(ticker, price, trading_day, t, r, q, strike, barrier):
     status, obj = get_vol_by_date(ticker, trading_day)
     if status:
-        v1 = uno.find_vol(strike / price, t, obj["atm_volatility_spot"], obj["atm_volatility_one_year"], obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
+        v1 = black_scholes.find_vol(strike / price, t, obj["atm_volatility_spot"], obj["atm_volatility_one_year"], obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v1 = np.nan_to_num(v1, nan=0)
-        v2 = uno.find_vol(barrier / price, t, obj["atm_volatility_spot"], obj["atm_volatility_one_year"], obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
+        v2 = black_scholes.find_vol(barrier / price, t, obj["atm_volatility_spot"], obj["atm_volatility_one_year"], obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v2 = np.nan_to_num(v2, nan=0)
     else :
         v1 = 0.2
@@ -98,39 +92,40 @@ def get_v1_v2(ticker, price, trading_day, t, r, q, strike, barrier):
 def get_trq(ticker, expiry, spot_date, currency_code):
     expiry = datetime.strptime(expiry, "%Y-%m-%d")
     spot_date = datetime.strptime(spot_date, "%Y-%m-%d")
-    daydiff = (expiry.date() - spot_date.date()).days
-    t = daydiff / 365
-    if t == 0:
-        t = 0.0027397260273972603
+    t = (expiry.date() - spot_date.date()).days
     r = get_r(currency_code, t)
     q = get_q(ticker, t)
-    return float(t), float(r), float(q)
+    return int(t), float(r), float(q)
 
-def get_vol(ticker, trading_day, t, r, q, months):
+def get_vol(ticker, trading_day, t, r, q, time_to_exp):
     status, obj = get_vol_by_date(ticker, trading_day)
     if status:
-        v0 = uno.find_vol(1, t, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
+        v0 = black_scholes.find_vol(1, t, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
                           obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v0 = np.nan_to_num(v0, nan=0)
         v0 = max(min(v0, 0.50), 0.20)
-        vol = v0 * (int(months)/12)**0.5
+
+        # Code when we use business days
+        # month = int(round((time_exp * 256), 0)) / 22
+        month = int(round((time_to_exp * 365), 0)) / 30
+        vol = v0 * (month/12)**0.5
+
     else:
         vol = 0.2
     return float(vol)
 
-def get_classic(ticker, spot_date, bot_horizon_month, investment_amount, price):
-    bot_horizon_month = int(bot_horizon_month)
+def get_classic(ticker, spot_date, time_to_exp, investment_amount, price):
     digits = max(min(4-len(str(int(price))), 2), -1)
     classic_vol_data = get_classic_vol_by_date(ticker, spot_date)
     classic_vol = classic_vol_data["classic_vol"]
-    if bot_horizon_month == 1:
-        dur = 0.288675 * 1
-    elif bot_horizon_month == 3:
-        dur = 0.5 * 1.75
+
+    month = int(round((time_to_exp * 365), 0)) / 30
+    dur = pow(time_to_exp, 0.5) * min((0.75 + (month * 0.25)) , 2)
+
     data = {
-        'price': price,
+        "price": price,
     }
-    data['vol'] = dur
+    data["vol"] = dur
     data["share_num"] = math.floor(investment_amount / price)
     data["max_loss_pct"] = - (dur * classic_vol * 1.25)
     data["max_loss_price"] = round(price * (1 + data["max_loss_pct"]), int(digits))
@@ -141,39 +136,39 @@ def get_classic(ticker, spot_date, bot_horizon_month, investment_amount, price):
     data["bot_cash_balance"] = round(investment_amount - (data["share_num"] * price), 2)
     return data
 
-def get_ucdc_detail(ticker, currency_code, expiry_date, spot_date, bot_horizon_month, investment_amount, price, bot_option_type, bot_group):
+def get_ucdc_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, price, bot_option_type, bot_group):
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         "price": price,
     }
     data["t"], data["r"], data["q"] = get_trq(ticker, expiry_date, spot_date, currency_code)
-    data["vol"] = get_vol(ticker, spot_date, data["t"], data["r"], data["q"], bot_horizon_month)
+    data["vol"] = get_vol(ticker, spot_date, data["t"], data["r"], data["q"], time_to_exp)
     data["strike"], data["strike_2"] = get_strike_barrier(price, data["vol"], bot_option_type, bot_group)
     data["v1"], data["v2"] = get_v1_v2(ticker, price, spot_date, data["t"], data["r"], data["q"], data["strike"], data["strike_2"])
 
-    option_price = uno.Rev_Conv(price, data["strike"], data["strike_2"], data["t"], data["r"], data["q"], data["v1"], data["v2"])
+    option_price = black_scholes.Rev_Conv(price, data["strike"], data["strike_2"], data["t"], data["r"], data["q"], data["v1"], data["v2"])
     data["option_price"] = np.nan_to_num(option_price, nan=0)
     data["potential_loss"] = (data["strike_2"]-data["strike"]) / price
     data["targeted_profit"] = -1 * option_price / price
-    delta = uno.deltaRC(price, data["strike"], data["strike_2"], data["t"], data["r"], data["q"], data["v1"], data["v2"])
+    delta = black_scholes.deltaRC(price, data["strike"], data["strike_2"], data["t"], data["r"], data["q"], data["v1"], data["v2"])
     data["delta"] = np.nan_to_num(data["delta"], nan=0)
     return data
 
-def get_ucdc(ticker, currency_code, expiry_date, spot_date, bot_horizon_month, investment_amount, price, bot_option_type, bot_group):
+def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group):
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         'price': price,
     }
     t, r, q = get_trq(ticker, expiry_date, spot_date, currency_code)
-    vol = get_vol(ticker, spot_date, t, r, q, bot_horizon_month)
+    vol = get_vol(ticker, spot_date, t, r, q, time_to_exp)
     strike, strike_2 = get_strike_barrier(price, vol, bot_option_type, bot_group)
     v1, v2 = get_v1_v2(ticker, price, spot_date, t, r, q, strike, strike_2)
 
-    option_price = uno.Rev_Conv(price, strike, strike_2, t, r, q, v1, v2)
+    option_price = black_scholes.Rev_Conv(price, strike, strike_2, t, r, q, v1, v2)
     option_price = np.nan_to_num(option_price, nan=0)
     potential_loss = (strike_2-strike) / price
     targeted_profit = -1 * option_price / price
-    delta = uno.deltaRC(price, strike, strike_2, t, r, q, v1, v2)
+    delta = black_scholes.deltaRC(price, strike, strike_2, t, r, q, v1, v2)
     delta = np.nan_to_num(delta, nan=0)
     share_num = investment_amount / price
     data['vol'] = vol
@@ -189,38 +184,38 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, bot_horizon_month, i
     data['bot_cash_balance'] = round(investment_amount - (data['share_num'] * price), 2)
     return data
 
-def get_uno_detail(ticker, currency_code, expiry_date, spot_date, bot_horizon_month, investment_amount, price, bot_option_type, bot_group):
+def get_uno_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, price, bot_option_type, bot_group):
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         'price': price,
     }
     data["t"], data["r"], data["q"] = get_trq(ticker, expiry_date, spot_date, currency_code)
-    data["vol"] = get_vol(ticker, spot_date, data["t"], data["r"], data["q"], bot_horizon_month)
+    data["vol"] = get_vol(ticker, spot_date, data["t"], data["r"], data["q"], time_to_exp)
     data["strike"], data["barrier"] = get_strike_barrier(price,  data["vol"], bot_option_type, bot_group)
     data["rebate"] = data["barrier"] - data["strike"]
     data["v1"], data["v2"] = get_v1_v2(ticker, price, spot_date, data["t"], data["r"], data["q"], data["strike"], data["barrier"])
-    delta = uno.deltaUnOC(price, data["strike"], data["barrier"], data["rebate"], data["t"], data["r"], data["q"], data["v1"], data["v2"])
+    delta = black_scholes.deltaUnOC(price, data["strike"], data["barrier"], data["rebate"], data["t"], data["r"], data["q"], data["v1"], data["v2"])
     data["delta"] = np.nan_to_num(delta, nan=0)
-    option_price = uno.Up_Out_Call(price, data["strike"], data["barrier"], data["rebate"], data["t"], data["r"], data["q"], data["v1"], data["v2"])
+    option_price = black_scholes.Up_Out_Call(price, data["strike"], data["barrier"], data["rebate"], data["t"], data["r"], data["q"], data["v1"], data["v2"])
     data["option_price"] = np.nan_to_num(option_price, nan=0)
     data["potential_loss"] = -1 * option_price / price
     data["targeted_profit"] = (data["rebate"]) / price
     return data
 
-def get_uno(ticker, currency_code, expiry_date, spot_date, bot_horizon_month, investment_amount, price, bot_option_type, bot_group):
+def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group):
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         'price': price,
     }
 
     t, r, q = get_trq(ticker, expiry_date, spot_date, currency_code)
-    vol = get_vol(ticker, spot_date, t, r, q, bot_horizon_month)
+    vol = get_vol(ticker, spot_date, t, r, q, time_to_exp)
     strike, barrier = get_strike_barrier(price, vol, bot_option_type, bot_group)
     rebate = barrier - strike
     v1, v2 = get_v1_v2(ticker, price, spot_date, t, r, q, strike, barrier)
-    delta = uno.deltaUnOC(price, strike, barrier, rebate, t, r, q, v1, v2)
+    delta = black_scholes.deltaUnOC(price, strike, barrier, rebate, t, r, q, v1, v2)
     delta = np.nan_to_num(delta, nan=0)
-    option_price = uno.Up_Out_Call(price, strike, barrier, rebate, t, r, q, v1, v2)
+    option_price = black_scholes.Up_Out_Call(price, strike, barrier, rebate, t, r, q, v1, v2)
     option_price = np.nan_to_num(option_price, nan=0)
     potential_loss = -1 * option_price / price
     targeted_profit = (barrier-strike) / price
@@ -239,42 +234,33 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, bot_horizon_month, in
     return data
 
 def get_vol_by_date(ticker, trading_day):
-    vol_table = "droid_vol_surface_parameters"
-    vol_inferred_table = "droid_vol_surface_parameters_inferred"
-    latest_vol_table = "latest_vol_updates"
-    db_url = "postgres://postgres:ml2021#LORA@droid-v1-cluster.cluster-ro-cgqhw7rofrpo.ap-northeast-2.rds.amazonaws.com:5432/postgres"
-
-    engine = create_engine(db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        metadata = db.MetaData()
+    vol_table = get_data_vol_surface_table_name()
+    vol_inferred_table = get_data_vol_surface_inferred_table_name()
+    latest_vol_table = get_latest_vol_table_name()
+    query = f"select * "
+    query += f"from {vol_table} vol "
+    query += f"where vol.ticker = '{ticker}' and "
+    query += f"vol.trading_day <= '{trading_day}' "
+    query += f"order by trading_day DESC limit 1;"
+    data = read_query(query, vol_table, cpu_counts=True)
+    if(len(data) != 1):
         query = f"select * "
-        query += f"from {vol_table} vol "
+        query += f"from {vol_inferred_table} vol "
         query += f"where vol.ticker = '{ticker}' and "
         query += f"vol.trading_day <= '{trading_day}' "
         query += f"order by trading_day DESC limit 1;"
-        data = pd.read_sql(query, con=conn)
-        data = pd.DataFrame(data)
+        data = read_query(query, vol_inferred_table, cpu_counts=True)
         if(len(data) != 1):
             query = f"select * "
-            query += f"from {vol_inferred_table} vol "
-            query += f"where vol.ticker = '{ticker}' and "
-            query += f"vol.trading_day <= '{trading_day}' "
-            query += f"order by trading_day DESC limit 1;"
-            data = pd.read_sql(query, con=conn)
-            data = pd.DataFrame(data)
+            query += f"from {latest_vol_table} vol "
+            query += f"where vol.ticker = '{ticker}' limit 1;"
+            data = read_query(query, latest_vol_table, cpu_counts=True)
             if(len(data) != 1):
-                query = f"select * "
-                query += f"from {latest_vol_table} vol "
-                query += f"where vol.ticker = '{ticker}' limit 1;"
-                data = pd.read_sql(query, con=conn)
-                data = pd.DataFrame(data)
-                if(len(data) != 1):
-                    data = {
-                        "ticker": ticker,
-                        "trading_day": trading_day
-                    }
-                    return False, data
-    engine.dispose()
+                data = {
+                    "ticker": ticker,
+                    "trading_day": trading_day
+                }
+                return False, data
     data = {
         "ticker": ticker,
         "trading_day": trading_day,
@@ -290,32 +276,25 @@ def get_vol_by_date(ticker, trading_day):
 
 def get_classic_vol_by_date(ticker, trading_day):
     vol_table = "classic_vol_history"
-    latest_price_updates_table = "latest_price_updates"
-    db_url = "postgres://postgres:ml2021#LORA@droid-v1-cluster.cluster-ro-cgqhw7rofrpo.ap-northeast-2.rds.amazonaws.com:5432/postgres"
+    latest_price_table = get_latest_price_table_name()
 
-    engine = create_engine(db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        metadata = db.MetaData()
+    query = f"select * "
+    query += f"from {vol_table} vol "
+    query += f"where vol.ticker = '{ticker}' and "
+    query += f"vol.spot_date <= '{trading_day}' "
+    query += f"order by spot_date DESC limit 1;"
+    data = read_query(query, vol_table, cpu_counts=True)
+    if(len(data) != 1):
         query = f"select * "
-        query += f"from {vol_table} vol "
-        query += f"where vol.ticker = '{ticker}' and "
-        query += f"vol.spot_date <= '{trading_day}' "
-        query += f"order by spot_date DESC limit 1;"
-        data = pd.read_sql(query, con=conn)
-        data = pd.DataFrame(data)
+        query += f"from {latest_price_table} vol "
+        query += f"where vol.ticker = '{ticker}';"
+        data = read_query(query, latest_price_table, cpu_counts=True)
         if(len(data) != 1):
-            query = f"select * "
-            query += f"from {latest_price_updates_table} vol "
-            query += f"where vol.ticker = '{ticker}';"
-            data = pd.read_sql(query, con=conn)
-            data = pd.DataFrame(data)
-            if(len(data) != 1):
-                classic_vol = 0.2
-            else:
-                classic_vol = data.loc[0, "classic_vol"]
+            classic_vol = 0.2
         else:
             classic_vol = data.loc[0, "classic_vol"]
-    engine.dispose()
+    else:
+        classic_vol = data.loc[0, "classic_vol"]
     if classic_vol == None:
         classic_vol = 0.2
     if classic_vol == np.NaN:

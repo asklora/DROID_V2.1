@@ -108,7 +108,7 @@ def mongo_statistic_backtest_update():
     backtest_data = backtest_data[["ticker", "bot_id", "spot_price", "spot_date", "potential_max_loss", "targeted_profit", "bot_return"]]
     backtest_data.loc[backtest_data["bot_return"] >= 0, "event"] = "TP"
     backtest_data.loc[backtest_data["bot_return"] < 0, "event"] = "SL"
-    backtest_data.loc[backtest_data["bot_return"] < 0, "event"] = "RUN"
+    backtest_data.loc[backtest_data["bot_return"].isnull(), "event"] = "RUN"
 
     bot_statistic = get_bot_statistic_data(ticker=None, currency_code=None)
     
