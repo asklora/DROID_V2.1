@@ -98,7 +98,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 ROOT_URLCONF = 'config.urls'
-STATIC_URL = 'files/staticfiles/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'files/staticfiles')
 AUTH_USER_MODEL = 'user.User'
 REST_FRAMEWORK = {
