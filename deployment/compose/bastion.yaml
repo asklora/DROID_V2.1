@@ -3,7 +3,7 @@ services:
   backend:
     container_name: django
     build:
-      context: ./deployment/jenkins/bastion
+      context: ../jenkins/bastion
       dockerfile: Dockerfile
     env_file: .env
     command: sh deployment/jenkins/entrypointdjango.sh
