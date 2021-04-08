@@ -6,7 +6,7 @@ services:
       context: /home/ubuntu/DROID_V2.1
       dockerfile: deployment/jenkins/bastion/Dockerfile
     env_file: /home/ubuntu/DROID_V2.1/.env
-    command: sh /home/ubuntu/DROID_V2.1/deployment/jenkins/entrypointdjango.sh
+    command: sh deployment/jenkins/entrypointdjango.sh
     volumes:
       - /home/ubuntu/DROID_V2.1:/code
     ports:
@@ -31,7 +31,7 @@ services:
     build:
       context: /home/ubuntu/DROID_V2.1
       dockerfile: deployment/jenkins/bastion/Dockerfile.celery
-    command: sh /home/ubuntu/DROID_V2.1/deployment/jenkins/celery.sh
+    command: sh deployment/jenkins/celery.sh
     env_file: /home/ubuntu/DROID_V2.1/.env
     volumes:
       - /home/ubuntu/DROID_V2.1:/code
