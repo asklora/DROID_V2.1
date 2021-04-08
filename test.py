@@ -5,7 +5,7 @@ from bot.data_download import get_latest_price
 import json
 import pandas as pd
 from pymongo import MongoClient
-
+#comment
 def change_date_to_str(data):
     for col in data.columns:
         print(col + " " + str(data.loc[0, col]) + " " + str(type(data.loc[0, col])))
