@@ -14,7 +14,7 @@ dlp = "postgres://postgres:ml2021#LORA@dlp-prod.cgqhw7rofrpo.ap-northeast-2.rds.
 droid = "postgres://postgres:ml2021#LORA@droid-v1-cluster.cluster-ro-cgqhw7rofrpo.ap-northeast-2.rds.amazonaws.com:5432/postgres"
 droid2 = "postgres://postgres:ml2021#LORA@droid-v2-prod-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com:5432/postgres"
 datenow = datetime.now().date().strftime("%Y-%m-%d")
-start_date = datetime.now().date() - relativedelta(years=15)
+start_date = datetime.now().date() - relativedelta(days=15)
 
 def uid_maker(data, uid="uid", ticker="ticker", trading_day="trading_day", date=True):
     data[trading_day] = data[trading_day].astype(str)
@@ -648,19 +648,45 @@ def latest_price():
     upsert_data_to_database("ticker", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
-def latest_price():
-    column = ["ticker", "classic_vol", "open", "high", "low", "close", 
-        "intraday_date", "intraday_ask", "intraday_bid", "latest_price_change", 
-        "intraday_time", "last_date", "capital_change"]
-    table = "bot_classic_backtest"
-    data = get_data_from_database_condition(droid, "latest_price_updates", f" ticker in {get_ticker_from_new_droid()} ")
+def data_interest():
+    column = ["ticker_interest", "rate", "raw_data", "days_to_maturity", "ingestion_field", "maturity", "updated", "currency_code"]
+    table = "data_interest"
+    data = get_data_from_database(droid, "interest_rate")
+    data = data.rename(columns={"ticker" : "ticker_interest", "currency" : "currency_code", "update_date" : "updated"})
     data = data[column]
     print(data)
-    upsert_data_to_database("ticker", TEXT, data, table, method="update")
+    upsert_data_to_database("ticker_interest", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
-if __name__ == '__main__':
+def daily_migrations():
+    vix_data()
+    data_dss()
+    data_dsws()
+    data_quandl()
+    latest_price()
+    data_interest()
 
+def weekly_migrations():
+    currency()
+    universe_rating()
+    data_universe_detail()
+    vix_data()
+    data_dss()
+    data_dsws()
+    data_quandl()
+    latest_price()
+    data_interest()
+    data_ibes()
+    data_ibes_monthly()
+    data_fred()
+    data_macro()
+    data_macro_monthly()
+    data_dividend()
+    data_fundamental_score()
+
+if __name__ == '__main__':
+    print("Do Process")
+    daily_migrations()
     # data = "0#.SPX"
     # data = data.replace("(", "").replace(")", "").replace("[", "").replace("]", "")
     # data = data.split(",")
@@ -671,7 +697,7 @@ if __name__ == '__main__':
     #country_calendar()
     # currency_calendar()
     # vix()
-    vix_data()
+    
     # industry_group()
     # industry()
     # industry_worldscope()
@@ -680,25 +706,23 @@ if __name__ == '__main__':
     #universe_consolidated()
     #PgFunctions(droid2, "universe_update")
     #universe_excluded()
-    universe_rating()
-    data_dividend()
-    data_dss()
-    data_dsws()
-    data_quandl()
-    data_universe_detail()
+    # universe_rating()
+    # data_dividend()
+    
+    # data_universe_detail()
     # PgFunctions(droid2, "data_vol_surface_update")
-    data_fundamental_score()
+    # data_fundamental_score()
     
     # top_stock_models()
     # top_stock_models_stock()
-    data_ibes()
-    data_ibes_monthly()
-    data_fred()
-    data_macro()
-    data_macro_monthly()
-    data_vol_surface_inferred()
+    # data_ibes()
+    # data_ibes_monthly()
+    # data_fred()
+    # data_macro()
+    # data_macro_monthly()
+    # data_vol_surface_inferred()
     # currency_calendar
-    latest_price()
+    
     # data_dividend_daily_rates
     # data_interest
     # data_interest_daily_rates
