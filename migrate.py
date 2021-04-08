@@ -648,19 +648,45 @@ def latest_price():
     upsert_data_to_database("ticker", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
-def latest_price():
-    column = ["ticker", "classic_vol", "open", "high", "low", "close", 
-        "intraday_date", "intraday_ask", "intraday_bid", "latest_price_change", 
-        "intraday_time", "last_date", "capital_change"]
-    table = "bot_classic_backtest"
-    data = get_data_from_database_condition(droid, "latest_price_updates", f" ticker in {get_ticker_from_new_droid()} ")
+def data_interest():
+    column = ["ticker_interest", "rate", "raw_data", "days_to_maturity", "ingestion_field", "maturity", "updated", "currency_code"]
+    table = "data_interest"
+    data = get_data_from_database(droid, "interest_rate")
+    data = data.rename(columns={"ticker" : "ticker_interest", "currency" : "currency_code", "update_date" : "updated"})
     data = data[column]
     print(data)
-    upsert_data_to_database("ticker", TEXT, data, table, method="update")
+    upsert_data_to_database("ticker_interest", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
-if __name__ == '__main__':
+def daily_migrations():
+    vix_data()
+    data_dss()
+    data_dsws()
+    data_quandl()
+    latest_price()
+    data_interest()
 
+def weekly_migrations():
+    currency()
+    universe_rating()
+    data_universe_detail()
+    vix_data()
+    data_dss()
+    data_dsws()
+    data_quandl()
+    latest_price()
+    data_interest()
+    data_ibes()
+    data_ibes_monthly()
+    data_fred()
+    data_macro()
+    data_macro_monthly()
+    data_dividend()
+    data_fundamental_score()
+
+if __name__ == '__main__':
+    print("Do Process")
+    daily_migrations()
     # data = "0#.SPX"
     # data = data.replace("(", "").replace(")", "").replace("[", "").replace("]", "")
     # data = data.split(",")
@@ -671,7 +697,7 @@ if __name__ == '__main__':
     #country_calendar()
     # currency_calendar()
     # vix()
-    vix_data()
+    
     # industry_group()
     # industry()
     # industry_worldscope()
@@ -680,25 +706,23 @@ if __name__ == '__main__':
     #universe_consolidated()
     #PgFunctions(droid2, "universe_update")
     #universe_excluded()
-    universe_rating()
-    data_dividend()
-    data_dss()
-    data_dsws()
-    data_quandl()
-    data_universe_detail()
+    # universe_rating()
+    # data_dividend()
+    
+    # data_universe_detail()
     # PgFunctions(droid2, "data_vol_surface_update")
-    data_fundamental_score()
+    # data_fundamental_score()
     
     # top_stock_models()
     # top_stock_models_stock()
-    data_ibes()
-    data_ibes_monthly()
-    data_fred()
-    data_macro()
-    data_macro_monthly()
-    data_vol_surface_inferred()
+    # data_ibes()
+    # data_ibes_monthly()
+    # data_fred()
+    # data_macro()
+    # data_macro_monthly()
+    # data_vol_surface_inferred()
     # currency_calendar
-    latest_price()
+    
     # data_dividend_daily_rates
     # data_interest
     # data_interest_daily_rates
