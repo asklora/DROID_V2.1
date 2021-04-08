@@ -14,7 +14,7 @@ dlp = "postgres://postgres:ml2021#LORA@dlp-prod.cgqhw7rofrpo.ap-northeast-2.rds.
 droid = "postgres://postgres:ml2021#LORA@droid-v1-cluster.cluster-ro-cgqhw7rofrpo.ap-northeast-2.rds.amazonaws.com:5432/postgres"
 droid2 = "postgres://postgres:ml2021#LORA@droid-v2-prod-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com:5432/postgres"
 datenow = datetime.now().date().strftime("%Y-%m-%d")
-start_date = datetime.now().date() - relativedelta(days=10)
+start_date = datetime.now().date() - relativedelta(years=15)
 
 def uid_maker(data, uid="uid", ticker="ticker", trading_day="trading_day", date=True):
     data[trading_day] = data[trading_day].astype(str)
@@ -642,6 +642,17 @@ def latest_price():
         "intraday_date", "intraday_ask", "intraday_bid", "latest_price_change", 
         "intraday_time", "last_date", "capital_change"]
     table = "latest_price"
+    data = get_data_from_database_condition(droid, "latest_price_updates", f" ticker in {get_ticker_from_new_droid()} ")
+    data = data[column]
+    print(data)
+    upsert_data_to_database("ticker", TEXT, data, table, method="update")
+    print(f"Get {table} = True")
+
+def latest_price():
+    column = ["ticker", "classic_vol", "open", "high", "low", "close", 
+        "intraday_date", "intraday_ask", "intraday_bid", "latest_price_change", 
+        "intraday_time", "last_date", "capital_change"]
+    table = "bot_classic_backtest"
     data = get_data_from_database_condition(droid, "latest_price_updates", f" ticker in {get_ticker_from_new_droid()} ")
     data = data[column]
     print(data)
