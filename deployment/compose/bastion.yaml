@@ -32,7 +32,7 @@ services:
       context: /home/ubuntu/DROID_V2.1/deployment/jenkins/bastion
       dockerfile: Dockerfile.celery
     command: sh /home/ubuntu/DROID_V2.1/deployment/jenkins/celery.sh
-    env_file: /home/ubuntu/DROID_V2.1/deployment/.env
+    env_file: /home/ubuntu/DROID_V2.1/.env
     volumes:
       - /home/ubuntu/DROID_V2.1/:/code
     restart: always
