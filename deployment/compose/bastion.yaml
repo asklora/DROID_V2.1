@@ -29,12 +29,12 @@ services:
   celery:
     container_name: Celery
     build:
-      context: ./backend
+      context: ./deployment/jenkins/bastion
       dockerfile: Dockerfile.celery
     command: sh deployment/jenkins/celery.sh
-    env_file: ./backend/.env
+    env_file: .env
     volumes:
-      - ./backend:/code
+      - ./:/code
     restart: always
     depends_on:
       - backend
