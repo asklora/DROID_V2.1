@@ -1,12 +1,14 @@
-version: "3.7"
+version: '2.1'
 services:
   backend:
     container_name: django
-    build: ./deployment/jenkins/bastion
-    env_file: .env
+    build:
+      context: /home/ubuntu/DROID_V2.1
+      dockerfile: deployment/jenkins/bastion/Dockerfile
+    env_file: /home/ubuntu/DROID_V2.1/.env
     command: sh deployment/jenkins/entrypointdjango.sh
     volumes:
-      - ./:/code
+      - /home/ubuntu/DROID_V2.1:/code
     ports:
       - "8000:8000"
     links:
@@ -16,11 +18,8 @@ services:
     container_name: nginx
     image: nginx:latest
     volumes:
-      - ./nginx/api.default.conf:/etc/nginx/conf.d/default.conf
-      # - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/api.default.conf:/etc/nginx/sites-enabled/default.conf
-      - ./backend/static:/usr/share/nginx/html/static
-      - ./backend/media:/usr/share/nginx/html/media
+      - /home/ubuntu/DROID_V2.1/deployment/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - /home/ubuntu/DROID_V2.1/files/staticfiles:/usr/share/nginx/html/static
     ports:
       - 80:80
       - 443:443
@@ -30,12 +29,12 @@ services:
   celery:
     container_name: Celery
     build:
-      context: ./backend
-      dockerfile: Dockerfile.celery
-    command: sh entrypoint/entrycelerystagging.sh
-    env_file: ./backend/.env
+      context: /home/ubuntu/DROID_V2.1
+      dockerfile: deployment/jenkins/bastion/Dockerfile.celery
+    command: sh deployment/jenkins/celery.sh
+    env_file: /home/ubuntu/DROID_V2.1/.env
     volumes:
-      - ./backend:/code
+      - /home/ubuntu/DROID_V2.1:/code
     restart: always
     depends_on:
       - backend

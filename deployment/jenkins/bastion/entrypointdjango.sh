@@ -1,2 +1,2 @@
 #!bin/bash
-celery -A core.services worker -l INFO --hostname=EC2@%h -Q EC2
+gunicorn config.wsgi:application --bind 0.0.0.0:8000 -w 9
