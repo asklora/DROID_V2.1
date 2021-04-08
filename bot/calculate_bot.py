@@ -137,6 +137,16 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price):
     return data
 
 def get_ucdc_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, price, bot_option_type, bot_group):
+    """
+    - ticker -> str
+    - currency_code -> str
+    - expiry_date -> date
+    - spot_date -> str
+    - time_to_exp -> float
+    - price -> float
+    - bot_option_type -> str
+    - bot_group -> str
+    """
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         "price": price,
@@ -155,6 +165,17 @@ def get_ucdc_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, 
     return data
 
 def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group):
+    """
+    - ticker -> str
+    - currency_code -> str
+    - expiry_date -> date
+    - spot_date -> str
+    - time_to_exp -> float
+    - price -> float
+    - bot_option_type -> str
+    - bot_group -> str
+    - investment_amount -> str
+    """
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         'price': price,
@@ -185,6 +206,16 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     return data
 
 def get_uno_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, price, bot_option_type, bot_group):
+    """
+    - ticker -> str
+    - currency_code -> str
+    - expiry_date -> date
+    - spot_date -> str
+    - time_to_exp -> float
+    - price -> float
+    - bot_option_type -> str
+    - bot_group -> str
+    """
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         'price': price,
@@ -203,6 +234,17 @@ def get_uno_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, p
     return data
 
 def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group):
+    """
+    - ticker -> str
+    - currency_code -> str
+    - expiry_date -> date
+    - spot_date -> str
+    - time_to_exp -> float
+    - price -> float
+    - bot_option_type -> str
+    - bot_group -> str
+    - investment_amount -> str
+    """
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         'price': price,

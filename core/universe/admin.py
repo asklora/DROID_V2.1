@@ -42,7 +42,7 @@ class UniverseResource(resources.ModelResource):
                     instance.delete()
 
         else:
-            # self.ticker.append(instance.origin_ticker)
+            self.ticker.append(instance.origin_ticker)
             # crudinstance(instance.uid,instance.__class__.__name__)
             instance.delete()
 
