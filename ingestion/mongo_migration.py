@@ -1,11 +1,16 @@
-from general.date_process import backdate_by_month
-from main import latest_price
+import json
 import numpy as np
 import pandas as pd
-from general.table_name import get_industry_group_table_name
 from bot.data_download import get_bot_backtest, get_bot_option_type, get_bot_statistic_data, get_latest_bot_update_data, get_latest_price
-from general.sql_query import get_active_currency, get_active_universe, get_industry, get_industry_group, get_latest_price_data, get_master_tac_data, get_region, get_universe_rating
-from general.mongo_query import update_to_mongo, change_date_to_str, update_specific_to_mongo
+from general.sql_query import get_active_currency, get_active_universe, get_consolidated_data, get_industry, get_industry_group, get_latest_price_data, get_master_tac_data, get_region, get_universe_rating
+from general.mongo_query import create_collection, update_to_mongo, change_date_to_str, update_specific_to_mongo
+from general.date_process import backdate_by_month
+import sys
+def mongo_create_currency():
+    collection = json.load(open("files/file_json/validator_currency.json"))
+    print(collection)
+    table = "currency"
+    create_collection(collection, table)
 
 def mongo_currency_update():
     region = get_region()
@@ -21,36 +26,42 @@ def mongo_currency_update():
 def mongo_universe_update():
     #Populate Universe
     universe = get_active_universe()
-    rating = get_universe_rating()
     industry = get_industry()
     industry_group = get_industry_group()
-    latest_price = get_latest_price()
-    result = universe.merge(rating, on="ticker", how="left")
-    result = result.merge(latest_price, on="ticker", how="left")
-    result = result.merge(industry, on="industry_code", how="left")
+    result = universe.merge(industry, on="industry_code", how="left")
     result = result.merge(industry_group, on="industry_group_code", how="left")
-    result["ST"] = np.where((result["wts_rating"] + result["dlp_1m"]) >= 11, True, False)
-    result["MT"] = np.where(result["dlp_3m"] >= 7, True, False)
-    result["GQ"] = np.where(result["fundamentals_quality"] >= 5, True, False)
-    result["GV"] = np.where(result["fundamentals_value"] >= 5, True, False)
-    result = result[["ticker", "close", "latest_price_change", "last_date", "ticker_name", "company_description", 
-        "currency_code", "industry_group_img", "ST", "MT", "GQ", "GV"]]
     
+    result = result[["ticker", "currency_code", "ticker_name", "company_description", "industry_code", "industry_group_img", 
+    "ticker_symbol", "exchange_code", "quandl_symbol", "lot_size", "is_active"]]
+    # ["isin", "cusip", "sedol", "permid", origin_ticker"]
     #Populate Price
-    start_date = backdate_by_month(1)
-    price = get_master_tac_data(start_date=start_date)
-    price = price[["ticker", "trading_day", "tri_adj_close", "day_status"]]
-    price = price.rename(columns={"tri_adj_close" : "price"})
-    price = change_date_to_str(price)
-    print(price)
-    price_df = pd.DataFrame({"ticker":[], "price_data":[]}, index=[])
+    isin = get_consolidated_data("consolidated_ticker as ticker, isin", "isin is not null", "consolidated_ticker, isin")
+    isin = isin.drop_duplicates(subset=["ticker"], keep="first")
+
+    cusip = get_consolidated_data("consolidated_ticker as ticker, cusip", "cusip is not null", "consolidated_ticker, cusip")
+    cusip = cusip.drop_duplicates(subset=["ticker"], keep="first")
+
+    sedol = get_consolidated_data("consolidated_ticker as ticker, sedol", "sedol is not null", "consolidated_ticker, sedol")
+    sedol = sedol.drop_duplicates(subset=["ticker"], keep="first")
+
+    permid = get_consolidated_data("consolidated_ticker as ticker, permid", "permid is not null", "consolidated_ticker, permid")
+    permid = permid.drop_duplicates(subset=["ticker"], keep="first")
+
+    origin_ticker = get_consolidated_data("consolidated_ticker as ticker, origin_ticker, source_id", "origin_ticker is not null", "consolidated_ticker, origin_ticker, source_id")
+
+    result = result.merge(isin, on="ticker", how="left")
+    result = result.merge(cusip, on="ticker", how="left")
+    result = result.merge(sedol, on="ticker", how="left")
+    result = result.merge(permid, on="ticker", how="left")
+
+    origin_ticker_df = pd.DataFrame({"ticker":[], "origin_ticker":[]}, index=[])
     for tick in result["ticker"].unique():
-        price_data = price.loc[price["ticker"] == tick]
-        price_data = price_data.sort_values(by="trading_day", ascending=False)
-        price_data = price_data[["trading_day", "price"]].to_dict("records")
-        price_data = pd.DataFrame({"ticker":[tick], "price_data":[price_data]}, index=[0])
-        price_df = price_df.append(price_data)
-    result = result.merge(price_df, on="ticker", how="left")
+        ticker_data = origin_ticker.loc[origin_ticker["ticker"] == tick]
+        if(len(ticker_data) > 0):
+            ticker_data = ticker_data[["origin_ticker", "source_id"]].to_dict("records")
+            ticker_data = pd.DataFrame({"ticker":[tick], "origin_ticker":[ticker_data]}, index=[0])
+            origin_ticker_df = origin_ticker_df.append(ticker_data)
+    result = result.merge(origin_ticker_df, on="ticker", how="left")
     print(result)
     update_to_mongo(data=result, index="ticker", table="universe", dict=False)
 
@@ -58,6 +69,10 @@ def mongo_universe_rating_update():
     #Populate Universe
     rating = get_universe_rating()
     result = rating[["ticker", "fundamentals_quality", "fundamentals_value", "dlp_1m", "dlp_3m", "wts_rating", "wts_rating2"]]
+    result["ST"] = np.where((result["wts_rating"] + result["dlp_1m"]) >= 11, True, False)
+    result["MT"] = np.where(result["dlp_3m"] >= 7, True, False)
+    result["GQ"] = np.where(result["fundamentals_quality"] >= 5, True, False)
+    result["GV"] = np.where(result["fundamentals_value"] >= 5, True, False)
     print(result)
     update_to_mongo(data=result, index="ticker", table="universe_rating", dict=False)
 
@@ -156,3 +171,20 @@ def mongo_statistic_backtest_update():
 # avg_days_max_profit
 # avg_days_max_loss
 # ticker
+
+
+# start_date = backdate_by_month(1)
+#     price = get_master_tac_data(start_date=start_date)
+#     price = price[["ticker", "trading_day", "tri_adj_close", "day_status"]]
+#     price = price.rename(columns={"tri_adj_close" : "price"})
+#     price = change_date_to_str(price)
+#     print(price)
+#     price_df = pd.DataFrame({"ticker":[], "price_data":[]}, index=[])
+#     for tick in result["ticker"].unique():
+#         price_data = price.loc[price["ticker"] == tick]
+#         price_data = price_data.sort_values(by="trading_day", ascending=False)
+#         price_data = price_data[["trading_day", "price"]].to_dict("records")
+#         price_data = pd.DataFrame({"ticker":[tick], "price_data":[price_data]}, index=[0])
+#         price_df = price_df.append(price_data)
+#     result = result.merge(price_df, on="ticker", how="left")
+#     print(result)

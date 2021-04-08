@@ -15,6 +15,12 @@ def connects(table):
     db_connect = client["latest_data"][table]
     return db_connect
 
+def create_collection(collection_validator, table):
+    client =  MongoClient(MONGO_URL)
+    db_connect = client
+    db_connect.createCollection(table, collection_validator)
+    return True
+
 def insert_to_mongo(data, index, table, dict=False):
     db_connect = connects(table)
     if(dict):

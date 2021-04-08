@@ -335,3 +335,13 @@ def get_master_tac_data(start_date=None, end_date=None, ticker=None, currency_co
         query += "and " + check
     data = read_query(query, table_name, cpu_counts=True)
     return data
+
+def get_consolidated_data(column, condition, group_field=None):
+    table_name = get_universe_consolidated_table_name()
+    query = f"select {column} from {table_name} "
+    if(type(condition) != type(None)):
+        query += f"where {condition} "
+    if(type(group_field) != type(None)):
+        query += f"group by {group_field} "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
