@@ -163,10 +163,8 @@ def update_ticker_symbol_from_dss(ticker=None):
     start_date = backdate_by_day(1)
     end_date = dateNow()
     jsonFileName = "files/file_json/ticker_symbol.json"
-    result = get_data_from_dss(start_date, end_date, ticker["ticker"], jsonFileName, report=REPORT_HISTORY)
+    result = get_data_from_dss(start_date, end_date, universe["ticker"], jsonFileName, report=REPORT_HISTORY)
     print(result)
-    import sys
-    sys.exit(1)
     result = result.drop(columns=["IdentifierType", "Identifier"])
     print(result)
     if (len(result) > 0 ):
