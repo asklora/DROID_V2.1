@@ -7,7 +7,7 @@ from general.sql_query import (
     get_active_universe, 
     get_active_universe_consolidated_by_field,
     get_active_universe_company_description_null)
-from general.sql_output import upsert_data_to_database, fill_null_company_desc_with_ticker_name
+from general.sql_output import update_universe_where_currency_code_null, upsert_data_to_database, fill_null_company_desc_with_ticker_name
 from datasource.dsws import get_data_static_from_dsws
 from datasource.dss import get_data_from_dss
 from general.table_name import (
@@ -154,6 +154,7 @@ def update_currency_code_from_dss(ticker=None):
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
+        update_universe_where_currency_code_null()
 
 def update_ticker_symbol_from_dss(ticker=None):
     print("{} : === Ticker Symbol Start Ingestion ===".format(datetimeNow()))

@@ -150,6 +150,12 @@ def update_capital_change(ticker):
     data = execute_query(query, table=table_name)
     return data
 
+def update_universe_where_currency_code_null():
+    table_name = get_universe_table_name()
+    query = f"update {table_name} set is_active = false where currency_code is null"
+    data = execute_query(query, table=table_name)
+    return data
+
 def update_all_data_by_capital_change(ticker, trading_day, capital_change):
     table_name = get_data_report_split_table_name()
     query = f"update {table_name} set "
