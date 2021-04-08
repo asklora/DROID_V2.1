@@ -132,7 +132,7 @@ def master_ohlctr_update():
         master_ohlcvtr_data = FillMissingDay(master_ohlcvtr_data, start_date, dateNow())
         master_ohlcvtr_data, new_tickers = CountDatapoint(master_ohlcvtr_data)
     else:
-        upsert_date = backdate_by_day(4)
+        upsert_date = backdate_by_day(7)
     print("Fill Day Status")
     master_ohlcvtr_data = FillDayStatus(master_ohlcvtr_data)
     # print("Fill Null Data Forward & Backward")
