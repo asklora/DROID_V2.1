@@ -20,12 +20,11 @@ from global_vars import REPORT_HISTORY, REPORT_INTRADAY
 
 def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
     print("{} : === Ticker ISIN Start Ingestion ===".format(datetimeNow()))
-    universe = get_active_universe_consolidated_by_field(isin=True, ticker=ticker)
-    manual_universe = universe.copy()
+    manual_universe = get_active_universe_consolidated_by_field(manual=True, ticker=ticker)
     manual_universe = manual_universe.loc[manual_universe["use_manual"] == True]
-    manual_universe = manual_universe.drop(columns=["consolidated_ticker"])
     manual_universe["consolidated_ticker"] = manual_universe["origin_ticker"]
 
+    universe = get_active_universe_consolidated_by_field(isin=True, ticker=ticker)
     universe = universe.loc[universe["use_manual"] == False]
     if(len(universe) > 0):
         universe = universe.drop(columns=["isin", "consolidated_ticker", "sedol", "is_active", "cusip", "permid", "updated"])
@@ -34,6 +33,7 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
         filter_field = ["ISIN", "SECD", "WC06004", "IPID"]
         result, error_ticker = get_data_static_from_dsws(universe[["origin_ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 20))
         result = result.rename(columns={"ISIN": "isin", "index":"origin_ticker", "SECD": "sedol", "WC06004": "cusip", "IPID": "permid"})
+        
         print(result)
 
         isin_list = result[["isin"]]
@@ -42,6 +42,7 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
         result2 = result2.rename(columns={"RIC": "consolidated_ticker", "index":"isin", "SECD": "sedol"})
         print(result2)
         result = result.merge(result2, how="left", on=["isin", "sedol"])
+        result = result.loc[result["consolidated_ticker"] != "FGBSM2^1"]
         print(result)
 
         if(len(result)) > 0 :
@@ -63,16 +64,16 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
                         null_consolidated_ticker.loc[index, "consolidated_ticker"] = origin_ticker
                         null_consolidated_ticker.loc[index, "is_active"] = True
             result = consolidated_ticker.append(null_consolidated_ticker)
-            result = universe.merge(result, how="left", on=["origin_ticker"])
+            result = result.merge(universe, how="left", on=["origin_ticker"])
             if(len(manual_universe) > 0):
                 result = result.append(manual_universe)
-        else:
-            result = manual_universe
-        result["updated"] = dateNow()
-        print(result)
-        #update_universe_consolidated_data_to_database(result, get_universe_consolidated_table_name())
-        upsert_data_to_database(result, get_universe_consolidated_table_name(), "uid", how="update", Text=True)
-        report_to_slack("{} : === Ticker ISIN Updated ===".format(datetimeNow()))
+    else:
+        result = manual_universe
+    result["updated"] = dateNow()
+    print(result)
+    upsert_data_to_database(result, get_universe_consolidated_table_name(), "uid", how="update", Text=True)
+    report_to_slack("{} : === Ticker ISIN Updated ===".format(datetimeNow()))
+    #Should remove FGBSM2^1 this ticker
 
 def update_ticker_name_from_dsws(ticker=None):
     print("{} : === Ticker Name Start Ingestion ===".format(datetimeNow()))

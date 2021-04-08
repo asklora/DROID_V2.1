@@ -99,7 +99,7 @@ def get_active_universe_consolidated_by_field(isin=False, cusip=False, sedol=Fal
     elif sedol:
         query += f"and use_sedol=True "
     elif manual:
-        query += f"and use_manual=True "
+        query += f"and use_manual=True and consolidated_ticker is null "
 
     if type(ticker) != type(None):
         query += f" and origin_ticker in {tuple_data(ticker)} "
