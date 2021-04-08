@@ -300,7 +300,14 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    ticker = pd.DataFrame({"ticker":["005930.KS"]}, index=[0])
+    update_ticker_symbol_from_dss()
+    update_quandl_orats_from_quandl()
+    do_function("universe_populate")
+    do_function("master_ohlcvtr_update")
+    master_ohlctr_update()
+    master_tac_update()
+    master_multiple_update()
+    # ticker = pd.DataFrame({"ticker":["005930.KS"]}, index=[0])
     # ticker="A"
     # update_ticker_symbol_from_dss(ticker=ticker)
     # update_worldscope_quarter_summary_from_dsws(ticker = ticker)
