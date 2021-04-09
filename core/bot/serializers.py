@@ -10,6 +10,11 @@ class HedgeSerializer(serializers.Serializer):
     spot_date = serializers.DateField(required=True,format="%Y-%m-%d", input_formats=["%Y-%m-%d", "iso-8601"])
     amount = serializers.FloatField(required=True)
 
-
-
-
+# {
+#     "bot_id":"CLASSIC_classic_007692",
+#     "ticker":"AAPL.O",
+#     "currency":"USD",
+#     "price":128.0,
+#     "spot_date":"2021-03-8",
+#     "amount":5000
+# }
