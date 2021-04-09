@@ -6,15 +6,63 @@ from main_executive import (
     data_prep_history, 
     infer_daily, 
     infer_history, 
-    option_maker_daily_ucdc, 
+    option_maker_daily_ucdc, option_maker_daily_uno, 
     option_maker_history_classic, 
     option_maker_history_ucdc, 
     option_maker_history_uno, train_lebeler_model, train_model)
 
 if __name__ == "__main__":
     print("Start Process")
-    daily_classic(currency_code=["EUR"], option_maker=True, null_filler=True)
-    daily_uno_ucdc(currency_code=["EUR"], infer=True, option_maker=True, null_filler=True)
+
+    data_prep_history()
+    do_function("latest_bot_data")
+    train_model()
+    infer_history()
+    do_function("latest_vol")
+
+    data_prep_history()
+    do_function("latest_bot_data")
+    train_model()
+    infer_history()
+    do_function("latest_vol")
+
+    # populate_latest_bot_update(currency_code=["KRW"])
+    # populate_latest_bot_update(currency_code=["HKD"])
+    # populate_latest_bot_update(currency_code=["CNY"])
+    # populate_latest_bot_update(currency_code=["USD"])
+    # populate_latest_bot_update(currency_code=["EUR"])
+
+    # option_maker_history_uno(currency_code=["KRW"], option_maker=True, infer=True)
+    # option_maker_history_uno(currency_code=["HKD"], option_maker=True, infer=True)
+    # option_maker_history_uno(currency_code=["CNY"], option_maker=True, infer=True)
+    # option_maker_daily_uno(currency_code=["USD"], option_maker=True, infer=False)
+    # option_maker_daily_uno(currency_code=["EUR"], option_maker=True, infer=True)
+    
+    # option_maker_history_uno(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
+    # option_maker_history_uno(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
+    # option_maker_history_uno(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
+    # option_maker_daily_uno(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=1, run_number=0)
+    # option_maker_daily_uno(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
+
+    # option_maker_history_classic(currency_code=["KRW"], option_maker=True, null_filler=True)
+    # option_maker_history_classic(currency_code=["HKD"], option_maker=True, null_filler=True)
+    # option_maker_history_classic(currency_code=["CNY"], option_maker=True, null_filler=True)
+    # option_maker_history_classic(currency_code=["USD"], option_maker=True, null_filler=True)
+    # daily_classic(currency_code=["EUR"], option_maker=True, null_filler=True)
+    # bot_statistic_classic()
+
+    # do_function("bot_backtest_updates")
+    # train_lebeler_model()
+    # bot_ranking_history()
+    # do_function("latest_bot_update")
+    # bot_statistic_ucdc()
+    # bot_statistic_uno()
+
+
+    # daily_classic(currency_code=["USD"], option_maker=True, null_filler=True)
+    # daily_classic(currency_code=["EUR"], option_maker=True, null_filler=True)
+    # daily_uno_ucdc(currency_code=["EUR"], infer=True, option_maker=True, null_filler=True)
+    
     # train_lebeler_model()
     # populate_latest_bot_update(currency_code="USD")
     # bot_ranking_history(ticker=None, currency_code=None)
