@@ -128,8 +128,8 @@ if db_debug:
 else:
     read_endpoint,write_endpoint,port = db.prod_url
 
-print(f'using read: {read_endpoint}')
-print(f'using write: {write_endpoint}')
+# print(f'using read: {read_endpoint}')
+# print(f'using write: {write_endpoint}')
 
 DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
 DB_ENGINE = 'psqlextra.backend'

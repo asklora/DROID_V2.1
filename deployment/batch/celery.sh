@@ -1,2 +1,2 @@
 #!bin/bash
-celery -A core.services worker -l INFO --hostname=%h@aws-batch -Q batch
+celery -A core.services worker -l INFO --hostname=portfolio-job@aws-batch -Q batch
