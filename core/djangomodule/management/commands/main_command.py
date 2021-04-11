@@ -5,27 +5,40 @@ import time
 import sys
 
 
+
 def executetask(client,jobid,hostname):
     payload = [
         {
         'type':'invoke',
-        'module':'migrate.vix_data'
+        'module':'migrate.currency'
         },{
         'type':'invoke',
-        'module':'migrate.data_dss'
+        'module':'migrate.universe_rating'
         },{
         'type':'invoke',
-        'module':'migrate.data_dsws'
+        'module':'migrate.data_universe_detail'
         },{
         'type':'invoke',
-        'module':'migrate.data_quandl'
+        'module':'migrate.data_ibes'
         },{
         'type':'invoke',
-        'module':'migrate.latest_price'
+        'module':'migrate.data_ibes_monthly'
         },{
         'type':'invoke',
-        'module':'migrate.data_interest'
-        },
+        'module':'migrate.data_fred'
+        },{
+        'type':'invoke',
+        'module':'migrate.data_macro'
+        },{
+        'type':'invoke',
+        'module':'migrate.data_macro_monthly'
+        },{
+        'type':'invoke',
+        'module':'migrate.data_dividend'
+        },{
+        'type':'invoke',
+        'module':'migrate.data_fundamental_score'
+        }
                ]
     for data in payload:
         app.send_task('config.celery.listener',args=(data,),queue='batch')
@@ -47,11 +60,7 @@ def executetask(client,jobid,hostname):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        # node = app.control.inspect()
-        # print(app.control.ping(timeout=0.5))
-        # print(node.scheduled())
         print('===== CREATING BATCH =====')
-        # batch_env = 'getting-started-compute-envs'
         batch_job_definition ='test-celery-job'
         batch_queue = 'getting-started-job-queue'
         host_name='portfolio-job@aws-batch'
