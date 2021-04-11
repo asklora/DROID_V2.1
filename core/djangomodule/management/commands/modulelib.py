@@ -6,4 +6,4 @@ class Command(BaseCommand):
         data = {
             'task':'hellow'
         }
-        celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
+        celery_app.send_task('config.celery.listener',args=(data,),queue='batch')
