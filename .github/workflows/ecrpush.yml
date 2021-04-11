@@ -1,0 +1,21 @@
+name: Ansible auto update  # feel free to pick your own name
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    if: "contains(github.event.head_commit.message, 'ecr')"
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: docker build . -t celery-portfolio-job -f deployment/batch/Dockerfile.celery
+      - name: Push to ECR
+        id: ecr
+        uses: jwalton/gh-ecr-push@v1
+        with:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ap-northeast-2
+          image: celery-portfolio-job:latest
