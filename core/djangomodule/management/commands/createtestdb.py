@@ -4,7 +4,6 @@ from core.djangomodule.network.cloud import DroidDb
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        # Named (optional) arguments
         parser.add_argument(
             '--delete',
             action='store_true',
