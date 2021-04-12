@@ -9,7 +9,7 @@ from main_executive import (
     option_maker_daily_ucdc, option_maker_daily_uno, 
     option_maker_history_classic, 
     option_maker_history_ucdc, 
-    option_maker_history_uno, train_lebeler_model, train_model)
+    option_maker_history_uno, option_maker_ucdc_check_new_ticker, option_maker_uno_check_new_ticker, train_lebeler_model, train_model)
 
 if __name__ == "__main__":
     print("Start Process")
@@ -42,12 +42,28 @@ if __name__ == "__main__":
     # option_maker_history_uno(currency_code=["CNY"], option_maker=True, infer=True)
     # option_maker_daily_uno(currency_code=["USD"], option_maker=True, infer=False)
     # option_maker_daily_uno(currency_code=["EUR"], option_maker=True, infer=True)
+    # option_maker_uno_check_new_ticker(currency_code=["EUR"], option_maker=True, infer=True)
+    # option_maker_uno_check_new_ticker(currency_code=["USD"], option_maker=True, infer=False)
     
+    # option_maker_history_ucdc(currency_code=["KRW"], option_maker=True, infer=True)
+    # option_maker_history_ucdc(currency_code=["HKD"], option_maker=True, infer=True)
+    # option_maker_history_ucdc(currency_code=["CNY"], option_maker=True, infer=True)
+    # option_maker_daily_ucdc(currency_code=["USD"], option_maker=True, infer=False)
+    # option_maker_daily_ucdc(currency_code=["EUR"], option_maker=True, infer=True)
+    # option_maker_ucdc_check_new_ticker(currency_code=["EUR"], option_maker=True, infer=True)
+    # option_maker_ucdc_check_new_ticker(currency_code=["USD"], option_maker=True, infer=False)
+
     # option_maker_history_uno(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
     # option_maker_history_uno(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
     # option_maker_history_uno(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
     # option_maker_daily_uno(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=1, run_number=0)
     # option_maker_daily_uno(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
+
+    # option_maker_history_ucdc(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
+    # option_maker_history_ucdc(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
+    # option_maker_history_ucdc(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
+    # option_maker_daily_ucdc(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=1, run_number=0)
+    # option_maker_daily_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
 
     # option_maker_history_classic(currency_code=["KRW"], option_maker=True, null_filler=True)
     # option_maker_history_classic(currency_code=["HKD"], option_maker=True, null_filler=True)
