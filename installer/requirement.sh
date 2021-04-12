@@ -5,7 +5,7 @@ if ! [ -x "$(command -v jq)" ]; then
   apt-get install -yq jq
 fi
 if ! [ -x "$(command -v aws)" ]; then
-  
+  echo 'Error: aws is not installed.' >&2
   apt-get install -yq awscli
 fi
 tar -xzf ./installer/ta-lib-0.4.0-src.tar.gz
