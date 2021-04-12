@@ -47,8 +47,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(('email address'), unique=True)
     username = models.CharField(
         max_length=255, unique=True, blank=True, null=True)
-    country = models.ForeignKey(
-        Country, on_delete=models.CASCADE, related_name='user_base_country', null=True, blank=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
     address = models.TextField(blank=True, null=True)
     first_name = models.CharField(max_length=255, null=True, blank=True)
