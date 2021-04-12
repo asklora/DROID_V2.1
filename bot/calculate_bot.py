@@ -42,6 +42,15 @@ def get_holiday(non_working_day, currency_code):
     return data
 
 def get_expiry_date(time_to_exp, spot_date, currency_code):
+    """
+    - Parameters:
+        - time_to_exp -> float
+        - spot_date -> date
+        - currency_code -> str
+    - Returns:
+        - datetime -> date
+    """
+    
     days = int(round((time_to_exp * 365), 0))
     expiry = spot_date + relativedelta(days=(days-1))
     # days = int(round((time_to_exp * 256), 0))
@@ -114,7 +123,7 @@ def get_vol(ticker, trading_day, t, r, q, time_to_exp):
         vol = 0.2
     return float(vol)
 
-def get_classic(ticker, spot_date, time_to_exp, investment_amount, price):
+def get_classic(ticker, spot_date, time_to_exp, investment_amount, price,expiry_date):
     digits = max(min(4-len(str(int(price))), 2), -1)
     classic_vol_data = get_classic_vol_by_date(ticker, spot_date)
     classic_vol = classic_vol_data["classic_vol"]
@@ -126,6 +135,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price):
         "price": price,
     }
     data["vol"] = dur
+    data["expiry_date"] = expiry_date.date()
     data["share_num"] = math.floor(investment_amount / price)
     data["max_loss_pct"] = - (dur * classic_vol * 1.25)
     data["max_loss_price"] = round(price * (1 + data["max_loss_pct"]), int(digits))
@@ -134,6 +144,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price):
     data["target_profit_price"] = round(price * (1 + data["target_profit_pct"]), digits)
     data["target_profit_amount"] = round((data["target_profit_price"] - price) * data["share_num"], digits)
     data["bot_cash_balance"] = round(investment_amount - (data["share_num"] * price), 2)
+    
     return data
 
 def get_ucdc_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, price, bot_option_type, bot_group):
@@ -192,6 +203,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     delta = black_scholes.deltaRC(price, strike, strike_2, t, r, q, v1, v2)
     delta = np.nan_to_num(delta, nan=0)
     share_num = investment_amount / price
+    data["expiry_date"] = expiry_date
     data['vol'] = vol
     data['share_num'] = math.floor(delta * share_num)
     data['max_loss_pct'] = potential_loss
@@ -262,6 +274,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     potential_loss = -1 * option_price / price
     targeted_profit = (barrier-strike) / price
     share_num = investment_amount / price
+    data["expiry_date"] = expiry_date
     data['share_num'] = math.floor(delta * share_num)
     data['max_loss_pct'] = potential_loss
     data['vol'] = vol
@@ -325,7 +338,7 @@ def get_classic_vol_by_date(ticker, trading_day):
     query += f"where vol.ticker = '{ticker}' and "
     query += f"vol.spot_date <= '{trading_day}' "
     query += f"order by spot_date DESC limit 1;"
-    data = read_query(query, vol_table, cpu_counts=True)
+    data = read_query(query, vol_table, cpu_counts=True,db_from='droidv1')
     if(len(data) != 1):
         query = f"select * "
         query += f"from {latest_price_table} vol "

@@ -2,7 +2,7 @@ import pandas as pd
 import sqlalchemy as db
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
-from general.sql_process import db_read, db_write
+from general.sql_process import db_read, db_write,droid_db_read
 from general.date_process import backdate_by_day, dateNow, droid_start_date, str_to_date
 from general.data_process import tuple_data
 from general.table_name import (
@@ -24,12 +24,16 @@ currency_table = get_currency_table_name()
 fundamentals_score_table = get_fundamental_score_table_name()
 universe_rating_table = get_universe_rating_table_name()
 
-def read_query(query, table=universe_table, cpu_counts=False):
+def read_query(query, table=universe_table, cpu_counts=False,db_from=None):
     print(f"Get Data From Database on {table} table")
-    if(cpu_counts):
-        engine = create_engine(db_read, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
+    if db_from == 'droidv1':
+        dbcon = droid_db_read
     else:
-        engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
+        dbcon = db_read
+    if(cpu_counts):
+        engine = create_engine(dbcon, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
+    else:
+        engine = create_engine(dbcon, max_overflow=-1, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
         data = pd.read_sql(query, con=conn)
     engine.dispose()
