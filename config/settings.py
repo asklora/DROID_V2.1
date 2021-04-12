@@ -50,8 +50,8 @@ CORE_APPS = [
     'core.master',
     'core.topstock',
     'core.Clients',
-    'core.signals',
     'core.survey',
+    'core.orders',
 ]
 
 INSTALLED_APPS = DJANGO_DEFAULT_APPS + ADDITIONAL_APPS + CORE_APPS
