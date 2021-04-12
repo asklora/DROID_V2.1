@@ -13,18 +13,23 @@ from main_executive import (
 
 if __name__ == "__main__":
     print("Start Process")
-
-    data_prep_history()
+    data_prep_daily()
     do_function("latest_bot_data")
     train_model()
-    infer_history()
+    infer_daily()
     do_function("latest_vol")
 
-    data_prep_history()
-    do_function("latest_bot_data")
-    train_model()
-    infer_history()
-    do_function("latest_vol")
+    # data_prep_history()
+    # do_function("latest_bot_data")
+    # train_model()
+    # infer_history()
+    # do_function("latest_vol")
+
+    # data_prep_history()
+    # do_function("latest_bot_data")
+    # train_model()
+    # infer_history()
+    # do_function("latest_vol")
 
     # populate_latest_bot_update(currency_code=["KRW"])
     # populate_latest_bot_update(currency_code=["HKD"])
