@@ -23,7 +23,7 @@ def migrate_droid1():
     now = datetime.now()
     try:
         original_stdout = sys.stdout # Save a reference to the original standard output
-        with open(f"logger/migrate{now}.txt", "w") as f:
+        with open(f"files/migrate{now}.txt", "w") as f:
             sys.stdout = f # Change the standard output to the file we created.
             daily_migrations() # triger ingestion function
             sys.stdout = original_stdout
