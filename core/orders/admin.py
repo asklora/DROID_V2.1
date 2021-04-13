@@ -1,3 +1,8 @@
 from django.contrib import admin
+from .models import Order,OrderPosition,PositionPerformance
 
-# Register your models here.
+
+admin.site.register(Order)
+admin.site.register(OrderPosition)
+admin.site.register(PositionPerformance)
+
