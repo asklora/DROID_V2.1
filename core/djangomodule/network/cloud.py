@@ -1,4 +1,4 @@
-import boto3,yaml,json
+import boto3,json
 import time
 from datetime import datetime
 
