@@ -138,7 +138,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price,expiry_
         "price": price,
     }
     data["vol"] = dur
-    data["expiry_date"] = expiry_date.date().strftime("%Y-%m-%d")
+    data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
     data["share_num"] = math.floor(investment_amount / price)
     data["max_loss_pct"] = - (dur * classic_vol * 1.25)
     data["max_loss_price"] = round(price * (1 + data["max_loss_pct"]), int(digits))
@@ -206,7 +206,16 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     delta = uno.deltaRC(price, strike, strike_2, t, r, q, v1, v2)
     delta = np.nan_to_num(delta, nan=0)
     share_num = investment_amount / price
-    data["expiry_date"] = expiry_date.date().strftime("%Y-%m-%d")
+    data['last_hedge_delta']=delta
+    data['option_price']=option_price
+    data['t']=t
+    data['r']=r
+    data['q']=q
+    data['strike']=strike
+    data['strike_2']=strike_2
+    data['v1']=v1
+    data['v2']=v2
+    data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
     data['vol'] = vol
     data['share_num'] = math.floor(delta * share_num)
     data['max_loss_pct'] = potential_loss
@@ -249,7 +258,6 @@ def get_uno_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, p
     return data
 
 def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group):
-    print(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group)
     """
     - ticker -> str
     - currency_code -> str
@@ -278,7 +286,16 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     potential_loss = -1 * option_price / price
     targeted_profit = (barrier-strike) / price
     share_num = investment_amount / price
-    data["expiry_date"] = expiry_date.date().strftime("%Y-%m-%d")
+    data['option_price']=option_price
+    data['t']=t
+    data['last_hedge_delta']=delta
+    data['r']=r
+    data['q']=q
+    data['strike']=strike
+    data['barrier']=barrier
+    data['v1']=v1
+    data['v2']=v2
+    data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
     data['share_num'] = math.floor(delta * share_num)
     data['max_loss_pct'] = potential_loss
     data['vol'] = vol

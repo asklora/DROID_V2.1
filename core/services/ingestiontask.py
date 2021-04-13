@@ -12,8 +12,23 @@ from main import (
     )
 from core.universe.models import Universe
 import sys
+from core.djangomodule.general import aws_batch
+from migrate import daily_migrations
 
 
+
+@aws_batch
+@app.task
+def migrate_droid1():
+    try:
+        original_stdout = sys.stdout # Save a reference to the original standard output
+        with open(f"logger/migrate{now}.txt", "w") as f:
+            sys.stdout = f # Change the standard output to the file we created.
+            daily_migrations() # triger ingestion function
+            sys.stdout = original_stdout
+        return {"result":f"migrate daily done"}
+    except Exception as e:
+        return {"err":str(e)}
 
 
 @app.task

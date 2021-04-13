@@ -70,8 +70,8 @@ class Command(BaseCommand):
                         jobQueue=batch_queue,
                         jobDefinition=batch_job_definition,
                         containerOverrides={
-                            'vcpus': 256,
-                            'memory': 3200,
+                            'vcpus': 32,
+                            'memory': 200,
                             'command': [
                                 "celery","-A","core.services","worker","-l","INFO",f"--hostname={host_name}","-Q","batch"
                             ]

@@ -13,7 +13,8 @@ class Order(BaseTimeStampModel):
     setup = models.JSONField(blank=True,null=True,default=dict)
     order_type = models.CharField(max_length=75, null=True, blank=True)
     placed = models.BooleanField(default=False)
-    status = models.CharField(max_length=10, null=True, blank=True,default='pending')
+    status = models.CharField(max_length=10, null=True, blank=True,default='review')
+    side = models.CharField(max_length=10,default='buy')
     amount = models.FloatField()
     placed_at = models.DateTimeField(null=True, blank=True)
     filled_at = models.DateTimeField(null=True, blank=True)
@@ -21,6 +22,7 @@ class Order(BaseTimeStampModel):
     order_summary = models.JSONField(blank=True,null=True,default=dict)
     is_init = models.BooleanField(default=True)
     price = models.FloatField()
+    signal_id = models.CharField(null=True,blank=True,max_length=255)
 
     def save(self, *args, **kwargs):
         
@@ -75,6 +77,7 @@ class OrderPosition(BaseTimeStampModel):
 	current_values = models.FloatField(null=True, blank=True, default=0)
 	commision_fee = models.FloatField(null=True, blank=True, default=0)
 	commision_fee_sell = models.FloatField(null=True, blank=True, default=0)
+	vol = models.FloatField(null=True, blank=True)
 	
 
 	class Meta:
@@ -123,13 +126,14 @@ class PositionPerformance(BaseTimeStampModel):
 	q = models.FloatField(blank=True, null=True)
 	v1 = models.FloatField(blank=True, null=True)
 	v2 = models.FloatField(blank=True, null=True)
-	delta = models.FloatField(blank=True, null=True)
+	# delta = models.FloatField(blank=True, null=True)
 	strike_2 = models.FloatField(blank=True, null=True)
 	order_summary = models.JSONField( null=True, blank=True) # order response from third party
+	order_id = models.ForeignKey('Order',null=True,blank=True, on_delete=models.SET_NULL)
 
 	class Meta:
 		managed = True
 		db_table = "order_position_performance"
 		
 	def __str__(self):
-		return self.created
+		return str(self.created)
