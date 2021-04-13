@@ -20,6 +20,7 @@ from migrate import daily_migrations
 @aws_batch
 @app.task
 def migrate_droid1():
+    now = datetime.now()
     try:
         original_stdout = sys.stdout # Save a reference to the original standard output
         with open(f"logger/migrate{now}.txt", "w") as f:
