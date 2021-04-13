@@ -14,7 +14,7 @@ from main_executive import (
 if __name__ == "__main__":
     print("Start Process")
 
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=6, run_number=0)
+    option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=6, run_number=0)
     # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=6, run_number=1)
     # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=6, run_number=2)
     # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=6, run_number=3)
