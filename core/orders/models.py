@@ -9,7 +9,7 @@ import uuid
 class OrderPositon(BaseTimeStampModel):
 	uid = models.UUIDField(primary_key=True, editable=False)
 	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_postion')
-	ric = models.ForeignKey(Universe, on_delete=models.CASCADE, related_name='ticker_ordered')
+	symbol = models.ForeignKey(Universe, on_delete=models.CASCADE, related_name='ticker_ordered')
 	bot_id = models.CharField(max_length=255,null=True,blank=True) #user = stock
 	expiry = models.DateField(null=True, blank=True)
 	spot_date = models.DateField(null=True, blank=True)
@@ -89,7 +89,7 @@ class PositionPerformance(BaseTimeStampModel):
 
 	class Meta:
 		managed = True
-		db_table = "order_positon_performance"
+		db_table = "order_position_performance"
 		
 	def __str__(self):
 		return self.side
