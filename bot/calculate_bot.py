@@ -17,6 +17,7 @@ from general.table_name import (
 from bot import uno
 from global_vars import large_hedge, small_hedge, buy_prem, sell_prem
 import pandas as pd
+# comment
 def check_date(dates):
     if(type(dates) == str and len(dates) > 10):
         dates = pd.to_datetime(dates)
