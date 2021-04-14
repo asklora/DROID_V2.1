@@ -173,7 +173,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
                   options_df["deriv"], options_df["deriv_inf"], options_df["r"], options_df["q"])
 
     v0[v0 <= 0.2] = 0.2
-    v0[v0 >= 0.80] = 0.80
+    v0[v0 >= 0.95] = 0.95
     options_df["vol_t"] = v0 * np.sqrt(options_df["time_to_exp"])
 
     options_df6 = options_df.copy()
