@@ -18,8 +18,12 @@ def order_signal_check(sender, instance, **kwargs):
         if instance.setup:
             if instance.setup['share_num'] == 0:
                 instance.status = 'allocated'
+            elif instance.status == 'filled':
+                instance.status = 'filled'
+                instance.filled_at = datetime.now()
             else:
                 instance.status = 'pending'
+
         else:
             instance.status = 'pending'
 
@@ -93,5 +97,23 @@ def order_signal(sender, instance, created, **kwargs):
     }
     services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
         
-        
-            
+
+@receiver(post_save, sender=OrderPosition)
+def order_position_signal(sender, instance, created, **kwargs):
+    instanceserialize = OrderPositionSerializer(instance).data
+    data ={
+    'type':'function',
+    'module':'core.djangomodule.crudlib.order.sync_postion',
+    'payload':dict(instanceserialize)
+    }
+    services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
+
+@receiver(post_save, sender=PositionPerformance)
+def order_perfromance_signal(sender, instance, created, **kwargs):
+    instanceserialize = PositionPerformanceSerializer(instance).data
+    data ={
+    'type':'function',
+    'module':'core.djangomodule.crudlib.order.sync_perfromance',
+    'payload':dict(instanceserialize)
+    }
+    services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
