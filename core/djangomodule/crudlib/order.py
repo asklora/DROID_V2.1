@@ -25,36 +25,44 @@ def sync_order(payload):
 
 def sync_postion(payload):
     try:
-        position = OrderPosition.objects.get(uid=payload['uid'])
+        postion = OrderPosition.objects.get(uid=payload['uid'])
         for attrib, val in payload.items():
-            field= position._meta.get_field(attrib)
+            field= postion._meta.get_field(attrib)
             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
-                attrib = f'{attrib}_id'
-            setattr(position, attrib,val)
-        position.save()
+                setattr(postion, f'{attrib}_id',val)
+            else:
+                setattr(postion, attrib,val)
+        postion.save()
     except OrderPosition.DoesNotExist:
+        attribs_modifier = {}
         for attrib, val in payload.items():
             field= OrderPosition._meta.get_field(attrib)
             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
-                payload[f'{attrib}_id'] = payload.pop(attrib)
-        position = OrderPosition.objects.create(**payload)
+                attribs_modifier[f'{attrib}_id'] = val
+            else:
+                attribs_modifier[attrib]=val
+        postion = OrderPosition.objects.create(**attribs_modifier)
     
-    print(position)
+    print(postion)
 
 def sync_perfromance(payload):
     try:
-        performance = PositionPerformance.objects.get(uid=payload['id'])
+        performance = PositionPerformance.objects.get(uid=payload['uid'])
         for attrib, val in payload.items():
             field= performance._meta.get_field(attrib)
             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
-                attrib = f'{attrib}_id'
-            setattr(performance, attrib,val)
+                setattr(performance, f'{attrib}_id',val)
+            else:
+                setattr(performance, attrib,val)
         performance.save()
     except PositionPerformance.DoesNotExist:
+        attribs_modifier = {}
         for attrib, val in payload.items():
             field= PositionPerformance._meta.get_field(attrib)
             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
-                payload[f'{attrib}_id'] = payload.pop(attrib)
-        performance = PositionPerformance.objects.create(**payload)
+                attribs_modifier[f'{attrib}_id'] = val
+            else:
+                attribs_modifier[attrib]=val
+        performance = PositionPerformance.objects.create(**attribs_modifier)
     
     print(performance)
