@@ -78,14 +78,14 @@ def get_expiry_date(time_to_exp, spot_date, currency_code):
 
 def get_strike_barrier(price, vol, bot_option_type, bot_group):
     if bot_group == "UNO":
-        if bot_option_type == 'OTM':
+        if bot_option_type == "OTM":
             strike = price * (1 + vol * 0.5)
-        elif bot_option_type == 'ITM':
+        elif bot_option_type == "ITM":
             strike = price * (1 - vol * 0.5)
 
-        if bot_option_type == 'OTM':
+        if bot_option_type == "OTM":
             barrier = price * (1 + vol * 2)
-        elif bot_option_type == 'ITM':
+        elif bot_option_type == "ITM":
             barrier = price * (1 + vol * 1.5)
         return float(strike), float(barrier)
 
@@ -99,9 +99,9 @@ def get_v1_v2(ticker, price, trading_day, t, r, q, strike, barrier):
     trading_day = check_date(trading_day)
     status, obj = get_vol_by_date(ticker, trading_day)
     if status:
-        v1 = uno.find_vol(strike / price, t, obj["atm_volatility_spot"], obj["atm_volatility_one_year"], obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
+        v1 = uno.find_vol(strike / price, t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"], obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v1 = np.nan_to_num(v1, nan=0)
-        v2 = uno.find_vol(barrier / price, t, obj["atm_volatility_spot"], obj["atm_volatility_one_year"], obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
+        v2 = uno.find_vol(barrier / price, t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"], obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v2 = np.nan_to_num(v2, nan=0)
     else :
         v1 = 0.2
@@ -121,7 +121,7 @@ def get_vol(ticker, trading_day, t, r, q, time_to_exp):
     status, obj = get_vol_by_date(ticker, trading_day)
     if status:
         print(obj)
-        v0 = uno.find_vol(1, t, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
+        v0 = uno.find_vol(1, t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
                           obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v0 = np.nan_to_num(v0, nan=0)
         v0 = max(min(v0, 0.50), 0.20)
@@ -183,11 +183,11 @@ def get_ucdc_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, 
     data["strike"], data["strike_2"] = get_strike_barrier(price, data["vol"], bot_option_type, bot_group)
     data["v1"], data["v2"] = get_v1_v2(ticker, price, spot_date, data["t"], data["r"], data["q"], data["strike"], data["strike_2"])
 
-    option_price = uno.Rev_Conv(price, data["strike"], data["strike_2"], data["t"], data["r"], data["q"], data["v1"], data["v2"])
+    option_price = uno.Rev_Conv(price, data["strike"], data["strike_2"], data["t"]/365, data["r"], data["q"], data["v1"], data["v2"])
     data["option_price"] = np.nan_to_num(option_price, nan=0)
     data["potential_loss"] = (data["strike_2"]-data["strike"]) / price
     data["targeted_profit"] = -1 * option_price / price
-    delta = uno.deltaRC(price, data["strike"], data["strike_2"], data["t"], data["r"], data["q"], data["v1"], data["v2"])
+    delta = uno.deltaRC(price, data["strike"], data["strike_2"], data["t"]/365, data["r"], data["q"], data["v1"], data["v2"])
     data["delta"] = np.nan_to_num(data["delta"], nan=0)
     return data
 
@@ -207,41 +207,41 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     expiry_date = check_date(expiry_date)
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
-        'price': price,
+        "price": price,
     }
     t, r, q = get_trq(ticker, expiry_date, spot_date, currency_code)
     vol = get_vol(ticker, spot_date, t, r, q, time_to_exp)
     strike, strike_2 = get_strike_barrier(price, vol, bot_option_type, bot_group)
     v1, v2 = get_v1_v2(ticker, price, spot_date, t, r, q, strike, strike_2)
 
-    option_price = uno.Rev_Conv(price, strike, strike_2, t, r, q, v1, v2)
+    option_price = uno.Rev_Conv(price, strike, strike_2, t/365, r, q, v1, v2)
     option_price = np.nan_to_num(option_price, nan=0)
     potential_loss = (strike_2-strike) / price
     targeted_profit = -1 * option_price / price
-    delta = uno.deltaRC(price, strike, strike_2, t, r, q, v1, v2)
+    delta = uno.deltaRC(price, strike, strike_2, t/365, r, q, v1, v2)
     delta = np.nan_to_num(delta, nan=0)
     share_num = investment_amount / price
-    data['last_hedge_delta']=delta
-    data['option_price']=option_price
-    data['t']=t
-    data['r']=r
-    data['q']=q
-    data['strike']=strike
-    data['strike_2']=strike_2
-    data['v1']=v1
-    data['v2']=v2
+    data["last_hedge_delta"]=delta
+    data["option_price"]=option_price
+    data["t"]=t
+    data["r"]=r
+    data["q"]=q
+    data["strike"]=strike
+    data["strike_2"]=strike_2
+    data["v1"]=v1
+    data["v2"]=v2
     data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
-    data['vol'] = vol
-    data['share_num'] = math.floor(delta * share_num)
-    data['max_loss_pct'] = potential_loss
-    data['max_loss_pct_display'] = round(data['max_loss_pct'] * 100, 2)
-    data['max_loss_amount'] = round((strike_2 - strike) * data['share_num'], int(digits))
-    data['max_loss_price'] = round(strike_2, int(digits))
-    data['target_profit_pct'] = targeted_profit
-    data['target_profit_pct_display'] = round(data['target_profit_pct'] * 100, 2)
-    data['target_profit_price'] = round(((-1 * option_price) + price), int(digits))
-    data['target_profit_amount'] = round(option_price * data['share_num'], int(digits)) * -1
-    data['bot_cash_balance'] = round(investment_amount - (data['share_num'] * price), 2)
+    data["vol"] = vol
+    data["share_num"] = math.floor(delta * share_num)
+    data["max_loss_pct"] = potential_loss
+    data["max_loss_pct_display"] = round(data["max_loss_pct"] * 100, 2)
+    data["max_loss_amount"] = round((strike_2 - strike) * data["share_num"], int(digits))
+    data["max_loss_price"] = round(strike_2, int(digits))
+    data["target_profit_pct"] = targeted_profit
+    data["target_profit_pct_display"] = round(data["target_profit_pct"] * 100, 2)
+    data["target_profit_price"] = round(((-1 * option_price) + price), int(digits))
+    data["target_profit_amount"] = round(option_price * data["share_num"], int(digits)) * -1
+    data["bot_cash_balance"] = round(investment_amount - (data["share_num"] * price), 2)
     return data
 
 def get_uno_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, price, bot_option_type, bot_group):
@@ -259,16 +259,16 @@ def get_uno_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, p
     expiry_date = check_date(expiry_date)
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
-        'price': price,
+        "price": price,
     }
     data["t"], data["r"], data["q"] = get_trq(ticker, expiry_date, spot_date, currency_code)
     data["vol"] = get_vol(ticker, spot_date, data["t"], data["r"], data["q"], time_to_exp)
     data["strike"], data["barrier"] = get_strike_barrier(price,  data["vol"], bot_option_type, bot_group)
     data["rebate"] = data["barrier"] - data["strike"]
     data["v1"], data["v2"] = get_v1_v2(ticker, price, spot_date, data["t"], data["r"], data["q"], data["strike"], data["barrier"])
-    delta = uno.deltaUnOC(price, data["strike"], data["barrier"], data["rebate"], data["t"], data["r"], data["q"], data["v1"], data["v2"])
+    delta = uno.deltaUnOC(price, data["strike"], data["barrier"], data["rebate"], data["t"]/365, data["r"], data["q"], data["v1"], data["v2"])
     data["delta"] = np.nan_to_num(delta, nan=0)
-    option_price = uno.Up_Out_Call(price, data["strike"], data["barrier"], data["rebate"], data["t"], data["r"], data["q"], data["v1"], data["v2"])
+    option_price = uno.Up_Out_Call(price, data["strike"], data["barrier"], data["rebate"], data["t"]/365, data["r"], data["q"], data["v1"], data["v2"])
     data["option_price"] = np.nan_to_num(option_price, nan=0)
     data["potential_loss"] = -1 * option_price / price
     data["targeted_profit"] = (data["rebate"]) / price
@@ -290,7 +290,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     expiry_date = check_date(expiry_date)
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
-        'price': price,
+        "price": price,
     }
 
     t, r, q = get_trq(ticker, expiry_date, spot_date, currency_code)
@@ -298,34 +298,34 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     strike, barrier = get_strike_barrier(price, vol, bot_option_type, bot_group)
     rebate = barrier - strike
     v1, v2 = get_v1_v2(ticker, price, spot_date, t, r, q, strike, barrier)
-    delta = uno.deltaUnOC(price, strike, barrier, rebate, t, r, q, v1, v2)
+    delta = uno.deltaUnOC(price, strike, barrier, rebate, t/365, r, q, v1, v2)
     delta = np.nan_to_num(delta, nan=0)
-    option_price = uno.Up_Out_Call(price, strike, barrier, rebate, t, r, q, v1, v2)
+    option_price = uno.Up_Out_Call(price, strike, barrier, rebate, t/365, r, q, v1, v2)
     option_price = np.nan_to_num(option_price, nan=0)
     potential_loss = -1 * option_price / price
     targeted_profit = (barrier-strike) / price
     share_num = investment_amount / price
-    data['option_price']=option_price
-    data['t']=t
-    data['last_hedge_delta']=delta
-    data['r']=r
-    data['q']=q
-    data['strike']=strike
-    data['barrier']=barrier
-    data['v1']=v1
-    data['v2']=v2
+    data["option_price"]=option_price
+    data["t"]=t
+    data["last_hedge_delta"]=delta
+    data["r"]=r
+    data["q"]=q
+    data["strike"]=strike
+    data["barrier"]=barrier
+    data["v1"]=v1
+    data["v2"]=v2
     data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
-    data['share_num'] = math.floor(delta * share_num)
-    data['max_loss_pct'] = potential_loss
-    data['vol'] = vol
-    data['max_loss_pct_display'] = round(data['max_loss_pct'] * 100, 2)
-    data['max_loss_amount'] = round(option_price * data['share_num'], int(digits)) * -1
-    data['max_loss_price'] = round(price - option_price, int(digits))
-    data['target_profit_pct'] = targeted_profit
-    data['target_profit_pct_display'] = round(data['target_profit_pct'] * 100, 2)
-    data['target_profit_price'] = round(barrier, int(digits))
-    data['target_profit_amount'] = round(rebate * data['share_num'], int(digits))
-    data['bot_cash_balance'] = round(investment_amount - (data['share_num'] * price), 2)
+    data["share_num"] = math.floor(delta * share_num)
+    data["max_loss_pct"] = potential_loss
+    data["vol"] = vol
+    data["max_loss_pct_display"] = round(data["max_loss_pct"] * 100, 2)
+    data["max_loss_amount"] = round(option_price * data["share_num"], int(digits)) * -1
+    data["max_loss_price"] = round(price - option_price, int(digits))
+    data["target_profit_pct"] = targeted_profit
+    data["target_profit_pct_display"] = round(data["target_profit_pct"] * 100, 2)
+    data["target_profit_price"] = round(barrier, int(digits))
+    data["target_profit_amount"] = round(rebate * data["share_num"], int(digits))
+    data["bot_cash_balance"] = round(investment_amount - (data["share_num"] * price), 2)
     return data
 
 def get_vol_by_date(ticker, trading_day):
