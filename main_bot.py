@@ -14,35 +14,45 @@ from main_executive import (
 if __name__ == "__main__":
     print("Start Process")
 
-    # option_maker_history_ucdc(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=5, run_number=0)
-    # option_maker_history_ucdc(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=5, run_number=1)
-    # option_maker_history_ucdc(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=5, run_number=2)
-    # option_maker_history_ucdc(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=5, run_number=3)
-    # option_maker_history_ucdc(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=5, run_number=4)
+    # option_maker_history_ucdc(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=3, run_number=0)
+    # option_maker_history_ucdc(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=3, run_number=1)
+    # option_maker_history_ucdc(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=3, run_number=2)
 
-    # option_maker_history_ucdc(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=5, run_number=0)
-    # option_maker_history_ucdc(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=5, run_number=1)
-    # option_maker_history_ucdc(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=5, run_number=2)
-    # option_maker_history_ucdc(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=5, run_number=3)
-    # option_maker_history_ucdc(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=5, run_number=4)
+    # option_maker_history_ucdc(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=3, run_number=0)
+    # option_maker_history_ucdc(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=3, run_number=1)
+    # option_maker_history_ucdc(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=3, run_number=2)
 
-    # option_maker_history_ucdc(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=5, run_number=0)
-    # option_maker_history_ucdc(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=5, run_number=1)
-    # option_maker_history_ucdc(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=5, run_number=2)
-    # option_maker_history_ucdc(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=5, run_number=3)
-    # option_maker_history_ucdc(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=5, run_number=4)
+    # option_maker_history_ucdc(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=3, run_number=0)
+    # option_maker_history_ucdc(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=3, run_number=1)
+    # option_maker_history_ucdc(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=3, run_number=2)
 
-    # option_maker_history_ucdc(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=5, run_number=0)
-    # option_maker_history_ucdc(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=5, run_number=1)
-    # option_maker_history_ucdc(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=5, run_number=2)
-    # option_maker_history_ucdc(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=5, run_number=3)
-    # option_maker_history_ucdc(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=5, run_number=4)
+    # option_maker_history_ucdc(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=3, run_number=0)
+    # option_maker_history_ucdc(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=3, run_number=1)
+    # option_maker_history_ucdc(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=3, run_number=2)
+    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=3, run_number=0)
+    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=3, run_number=1)
+    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=3, run_number=2)
 
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=5, run_number=0)
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=5, run_number=1)
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=5, run_number=2)
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=5, run_number=3)
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=5, run_number=4)
+    # option_maker_history_uno(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=3, run_number=0)
+    # option_maker_history_uno(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=3, run_number=1)
+    # option_maker_history_uno(currency_code=["KRW"], null_filler=True, infer=True, total_no_of_runs=3, run_number=2)
+
+    # option_maker_history_uno(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=3, run_number=0)
+    # option_maker_history_uno(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=3, run_number=1)
+    # option_maker_history_uno(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=3, run_number=2)
+
+    # option_maker_history_uno(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=3, run_number=0)
+    # option_maker_history_uno(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=3, run_number=1)
+    # option_maker_history_uno(currency_code=["CNY"], null_filler=True, infer=True, total_no_of_runs=3, run_number=2)
+
+    # option_maker_history_uno(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=3, run_number=0)
+    # option_maker_history_uno(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=3, run_number=1)
+    # option_maker_history_uno(currency_code=["USD"], null_filler=True, infer=False, total_no_of_runs=3, run_number=2)
+
+    # option_maker_history_uno(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=3, run_number=0)
+    # option_maker_history_uno(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=3, run_number=1)
+    # option_maker_history_uno(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=3, run_number=2)
+
 
 
 
@@ -86,13 +96,13 @@ if __name__ == "__main__":
     # option_maker_ucdc_check_new_ticker(currency_code=["EUR"], option_maker=True, infer=True)
     # option_maker_ucdc_check_new_ticker(currency_code=["USD"], option_maker=True, infer=False)
 
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=5, run_number=0)
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=5, run_number=1)
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=5, run_number=2)
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=5, run_number=3)
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=5, run_number=4)
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=5, run_number=5)
-    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=8, run_number=5)
+    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=3, run_number=0)
+    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=3, run_number=1)
+    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=3, run_number=2)
+    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=3, run_number=3)
+    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=3, run_number=4)
+    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=3, run_number=3)
+    # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=8, run_number=3)
     # option_maker_history_ucdc(currency_code=["EUR"], null_filler=True, infer=True, total_no_of_runs=8, run_number=7)
 
     # option_maker_history_uno(currency_code=["HKD"], null_filler=True, infer=True, total_no_of_runs=1, run_number=0)
