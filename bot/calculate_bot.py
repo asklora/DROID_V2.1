@@ -15,6 +15,7 @@ from general.table_name import (
     get_latest_vol_table_name, 
     get_master_tac_table_name)
 from bot import uno
+from global_vars import large_hedge, small_hedge, buy_prem, sell_prem
 
 def get_q(ticker, t):
     table_name = get_data_dividend_daily_rates_table_name()
@@ -381,3 +382,50 @@ def get_classic_vol_by_date(ticker, trading_day):
         "classic_vol": classic_vol
     }
     return data
+
+
+def get_uno_hedge(latest_spot_price, strike, delta, last_hedge_delta):
+    if latest_spot_price > strike:
+        if abs(delta - last_hedge_delta) > large_hedge:
+            last_hedge_delta =  delta
+
+    if latest_spot_price <= strike:
+        if abs(delta - last_hedge_delta) > small_hedge : 
+            last_hedge_delta =  delta
+    return last_hedge_delta
+
+def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
+    if currency_code in ["EUR", "USD", "0#.ETF", "0#.SPX", "0#.SXXE"]:
+        if abs(delta - last_hedge_delta) > large_hedge:
+            last_hedge_delta =  delta
+    else:
+        if abs(delta - last_hedge_delta) > small_hedge:
+            last_hedge_delta =  delta
+    return last_hedge_delta
+    
+def get_hedge_detail(ask_price, bid_price, share_num, last_share_num, delta, last_hedge_delta, hedge=False):
+    if(hedge):
+        hedge_shares = round(delta - last_hedge_delta, 0)
+        share_num = last_share_num + hedge_shares
+    else:
+        hedge_shares = round(last_hedge_delta - last_hedge_delta, 0)
+        share_num = last_share_num
+
+    if(hedge_shares> 0):
+        status = "buy"
+    elif(hedge_shares < 0):
+        status = "sell"
+    else:
+        status = "hold"
+    
+    if(status == "buy"):
+        hedge_price = ask_price
+        if(hedge_shares > 0):
+            hedge_price = buy_prem * ask_price
+    elif(status == "sell"):
+        hedge_price = bid_price
+        if(hedge_shares < 0):
+            hedge_price = sell_prem * bid_price
+    else:
+        hedge_price = 0
+    return share_num, hedge_shares, status, hedge_price
