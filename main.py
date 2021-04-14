@@ -1,4 +1,4 @@
-from bot.calculate_bot import get_uno
+from bot.calculate_bot import get_ucdc, get_uno
 from main_executive import daily_classic, daily_uno_ucdc
 from general.date_process import dateNow
 from general.sql_query import get_active_universe, get_universe_by_region
@@ -301,7 +301,10 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    # get_uno("AAPL.O", "USD" , "2021-06-11", "2021-04-13",0.16666 ,2000.0 ,131.24 ,"ITM" ,"UNO")
+    # hasil = get_uno("AAPL.O", "USD" , "2021-06-11", "2021-04-13",0.16666 ,2000.0 ,131.24 ,"ITM" ,"UNO")
+    # print(hasil)
+    # hasil = get_ucdc("AAPL.O", "USD" , "2021-06-11", "2021-04-13",0.16666 ,2000.0 ,131.24 ,"ATM" ,"UCDC")
+    # print(hasil)
     # update_currency_code_from_dss()
     # update_quandl_orats_from_quandl()
     # do_function("universe_populate")
