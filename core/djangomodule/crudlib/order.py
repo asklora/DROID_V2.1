@@ -47,7 +47,7 @@ def sync_postion(payload):
 
 def sync_perfromance(payload):
     try:
-        performance = PositionPerformance.objects.get(uid=payload['uid'])
+        performance = PositionPerformance.objects.get(id=payload['id'])
         for attrib, val in payload.items():
             field= performance._meta.get_field(attrib)
             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
