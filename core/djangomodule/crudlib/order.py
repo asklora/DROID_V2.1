@@ -7,15 +7,19 @@ def sync_order(payload):
         for attrib, val in payload.items():
             field= order._meta.get_field(attrib)
             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
-                attrib = f'{attrib}_id'
-            setattr(order, attrib,val)
+                setattr(order, f'{attrib}_id',val)
+            else:
+                setattr(order, attrib,val)
         order.save()
     except Order.DoesNotExist:
+        attribs_modifier = {}
         for attrib, val in payload.items():
             field= Order._meta.get_field(attrib)
             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
-                payload[f'{attrib}_id'] = payload.pop(attrib)
-        order = Order.objects.create(**payload)
+                attribs_modifier[f'{attrib}_id'] = val
+            else:
+                attribs_modifier[attrib]=val
+        order = Order.objects.create(**attribs_modifier)
     
     print(order)
 

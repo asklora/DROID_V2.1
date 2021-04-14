@@ -40,14 +40,7 @@ def order_signal(sender, instance, created, **kwargs):
                                 instance.created,bot.time_to_exp,instance.amount,instance.price,bot.bot_option_type,bot.bot_type.bot_type)
             instance.setup = setup
             instance.save()
-            instanceserialize = OrderSerializer(instance).data
-            print(instanceserialize)
-            data ={
-            'type':'function',
-            'module':'core.djangomodule.crudlib.order.sync_order',
-            'payload':dict(instanceserialize)
-            }
-            services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
+            
         # if not user can create the setup TP and SL
     elif created and not instance.is_init and instance.bot_id != 'stock':
         pass
@@ -92,6 +85,13 @@ def order_signal(sender, instance, created, **kwargs):
                 signal = PositionPerformance.objects.get(id=int(instance.signal_id))
                 signal.order_id = instance.uid
                 signal.save()
+    instanceserialize = OrderSerializer(instance).data
+    data ={
+    'type':'function',
+    'module':'core.djangomodule.crudlib.order.sync_order',
+    'payload':dict(instanceserialize)
+    }
+    services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
         
         
             
