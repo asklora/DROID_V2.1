@@ -17,6 +17,13 @@ from general.table_name import (
 from bot import uno
 from global_vars import large_hedge, small_hedge, buy_prem, sell_prem
 
+def check_date(dates):
+    if(type(dates) == str and len(dates) > 10):
+        dates = datetime.strptime(dates, "%Y-%m-%d %H:%M:%S")
+    elif(type(dates) == str and len(dates) == 10):
+        dates = datetime.strptime(dates, "%Y-%m-%d")
+    return dates
+
 def get_q(ticker, t):
     table_name = get_data_dividend_daily_rates_table_name()
     query = f"select * from {table_name} where t = {t} and ticker='{ticker}'"
@@ -30,6 +37,7 @@ def get_r(currency_code, t):
     return data.loc[0, "r"]
 
 def get_spot_date(spot_date, ticker):
+    spot_date = check_date(spot_date)
     table_name = get_master_tac_table_name()
     query = f"select max(trading_day) as max_date from {table_name} where ticker = {ticker} and spot_date>='{spot_date}' and day_status='trading_day'"
     data = read_query(query, table_name, cpu_counts=True)
@@ -51,7 +59,7 @@ def get_expiry_date(time_to_exp, spot_date, currency_code):
     - Returns:
         - datetime -> date
     """
-    
+    spot_date = check_date(spot_date)
     days = int(round((time_to_exp * 365), 0))
     expiry = spot_date + relativedelta(days=(days-1))
     # days = int(round((time_to_exp * 256), 0))
@@ -88,6 +96,7 @@ def get_strike_barrier(price, vol, bot_option_type, bot_group):
     return False
 
 def get_v1_v2(ticker, price, trading_day, t, r, q, strike, barrier):
+    trading_day = check_date(trading_day)
     status, obj = get_vol_by_date(ticker, trading_day)
     if status:
         v1 = uno.find_vol(strike / price, t, obj["atm_volatility_spot"], obj["atm_volatility_one_year"], obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
@@ -100,16 +109,15 @@ def get_v1_v2(ticker, price, trading_day, t, r, q, strike, barrier):
     return float(v1), float(v2)
 
 def get_trq(ticker, expiry, spot_date, currency_code):
-    if isinstance(expiry,str):
-        expiry = datetime.strptime(expiry, "%Y-%m-%d")
-    if isinstance(spot_date,str):
-        spot_date = datetime.strptime(spot_date, "%Y-%m-%d")
+    expiry = check_date(expiry)
+    spot_date = check_date(spot_date)
     t = (expiry - spot_date).days
     r = get_r(currency_code, t)
     q = get_q(ticker, t)
     return int(t), float(r), float(q)
 
 def get_vol(ticker, trading_day, t, r, q, time_to_exp):
+    trading_day = check_date(trading_day)
     status, obj = get_vol_by_date(ticker, trading_day)
     if status:
         print(obj)
@@ -127,7 +135,9 @@ def get_vol(ticker, trading_day, t, r, q, time_to_exp):
         vol = 0.2
     return float(vol)
 
-def get_classic(ticker, spot_date, time_to_exp, investment_amount, price,expiry_date):
+def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry_date):
+    spot_date = check_date(spot_date)
+    expiry_date = check_date(expiry_date)
     digits = max(min(4-len(str(int(price))), 2), -1)
     classic_vol_data = get_classic_vol_by_date(ticker, spot_date)
     classic_vol = classic_vol_data["classic_vol"]
@@ -162,6 +172,8 @@ def get_ucdc_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, 
     - bot_option_type -> str
     - bot_group -> str
     """
+    spot_date = check_date(spot_date)
+    expiry_date = check_date(expiry_date)
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         "price": price,
@@ -191,6 +203,8 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     - bot_group -> str
     - investment_amount -> str
     """
+    spot_date = check_date(spot_date)
+    expiry_date = check_date(expiry_date)
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         'price': price,
@@ -241,6 +255,8 @@ def get_uno_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, p
     - bot_option_type -> str
     - bot_group -> str
     """
+    spot_date = check_date(spot_date)
+    expiry_date = check_date(expiry_date)
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         'price': price,
@@ -270,6 +286,8 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     - bot_group -> str
     - investment_amount -> str
     """
+    spot_date = check_date(spot_date)
+    expiry_date = check_date(expiry_date)
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         'price': price,
@@ -311,6 +329,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     return data
 
 def get_vol_by_date(ticker, trading_day):
+    trading_day = check_date(trading_day)
     vol_table = get_data_vol_surface_table_name()
     vol_inferred_table = get_data_vol_surface_inferred_table_name()
     latest_vol_table = get_latest_vol_table_name()
@@ -352,6 +371,7 @@ def get_vol_by_date(ticker, trading_day):
     return True, data
 
 def get_classic_vol_by_date(ticker, trading_day):
+    trading_day = check_date(trading_day)
     vol_table = "classic_vol_history"
     latest_price_table = get_latest_price_table_name()
 
