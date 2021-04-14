@@ -37,8 +37,8 @@ def aws_batch(func):
                         jobQueue=batch_queue,
                         jobDefinition=batch_job_definition,
                         containerOverrides={
-                            'vcpus': 32,
-                            'memory': 200,
+                            'vcpus': 128,
+                            'memory': 32000,
                             'command': [
                                 "celery","-A","core.services","worker","-l","INFO",f"--hostname={host_name}","-Q","batch"
                             ]
