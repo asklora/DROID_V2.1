@@ -188,7 +188,7 @@ def get_ucdc_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, 
     data["potential_loss"] = (data["strike_2"]-data["strike"]) / price
     data["targeted_profit"] = -1 * option_price / price
     delta = uno.deltaRC(price, data["strike"], data["strike_2"], data["t"]/365, data["r"], data["q"], data["v1"], data["v2"])
-    data["delta"] = np.nan_to_num(data["delta"], nan=0)
+    data["delta"] = np.nan_to_num(delta, nan=0)
     return data
 
 def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group):
