@@ -99,9 +99,11 @@ def get_v1_v2(ticker, price, trading_day, t, r, q, strike, barrier):
     return float(v1), float(v2)
 
 def get_trq(ticker, expiry, spot_date, currency_code):
-    expiry = datetime.strptime(expiry, "%Y-%m-%d")
-    spot_date = datetime.strptime(spot_date, "%Y-%m-%d")
-    t = (expiry.date() - spot_date.date()).days
+    if isinstance(expiry,str):
+        expiry = datetime.strptime(expiry, "%Y-%m-%d")
+    if isinstance(spot_date,str):
+        spot_date = datetime.strptime(spot_date, "%Y-%m-%d")
+    t = (expiry - spot_date).days
     r = get_r(currency_code, t)
     q = get_q(ticker, t)
     return int(t), float(r), float(q)
@@ -136,7 +138,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price,expiry_
         "price": price,
     }
     data["vol"] = dur
-    data["expiry_date"] = expiry_date.date()
+    data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
     data["share_num"] = math.floor(investment_amount / price)
     data["max_loss_pct"] = - (dur * classic_vol * 1.25)
     data["max_loss_price"] = round(price * (1 + data["max_loss_pct"]), int(digits))
@@ -204,7 +206,16 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     delta = uno.deltaRC(price, strike, strike_2, t, r, q, v1, v2)
     delta = np.nan_to_num(delta, nan=0)
     share_num = investment_amount / price
-    data["expiry_date"] = expiry_date
+    data['last_hedge_delta']=delta
+    data['option_price']=option_price
+    data['t']=t
+    data['r']=r
+    data['q']=q
+    data['strike']=strike
+    data['strike_2']=strike_2
+    data['v1']=v1
+    data['v2']=v2
+    data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
     data['vol'] = vol
     data['share_num'] = math.floor(delta * share_num)
     data['max_loss_pct'] = potential_loss
@@ -275,7 +286,16 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     potential_loss = -1 * option_price / price
     targeted_profit = (barrier-strike) / price
     share_num = investment_amount / price
-    data["expiry_date"] = expiry_date
+    data['option_price']=option_price
+    data['t']=t
+    data['last_hedge_delta']=delta
+    data['r']=r
+    data['q']=q
+    data['strike']=strike
+    data['barrier']=barrier
+    data['v1']=v1
+    data['v2']=v2
+    data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
     data['share_num'] = math.floor(delta * share_num)
     data['max_loss_pct'] = potential_loss
     data['vol'] = vol
