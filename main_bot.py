@@ -114,14 +114,15 @@ if __name__ == "__main__":
     # option_maker_history_classic(currency_code=["CNY"], option_maker=True, null_filler=True)
     # option_maker_history_classic(currency_code=["USD"], option_maker=True, null_filler=True)
     # daily_classic(currency_code=["EUR"], option_maker=True, null_filler=True)
-    # bot_statistic_classic()
-
+    
+    # do_function("data_vol_surface_update")
     # do_function("bot_backtest_updates")
     # train_lebeler_model()
     # bot_ranking_history()
     # do_function("latest_bot_update")
     # bot_statistic_ucdc()
     # bot_statistic_uno()
+    # bot_statistic_classic()
 
 
     # daily_classic(currency_code=["USD"], option_maker=True, null_filler=True)
