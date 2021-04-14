@@ -16,10 +16,10 @@ from general.table_name import (
     get_master_tac_table_name)
 from bot import uno
 from global_vars import large_hedge, small_hedge, buy_prem, sell_prem
-
+import pandas as pd
 def check_date(dates):
     if(type(dates) == str and len(dates) > 10):
-        dates = datetime.strptime(dates, "%Y-%m-%d %H:%M:%S")
+        dates = pd.to_datetime(dates)
     elif(type(dates) == str and len(dates) == 10):
         dates = datetime.strptime(dates, "%Y-%m-%d")
     return dates
