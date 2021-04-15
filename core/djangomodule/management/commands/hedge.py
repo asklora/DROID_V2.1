@@ -26,6 +26,8 @@ class Command(BaseCommand):
                                 order.expiry,today,
                                     bot.time_to_exp,
                                 intraday_price,bot.bot_option_type,bot.bot_type.bot_type)
+                    bot_cash_balance = prev_performance.current_bot_cash_balance + ((prev_performance.share_num - order.share_num) * intraday_price)
+                    current_pnl_amt = prev_performance.current_pnl_amt + (intraday_price - prev_performance.last_live_price) * prev_performance.share_num
                 elif order.bot.is_ucdc():
                     detail = get_ucdc_detail(order.symbol.ticker,order.symbol.currency_code,
                                              order.expiry,today,bot.time_to_exp,intraday_price,
