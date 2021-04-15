@@ -24,6 +24,15 @@ class BotOptionType(models.Model):
     class Meta:
         managed = True
         db_table = "bot_option_type"
+        
+    def is_uno(self):
+        return self.bot_type.bot_type == 'UNO'
+    
+    def is_classic(self):
+        return self.bot_type.bot_type == 'CLASSIC'
+    
+    def is_ucdc(self):
+        return self.bot_type.bot_type == 'UCDC'
 
     def __str__(self):
         return f"{self.bot_type}-{self.bot_option_type}-{self.time_to_exp}"
