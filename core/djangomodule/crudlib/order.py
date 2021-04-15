@@ -23,7 +23,7 @@ def sync_order(payload):
     
     print(order)
 
-def sync_postion(payload):
+def sync_position(payload):
     try:
         postion = OrderPosition.objects.get(uid=payload['uid'])
         for attrib, val in payload.items():
@@ -45,7 +45,7 @@ def sync_postion(payload):
     
     print(postion)
 
-def sync_perfromance(payload):
+def sync_performance(payload):
     try:
         performance = PositionPerformance.objects.get(id=payload['id'])
         for attrib, val in payload.items():
