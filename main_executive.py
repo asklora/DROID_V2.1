@@ -335,7 +335,7 @@ def option_maker_daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, m
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
     if option_maker:
-        populate_bot_ucdc_backtest(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, mod=mod, infer=infer, daily=True)
+        populate_bot_ucdc_backtest(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, infer=infer, daily=True)
         print("Option creation is finished")
     if null_filler:
         fill_bot_backtest_ucdc(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, total_no_of_runs=total_no_of_runs, run_number=run_number)
@@ -349,7 +349,7 @@ def option_maker_history_ucdc(currency_code=None, time_to_exp=None, mod=False, o
     start_date = str_to_date(droid_start_date())
     end_date = str_to_date(dateNow())
     if option_maker:
-        populate_bot_ucdc_backtest(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, mod=mod, infer=infer, history=True)
+        populate_bot_ucdc_backtest(currency_code=currency_code, start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, mod=mod, infer=infer, history=True)
         print("Option creation is finished")
     if null_filler:
         fill_bot_backtest_ucdc(start_date=start_date, end_date=end_date, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, history=True, total_no_of_runs=total_no_of_runs, run_number=run_number)
