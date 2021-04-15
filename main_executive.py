@@ -325,7 +325,7 @@ def option_maker_ucdc_check_new_ticker(ticker=None, currency_code=None, time_to_
 
 def option_maker_daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
     time_to_exp = check_time_to_exp(time_to_exp)
-    print("{} : === OPTION MAKER UNO STARTED ===".format(dateNow()))
+    print("{} : === OPTION MAKER UCDC STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, ucdc=True)
     start_date = latest_dates_db["max_date"].min()
     end_date = str_to_date(dateNow())
@@ -339,8 +339,8 @@ def option_maker_daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, m
         print("Option creation is finished")
     if null_filler:
         fill_bot_backtest_ucdc(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, total_no_of_runs=total_no_of_runs, run_number=run_number)
-    print("{} : === OPTION MAKER UNO COMPLETED ===".format(dateNow()))
-    report_to_slack("{} : === OPTION MAKER UNO COMPLETED ===".format(dateNow()))
+    print("{} : === OPTION MAKER UCDC COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === OPTION MAKER UCDC COMPLETED ===".format(dateNow()))
 
 
 def option_maker_history_ucdc(currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
