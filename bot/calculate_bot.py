@@ -15,7 +15,7 @@ from general.table_name import (
     get_latest_vol_table_name, 
     get_master_tac_table_name)
 from bot import uno
-from global_vars import large_hedge, small_hedge, buy_prem, sell_prem
+from global_vars import large_hedge, small_hedge, buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem
 import pandas as pd
 # comment22
 def check_date(dates):
@@ -430,7 +430,7 @@ def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
             last_hedge_delta =  delta
     return last_hedge_delta
     
-def get_hedge_detail(ask_price, bid_price, last_share_num, delta, last_hedge_delta, hedge=False):
+def get_hedge_detail(ask_price, bid_price, last_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False):
     if(hedge):
         hedge_shares = round(delta - last_hedge_delta, 0)
         share_num = last_share_num + hedge_shares
@@ -444,7 +444,12 @@ def get_hedge_detail(ask_price, bid_price, last_share_num, delta, last_hedge_del
         status = "sell"
     else:
         status = "hold"
-    
+    if(uno):
+        buy_prem = buy_UNO_prem
+        sell_prem = sell_UNO_prem
+    else:
+        buy_prem = buy_UCDC_prem
+        sell_prem = sell_UCDC_prem
     if(status == "buy"):
         hedge_price = ask_price
         if(hedge_shares > 0):

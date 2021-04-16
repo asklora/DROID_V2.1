@@ -54,8 +54,10 @@ DROID_HISTORY_YEARS=4
 #Hedging
 large_hedge = 0.05
 small_hedge = 0.02
-buy_prem = 1.005
-sell_prem = 0.995
+buy_UCDC_prem = 1.005
+sell_UCDC_prem = 0.995
+buy_UNO_prem = 1.015
+sell_UNO_prem = 0.99
 
 # BOT BACKTEST VARIABEL
 null_per = 5

@@ -75,7 +75,7 @@ def create_performance(price_data, position, latest_price=False):
         delta = uno.deltaUnOC(live_price, strike, barrier, rebate, t, r, q, v1, v2)
         # share_num = math.floor(delta * position.share_num)
         last_hedge_delta = get_uno_hedge(live_price, strike, delta, last_performance.last_hedge_delta)
-        share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, live_price, last_performance.share_num, delta, last_hedge_delta, hedge=(last_hedge_delta==delta))
+        share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, live_price, last_performance.share_num, delta, last_hedge_delta, hedge=(last_hedge_delta==delta), uno=True)
 
         bot_cash_balance = last_performance.current_bot_cash_balance + ((last_performance.share_num - share_num) * live_price)
         current_pnl_amt = last_performance.current_pnl_amt + (live_price - last_performance.last_live_price) * last_performance.share_num
