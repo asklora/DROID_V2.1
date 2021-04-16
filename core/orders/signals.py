@@ -116,22 +116,22 @@ def order_signal(sender, instance, created, **kwargs):
     services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
         
 
-@receiver(post_save, sender=OrderPosition)
-def order_position_signal(sender, instance, created, **kwargs):
-    instanceserialize = OrderPositionSerializer(instance).data
-    data ={
-    'type':'function',
-    'module':'core.djangomodule.crudlib.order.sync_position',
-    'payload':dict(instanceserialize)
-    }
-    services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
+# @receiver(post_save, sender=OrderPosition)
+# def order_position_signal(sender, instance, created, **kwargs):
+#     instanceserialize = OrderPositionSerializer(instance).data
+#     data ={
+#     'type':'function',
+#     'module':'core.djangomodule.crudlib.order.sync_position',
+#     'payload':dict(instanceserialize)
+#     }
+#     services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
 
-@receiver(post_save, sender=PositionPerformance)
-def order_perfromance_signal(sender, instance, created, **kwargs):
-    instanceserialize = PositionPerformanceSerializer(instance).data
-    data ={
-    'type':'function',
-    'module':'core.djangomodule.crudlib.order.sync_performance',
-    'payload':dict(instanceserialize)
-    }
-    services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora',countdown=5)
+# @receiver(post_save, sender=PositionPerformance)
+# def order_perfromance_signal(sender, instance, created, **kwargs):
+#     instanceserialize = PositionPerformanceSerializer(instance).data
+#     data ={
+#     'type':'function',
+#     'module':'core.djangomodule.crudlib.order.sync_performance',
+#     'payload':dict(instanceserialize)
+#     }
+#     services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora',countdown=5)

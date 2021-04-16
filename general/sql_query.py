@@ -24,8 +24,9 @@ currency_table = get_currency_table_name()
 fundamentals_score_table = get_fundamental_score_table_name()
 universe_rating_table = get_universe_rating_table_name()
 
-def read_query(query, table=universe_table, cpu_counts=False,db_from=None):
-    print(f"Get Data From Database on {table} table")
+def read_query(query, table=universe_table, cpu_counts=False,db_from=None, prints=True):
+    if(prints):
+        print(f"Get Data From Database on {table} table")
     if db_from == 'droidv1':
         dbcon = droid_db_read
     else:
@@ -38,7 +39,8 @@ def read_query(query, table=universe_table, cpu_counts=False,db_from=None):
         data = pd.read_sql(query, con=conn)
     engine.dispose()
     data = pd.DataFrame(data)
-    print("Total Data = " + str(len(data)))
+    if(prints):
+        print("Total Data = " + str(len(data)))
     return data
 
 def check_start_end_date(start_date, end_date):

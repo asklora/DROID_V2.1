@@ -4,7 +4,7 @@ from core.orders.models import OrderPosition, PositionPerformance
 # from core.classic_droid.celery import app
 
 def final(price_data, position, latest_price=False):
-    performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("timestamp")
+    performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
     if(latest_price):
         today = price_data.last_date
         live_price = price_data.close
@@ -59,7 +59,7 @@ def create_performance(price_data, position, latest_price=False):
         trading_day = price_data.trading_day
 
     try:
-        last_performance = PositionPerformance.objects.filter(order_id=position.order_id).latest("timestamp")
+        last_performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
     except PositionPerformance.DoesNotExist:
         last_performance = False
 
@@ -73,10 +73,8 @@ def create_performance(price_data, position, latest_price=False):
     current_pnl_ret = (current_pnl_amt + position.bot_cash_balance) / position.investment_amount
     current_investment_amount = live_price * position.share_num
     digits = max(min(5-len(str(int(position.entry_price))),2),-1)
-    start_date = trading_day.strftime("%Y-%m-%d")
-    timestamps = datetime.strptime(start_date, "%Y-%m-%d")
     performance =PositionPerformance.objects.create(
-        position=position,
+        position_uid=position,
         share_num=share_num,
         last_live_price=round(live_price,2),
         last_spot_price=position.entry_price,
@@ -84,7 +82,6 @@ def create_performance(price_data, position, latest_price=False):
         current_pnl_amt=round(current_pnl_amt,digits),
         current_investment_amount=round(current_investment_amount,2),
         current_bot_cash_balance=  round(position.bot_cash_balance,2),
-        timestamp=timestamps,
         updated= trading_day,
         created= trading_day,
         last_hedge_delta = 100
@@ -99,7 +96,7 @@ def classic_position_check(position_uid):
     try:
         position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
         try:
-            performance = PositionPerformance.objects.filter(order_id=position.order_id).latest("timestamp")
+            performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
             trading_day = performance.created
         except PositionPerformance.DoesNotExist:
             performance = False
