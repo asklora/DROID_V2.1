@@ -33,14 +33,14 @@ def order_signal(sender, instance, created, **kwargs):
         # if bot will create setup expiry , SL and TP
         if instance.bot_id != 'stock':
             bot = BotOptionType.objects.get(bot_id=instance.bot_id)
-            expiry = get_expiry_date(bot.time_to_exp,instance.created,instance.symbol.currency_code.currency_code)
+            expiry = get_expiry_date(bot.time_to_exp,instance.created,instance.ticker.currency_code.currency_code)
             if bot.bot_type.bot_type == 'CLASSIC':
-                setup = get_classic(instance.symbol.ticker,instance.created,bot.time_to_exp,instance.amount,instance.price,expiry)
+                setup = get_classic(instance.ticker.ticker,instance.created,bot.time_to_exp,instance.amount,instance.price,expiry)
             elif bot.bot_type.bot_type == 'UNO':
-                setup = get_uno(instance.symbol.ticker,instance.symbol.currency_code.currency_code, expiry,
+                setup = get_uno(instance.ticker.ticker,instance.ticker.currency_code.currency_code, expiry,
                                 instance.created,bot.time_to_exp,instance.amount,instance.price,bot.bot_option_type,bot.bot_type.bot_type)
             elif bot.bot_type.bot_type == 'UCDC':
-                setup = get_ucdc(instance.symbol.ticker,instance.symbol.currency_code.currency_code, expiry,
+                setup = get_ucdc(instance.ticker.ticker,instance.ticker.currency_code.currency_code, expiry,
                                 instance.created,bot.time_to_exp,instance.amount,instance.price,bot.bot_option_type,bot.bot_type.bot_type)
             instance.setup = setup
             instance.save()
@@ -57,8 +57,8 @@ def order_signal(sender, instance, created, **kwargs):
             elif instance.status == 'allocated':
                 spot_date =instance.placed_at.date()
             order = OrderPosition.objects.create(
-                user=instance.user,
-                symbol=instance.symbol,
+                user_id=instance.user,
+                ticker=instance.ticker,
                 bot_id=instance.bot_id,
                 spot_date=spot_date,
                 entry_price=instance.price,
@@ -66,7 +66,7 @@ def order_signal(sender, instance, created, **kwargs):
                 is_live=True
             )
             perf = PositionPerformance.objects.create(
-                position=order,
+                position_uid=order,
                 last_spot_price=instance.price,
                 last_live_price=instance.price
             )
