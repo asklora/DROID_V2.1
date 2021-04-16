@@ -11,7 +11,7 @@ from bot.calculate_bot import (
     get_vol)
 
 def final(price_data, position, latest_price=False):
-    performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("timestamp")
+    performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
     if(latest_price):
         today = price_data.last_date
         last_live_price = price_data.close
@@ -50,6 +50,8 @@ def final(price_data, position, latest_price=False):
         return False
 
 def create_performance(price_data, position, latest_price=False):
+    # new access bot reference
+    bot = position.bot
     expiry = position.expiry.strftime("%Y-%m-%d")
 
     if(latest_price):
@@ -59,7 +61,7 @@ def create_performance(price_data, position, latest_price=False):
         live_price = price_data.tri_adj_close
         trading_day = price_data.trading_day
     try:
-        last_performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("timestamp")
+        last_performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
     except PositionPerformance.DoesNotExist:
         last_performance = False
 
@@ -83,8 +85,8 @@ def create_performance(price_data, position, latest_price=False):
         current_pnl_amt = 0 # initial value
         share_num = round((position.investment_amount / live_price), 1)
         bot_cash_balance = position.bot_cash_balance
-        vol = get_vol(position.ticker.ticker, trading_day, t, r, q, position.bot_type.bot_horizon_month)
-        strike, barrier = get_strike_barrier(live_price, vol, position.option_type, position.bot_type.bot_group)
+        vol = get_vol(position.ticker.ticker, trading_day, t, r, q, bot.bot_type.bot_horizon_month)
+        strike, barrier = get_strike_barrier(live_price, vol, bot.option_type, bot.bot_type.bot_group)
         rebate = barrier - strike
         v1, v2 = get_v1_v2(position.ticker.ticker, live_price, trading_day, t, r, q, strike, barrier)
         delta = uno.deltaUnOC(live_price, strike, barrier, rebate, t, r, q, v1, v2)
@@ -133,7 +135,7 @@ def uno_position_check(position_uid):
     try:
         position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
         try:
-            performance = PositionPerformance.objects.filter(order_id=position.order_id).latest("timestamp")
+            performance = PositionPerformance.objects.filter(order_id=position.order_id).latest("created")
             trading_day = performance.created
         except PositionPerformance.DoesNotExist:
             performance = False
