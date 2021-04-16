@@ -65,7 +65,7 @@ def create_performance(price_data, position, latest_price=False):
     except PositionPerformance.DoesNotExist:
         last_performance = False
 
-    t, r, q = get_trq(position.ticker.ticker, expiry, trading_day, position.currency.currency_code)
+    t, r, q = get_trq(position.symbol.symbol, expiry, trading_day, position.currency.currency_code)
 
     if last_performance:
         strike = last_performance.strike
@@ -73,7 +73,7 @@ def create_performance(price_data, position, latest_price=False):
         option_price = last_performance.option_price
         rebate = barrier - strike
 
-        v1, v2 = get_v1_v2(position.ticker.ticker, live_price, trading_day, t, r, q, strike, barrier)
+        v1, v2 = get_v1_v2(position.symbol.symbol, live_price, trading_day, t, r, q, strike, barrier)
         delta = uno.deltaUnOC(live_price, strike, barrier, rebate, t, r, q, v1, v2)
         # share_num = math.floor(delta * position.share_num)
         last_hedge_delta = get_uno_hedge(live_price, strike, delta, last_performance.last_hedge_delta)
@@ -85,10 +85,10 @@ def create_performance(price_data, position, latest_price=False):
         current_pnl_amt = 0 # initial value
         share_num = round((position.investment_amount / live_price), 1)
         bot_cash_balance = position.bot_cash_balance
-        vol = get_vol(position.ticker.ticker, trading_day, t, r, q, bot.bot_type.bot_horizon_month)
+        vol = get_vol(position.symbol.symbol, trading_day, t, r, q, bot.bot_type.bot_horizon_month)
         strike, barrier = get_strike_barrier(live_price, vol, bot.option_type, bot.bot_type.bot_group)
         rebate = barrier - strike
-        v1, v2 = get_v1_v2(position.ticker.ticker, live_price, trading_day, t, r, q, strike, barrier)
+        v1, v2 = get_v1_v2(position.symbol.symbol, live_price, trading_day, t, r, q, strike, barrier)
         delta = uno.deltaUnOC(live_price, strike, barrier, rebate, t, r, q, v1, v2)
         share_num = math.floor(delta * share_num)
         bot_cash_balance = position.investment_amount - (share_num * live_price)
@@ -101,8 +101,6 @@ def create_performance(price_data, position, latest_price=False):
     position.share_num = round((position.investment_amount / live_price), 1)
     position.save()
     digits = max(min(5-len(str(int(position.entry_price))),2),-1)
-    # start_date = (latest_price.trading_day).strftime("%Y-%m-%d")
-    # timestamps = datetime.strptime(start_date, "%Y-%m-%d")
     perf = PositionPerformance.objects.create(
         order=position,
         share_num=share_num,
@@ -140,8 +138,8 @@ def uno_position_check(position_uid):
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
-        tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gt=trading_day).order_by("trading_day")
-        lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
+        tac_data = MasterTac.objects.filter(symbol=position.symbol, trading_day__gt=trading_day).order_by("trading_day")
+        lastest_price_data = LatestPrice.objects.get(symbol=position.symbol)
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day

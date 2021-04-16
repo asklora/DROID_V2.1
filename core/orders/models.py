@@ -12,17 +12,16 @@ from core.djangomodule.general import generate_id
 
 class Order(BaseTimeStampModel):
     order_uid = models.UUIDField(primary_key=True, editable=False)
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='user_order',db_column='user_id')
-    symbol = models.ForeignKey(
-        Universe, on_delete=models.CASCADE, related_name='symbol_order',db_column='ticker')
+    user_id = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="user_order",db_column="user_id")
+    ticker = models.ForeignKey(
+        Universe, on_delete=models.CASCADE, related_name="symbol_order",db_column="ticker")
     bot_id = models.CharField(max_length=255, null=True, blank=True)
     setup = models.JSONField(blank=True, null=True, default=dict)
     order_type = models.CharField(max_length=75, null=True, blank=True)
     placed = models.BooleanField(default=False)
-    status = models.CharField(max_length=10, null=True,
-                              blank=True, default='review')
-    side = models.CharField(max_length=10, default='buy')
+    status = models.CharField(max_length=10, null=True,blank=True, default="review")
+    side = models.CharField(max_length=10, default="buy")
     amount = models.FloatField()
     placed_at = models.DateTimeField(null=True, blank=True)
     filled_at = models.DateTimeField(null=True, blank=True)
@@ -62,10 +61,10 @@ class Order(BaseTimeStampModel):
 class OrderPosition(BaseTimeStampModel):
 
     position_uid = models.UUIDField(primary_key=True, editable=False)
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='user_position',db_column='user_id')
-    symbol = models.ForeignKey(
-        Universe, on_delete=models.CASCADE, related_name='ticker_ordered',db_column='ticker')
+    user_id = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="user_position",db_column="user_id")
+    ticker = models.ForeignKey(
+        Universe, on_delete=models.CASCADE, related_name="ticker_ordered",db_column="ticker")
     bot_id = models.CharField(
         max_length=255, null=True, blank=True)  # user = stock
     expiry = models.DateField(null=True, blank=True)
@@ -128,8 +127,8 @@ class OrderPosition(BaseTimeStampModel):
 
 class PositionPerformance(BaseTimeStampModel):
     performance_uid = models.CharField(max_length=255, primary_key=True,editable=False)
-    position = models.ForeignKey(
-        OrderPosition, on_delete=models.CASCADE, related_name='order_position',db_column='position_uid')
+    position_uid = models.ForeignKey(
+        OrderPosition, on_delete=models.CASCADE, related_name="order_position",db_column="position_uid")
     last_spot_price = models.FloatField(null=True, blank=True)
     last_live_price = models.FloatField(null=True, blank=True)
     current_pnl_ret = models.FloatField(null=True, blank=True)
@@ -150,7 +149,7 @@ class PositionPerformance(BaseTimeStampModel):
     # order response from third party
     order_summary = models.JSONField(null=True, blank=True)
     order_uid = models.ForeignKey(
-        'Order', null=True, blank=True, on_delete=models.SET_NULL,db_column='order_uid')
+        "Order", null=True, blank=True, on_delete=models.SET_NULL,db_column="order_uid")
     
     
     def save(self, *args, **kwargs):

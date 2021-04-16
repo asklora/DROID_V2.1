@@ -56,15 +56,15 @@ def create_performance(price_data, position, latest_price=False):
     except PositionPerformance.DoesNotExist:
         last_performance = False
 
-    t, r, q = get_trq(position.ticker, expiry, trading_day, position.ticker.currency_code)
+    t, r, q = get_trq(position.symbol, expiry, trading_day, position.symbol.currency_code)
     if last_performance:
-        currency_code = str(position.ticker.currency.currency_code)
+        currency_code = str(position.symbol.currency.currency_code)
         strike=last_performance.strike
         strike_2=last_performance.strike_2
         option_price = last_performance.option_price
         current_pnl_amt = last_performance.current_pnl_amt + (live_price - last_performance.last_live_price) * last_performance.share_num
 
-        v1, v2 = get_v1_v2(position.ticker, live_price, trading_day, t, r, q, strike, strike_2)
+        v1, v2 = get_v1_v2(position.symbol, live_price, trading_day, t, r, q, strike, strike_2)
         delta = uno.deltaRC(live_price, strike, strike_2, t, r, q, v1, v2)
         last_hedge_delta = get_ucdc_hedge(currency_code, delta, last_performance.last_hedge_delta)
         share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, live_price, last_performance.share_num, delta, last_hedge_delta, hedge=(last_hedge_delta == delta), ucdc=True)
@@ -72,9 +72,9 @@ def create_performance(price_data, position, latest_price=False):
         
     elif not last_performance:
         current_pnl_amt = 0 # initial value
-        vol = get_vol(position.ticker, trading_day, t, r, q, bot.bot_type.bot_horizon_month)
+        vol = get_vol(position.symbol, trading_day, t, r, q, bot.bot_type.bot_horizon_month)
         strike, strike_2 = get_strike_barrier(live_price, vol, bot.option_type, bot.bot_type.bot_group)
-        v1, v2 = get_v1_v2(position.ticker, live_price, trading_day, t, r, q, strike, strike_2)
+        v1, v2 = get_v1_v2(position.symbol, live_price, trading_day, t, r, q, strike, strike_2)
         option_price = get_option_price_ucdc(live_price, strike, strike_2, t, r, q, v1, v2)
         delta = uno.deltaRC(live_price, strike, strike_2, t, r, q, v1, v2)
         share_num = round((position.investment_amount / live_price), 1)
@@ -127,8 +127,8 @@ def ucdc_position_check(position_uid):
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
-        tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gt=trading_day).order_by("trading_day")
-        lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
+        tac_data = MasterTac.objects.filter(symbol=position.symbol, trading_day__gt=trading_day).order_by("trading_day")
+        lastest_price_data = LatestPrice.objects.get(symbol=position.symbol)
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day

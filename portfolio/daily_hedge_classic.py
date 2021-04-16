@@ -4,7 +4,7 @@ from core.orders.models import OrderPosition, PositionPerformance
 # from core.classic_droid.celery import app
 
 def final(price_data, position, latest_price=False):
-    performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("timestamp")
+    performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
     if(latest_price):
         today = price_data.last_date
         live_price = price_data.close
@@ -59,7 +59,7 @@ def create_performance(price_data, position, latest_price=False):
         trading_day = price_data.trading_day
 
     try:
-        last_performance = PositionPerformance.objects.filter(order_id=position.order_id).latest("timestamp")
+        last_performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
     except PositionPerformance.DoesNotExist:
         last_performance = False
 
@@ -84,7 +84,6 @@ def create_performance(price_data, position, latest_price=False):
         current_pnl_amt=round(current_pnl_amt,digits),
         current_investment_amount=round(current_investment_amount,2),
         current_bot_cash_balance=  round(position.bot_cash_balance,2),
-        timestamp=timestamps,
         updated= trading_day,
         created= trading_day,
         last_hedge_delta = 100
@@ -99,13 +98,13 @@ def classic_position_check(position_uid):
     try:
         position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
         try:
-            performance = PositionPerformance.objects.filter(order_id=position.order_id).latest("timestamp")
+            performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
             trading_day = performance.created
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
-        tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gt=trading_day).order_by("trading_day")
-        lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
+        tac_data = MasterTac.objects.filter(symbol=position.symbol, trading_day__gt=trading_day).order_by("trading_day")
+        lastest_price_data = LatestPrice.objects.get(symbol=position.symbol)
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day
