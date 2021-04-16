@@ -96,6 +96,12 @@ def get_strike_barrier(price, vol, bot_option_type, bot_group):
         return float(strike), float(strike_2)
     return False
 
+def get_option_price_uno(price, strike, barrier, rebate, t, r, q, v1, v2):
+    return uno.Up_Out_Call(price, strike, barrier, rebate, t/365, r, q, v1, v2)
+
+def get_option_price_ucdc(price, strike, strike_2, t, r, q, v1, v2):
+    return uno.Rev_Conv(price, strike, strike_2, t/365, r, q, v1, v2)
+
 def get_v1_v2(ticker, price, trading_day, t, r, q, strike, barrier):
     trading_day = check_date(trading_day)
     status, obj = get_vol_by_date(ticker, trading_day)
@@ -424,7 +430,7 @@ def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
             last_hedge_delta =  delta
     return last_hedge_delta
     
-def get_hedge_detail(ask_price, bid_price, share_num, last_share_num, delta, last_hedge_delta, hedge=False):
+def get_hedge_detail(ask_price, bid_price, last_share_num, delta, last_hedge_delta, hedge=False):
     if(hedge):
         hedge_shares = round(delta - last_hedge_delta, 0)
         share_num = last_share_num + hedge_shares

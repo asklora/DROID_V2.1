@@ -1,158 +1,224 @@
-from core.universe.models import Currency, Universe
-from core.master.models import LatestPrice, MasterTac
-from datetime import datetime
-from bot import uno
 import math
-from bot.calculate_bot import get_trq, get_strike_barrier, get_v1_v2, get_vol, get_spot_date
+from bot import uno
+from core.master.models import LatestPrice, MasterTac
+from core.orders.models import OrderPosition, PositionPerformance
+from bot.calculate_bot import (
+    get_hedge_detail,
+    get_trq, 
+    get_strike_barrier,
+    get_uno_hedge, 
+    get_v1_v2, 
+    get_vol)
 
-def final(master, porfolio):
-    latest_price = master
-    performance = PortfolioPerformance.objects.filter(order_id=porfolio.order_id).latest('timestamp')
-    #today = datetime.today().strftime('%Y-%m-%d')
-    # today = latest_price.trading_day + timedelta(days=1)
-    today = latest_price.trading_day
-    live_price = latest_price.tri_adjusted_price
+def final(price_data, position, latest_price=False):
+    performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("timestamp")
+    if(latest_price):
+        today = price_data.last_date
+        last_live_price = price_data.close
+        high = price_data.high
+    else:
+        today = price_data.trading_day
+        last_live_price = price_data.tri_adj_close
+        high = price_data.tri_adj_high
 
-    high = latest_price.tri_adj_high
     if high == 0 or high == None:
-        high = live_price
+        high = last_live_price
 
-    if high > porfolio.target_profit_price or today >= porfolio.expiry:
-        current_investment_amount=live_price * performance.share_num
-        current_pnl_amt = performance.current_pnl_amt + ((live_price - performance.last_live_price) * performance.share_num)
-        current_pnl_ret = (current_pnl_amt + porfolio.bot_cash_balance) / porfolio.investment_amount
-        porfolio.final_price = live_price
-        porfolio.current_inv_ret = (current_pnl_amt + porfolio.bot_cash_balance) / porfolio.investment_amount
-        porfolio.final_return = porfolio.current_inv_ret
-        porfolio.final_pnl_amount =  current_pnl_amt
-        porfolio.current_inv_amt = current_investment_amount
-        porfolio.event_date =today
-        porfolio.status = True
-        if high > porfolio.target_profit_price:
-            porfolio.event = "KO"
-        elif today >= porfolio.expiry:
+    if high > position.target_profit_price or today >= position.expiry:
+        current_investment_amount=last_live_price * performance.share_num
+        current_pnl_amt = performance.current_pnl_amt + ((last_live_price - performance.last_live_price) * performance.share_num)
+        # current_pnl_ret = (current_pnl_amt + position.bot_cash_balance) / position.investment_amount
+        position.final_price = last_live_price
+        position.current_inv_ret = (current_pnl_amt + position.bot_cash_balance) / position.investment_amount
+        position.final_return = position.current_inv_ret
+        position.final_pnl_amount =  current_pnl_amt
+        position.current_inv_amt = current_investment_amount
+        position.event_date =today
+        position.status = True
+        if high > position.target_profit_price:
+            position.event = "KO"
+        elif today >= position.expiry:
             if current_pnl_amt < 0:
-                porfolio.event = "Loss"
+                position.event = "Loss"
             elif current_pnl_amt >= 0:
-                porfolio.event = "Profit"
+                position.event = "Profit"
             else:
-                porfolio.event = "Bot Expired"
-        print("SAVED")
-        porfolio.save()
-        print("UDAH SAVE?")
+                position.event = "Bot Expired"
+        position.save()
         return True
     else:
         return False
 
-def performance(master, porfolio):
-    latest_price = master
-    
-    expiry = porfolio.expiry.strftime('%Y-%m-%d')
-    spot = latest_price.trading_day.strftime('%Y-%m-%d')
+def create_performance(price_data, position, latest_price=False):
+    expiry = position.expiry.strftime("%Y-%m-%d")
+
+    if(latest_price):
+        live_price = price_data.close
+        trading_day = price_data.last_date
+    else:
+        live_price = price_data.tri_adj_close
+        trading_day = price_data.trading_day
     try:
-        last_perf = PortfolioPerformance.objects.filter(order_id=porfolio.order_id).latest('timestamp')
-    except PortfolioPerformance.DoesNotExist:
-        last_perf = False
-    #New Changes
-    live_price = latest_price.tri_adjusted_price
+        last_performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("timestamp")
+    except PositionPerformance.DoesNotExist:
+        last_performance = False
 
-    t, r, q = get_trq(porfolio.stock_selected.ticker, expiry, spot, porfolio.currency.currency_code)
+    t, r, q = get_trq(position.stock_selected.ticker, expiry, trading_day, position.currency.currency_code)
 
-    if last_perf:
-        executive_option =UnoOptionsPrice.objects.filter(portfolio_id=porfolio.order_id).first()
-        strike=executive_option.strike
-        barrier=executive_option.barrier
-        rebate=barrier - strike
+    if last_performance:
+        strike = last_performance.strike
+        barrier = last_performance.barrier
+        option_price = last_performance.option_price
+        rebate = barrier - strike
 
-        v1, v2 = get_v1_v2(porfolio.stock_selected.ticker, live_price, spot, t, r, q, strike, barrier)
+        v1, v2 = get_v1_v2(position.stock_selected.ticker, live_price, trading_day, t, r, q, strike, barrier)
 
         delta = uno.deltaUnOC(live_price, strike, barrier, rebate, t, r, q, v1, v2)
 
-        share_num = math.floor(delta * porfolio.share_num)
+        share_num = math.floor(delta * position.share_num)
 
         spot_price = live_price
-        if spot_price > strike :
-            last_hedge_delta = last_perf.last_hedge_delta
-            if abs(last_hedge_delta - delta) <= ((v1 + v2)  / 15) :
-                share_num = last_perf.share_num
-                last_hedge_delta = last_hedge_delta
-            else :
-                last_hedge_delta = delta
-        else :
-            last_hedge_delta = delta
+        last_hedge_delta = get_uno_hedge(live_price, strike, delta, last_performance.last_hedge_delta)
+        share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, live_price, last_performance.share_num, delta, last_hedge_delta, hedge=(last_hedge_delta==delta))
 
-        bot_cash_balance = last_perf.current_bot_cash_balance + ((last_perf.share_num - share_num) * live_price)
-        current_pnl_amt = last_perf.current_pnl_amt + (live_price - last_perf.last_live_price) * last_perf.share_num
-    elif not last_perf:
+        bot_cash_balance = last_performance.current_bot_cash_balance + ((last_performance.share_num - share_num) * live_price)
+        current_pnl_amt = last_performance.current_pnl_amt + (live_price - last_performance.last_live_price) * last_performance.share_num
+    elif not last_performance:
         current_pnl_amt = 0 # initial value
-        share_num = round((porfolio.investment_amount / live_price), 1)
-        bot_cash_balance = porfolio.bot_cash_balance
-        vol = get_vol(porfolio.stock_selected.ticker, spot, t, r, q, porfolio.bot_type.bot_horizon_month)
-        strike, barrier = get_strike_barrier(live_price, vol, porfolio.option_type, porfolio.bot_type.bot_group)
+        share_num = round((position.investment_amount / live_price), 1)
+        bot_cash_balance = position.bot_cash_balance
+        vol = get_vol(position.stock_selected.ticker, spot, t, r, q, position.bot_type.bot_horizon_month)
+        strike, barrier = get_strike_barrier(live_price, vol, position.option_type, position.bot_type.bot_group)
         rebate = barrier - strike
-        v1, v2 = get_v1_v2(porfolio.stock_selected.ticker, live_price, spot, t, r, q, strike, barrier)
+        v1, v2 = get_v1_v2(position.stock_selected.ticker, live_price, spot, t, r, q, strike, barrier)
         delta = uno.deltaUnOC(live_price, strike, barrier, rebate, t, r, q, v1, v2)
         share_num = math.floor(delta * share_num)
-        bot_cash_balance = porfolio.investment_amount - (share_num * live_price)
+        bot_cash_balance = position.investment_amount - (share_num * live_price)
         last_hedge_delta = delta
             
-    current_pnl_ret = (current_pnl_amt + bot_cash_balance) / porfolio.investment_amount
+    current_pnl_ret = (current_pnl_amt + bot_cash_balance) / position.investment_amount
             #New Changes
     current_investment_amount = live_price * share_num
-    porfolio.bot_cash_balance = round(bot_cash_balance,2)
-    porfolio.share_num = round((porfolio.investment_amount / live_price), 1)
-    porfolio.save()
-    digits = max(min(5-len(str(int(porfolio.entry_price))),2),-1)
-    start_date = (latest_price.trading_day).strftime("%Y-%m-%d")
-    timestamps = datetime.strptime(start_date, "%Y-%m-%d")
-    perf = PortfolioPerformance.objects.create(
-        order=porfolio,
+    position.bot_cash_balance = round(bot_cash_balance,2)
+    position.share_num = round((position.investment_amount / live_price), 1)
+    position.save()
+    digits = max(min(5-len(str(int(position.entry_price))),2),-1)
+    # start_date = (latest_price.trading_day).strftime("%Y-%m-%d")
+    # timestamps = datetime.strptime(start_date, "%Y-%m-%d")
+    perf = PositionPerformance.objects.create(
+        order=position,
         share_num=share_num,
         last_live_price=round(live_price,2),
-        last_spot_price=porfolio.entry_price,
+        last_spot_price=position.entry_price,
         current_pnl_ret=round(current_pnl_ret,4),
         current_pnl_amt=round(current_pnl_amt,digits),
         current_investment_amount=round(current_investment_amount,2),
         current_bot_cash_balance=  round(bot_cash_balance,2),
-        timestamp=timestamps,
-        updated= latest_price.trading_day,
-        created= latest_price.trading_day,
-        last_hedge_delta = last_hedge_delta
+        updated= trading_day,
+        created= trading_day,
+        last_hedge_delta = last_hedge_delta,
+        v1 = v1,
+        v2 = v2,
+        r = r,
+        q = q,
+        strike = strike,
+        barrier = barrier,
+        delta = delta,
+        option_price = option_price
+        # order_summary,
+        # position_uid,
+        # order_uid,
+        # performance_uid,
         )
     perf.save()
-    if perf:
-        uno_model = UnoOptionsPrice.objects.create(
-            portfolio=porfolio,
-            v1 = v1,
-            v2 = v2,
-            r = r,
-            q = q,
-            strike = strike,
-            barrier = barrier,
-            delta = delta,
-            created = latest_price.trading_day,
-            updated = latest_price.trading_day,
-            created_time = timestamps
-            )
-@app.task
-def start_uno_trace(order_id):
-    try:
-        porfolio = PortfolioOrder.objects.get(order_id=order_id, status=False)
-        performance_data = PortfolioPerformance.objects.filter(order_id=order_id)
-        uno_model = UnoOptionsPrice.objects.filter(portfolio_id=order_id)
-        if(len(performance_data) > 1):
-            return {'status' : "Cannot Trace This Order ID"}
 
-        ticker = porfolio.stock_selected
-        spot_date = porfolio.spot_date
-        trading_day = get_spot_date(spot_date.strftime("%Y-%m-%d"), ticker).strftime("%Y-%m-%d")
-        Master_ohlctr = MasterOhlctr.objects.filter(ticker=ticker, trading_day__gte=trading_day).order_by('trading_day')
-        for master in Master_ohlctr:
-            performance(master, porfolio)
-            porfolio.save()
-            status = final(master, porfolio)
-            if status:
+# @app.task
+def start_uno_trace(position_uid):
+    try:
+        position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
+        try:
+            performance = PositionPerformance.objects.filter(order_id=position.order_id).latest("timestamp")
+            trading_day = performance.created
+        except PositionPerformance.DoesNotExist:
+            performance = False
+            trading_day = position.spot_date
+        tac_data = MasterTac.objects.filter(ticker=position.stock_selected, trading_day__gt=trading_day).order_by("trading_day")
+        lastest_price_data = LatestPrice.objects.get(ticker=position.stock_selected)
+        status = False
+        for tac in tac_data:
+            trading_day = tac.trading_day
+            print(f"{trading_day} done")
+            create_performance(tac, position)
+            position.save()
+            status = final(tac, position)
+            if status :
+                print(f"position end")
                 break
+        if(not status and trading_day < lastest_price_data.last_date):
+            trading_day = lastest_price_data.last_date
+            print(f"{trading_day} done")
+            create_performance(lastest_price_data, position, latest_price=True)
+            position.save()
+            status = final(lastest_price_data, position, latest_price=True)
+            if status :
+                print(f"position end")
         return True
-    except PortfolioOrder.DoesNotExist:
+    except OrderPosition.DoesNotExist:
         return False
+
+
+created
+updated
+position_uid
+investment_amount
+bot_id
+entry_price
+current_inv_amt
+is_live
+max_loss_pct
+max_loss_price
+max_loss_amount
+target_profit_pct
+target_profit_price
+target_profit_amount
+bot_cash_balance
+event
+event_date
+final_price
+final_return
+final_pnl_amount
+commision_fee
+commision_fee_sell
+user_id
+current_inv_ret
+current_returns
+current_values
+expiry
+ticker
+share_num
+spot_date
+vol
+
+
+created
+updated
+last_spot_price
+last_live_price
+current_pnl_ret
+current_pnl_amt
+current_bot_cash_balance
+share_num
+current_investment_amount
+last_hedge_delta
+option_price
+strike
+barrier
+r
+q
+v1
+v2
+strike_2
+order_summary
+position_uid
+order_uid
+performance_uid
