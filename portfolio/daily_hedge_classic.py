@@ -76,7 +76,7 @@ def create_performance(price_data, position, latest_price=False):
     start_date = trading_day.strftime("%Y-%m-%d")
     timestamps = datetime.strptime(start_date, "%Y-%m-%d")
     performance =PositionPerformance.objects.create(
-        position=position,
+        position_uid=position,
         share_num=share_num,
         last_live_price=round(live_price,2),
         last_spot_price=position.entry_price,
@@ -103,8 +103,8 @@ def classic_position_check(position_uid):
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
-        tac_data = MasterTac.objects.filter(symbol=position.symbol, trading_day__gt=trading_day).order_by("trading_day")
-        lastest_price_data = LatestPrice.objects.get(symbol=position.symbol)
+        tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gt=trading_day).order_by("trading_day")
+        lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day
