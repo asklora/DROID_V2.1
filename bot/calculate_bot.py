@@ -28,27 +28,27 @@ def check_date(dates):
 def get_q(ticker, t):
     table_name = get_data_dividend_daily_rates_table_name()
     query = f"select * from {table_name} where t = {t} and ticker='{ticker}'"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name, cpu_counts=True, prints=False)
     return data.loc[0, "q"]
 
 def get_r(currency_code, t):
     table_name = get_data_interest_daily_rates_table_name()
     query = f"select * from {table_name} where t = {t} and currency_code='{currency_code}'"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name, cpu_counts=True, prints=False)
     return data.loc[0, "r"]
 
 def get_spot_date(spot_date, ticker):
     spot_date = check_date(spot_date)
     table_name = get_master_tac_table_name()
     query = f"select max(trading_day) as max_date from {table_name} where ticker = {ticker} and spot_date>='{spot_date}' and day_status='trading_day'"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name, cpu_counts=True, prints=False)
     return data.loc[0, "max_date"]
 
 def get_holiday(non_working_day, currency_code):
     table_name = get_currency_calendar_table_name()
     query = f"select * from {table_name} "
     query+= f" where non_working_day='{non_working_day}' and currency_code in {tuple_data(currency_code)}"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name, cpu_counts=True, prints=False)
     return data
 
 def get_expiry_date(time_to_exp, spot_date, currency_code):
@@ -119,6 +119,8 @@ def get_trq(ticker, expiry, spot_date, currency_code):
     expiry = check_date(expiry)
     spot_date = check_date(spot_date)
     t = (expiry - spot_date).days
+    if(t == 0):
+        t = 1
     r = get_r(currency_code, t)
     q = get_q(ticker, t)
     return int(t), float(r), float(q)
@@ -345,19 +347,19 @@ def get_vol_by_date(ticker, trading_day):
     query += f"where vol.ticker = '{ticker}' and "
     query += f"vol.trading_day <= '{trading_day}' "
     query += f"order by trading_day DESC limit 1;"
-    data = read_query(query, vol_table, cpu_counts=True)
+    data = read_query(query, vol_table, cpu_counts=True, prints=False)
     if(len(data) != 1):
         query = f"select * "
         query += f"from {vol_inferred_table} vol "
         query += f"where vol.ticker = '{ticker}' and "
         query += f"vol.trading_day <= '{trading_day}' "
         query += f"order by trading_day DESC limit 1;"
-        data = read_query(query, vol_inferred_table, cpu_counts=True)
+        data = read_query(query, vol_inferred_table, cpu_counts=True, prints=False)
         if(len(data) != 1):
             query = f"select * "
             query += f"from {latest_vol_table} vol "
             query += f"where vol.ticker = '{ticker}' limit 1;"
-            data = read_query(query, latest_vol_table, cpu_counts=True)
+            data = read_query(query, latest_vol_table, cpu_counts=True, prints=False)
             if(len(data) != 1):
                 data = {
                     "ticker": ticker,
@@ -387,12 +389,12 @@ def get_classic_vol_by_date(ticker, trading_day):
     query += f"where vol.ticker = '{ticker}' and "
     query += f"vol.spot_date <= '{trading_day}' "
     query += f"order by spot_date DESC limit 1;"
-    data = read_query(query, vol_table, cpu_counts=True,db_from='droidv1')
+    data = read_query(query, vol_table, cpu_counts=True, db_from="droidv1", prints=False)
     if(len(data) != 1):
         query = f"select * "
         query += f"from {latest_price_table} vol "
         query += f"where vol.ticker = '{ticker}';"
-        data = read_query(query, latest_price_table, cpu_counts=True)
+        data = read_query(query, latest_price_table, cpu_counts=True, prints=False)
         if(len(data) != 1):
             classic_vol = 0.2
         else:
@@ -434,10 +436,15 @@ def get_hedge_detail(ask_price, bid_price, last_share_num, delta, last_hedge_del
     if(hedge):
         hedge_shares = round(delta - last_hedge_delta, 0)
         share_num = last_share_num + hedge_shares
+        # print(math.floor(delta * last_share_num))
     else:
         hedge_shares = round(last_hedge_delta - last_hedge_delta, 0)
         share_num = last_share_num
-
+    #     print(math.floor(last_hedge_delta * last_share_num))
+    # print(delta)
+    # print(last_hedge_delta)
+    # print(hedge_shares)
+    
     if(hedge_shares> 0):
         status = "buy"
     elif(hedge_shares < 0):

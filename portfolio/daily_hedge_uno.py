@@ -34,7 +34,7 @@ def final(price_data, position, latest_price=False):
         position.final_pnl_amount =  current_pnl_amt
         position.current_inv_amt = current_investment_amount
         position.event_date =today
-        position.status = True
+        position.is_live = False
         if high > position.target_profit_price:
             position.event = "KO"
         elif today >= position.expiry:
@@ -52,7 +52,6 @@ def final(price_data, position, latest_price=False):
 def create_performance(price_data, position, latest_price=False):
     # new access bot reference
     bot = position.bot
-    expiry = position.expiry.strftime("%Y-%m-%d")
 
     if(latest_price):
         live_price = price_data.close
@@ -65,7 +64,7 @@ def create_performance(price_data, position, latest_price=False):
     except PositionPerformance.DoesNotExist:
         last_performance = False
 
-    t, r, q = get_trq(position.ticker.ticker, expiry, trading_day, position.currency.currency_code)
+    t, r, q = get_trq(position.ticker.ticker, position.expiry, trading_day, position.ticker.currency_code)
 
     if last_performance:
         strike = last_performance.strike
@@ -101,7 +100,7 @@ def create_performance(price_data, position, latest_price=False):
     position.share_num = round((position.investment_amount / live_price), 1)
     position.save()
     digits = max(min(5-len(str(int(position.entry_price))),2),-1)
-    perf = PositionPerformance.objects.create(
+    performance = PositionPerformance.objects.create(
         position_uid=position,
         share_num=share_num,
         last_live_price=round(live_price,2),
@@ -119,21 +118,20 @@ def create_performance(price_data, position, latest_price=False):
         q = q,
         strike = strike,
         barrier = barrier,
-        delta = delta,
         option_price = option_price
         # order_summary,
         # position_uid,
         # order_uid,
         # performance_uid,
         )
-    perf.save()
+    performance.save()
 
 # @app.task
 def uno_position_check(position_uid):
     try:
         position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
         try:
-            performance = PositionPerformance.objects.filter(order_id=position.order_id).latest("created")
+            performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
             trading_day = performance.created
         except PositionPerformance.DoesNotExist:
             performance = False

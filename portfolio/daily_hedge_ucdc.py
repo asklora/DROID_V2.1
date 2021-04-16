@@ -24,7 +24,7 @@ def final(price_data, position, latest_price=False):
         live_price = price_data.tri_adj_close
     if today >= position.expiry:
         current_investment_amount=live_price * performance.share_num
-        current_pnl_amt = performance.current_pnl_amt + ((live_price - performance.live_price) * performance.share_num)
+        current_pnl_amt = performance.current_pnl_amt + ((live_price - performance.last_live_price) * performance.share_num)
         # current_pnl_ret = (current_pnl_amt + position.bot_cash_balance) / position.investment_amount
         position.final_price = live_price
         position.current_inv_ret = (current_pnl_amt + position.bot_cash_balance) / position.investment_amount
@@ -43,7 +43,7 @@ def final(price_data, position, latest_price=False):
 def create_performance(price_data, position, latest_price=False):
     # new access bot reference
     bot = position.bot
-    expiry = position.expiry.strftime("%Y-%m-%d")
+    expiry = position.expiry
 
     if(latest_price):
         live_price = price_data.close
@@ -58,7 +58,7 @@ def create_performance(price_data, position, latest_price=False):
 
     t, r, q = get_trq(position.ticker, expiry, trading_day, position.ticker.currency_code)
     if last_performance:
-        currency_code = str(position.ticker.currency.currency_code)
+        currency_code = str(position.ticker.currency_code)
         strike=last_performance.strike
         strike_2=last_performance.strike_2
         option_price = last_performance.option_price
@@ -88,8 +88,6 @@ def create_performance(price_data, position, latest_price=False):
     position.share_num = round((position.investment_amount / live_price), 1)
     position.save()
     digits = max(min(5-len(str(int(position.entry_price))),2),-1)
-    # start_date = (latest_price.trading_day).strftime("%Y-%m-%d")
-    # createds = datetime.strptime(start_date, "%Y-%m-%d")
     performance = PositionPerformance.objects.create(
         position_uid=position,
         share_num=share_num,
@@ -108,7 +106,6 @@ def create_performance(price_data, position, latest_price=False):
         q = q,
         strike = strike,
         strike_2 = strike_2,
-        delta = delta,
         option_price = option_price
         # order_summary,
         # position_uid,
@@ -127,7 +124,7 @@ def ucdc_position_check(position_uid):
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
-        tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gt=trading_day).order_by("trading_day")
+        tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry).order_by("trading_day")
         lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
         status = False
         for tac in tac_data:
