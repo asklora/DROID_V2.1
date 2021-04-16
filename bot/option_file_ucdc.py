@@ -22,7 +22,7 @@ from bot.data_download import (
     get_calendar_data, 
     get_currency_data, 
     get_master_tac_price)
-from global_vars import modified_delta_list
+from global_vars import modified_delta_list, max_vol, min_vol
 
 def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, infer=True, history=False, daily=False, new_ticker=False):
     if type(start_date) == type(None):
@@ -173,8 +173,8 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
                   options_df["atm_volatility_infinity"], 12, options_df["slope"], options_df["slope_inf"],
                   options_df["deriv"], options_df["deriv_inf"], options_df["r"], options_df["q"])
 
-    v0[v0 <= 0.2] = 0.2
-    v0[v0 >= 0.95] = 0.95
+    v0[v0 <= min_vol] = min_vol
+    v0[v0 >= max_vol] = max_vol
     options_df["vol_t"] = v0 * np.sqrt(options_df["time_to_exp"])
 
     options_df["option_type"] = "ATM"

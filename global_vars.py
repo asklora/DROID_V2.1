@@ -51,6 +51,11 @@ REPORT_HISTORY="Price_History"
 DLP_HISTORY_YEARS=12
 DROID_HISTORY_YEARS=4
 
+#vol ranges
+max_vol = 0.95
+min_vol = 0.2
+default_vol = 0.25
+
 #Hedging
 large_hedge = 0.05
 small_hedge = 0.02

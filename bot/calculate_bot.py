@@ -15,7 +15,7 @@ from general.table_name import (
     get_latest_vol_table_name, 
     get_master_tac_table_name)
 from bot import uno
-from global_vars import large_hedge, small_hedge, buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem
+from global_vars import large_hedge, small_hedge, buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem, max_vol, min_vol, default_vol
 import pandas as pd
 # comment22
 def check_date(dates):
@@ -111,8 +111,8 @@ def get_v1_v2(ticker, price, trading_day, t, r, q, strike, barrier):
         v2 = uno.find_vol(barrier / price, t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"], obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v2 = np.nan_to_num(v2, nan=0)
     else :
-        v1 = 0.2
-        v2 = 0.2
+        v1 = default_vol
+        v2 = default_vol
     return float(v1), float(v2)
 
 def get_trq(ticker, expiry, spot_date, currency_code):
@@ -133,7 +133,7 @@ def get_vol(ticker, trading_day, t, r, q, time_to_exp):
         v0 = uno.find_vol(1, t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
                           obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v0 = np.nan_to_num(v0, nan=0)
-        v0 = max(min(v0, 0.50), 0.20)
+        v0 = max(min(v0, max_vol), min_vol)
 
         # Code when we use business days
         # month = int(round((time_exp * 256), 0)) / 22
@@ -141,7 +141,7 @@ def get_vol(ticker, trading_day, t, r, q, time_to_exp):
         vol = v0 * (month/12)**0.5
 
     else:
-        vol = 0.2
+        vol = default_vol
     return float(vol)
 
 def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry_date):
@@ -396,15 +396,15 @@ def get_classic_vol_by_date(ticker, trading_day):
         query += f"where vol.ticker = '{ticker}';"
         data = read_query(query, latest_price_table, cpu_counts=True, prints=False)
         if(len(data) != 1):
-            classic_vol = 0.2
+            classic_vol = default_vol
         else:
             classic_vol = data.loc[0, "classic_vol"]
     else:
         classic_vol = data.loc[0, "classic_vol"]
     if classic_vol == None:
-        classic_vol = 0.2
+        classic_vol = default_vol
     if classic_vol == np.NaN:
-        classic_vol = 0.2
+        classic_vol = default_vol
     data = {
         "ticker": ticker,
         "trading_day": trading_day,
