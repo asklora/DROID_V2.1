@@ -6,9 +6,9 @@ from core.djangomodule.models import BaseTimeStampModel
 
 
 class Client(BaseTimeStampModel):
-    uid = models.CharField(max_length=255,primary_key=True,editable=False)
+    client_uid = models.CharField(max_length=255,primary_key=True,editable=False)
     client_name = models.CharField(max_length=255)
-    client_base_currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name="client_currency")
+    client_base_currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name="client_currency",db_column='currency_code')
     client_base_commision = models.FloatField(null=True,blank=True)
     use_currency = models.BooleanField(default=True)
     client_credentials = models.JSONField(null=True,blank=True)
@@ -41,8 +41,8 @@ class Client(BaseTimeStampModel):
     
 class UserClient(BaseTimeStampModel):
     uid = models.CharField(max_length=255,primary_key=True,editable=False)
-    user =models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_user")
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="client_related")
+    user =models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_user", db_column='user_id')
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="client_related",db_column='client_uid')
     extra_data = models.JSONField(null=True,blank=True)
 
     def __str__(self):
@@ -71,7 +71,7 @@ class UserClient(BaseTimeStampModel):
 
 class UniverseClient(BaseTimeStampModel):
     ticker = models.ForeignKey(Universe,on_delete=models.CASCADE, related_name="client_universe",db_column="ticker")
-    client = models.ForeignKey(Client,on_delete=models.CASCADE, related_name="universe_client",db_column="client")
+    client = models.ForeignKey(Client,on_delete=models.CASCADE, related_name="universe_client",db_column="client_uid")
 
     class Meta:
         managed = True
@@ -93,9 +93,8 @@ class ClientTopStock(BaseTimeStampModel):
 
     )
     uid = models.CharField(max_length=255,primary_key=True,editable=False)
-    client = models.ForeignKey(Client,on_delete=models.CASCADE, related_name="client_top_stock",db_column="client")
+    client = models.ForeignKey(Client,on_delete=models.CASCADE, related_name="client_top_stock",db_column="client_uid")
     ticker =models.ForeignKey(Universe,on_delete=models.CASCADE, related_name="universe_top_stock",db_column="ticker")
-    use_signal= models.BooleanField(default=False)
     spot_date=models.DateField(null=True,blank=True)
     expiry_date=models.DateField(null=True,blank=True)
     has_order = models.BooleanField(default=False)
@@ -104,16 +103,6 @@ class ClientTopStock(BaseTimeStampModel):
     execution_date=models.DateField(null=True,blank=True)
     completed_date=models.DateField(null=True,blank=True)
     event = models.CharField(max_length=50)
-    last_closing_price = models.FloatField(null=True, blank=True)
-    investment_amount = models.FloatField(null=True, blank=True)
-    vol_t = models.FloatField(null=True, blank=True)
-    max_loss_pct = models.FloatField(null=True, blank=True)
-    max_loss_price = models.FloatField(null=True, blank=True)
-    max_loss_amount = models.FloatField(null=True, blank=True)
-    target_profit_pct = models.FloatField(null=True, blank=True)
-    target_profit_price = models.FloatField(null=True, blank=True)
-    target_profit_amount = models.FloatField(null=True, blank=True)
-    execution_price = models.FloatField(null=True, blank=True)
     rank = models.IntegerField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -144,23 +133,3 @@ class ClientTopStock(BaseTimeStampModel):
 
     def __str__(self):
         return f'{self.ticker.ticker}-{self.client.client_name}'
-
-
-class ClientBotPerformance(BaseTimeStampModel):
-    order = models.ForeignKey(
-        ClientTopStock, on_delete=models.CASCADE, related_name="portfolio_perfomance")
-    last_live_price = models.FloatField(null=True, blank=True)
-    current_pnl_ret = models.FloatField(null=True, blank=True)
-    current_pnl_amt = models.FloatField(null=True, blank=True)
-    current_bot_cash_balance = models.FloatField(null=True, blank=True)
-    share = models.FloatField(null=True, blank=True)
-    current_investment_amount = models.FloatField(null=True, blank=True)
-    trading_day = models.DateField(null=True, blank=True)
-    last_hedge_delta = models.FloatField(null=True, blank=True)
-
-    class Meta:
-        managed = True
-        db_table = "client_bot_history"
-        verbose_name_plural = "Client Bot History"
-    def __str__(self):
-        return f'{self.order.uid}'

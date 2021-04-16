@@ -5,15 +5,17 @@ from core.user.models import User
 from core.bot.models import BotOptionType
 from django.db import IntegrityError
 import uuid
+from core.djangomodule.general import generate_id
+
 # Create your models here.
 
 
 class Order(BaseTimeStampModel):
-    uid = models.UUIDField(primary_key=True, editable=False)
+    order_uid = models.UUIDField(primary_key=True, editable=False)
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='user_order')
+        User, on_delete=models.CASCADE, related_name='user_order',db_column='user_id')
     symbol = models.ForeignKey(
-        Universe, on_delete=models.CASCADE, related_name='symbol_order')
+        Universe, on_delete=models.CASCADE, related_name='symbol_order',db_column='ticker')
     bot_id = models.CharField(max_length=255, null=True, blank=True)
     setup = models.JSONField(blank=True, null=True, default=dict)
     order_type = models.CharField(max_length=75, null=True, blank=True)
@@ -28,12 +30,17 @@ class Order(BaseTimeStampModel):
     order_summary = models.JSONField(blank=True, null=True, default=dict)
     is_init = models.BooleanField(default=True)
     price = models.FloatField()
-    signal_id = models.CharField(null=True, blank=True, max_length=255)
-
+    performance_uid = models.CharField(null=True, blank=True, max_length=255)
+    class Meta:
+        managed = True
+        db_table = "orders"
+        
+        
+        
     def save(self, *args, **kwargs):
 
-        if not self.uid:
-            self.uid = uuid.uuid4().hex
+        if not self.order_uid:
+            self.order_uid = uuid.uuid4().hex
             # using your function as above or anything else
             success = False
             failures = 0
@@ -45,7 +52,7 @@ class Order(BaseTimeStampModel):
                     if failures > 5:
                         raise KeyError
                     else:
-                        self.uid = uuid.uuid4().hex
+                        self.order_uid = uuid.uuid4().hex
                 else:
                     success = True
         else:
@@ -54,11 +61,11 @@ class Order(BaseTimeStampModel):
 
 class OrderPosition(BaseTimeStampModel):
 
-    uid = models.UUIDField(primary_key=True, editable=False)
+    position_uid = models.UUIDField(primary_key=True, editable=False)
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='user_position')
+        User, on_delete=models.CASCADE, related_name='user_position',db_column='user_id')
     symbol = models.ForeignKey(
-        Universe, on_delete=models.CASCADE, related_name='ticker_ordered')
+        Universe, on_delete=models.CASCADE, related_name='ticker_ordered',db_column='ticker')
     bot_id = models.CharField(
         max_length=255, null=True, blank=True)  # user = stock
     expiry = models.DateField(null=True, blank=True)
@@ -90,7 +97,7 @@ class OrderPosition(BaseTimeStampModel):
 
     class Meta:
         managed = True
-        db_table = "order_position"
+        db_table = "orders_position"
     
     @property
     def bot(self):
@@ -98,8 +105,8 @@ class OrderPosition(BaseTimeStampModel):
         return _bot
 
     def save(self, *args, **kwargs):
-        if not self.uid:
-            self.uid = uuid.uuid4().hex
+        if not self.position_uid:
+            self.position_uid = uuid.uuid4().hex
             # using your function as above or anything else
             success = False
             failures = 0
@@ -112,7 +119,7 @@ class OrderPosition(BaseTimeStampModel):
                         raise KeyError
                     else:
                         # looks like a collision, try another random value
-                        self.uid = uuid.uuid4().hex
+                        self.position_uid = uuid.uuid4().hex
                 else:
                     success = True
         else:
@@ -120,8 +127,9 @@ class OrderPosition(BaseTimeStampModel):
 
 
 class PositionPerformance(BaseTimeStampModel):
+    performance_uid = models.CharField(max_length=255, primary_key=True,editable=False)
     position = models.ForeignKey(
-        OrderPosition, on_delete=models.CASCADE, related_name='order_position')
+        OrderPosition, on_delete=models.CASCADE, related_name='order_position',db_column='position_uid')
     last_spot_price = models.FloatField(null=True, blank=True)
     last_live_price = models.FloatField(null=True, blank=True)
     current_pnl_ret = models.FloatField(null=True, blank=True)
@@ -141,12 +149,31 @@ class PositionPerformance(BaseTimeStampModel):
     strike_2 = models.FloatField(blank=True, null=True)
     # order response from third party
     order_summary = models.JSONField(null=True, blank=True)
-    order_id = models.ForeignKey(
-        'Order', null=True, blank=True, on_delete=models.SET_NULL)
-
+    order_uid = models.ForeignKey(
+        'Order', null=True, blank=True, on_delete=models.SET_NULL,db_column='order_uid')
+    
+    
+    def save(self, *args, **kwargs):
+        if not self.performance_uid:
+            self.performance_uid = generate_id(9)
+            # using your function as above or anything else
+        success = False
+        failures = 0
+        while not success:
+            try:
+                super(PositionPerformance, self).save(*args, **kwargs)
+            except IntegrityError:
+                failures += 1
+                if failures > 5:  # or some other arbitrary cutoff point at which things are clearly wrong
+                    raise KeyError
+                else:
+                    # looks like a collision, try another random value
+                    self.performance_uid = generate_id(9)
+            else:
+                success = True
     class Meta:
         managed = True
-        db_table = "order_position_performance"
+        db_table = "orders_position_performance"
 
     def __str__(self):
         return str(self.created)

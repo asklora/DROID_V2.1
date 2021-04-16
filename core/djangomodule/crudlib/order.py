@@ -3,7 +3,7 @@ from core.orders.models import Order,OrderPosition,PositionPerformance
 
 def sync_order(payload):
     try:
-        order = Order.objects.get(uid=payload['uid'])
+        order = Order.objects.get(order_uid=payload['order_uid'])
         for attrib, val in payload.items():
             field= order._meta.get_field(attrib)
             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
@@ -25,7 +25,7 @@ def sync_order(payload):
 
 def sync_position(payload):
     try:
-        postion = OrderPosition.objects.get(uid=payload['uid'])
+        postion = OrderPosition.objects.get(position_uid=payload['position_uid'])
         for attrib, val in payload.items():
             field= postion._meta.get_field(attrib)
             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
@@ -47,7 +47,7 @@ def sync_position(payload):
 
 def sync_performance(payload):
     try:
-        performance = PositionPerformance.objects.get(id=payload['id'])
+        performance = PositionPerformance.objects.get(performance_uid=payload['performance_uid'])
         for attrib, val in payload.items():
             field= performance._meta.get_field(attrib)
             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:

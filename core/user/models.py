@@ -89,110 +89,110 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_table = 'user_core'
 
 
-class Accountbalance(models.Model):
-    balance_id = models.CharField(
-        primary_key=True, max_length=300, blank=True, editable=False, unique=True)
-    user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name='user_balance')
-    amount = models.FloatField(default=0)
-    currency = models.ForeignKey(
-        Currency, on_delete=models.DO_NOTHING, related_name='user_currency', default='USD')
-    last_updated = models.DateTimeField(auto_now_add=True)
+# class Accountbalance(models.Model):
+#     balance_id = models.CharField(
+#         primary_key=True, max_length=300, blank=True, editable=False, unique=True)
+#     user = models.OneToOneField(
+#         User, on_delete=models.CASCADE, related_name='user_balance')
+#     amount = models.FloatField(default=0)
+#     currency = models.ForeignKey(
+#         Currency, on_delete=models.DO_NOTHING, related_name='user_currency', default='USD')
+#     last_updated = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return self.user.email
+#     def __str__(self):
+#         return self.user.email
 
-    def save(self, *args, **kwargs):
-        if self.amount == None:
-            self.amount = 0
-        if not self.balance_id:
-            self.balance_id = uuid.uuid4().hex
-            # using your function as above or anything else
-        success = False
-        failures = 0
-        while not success:
-            try:
-                super(Accountbalance, self).save(*args, **kwargs)
-            except IntegrityError:
-                failures += 1
-                if failures > 5:  # or some other arbitrary cutoff point at which things are clearly wrong
-                    raise KeyError
-                else:
-                    # looks like a collision, try another random value
-                    self.balance_id = uuid.uuid4().hex
-            else:
-                success = True
+#     def save(self, *args, **kwargs):
+#         if self.amount == None:
+#             self.amount = 0
+#         if not self.balance_id:
+#             self.balance_id = uuid.uuid4().hex
+#             # using your function as above or anything else
+#         success = False
+#         failures = 0
+#         while not success:
+#             try:
+#                 super(Accountbalance, self).save(*args, **kwargs)
+#             except IntegrityError:
+#                 failures += 1
+#                 if failures > 5:  # or some other arbitrary cutoff point at which things are clearly wrong
+#                     raise KeyError
+#                 else:
+#                     # looks like a collision, try another random value
+#                     self.balance_id = uuid.uuid4().hex
+#             else:
+#                 success = True
 
-    class Meta:
-        db_table = 'user_account_balance'
-
-
-class TransactionHistory(models.Model):
-    C = 'credit'
-    D = 'debit'
-    type_choice = (
-        (C, 'credit'),
-        (D, 'debit')
-    )
-    tr_id = models.CharField(max_length=500, editable=False)
-    balance_id = models.ForeignKey(Accountbalance, on_delete=models.CASCADE,
-                                   related_name='account_trasaction', db_column='balanceId')
-    tr_type = models.CharField(max_length=100, choices=type_choice)
-    tr_amount = models.FloatField(default=0)
-    description = models.TextField()
-    created = models.DateTimeField(auto_now=True)
-    updated = models.DateTimeField(auto_now_add=True)
-    bot_transaction = models.CharField(max_length=500, null=True, blank=True)
-
-    def __str__(self):
-        return f'{self.tr_type} - {self.balance_id.user.email}'
-
-    def save(self, *args, **kwargs):
-        if self.created == None:
-            self.created = datetime.now()
-        payload = {
-            'user': self.balance_id.user.email,
-            'transaction_type': self.tr_type,
-            'amount': self.tr_amount,
-            'balance_id': self.balance_id.balance_id,
-            'description': self.description,
-            'created': str(self.created)
-        }
-        token_id = jwt.encode(payload, settings.SECRET_KEY,
-                              algorithm='HS256').decode('utf-8')
-        token_id = token_id.replace('.', '|')
-        self.tr_amount = round(self.tr_amount, 2)
-        self.tr_id = token_id
-        super(TransactionHistory, self).save(*args, **kwargs)
-
-    class Meta:
-        db_table = 'user_transaction'
+#     class Meta:
+#         db_table = 'user_account_balance'
 
 
-class UserLogHistory(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='user_log_history')
-    name = models.CharField(max_length=255, null=True, blank=True)
-    email = models.CharField(max_length=255, null=True, blank=True)
-    login_time = models.TimeField(max_length=255, null=True, blank=True)
-    login_date = models.DateField(max_length=255, null=True, blank=True)
-    timeZone = models.CharField(max_length=255, null=True, blank=True)
+# class TransactionHistory(models.Model):
+#     C = 'credit'
+#     D = 'debit'
+#     type_choice = (
+#         (C, 'credit'),
+#         (D, 'debit')
+#     )
+#     tr_id = models.CharField(max_length=500, editable=False)
+#     balance_id = models.ForeignKey(Accountbalance, on_delete=models.CASCADE,
+#                                    related_name='account_trasaction', db_column='balanceId')
+#     tr_type = models.CharField(max_length=100, choices=type_choice)
+#     tr_amount = models.FloatField(default=0)
+#     description = models.TextField()
+#     created = models.DateTimeField(auto_now=True)
+#     updated = models.DateTimeField(auto_now_add=True)
+#     bot_transaction = models.CharField(max_length=500, null=True, blank=True)
 
-    def __str__(self):
-        date = str(self.login_time)
-        return f'{self.email} @{date}'
+#     def __str__(self):
+#         return f'{self.tr_type} - {self.balance_id.user.email}'
 
-    class Meta:
-        db_table = 'user_logs'
-        get_latest_by = "login_time"
-        ordering = ['-login_time', '-login_date']
-        verbose_name = 'USER LOG HISTORIE'
-        verbose_name_plural = 'USER LOG HISTORIES'
+#     def save(self, *args, **kwargs):
+#         if self.created == None:
+#             self.created = datetime.now()
+#         payload = {
+#             'user': self.balance_id.user.email,
+#             'transaction_type': self.tr_type,
+#             'amount': self.tr_amount,
+#             'balance_id': self.balance_id.balance_id,
+#             'description': self.description,
+#             'created': str(self.created)
+#         }
+#         token_id = jwt.encode(payload, settings.SECRET_KEY,
+#                               algorithm='HS256').decode('utf-8')
+#         token_id = token_id.replace('.', '|')
+#         self.tr_amount = round(self.tr_amount, 2)
+#         self.tr_id = token_id
+#         super(TransactionHistory, self).save(*args, **kwargs)
+
+#     class Meta:
+#         db_table = 'user_transaction'
 
 
-class UserActivity(User):
+# class UserLogHistory(models.Model):
+#     user = models.ForeignKey(
+#         User, on_delete=models.CASCADE, related_name='user_log_history')
+#     name = models.CharField(max_length=255, null=True, blank=True)
+#     email = models.CharField(max_length=255, null=True, blank=True)
+#     login_time = models.TimeField(max_length=255, null=True, blank=True)
+#     login_date = models.DateField(max_length=255, null=True, blank=True)
+#     timeZone = models.CharField(max_length=255, null=True, blank=True)
 
-    class Meta:
-        proxy = True
-        verbose_name = 'User activitie'
-        verbose_name_plural = 'User activities'
+#     def __str__(self):
+#         date = str(self.login_time)
+#         return f'{self.email} @{date}'
+
+#     class Meta:
+#         db_table = 'user_logs'
+#         get_latest_by = "login_time"
+#         ordering = ['-login_time', '-login_date']
+#         verbose_name = 'USER LOG HISTORIE'
+#         verbose_name_plural = 'USER LOG HISTORIES'
+
+
+# class UserActivity(User):
+
+#     class Meta:
+#         proxy = True
+#         verbose_name = 'User activitie'
+#         verbose_name_plural = 'User activities'
