@@ -14,13 +14,13 @@ PositionPerformanceSerializer)
 @receiver(pre_save, sender=Order)
 def order_signal_check(sender, instance, **kwargs):
     if instance.placed:
-        instance.placed_at =datetime.now()
+        # instance.placed_at =datetime.now()
         if instance.setup:
             if instance.setup['share_num'] == 0:
                 instance.status = 'allocated'
             elif instance.status == 'filled':
                 instance.status = 'filled'
-                instance.filled_at = datetime.now()
+                # instance.filled_at = datetime.now()
             else:
                 instance.status = 'pending'
 

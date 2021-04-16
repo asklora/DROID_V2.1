@@ -49,6 +49,8 @@ def final(price_data, position, latest_price=False):
         return False
 
 def create_performance(price_data, position, latest_price=False):
+    bot = position.bot
+    
     if(latest_price):
         live_price = price_data.close
         trading_day = price_data.last_date
