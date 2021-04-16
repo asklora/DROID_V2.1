@@ -63,7 +63,7 @@ def create_performance(price_data, position, latest_price=False):
     except PositionPerformance.DoesNotExist:
         last_performance = False
 
-    t, r, q = get_trq(position.stock_selected.ticker, expiry, trading_day, position.currency.currency_code)
+    t, r, q = get_trq(position.ticker.ticker, expiry, trading_day, position.currency.currency_code)
 
     if last_performance:
         strike = last_performance.strike
@@ -71,13 +71,9 @@ def create_performance(price_data, position, latest_price=False):
         option_price = last_performance.option_price
         rebate = barrier - strike
 
-        v1, v2 = get_v1_v2(position.stock_selected.ticker, live_price, trading_day, t, r, q, strike, barrier)
-
+        v1, v2 = get_v1_v2(position.ticker.ticker, live_price, trading_day, t, r, q, strike, barrier)
         delta = uno.deltaUnOC(live_price, strike, barrier, rebate, t, r, q, v1, v2)
-
-        share_num = math.floor(delta * position.share_num)
-
-        spot_price = live_price
+        # share_num = math.floor(delta * position.share_num)
         last_hedge_delta = get_uno_hedge(live_price, strike, delta, last_performance.last_hedge_delta)
         share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, live_price, last_performance.share_num, delta, last_hedge_delta, hedge=(last_hedge_delta==delta))
 
@@ -87,10 +83,10 @@ def create_performance(price_data, position, latest_price=False):
         current_pnl_amt = 0 # initial value
         share_num = round((position.investment_amount / live_price), 1)
         bot_cash_balance = position.bot_cash_balance
-        vol = get_vol(position.stock_selected.ticker, spot, t, r, q, position.bot_type.bot_horizon_month)
+        vol = get_vol(position.ticker.ticker, trading_day, t, r, q, position.bot_type.bot_horizon_month)
         strike, barrier = get_strike_barrier(live_price, vol, position.option_type, position.bot_type.bot_group)
         rebate = barrier - strike
-        v1, v2 = get_v1_v2(position.stock_selected.ticker, live_price, spot, t, r, q, strike, barrier)
+        v1, v2 = get_v1_v2(position.ticker.ticker, live_price, trading_day, t, r, q, strike, barrier)
         delta = uno.deltaUnOC(live_price, strike, barrier, rebate, t, r, q, v1, v2)
         share_num = math.floor(delta * share_num)
         bot_cash_balance = position.investment_amount - (share_num * live_price)
@@ -133,7 +129,7 @@ def create_performance(price_data, position, latest_price=False):
     perf.save()
 
 # @app.task
-def start_uno_trace(position_uid):
+def uno_position_check(position_uid):
     try:
         position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
         try:
@@ -142,8 +138,8 @@ def start_uno_trace(position_uid):
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
-        tac_data = MasterTac.objects.filter(ticker=position.stock_selected, trading_day__gt=trading_day).order_by("trading_day")
-        lastest_price_data = LatestPrice.objects.get(ticker=position.stock_selected)
+        tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gt=trading_day).order_by("trading_day")
+        lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day
@@ -165,60 +161,3 @@ def start_uno_trace(position_uid):
         return True
     except OrderPosition.DoesNotExist:
         return False
-
-
-created
-updated
-position_uid
-investment_amount
-bot_id
-entry_price
-current_inv_amt
-is_live
-max_loss_pct
-max_loss_price
-max_loss_amount
-target_profit_pct
-target_profit_price
-target_profit_amount
-bot_cash_balance
-event
-event_date
-final_price
-final_return
-final_pnl_amount
-commision_fee
-commision_fee_sell
-user_id
-current_inv_ret
-current_returns
-current_values
-expiry
-ticker
-share_num
-spot_date
-vol
-
-
-created
-updated
-last_spot_price
-last_live_price
-current_pnl_ret
-current_pnl_amt
-current_bot_cash_balance
-share_num
-current_investment_amount
-last_hedge_delta
-option_price
-strike
-barrier
-r
-q
-v1
-v2
-strike_2
-order_summary
-position_uid
-order_uid
-performance_uid
