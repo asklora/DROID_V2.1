@@ -22,7 +22,6 @@ def final(price_data, position, latest_price=False, force_sell=False):
 
     status_expiry = today >= position.expiry
     if(force_sell):
-        position.event = "Bot Expired"
         status_expiry = True
     # try catch klo error
     performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
@@ -37,7 +36,7 @@ def final(price_data, position, latest_price=False, force_sell=False):
         position.current_inv_amt = current_investment_amount
         position.event_date =today
         position.is_live = False
-        if today >= position.expiry:
+        if today >= position.expiry or force_sell:
             position.event = "Bot Expired"
         position.save()
         return True
