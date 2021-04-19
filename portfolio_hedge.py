@@ -12,6 +12,6 @@ def test():
             status = uno_position_check(position_uid)
         elif(position.bot.is_ucdc()):
             status = ucdc_position_check(position_uid)
-        else:
+        elif(position.bot.is_classic()):
             status = classic_position_check(position_uid)
         print(status)
