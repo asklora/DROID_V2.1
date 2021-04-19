@@ -12,17 +12,21 @@ from bot.calculate_bot import (
 # from backendmodel.classic_droid.celery import app
 
 
-def final(price_data, position, latest_price=False):
-    
-    # try catch klo error
-    performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
+def final(price_data, position, latest_price=False, force_sell=False):
     if(latest_price):
         today = price_data.last_date
         live_price = price_data.close
     else:
         today = price_data.trading_day
         live_price = price_data.tri_adj_close
-    if today >= position.expiry:
+
+    status_expiry = today >= position.expiry
+    if(force_sell):
+        position.event = "Bot Expired"
+        status_expiry = True
+    # try catch klo error
+    performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
+    if status_expiry:
         current_investment_amount=live_price * performance.share_num
         current_pnl_amt = performance.current_pnl_amt + ((live_price - performance.last_live_price) * performance.share_num)
         # current_pnl_ret = (current_pnl_amt + position.bot_cash_balance) / position.investment_amount
@@ -61,6 +65,7 @@ def create_performance(price_data, position, latest_price=False):
         last_performance = False
 
     t, r, q = get_trq(position.ticker, expiry, trading_day, position.ticker.currency_code)
+    print(t)
     if last_performance:
         currency_code = str(position.ticker.currency_code)
         strike=last_performance.strike
@@ -133,19 +138,27 @@ def ucdc_position_check(position_uid):
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day
-            print(f"{trading_day} done")
+            print(f"tac {trading_day} done")
             create_performance(tac, position)
             position.save()
             status = final(tac, position)
             if status :
                 print(f"position end")
                 break
-        if(not status and trading_day < lastest_price_data.last_date):
+        if(not status and trading_day.date() < lastest_price_data.last_date and position.expiry >= lastest_price_data.last_date):
             trading_day = lastest_price_data.last_date
-            print(f"{trading_day} done")
+            print(f"latest price {trading_day} done")
             create_performance(lastest_price_data, position, latest_price=True)
             position.save()
             status = final(lastest_price_data, position, latest_price=True)
+            if status :
+                print(f"position end")
+        
+        tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gte=position.expiry).order_by("trading_day")
+        if(not status and tac_data.count() > 0):
+            tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__lte=position.expiry).latest("-trading_day")
+            print(f"force {tac_data.trading_day} done")
+            status = final(tac_data, position, force_sell=True)
             if status :
                 print(f"position end")
         return True
