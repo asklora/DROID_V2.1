@@ -9,7 +9,7 @@ from global_vars import REPORT_HISTORY, REPORT_INTRADAY
 def update_currency_price_from_dss():
     print("{} : === Currency Price Ingestion ===".format(datetimeNow()))
     currencylist = get_active_currency_ric_not_null()
-    currencylist = currencylist.drop(columns=["last_date", "ask_price", "bid_price"])
+    currencylist = currencylist.drop(columns=["last_date", "last_price"])
     currency = currencylist["ric"]
     jsonFileName = "files/file_json/currency_price.json"
     result = get_data_from_dss("start_date", "end_date", currency, jsonFileName, report=REPORT_INTRADAY)
@@ -23,7 +23,8 @@ def update_currency_price_from_dss():
             "Universal Bid Price": "bid_price",
         })
         result = result.merge(currencylist, how="left", on="ric")
-        result["last_price"] = (result["ask_price"] + result["bid_price"]) / 2
+        result["last_price"] = (result["ask_price"] + result["ask_price"]) / 2
+        result = result.drop(columns=["ask_price", "ask_price"])
         print(result)
         upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
         report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
