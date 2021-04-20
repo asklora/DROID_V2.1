@@ -66,6 +66,7 @@ def order_signal(sender, instance, created, **kwargs):
                 is_live=True
             )
             perf = PositionPerformance.objects.create(
+                created=order.spot_date,
                 position_uid=order,
                 last_spot_price=instance.price,
                 last_live_price=instance.price
@@ -77,12 +78,12 @@ def order_signal(sender, instance, created, **kwargs):
                     if hasattr(perf,key):
                         setattr(perf,key,val)
                 order.save()
-                orderserialize = OrderPositionSerializer(order).data
-                orderdata ={
-                'type':'function',
-                'module':'core.djangomodule.crudlib.order.sync_position',
-                'payload':dict(orderserialize)
-                }
+                # orderserialize = OrderPositionSerializer(order).data
+                # orderdata ={
+                # 'type':'function',
+                # 'module':'core.djangomodule.crudlib.order.sync_position',
+                # 'payload':dict(orderserialize)
+                # }
                 # services.celery_app.send_task('config.celery.listener',args=(orderdata,),queue='asklora',)
                 perf.current_pnl_amt = 0
                 perf.current_bot_cash_balance =order.bot_cash_balance
@@ -90,13 +91,13 @@ def order_signal(sender, instance, created, **kwargs):
                 perf.current_investment_amount = perf.last_live_price * perf.share_num
                 perf.order_id = instance
                 perf.save()
-                perfserialize = PositionPerformanceSerializer(perf).data
-                print(perfserialize)
-                perfdata ={
-                'type':'function',
-                'module':'core.djangomodule.crudlib.order.sync_performance',
-                'payload':dict(perfserialize)
-                }
+                # perfserialize = PositionPerformanceSerializer(perf).data
+                # print(perfserialize)
+                # perfdata ={
+                # 'type':'function',
+                # 'module':'core.djangomodule.crudlib.order.sync_performance',
+                # 'payload':dict(perfserialize)
+                # }
                 # services.celery_app.send_task('config.celery.listener',args=(perfdata,),queue='asklora')
                 
             
