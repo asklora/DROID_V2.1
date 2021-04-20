@@ -202,7 +202,7 @@ def ucdc_position_check(position_uid):
             ticker=position.ticker, trading_day__gte=position.expiry).order_by("trading_day")
         if(not status and tac_data.count() > 0):
             tac_data = MasterTac.objects.filter(
-                ticker=position.ticker, trading_day__lte=position.expiry).latest("-trading_day")
+                ticker=position.ticker, trading_day__lte=position.expiry).latest("trading_day")
             print(f"force {tac_data.trading_day} done")
             status = final(tac_data, position, force_sell=True)
             if status:
