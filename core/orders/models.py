@@ -30,6 +30,8 @@ class Order(BaseTimeStampModel):
     is_init = models.BooleanField(default=True)
     price = models.FloatField()
     performance_uid = models.CharField(null=True, blank=True, max_length=255)
+    
+    
     class Meta:
         managed = True
         db_table = "orders"

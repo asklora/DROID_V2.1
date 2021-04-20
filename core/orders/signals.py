@@ -57,7 +57,7 @@ def order_signal(sender, instance, created, **kwargs):
             elif instance.status == 'allocated':
                 spot_date =instance.placed_at.date()
             order = OrderPosition.objects.create(
-                user_id=instance.user,
+                user_id=instance.user_id,
                 ticker=instance.ticker,
                 bot_id=instance.bot_id,
                 spot_date=spot_date,
@@ -83,9 +83,7 @@ def order_signal(sender, instance, created, **kwargs):
                 'module':'core.djangomodule.crudlib.order.sync_position',
                 'payload':dict(orderserialize)
                 }
-                print(orderserialize)
-                print("===============================================")
-                services.celery_app.send_task('config.celery.listener',args=(orderdata,),queue='asklora',)
+                # services.celery_app.send_task('config.celery.listener',args=(orderdata,),queue='asklora',)
                 perf.current_pnl_amt = 0
                 perf.current_bot_cash_balance =order.bot_cash_balance
                 perf.current_pnl_ret = (perf.current_pnl_amt + perf.current_bot_cash_balance) / order.investment_amount
@@ -99,7 +97,7 @@ def order_signal(sender, instance, created, **kwargs):
                 'module':'core.djangomodule.crudlib.order.sync_performance',
                 'payload':dict(perfserialize)
                 }
-                services.celery_app.send_task('config.celery.listener',args=(perfdata,),queue='asklora')
+                # services.celery_app.send_task('config.celery.listener',args=(perfdata,),queue='asklora')
                 
             
         else:
@@ -113,7 +111,7 @@ def order_signal(sender, instance, created, **kwargs):
     'module':'core.djangomodule.crudlib.order.sync_order',
     'payload':dict(instanceserialize)
     }
-    services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
+    # services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
         
 
 # @receiver(post_save, sender=OrderPosition)
