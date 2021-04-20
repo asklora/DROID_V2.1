@@ -70,7 +70,7 @@ def create_performance(price_data, position, latest_price=False):
     if last_performance:
         share_num = last_performance.share_num
         current_pnl_amt = last_performance.current_pnl_amt + (live_price - last_performance.last_live_price ) * last_performance.share_num
-    elif not last_performance:
+    else:
         live_price = position.entry_price
         current_pnl_amt = 0
         share_num = position.share_num

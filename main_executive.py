@@ -387,28 +387,28 @@ def bot_statistic_uno(ticker=None, currency_code=None, time_to_exp=None):
 # ************************************************************************************************************************************************************************************
 # *************************** BOT STATISTIC ******************************************************************************************************************************************
 # ************************************************************************************************************************************************************************************
-def bot_ranking_history(ticker=None, currency_code=None, mod=False):
+def bot_ranking_history(ticker=None, currency_code=None, mod=False, time_to_exp=time_to_expiry):
     folder_check()
     print("{} : === BOT RANKING HISTORY STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     start_date = str_to_date(droid_start_date())
     end_date = str_to_date(dateNow())
-    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, mod=mod, history=True)
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, currency_code=currency_code, mod=mod, history=True)
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
     print("{} : === BOT RANKING HISTORY COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === BOT RANKING HISTORY COMPLETED ===".format(dateNow()))
 
 
-def bot_ranking_daily(ticker=None, currency_code=None, mod=False):
+def bot_ranking_daily(ticker=None, currency_code=None, mod=False, time_to_exp=time_to_expiry):
     folder_check()
     print("{} : === BOT RANKING DAILY STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     start_date = get_bot_data_latest_date(daily=True)
     end_date = str_to_date(dateNow())
-    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, mod=mod)
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, currency_code=currency_code, mod=mod)
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
     print("{} : === BOT RANKING DAILY COMPLETED ===".format(dateNow()))
