@@ -422,14 +422,16 @@ def get_classic_vol_by_date(ticker, trading_day):
 
 
 def get_uno_hedge(latest_spot_price, strike, delta, last_hedge_delta):
+    hedge=False
     if latest_spot_price > strike:
         if abs(delta - last_hedge_delta) > large_hedge:
             last_hedge_delta =  delta
+            hedge = True
 
     if latest_spot_price <= strike:
         if abs(delta - last_hedge_delta) > small_hedge : 
             last_hedge_delta =  delta
-    return last_hedge_delta
+    return last_hedge_delta, hedge
 
 def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
     hedge=False
