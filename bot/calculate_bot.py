@@ -127,6 +127,8 @@ def get_trq(ticker, expiry, spot_date, currency_code):
     expiry = check_date(expiry)
     spot_date = check_date(spot_date)
     t = (expiry - spot_date).days
+    if t == 0:
+        t=1
     r = get_r(currency_code, t)
     q = get_q(ticker, t)
     return int(t), float(r), float(q)

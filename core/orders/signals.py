@@ -15,7 +15,7 @@ import pandas as pd
 def order_signal_check(sender, instance, **kwargs):
     if instance.placed:
         # instance.placed_at =datetime.now()
-        if instance.setup:
+        if instance.setup and instance.is_init:
             if instance.setup['share_num'] == 0:
                 instance.status = 'allocated'
             elif instance.status == 'filled':
@@ -104,10 +104,10 @@ def order_signal(sender, instance, created, **kwargs):
 
         else:
             if instance.bot_id != 'stock':
-                signal = PositionPerformance.objects.get(
-                    id=int(instance.signal_id))
-                signal.order_id = instance.uid
-                signal.save()
+                signal_performance = PositionPerformance.objects.get(
+                    performance_uid=instance.performance_uid)
+                signal_performance.order_id = instance
+                signal_performance.save()
     instanceserialize = OrderSerializer(instance).data
     data = {
         'type': 'function',

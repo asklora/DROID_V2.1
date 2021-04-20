@@ -162,7 +162,7 @@ def create_performance(price_data, position, latest_price=False):
             amount=hedge_shares*live_price,
             user_id=position.user_id,
             side=status,
-            performance_uid=performance
+            performance_uid=performance.performance_uid
         )
         if order:
             order.placed = True

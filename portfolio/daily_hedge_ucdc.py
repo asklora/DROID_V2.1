@@ -156,6 +156,7 @@ def create_performance(price_data, position, latest_price=False):
             order.placed = True
             order.placed_at = log_time
             order.save()
+        print(order.status)
         if order.status in ['pending', 'review']:
             order.status = 'filled'
             order.filled_at = log_time
