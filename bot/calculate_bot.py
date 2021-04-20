@@ -29,13 +29,21 @@ def get_q(ticker, t):
     table_name = get_data_dividend_daily_rates_table_name()
     query = f"select * from {table_name} where t = {t} and ticker='{ticker}'"
     data = read_query(query, table_name, cpu_counts=True, prints=False)
-    return data.loc[0, "q"]
+    try:
+        q = data.loc[0, "q"]
+    except Exception as e:
+        q = 0
+    return q
 
 def get_r(currency_code, t):
     table_name = get_data_interest_daily_rates_table_name()
     query = f"select * from {table_name} where t = {t} and currency_code='{currency_code}'"
     data = read_query(query, table_name, cpu_counts=True, prints=False)
-    return data.loc[0, "r"]
+    try:
+        r = data.loc[0, "r"]
+    except Exception as e:
+        r = 0
+    return r
 
 def get_spot_date(spot_date, ticker):
     spot_date = check_date(spot_date)
