@@ -76,8 +76,7 @@ def create_performance(price_data, position, latest_price=False):
         last_hedge_delta, hedge = get_ucdc_hedge(currency_code, delta, last_performance.last_hedge_delta)
         share_num, hedge_shares, status, hedge_price = get_hedge_detail(ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta, hedge=hedge, ucdc=True)
         bot_cash_balance = last_performance.current_bot_cash_balance + ((last_performance.share_num - share_num) * live_price)
-        
-    elif not last_performance:
+    else:
         current_pnl_amt = 0 # initial value
         vol = get_vol(position.ticker, trading_day, t, r, q, bot.bot_type.bot_horizon_month)
         strike, strike_2 = get_strike_barrier(live_price, vol, bot.option_type, bot.bot_type.bot_group)
