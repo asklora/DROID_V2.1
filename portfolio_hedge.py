@@ -9,9 +9,9 @@ def test():
     for position in positions:
         position_uid = position.position_uid
         if(position.bot.is_uno()):
-            status = uno_position_check(position_uid)
+            status = uno_position_check.apply_async(args=(position_uid,),queue='droid')
         elif(position.bot.is_ucdc()):
-            status = ucdc_position_check(position_uid)
+            status = ucdc_position_check.apply_async(args=(position_uid,),queue='droid')
         elif(position.bot.is_classic()):
-            status = classic_position_check(position_uid)
+            status = classic_position_check.apply_async(args=(position_uid,),queue='droid')
         print(status)
