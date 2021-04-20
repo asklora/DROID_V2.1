@@ -1,3 +1,4 @@
+from bot.preprocess import dividend_daily_update, interest_daily_update
 from ingestion.master_tac import master_tac_update
 from ingestion.master_multiple import master_multiple_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
@@ -77,3 +78,5 @@ if __name__ == "__main__":
     # bot_statistic_ucdc()
     # bot_statistic_uno()
     # bot_statistic_classic()
+    # interest_daily_update()
+    # dividend_daily_update()
