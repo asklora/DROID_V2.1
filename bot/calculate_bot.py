@@ -135,7 +135,6 @@ def get_vol(ticker, trading_day, t, r, q, time_to_exp):
     trading_day = check_date(trading_day)
     status, obj = get_vol_by_date(ticker, trading_day)
     if status:
-        print(obj)
         v0 = uno.find_vol(1, t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
                           obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v0 = np.nan_to_num(v0, nan=0)

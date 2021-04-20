@@ -2,7 +2,7 @@ from django.db import models
 from django.utils import timezone
 
 class BaseTimeStampModel(models.Model):
-    created = models.DateTimeField(editable=False)
+    created = models.DateTimeField(editable=True)
     updated = models.DateTimeField(editable=False)
 
     class Meta:
