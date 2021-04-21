@@ -450,7 +450,7 @@ def get_hedge_detail(ask_price, bid_price, last_share_num, bot_share_num, delta,
     else:
         hedge_shares = 0
         share_num = last_share_num
-    if(hedge_shares> 0):
+    if(hedge_shares > 0):
         status = "buy"
     elif(hedge_shares < 0):
         status = "sell"
