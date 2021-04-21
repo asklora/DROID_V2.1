@@ -24,10 +24,10 @@ currency_table = get_currency_table_name()
 fundamentals_score_table = get_fundamental_score_table_name()
 universe_rating_table = get_universe_rating_table_name()
 
-def read_query(query, table=universe_table, cpu_counts=False,db_from=None, prints=True):
+def read_query(query, table=universe_table, cpu_counts=False, droid1=False, prints=True):
     if(prints):
         print(f"Get Data From Database on {table} table")
-    if db_from == 'droidv1':
+    if droid1:
         dbcon = droid_db_read
     else:
         dbcon = db_read

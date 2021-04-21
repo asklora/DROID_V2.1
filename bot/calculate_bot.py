@@ -396,7 +396,7 @@ def get_classic_vol_by_date(ticker, trading_day):
     query += f"where vol.ticker = '{ticker}' and "
     query += f"vol.spot_date <= '{trading_day}' "
     query += f"order by spot_date DESC limit 1;"
-    data = read_query(query, vol_table, cpu_counts=True, db_from="droidv1", prints=False)
+    data = read_query(query, vol_table, cpu_counts=True, droid1=True, prints=False)
     if(len(data) != 1):
         query = f"select * "
         query += f"from {latest_price_table} vol "

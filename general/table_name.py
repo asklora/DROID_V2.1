@@ -10,6 +10,9 @@ def get_universe_consolidated_table_name():
 def get_universe_table_name():
     return "universe"
 
+def get_universe_client_table_name():
+    return "universe_client"
+
 def get_universe_rating_table_name():
     return "universe_rating"
 

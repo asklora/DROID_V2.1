@@ -8,6 +8,10 @@ import sys
 
 def test():
     positions = OrderPosition.objects.filter(is_live=True)
+<<<<<<< HEAD
+    # positions = OrderPosition.objects.filter(is_live=True, bot_id="UNO_OTM_003846")
+=======
+>>>>>>> 93d1ca00d8c440d4caff731ecb3da40ed69ba750
     for position in positions:
         position_uid = position.position_uid
         if(position.bot.is_uno()):
