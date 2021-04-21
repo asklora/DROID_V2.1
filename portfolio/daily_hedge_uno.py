@@ -115,7 +115,7 @@ def create_performance(price_data, position, latest_price=False):
 
     if status_expiry:
         current_investment_amount = live_price * performance.share_num
-        current_pnl_amt = performance.current_pnl_amt + ((live_price - performance.live_price) * performance.share_num)
+        current_pnl_amt = performance.current_pnl_amt + ((live_price - performance.last_live_price) * performance.share_num)
         # current_pnl_ret = (current_pnl_amt + position.bot_cash_balance) / position.investment_amount
         position.final_price = live_price
         position.current_inv_ret = performance.current_pnl_ret

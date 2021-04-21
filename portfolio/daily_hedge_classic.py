@@ -44,7 +44,7 @@ def create_performance(price_data, position, latest_price=False):
     current_pnl_ret = (current_pnl_amt + bot_cash_balance) / position.investment_amount
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.save()
-    current_investment_amount = live_price * position.share_num
+    current_investment_amount = live_price * share_num
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)
     performance = PositionPerformance.objects.create(
