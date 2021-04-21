@@ -7,23 +7,18 @@ import sys
 
 
 def test():
-    positions = OrderPosition.objects.filter(is_live=True)
-<<<<<<< HEAD
-    # positions = OrderPosition.objects.filter(is_live=True, bot_id="UNO_OTM_003846")
-=======
->>>>>>> 93d1ca00d8c440d4caff731ecb3da40ed69ba750
+    positions = OrderPosition.objects.filter(is_live=True, position_uid="0926a326-4225-4552-8386-af0a4a1ceec8")
     for position in positions:
         position_uid = position.position_uid
         if(position.bot.is_uno()):
-            status = uno_position_check.apply_async(
-                args=(position_uid,), queue='droid')
-            # status = uno_position_check(position_uid)
+            # status = uno_position_check.apply_async(args=(position_uid,), queue='droid')
+            status = uno_position_check(position_uid)
         elif(position.bot.is_ucdc()):
             # status = ucdc_position_check.apply_async(
             #     args=(position_uid,), queue='droid')
             status = ucdc_position_check(position_uid)
         elif(position.bot.is_classic()):
-            # status = ucdc_position_check.apply_async(
+            # status = classic_position_check.apply_async(
             #     args=(position_uid,), queue='droid')
-            status = ucdc_position_check(position_uid)
+            status = classic_position_check(position_uid)
         print(status)
