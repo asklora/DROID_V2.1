@@ -93,13 +93,14 @@ def create_performance(price_data, position, latest_price=False):
         v1, v2 = get_v1_v2(position.ticker.ticker, live_price,
                            trading_day, t, r, q, strike, barrier)
         if(trading_day >= position.expiry):
-            delta =last_performance.last_hedge_delta
+            delta = last_performance.last_hedge_delta
             last_hedge_delta = last_performance.last_hedge_delta
             hedge = False
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(
-                ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta, hedge=hedge, uno=True)
+                ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_hedge_delta, hedge=hedge, uno=True)
         else:
-            delta = uno.deltaUnOC(live_price, strike, barrier,rebate, t, r, q, v1, v2)
+            delta = uno.deltaUnOC(live_price, strike,
+                                  barrier, rebate, t, r, q, v1, v2)
             last_hedge_delta, hedge = get_uno_hedge(
                 live_price, strike, delta, last_performance.last_hedge_delta)
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(
@@ -165,11 +166,11 @@ def create_performance(price_data, position, latest_price=False):
             updated=log_time,
             price=live_price,
             bot_id=bot.bot_id,
-            amount=hedge_shares*live_price,
+            amount=(hedge_shares*live_price) * 1,
             user_id=position.user_id,
             side=status,
             performance_uid=performance.performance_uid,
-            qty=hedge_shares
+            qty=hedge_shares * 1
         )
         if order:
             order.placed = True
@@ -206,7 +207,7 @@ def uno_position_check(position_uid):
             position.save()
             status = final(tac, position)
             if status:
-                print(f"position end")
+                print(f"position end tac")
                 break
         if(type(trading_day) == datetime):
             trading_day = trading_day.date()
@@ -217,9 +218,10 @@ def uno_position_check(position_uid):
             position.save()
             status = final(lastest_price_data, position, latest_price=True)
             if status:
-                print(f"position end")
+                print(f"position end not tac")
         try:
-            tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gte=position.expiry).latest("-trading_day")
+            tac_data = MasterTac.objects.filter(
+                ticker=position.ticker, trading_day__gte=position.expiry).latest("-trading_day")
             if(not status and tac_data):
                 position.expiry = tac_data.trading_day
                 position.save()
@@ -228,7 +230,7 @@ def uno_position_check(position_uid):
                 position.save()
                 status = final(tac_data, position)
                 if status:
-                    print(f"position end")
+                    print(f"position end moving expiry")
         except PositionPerformance.DoesNotExist:
             status = False
         return True
