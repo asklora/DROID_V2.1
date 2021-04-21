@@ -147,7 +147,7 @@ def data_prep_history():
 def infer_daily(ticker=None, currency_code=None):
     folder_check()
     print("{} : === {} VOLATILITY INFER STARTED ===".format(dateNow(), currency_code))
-    start_date = get_bot_data_latest_date(daily=True)
+    start_date = get_bot_data_latest_date()
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
