@@ -15,6 +15,7 @@ from bot.calculate_bot import (
 from config.celery import app
 import pandas as pd
 
+
 def create_performance(price_data, position, latest_price=False):
     # new access bot reference
     bot = position.bot
@@ -30,9 +31,9 @@ def create_performance(price_data, position, latest_price=False):
         trading_day = price_data.trading_day
         bid_price = price_data.tri_adj_close
         ask_price = price_data.tri_adj_close
-    
+
     status_expiry = trading_day >= position.expiry
-    
+
     try:
         last_performance = PositionPerformance.objects.filter(
             position_uid=position.position_uid).latest("created")
@@ -46,11 +47,14 @@ def create_performance(price_data, position, latest_price=False):
         strike = last_performance.strike
         strike_2 = last_performance.strike_2
         option_price = last_performance.option_price
-        current_pnl_amt = last_performance.current_pnl_amt + (live_price - last_performance.last_live_price) * last_performance.share_num
+        current_pnl_amt = last_performance.current_pnl_amt + \
+            (live_price - last_performance.last_live_price) * \
+            last_performance.share_num
 
-        v1, v2 = get_v1_v2(position.ticker, live_price, trading_day, t, r, q, strike, strike_2)
+        v1, v2 = get_v1_v2(position.ticker, live_price,
+                           trading_day, t, r, q, strike, strike_2)
         if(status_expiry):
-            delta =last_performance.last_hedge_delta
+            delta = last_performance.last_hedge_delta
             last_hedge_delta = last_performance.last_hedge_delta
             hedge = False
             share_num = 0
@@ -58,22 +62,31 @@ def create_performance(price_data, position, latest_price=False):
             status = "sell"
         else:
             delta = uno.deltaRC(live_price, strike, strike_2, t, r, q, v1, v2)
-            last_hedge_delta, hedge = get_ucdc_hedge(currency_code, delta, last_performance.last_hedge_delta)
-            share_num, hedge_shares, status, hedge_price = get_hedge_detail(ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta, hedge=hedge, ucdc=True)
-        bot_cash_balance = last_performance.current_bot_cash_balance + ((last_performance.share_num - share_num) * live_price)
+            last_hedge_delta, hedge = get_ucdc_hedge(
+                currency_code, delta, last_performance.last_hedge_delta)
+            share_num, hedge_shares, status, hedge_price = get_hedge_detail(
+                ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta, hedge=hedge, ucdc=True)
+        bot_cash_balance = last_performance.current_bot_cash_balance + \
+            ((last_performance.share_num - share_num) * live_price)
     else:
         current_pnl_amt = 0  # initial value
-        vol = get_vol(position.ticker, trading_day, t, r, q, bot.bot_type.bot_horizon_month)
-        strike, strike_2 = get_strike_barrier(live_price, vol, bot.option_type, bot.bot_type.bot_group)
-        v1, v2 = get_v1_v2(position.ticker, live_price, trading_day, t, r, q, strike, strike_2)
-        option_price = get_option_price_ucdc(live_price, strike, strike_2, t, r, q, v1, v2)
+        vol = get_vol(position.ticker, trading_day, t, r,
+                      q, bot.bot_type.bot_horizon_month)
+        strike, strike_2 = get_strike_barrier(
+            live_price, vol, bot.option_type, bot.bot_type.bot_group)
+        v1, v2 = get_v1_v2(position.ticker, live_price,
+                           trading_day, t, r, q, strike, strike_2)
+        option_price = get_option_price_ucdc(
+            live_price, strike, strike_2, t, r, q, v1, v2)
         delta = uno.deltaRC(live_price, strike, strike_2, t, r, q, v1, v2)
         share_num = round((position.investment_amount / live_price), 1)
         share_num = math.floor(delta * share_num)
-        bot_cash_balance = position.investment_amount - (share_num * live_price)
+        bot_cash_balance = position.investment_amount - \
+            (share_num * live_price)
         last_hedge_delta = delta
 
-    current_pnl_ret = (current_pnl_amt + bot_cash_balance) / position.investment_amount
+    current_pnl_ret = (current_pnl_amt + bot_cash_balance) / \
+        position.investment_amount
     current_investment_amount = live_price * share_num
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.share_num = round((position.investment_amount / live_price), 1)
@@ -103,7 +116,8 @@ def create_performance(price_data, position, latest_price=False):
 
     if status_expiry:
         current_investment_amount = live_price * performance.share_num
-        current_pnl_amt = performance.current_pnl_amt + ((live_price - performance.last_live_price) * performance.share_num)
+        current_pnl_amt = performance.current_pnl_amt + \
+            ((live_price - performance.last_live_price) * performance.share_num)
         # current_pnl_ret = (current_pnl_amt + position.bot_cash_balance) / position.investment_amount
         position.final_price = live_price
         position.current_inv_ret = (
@@ -125,10 +139,11 @@ def create_performance(price_data, position, latest_price=False):
             updated=log_time,
             price=live_price,
             bot_id=bot.bot_id,
-            amount=hedge_shares*live_price,
+            amount=(hedge_shares*live_price) * 1,
             user_id=position.user_id,
             side=status,
-            performance_uid=performance.performance_uid
+            performance_uid=performance.performance_uid,
+            qty=hedge_shares * 1
         )
         if order:
             order.placed = True
@@ -141,11 +156,12 @@ def create_performance(price_data, position, latest_price=False):
             order.save()
             performance.order_uid = order
             performance.save()
-    
+
     if(status_expiry):
         return True
     else:
         return False
+
 
 @app.task
 def ucdc_position_check(position_uid):
@@ -159,7 +175,8 @@ def ucdc_position_check(position_uid):
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
-        tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry).order_by("trading_day")
+        tac_data = MasterTac.objects.filter(
+            ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry).order_by("trading_day")
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day
@@ -167,7 +184,7 @@ def ucdc_position_check(position_uid):
             status = create_performance(tac, position)
             position.save()
             if status:
-                print(f"position end")
+                print(f"position end tac")
                 break
         if(type(trading_day) == datetime):
             trading_day = trading_day.date()
@@ -175,12 +192,14 @@ def ucdc_position_check(position_uid):
         if(not status and trading_day < lastest_price_data.last_date and position.expiry >= lastest_price_data.last_date):
             trading_day = lastest_price_data.last_date
             print(f"latest price {trading_day} done")
-            status = create_performance(lastest_price_data, position, latest_price=True)
+            status = create_performance(
+                lastest_price_data, position, latest_price=True)
             position.save()
             if status:
-                print(f"position end")
+                print(f"position end not tac")
         try:
-            tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gte=position.expiry).latest("-trading_day")
+            tac_data = MasterTac.objects.filter(
+                ticker=position.ticker, trading_day__gte=position.expiry).latest("-trading_day")
             if(not status and tac_data):
                 position.expiry = tac_data.trading_day
                 position.save()
@@ -188,7 +207,7 @@ def ucdc_position_check(position_uid):
                 status = create_performance(tac_data, position)
                 position.save()
                 if status:
-                    print(f"position end")
+                    print(f"position end moving expiry")
         except PositionPerformance.DoesNotExist:
             status = False
         return True
