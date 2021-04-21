@@ -90,8 +90,6 @@ def create_performance(price_data, position, latest_price=False):
         last_hedge_delta = delta
 
     current_pnl_ret = (current_pnl_amt + bot_cash_balance) / position.investment_amount
-    if(current_pnl_ret > 1):
-        current_pnl_ret = current_pnl_ret - 1
     current_investment_amount = live_price * share_num
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.share_num = round((position.investment_amount / live_price), 1)
