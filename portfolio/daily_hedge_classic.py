@@ -65,8 +65,7 @@ def create_performance(price_data, position, latest_price=False):
         current_investment_amount = live_price * performance.share_num
         current_pnl_amt = performance.current_pnl_amt + ((live_price - performance.last_live_price) * performance.share_num)
         position.final_price = live_price
-        position.current_inv_ret = (
-            current_pnl_amt + position.bot_cash_balance) / position.investment_amount
+        position.current_inv_ret = (current_pnl_amt + position.bot_cash_balance) / position.investment_amount
         position.final_return = position.current_inv_ret
         position.current_inv_amt = current_investment_amount
         position.final_pnl_amount = current_pnl_amt

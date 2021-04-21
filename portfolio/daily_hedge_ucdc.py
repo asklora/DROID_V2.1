@@ -81,12 +81,10 @@ def create_performance(price_data, position, latest_price=False):
         delta = uno.deltaRC(live_price, strike, strike_2, t, r, q, v1, v2)
         share_num = round((position.investment_amount / live_price), 1)
         share_num = math.floor(delta * share_num)
-        bot_cash_balance = position.investment_amount - \
-            (share_num * live_price)
+        bot_cash_balance = position.investment_amount - (share_num * live_price)
         last_hedge_delta = delta
 
-    current_pnl_ret = (current_pnl_amt + bot_cash_balance) / \
-        position.investment_amount
+    current_pnl_ret = (current_pnl_amt + bot_cash_balance) / position.investment_amount
     current_investment_amount = live_price * share_num
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.share_num = round((position.investment_amount / live_price), 1)
@@ -118,10 +116,8 @@ def create_performance(price_data, position, latest_price=False):
         current_investment_amount = live_price * performance.share_num
         current_pnl_amt = performance.current_pnl_amt + \
             ((live_price - performance.last_live_price) * performance.share_num)
-        # current_pnl_ret = (current_pnl_amt + position.bot_cash_balance) / position.investment_amount
         position.final_price = live_price
-        position.current_inv_ret = (
-            current_pnl_amt + position.bot_cash_balance) / position.investment_amount
+        position.current_inv_ret = (current_pnl_amt + position.bot_cash_balance) / position.investment_amount
         position.final_return = position.current_inv_ret
         position.final_pnl_amount = current_pnl_amt
         position.current_inv_amt = current_investment_amount
