@@ -30,6 +30,7 @@ class Order(BaseTimeStampModel):
     is_init = models.BooleanField(default=True)
     price = models.FloatField()
     performance_uid = models.CharField(null=True, blank=True, max_length=255)
+    qty = models.FloatField(null=True, blank=True)
     
     
     class Meta:
@@ -99,6 +100,28 @@ class OrderPosition(BaseTimeStampModel):
     class Meta:
         managed = True
         db_table = "orders_position"
+    def current_return(self):
+        performance = self.order_position.filter(position_uid=self.position_uid)
+        if performance.exists():
+            perf = performance.latest('created')
+            ret = perf.current_bot_cash_balance + perf.current_investment_amount - self.investment_amount
+            # if self.user_currency != self.currency:
+            #     ret = ret * self.currency_rate
+            ret = round(ret,2)
+            return ret
+        return 0
+    
+    
+    def current_value(self):
+        performance = self.order_position.filter(position_uid=self.position_uid)
+        if performance.exists():
+            perf = performance.latest('created')
+            ret = perf.current_bot_cash_balance + perf.current_investment_amount
+            # if self.user_currency != self.currency:
+            #     ret = ret * self.currency_rate
+            ret = round(ret,2)
+            return ret
+        return 0
     
     @property
     def bot(self):
@@ -106,6 +129,8 @@ class OrderPosition(BaseTimeStampModel):
         return _bot
 
     def save(self, *args, **kwargs):
+        self.current_values=self.current_value()
+        self.current_returns=self.current_return()
         if not self.position_uid:
             self.position_uid = uuid.uuid4().hex
             # using your function as above or anything else
@@ -153,6 +178,7 @@ class PositionPerformance(BaseTimeStampModel):
     order_uid = models.ForeignKey(
         "Order", null=True, blank=True, on_delete=models.SET_NULL,db_column="order_uid")
     
+
     
     def save(self, *args, **kwargs):
         if not self.performance_uid:

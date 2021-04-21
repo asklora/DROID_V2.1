@@ -43,6 +43,7 @@ def order_signal(sender, instance, created, **kwargs):
                 setup = get_ucdc(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
                                  instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type)
             instance.setup = setup
+            instance.qty = setup['share_num']
             instance.save()
 
         # if not user can create the setup TP and SL
@@ -50,7 +51,7 @@ def order_signal(sender, instance, created, **kwargs):
         pass
 
     # update the status and create position
-    elif not created and instance.status in ['filled', 'allocated']:
+    elif not created and instance.status in ['filled', 'allocated'] and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         if instance.is_init:
             if instance.status == 'filled':
                 spot_date = instance.filled_at
@@ -78,7 +79,7 @@ def order_signal(sender, instance, created, **kwargs):
                         setattr(order, key, val)
                     if hasattr(perf, key):
                         setattr(perf, key, val)
-                order.save()
+                
                 orderserialize = OrderPositionSerializer(order).data
                 orderdata = {
                     'type': 'function',
@@ -93,13 +94,18 @@ def order_signal(sender, instance, created, **kwargs):
                 perf.current_investment_amount = perf.last_live_price * perf.share_num
                 perf.order_id = instance
                 perf.save()
+                order.save()
                 perfserialize = PositionPerformanceSerializer(perf).data
                 perfdata = {
                     'type': 'function',
                     'module': 'core.djangomodule.crudlib.order.sync_performance',
                     'payload': dict(perfserialize)
                 }
-                instance.performance_uid = perf.performance_uid
+                if instance.bot_id != 'stock':
+                    instance.performance_uid = perf.performance_uid
+                else:
+                    instance.performance_uid = 'stock'
+                instance.save()
                 # services.celery_app.send_task('config.celery.listener',args=(perfdata,),queue='asklora')
 
         else:
