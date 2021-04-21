@@ -124,7 +124,7 @@ def hanwha_test_pick(currency_code=None):
     print(today)
     print(today.weekday())
     while (today.weekday() != 0):
-        today =  today - relativedelta(days=1)
+        today =  today + relativedelta(days=1)
     result["spot_date"] = today
     result = uid_maker(result, uid="uid", ticker="currency_code", trading_day="client_uid", date=False)
     result = uid_maker(result, uid="uid", ticker="uid", trading_day="spot_date", date=True)
