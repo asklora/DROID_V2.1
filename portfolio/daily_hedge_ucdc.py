@@ -159,35 +159,33 @@ def ucdc_position_check(position_uid):
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
-        tac_data = MasterTac.objects.filter(
-            ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry).order_by("trading_day")
-        lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
+        tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry).order_by("trading_day")
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day
             print(f"tac {trading_day} done")
-            create_performance(tac, position)
+            status = create_performance(tac, position)
             position.save()
             if status:
                 print(f"position end")
                 break
         if(type(trading_day) == datetime):
             trading_day = trading_day.date()
+        lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
         if(not status and trading_day < lastest_price_data.last_date and position.expiry >= lastest_price_data.last_date):
             trading_day = lastest_price_data.last_date
             print(f"latest price {trading_day} done")
-            create_performance(lastest_price_data, position, latest_price=True)
+            status = create_performance(lastest_price_data, position, latest_price=True)
             position.save()
             if status:
                 print(f"position end")
-
         try:
             tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gte=position.expiry).latest("-trading_day")
             if(not status and tac_data):
                 position.expiry = tac_data.trading_day
                 position.save()
                 print(f"force sell {tac_data.trading_day} done")
-                create_performance(tac_data, position)
+                status = create_performance(tac_data, position)
                 position.save()
                 if status:
                     print(f"position end")

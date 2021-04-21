@@ -55,7 +55,7 @@ def create_performance(price_data, position, latest_price=False):
         current_pnl_ret=round(current_pnl_ret, 4),
         current_pnl_amt=round(current_pnl_amt, digits),
         current_investment_amount=round(current_investment_amount, 2),
-        current_bot_cash_balance=round(bot_cash_balance),
+        current_bot_cash_balance=round(bot_cash_balance, 2),
         updated=log_time,
         created=log_time,
         last_hedge_delta=100
@@ -128,39 +128,34 @@ def classic_position_check(position_uid):
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
-        tac_data = MasterTac.objects.filter(
-            ticker=position.ticker, trading_day__gt=trading_day).order_by("trading_day")
-        lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
+        tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry).order_by("trading_day")
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day
-            print(f"{trading_day} done")
-            create_performance(tac, position)
+            print(f"tac {trading_day} done")
+            status = create_performance(tac, position)
             position.save()
-            status = final(tac, position)
             if status:
                 print(f"position end")
                 break
         if(type(trading_day) == datetime):
             trading_day = trading_day.date()
+        lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
         if(not status and trading_day < lastest_price_data.last_date and position.expiry >= lastest_price_data.last_date):
             trading_day = lastest_price_data.last_date
             print(f"latest price {trading_day} done")
-            create_performance(lastest_price_data, position, latest_price=True)
+            status = create_performance(lastest_price_data, position, latest_price=True)
             position.save()
-            status = final(lastest_price_data, position, latest_price=True)
             if status:
                 print(f"position end")
-
         try:
             tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gte=position.expiry).latest("-trading_day")
             if(not status and tac_data):
                 position.expiry = tac_data.trading_day
                 position.save()
                 print(f"force sell {tac_data.trading_day} done")
-                create_performance(tac_data, position)
+                status = create_performance(tac_data, position)
                 position.save()
-                status = final(tac_data, position)
                 if status:
                     print(f"position end")
         except PositionPerformance.DoesNotExist:

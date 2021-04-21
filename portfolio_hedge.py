@@ -7,7 +7,7 @@ import sys
 
 
 def test():
-    positions = OrderPosition.objects.filter(is_live=True, position_uid="0926a326-4225-4552-8386-af0a4a1ceec8")
+    positions = OrderPosition.objects.filter(is_live=True, position_uid="d39d6a37-fe4c-446a-bc38-69df75e275aa")
     for position in positions:
         position_uid = position.position_uid
         if(position.bot.is_uno()):
