@@ -1,6 +1,7 @@
 from django.db import models
 
 class FormulaRatios(models.Model):
+    id = models.AutoField(primary_key=True, unique=True)
     name = models.TextField(blank=True, null=True)
     field_num = models.TextField(blank=True, null=True)
     field_demon = models.TextField(blank=True, null=True)
@@ -12,10 +13,11 @@ class FormulaRatios(models.Model):
         db_table = "ai_value_formula_ratios"
 
     def __str__(self):
-        return self.ticker.ticker
+        return self.name
 
 
 class LgbmEval(models.Model):
+    id = models.AutoField(primary_key=True, unique=True)
     index = models.TextField(blank=True, null=True)
     consensus = models.FloatField(blank=True, null=True)
     group_code= models.TextField(blank=True, null=True)
@@ -30,10 +32,10 @@ class LgbmEval(models.Model):
         db_table = "ai_value_lgbm_eval"
 
     def __str__(self):
-        return self.ticker.ticker
-
+        return f"{self.index}_{self.group_code}"
 
 class LgbmPred(models.Model):
+    id = models.AutoField(primary_key=True, unique=True)
     ticker = models.TextField(blank=True, null=True)
     pred = models.FloatField(blank=True, null=True)
     finish_timing= models.DateTimeField(editable=True)
@@ -42,10 +44,11 @@ class LgbmPred(models.Model):
         db_table = "ai_value_lgbm_pred"
 
     def __str__(self):
-        return self.ticker.ticker
+        return f"{self.ticker}_{self.finish_timing}"
 
 
 class LgbmPredFinal(models.Model):
+    id = models.AutoField(primary_key=True, unique=True)
     ticker= models.TextField(blank=True, null=True)
     testing_period= models.DateTimeField(editable=True),
     pred_mkt= models.FloatField(blank=True, null=True)
@@ -60,10 +63,11 @@ class LgbmPredFinal(models.Model):
         db_table = "ai_value_lgbm_pred_final"
 
     def __str__(self):
-        return self.ticker.ticker
+        return f"{self.ticker}_{self.finish_timing}"
 
 
 class LgbmPredFinalEps(models.Model):
+    id = models.AutoField(primary_key=True, unique=True)
     ticker= models.TextField(blank=True, null=True)
     period_end= models.DateTimeField(editable=True),
     final_pred_eps= models.FloatField(blank=True, null=True)
@@ -76,10 +80,11 @@ class LgbmPredFinalEps(models.Model):
         db_table = "ai_value_lgbm_pred_final_eps"
 
     def __str__(self):
-        return self.ticker.ticker
+        return f"{self.ticker}_{self.period_end}"
 
 
 class LgbmScore(models.Model):
+    id = models.AutoField(primary_key=True, unique=True)
     objective = models.TextField(blank=True, null=True)
     y_type= models.TextField(blank=True, null=True)
     qcut_q= models.BigIntegerField(blank=True, null=True)
@@ -122,4 +127,4 @@ class LgbmScore(models.Model):
         db_table = "ai_value_lgbm_score"
 
     def __str__(self):
-        return self.ticker.ticker
+        return f"{self.id}"
