@@ -81,9 +81,9 @@ def top_stock_distinct_industry(currency_code, client_uid):
     data = read_query(query, table=table_name, cpu_counts=True)
     return data
 
-def hanwha_test_pick(currency_code=None):
-    print("{} : === HANWHA WEEKLY PICK STARTED ===".format(dateNow()))
-    client_uid = get_client_uid()
+def test_pick(currency_code=None, client_name="HANWHA"):
+    print("{} : === CLIENT WEEKLY PICK STARTED ===".format(dateNow()))
+    client_uid = get_client_uid(client_name=client_name)
     universe = get_client_universe(currency_code, client_uid)
     top_five = top_stock_distinct_industry(currency_code, client_uid)
     print(top_five)
@@ -124,18 +124,20 @@ def hanwha_test_pick(currency_code=None):
     print(today)
     print(today.weekday())
     while (today.weekday() != 0):
-        today =  today + relativedelta(days=1)
+        today =  today - relativedelta(days=1)
     result["spot_date"] = today
     result = uid_maker(result, uid="uid", ticker="currency_code", trading_day="client_uid", date=False)
     result = uid_maker(result, uid="uid", ticker="uid", trading_day="spot_date", date=True)
     print(result)
-    print("{} : === HANWHA WEEKLY PICK COMPLETED ===".format(dateNow()))
+    print("{} : === CLIENT WEEKLY PICK COMPLETED ===".format(dateNow()))
     upsert_data_to_database(result, "client_test_pick", "uid", how="ignore", cpu_count=True, Text=True)
-    report_to_slack("{} : === HANWHA WEEKLY PICK COMPLETED ===".format(dateNow()))
+    report_to_slack("{} : === CLIENT WEEKLY PICK COMPLETED ===".format(dateNow()))
 
 if __name__ == '__main__':
     print("Do Process")
-    hanwha_test_pick(currency_code=["USD"])
-    hanwha_test_pick(currency_code=["KRW"])
-    hanwha_test_pick(currency_code=["HKD"])
-    hanwha_test_pick(currency_code=["CNY"])
+    # test_pick(currency_code=["USD"], client_name="FELS")
+    # test_pick(currency_code=["EUR"], client_name="FELS")
+    # test_pick(currency_code=["USD"], client_name="HANWHA")
+    # test_pick(currency_code=["KRW"], client_name="HANWHA")
+    # test_pick(currency_code=["HKD"], client_name="HANWHA")
+    # test_pick(currency_code=["CNY"], client_name="HANWHA")
