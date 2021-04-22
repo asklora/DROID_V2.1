@@ -11,3 +11,4 @@ django-admin startapp Clients core/Clients
 django-admin startapp signals core/signals
 django-admin startapp survey core/survey
 django-admin startapp orders core/orders
+django-admin startapp orders core/ai_value

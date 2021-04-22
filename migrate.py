@@ -59,23 +59,23 @@ def upsert_data_to_database(index, index_type, data, table_name, method="update"
     print("DATA INSERTED TO " + table_name)
     engine.dispose()
     
-# def insert_data_to_database(db_url, data, table):
-#     print('=== Insert Data To Database ===')
-#     engines = create_engine(db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
-#     try:
-#         with engines.connect() as engine:
-#             metadata = db.MetaData()
-#             data.to_sql(
-#                 table,
-#                 if_exists="append",
-#                 index=False,
-#                 chunksize=20000,
-#                 con=engine
-#             )
-#         engines.dispose()
-#         print("DATA INSERTED TO " + table)
-#     except Exception as ex:
-#         print("error: ", ex)
+def insert_data_to_database(db_url, data, table):
+    print('=== Insert Data To Database ===')
+    engines = create_engine(db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    try:
+        with engines.connect() as engine:
+            metadata = db.MetaData()
+            data.to_sql(
+                table,
+                if_exists="append",
+                index=False,
+                chunksize=20000,
+                con=engine
+            )
+        engines.dispose()
+        print("DATA INSERTED TO " + table)
+    except Exception as ex:
+        print("error: ", ex)
 
 def insert_data_to_database_manually(db_url, field, data, table, index):
     engine_prod = create_engine(db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
@@ -658,6 +658,62 @@ def data_interest():
     upsert_data_to_database("ticker_interest", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
+def data_worldscope_summary():
+    column = ["uid", "worldscope_identifier", "year", "frequency_number", "fiscal_quarter_end", "period_end", "report_date", 
+        "fn_2001", "fn_2101", "fn_2201", "fn_2501", "fn_3101", "fn_5085", "fn_8001", "fn_18100", "fn_18158", "fn_18199", "fn_18262", 
+        "fn_18263", "fn_18264", "fn_18265", "fn_18266", "fn_18267", "fn_18269", "fn_18304", "fn_18308", "fn_18309", "fn_18310", "fn_18311", 
+        "fn_18312", "fn_18313", "fn_3501", "fn_3255", "fn_18271", "fn_2999", "fn_5192", "ticker"]
+    table = "data_worldscope_summary"
+    data = get_data_from_database_condition(dlp, "worldscope_quarter_summary", f" period_end>='{start_date}'::date - interval '3 months' and ticker in {get_ticker_from_new_droid()} ")
+    data = data.rename(columns={"identifier" : "worldscope_identifier"})
+    data = uid_maker(data, uid="uid", ticker="ticker", trading_day="period_end", date=True)
+    data = data[column]
+    print(data)
+    upsert_data_to_database("uid", TEXT, data, table, method="update")
+    print(f"Get {table} = True")
+
+def data_worldscope_summary():
+    column = ["uid", "worldscope_identifier", "year", "frequency_number", "fiscal_quarter_end", "period_end", "report_date", 
+        "fn_2001", "fn_2101", "fn_2201", "fn_2501", "fn_3101", "fn_5085", "fn_8001", "fn_18100", "fn_18158", "fn_18199", "fn_18262", 
+        "fn_18263", "fn_18264", "fn_18265", "fn_18266", "fn_18267", "fn_18269", "fn_18304", "fn_18308", "fn_18309", "fn_18310", "fn_18311", 
+        "fn_18312", "fn_18313", "fn_3501", "fn_3255", "fn_18271", "fn_2999", "fn_5192", "ticker"]
+    table = "data_worldscope_summary"
+    data = get_data_from_database_condition(dlp, "worldscope_quarter_summary", f" period_end>='{start_date}'::date - interval '3 months' and ticker in {get_ticker_from_new_droid()} ")
+    data = data.rename(columns={"identifier" : "worldscope_identifier"})
+    data = uid_maker(data, uid="uid", ticker="ticker", trading_day="period_end", date=True)
+    data = data[column]
+    print(data)
+    upsert_data_to_database("uid", TEXT, data, table, method="update")
+    print(f"Get {table} = True")
+
+def ai_value_lgbm_pred():
+    table = "ai_value_lgbm_pred"
+    data = get_data_from_database(dlp, table)
+    print(data)
+    insert_data_to_database(droid2, data, table)
+    print(f"Get {table} = True")
+
+def ai_value_lgbm_pred_final():
+    table = "ai_value_lgbm_pred_final"
+    data = get_data_from_database(dlp, table)
+    print(data)
+    insert_data_to_database(droid2, data, table)
+    print(f"Get {table} = True")
+
+def ai_value_lgbm_pred_final_eps():
+    table = "ai_value_lgbm_pred_final_eps"
+    data = get_data_from_database(dlp, table)
+    print(data)
+    insert_data_to_database(droid2, data, table)
+    print(f"Get {table} = True")
+
+def ai_value_lgbm_score():
+    table = "ai_value_lgbm_score"
+    data = get_data_from_database(dlp, table)
+    print(data)
+    insert_data_to_database(droid2, data, table)
+    print(f"Get {table} = True")
+
 def daily_migrations():
     vix_data()
     data_dss()
@@ -683,10 +739,16 @@ def weekly_migrations():
     data_macro_monthly()
     data_dividend()
     data_fundamental_score()
+    data_worldscope_summary()
 
 if __name__ == '__main__':
     print("Do Process")
-    daily_migrations()
+    # daily_migrations()
+    # data_worldscope_summary()
+    ai_value_lgbm_pred()
+    ai_value_lgbm_pred_final()
+    ai_value_lgbm_pred_final_eps()
+    ai_value_lgbm_score()
     # data = "0#.SPX"
     # data = data.replace("(", "").replace(")", "").replace("[", "").replace("]", "")
     # data = data.split(",")
