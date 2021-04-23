@@ -50,7 +50,7 @@ class LgbmPred(models.Model):
 class LgbmPredFinal(models.Model):
     id = models.AutoField(primary_key=True, unique=True)
     ticker= models.TextField(blank=True, null=True)
-    testing_period= models.DateTimeField(editable=True),
+    testing_period= models.DateTimeField(blank=True, null=True)
     pred_mkt= models.FloatField(blank=True, null=True)
     pred_ind= models.FloatField(blank=True, null=True)
     pred_mean = models.FloatField(blank=True, null=True)
@@ -63,18 +63,18 @@ class LgbmPredFinal(models.Model):
         db_table = "ai_value_lgbm_pred_final"
 
     def __str__(self):
-        return f"{self.ticker}_{self.finish_timing}"
+        return f"{self.ticker}_{self.testing_period}"
 
 
 class LgbmPredFinalEps(models.Model):
     id = models.AutoField(primary_key=True, unique=True)
     ticker= models.TextField(blank=True, null=True)
-    period_end= models.DateTimeField(editable=True),
+    period_end= models.DateTimeField(blank=True, null=True)
     final_pred_eps= models.FloatField(blank=True, null=True)
     consensus_eps = models.FloatField(blank=True, null=True)
     time_type = models.TextField(blank=True, null=True)
     pred_type = models.TextField(blank=True, null=True)
-    update_time = models.DateTimeField(editable=True)
+    update_time = models.DateTimeField(blank=True, null=True)
     class Meta:
         managed = True
         db_table = "ai_value_lgbm_pred_final_eps"
@@ -93,11 +93,11 @@ class LgbmScore(models.Model):
     nthread = models.BigIntegerField(blank=True, null=True)
     name_sql= models.TextField(blank=True, null=True)
     group_code= models.TextField(blank=True, null=True)
-    testing_period= models.DateTimeField(editable=True),
+    testing_period= models.DateTimeField(blank=True, null=True)
     cv_number = models.BigIntegerField(blank=True, null=True)
     train_len = models.BigIntegerField(blank=True, null=True)
     valid_len = models.BigIntegerField(blank=True, null=True)
-    finish_timing = models.DateTimeField(editable=True),
+    finish_timing = models.DateTimeField(blank=True, null=True)
     bagging_fraction= models.FloatField(blank=True, null=True)
     bagging_freq= models.BigIntegerField(blank=True, null=True)
     boosting_type = models.TextField(blank=True, null=True)
