@@ -710,6 +710,7 @@ def ai_value_lgbm_pred_final_eps():
 def ai_value_lgbm_score():
     table = "ai_value_lgbm_score"
     data = get_data_from_database(dlp, table)
+    data = data.rename(columns={"verbose" : "lgbm_verbose"})
     print(data)
     insert_data_to_database(droid2, data, table)
     print(f"Get {table} = True")
