@@ -4,6 +4,7 @@ from core.orders.models import OrderPosition, PositionPerformance, Order
 from config.celery import app
 import pandas as pd
 
+
 def create_performance(price_data, position, latest_price=False):
     bot = position.bot
 
@@ -35,13 +36,17 @@ def create_performance(price_data, position, latest_price=False):
         share_num = last_performance.share_num
         if(status_expiry):
             share_num = 0
-        bot_cash_balance = last_performance.current_bot_cash_balance + ((last_performance.share_num - share_num) * live_price)
-        current_pnl_amt = last_performance.current_pnl_amt + (live_price - last_performance.last_live_price) * last_performance.share_num
+        bot_cash_balance = last_performance.current_bot_cash_balance + \
+            ((last_performance.share_num - share_num) * live_price)
+        current_pnl_amt = last_performance.current_pnl_amt + \
+            (live_price - last_performance.last_live_price) * \
+            last_performance.share_num
     else:
         live_price = position.entry_price
         current_pnl_amt = 0
         share_num = position.share_num
-    current_pnl_ret = (current_pnl_amt + bot_cash_balance) / position.investment_amount
+    current_pnl_ret = (current_pnl_amt + bot_cash_balance) / \
+        position.investment_amount
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.save()
     current_investment_amount = live_price * share_num
@@ -63,9 +68,11 @@ def create_performance(price_data, position, latest_price=False):
 
     if status_expiry:
         current_investment_amount = live_price * performance.share_num
-        current_pnl_amt = performance.current_pnl_amt + ((live_price - performance.last_live_price) * performance.share_num)
+        current_pnl_amt = performance.current_pnl_amt + \
+            ((live_price - performance.last_live_price) * performance.share_num)
         position.final_price = live_price
-        position.current_inv_ret = (current_pnl_amt + position.bot_cash_balance) / position.investment_amount
+        position.current_inv_ret = (
+            current_pnl_amt + position.bot_cash_balance) / position.investment_amount
         position.final_return = position.current_inv_ret
         position.current_inv_amt = current_investment_amount
         position.final_pnl_amount = current_pnl_amt
@@ -83,20 +90,20 @@ def create_performance(price_data, position, latest_price=False):
             else:
                 position.event = "Bot Expired"
         position.save()
-    
+
     if status_expiry:
         order = Order.objects.create(
-            is_init = False,
-            ticker = position.ticker,
-            created = log_time,
-            updated = log_time,
-            price = live_price,
-            bot_id = bot.bot_id,
-            amount = position.share_num * live_price,
-            user_id = position.user_id,
-            side = "sell",
-            performance_uid = performance.performance_uid,
-            qty = position.share_num
+            is_init=False,
+            ticker=position.ticker,
+            created=log_time,
+            updated=log_time,
+            price=live_price,
+            bot_id=bot.bot_id,
+            amount=position.share_num * live_price,
+            user_id=position.user_id,
+            side="sell",
+            performance_uid=performance.performance_uid,
+            qty=position.share_num
         )
         if order:
             order.placed = True
@@ -125,7 +132,8 @@ def classic_position_check(position_uid):
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
-        tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry).order_by("trading_day")
+        tac_data = MasterTac.objects.filter(
+            ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry).order_by("trading_day")
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day
@@ -141,12 +149,14 @@ def classic_position_check(position_uid):
         if(not status and trading_day < lastest_price_data.last_date and position.expiry >= lastest_price_data.last_date):
             trading_day = lastest_price_data.last_date
             print(f"latest price {trading_day} done")
-            status = create_performance(lastest_price_data, position, latest_price=True)
+            status = create_performance(
+                lastest_price_data, position, latest_price=True)
             position.save()
             if status:
                 print(f"position end")
         try:
-            tac_data = MasterTac.objects.filter(ticker=position.ticker, trading_day__gte=position.expiry).latest("-trading_day")
+            tac_data = MasterTac.objects.filter(
+                ticker=position.ticker, trading_day__gte=position.expiry).latest("-trading_day")
             if(not status and tac_data):
                 position.expiry = tac_data.trading_day
                 position.save()

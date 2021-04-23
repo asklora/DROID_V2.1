@@ -50,8 +50,8 @@ def order_signal(sender, instance, created, **kwargs):
     elif created and not instance.is_init and instance.bot_id != 'stock':
         pass
 
-    # update the status and create position
     elif not created and instance.status in ['filled', 'allocated'] and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
+        # update the status and create new position
         if instance.is_init:
             if instance.status == 'filled':
                 spot_date = instance.filled_at
@@ -79,7 +79,7 @@ def order_signal(sender, instance, created, **kwargs):
                         setattr(order, key, val)
                     if hasattr(perf, key):
                         setattr(perf, key, val)
-                
+
                 orderserialize = OrderPositionSerializer(order).data
                 orderdata = {
                     'type': 'function',
@@ -109,11 +109,45 @@ def order_signal(sender, instance, created, **kwargs):
                 # services.celery_app.send_task('config.celery.listener',args=(perfdata,),queue='asklora')
 
         else:
+            # hedging daily here
             if instance.bot_id != 'stock':
-                signal_performance = PositionPerformance.objects.get(
-                    performance_uid=instance.performance_uid)
-                signal_performance.order_id = instance
-                signal_performance.save()
+                if instance.setup:
+                    # getting existing position from setup
+                    order_position = OrderPosition.objects.get(
+                        position_uid=instance.setup['position']['position_uid'])
+                    key_list = list(instance.setup['position'])
+
+                    # update the position
+                    for key in key_list:
+                        if not key in ['created', 'updated']:
+                            if hasattr(order_position, key):
+                                field = order_position._meta.get_field(key)
+                                if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
+                                    raw_key = f'{key}_id'
+                                    setattr(
+                                        order_position, raw_key, instance.setup['position'].pop(key))
+                                elif key == 'share_num':
+                                    setattr(order_position, key,
+                                            instance.setup['position'].get(key))
+                                else:
+                                    setattr(order_position, key,
+                                            instance.setup['position'].pop(key))
+                     # remove field position_uid, cause it will double
+                    instance.setup['performance'].pop('position_uid')
+                    signal_performance = PositionPerformance.objects.create(
+                        position_uid=order_position,  # replace with instance
+                        # the rest is value from setup
+                        **instance.setup['performance']
+                    )
+
+                    signal_performance.order_uid = instance
+                    order_position.save()
+                    signal_performance.save()
+                    if not instance.performance_uid:
+                        instance.performance_uid = signal_performance.performance_uid
+                        instance.save()
+
+    # send payload to asklora
     instanceserialize = OrderSerializer(instance).data
     data = {
         'type': 'function',
