@@ -37,7 +37,7 @@ def get_client_uid(client_name="HANWHA"):
     data = read_query(query, table=table_name, cpu_counts=True)
     return data.loc[0, "client_uid"]
 
-def another_top_stock(currency_code, client_uid, top_five_ticker_list):
+def another_top_stock(currency_code, client_uid, top_five_ticker_list, top_pick_distinct):
     table_name = get_universe_rating_table_name()
     query = f"select f3.ticker, f3.industry_code, f3.ribbon_score, f3.wts_rating, f3.wts_score, (now())::date as forward_date "
     query += f"from (select f2.ticker, f2.industry_code, f2.wts_rating, f2.wts_score, (f2.st + f2.mt + f2.gq) as ribbon_score "
@@ -53,11 +53,11 @@ def another_top_stock(currency_code, client_uid, top_five_ticker_list):
     if (check != ""):
         query += f"and ur.{check}"
     query += f") f1) f2) f3 "
-    query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit 18 "
+    query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit {25-top_pick_distinct} "
     data = read_query(query, table=table_name, cpu_counts=True)
     return data
 
-def top_stock_distinct_industry(currency_code, client_uid):
+def top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct):
     table_name = get_universe_rating_table_name()
     query = f"select f5.ticker, f5.industry_code, f5.ribbon_score, f5.wts_rating, f5.wts_score, (now())::date as forward_date "
     query += f"from (select distinct on (f4.industry_code) f4.ticker, f4.industry_code, f4.ribbon_score, f4.wts_rating, f4.wts_score "
@@ -76,20 +76,19 @@ def top_stock_distinct_industry(currency_code, client_uid):
     if (check != ""):
         query += f"where ur.{check}"
     query += f") f1) f2) f3 "
-    query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit 30) f4 where rn=1) f5 "
-    query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit 7; "
+    query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC) f4 where rn=1) f5 "
+    query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit {top_pick_distinct}; "
     data = read_query(query, table=table_name, cpu_counts=True)
     return data
 
-def test_pick(currency_code=None, client_name="HANWHA"):
+def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7):
     print("{} : === CLIENT WEEKLY PICK STARTED ===".format(dateNow()))
     client_uid = get_client_uid(client_name=client_name)
-    universe = get_client_universe(currency_code, client_uid)
-    top_five = top_stock_distinct_industry(currency_code, client_uid)
-    print(top_five)
-    top_ten = another_top_stock(currency_code, client_uid, top_five["ticker"])
-    print(top_ten)
-    top_stock = top_five.append(top_ten)
+    top_stock_distinct = top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct)
+    print(top_stock_distinct)
+    top_stock_not_distinct = another_top_stock(currency_code, client_uid, top_stock_distinct["ticker"], top_pick_distinct)
+    print(top_stock_not_distinct)
+    top_stock = top_stock_distinct.append(top_stock_not_distinct)
     top_stock = top_stock.reset_index(inplace=False, drop=True)
     print(top_stock)
     result = pd.DataFrame({"spot_date":[top_stock.loc[0, "forward_date"]],

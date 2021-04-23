@@ -45,11 +45,10 @@ def create_performance(price_data, position, latest_price=False):
         live_price = position.entry_price
         current_pnl_amt = 0
         share_num = position.share_num
-    current_pnl_ret = (current_pnl_amt + bot_cash_balance) / \
-        position.investment_amount
+    current_investment_amount = live_price * share_num
+    current_pnl_ret = (bot_cash_balance + current_investment_amount - position.investment_amount) / position.investment_amount
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.save()
-    current_investment_amount = live_price * share_num
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)
     performance = PositionPerformance.objects.create(
@@ -67,15 +66,11 @@ def create_performance(price_data, position, latest_price=False):
     )
 
     if status_expiry:
-        current_investment_amount = live_price * performance.share_num
-        current_pnl_amt = performance.current_pnl_amt + \
-            ((live_price - performance.last_live_price) * performance.share_num)
         position.final_price = live_price
-        position.current_inv_ret = (
-            current_pnl_amt + position.bot_cash_balance) / position.investment_amount
+        position.current_inv_ret = performance.current_pnl_ret
         position.final_return = position.current_inv_ret
-        position.current_inv_amt = current_investment_amount
-        position.final_pnl_amount = current_pnl_amt
+        position.final_pnl_amount = performance.current_pnl_amt
+        position.current_inv_amt = live_price * performance.share_num
         position.event_date = trading_day
         position.is_live = False
         if high > position.target_profit_price:
