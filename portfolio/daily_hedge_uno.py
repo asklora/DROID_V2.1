@@ -92,9 +92,8 @@ def create_performance(price_data, position, latest_price=False):
             (share_num * live_price)
         last_hedge_delta = delta
 
-    current_pnl_ret = (current_pnl_amt + bot_cash_balance) / \
-        position.investment_amount
     current_investment_amount = live_price * share_num
+    current_pnl_ret = (bot_cash_balance + current_investment_amount - position.investment_amount) / position.investment_amount
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.share_num = round((position.investment_amount / live_price), 1)
     position.save()
@@ -124,16 +123,11 @@ def create_performance(price_data, position, latest_price=False):
     )
 
     if status_expiry:
-        current_investment_amount = live_price * performance['share_num']
-        current_pnl_amt = performance['current_pnl_amt'] + \
-            ((live_price - performance['last_live_price'])
-             * performance['share_num'])
         position.final_price = live_price
-        position.current_inv_ret = (
-            current_pnl_amt + position.bot_cash_balance) / position.investment_amount
+        position.current_inv_ret = performance["current_pnl_ret"]
         position.final_return = position.current_inv_ret
-        position.final_pnl_amount = current_pnl_amt
-        position.current_inv_amt = current_investment_amount
+        position.final_pnl_amount = performance["current_pnl_amt"]
+        position.current_inv_amt = live_price * performance["share_num"]
         position.event_date = trading_day
         position.is_live = False
         if high > position.target_profit_price:
@@ -149,22 +143,22 @@ def create_performance(price_data, position, latest_price=False):
     # serializing -> make dictionary position instance
     position_val = OrderPositionSerializer(position).data
     # remove created and updated from position
-    [position_val.pop(key) for key in ['created', 'updated']]
+    [position_val.pop(key) for key in ["created", "updated"]]
     # merge two dict, and save to order setup
-    setup = {'performance': performance, 'position': position_val}
+    setup = {"performance": performance, "position": position_val}
     if not status == "hold":
         if hedge_shares < 0:
             hedge_shares = hedge_shares * -1  # make it positif in order
 
         order = Order.objects.create(
             is_init=False,
-            ticker_id=position_val['ticker'],
+            ticker_id=position_val["ticker"],
             created=log_time,
             updated=log_time,
             price=live_price,
             bot_id=bot.bot_id,
             amount=(hedge_shares*live_price),
-            user_id_id=position_val['user_id'],
+            user_id_id=position_val["user_id"],
             side=status,
             qty=hedge_shares,
             setup=setup
@@ -182,7 +176,7 @@ def create_performance(price_data, position, latest_price=False):
             return False, order.order_uid
 
     # otherwise just create a record
-    performance.pop('position_uid')
+    performance.pop("position_uid")
     position.save()
     PositionPerformance.objects.create(
         position_uid=position,
