@@ -4,7 +4,7 @@ from .manager import AppUserManager
 from django.core.exceptions import ValidationError
 import uuid
 from django.utils import timezone
-from core.universe.models import Currency,Country
+from core.universe.models import Currency, Country
 from datetime import datetime, date
 from django.db import IntegrityError
 from django.conf import settings
@@ -13,17 +13,9 @@ from django.db.models import (
     Case, When, Value,
     F, FloatField, ExpressionWrapper,
     Sum, Q, Lookup
-    )
-import jwt
+)
 import base64
-
-
-
-
-
-
-
-
+from core.djangomodule.models import BaseTimeStampModel
 
 
 def generate_balance_id():
@@ -85,88 +77,66 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def balance(self):
         return self.user_balance.amount
+
     class Meta:
         db_table = 'user_core'
 
 
-# class Accountbalance(models.Model):
-#     balance_id = models.CharField(
-#         primary_key=True, max_length=300, blank=True, editable=False, unique=True)
-#     user = models.OneToOneField(
-#         User, on_delete=models.CASCADE, related_name='user_balance')
-#     amount = models.FloatField(default=0)
-#     currency = models.ForeignKey(
-#         Currency, on_delete=models.DO_NOTHING, related_name='user_currency', default='USD')
-#     last_updated = models.DateTimeField(auto_now_add=True)
+class Accountbalance(BaseTimeStampModel):
+    balance_uid = models.CharField(
+        primary_key=True, max_length=300, blank=True, editable=False, unique=True)
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name='user_balance', db_column='user_id')
+    amount = models.FloatField(default=0)
+    currency_code = models.ForeignKey(
+        Currency, on_delete=models.DO_NOTHING, related_name='user_currency', default='USD', db_column='currency_code')
 
-#     def __str__(self):
-#         return self.user.email
+    def __str__(self):
+        return self.user.email
 
-#     def save(self, *args, **kwargs):
-#         if self.amount == None:
-#             self.amount = 0
-#         if not self.balance_id:
-#             self.balance_id = uuid.uuid4().hex
-#             # using your function as above or anything else
-#         success = False
-#         failures = 0
-#         while not success:
-#             try:
-#                 super(Accountbalance, self).save(*args, **kwargs)
-#             except IntegrityError:
-#                 failures += 1
-#                 if failures > 5:  # or some other arbitrary cutoff point at which things are clearly wrong
-#                     raise KeyError
-#                 else:
-#                     # looks like a collision, try another random value
-#                     self.balance_id = uuid.uuid4().hex
-#             else:
-#                 success = True
+    def save(self, *args, **kwargs):
+        if self.amount == None:
+            self.amount = 0
+        if not self.balance_id:
+            self.balance_id = uuid.uuid4().hex
+            # using your function as above or anything else
+        success = False
+        failures = 0
+        while not success:
+            try:
+                super(Accountbalance, self).save(*args, **kwargs)
+            except IntegrityError:
+                failures += 1
+                if failures > 5:  # or some other arbitrary cutoff point at which things are clearly wrong
+                    raise KeyError
+                else:
+                    # looks like a collision, try another random value
+                    self.balance_id = uuid.uuid4().hex
+            else:
+                success = True
 
-#     class Meta:
-#         db_table = 'user_account_balance'
+    class Meta:
+        db_table = 'user_account_balance'
 
 
-# class TransactionHistory(models.Model):
-#     C = 'credit'
-#     D = 'debit'
-#     type_choice = (
-#         (C, 'credit'),
-#         (D, 'debit')
-#     )
-#     tr_id = models.CharField(max_length=500, editable=False)
-#     balance_id = models.ForeignKey(Accountbalance, on_delete=models.CASCADE,
-#                                    related_name='account_trasaction', db_column='balanceId')
-#     tr_type = models.CharField(max_length=100, choices=type_choice)
-#     tr_amount = models.FloatField(default=0)
-#     description = models.TextField()
-#     created = models.DateTimeField(auto_now=True)
-#     updated = models.DateTimeField(auto_now_add=True)
-#     bot_transaction = models.CharField(max_length=500, null=True, blank=True)
+class TransactionHistory(BaseTimeStampModel):
+    C = 'credit'
+    D = 'debit'
+    type_choice = (
+        (C, 'credit'),
+        (D, 'debit')
+    )
+    balance_uid = models.ForeignKey(Accountbalance, on_delete=models.CASCADE,
+                                    related_name='account_trasaction', db_column='balance_uid')
+    side = models.CharField(max_length=100, choices=type_choice)
+    amount = models.FloatField(default=0)
+    transaction_detail = models.JSONField(default=dict, null=True, blank=True)
 
-#     def __str__(self):
-#         return f'{self.tr_type} - {self.balance_id.user.email}'
+    def __str__(self):
+        return f'{self.tr_type} - {self.balance_id.user.email}'
 
-#     def save(self, *args, **kwargs):
-#         if self.created == None:
-#             self.created = datetime.now()
-#         payload = {
-#             'user': self.balance_id.user.email,
-#             'transaction_type': self.tr_type,
-#             'amount': self.tr_amount,
-#             'balance_id': self.balance_id.balance_id,
-#             'description': self.description,
-#             'created': str(self.created)
-#         }
-#         token_id = jwt.encode(payload, settings.SECRET_KEY,
-#                               algorithm='HS256').decode('utf-8')
-#         token_id = token_id.replace('.', '|')
-#         self.tr_amount = round(self.tr_amount, 2)
-#         self.tr_id = token_id
-#         super(TransactionHistory, self).save(*args, **kwargs)
-
-#     class Meta:
-#         db_table = 'user_transaction'
+    class Meta:
+        db_table = 'user_transaction'
 
 
 # class UserLogHistory(models.Model):

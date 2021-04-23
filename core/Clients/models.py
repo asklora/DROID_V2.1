@@ -9,10 +9,6 @@ class Client(BaseTimeStampModel):
     client_uid = models.CharField(
         max_length=255, primary_key=True, editable=False)
     client_name = models.CharField(max_length=255)
-    client_base_currency = models.ForeignKey(
-        Currency, on_delete=models.CASCADE, related_name="client_currency", db_column='currency_code')
-    client_base_commision = models.FloatField(null=True, blank=True)
-    use_currency = models.BooleanField(default=True)
     client_credentials = models.JSONField(null=True, blank=True)
 
     class Meta:
@@ -48,6 +44,9 @@ class UserClient(BaseTimeStampModel):
         User, on_delete=models.CASCADE, related_name="client_user", db_column='user_id')
     client = models.ForeignKey(Client, on_delete=models.CASCADE,
                                related_name="client_related", db_column='client_uid')
+    currency_code = models.ForeignKey(
+        Currency, on_delete=models.CASCADE, related_name="client_currency", db_column='currency_code', null=True, blank=True)
+    use_currency = models.BooleanField(default=True)
     extra_data = models.JSONField(null=True, blank=True)
 
     def __str__(self):
@@ -108,6 +107,8 @@ class ClientTopStock(BaseTimeStampModel):
     completed_date = models.DateField(null=True, blank=True)
     event = models.CharField(max_length=50, null=True, blank=True)
     bot_id = models.CharField(max_length=80, null=True, blank=True)
+    currency_code = models.ForeignKey(
+        Currency, on_delete=models.CASCADE, related_name="topstock_currency", db_column='currency_code')
     rank = models.IntegerField(null=True, blank=True)
 
     def save(self, *args, **kwargs):

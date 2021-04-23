@@ -123,7 +123,7 @@ def create_performance(price_data, position, latest_price=False):
         option_price=option_price
     )
 
-    if status_expiry:
+    if status_expiry or high >= position.target_profit_price:
         current_investment_amount = live_price * performance['share_num']
         current_pnl_amt = performance['current_pnl_amt'] + \
             ((live_price - performance['last_live_price'])
