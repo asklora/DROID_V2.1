@@ -35,3 +35,8 @@ def tuple_data(data):
     data = str(data)
     data = data.replace(",)", ")")
     return data
+
+def NoneToZero(value):
+    if value:
+        return value
+    return 0

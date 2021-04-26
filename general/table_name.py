@@ -180,6 +180,9 @@ def get_orders_position_table_name():
 def get_orders_position_performance_table_name():
     return "orders_position_performance"
 
+def get_user_account_balance_table_name():
+    return "user_account_balance"
+
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 
