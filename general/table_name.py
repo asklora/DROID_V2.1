@@ -177,6 +177,12 @@ def get_orders_table_name():
 def get_orders_position_table_name():
     return "orders_position"
 
+def get_client_test_pick_table_name():
+    return "client_test_pick"
+
+def get_client_top_stock_table_name():
+    return "client_top_stock"
+
 def get_orders_position_performance_table_name():
     return "orders_position_performance"
 

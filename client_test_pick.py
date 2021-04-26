@@ -1,4 +1,6 @@
+
 import sys
+from boto3 import client
 from botocore import hooks
 from numpy import append
 import pandas as pd
@@ -14,6 +16,8 @@ from general.table_name import (
     get_bot_option_type_table_name,
     get_bot_ranking_table_name,
     get_client_table_name,
+    get_client_test_pick_table_name,
+    get_client_top_stock_table_name,
     get_master_tac_table_name,
     get_orders_position_table_name, 
     get_universe_table_name, 
@@ -21,6 +25,7 @@ from general.table_name import (
     get_universe_rating_table_name,
     get_user_account_balance_table_name,
     get_user_clients_table_name)
+from bot.calculate_bot import get_expiry_date
 
 def check_currency_code(currency_code, client_uid):
     query = ""
@@ -51,15 +56,38 @@ def get_client_uid(client_name="HANWHA"):
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data.loc[0, "client_uid"]
 
-def get_user_id(client_uid, currency_code):
+def get_user_id(client_uid, currency_code, tester=False, advisor=False, capital="small"):
     table_name = get_user_clients_table_name()
-    filter = '{"capital": "small", "service_type": "bot_advisor"}'
-    query = f"select user_id from {table_name} where client_uid='{client_uid}' and extra_data='{filter}' and currency_code in {tuple_data(currency_code)};"
+    
+    query = f"select user_id from {table_name} where client_uid='{client_uid}' and currency_code in {tuple_data(currency_code)} "
+    if(advisor):
+        filter = '{"capital": "'+capital+'", "service_type": "bot_advisor"}'
+        query += f" and extra_data='{filter}' "
+    if(tester):
+        filter = '{"capital": "'+capital+'", "service_type": "bot_tester"}'
+        query += f" and extra_data='{filter}' "
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     if(len(data) >= 1):
         return data.loc[0, "user_id"]
     else:
         sys.exit("There is no Account for this user")
+
+def get_client_test_pick_ticker(client_uid, currency_code):
+    table_name = get_client_test_pick_table_name()
+    query = f"select ctp.* from {table_name} ctp inner join (select client_uid, currency_code, max(ctp1.spot_date) max_date "
+    query += f"from {table_name} ctp1 group by client_uid, currency_code) filter "
+    query += f"on ctp.client_uid = filter.client_uid and ctp.currency_code = filter.currency_code and "
+    query += f"ctp.spot_date = filter.max_date where ctp.client_uid='{client_uid}' and ctp.currency_code  in {tuple_data(currency_code)}; "
+    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+    result = pd.DataFrame({"client_uid":[], "currency_code":[], "spot_date":[], "ticker":[], "rank":[]}, index=[])
+    for col in data.columns:
+        if(col not in ["uid", "client_uid", "currency_code", "spot_date"]):
+            rank = col.split("_")
+            temp = pd.DataFrame({"client_uid":[client_uid], "currency_code":[currency_code[0]], 
+            "spot_date":[data.loc[0, "spot_date"]], "ticker":[data.loc[0, col]], "rank":[rank[1]]}, index=[0])
+            result = result.append(temp)
+    result = result.reset_index(inplace=False, drop=True)
+    return result
 
 def get_portolio_ticker_list(user_id):
     table_name = get_orders_position_table_name()
@@ -67,11 +95,13 @@ def get_portolio_ticker_list(user_id):
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data["ticker"].to_list()
 
-def get_old_advisor_ticker_pick(client_uid):
-    table_name = get_orders_position_table_name()
-    query = f"select ticker_rank1 as ticker from client_test_pick where client_uid = '{client_uid}' "
-    query += f"UNION "
-    query += f"select ticker_rank2 as ticker from client_test_pick where client_uid = '{client_uid}';"
+def get_old_advisor_ticker_pick(client_uid, currency_code, tester=False, advisor=False):
+    table_name = get_client_top_stock_table_name()
+    query = f"select ticker from client_top_stock where currency_code in {tuple_data(currency_code)} and client_uid = '{client_uid}' "
+    if(advisor):
+        query += f"and service_type = 'bot_advisor' "
+    if(tester):
+        query += f"and service_type = 'bot_tester' "
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data["ticker"].to_list()
 
@@ -173,15 +203,17 @@ def top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct):
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data
 
-def populate_bot_advisor(client_uid, currency_code, top_pick_distinct, top_stock, time_to_exp):
-    user_id = get_user_id(client_uid, currency_code)
+def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stock=7, time_to_exp=[0.07692], top_pick = 2, capital="small"):
+    client_uid = get_client_uid(client_name=client_name)
+    user_id = get_user_id(client_uid, currency_code, advisor=True, capital=capital)
     portolio_ticker_list = get_portolio_ticker_list(user_id)
-    old_advisor_ticker_list = get_old_advisor_ticker_pick(client_uid)
+    old_advisor_ticker_list = get_old_advisor_ticker_pick(client_uid, currency_code, advisor=True)
+    top_stock = get_client_test_pick_ticker(client_uid, currency_code)
     available_pick = top_stock.loc[~top_stock["ticker"].isin(portolio_ticker_list)]
     available_pick = available_pick.loc[~available_pick["ticker"].isin(old_advisor_ticker_list)]
-    available_pick = available_pick.reset_index(inplace=False, drop=True).head(top_pick_distinct)
-    bot_ranking = get_bot_ranking(available_pick["ticker"], top_stock.loc[0, "forward_date"])
-    price = get_newest_price(available_pick["ticker"], top_stock.loc[0, "forward_date"])
+    available_pick = available_pick.reset_index(inplace=False, drop=True).head(top_pick_stock)
+    bot_ranking = get_bot_ranking(available_pick["ticker"], top_stock.loc[0, "spot_date"])
+    price = get_newest_price(available_pick["ticker"], top_stock.loc[0, "spot_date"])
     filter_field = ["ticker"]
     rename = {}
     bot_option_type = get_bot_option_type(time_to_exp)
@@ -200,7 +232,7 @@ def populate_bot_advisor(client_uid, currency_code, top_pick_distinct, top_stock
         for col in bot_ranking.columns:
             if(col != "ticker"):
                 bot = col.split("_")
-                temp = pd.DataFrame({"ticker":[row["ticker"]], "spot_date":[top_stock.loc[0, "forward_date"]], 
+                temp = pd.DataFrame({"ticker":[row["ticker"]], "spot_date":[top_stock.loc[0, "spot_date"]], 
                     "bot_id":[col], "prob":[row[col]], "bot":[bot[0]]}, index=[0])
                 bot_advisor_pick = bot_advisor_pick.append(temp)
     bot_advisor_pick = bot_advisor_pick.sort_values(by=["prob"], ascending=[False])
@@ -208,7 +240,9 @@ def populate_bot_advisor(client_uid, currency_code, top_pick_distinct, top_stock
     bot_advisor_pick = bot_advisor_pick.reset_index(inplace=False, drop=True)
     print(bot_advisor_pick)
     current_assets = get_current_assets(user_id)
-    advisor_pick = pd.DataFrame({"currency_code":[currency_code[0]]}, index=[0])
+    advisor_pick = pd.DataFrame({"created":[], "updated":[], "uid":[],"spot_date":[], "expiry_date":[], "has_position":[], 
+        "position_uid":[],"execution_date":[], "completed_date":[], "event":[], "rank":[], "client_uid":[], "ticker":[], 
+        "bot_id":[], "currency_code":[], "service_type":[]}, index=[])
     count = 1
     last_ticker = [""]
     for index, row in bot_advisor_pick.iterrows():
@@ -216,21 +250,29 @@ def populate_bot_advisor(client_uid, currency_code, top_pick_distinct, top_stock
         bot_id = row["bot_id"]
         bot = row["bot"]
         tri_adj_close = row["tri_adj_close"]
-        if(count > 2):
+        if(count > top_pick):
             break
         status = True
         if(bot == "UNO" or bot == "UCDC"):
             if(tri_adj_close > current_assets/100):
                 status=False
         if(status):
-            advisor_pick[f"ticker_rank{count}"] = ticker
-            advisor_pick[f"bot_rank{count}"] = bot_id
+            service_type = "bot_advisor"
+            uid = client_uid + currency_code[0] + service_type
+            spot_date = top_stock.loc[0, "spot_date"]
+            expiry_date = get_expiry_date(time_to_exp[0], str(spot_date), currency_code[0])
+            uid = uid.replace("-", "").replace(".", "").replace(" ", "")
+            temp = pd.DataFrame({"created":[datetime.today()], "updated":[datetime.today()], "uid":[uid],"spot_date":[spot_date], 
+            "expiry_date":[expiry_date], "has_position":[0], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
+            "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id], "currency_code":[currency_code[0]], "service_type":[service_type]}, index=[0])
             last_ticker.append(ticker)
             count+=1
+            advisor_pick = advisor_pick.append(temp)
     print(advisor_pick)
-    return advisor_pick
+    advisor_pick.to_csv("advisor_pick.csv")
+    upsert_data_to_database(advisor_pick, get_client_top_stock_table_name(), "uid", how="ignore", cpu_count=True, Text=True)
 
-def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7, time_to_exp=[0.07692]):
+def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7):
     print("{} : === CLIENT WEEKLY PICK STARTED ===".format(dateNow()))
     client_uid = get_client_uid(client_name=client_name)
     top_stock_distinct = top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct)
@@ -240,7 +282,7 @@ def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7, tim
     top_stock = top_stock_distinct.append(top_stock_not_distinct)
     top_stock = top_stock.reset_index(inplace=False, drop=True)
     print(top_stock)
-    advisor_pick = populate_bot_advisor(client_uid, currency_code, top_pick_distinct, top_stock, time_to_exp)
+    # advisor_pick = populate_bot_advisor(client_uid, currency_code, top_pick_distinct, top_stock, time_to_exp)
     result = pd.DataFrame({"spot_date":[top_stock.loc[0, "forward_date"]],
                 "ticker_1":[top_stock.loc[0, "ticker"]],
                 "ticker_2":[top_stock.loc[1, "ticker"]],
@@ -269,7 +311,7 @@ def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7, tim
                 "ticker_25":[top_stock.loc[24, "ticker"]]}, index=[0])
     result["client_uid"] = client_uid
     result["currency_code"] = currency_code[0]
-    result = result.merge(advisor_pick, how="left", on="currency_code")
+    # result = result.merge(advisor_pick, how="left", on="currency_code")
     today = datetime.now().date()
     print(today)
     print(today.weekday())
@@ -280,14 +322,26 @@ def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7, tim
     result = uid_maker(result, uid="uid", ticker="uid", trading_day="spot_date", date=True)
     print(result)
     print("{} : === CLIENT WEEKLY PICK COMPLETED ===".format(dateNow()))
-    upsert_data_to_database(result, "client_test_pick", "uid", how="ignore", cpu_count=True, Text=True)
+    upsert_data_to_database(result, get_client_test_pick_table_name(), "uid", how="update", cpu_count=True, Text=True)
     report_to_slack("{} : === CLIENT WEEKLY PICK COMPLETED ===".format(dateNow()))
 
 if __name__ == '__main__':
     print("Do Process")
     # test_pick(currency_code=["USD"], client_name="FELS")
     # test_pick(currency_code=["EUR"], client_name="FELS")
-    test_pick(currency_code=["USD"], client_name="HANWHA")
-    test_pick(currency_code=["KRW"], client_name="HANWHA")
-    test_pick(currency_code=["HKD"], client_name="HANWHA")
-    test_pick(currency_code=["CNY"], client_name="HANWHA")
+    # test_pick(currency_code=["USD"], client_name="HANWHA")
+    # test_pick(currency_code=["KRW"], client_name="HANWHA")
+    # test_pick(currency_code=["HKD"], client_name="HANWHA")
+    # test_pick(currency_code=["CNY"], client_name="HANWHA")
+    populate_bot_advisor(currency_code=["USD"], client_name="HANWHA", capital="small")
+    # populate_bot_advisor(currency_code=["USD"], client_name="HANWHA", capital="large")
+    # populate_bot_advisor(currency_code=["USD"], client_name="HANWHA", capital="large_margin")
+    # populate_bot_advisor(currency_code=["KRW"], client_name="HANWHA", capital="small")
+    # populate_bot_advisor(currency_code=["KRW"], client_name="HANWHA", capital="large")
+    # populate_bot_advisor(currency_code=["KRW"], client_name="HANWHA", capital="large_margin")
+    # populate_bot_advisor(currency_code=["HKD"], client_name="HANWHA", capital="small")
+    # populate_bot_advisor(currency_code=["HKD"], client_name="HANWHA", capital="large")
+    # populate_bot_advisor(currency_code=["HKD"], client_name="HANWHA", capital="large_margin")
+    # populate_bot_advisor(currency_code=["CNY"], client_name="HANWHA", capital="small")
+    # populate_bot_advisor(currency_code=["CNY"], client_name="HANWHA", capital="large")
+    # populate_bot_advisor(currency_code=["CNY"], client_name="HANWHA", capital="large_margin")
