@@ -73,7 +73,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f'{self.first_name} {self.last_name}'
 
     @property
-    def get_current_assets(self):
+    def current_assets(self):
         order = self.user_position.filter(is_live=True).aggregate(total=Sum(
             Case(When(~Q(currency_id=self.user_balance.currency_code.currency_code),
                       then=F('current_values')),
