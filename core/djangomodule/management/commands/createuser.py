@@ -9,7 +9,9 @@ class Command(BaseCommand):
         parser.add_argument('-e', '--email', type=str, help='email')
         parser.add_argument('-b', '--bot', type=str, help='bot group type')
         parser.add_argument('-p', '--password', type=str, help='ticker')
-        parser.add_argument('-c', '--currency', type=float, help='price')
+        parser.add_argument('-c', '--currency', type=str, help='currency')
+        parser.add_argument('-amt', '--amt', type=float, help='amount')
+        parser.add_argument('-cap', '--cap', type=str, help='capital')
         parser.add_argument(
             '-b2b', '--b2b', action='store_true', help='for client')
         parser.add_argument('-client', '--client',
@@ -20,7 +22,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         try:
             user = User.objects.get(email=options['email'])
-        except User.DoesntExist:
+        except User.DoesNotExist:
             user = False
 
         if user:
@@ -32,7 +34,7 @@ class Command(BaseCommand):
             is_staff = False
         user = User.objects.create(
             email=options['email'],
-            status_choices='approved',
+            current_status='approved',
             is_active=True,
             is_staff=is_staff
         )
@@ -41,12 +43,12 @@ class Command(BaseCommand):
         if user:
             wallet = Accountbalance.objects.create(
                 user=user,
-                currency_code_id=options['currency'].upper()
-            )
+                currency_code_id=options['currency'].upper(),
+                amount=options['amt'])
             try:
                 client = Client.objects.get(
-                    client_name=options['client_name'].upper())
-            except Client.DoesntExistt:
+                    client_name=options['client'].upper())
+            except Client.DoesNotExist:
                 wallet.delete()
                 user.delete()
                 raise NameError('client not found')
@@ -56,8 +58,7 @@ class Command(BaseCommand):
                 client=client,
                 currency_code_id=options['currency'].upper(),
                 extra_data={
-                    'bot_properties': {
-                        'bot_group': options['bot'].upper()
-                    }
+                    'service_type': 'bot_advisor',
+                    'capital': options['cap']
                 }
             )

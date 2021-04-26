@@ -16,6 +16,7 @@ from django.db.models import (
 )
 import base64
 from core.djangomodule.models import BaseTimeStampModel
+from core.djangomodule.general import nonetozero
 
 
 def generate_balance_id():
@@ -71,8 +72,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     def name(self):
         return f'{self.first_name} {self.last_name}'
 
-    def __str__(self):
-        return self.email
+    @property
+    def get_current_assets(self):
+        order = self.user_position.filter(is_live=True).aggregate(total=Sum(
+            Case(When(~Q(currency_id=self.user_balance.currency_code.currency_code),
+                      then=F('current_values')),
+                 default=F('current_values'),
+                 output_field=FloatField(),
+                 )))
+        asset = nonetozero(order['total']) + self.user_balance.amount
+        result = round(asset, 2)
+        return result
 
     @property
     def balance(self):
@@ -80,6 +90,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = 'user_core'
+
+    def __str__(self):
+        return self.email
 
 
 class Accountbalance(BaseTimeStampModel):
@@ -97,8 +110,8 @@ class Accountbalance(BaseTimeStampModel):
     def save(self, *args, **kwargs):
         if self.amount == None:
             self.amount = 0
-        if not self.balance_id:
-            self.balance_id = uuid.uuid4().hex
+        if not self.balance_uid:
+            self.balance_uid = uuid.uuid4().hex
             # using your function as above or anything else
         success = False
         failures = 0
@@ -111,7 +124,7 @@ class Accountbalance(BaseTimeStampModel):
                     raise KeyError
                 else:
                     # looks like a collision, try another random value
-                    self.balance_id = uuid.uuid4().hex
+                    self.balance_uid = uuid.uuid4().hex
             else:
                 success = True
 

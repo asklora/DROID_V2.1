@@ -17,45 +17,45 @@ class UploadTo:
         return "{0}/{1}".format(instance.app.app_type.name, filename)
 
 
-
 def generate_id(digit):
     r_id = base64.b64encode(os.urandom(digit)).decode("ascii")
     r_id = r_id.replace(
         "/", "").replace("_", "").replace("+", "").replace("=", "").strip()
     return r_id
 
+
 def aws_batch(func):
-    
+
     def inner():
         print('===== CREATING BATCH =====')
-        batch_job_definition ='test-celery-job'
+        batch_job_definition = 'test-celery-job'
         batch_queue = 'getting-started-job-queue'
-        host_name='portfolio-job@aws-batch'
-        client = boto3.client('batch',region_name='ap-northeast-2')
-        submit_job =client.submit_job(
-                        jobName='jobfromboto',
-                        jobQueue=batch_queue,
-                        jobDefinition=batch_job_definition,
-                        containerOverrides={
-                            'vcpus': 128,
-                            'memory': 32000,
-                            'command': [
-                                "celery","-A","core.services","worker","-l","INFO",f"--hostname={host_name}","-Q","batch"
-                            ]
-                        },
-                        timeout={
-                            'attemptDurationSeconds': 5000
-                        })
+        host_name = 'portfolio-job@aws-batch'
+        client = boto3.client('batch', region_name='ap-northeast-2')
+        submit_job = client.submit_job(
+            jobName='jobfromboto',
+            jobQueue=batch_queue,
+            jobDefinition=batch_job_definition,
+            containerOverrides={
+                'vcpus': 128,
+                'memory': 32000,
+                'command': [
+                    "celery", "-A", "core.services", "worker", "-l", "INFO", f"--hostname={host_name}", "-Q", "batch"
+                ]
+            },
+            timeout={
+                'attemptDurationSeconds': 5000
+            })
         print('===== JOB SUBMITTED =====')
         print(f'JOB ID : {submit_job["jobId"]}')
         status = ''
         while True:
             response = client.describe_jobs(
-                        jobs=[
-                            submit_job['jobId'],
-                        ]
-                    )
-            if response['jobs'][0]['status'] in ['FAILED','SUCCEEDED']:
+                jobs=[
+                    submit_job['jobId'],
+                ]
+            )
+            if response['jobs'][0]['status'] in ['FAILED', 'SUCCEEDED']:
                 print(response['jobs'][0]['status'])
                 break
             if response['jobs'][0]['status'] in ['RUNNING']:
@@ -74,7 +74,7 @@ def aws_batch(func):
         if status == 'READY':
             func.apply_async(queue='batch')
             time.sleep(2)
-        
+
         while True:
             task = app.control.inspect([host_name]).active()
             active_task = len(task[host_name])
@@ -89,3 +89,9 @@ def aws_batch(func):
                 break
             time.sleep(15)
     return inner
+
+
+def nonetozero(value):
+    if value:
+        return value
+    return 0
