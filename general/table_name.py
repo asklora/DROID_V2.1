@@ -147,6 +147,9 @@ def get_top_stock_models_stock_table_name():
 def get_client_table_name():
     return "client"
 
+def get_user_clients_table_name():
+    return "user_clients"
+
 def get_data_dividend_table_name():
     return "data_dividend"
 
@@ -167,6 +170,15 @@ def get_latest_bot_update_table_name():
 
 def get_bot_option_type_table_name():
     return "bot_option_type"
+
+def get_orders_table_name():
+    return "orders"
+
+def get_orders_position_table_name():
+    return "orders_position"
+
+def get_orders_position_performance_table_name():
+    return "orders_position_performance"
 
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
