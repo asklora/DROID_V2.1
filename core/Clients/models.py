@@ -110,6 +110,7 @@ class ClientTopStock(BaseTimeStampModel):
     currency_code = models.ForeignKey(
         Currency, on_delete=models.CASCADE, related_name="topstock_currency", db_column='currency_code')
     rank = models.IntegerField(null=True, blank=True)
+    srevice_type = models.CharField(max_length=80, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.uid:
