@@ -744,12 +744,12 @@ def weekly_migrations():
 
 if __name__ == '__main__':
     print("Do Process")
-    # daily_migrations()
+    daily_migrations()
     # data_worldscope_summary()
-    ai_value_lgbm_pred()
-    ai_value_lgbm_pred_final()
-    ai_value_lgbm_pred_final_eps()
-    ai_value_lgbm_score()
+    # ai_value_lgbm_pred()
+    # ai_value_lgbm_pred_final()
+    # ai_value_lgbm_pred_final_eps()
+    # ai_value_lgbm_score()
     # data = "0#.SPX"
     # data = data.replace("(", "").replace(")", "").replace("[", "").replace("]", "")
     # data = data.split(",")
