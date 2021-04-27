@@ -102,7 +102,7 @@ def get_industry_code():
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data
 
-def get_portolio_ticker_list(user_id):
+def get_portfolio_ticker_list(user_id):
     table_name = get_orders_position_table_name()
     query = f"select distinct op.ticker, u.industry_code from {table_name} op inner join universe u on op.ticker = u.ticker where user_id='{user_id}';"
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
@@ -221,10 +221,10 @@ def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stoc
     user_id = get_user_id(client_uid, currency_code, advisor=True, capital=capital)
     print(client_uid)
     print(user_id)
-    portolio_ticker_list = get_portolio_ticker_list(user_id)
+    portfolio_ticker_list = get_portfolio_ticker_list(user_id)
     old_advisor_ticker_list = get_old_bot_ticker_pick(client_uid, currency_code, advisor=True, capital=capital)
     top_stock = get_client_test_pick_ticker(client_uid, currency_code)
-    available_pick = top_stock.loc[~top_stock["ticker"].isin(portolio_ticker_list["ticker"].to_list())]
+    available_pick = top_stock.loc[~top_stock["ticker"].isin(portfolio_ticker_list["ticker"].to_list())]
     available_pick = available_pick.loc[~available_pick["ticker"].isin(old_advisor_ticker_list)]
     available_pick = available_pick.reset_index(inplace=False, drop=True).head(top_pick_stock)
     bot_ranking = get_bot_ranking(available_pick["ticker"], top_stock.loc[0, "spot_date"])
@@ -292,13 +292,13 @@ def populate_bot_tester(currency_code=None, client_name="HANWHA", top_pick_stock
     user_id = get_user_id(client_uid, currency_code, tester=True, capital=capital)
     print(client_uid)
     print(user_id)
-    portolio_ticker_list = get_portolio_ticker_list(user_id)
+    portfolio_ticker_list = get_portfolio_ticker_list(user_id)
     old_tester_ticker_list = get_old_bot_ticker_pick(client_uid, currency_code, tester=True)
     top_stock = get_client_test_pick_ticker(client_uid, currency_code)
     industry_code = get_industry_code()
     top_stock = top_stock.merge(industry_code, how="left", on="ticker")
-    available_pick = top_stock.loc[~top_stock["ticker"].isin(portolio_ticker_list["ticker"].to_list())]
-    available_pick = top_stock.loc[~top_stock["industry_code"].isin(portolio_ticker_list["industry_code"].unique())]
+    available_pick = top_stock.loc[~top_stock["ticker"].isin(portfolio_ticker_list["ticker"].to_list())]
+    available_pick = top_stock.loc[~top_stock["industry_code"].isin(portfolio_ticker_list["industry_code"].unique())]
     available_pick = available_pick.loc[~available_pick["ticker"].isin(old_tester_ticker_list)]
     available_pick = available_pick.reset_index(inplace=False, drop=True).head(top_pick_stock)
     bot_ranking = get_bot_ranking(available_pick["ticker"], top_stock.loc[0, "spot_date"])
