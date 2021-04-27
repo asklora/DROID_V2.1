@@ -88,10 +88,12 @@ def order_signal(sender, instance, created, **kwargs):
                 }
                 # services.celery_app.send_task('config.celery.listener',args=(orderdata,),queue='asklora',)
                 perf.current_pnl_amt = 0
+                digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
                 perf.current_bot_cash_balance = order.bot_cash_balance
                 perf.current_pnl_ret = (
                     perf.current_pnl_amt + perf.current_bot_cash_balance) / order.investment_amount
-                perf.current_investment_amount = perf.last_live_price * perf.share_num
+                perf.current_investment_amount = round(
+                    perf.last_live_price * perf.share_num, digits)
                 perf.order_id = instance
                 perf.save()
                 order.save()

@@ -112,6 +112,7 @@ class ClientTopStock(BaseTimeStampModel):
     rank = models.IntegerField(null=True, blank=True)
     service_type = models.CharField(max_length=80, null=True, blank=True)
     capital = models.CharField(max_length=80, null=True, blank=True)
+    bot = models.CharField(max_length=80, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.uid:
