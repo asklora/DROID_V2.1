@@ -109,6 +109,7 @@ def get_portfolio_ticker_list(user_id):
     return data
 
 def get_old_bot_ticker_pick(client_uid, currency_code, tester=False, advisor=False, capital="small", bot="UNO"):
+
     table_name = get_client_top_stock_table_name()
     query = f"select ticker from client_top_stock where currency_code in {tuple_data(currency_code)} and client_uid = '{client_uid}' "
     if(advisor):
@@ -149,6 +150,7 @@ def get_current_assets(user_id):
     return current_assets
 
 def another_top_stock(currency_code, client_uid, top_distinct_ticker_list, top_pick_distinct):
+    #top stocks without distince industries (excluding [top_distinct_ticker_list])
     table_name = get_universe_rating_table_name()
     query = f"select f3.ticker, f3.industry_code, f3.ribbon_score, f3.wts_rating, f3.wts_score, (now())::date as forward_date "
     query += f"from (select f2.ticker, f2.industry_code, f2.wts_rating, f2.wts_score, (f2.st + f2.mt + f2.gq) as ribbon_score "
@@ -164,11 +166,13 @@ def another_top_stock(currency_code, client_uid, top_distinct_ticker_list, top_p
     if (check != ""):
         query += f"and ur.{check}"
     query += f") f1) f2) f3 "
+    #top total ribbons, then wts score, then combined score
     query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit {25-top_pick_distinct} "
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data
 
 def top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct):
+    # top (top_pick_distinct) stocks with distinct industries
     table_name = get_universe_rating_table_name()
     query = f"select f5.ticker, f5.industry_code, f5.ribbon_score, f5.wts_rating, f5.wts_score, (now())::date as forward_date "
     query += f"from (select distinct on (f4.industry_code) f4.ticker, f4.industry_code, f4.ribbon_score, f4.wts_rating, f4.wts_score "
@@ -188,6 +192,7 @@ def top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct):
         query += f"where ur.{check}"
     query += f") f1) f2) f3 "
     query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC) f4 where rn=1) f5 "
+    #top total ribbons, then wts score, then combined score
     query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit {top_pick_distinct}; "
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data
@@ -197,9 +202,10 @@ def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stoc
     user_id = get_user_id(client_uid, currency_code, advisor=True, capital=capital)
     print(client_uid)
     print(user_id)
-    portfolio_ticker_list = get_portfolio_ticker_list(user_id)
+    portfolio_ticker_list = get_portfolio_ticker_list(user_id) #current portfolio stocks
     old_advisor_ticker_list = get_old_bot_ticker_pick(client_uid, currency_code, advisor=True, capital=capital)
     top_stock = get_client_test_pick_ticker(client_uid, currency_code)
+    #eliminate stocks already in portfolio
     available_pick = top_stock.loc[~top_stock["ticker"].isin(portfolio_ticker_list["ticker"].to_list())]
     available_pick = available_pick.loc[~available_pick["ticker"].isin(old_advisor_ticker_list)]
     available_pick = available_pick.reset_index(inplace=False, drop=True).head(top_pick_stock)
@@ -346,8 +352,10 @@ def populate_bot_tester(currency_code=None, client_name="HANWHA", top_pick_stock
 def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7):
     print("{} : === CLIENT WEEKLY PICK STARTED ===".format(dateNow()))
     client_uid = get_client_uid(client_name=client_name)
+    # get the top (top_pick_distinct=7) distinct industry stocks
     top_stock_distinct = top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct)
     print(top_stock_distinct)
+    # get the rest (indusries can overlap)
     top_stock_not_distinct = another_top_stock(currency_code, client_uid, top_stock_distinct["ticker"], top_pick_distinct)
     print(top_stock_not_distinct)
     top_stock = top_stock_distinct.append(top_stock_not_distinct)
