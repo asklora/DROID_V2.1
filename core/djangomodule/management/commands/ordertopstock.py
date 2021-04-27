@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from core.orders.models import Order
+from core.orders.models import Order, PositionPerformance
 from core.Clients.models import UserClient, Client
 import pandas as pd
 
@@ -47,5 +47,10 @@ class Command(BaseCommand):
                 order.status = 'filled'
                 order.filled_at = spot_date
                 order.save()
+                position_uid = PositionPerformance.objects.get(
+                    performance_uid=order.performance_uid).position_uid.position_uid
+                queue.position_uid = position_uid
+                queue.has_position = True
+                queue.save()
                 print(user.user_id, user.extra_data['service_type'],
                       user.extra_data['capital'], queue.ticker, 'created')
