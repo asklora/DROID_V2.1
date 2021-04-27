@@ -192,30 +192,6 @@ def top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct):
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data
 
-def top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct):
-    table_name = get_universe_rating_table_name()
-    query = f"select f5.ticker, f5.industry_code, f5.ribbon_score, f5.wts_rating, f5.wts_score, (now())::date as forward_date "
-    query += f"from (select distinct on (f4.industry_code) f4.ticker, f4.industry_code, f4.ribbon_score, f4.wts_rating, f4.wts_score "
-    query += f"from (select f3.ticker, f3.industry_code, f3.ribbon_score, f3.wts_rating, f3.wts_score,  "
-    query += f"row_number() OVER (PARTITION BY f3.industry_code ORDER BY "
-    query += f"f3.ribbon_score DESC, f3.wts_rating DESC, f3.wts_score DESC, f3.ticker ASC) AS rn "
-    query += f"from (select f2.ticker, f2.industry_code, f2.wts_rating, f2.wts_score, (f2.st + f2.mt + f2.gq) as ribbon_score "
-    query += f"from (select f1.ticker, f1.industry_code, "
-    query += f"CASE WHEN (f1.wts_rating) >= 5 THEN 1 ELSE 0 END AS st, "
-    query += f"CASE WHEN (f1.dlp_1m) >= 5 THEN 1 ELSE 0 END AS mt, "
-    query += f"CASE WHEN (f1.fundamentals_quality) >= 5 THEN 1 ELSE 0 END AS gq, "
-    query += f"f1.wts_rating + f1.dlp_1m + f1.fundamentals_quality AS wts_score, f1.wts_rating "
-    query += f"from (select ur.ticker, ur.wts_rating, ur.dlp_1m, ur.fundamentals_quality, u.industry_code "
-    query += f"from {table_name} ur inner join {get_universe_table_name()} u on u.ticker = ur.ticker "
-    check = check_currency_code(currency_code, client_uid)
-    if (check != ""):
-        query += f"where ur.{check}"
-    query += f") f1) f2) f3 "
-    query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC) f4 where rn=1) f5 "
-    query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit {top_pick_distinct}; "
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
-    return data
-
 def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stock=7, time_to_exp=[0.07692], top_pick = 2, capital="small"):
     client_uid = get_client_uid(client_name=client_name)
     user_id = get_user_id(client_uid, currency_code, advisor=True, capital=capital)
