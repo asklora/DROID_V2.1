@@ -103,13 +103,14 @@ def get_industry_code():
     return data
 
 def get_portfolio_ticker_list(user_id):
+    # get stocks already in portfolio
     table_name = get_orders_position_table_name()
     query = f"select distinct op.ticker, u.industry_code from {table_name} op inner join universe u on op.ticker = u.ticker where user_id='{user_id}';"
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data
 
 def get_old_bot_ticker_pick(client_uid, currency_code, tester=False, advisor=False, capital="small", bot="UNO"):
-
+    #????
     table_name = get_client_top_stock_table_name()
     query = f"select ticker from client_top_stock where currency_code in {tuple_data(currency_code)} and client_uid = '{client_uid}' "
     if(advisor):
