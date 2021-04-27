@@ -277,7 +277,7 @@ def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stoc
             uid = f"{client_uid}_{currency_code[0]}_{ticker}_{spot_date}_{service_type}_{capital}"
             expiry_date = get_expiry_date(time_to_exp[0], str(spot_date), currency_code[0])
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
-            temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], "bot":[bot], 
+            temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], "bot":[None], 
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
             "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id], "currency_code":[currency_code[0]], "service_type":[service_type], "capital":[capital]}, index=[0])
             last_ticker.append(ticker)
