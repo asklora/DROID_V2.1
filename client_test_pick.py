@@ -148,7 +148,7 @@ def get_current_assets(user_id):
     current_assets = round(total_current_value + user_balance, 2)
     return current_assets
 
-def another_top_stock(currency_code, client_uid, top_five_ticker_list, top_pick_distinct):
+def another_top_stock(currency_code, client_uid, top_distinct_ticker_list, top_pick_distinct):
     table_name = get_universe_rating_table_name()
     query = f"select f3.ticker, f3.industry_code, f3.ribbon_score, f3.wts_rating, f3.wts_score, (now())::date as forward_date "
     query += f"from (select f2.ticker, f2.industry_code, f2.wts_rating, f2.wts_score, (f2.st + f2.mt + f2.gq) as ribbon_score "
@@ -159,7 +159,7 @@ def another_top_stock(currency_code, client_uid, top_five_ticker_list, top_pick_
     query += f"f1.wts_rating + f1.dlp_1m + f1.fundamentals_quality AS wts_score, f1.wts_rating "
     query += f"from (select ur.ticker, ur.wts_rating, ur.dlp_1m, ur.fundamentals_quality, u.industry_code "
     query += f"from {table_name} ur inner join {get_universe_table_name()} u on u.ticker = ur.ticker "
-    query += f"where ur.ticker not in {tuple_data(top_five_ticker_list)} " 
+    query += f"where ur.ticker not in {tuple_data(top_distinct_ticker_list)} "
     check = check_currency_code(currency_code, client_uid)
     if (check != ""):
         query += f"and ur.{check}"
