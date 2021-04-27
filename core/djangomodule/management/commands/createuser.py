@@ -12,6 +12,8 @@ class Command(BaseCommand):
         parser.add_argument('-c', '--currency', type=str, help='currency')
         parser.add_argument('-amt', '--amt', type=float, help='amount')
         parser.add_argument('-cap', '--cap', type=str, help='capital')
+        parser.add_argument('-type', '--type', type=str, help='capital')
+        parser.add_argument('-s', '--service', type=str, help='capital')
         parser.add_argument(
             '-b2b', '--b2b', action='store_true', help='for client')
         parser.add_argument('-client', '--client',
@@ -20,6 +22,9 @@ class Command(BaseCommand):
         # parser.add_argument('-f4w', '--fels4w', action='store_true', help='only use test account')
 
     def handle(self, *args, **options):
+        types = options['type'].upper()
+        if types == 'null' or types == 'NULL':
+            types = None
         try:
             user = User.objects.get(email=options['email'])
         except User.DoesNotExist:
@@ -58,7 +63,8 @@ class Command(BaseCommand):
                 client=client,
                 currency_code_id=options['currency'].upper(),
                 extra_data={
-                    'service_type': 'bot_advisor',
-                    'capital': options['cap']
+                    'service_type':  options['service'],
+                    'capital': options['cap'],
+                    'type': types
                 }
             )

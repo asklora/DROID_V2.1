@@ -74,15 +74,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def current_assets(self):
-        order = self.user_position.filter(is_live=True).aggregate(total=Sum(
-            Case(When(~Q(currency_id=self.user_balance.currency_code.currency_code),
-                      then=F('current_values')),
-                 default=F('current_values'),
-                 output_field=FloatField(),
-                 )))
+        order = self.user_position.filter(
+            is_live=True).aggregate(total=Sum('current_values'))
         asset = nonetozero(order['total']) + self.user_balance.amount
         result = round(asset, 2)
         return result
+
+    @property
+    def position_count(self):
+        position = self.user_position.filter(is_live=True).count()
+        if position >= 1:
+            return position
+        return 1
 
     @property
     def balance(self):
