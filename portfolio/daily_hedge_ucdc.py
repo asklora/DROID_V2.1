@@ -139,7 +139,7 @@ def create_performance(price_data, position, latest_price=False):
     setup = {"performance": performance, "position": position_val}
     if not status == "hold":
         if hedge_shares < 0:
-            hedge_shares = hedge_shares * -1  # make it positif in order
+            hedge_shares = hedge_shares * -1  # make it positive in order
 
         order = Order.objects.create(
             is_init=False,
