@@ -87,7 +87,8 @@ def create_performance(price_data, position, latest_price=False):
         last_hedge_delta = delta
 
     current_investment_amount = live_price * share_num
-    current_pnl_ret = (bot_cash_balance + current_investment_amount - position.investment_amount) / position.investment_amount
+    current_pnl_ret = (bot_cash_balance + current_investment_amount -
+                       position.investment_amount) / position.investment_amount
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.share_num = round((position.investment_amount / live_price), 1)
 
@@ -247,7 +248,7 @@ def ucdc_position_check(position_uid):
                 # position.save()
                 if status:
                     print(f"position end moving expiry")
-        except PositionPerformance.DoesNotExist:
+        except MasterTac.DoesNotExist:
             status = False
         return True
     except OrderPosition.DoesNotExist:
