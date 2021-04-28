@@ -109,16 +109,16 @@ def get_portfolio_ticker_list(user_id):
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data
 
-def get_old_bot_ticker_pick(client_uid, currency_code, tester=False, advisor=False, capital="small", bot="UNO"):
-    #????
-    table_name = get_client_top_stock_table_name()
-    query = f"select ticker from client_top_stock where currency_code in {tuple_data(currency_code)} and client_uid = '{client_uid}' "
-    if(advisor):
-        query += f"and service_type = 'bot_advisor' and capital = '{capital}' "
-    if(tester):
-        query += f"and service_type = 'bot_tester' and capital = '{capital}' and bot = '{bot}' "
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
-    return data["ticker"].to_list()
+# def get_old_bot_ticker_pick(client_uid, currency_code, tester=False, advisor=False, capital="small", bot="UNO"):
+#     #????
+#     table_name = get_client_top_stock_table_name()
+#     query = f"select ticker from client_top_stock where currency_code in {tuple_data(currency_code)} and client_uid = '{client_uid}' "
+#     if(advisor):
+#         query += f"and service_type = 'bot_advisor' and capital = '{capital}' "
+#     if(tester):
+#         query += f"and service_type = 'bot_tester' and capital = '{capital}' and bot = '{bot}' "
+#     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+#     return data["ticker"].to_list()
 
 def get_bot_ranking(ticker, spot_date):
     table_name = get_bot_ranking_table_name()
@@ -204,11 +204,11 @@ def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stoc
     print(client_uid)
     print(user_id)
     portfolio_ticker_list = get_portfolio_ticker_list(user_id) #current portfolio stocks
-    old_advisor_ticker_list = get_old_bot_ticker_pick(client_uid, currency_code, advisor=True, capital=capital)
+    # old_advisor_ticker_list = get_old_bot_ticker_pick(client_uid, currency_code, advisor=True, capital=capital)
     top_stock = get_client_test_pick_ticker(client_uid, currency_code)
     #eliminate stocks already in portfolio
     available_pick = top_stock.loc[~top_stock["ticker"].isin(portfolio_ticker_list["ticker"].to_list())]
-    available_pick = available_pick.loc[~available_pick["ticker"].isin(old_advisor_ticker_list)]
+    # available_pick = available_pick.loc[~available_pick["ticker"].isin(old_advisor_ticker_list)]
     available_pick = available_pick.reset_index(inplace=False, drop=True).head(top_pick_stock)
     bot_ranking = get_bot_ranking(available_pick["ticker"], top_stock.loc[0, "spot_date"])
     price = get_newest_price(available_pick["ticker"], top_stock.loc[0, "spot_date"])
@@ -276,13 +276,13 @@ def populate_bot_tester(currency_code=None, client_name="HANWHA", top_pick_stock
     print(client_uid)
     print(user_id)
     portfolio_ticker_list = get_portfolio_ticker_list(user_id)
-    old_tester_ticker_list = get_old_bot_ticker_pick(client_uid, currency_code, tester=True)
+    # old_tester_ticker_list = get_old_bot_ticker_pick(client_uid, currency_code, tester=True)
     top_stock = get_client_test_pick_ticker(client_uid, currency_code)
     industry_code = get_industry_code()
     top_stock = top_stock.merge(industry_code, how="left", on="ticker")
     available_pick = top_stock.loc[~top_stock["ticker"].isin(portfolio_ticker_list["ticker"].to_list())]
     available_pick = top_stock.loc[~top_stock["industry_code"].isin(portfolio_ticker_list["industry_code"].unique())]
-    available_pick = available_pick.loc[~available_pick["ticker"].isin(old_tester_ticker_list)]
+    # available_pick = available_pick.loc[~available_pick["ticker"].isin(old_tester_ticker_list)]
     available_pick = available_pick.reset_index(inplace=False, drop=True).head(top_pick_stock)
     bot_ranking = get_bot_ranking(available_pick["ticker"], top_stock.loc[0, "spot_date"])
     price = get_newest_price(available_pick["ticker"], top_stock.loc[0, "spot_date"])
