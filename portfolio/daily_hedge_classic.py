@@ -46,7 +46,8 @@ def create_performance(price_data, position, latest_price=False):
         current_pnl_amt = 0
         share_num = position.share_num
     current_investment_amount = live_price * share_num
-    current_pnl_ret = (bot_cash_balance + current_investment_amount - position.investment_amount) / position.investment_amount
+    current_pnl_ret = (bot_cash_balance + current_investment_amount -
+                       position.investment_amount) / position.investment_amount
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.save()
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
@@ -160,7 +161,7 @@ def classic_position_check(position_uid):
                 position.save()
                 if status:
                     print(f"position end")
-        except PositionPerformance.DoesNotExist:
+        except MasterTac.DoesNotExist:
             status = False
         return True
     except OrderPosition.DoesNotExist:

@@ -254,7 +254,7 @@ def uno_position_check(position_uid):
                         order.save()
                 if status:
                     print(f"position end moving expiry")
-        except PositionPerformance.DoesNotExist:
+        except MasterTac.DoesNotExist:
             status = False
         return True
     except OrderPosition.DoesNotExist:
