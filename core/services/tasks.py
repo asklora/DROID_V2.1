@@ -46,8 +46,11 @@ def get_isin_populate_universe(ticker, user_id):
                         res_celery.append(
                             {"result": f"relation {user.client_user.all()[0].client.client_uid} and {tick} exist"})
                     else:
-                        UniverseClient.objects.create(client_id=user.client_user.all()[
-                                                      0].client.client_uid, ticker_id=symbol)
+                        try:
+                            UniverseClient.objects.create(client_id=user.client_user.all()[
+                                0].client.client_uid, ticker_id=symbol)
+                        except Exception as e:
+                            return {'err': str(e)}
 
                         res_celery.append(
                             {"result": f"relation {user.client_user.all()[0].client.client_uid} and {tick} created"})
