@@ -71,13 +71,13 @@ def get_isin_populate_universe(ticker, user_id):
                 new_ticker_ingestion(ticker=new_ticker)
             if populate:
                 relation = UniverseClient.objects.filter(
-                    client=uuser.client_user.all()[0].client.client_uid, ticker=symbol)
+                    client=user.client_user.all()[0].client.client_uid, ticker=symbol)
                 if relation.exists():
-                    return {"result": f"relation {uuser.client_user.all()[0].client.client_uid} and {ticker} exist"}
+                    return {"result": f"relation {user.client_user.all()[0].client.client_uid} and {ticker} exist"}
                 else:
                     new_ticker_ingestion(ticker=symbol)
                     UniverseClient.objects.create(
-                        client_id=uuser.client_user.all()[0].client.client_uid, ticker_id=symbol)
-                return {"result": f"relation {uuser.client_user.all()[0].client.client_uid} and {ticker} created"}
+                        client_id=user.client_user.all()[0].client.client_uid, ticker_id=symbol)
+                return {"result": f"relation {user.client_user.all()[0].client.client_uid} and {ticker} created"}
     except Exception as e:
         return {'err': str(e)}
