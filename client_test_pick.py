@@ -105,7 +105,8 @@ def get_industry_code():
 def get_portfolio_ticker_list(user_id):
     # get stocks already in portfolio
     table_name = get_orders_position_table_name()
-    query = f"select distinct op.ticker, u.industry_code from {table_name} op inner join universe u on op.ticker = u.ticker where user_id='{user_id}';"
+    query = f"select distinct op.ticker, u.industry_code from {table_name} op inner join universe u on op.ticker = u.ticker "
+    query += f"where user_id='{user_id}' and op.is_live=True; "
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data
 
