@@ -301,6 +301,10 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
+    from migrate import weekly_migrations
+    do_function("universe_populate")
+    update_currency_code_from_dss()
+    weekly_migrations()
     update_quandl_orats_from_quandl()
     
     do_function("master_ohlcvtr_update")
