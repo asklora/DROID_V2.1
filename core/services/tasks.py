@@ -47,6 +47,7 @@ def get_isin_populate_universe(ticker, user_id):
                             {"result": f"relation {user.client_user.all()[0].client.client_uid} and {tick} exist"})
                     else:
                         if universe.exists():
+                            print('create', symbol)
                             UniverseClient.objects.create(client_id=user.client_user.all()[
                                 0].client.client_uid, ticker_id=symbol)
                             res_celery.append(
@@ -56,6 +57,7 @@ def get_isin_populate_universe(ticker, user_id):
                                 {'err': f'error cant create ticker {symbol}'})
 
             if len(symbols) > 0:
+                print(symbols)
                 new_ticker_ingestion(ticker=symbols)
             return res_celery
         else:
