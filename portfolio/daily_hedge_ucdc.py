@@ -63,7 +63,7 @@ def create_performance(price_data, position, latest_price=False):
             status = "sell"
         else:
             delta = uno.deltaRC(live_price, strike, strike_2, t, r, q, v1, v2)
-            last_hedge_delta, hedge = get_ucdc_hedge(
+            delta, hedge = get_ucdc_hedge(
                 currency_code, delta, last_performance.last_hedge_delta)
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(
                 ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta, hedge=hedge, ucdc=True)
