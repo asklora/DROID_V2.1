@@ -43,8 +43,13 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
         print(result2)
         result = result.merge(result2, how="left", on=["isin", "sedol"])
         result = result.loc[result["consolidated_ticker"] != "FGBSM2^1"]
+        null_result = result.loc[result["isin"] == "NA"]
+        null_result["use_manual"] = True
+        null_result["use_isin"] = False
+        null_result["consolidated_ticker"] = null_result["origin_ticker"]
+        print(null_result)
+        result = result.loc[result["consolidated_ticker"] != "NA"]
         print(result)
-
         if(len(result)) > 0 :
             consolidated_ticker = result.loc[result["consolidated_ticker"].notnull()]
             consolidated_ticker["is_active"] = True
@@ -65,8 +70,12 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
                         null_consolidated_ticker.loc[index, "is_active"] = True
             result = consolidated_ticker.append(null_consolidated_ticker)
             result = result.merge(universe, how="left", on=["origin_ticker"])
+            
             if(len(manual_universe) > 0):
                 result = result.append(manual_universe)
+            
+            if(len(null_result) > 0):
+                result = result.append(null_result)
     else:
         result = manual_universe
     result["updated"] = dateNow()
