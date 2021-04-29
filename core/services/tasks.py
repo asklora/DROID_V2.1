@@ -57,7 +57,6 @@ def get_isin_populate_universe(ticker, user_id):
                                 {'err': f'error cant create ticker {symbol}'})
 
             if len(symbols) > 0:
-                print(symbols)
                 new_ticker_ingestion(ticker=symbols)
             return res_celery
         else:
