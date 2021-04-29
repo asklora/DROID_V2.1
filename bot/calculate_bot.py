@@ -476,37 +476,37 @@ def get_classic_vol_by_date(ticker, trading_day):
 
 
 def get_uno_hedge(latest_spot_price, strike, delta, last_hedge_delta):
-    hedge = False
+    hedge = True
     if latest_spot_price > strike:
         # hedge threhold for OTM
         if abs(delta - last_hedge_delta) < large_hedge:
             #if delta change too small then reset new delta to old delta (last_hedge_delta)
             delta = last_hedge_delta
-            hedge = True
+            hedge = False
 
     if latest_spot_price <= strike:
         # hedge threhold for ITM
         if abs(delta - last_hedge_delta) < small_hedge:
             #if delta changetoo small then reset new delta to old delta (last_hedge_delta)
             delta = last_hedge_delta
-            hedge = True
+            hedge = False
     return delta, hedge
 
 
 def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
-    hedge = False
+    hedge = True
     if currency_code in ["EUR", "USD", "0#.ETF", "0#.SPX", "0#.SXXE"]:
         #hedge threshold for DM
         if abs(delta - last_hedge_delta) < large_hedge:
             #if delta change too small then reset new delta to old delta (last_hedge_delta)
             delta = last_hedge_delta
-            hedge = True
+            hedge = False
     else:
         #hedge threshold for EM
         if abs(delta - last_hedge_delta) < small_hedge:
             #if delta change too small then reset new delta to old delta (last_hedge_delta)
             delta = last_hedge_delta
-            hedge = True
+            hedge = False
     return delta, hedge
 
 
