@@ -94,6 +94,8 @@ def create_performance(price_data, position, latest_price=False):
 
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)
+    if log_time == datetime.now():
+        log_time = datetime.now()
     # not creating performance first, value stored at dict and placed in setup order we can use it later after the order filled
     # see below
     performance = dict(

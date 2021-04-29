@@ -52,6 +52,8 @@ def create_performance(price_data, position, latest_price=False):
     position.save()
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)
+    if log_time == datetime.now():
+        log_time = datetime.now()
     performance = PositionPerformance.objects.create(
         position_uid=position,
         share_num=share_num,
