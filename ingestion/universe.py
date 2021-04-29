@@ -45,6 +45,11 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
         result = result.loc[result["consolidated_ticker"] != "FGBSM2^1"]
         null_result = result.loc[result["isin"] == "NA"]
         null_result["use_manual"] = True
+        null_result["isin"] = None
+        null_result["sedol"] = None
+        null_result["cusip"] = None
+        null_result["permid"] = None
+        null_result["is_active"] = True
         null_result["use_isin"] = False
         null_result["consolidated_ticker"] = null_result["origin_ticker"]
         print(null_result)
