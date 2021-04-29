@@ -24,7 +24,7 @@ def update_currency_price_from_dss():
         })
         result = result.merge(currencylist, how="left", on="ric")
         result["last_price"] = (result["ask_price"] + result["ask_price"]) / 2
-        result = result.drop(columns=["ask_price", "ask_price"])
+        result = result.drop(columns=["ask_price", "bid_price"])
         print(result)
         upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
         report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))

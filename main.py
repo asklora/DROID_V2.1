@@ -226,9 +226,6 @@ def dlpa_weekly():
     #Post to Facebook
 
 
-
-
-
 def new_ticker_ingestion(ticker=None):
     update_ticker_name_from_dsws(ticker=ticker)
     update_ticker_symbol_from_dss(ticker=ticker)
@@ -301,19 +298,20 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
-    from migrate import weekly_migrations
-    do_function("universe_populate")
-    update_currency_code_from_dss()
-    weekly_migrations()
-    update_quandl_orats_from_quandl()
+    # update_ticker_symbol_from_dss()
+    # from migrate import weekly_migrations
+    # do_function("universe_populate")
+    # update_currency_code_from_dss()
+    # weekly_migrations()
+    # update_quandl_orats_from_quandl()
     
-    do_function("master_ohlcvtr_update")
-    master_ohlctr_update()
-    master_tac_update()
-    master_multiple_update()
+    # do_function("master_ohlcvtr_update")
+    # master_ohlctr_update()
+    # master_tac_update()
+    # master_multiple_update()
 
-    update_utc_offset_from_timezone()
+    # update_utc_offset_from_timezone()
     update_currency_price_from_dss()
 
-    interest_update()
+    # interest_update()
     print("Done")
