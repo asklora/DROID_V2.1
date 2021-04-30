@@ -502,7 +502,7 @@ def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
         #hedge threshold for EM
         if abs(delta - last_hedge_delta) > small_hedge:
             last_hedge_delta = delta
-            # hedge = True ???
+            hedge = True
     return last_hedge_delta, hedge
 
 

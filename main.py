@@ -306,9 +306,9 @@ if __name__ == "__main__":
     # update_quandl_orats_from_quandl()
     
     # do_function("master_ohlcvtr_update")
-    # master_ohlctr_update()
-    # master_tac_update()
-    # master_multiple_update()
+    master_ohlctr_update()
+    master_tac_update()
+    master_multiple_update()
 
     # update_utc_offset_from_timezone()
     update_currency_price_from_dss()
