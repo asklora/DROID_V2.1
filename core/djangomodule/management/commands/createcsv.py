@@ -74,12 +74,13 @@ class CsvSerializer(serializers.ModelSerializer):
         prev = PositionPerformance.objects.filter(
             position_uid=obj.position_uid, created__lt=obj.created).first()
         if prev:
-            if prev.share_num > obj.share_num:
-                return int(obj.share_num-prev.share_num)
-            elif prev.share_num < obj.share_num:
-                return int(prev.share_num - obj.share_num)
-            else:
-                return 0
+            return int(obj.share_num - prev.share_num)
+            # if prev.share_num > obj.share_num:
+            #     return int(obj.share_num - prev.share_num)
+            # elif prev.share_num < obj.share_num:
+            #     return int(prev.share_num - obj.share_num)
+            # else:
+            #     return 0
         return obj.share_num
 
     def get_prev_delta(self, obj):
@@ -124,6 +125,7 @@ class Command(BaseCommand):
             '2021-04-26',
             '2021-04-27',
             '2021-04-28',
+            '2021-04-29',
         ]
         for created in dates:
             perf = PositionPerformance.objects.filter(

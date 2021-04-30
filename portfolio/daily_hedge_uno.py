@@ -57,7 +57,6 @@ def create_performance(price_data, position, latest_price=False):
                            trading_day, t, r, q, strike, barrier)
         if(status_expiry):
             delta = last_performance.last_hedge_delta
-            last_hedge_delta = last_performance.last_hedge_delta
             hedge = False
             share_num = 0
             hedge_shares = last_performance.share_num * -1
@@ -90,7 +89,6 @@ def create_performance(price_data, position, latest_price=False):
         share_num = math.floor(delta * share_num)
         bot_cash_balance = position.investment_amount - \
             (share_num * live_price)
-        last_hedge_delta = delta
 
     current_investment_amount = live_price * share_num
     current_pnl_ret = (bot_cash_balance + current_investment_amount -
@@ -115,7 +113,7 @@ def create_performance(price_data, position, latest_price=False):
         current_bot_cash_balance=round(bot_cash_balance, 2),
         updated=str(log_time),
         created=str(log_time),
-        last_hedge_delta=last_hedge_delta,
+        last_hedge_delta=delta,
         v1=v1,
         v2=v2,
         r=r,
