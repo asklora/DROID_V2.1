@@ -62,7 +62,7 @@ def create_performance(price_data, position, latest_price=False):
             hedge_shares = last_performance.share_num * -1
             status = "sell"
         else:
-            delta = uno.deltaRC(live_price, strike, strike_2, t, r, q, v1, v2)
+            delta = uno.deltaRC(live_price, strike, strike_2, t/365, r, q, v1, v2)
             delta, hedge = get_ucdc_hedge(
                 currency_code, delta, last_performance.last_hedge_delta)
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(
@@ -79,7 +79,7 @@ def create_performance(price_data, position, latest_price=False):
                            trading_day, t, r, q, strike, strike_2)
         option_price = get_option_price_ucdc(
             live_price, strike, strike_2, t, r, q, v1, v2)
-        delta = uno.deltaRC(live_price, strike, strike_2, t, r, q, v1, v2)
+        delta = uno.deltaRC(live_price, strike, strike_2, t/365, r, q, v1, v2)
         share_num = round((position.investment_amount / live_price), 1)
         share_num = math.floor(delta * share_num)
         bot_cash_balance = position.investment_amount - \

@@ -64,7 +64,7 @@ def create_performance(price_data, position, latest_price=False):
             status = "sell"
         else:
             delta = uno.deltaUnOC(live_price, strike,
-                                  barrier, rebate, t, r, q, v1, v2)
+                                  barrier, rebate, t/365, r, q, v1, v2)
             delta, hedge = get_uno_hedge(
                 live_price, strike, delta, last_performance.last_hedge_delta)
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(
@@ -86,7 +86,7 @@ def create_performance(price_data, position, latest_price=False):
         v1, v2 = get_v1_v2(position.ticker.ticker, live_price,
                            trading_day, t, r, q, strike, barrier)
         delta = uno.deltaUnOC(live_price, strike, barrier,
-                              rebate, t, r, q, v1, v2)
+                              rebate, t/365, r, q, v1, v2)
         share_num = math.floor(delta * share_num)
         bot_cash_balance = position.investment_amount - \
             (share_num * live_price)

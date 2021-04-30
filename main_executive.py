@@ -11,7 +11,7 @@ from bot.data_download import (
      get_new_tickers_from_bot_data, 
      get_volatility_latest_date)
 from general.slack import report_to_slack
-from general.date_process import dateNow, droid_start_date_buffer, str_to_date, droid_start_date
+from general.date_process import backdate_by_year, dateNow, droid_start_date_buffer, str_to_date, droid_start_date
 from bot.option_file_classic import fill_bot_backtest_classic, populate_bot_classic_backtest
 from bot.option_file_ucdc import fill_bot_backtest_ucdc, populate_bot_ucdc_backtest
 from bot.option_file_uno import fill_bot_backtest_uno, populate_bot_uno_backtest
@@ -147,7 +147,7 @@ def data_prep_history():
 def infer_daily(ticker=None, currency_code=None):
     folder_check()
     print("{} : === {} VOLATILITY INFER STARTED ===".format(dateNow(), currency_code))
-    start_date = get_bot_data_latest_date()
+    start_date = str_to_date(backdate_by_year(1))
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
