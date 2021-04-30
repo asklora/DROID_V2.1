@@ -65,7 +65,7 @@ def create_performance(price_data, position, latest_price=False):
         else:
             delta = uno.deltaUnOC(live_price, strike,
                                   barrier, rebate, t, r, q, v1, v2)
-            last_hedge_delta, hedge = get_uno_hedge(
+            delta, hedge = get_uno_hedge(
                 live_price, strike, delta, last_performance.last_hedge_delta)
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(
                 ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta, hedge=hedge, uno=True)
@@ -100,6 +100,8 @@ def create_performance(price_data, position, latest_price=False):
     position.save()
     digits = max(min(5-len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)
+    if log_time == datetime.now():
+        log_time = datetime.now()
     # not creating performance first, value stored at dict and placed in setup order we can use it later after the order filled
     # see below
     performance = dict(
