@@ -503,18 +503,11 @@ def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
             hedge = False
     else:
         #hedge threshold for EM
-<<<<<<< HEAD
-        if abs(delta - last_hedge_delta) > small_hedge:
-            last_hedge_delta = delta
-            hedge = True
-    return last_hedge_delta, hedge
-=======
         if abs(delta - last_hedge_delta) < small_hedge:
             #if delta change too small then reset new delta to old delta (last_hedge_delta)
             delta = last_hedge_delta
             hedge = False
     return delta, hedge
->>>>>>> 0e79585c915bb22ce73be4803db9542ebc9113ea
 
 
 def get_hedge_detail(ask_price, bid_price, last_share_num, bot_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False):
