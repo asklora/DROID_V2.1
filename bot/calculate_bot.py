@@ -195,6 +195,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry
         (data["target_profit_price"] - price) * data["share_num"], digits)
     data["bot_cash_balance"] = round(
         investment_amount - (data["share_num"] * price), 2)
+    data["last_hedge_delta"] = 100
 
     return data
 
@@ -480,14 +481,14 @@ def get_uno_hedge(latest_spot_price, strike, delta, last_hedge_delta):
     if latest_spot_price > strike:
         # hedge threhold for OTM
         if abs(delta - last_hedge_delta) < large_hedge:
-            #if delta change too small then reset new delta to old delta (last_hedge_delta)
+            # if delta change too small then reset new delta to old delta (last_hedge_delta)
             delta = last_hedge_delta
             hedge = False
 
     if latest_spot_price <= strike:
         # hedge threhold for ITM
         if abs(delta - last_hedge_delta) < small_hedge:
-            #if delta changetoo small then reset new delta to old delta (last_hedge_delta)
+            # if delta changetoo small then reset new delta to old delta (last_hedge_delta)
             delta = last_hedge_delta
             hedge = False
     return delta, hedge
@@ -496,15 +497,15 @@ def get_uno_hedge(latest_spot_price, strike, delta, last_hedge_delta):
 def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
     hedge = True
     if currency_code in ["EUR", "USD", "0#.ETF", "0#.SPX", "0#.SXXE"]:
-        #hedge threshold for DM
+        # hedge threshold for DM
         if abs(delta - last_hedge_delta) < large_hedge:
-            #if delta change too small then reset new delta to old delta (last_hedge_delta)
+            # if delta change too small then reset new delta to old delta (last_hedge_delta)
             delta = last_hedge_delta
             hedge = False
     else:
-        #hedge threshold for EM
+        # hedge threshold for EM
         if abs(delta - last_hedge_delta) < small_hedge:
-            #if delta change too small then reset new delta to old delta (last_hedge_delta)
+            # if delta change too small then reset new delta to old delta (last_hedge_delta)
             delta = last_hedge_delta
             hedge = False
     return delta, hedge
@@ -524,7 +525,7 @@ def get_hedge_detail(ask_price, bid_price, last_share_num, bot_share_num, delta,
     else:
         status = "hold"
     if(uno):
-        #buy above offer and sell below bid (chase MORE - short gamma)
+        # buy above offer and sell below bid (chase MORE - short gamma)
         buy_prem = buy_UNO_prem
         sell_prem = sell_UNO_prem
     else:
