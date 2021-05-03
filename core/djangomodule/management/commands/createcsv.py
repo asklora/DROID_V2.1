@@ -127,10 +127,18 @@ class Command(BaseCommand):
             '2021-04-28',
             '2021-04-29',
         ]
+        curr = [
+            'KRW',
+            'USD',
+            'CNY',
+            'HKD',
+        ]
         for created in dates:
-            perf = PositionPerformance.objects.filter(
-                position_uid__user_id__in=hanwha, created=created).order_by('created')
-            # item = json.dumps(CsvSerializer(perf, many=True).data)
-            df = pd.DataFrame(CsvSerializer(perf, many=True).data)
-            df = df.fillna(0)
-            df.to_csv(f'{created}_asklora.csv', index=False)
+            for currency in curr:
+                perf = PositionPerformance.objects.filter(
+                    position_uid__user_id__in=hanwha, created=created, position_uid__ticker__currency_code=currency).order_by('created')
+                # item = json.dumps(CsvSerializer(perf, many=True).data)
+                if perf.exists():
+                    df = pd.DataFrame(CsvSerializer(perf, many=True).data)
+                    df = df.fillna(0)
+                    df.to_csv(f'{currency}_{created}_asklora.csv', index=False)

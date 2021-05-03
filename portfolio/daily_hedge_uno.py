@@ -1,7 +1,7 @@
 from datetime import datetime
 import math
 from bot import uno
-from core.master.models import LatestPrice, MasterTac
+from core.master.models import LatestPrice, MasterTac, MasterOhlcvtr
 from core.orders.models import OrderPosition, PositionPerformance, Order
 from bot.calculate_bot import (
     get_hedge_detail,
@@ -27,11 +27,11 @@ def create_performance(price_data, position, latest_price=False):
         ask_price = price_data.intraday_ask
         high = price_data.high
     else:
-        live_price = price_data.tri_adj_close
+        live_price = price_data.close
         trading_day = price_data.trading_day
-        bid_price = price_data.tri_adj_close
-        ask_price = price_data.tri_adj_close
-        high = price_data.tri_adj_high
+        bid_price = price_data.close
+        ask_price = price_data.close
+        high = price_data.high
 
     if high == 0 or high == None:
         high = live_price
@@ -201,8 +201,8 @@ def uno_position_check(position_uid):
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
-        tac_data = MasterTac.objects.filter(
-            ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry).order_by("trading_day")
+        tac_data = MasterOhlcvtr.objects.filter(
+            ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry, day_status='trading_day').order_by("trading_day")
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day
@@ -237,8 +237,8 @@ def uno_position_check(position_uid):
             if status:
                 print(f"position end not tac")
         try:
-            tac_data = MasterTac.objects.filter(
-                ticker=position.ticker, trading_day__gte=position.expiry).latest("-trading_day")
+            tac_data = MasterOhlcvtr.objects.filter(
+                ticker=position.ticker, trading_day__gte=position.expiry, day_status='trading_day').latest("trading_day")
             if(not status and tac_data):
                 position.expiry = tac_data.trading_day
                 position.save()
@@ -254,7 +254,7 @@ def uno_position_check(position_uid):
                         order.save()
                 if status:
                     print(f"position end moving expiry")
-        except MasterTac.DoesNotExist:
+        except MasterOhlcvtr.DoesNotExist:
             status = False
         return True
     except OrderPosition.DoesNotExist:
