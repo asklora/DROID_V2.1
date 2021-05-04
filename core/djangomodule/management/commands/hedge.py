@@ -19,19 +19,19 @@ class Command(BaseCommand):
             if (position.bot.is_uno()):
                 if options['celery']:
                     status = uno_position_check.apply_async(
-                        args=(position_uid,), queue='droid')
+                        args=(position_uid,), queue='ec2')
                 else:
                     status = uno_position_check(position_uid)
             elif (position.bot.is_ucdc()):
                 if options['celery']:
                     status = ucdc_position_check.apply_async(
-                        args=(position_uid,), queue='droid')
+                        args=(position_uid,), queue='ec2')
                 else:
                     status = ucdc_position_check(position_uid)
             elif (position.bot.is_classic()):
                 if options['celery']:
                     status = classic_position_check.apply_async(
-                        args=(position_uid,), queue='droid')
+                        args=(position_uid,), queue='ec2')
                 else:
                     status = classic_position_check(position_uid)
             print(status)
