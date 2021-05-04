@@ -301,7 +301,7 @@ if __name__ == "__main__":
     # update_ticker_symbol_from_dss()
     from migrate import weekly_migrations, daily_migrations
     # do_function("universe_populate")
-    update_currency_code_from_dss()
+    # update_currency_code_from_dss()
     weekly_migrations()
     update_quandl_orats_from_quandl()
     
