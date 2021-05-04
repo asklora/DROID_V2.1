@@ -209,6 +209,8 @@ def option_maker_daily_classic(ticker=None, currency_code=None, time_to_exp=None
     print("{} : === OPTION MAKER CLASSIC STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, classic=True)
     start_date = latest_dates_db["max_date"].min()
+    if(start_date > backdate_by_month(6)):
+        start_date = str_to_date(backdate_by_month(6))
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -246,7 +248,6 @@ def option_maker_uno_check_new_ticker(ticker=None, currency_code=None, time_to_e
     time_to_exp = check_time_to_exp(time_to_exp)
     print("{} : === OPTION MAKER UNO CHECK NEW TICKER STARTED ===".format(dateNow()))
     start_date = str_to_date(droid_start_date())
-    start_date2 = str_to_date(droid_start_date_buffer())
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -269,6 +270,8 @@ def option_maker_daily_uno(ticker=None, currency_code=None, time_to_exp=None, mo
     print("{} : === OPTION MAKER UNO STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, uno=True)
     start_date = latest_dates_db["max_date"].min()
+    if(start_date > backdate_by_month(6)):
+        start_date = str_to_date(backdate_by_month(6))
     end_date = str_to_date(dateNow())
     latest_date = get_volatility_latest_date(ticker=ticker, currency_code=currency_code, infer=True)
     if start_date is None:
@@ -328,6 +331,8 @@ def option_maker_daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, m
     print("{} : === OPTION MAKER UCDC STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, ucdc=True)
     start_date = latest_dates_db["max_date"].min()
+    if(start_date > backdate_by_month(6)):
+        start_date = str_to_date(backdate_by_month(6))
     end_date = str_to_date(dateNow())
     latest_date = get_volatility_latest_date(ticker=ticker, currency_code=currency_code, infer=True)
     if start_date is None:
