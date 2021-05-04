@@ -3,6 +3,7 @@ from core.master.models import LatestPrice, MasterTac, MasterOhlcvtr
 from core.orders.models import OrderPosition, PositionPerformance, Order
 from config.celery import app
 import pandas as pd
+from core.djangomodule.serializers import OrderPositionSerializer
 
 
 def create_performance(price_data, position, latest_price=False):
@@ -54,8 +55,8 @@ def create_performance(price_data, position, latest_price=False):
     log_time = pd.Timestamp(trading_day)
     if log_time == datetime.now():
         log_time = datetime.now()
-    performance = PositionPerformance.objects.create(
-        position_uid=position,
+    performance = dict(
+        position_uid=str(position.position_uid),
         share_num=share_num,
         last_live_price=round(live_price, 2),
         last_spot_price=position.entry_price,
@@ -63,17 +64,16 @@ def create_performance(price_data, position, latest_price=False):
         current_pnl_amt=round(current_pnl_amt, digits),
         current_investment_amount=round(current_investment_amount, 2),
         current_bot_cash_balance=round(bot_cash_balance, 2),
-        updated=log_time,
-        created=log_time,
-        last_hedge_delta=100
+        updated=str(log_time),
+        created=str(log_time)
     )
 
     if status_expiry:
         position.final_price = live_price
-        position.current_inv_ret = performance.current_pnl_ret
+        position.current_inv_ret = performance['current_pnl_ret']
         position.final_return = position.current_inv_ret
-        position.final_pnl_amount = performance.current_pnl_amt
-        position.current_inv_amt = live_price * performance.share_num
+        position.final_pnl_amount = performance['current_pnl_amt']
+        position.current_inv_amt = live_price * performance['share_num']
         position.event_date = trading_day
         position.is_live = False
         if high > position.target_profit_price:
@@ -88,8 +88,13 @@ def create_performance(price_data, position, latest_price=False):
             else:
                 position.event = "Bot Expired"
         position.save()
+        # serializing -> make dictionary position instance
+        position_val = OrderPositionSerializer(position).data
+        # remove created and updated from position
+        [position_val.pop(key) for key in ["created", "updated"]]
 
-    if status_expiry:
+        # merge two dict, and save to order setup
+        setup = {"performance": performance, "position": position_val}
         order = Order.objects.create(
             is_init=False,
             ticker=position.ticker,
@@ -101,21 +106,32 @@ def create_performance(price_data, position, latest_price=False):
             user_id=position.user_id,
             side="sell",
             performance_uid=performance.performance_uid,
-            qty=position.share_num
+            qty=position.share_num,
+            setup=setup
         )
+        # only for bot
         if order:
             order.placed = True
             order.placed_at = log_time
             order.save()
-        if order.status in ["pending", "review"]:
-            order.status = "filled"
-            order.filled_at = log_time
-            order.save()
-            performance.order_uid = order
-            performance.save()
-        return True
+        # go to core/orders/signal.py Line 54 and 112
+        # this will wait until order filled then creating performance along with it
+        if(status_expiry):
+            return True, order.order_uid
+        else:
+            return False, order.order_uid
+    # remove position_uid from dict and swap with instance
+    performance.pop("position_uid")
+    position.save()
+    # create the record
+    PositionPerformance.objects.create(
+        position_uid=position,  # swapped with instance
+        **performance  # the dict value
+    )
+    if(status_expiry):
+        return True, None
     else:
-        return False
+        return False, None
 
 
 @app.task
@@ -136,8 +152,15 @@ def classic_position_check(position_uid):
         for tac in tac_data:
             trading_day = tac.trading_day
             print(f"tac {trading_day} done")
-            status = create_performance(tac, position)
-            position.save()
+            status, order_id = create_performance(tac, position)
+            # position.save()
+            if order_id:
+                order = Order.objects.get(order_uid=order_id)
+                log_time = pd.Timestamp(trading_day)
+                if order.status in ["pending", "review"]:
+                    order.status = "filled"
+                    order.filled_at = log_time
+                    order.save()
             if status:
                 print(f"position end")
                 break
@@ -147,9 +170,15 @@ def classic_position_check(position_uid):
         if(not status and trading_day < lastest_price_data.last_date and position.expiry >= lastest_price_data.last_date):
             trading_day = lastest_price_data.last_date
             print(f"latest price {trading_day} done")
-            status = create_performance(
-                lastest_price_data, position, latest_price=True)
-            position.save()
+            status, order_id = create_performance(tac, position)
+            # position.save()
+            if order_id:
+                order = Order.objects.get(order_uid=order_id)
+                log_time = pd.Timestamp(trading_day)
+                if order.status in ["pending", "review"]:
+                    order.status = "filled"
+                    order.filled_at = log_time
+                    order.save()
             if status:
                 print(f"position end")
         try:
@@ -160,7 +189,15 @@ def classic_position_check(position_uid):
                 position.save()
                 print(f"force sell {tac_data.trading_day} done")
                 status = create_performance(tac_data, position)
-                position.save()
+                status, order_id = create_performance(tac, position)
+                # position.save()
+                if order_id:
+                    order = Order.objects.get(order_uid=order_id)
+                    log_time = pd.Timestamp(trading_day)
+                    if order.status in ["pending", "review"]:
+                        order.status = "filled"
+                        order.filled_at = log_time
+                        order.save()
                 if status:
                     print(f"position end")
         except MasterOhlcvtr.DoesNotExist:
