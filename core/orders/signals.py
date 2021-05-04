@@ -166,7 +166,7 @@ def order_signal(sender, instance, created, **kwargs):
                             amount=amt,
                             transaction_detail={
                                 'position': f'{order_position.position_uid}',
-                                'event': 'create',
+                                'event': 'return',
                             },
                         )
 
