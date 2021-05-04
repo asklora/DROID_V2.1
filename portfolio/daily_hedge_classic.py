@@ -1,5 +1,5 @@
 from datetime import datetime
-from core.master.models import LatestPrice, MasterTac
+from core.master.models import LatestPrice, MasterTac, MasterOhlcvtr
 from core.orders.models import OrderPosition, PositionPerformance, Order
 from config.celery import app
 import pandas as pd
@@ -14,10 +14,10 @@ def create_performance(price_data, position, latest_price=False):
         high = price_data.high
         low = price_data.low
     else:
-        live_price = price_data.tri_adj_close
+        live_price = price_data.close
         trading_day = price_data.trading_day
-        high = price_data.tri_adj_high
-        low = price_data.tri_adj_low
+        high = price_data.close
+        low = price_data.close
 
     if high == 0 or high == None:
         high = live_price
@@ -130,8 +130,8 @@ def classic_position_check(position_uid):
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
-        tac_data = MasterTac.objects.filter(
-            ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry).order_by("trading_day")
+        tac_data = MasterOhlcvtr.objects.filter(
+            ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry, day_status='trading_day').order_by("trading_day")
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day
@@ -153,8 +153,8 @@ def classic_position_check(position_uid):
             if status:
                 print(f"position end")
         try:
-            tac_data = MasterTac.objects.filter(
-                ticker=position.ticker, trading_day__gte=position.expiry).latest("-trading_day")
+            tac_data = MasterOhlcvtr.objects.filter(
+                ticker=position.ticker, trading_day__gte=position.expiry, day_status='trading_day').latest("trading_day")
             if(not status and tac_data):
                 position.expiry = tac_data.trading_day
                 position.save()
@@ -163,7 +163,7 @@ def classic_position_check(position_uid):
                 position.save()
                 if status:
                     print(f"position end")
-        except MasterTac.DoesNotExist:
+        except MasterOhlcvtr.DoesNotExist:
             status = False
         return True
     except OrderPosition.DoesNotExist:

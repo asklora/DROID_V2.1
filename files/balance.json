@@ -1,0 +1,194 @@
+[
+  {
+    "balance_uid": "5b9b4054b3724272bc1bf7440a1fc890",
+    "created": "2021-04-26T05:37:44.196621",
+    "updated": "2021-04-26T05:37:44.196627",
+    "amount": 10000000.0,
+    "user": 108,
+    "currency_code": "KRW"
+  },
+  {
+    "balance_uid": "f7761084bdd940fdbf4cfb0f345b305d",
+    "created": "2021-04-26T05:38:24.931069",
+    "updated": "2021-04-26T05:38:24.931075",
+    "amount": 30000000.0,
+    "user": 109,
+    "currency_code": "KRW"
+  },
+  {
+    "balance_uid": "ec5f733d64284f05afe9fef929878dff",
+    "created": "2021-04-26T05:38:44.131507",
+    "updated": "2021-04-26T05:38:44.131512",
+    "amount": 30000000.0,
+    "user": 110,
+    "currency_code": "KRW"
+  },
+  {
+    "balance_uid": "e0559c380bbe438ebb9a31ae63a8d4e1",
+    "created": "2021-04-26T05:39:29.805013",
+    "updated": "2021-04-26T05:39:29.805020",
+    "amount": 15000.0,
+    "user": 111,
+    "currency_code": "USD"
+  },
+  {
+    "balance_uid": "296fd5b7cf0c4b5fb973df1738b3d64f",
+    "created": "2021-04-26T05:39:56.689965",
+    "updated": "2021-04-26T05:39:56.689971",
+    "amount": 50000.0,
+    "user": 112,
+    "currency_code": "USD"
+  },
+  {
+    "balance_uid": "3aff8f0489a849c3b9fa184b3a78bd1e",
+    "created": "2021-04-26T05:40:17.677834",
+    "updated": "2021-04-26T05:40:17.677839",
+    "amount": 50000.0,
+    "user": 113,
+    "currency_code": "USD"
+  },
+  {
+    "balance_uid": "cc31b8145a82472886b75015d941831f",
+    "created": "2021-04-26T05:41:26.407274",
+    "updated": "2021-04-26T05:41:26.407280",
+    "amount": 50000.0,
+    "user": 114,
+    "currency_code": "HKD"
+  },
+  {
+    "balance_uid": "d28f5cc42fa94cfcab43b886861d9271",
+    "created": "2021-04-26T05:42:05.554590",
+    "updated": "2021-04-26T05:42:05.554596",
+    "amount": 200000.0,
+    "user": 115,
+    "currency_code": "HKD"
+  },
+  {
+    "balance_uid": "622cca776ff74d499268fb831679155b",
+    "created": "2021-04-26T05:42:26.629423",
+    "updated": "2021-04-26T05:42:26.629429",
+    "amount": 200000.0,
+    "user": 116,
+    "currency_code": "HKD"
+  },
+  {
+    "balance_uid": "67cd4e9cd02e418cb7b77805d12e569b",
+    "created": "2021-04-26T05:43:12.619913",
+    "updated": "2021-04-26T05:43:12.619918",
+    "amount": 50000.0,
+    "user": 117,
+    "currency_code": "CNY"
+  },
+  {
+    "balance_uid": "90a0241c4b28417bb81b61fceb18c263",
+    "created": "2021-04-26T05:43:35.164809",
+    "updated": "2021-04-26T05:43:35.164815",
+    "amount": 200000.0,
+    "user": 118,
+    "currency_code": "CNY"
+  },
+  {
+    "balance_uid": "8de70bfbce0f4032a2e98ecfca18528a",
+    "created": "2021-04-26T05:43:52.152300",
+    "updated": "2021-04-26T05:43:52.152305",
+    "amount": 200000.0,
+    "user": 119,
+    "currency_code": "CNY"
+  },
+  {
+    "balance_uid": "addd7f50d99445488bcc32469d088df1",
+    "created": "2021-04-27T05:30:21.930760",
+    "updated": "2021-04-27T05:30:21.930766",
+    "amount": 5000.0,
+    "user": 122,
+    "currency_code": "USD"
+  },
+  {
+    "balance_uid": "5472f929873042e69330e1456d7002fd",
+    "created": "2021-04-27T05:26:28.834171",
+    "updated": "2021-04-27T05:26:28.834176",
+    "amount": 5000.0,
+    "user": 120,
+    "currency_code": "USD"
+  },
+  {
+    "balance_uid": "ead565ac20ea409989f20b3234fda1f5",
+    "created": "2021-04-27T05:29:44.928010",
+    "updated": "2021-04-27T05:29:44.928015",
+    "amount": 5000.0,
+    "user": 121,
+    "currency_code": "USD"
+  },
+  {
+    "balance_uid": "7362ef3f03854c678d9419d4c6f79d92",
+    "created": "2021-04-27T05:33:58.958953",
+    "updated": "2021-04-27T05:33:58.958960",
+    "amount": 30000.0,
+    "user": 123,
+    "currency_code": "USD"
+  },
+  {
+    "balance_uid": "b58d3cdf660144118d7be6a9f40894bc",
+    "created": "2021-04-27T05:34:25.754302",
+    "updated": "2021-04-27T05:34:25.754307",
+    "amount": 30000.0,
+    "user": 124,
+    "currency_code": "USD"
+  },
+  {
+    "balance_uid": "a4db3e84f9b849f18e9b0725a25fb945",
+    "created": "2021-04-27T05:34:48.799334",
+    "updated": "2021-04-27T05:34:48.799339",
+    "amount": 30000.0,
+    "user": 125,
+    "currency_code": "USD"
+  },
+  {
+    "balance_uid": "5dc430d46a464ffc9db5a6471e5ee66b",
+    "created": "2021-04-27T05:35:41.453342",
+    "updated": "2021-04-27T05:35:41.453347",
+    "amount": 30000000.0,
+    "user": 126,
+    "currency_code": "KRW"
+  },
+  {
+    "balance_uid": "92217dd6d5034d3bba18364ff8b56593",
+    "created": "2021-04-27T05:36:03.573813",
+    "updated": "2021-04-27T05:36:03.573819",
+    "amount": 30000000.0,
+    "user": 127,
+    "currency_code": "KRW"
+  },
+  {
+    "balance_uid": "a7baed0bdf804afea98ae4f843be1c8f",
+    "created": "2021-04-27T05:36:56.789257",
+    "updated": "2021-04-27T05:36:56.789262",
+    "amount": 30000000.0,
+    "user": 128,
+    "currency_code": "KRW"
+  },
+  {
+    "balance_uid": "fa85d7956ca04437a3952632cc266d5f",
+    "created": "2021-04-27T05:37:37.782651",
+    "updated": "2021-04-27T05:37:37.782657",
+    "amount": 5000000.0,
+    "user": 129,
+    "currency_code": "KRW"
+  },
+  {
+    "balance_uid": "c862e48ee7f340a2b0509f41d6799aba",
+    "created": "2021-04-27T05:38:00.183185",
+    "updated": "2021-04-27T05:38:00.183190",
+    "amount": 5000000.0,
+    "user": 130,
+    "currency_code": "KRW"
+  },
+  {
+    "balance_uid": "eab7fde22a1d43b39320436d0b2200f0",
+    "created": "2021-04-27T05:38:18.602253",
+    "updated": "2021-04-27T05:38:18.602260",
+    "amount": 5000000.0,
+    "user": 131,
+    "currency_code": "KRW"
+  }
+]

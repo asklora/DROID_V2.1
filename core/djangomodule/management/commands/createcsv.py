@@ -74,12 +74,13 @@ class CsvSerializer(serializers.ModelSerializer):
         prev = PositionPerformance.objects.filter(
             position_uid=obj.position_uid, created__lt=obj.created).first()
         if prev:
-            if prev.share_num > obj.share_num:
-                return int(obj.share_num-prev.share_num)
-            elif prev.share_num < obj.share_num:
-                return int(prev.share_num - obj.share_num)
-            else:
-                return 0
+            return int(obj.share_num - prev.share_num)
+            # if prev.share_num > obj.share_num:
+            #     return int(obj.share_num - prev.share_num)
+            # elif prev.share_num < obj.share_num:
+            #     return int(prev.share_num - obj.share_num)
+            # else:
+            #     return 0
         return obj.share_num
 
     def get_prev_delta(self, obj):
@@ -105,11 +106,11 @@ class CsvSerializer(serializers.ModelSerializer):
         if obj.order_uid:
             if obj.order_uid.is_init:
                 return 'new'
-            elif not obj.position_uid.is_live:
+            elif not obj.position_uid.is_live and obj.position_uid.event_date == obj.created.date():
                 return 'expired'
             else:
                 return 'live'
-        elif not obj.order_uid and not obj.position_uid.is_live:
+        elif obj.order_uid and not obj.position_uid.is_live and obj.position_uid.event_date == obj.created.date():
             return 'expired'
         else:
             return 'live'
@@ -121,14 +122,20 @@ class Command(BaseCommand):
         hanwha = [user['user'] for user in UserClient.objects.filter(
             client__client_name='HANWHA', extra_data__service_type='bot_advisor').values('user')]
         dates = [
-            '2021-04-26',
-            '2021-04-27',
-            '2021-04-28',
+            str(perf.created) for perf in PositionPerformance.objects.all().order_by('created').distinct('created')]
+        curr = [
+            'KRW',
+            'USD',
+            'CNY',
+            'HKD',
         ]
         for created in dates:
-            perf = PositionPerformance.objects.filter(
-                position_uid__user_id__in=hanwha, created=created).order_by('created')
-            # item = json.dumps(CsvSerializer(perf, many=True).data)
-            df = pd.DataFrame(CsvSerializer(perf, many=True).data)
-            df = df.fillna(0)
-            df.to_csv(f'{created}_asklora.csv', index=False)
+            for currency in curr:
+                perf = PositionPerformance.objects.filter(
+                    position_uid__user_id__in=hanwha, created=created, position_uid__ticker__currency_code=currency).order_by('created')
+                # item = json.dumps(CsvSerializer(perf, many=True).data)
+                if perf.exists():
+                    df = pd.DataFrame(CsvSerializer(perf, many=True).data)
+                    df = df.fillna(0)
+                    df.to_csv(
+                        f'files/file_csv/hanwha/{currency}_{created}_asklora.csv', index=False)

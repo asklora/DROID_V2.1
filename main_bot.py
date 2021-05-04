@@ -19,6 +19,14 @@ from main_executive import (
 if __name__ == "__main__":
     print("Start Process")
 
+    daily_uno_ucdc(currency_code=["KRW"], infer=True)
+    daily_uno_ucdc(currency_code=["HKD"], infer=True)
+    daily_uno_ucdc(currency_code=["CNY"], infer=True)
+    daily_uno_ucdc(currency_code=["USD"], infer=False)
+    daily_uno_ucdc(currency_code=["EUR"], infer=True)
+
+    daily_classic()
+    
     # update_quandl_orats_from_quandl()
     # do_function("data_vol_surface_update")
 

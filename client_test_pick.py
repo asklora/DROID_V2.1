@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from general.data_process import tuple_data
-from general.sql_query import get_master_tac_data, read_query
+from general.sql_query import get_master_ohlcvtr_data, get_master_tac_data, read_query
 from general.date_process import dateNow
 from general.slack import report_to_slack
 from general.data_process import uid_maker, NoneToZero
@@ -18,6 +18,7 @@ from general.table_name import (
     get_client_table_name,
     get_client_test_pick_table_name,
     get_client_top_stock_table_name,
+    get_master_ohlcvtr_table_name,
     get_master_tac_table_name,
     get_orders_position_table_name, 
     get_universe_table_name, 
@@ -130,13 +131,21 @@ def get_bot_ranking(ticker, spot_date):
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data
 
-def get_newest_price(ticker, spot_date):
-    table_name = get_master_tac_table_name()
-    query = f"select tac.ticker, tac.trading_day, tac.tri_adj_close from {table_name} tac "
-    query += f"inner join (select tac1.ticker, max(tac1.trading_day) as max_date "
-    query += f"from {table_name} tac1 where trading_day<='{spot_date}' group by tac1.ticker) as filter "
-    query += f"on filter.ticker=tac.ticker and filter.max_date=tac.trading_day "
-    query += f"where tac.ticker in {tuple_data(ticker)}; "
+def get_newest_price(ticker, spot_date, master_ohlcvtr=False):
+    if(master_ohlcvtr):
+        table_name = get_master_ohlcvtr_table_name()
+        query = f"select tac.ticker, tac.trading_day, tac.close as tri_adj_close from {table_name} tac "
+        query += f"inner join (select tac1.ticker, max(tac1.trading_day) as max_date "
+        query += f"from {table_name} tac1 where trading_day<='{spot_date}' and tac1.close is not null group by tac1.ticker) as filter "
+        query += f"on filter.ticker=tac.ticker and filter.max_date=tac.trading_day "
+        query += f"where tac.ticker in {tuple_data(ticker)}; "
+    else:
+        table_name = get_master_tac_table_name()
+        query = f"select tac.ticker, tac.trading_day, tac.tri_adj_close from {table_name} tac "
+        query += f"inner join (select tac1.ticker, max(tac1.trading_day) as max_date "
+        query += f"from {table_name} tac1 where trading_day<='{spot_date}' and tac1.tri_adj_close is not null group by tac1.ticker) as filter "
+        query += f"on filter.ticker=tac.ticker and filter.max_date=tac.trading_day "
+        query += f"where tac.ticker in {tuple_data(ticker)}; "
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data
     
@@ -397,6 +406,8 @@ def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7):
     print(today.weekday())
     while (today.weekday() != 0):
         today =  today - relativedelta(days=1)
+    print(today)
+    # sys.exit(1)
     result["spot_date"] = today
     result = uid_maker(result, uid="uid", ticker="currency_code", trading_day="client_uid", date=False)
     result = uid_maker(result, uid="uid", ticker="uid", trading_day="spot_date", date=True)
@@ -405,8 +416,224 @@ def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7):
     upsert_data_to_database(result, get_client_test_pick_table_name(), "uid", how="update", cpu_count=True, Text=True)
     report_to_slack("{} : === CLIENT WEEKLY PICK COMPLETED ===".format(dateNow()))
 
+def bot_tester_manual_populate(client_name="HANWHA", time_to_exp=[0.07692]):
+    all = []
+    bot_option_type = get_bot_option_type(time_to_exp)
+    industry_code = get_industry_code()
+    stock_pick = pd.DataFrame({"ticker":[""], "spot_date":[], "currency_code":[]}, index=[])
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["000880.KS", "000660.KS"], "spot_date":["2021-04-05", "2021-04-05"], "currency_code":["KRW", "KRW"]}, index=[0, 1]))
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["AIG", "AMD.O"], "spot_date":["2021-04-05", "2021-04-05"], "currency_code":["USD", "USD"]}, index=[2, 3]))
+    # stock_pick = stock_pick.append(pd.DataFrame({"ticker":["601398.SS", "000001.SZ"], "spot_date":["2021-04-05", "2021-04-05"], "currency_code":["CNY", "CNY"]}, index=[4, 5]))
+    # stock_pick = stock_pick.append(pd.DataFrame({"ticker":["0005.HK", "0700.HK"], "spot_date":["2021-04-05", "2021-04-05"], "currency_code":["HKD", "HKD"]}, index=[6, 7]))
+
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["003550.KS", "004020.KS"], "spot_date":["2021-04-12", "2021-04-12"], "currency_code":["KRW", "KRW"]}, index=[8, 9]))
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["F", "AAL.O"], "spot_date":["2021-04-12", "2021-04-12"], "currency_code":["USD", "USD"]}, index=[10, 11]))
+    # stock_pick = stock_pick.append(pd.DataFrame({"ticker":["600115.SS", "600600.SS"], "spot_date":["2021-04-12", "2021-04-12"], "currency_code":["CNY", "CNY"]}, index=[12, 13]))
+    # stock_pick = stock_pick.append(pd.DataFrame({"ticker":["1398.HK", "1928.HK"], "spot_date":["2021-04-12", "2021-04-12"], "currency_code":["HKD", "HKD"]}, index=[14, 15]))
+
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["004170.KS", "006800.KS"], "spot_date":["2021-04-19", "2021-04-19"], "currency_code":["KRW", "KRW"]}, index=[16, 17]))
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["AA", "CAT"], "spot_date":["2021-04-19", "2021-04-19"], "currency_code":["USD", "USD"]}, index=[18, 19]))
+    # stock_pick = stock_pick.append(pd.DataFrame({"ticker":["601009.SS", "601111.SS"], "spot_date":["2021-04-19", "2021-04-19"], "currency_code":["CNY", "CNY"]}, index=[20, 21]))
+    # stock_pick = stock_pick.append(pd.DataFrame({"ticker":["2318.HK", "9618.HK"], "spot_date":["2021-04-19", "2021-04-19"], "currency_code":["HKD", "HKD"]}, index=[22, 23]))
+    print(stock_pick)
+    for spot_date in stock_pick["spot_date"].unique():
+        for currency_code in stock_pick["currency_code"].unique():
+            for capital in ["small", "large"]:
+                if(capital == "small"):
+                    top_pick=1
+                else:
+                    top_pick=2
+                available_pick = stock_pick.loc[stock_pick["currency_code"] == currency_code]
+                available_pick = available_pick.loc[ available_pick["spot_date"] == spot_date]
+                print(available_pick)
+                client_uid = get_client_uid(client_name=client_name)
+                user_id = get_user_id(client_uid, currency_code, tester=True, capital=capital)
+                print(client_uid)
+                print(user_id)
+                bot_ranking = get_bot_ranking(available_pick["ticker"], spot_date)
+                price = get_newest_price(available_pick["ticker"], spot_date, master_ohlcvtr=True)
+                print(spot_date)
+                rename = {}
+                bot_option_type = get_bot_option_type(time_to_exp)
+                filter_field = ["ticker"]
+                for index, row in bot_option_type.iterrows():
+                    option_type = row["bot_option_type"]
+                    if(option_type == "CLASSIC") : option_type = option_type.lower()
+                    bot_type = row["bot_type"].lower()
+                    time_to_exp_str = row["time_to_exp_str"]
+                    filter_field.append(f"{bot_type}_{option_type}_{time_to_exp_str}_pnl_class_prob")
+                    temp = {f"{bot_type}_{option_type}_{time_to_exp_str}_pnl_class_prob" : f"{bot_type.upper()}_{option_type}_{time_to_exp_str}"}
+                    rename.update(temp)
+                bot_ranking = bot_ranking[filter_field]
+                bot_ranking = bot_ranking.rename(columns=rename)
+                bot_tester_pick = pd.DataFrame({"ticker":[], "spot_date":[], "bot_id":[], "prob":[], "bot":[]}, index=[])
+                for index, row in bot_ranking.iterrows():
+                    for col in bot_ranking.columns:
+                        if(col != "ticker"):
+                            bot_type = col.split("_")
+                            pick_temp = pd.DataFrame({"ticker":[row["ticker"]], "spot_date":[spot_date], "bot_id":[col], "prob":[row[col]], "bot":[bot_type[0]]}, index=[0])
+                            print(pick_temp)
+                            bot_tester_pick = bot_tester_pick.append(pick_temp)
+                bot_tester_pick = bot_tester_pick.sort_values(by=["prob"], ascending=[False])
+                bot_tester_pick = bot_tester_pick.merge(price, how="left", on="ticker")
+                bot_tester_pick = bot_tester_pick.reset_index(inplace=False, drop=True)
+                current_assets = get_current_assets(user_id)
+                count = 1
+                last_ticker = [""]
+                last_industry_code = [""]
+                bot_tester_pick = bot_tester_pick.merge(industry_code, how="left", on="ticker")
+                tester_pick = pd.DataFrame({"created":[], "updated":[], "uid":[],"spot_date":[], "expiry_date":[], "has_position":[], 
+                    "position_uid":[],"execution_date":[], "completed_date":[], "event":[], "rank":[], "client_uid":[], "ticker":[], 
+                    "bot_id":[], "currency_code":[], "service_type":[], "bot":[]}, index=[])
+                for bot in ["UNO", "UCDC", "CLASSIC"]:
+                    test = bot_tester_pick.loc[bot_tester_pick["bot"] == bot]
+                    print(test)
+                    for index, row in test.iterrows():
+                        ticker = row["ticker"]
+                        industry_code_field = row["industry_code"]
+                        bot_id = row["bot_id"]
+                        bot = row["bot"]
+                        tri_adj_close = row["tri_adj_close"]
+                        print("current_assets")
+                        print(current_assets)
+                        print(tri_adj_close)
+                        if(count > top_pick):
+                            break
+                        status = True
+                        if(bot == "UNO" or bot == "UCDC"):
+                            if(tri_adj_close > current_assets/100):
+                                status=False
+                        if(status and ticker not in last_ticker and industry_code_field not in last_industry_code):
+                            service_type = "bot_tester"
+                            spot_date = spot_date
+                            uid = f"{client_uid}_{currency_code[0]}_{ticker}_{spot_date}_{service_type}_{capital}"
+                            expiry_date = get_expiry_date(time_to_exp[0], str(spot_date), currency_code)
+                            uid = uid.replace("-", "").replace(".", "").replace(" ", "")
+                            temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], 
+                            "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
+                            "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id],"bot":[bot], "currency_code":[currency_code], "service_type":[service_type], "capital":[capital]}, index=[0])
+                            last_ticker.append(ticker)
+                            last_industry_code.append(industry_code_field)
+                            count+=1
+                            # upsert_data_to_database(temp, get_client_top_stock_table_name(), "uid", how="ignore", cpu_count=True, Text=True)
+                            tester_pick = tester_pick.append(temp)
+                print("tester_pick")
+                print(tester_pick)
+                all.append(tester_pick)
+    data = []
+    for frame in all:
+        df = frame.reset_index()
+        data.append(df)
+    data = pd.concat(data)
+    print(data)
+    data = data.drop(columns=["index"])
+    upsert_data_to_database(data, get_client_top_stock_table_name(), "uid", how="ignore", cpu_count=True, Text=True)
+
+def bot_advisor_manual_populate(client_name="HANWHA", time_to_exp=[0.07692], top_pick = 2):
+    all = []
+    bot_option_type = get_bot_option_type(time_to_exp)
+    industry_code = get_industry_code()
+    stock_pick = pd.DataFrame({"ticker":[""], "spot_date":[], "currency_code":[]}, index=[])
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["000880.KS", "000660.KS"], "spot_date":["2021-04-05", "2021-04-05"], "currency_code":["KRW", "KRW"]}, index=[0, 1]))
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["AIG", "AMD.O"], "spot_date":["2021-04-05", "2021-04-05"], "currency_code":["USD", "USD"]}, index=[2, 3]))
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["601398.SS", "000001.SZ"], "spot_date":["2021-04-05", "2021-04-05"], "currency_code":["CNY", "CNY"]}, index=[4, 5]))
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["0005.HK", "0700.HK"], "spot_date":["2021-04-05", "2021-04-05"], "currency_code":["HKD", "HKD"]}, index=[6, 7]))
+
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["003550.KS", "004020.KS"], "spot_date":["2021-04-12", "2021-04-12"], "currency_code":["KRW", "KRW"]}, index=[8, 9]))
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["F", "AAL.O"], "spot_date":["2021-04-12", "2021-04-12"], "currency_code":["USD", "USD"]}, index=[10, 11]))
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["600115.SS", "600600.SS"], "spot_date":["2021-04-12", "2021-04-12"], "currency_code":["CNY", "CNY"]}, index=[12, 13]))
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["1398.HK", "1928.HK"], "spot_date":["2021-04-12", "2021-04-12"], "currency_code":["HKD", "HKD"]}, index=[14, 15]))
+
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["004170.KS", "006800.KS"], "spot_date":["2021-04-19", "2021-04-19"], "currency_code":["KRW", "KRW"]}, index=[16, 17]))
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["AA", "CAT"], "spot_date":["2021-04-19", "2021-04-19"], "currency_code":["USD", "USD"]}, index=[18, 19]))
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["601009.SS", "601111.SS"], "spot_date":["2021-04-19", "2021-04-19"], "currency_code":["CNY", "CNY"]}, index=[20, 21]))
+    stock_pick = stock_pick.append(pd.DataFrame({"ticker":["2318.HK", "9618.HK"], "spot_date":["2021-04-19", "2021-04-19"], "currency_code":["HKD", "HKD"]}, index=[22, 23]))
+    print(stock_pick)
+    for spot_date in stock_pick["spot_date"].unique():
+        for currency_code in stock_pick["currency_code"].unique():
+            for capital in ["small", "large", "large_margin"]:
+                available_pick = stock_pick.loc[stock_pick["currency_code"] == currency_code]
+                available_pick = available_pick.loc[ available_pick["spot_date"] == spot_date]
+                print(available_pick)
+                client_uid = get_client_uid(client_name=client_name)
+                user_id = get_user_id(client_uid, currency_code, advisor=True, capital=capital)
+                print(client_uid)
+                print(user_id)
+                bot_ranking = get_bot_ranking(available_pick["ticker"], spot_date)
+                price = get_newest_price(available_pick["ticker"], spot_date, master_ohlcvtr=True)
+                print(spot_date)
+                filter_field = ["ticker"]
+                rename = {}
+                bot_option_type = get_bot_option_type(time_to_exp)
+                for index, row in bot_option_type.iterrows():
+                    option_type = row["bot_option_type"]
+                    if(option_type == "CLASSIC") : option_type = option_type.lower()
+                    bot_type = row["bot_type"].lower()
+                    time_to_exp_str = row["time_to_exp_str"]
+                    filter_field.append(f"{bot_type}_{option_type}_{time_to_exp_str}_pnl_class_prob")
+                    temp = {f"{bot_type}_{option_type}_{time_to_exp_str}_pnl_class_prob" : f"{bot_type.upper()}_{option_type}_{time_to_exp_str}"}
+                    rename.update(temp)
+                bot_ranking = bot_ranking[filter_field]
+                bot_ranking = bot_ranking.rename(columns=rename)
+                bot_advisor_pick = pd.DataFrame({"ticker":[], "spot_date":[], "bot_id":[], "prob":[], "bot":[]}, index=[])
+                for index, row in bot_ranking.iterrows():
+                    for col in bot_ranking.columns:
+                        if(col != "ticker"):
+                            bot = col.split("_")
+                            temp = pd.DataFrame({"ticker":[row["ticker"]], "spot_date":[spot_date], 
+                                "bot_id":[col], "prob":[row[col]], "bot":[bot[0]]}, index=[0])
+                            bot_advisor_pick = bot_advisor_pick.append(temp)
+                bot_advisor_pick = bot_advisor_pick.sort_values(by=["prob"], ascending=[False])
+                bot_advisor_pick = bot_advisor_pick.merge(price, how="left", on="ticker")
+                bot_advisor_pick = bot_advisor_pick.reset_index(inplace=False, drop=True)
+                print(bot_advisor_pick)
+                current_assets = get_current_assets(user_id)
+                advisor_pick = pd.DataFrame({"created":[], "updated":[], "uid":[],"spot_date":[], "expiry_date":[], "has_position":[], 
+                    "position_uid":[],"execution_date":[], "completed_date":[], "event":[], "rank":[], "client_uid":[], "ticker":[], 
+                    "bot_id":[], "currency_code":[], "service_type":[], "bot":[]}, index=[])
+                count = 1
+                last_ticker = [""]
+                for index, row in bot_advisor_pick.iterrows():
+                    ticker = row["ticker"]
+                    bot_id = row["bot_id"]
+                    bot = row["bot"]
+                    tri_adj_close = row["tri_adj_close"]
+                    if(count > top_pick):
+                        break
+                    status = True
+                    if(bot == "UNO" or bot == "UCDC"):
+                        if(tri_adj_close > current_assets/100):
+                            status=False
+                    if(status and ticker not in last_ticker):
+                        service_type = "bot_advisor"
+                        spot_date = spot_date
+                        uid = f"{client_uid}_{currency_code[0]}_{ticker}_{spot_date}_{service_type}_{capital}"
+                        expiry_date = get_expiry_date(time_to_exp[0], str(spot_date), currency_code)
+                        uid = uid.replace("-", "").replace(".", "").replace(" ", "")
+                        temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], "bot":[None], 
+                        "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
+                        "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id], "currency_code":[currency_code], "service_type":[service_type], "capital":[capital]}, index=[0])
+                        last_ticker.append(ticker)
+                        count+=1
+                        advisor_pick = advisor_pick.append(temp)
+                print(advisor_pick)
+                print("advisor_pick")
+                print(advisor_pick)
+                all.append(advisor_pick)
+    data = []
+    for frame in all:
+        df = frame.reset_index()
+        data.append(df)
+    data = pd.concat(data)
+    data = data.drop(columns=["index"])
+    print(data)
+    upsert_data_to_database(data, get_client_top_stock_table_name(), "uid", how="ignore", cpu_count=True, Text=True)
+
+
 if __name__ == '__main__':
     print("Do Process")
+    bot_advisor_manual_populate()
+    # bot_tester_manual_populate()
     # test_pick(currency_code=["USD"], client_name="FELS")
     # test_pick(currency_code=["EUR"], client_name="FELS")
     # test_pick(currency_code=["USD"], client_name="HANWHA")

@@ -11,7 +11,7 @@ from bot.data_download import (
      get_new_tickers_from_bot_data, 
      get_volatility_latest_date)
 from general.slack import report_to_slack
-from general.date_process import dateNow, droid_start_date_buffer, str_to_date, droid_start_date
+from general.date_process import backdate_by_month, backdate_by_year, dateNow, droid_start_date_buffer, str_to_date, droid_start_date
 from bot.option_file_classic import fill_bot_backtest_classic, populate_bot_classic_backtest
 from bot.option_file_ucdc import fill_bot_backtest_ucdc, populate_bot_ucdc_backtest
 from bot.option_file_uno import fill_bot_backtest_uno, populate_bot_uno_backtest
@@ -147,7 +147,7 @@ def data_prep_history():
 def infer_daily(ticker=None, currency_code=None):
     folder_check()
     print("{} : === {} VOLATILITY INFER STARTED ===".format(dateNow(), currency_code))
-    start_date = get_bot_data_latest_date()
+    start_date = str_to_date(backdate_by_year(1))
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -209,6 +209,8 @@ def option_maker_daily_classic(ticker=None, currency_code=None, time_to_exp=None
     print("{} : === OPTION MAKER CLASSIC STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, classic=True)
     start_date = latest_dates_db["max_date"].min()
+    if(start_date > str_to_date(backdate_by_month(6))):
+        start_date = str_to_date(backdate_by_month(6))
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -246,7 +248,6 @@ def option_maker_uno_check_new_ticker(ticker=None, currency_code=None, time_to_e
     time_to_exp = check_time_to_exp(time_to_exp)
     print("{} : === OPTION MAKER UNO CHECK NEW TICKER STARTED ===".format(dateNow()))
     start_date = str_to_date(droid_start_date())
-    start_date2 = str_to_date(droid_start_date_buffer())
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -269,6 +270,8 @@ def option_maker_daily_uno(ticker=None, currency_code=None, time_to_exp=None, mo
     print("{} : === OPTION MAKER UNO STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, uno=True)
     start_date = latest_dates_db["max_date"].min()
+    if(start_date > str_to_date(backdate_by_month(6))):
+        start_date = str_to_date(backdate_by_month(6))
     end_date = str_to_date(dateNow())
     latest_date = get_volatility_latest_date(ticker=ticker, currency_code=currency_code, infer=True)
     if start_date is None:
@@ -328,6 +331,8 @@ def option_maker_daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, m
     print("{} : === OPTION MAKER UCDC STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, ucdc=True)
     start_date = latest_dates_db["max_date"].min()
+    if(start_date > str_to_date(backdate_by_month(6))):
+        start_date = str_to_date(backdate_by_month(6))
     end_date = str_to_date(dateNow())
     latest_date = get_volatility_latest_date(ticker=ticker, currency_code=currency_code, infer=True)
     if start_date is None:
@@ -407,6 +412,8 @@ def bot_ranking_daily(ticker=None, currency_code=None, mod=False, time_to_exp=ti
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     start_date = get_bot_data_latest_date(daily=True)
+    if(start_date < str_to_date(backdate_by_month(3))):
+        start_date = str_to_date(backdate_by_year(1))
     end_date = str_to_date(dateNow())
     populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, currency_code=currency_code, mod=mod)
     print(f"The start date is set as: {start_date}")

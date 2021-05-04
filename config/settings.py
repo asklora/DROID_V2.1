@@ -19,7 +19,7 @@ SECRET_KEY = '!5fyj@#07=!rc9^)k0tgsl%dp@rmfe$*8t3*+m&mkwk-w^l!_a'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['18.167.118.164','127.0.0.1']
+ALLOWED_HOSTS = ['18.167.118.164', '127.0.0.1']
 
 
 # Application definition
@@ -32,7 +32,7 @@ DJANGO_DEFAULT_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.postgres',
-    
+
 ]
 ADDITIONAL_APPS = [
     'psqlextra',
@@ -75,7 +75,7 @@ MIDDLEWARE = [
 
 # =========================
 
-#TEMPLATE CONF
+# TEMPLATE CONF
 
 TEMPLATES = [
     {
@@ -123,11 +123,11 @@ ELASTICSEARCH_DSL = {
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-db_debug= env.bool("DROID_DEBUG")
+db_debug = env.bool("DROID_DEBUG")
 if db_debug:
-    read_endpoint,write_endpoint,port = db.test_url
+    read_endpoint, write_endpoint, port = db.test_url
 else:
-    read_endpoint,write_endpoint,port = db.prod_url
+    read_endpoint, write_endpoint, port = db.prod_url
 
 # print(f'using read: {read_endpoint}')
 # print(f'using write: {write_endpoint}')
@@ -198,10 +198,11 @@ USE_TZ = False
 
 
 # REDIS AND CELERY
-
+CELERY_TIMEZONE = 'UTC'
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@18.167.118.164:5672'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_IMPORTS = ['core.services.ingestiontask','portfolio_hedge']
+CELERY_IMPORTS = ['core.services.ingestiontask', 'portfolio_hedge']
+CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

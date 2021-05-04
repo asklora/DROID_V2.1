@@ -9,6 +9,7 @@ from core.djangomodule.serializers import (OrderSerializer,
                                            OrderPositionSerializer,
                                            PositionPerformanceSerializer)
 import pandas as pd
+from core.user.models import TransactionHistory
 
 
 @receiver(pre_save, sender=Order)
@@ -50,13 +51,11 @@ def order_signal(sender, instance, created, **kwargs):
     elif created and not instance.is_init and instance.bot_id != 'stock':
         pass
 
-    elif not created and instance.status in ['filled', 'allocated'] and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
+    elif not created and instance.status in 'filled' and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         # update the status and create new position
         if instance.is_init:
             if instance.status == 'filled':
                 spot_date = instance.filled_at
-            elif instance.status == 'allocated':
-                spot_date = instance.placed_at
             order = OrderPosition.objects.create(
                 user_id=instance.user_id,
                 ticker=instance.ticker,
@@ -103,11 +102,21 @@ def order_signal(sender, instance, created, **kwargs):
                     'module': 'core.djangomodule.crudlib.order.sync_performance',
                     'payload': dict(perfserialize)
                 }
+                instance.amount = perf.current_investment_amount
                 if instance.bot_id != 'stock':
                     instance.performance_uid = perf.performance_uid
                 else:
                     instance.performance_uid = 'stock'
                 instance.save()
+                TransactionHistory.objects.create(
+                    balance_uid=order.user_id.wallet,
+                    side='debit',
+                    amount=order.investment_amount,
+                    transaction_detail={
+                        'position': f'{order.position_uid}',
+                        'event': 'create',
+                    },
+                )
                 # services.celery_app.send_task('config.celery.listener',args=(perfdata,),queue='asklora')
 
         else:
@@ -145,9 +154,21 @@ def order_signal(sender, instance, created, **kwargs):
                     signal_performance.order_uid = instance
                     order_position.save()
                     signal_performance.save()
+
                     if not instance.performance_uid:
                         instance.performance_uid = signal_performance.performance_uid
                         instance.save()
+                    if not order_position.is_live:
+                        amt = order_position.investment_amount + order_position.final_pnl_amount
+                        TransactionHistory.objects.create(
+                            balance_uid=order_position.user_id.wallet,
+                            side='credit',
+                            amount=amt,
+                            transaction_detail={
+                                'position': f'{order_position.position_uid}',
+                                'event': 'create',
+                            },
+                        )
 
     # send payload to asklora
     instanceserialize = OrderSerializer(instance).data
