@@ -28,9 +28,11 @@ def debug_task(self):
         if a >= 20:
             break
         a += 1
-        time.sleep(20)
+        time.sleep(2)
+
+
 @app.task(bind=True)
-def listener(self,data):
+def listener(self, data):
     """
     - Data format:
         {
@@ -41,14 +43,14 @@ def listener(self,data):
                 'password':'r3ddpapapapa'
             }
         }
-    
+
     """
-    if data['type'] =='function':
+    if data['type'] == 'function':
         module, function = data['module'].rsplit('.', 1)
         mod = import_module(module)
         func = getattr(mod, function)
         func(data['payload'])
-    elif data['type'] =='invoke':
+    elif data['type'] == 'invoke':
         module, function = data['module'].rsplit('.', 1)
         mod = import_module(module)
         func = getattr(mod, function)

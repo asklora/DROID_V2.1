@@ -106,11 +106,11 @@ class CsvSerializer(serializers.ModelSerializer):
         if obj.order_uid:
             if obj.order_uid.is_init:
                 return 'new'
-            elif not obj.position_uid.is_live:
+            elif not obj.position_uid.is_live and obj.position_uid.event_date == obj.created.date():
                 return 'expired'
             else:
                 return 'live'
-        elif not obj.order_uid and not obj.position_uid.is_live:
+        elif obj.order_uid and not obj.position_uid.is_live and obj.position_uid.event_date == obj.created.date():
             return 'expired'
         else:
             return 'live'
@@ -122,11 +122,7 @@ class Command(BaseCommand):
         hanwha = [user['user'] for user in UserClient.objects.filter(
             client__client_name='HANWHA', extra_data__service_type='bot_advisor').values('user')]
         dates = [
-            '2021-04-26',
-            '2021-04-27',
-            '2021-04-28',
-            '2021-04-29',
-        ]
+            str(perf.created) for perf in PositionPerformance.objects.all().order_by('created').distinct('created')]
         curr = [
             'KRW',
             'USD',
@@ -141,4 +137,5 @@ class Command(BaseCommand):
                 if perf.exists():
                     df = pd.DataFrame(CsvSerializer(perf, many=True).data)
                     df = df.fillna(0)
-                    df.to_csv(f'{currency}_{created}_asklora.csv', index=False)
+                    df.to_csv(
+                        f'files/file_csv/hanwha/{currency}_{created}_asklora.csv', index=False)
