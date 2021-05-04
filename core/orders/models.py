@@ -63,7 +63,7 @@ class Order(BaseTimeStampModel):
 
 class OrderPosition(BaseTimeStampModel):
 
-    position_uid = models.UUIDField(primary_key=True, editable=False)
+    position_uid = models.CharField(primary_key=True, editable=False,max_length=500)
     user_id = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="user_position",db_column="user_id")
     ticker = models.ForeignKey(
