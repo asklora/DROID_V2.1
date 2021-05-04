@@ -35,4 +35,4 @@ class Command(BaseCommand):
                         args=(position_uid,), queue=options['queue'])
                 else:
                     status = classic_position_check(position_uid)
-            print(status)
+            print(status,'done')
