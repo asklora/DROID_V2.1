@@ -197,6 +197,7 @@ def get_macro_data(start_date, end_date):
     query = f"select trading_day, usinter3, usgbill3, emibor3, jpmshort, emgbond, chgbond, fred_data "
     query += f"from {get_data_macro_monthly_table_name()} where trading_day >= '{start_date}' and trading_day <= '{end_date}' "
     data = read_query(query, get_data_macro_monthly_table_name(), cpu_counts=False)
+    data["ticker"] = "MSFT.O"
     result = data[["ticker", "trading_day"]]
     result = result.sort_values(by=["trading_day"], ascending=True)
     daily = pd.date_range(start_date, end_date, freq="D")
