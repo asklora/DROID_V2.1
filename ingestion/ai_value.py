@@ -12,7 +12,7 @@ from general.sql_query import get_active_universe_by_entity_type, get_data_ibes_
 
 def populate_ibes_table():
     table_name = get_data_ibes_table_name()
-    start_date = backdate_by_month(6)
+    start_date = backdate_by_month(30)
     ibes_data = get_data_ibes_monthly(start_date)
     ibes_data = ibes_data.drop(columns=["trading_day"])
     upsert_data_to_database(ibes_data, table_name, "uid", how="update", Text=True)
@@ -100,9 +100,10 @@ def get_fred_csv_monthly():
 def populate_macro_table():
     table_name = get_data_macro_table_name()
     end_date = dateNow()
-    start_date = backdate_by_month(6)
+    start_date = backdate_by_month(30)
     macro_data = get_data_macro_monthly(start_date)
     macro_data = macro_data.drop(columns=["trading_day"])
+    macro_data = macro_data.dropna(subset=["period_end"])
     upsert_data_to_database(macro_data, table_name, "period_end", how="update", Text=True)
     report_to_slack("{} : === Data MACRO Update Updated ===".format(datetimeNow()))
 
