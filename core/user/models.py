@@ -85,7 +85,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         position = self.user_position.filter(is_live=True).count()
         if position >= 1:
             return position
-        return 1
+        return 0
 
     @property
     def balance(self):
