@@ -107,11 +107,11 @@ class CsvSerializer(serializers.ModelSerializer):
             if obj.order_uid.is_init:
                 return "new"
             elif not obj.position_uid.is_live and obj.position_uid.event_date == obj.created.date():
-                return "expired"
+                return obj.position_uid.event
             else:
                 return "live"
         elif obj.order_uid and not obj.position_uid.is_live and obj.position_uid.event_date == obj.created.date():
-            return "expired"
+            return obj.position_uid.event
         else:
             return "live"
 
