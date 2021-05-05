@@ -10,8 +10,8 @@ class Command(BaseCommand):
         serialize = UserSerializer(User.objects.all(), many=True).data
         for user in serialize:
             data ={
-            'type':'function',
-            'module':'core.djangomodule.crudlib.user.sync_user',
-            'payload':dict(user)
+            "type":"function",
+            "module":"core.djangomodule.crudlib.user.sync_user",
+            "payload":dict(user)
         }
-            services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
+            services.celery_app.send_task("config.celery.listener",args=(data,),queue="asklora")

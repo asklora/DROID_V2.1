@@ -9,19 +9,19 @@ from datetime import datetime, timedelta
 class Command(BaseCommand):
     def add_arguments(self, parser):
 
-        #     parser.add_argument('-a', '--account', type=str, help='email')
-        #     parser.add_argument('-t', '--ticker', type=str, help='ticker')
-        #     parser.add_argument('-p', '--price', type=float, help='price')
-        #     parser.add_argument('-d', '--date', type=str, help='spot date')
-        #     parser.add_argument('-b', '--bot', type=str, help='bot id')
-        #     parser.add_argument('-amt', '--amount', type=float, help='amount')
+        #     parser.add_argument("-a", "--account", type=str, help="email")
+        #     parser.add_argument("-t", "--ticker", type=str, help="ticker")
+        #     parser.add_argument("-p", "--price", type=float, help="price")
+        #     parser.add_argument("-d", "--date", type=str, help="spot date")
+        #     parser.add_argument("-b", "--bot", type=str, help="bot id")
+        #     parser.add_argument("-amt", "--amount", type=float, help="amount")
         parser.add_argument(
-            '-d', '--debug', action='store_true', help='for celery')
+            "-d", "--debug", action="store_true", help="for celery")
 
     def handle(self, *args, **options):
-        client = Client.objects.get(client_name='HANWHA')
+        client = Client.objects.get(client_name="HANWHA")
         topstock = client.client_top_stock.filter(
-            has_position=False).order_by('service_type', 'spot_date', 'currency_code', 'capital', 'rank')
+            has_position=False).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
 
         for queue in topstock:
             user = UserClient.objects.get(
@@ -30,7 +30,7 @@ class Command(BaseCommand):
                 extra_data__capital=queue.capital,
                 extra_data__type=queue.bot
             )
-            if options['debug']:
+            if options["debug"]:
                 last_spot_date = queue.spot_date - timedelta(days=1)
                 if last_spot_date.weekday() == 6:
                     last_spot_date = last_spot_date - \
@@ -47,7 +47,7 @@ class Command(BaseCommand):
                         dates = dates - timedelta(days=2)
                     elif dates.weekday() == 5:
                         dates = dates - timedelta(days=1)
-                    print(dates, 'go back')
+                    print(dates, "go back")
                     price = MasterOhlcvtr.objects.get(
                         ticker=queue.ticker, trading_day=dates).close
 
@@ -55,10 +55,10 @@ class Command(BaseCommand):
             else:
                 price = queue.ticker.latest_price_ticker.close
                 spot_date = datetime.now()
-            if user.extra_data['service_type'] == 'bot_advisor':
+            if user.extra_data["service_type"] == "bot_advisor":
                 portnum =8
-            elif user.extra_data['service_type'] == 'bot_tester':
-                if user.extra_data['capital'] == 'small':
+            elif user.extra_data["service_type"] == "bot_tester":
+                if user.extra_data["capital"] == "small":
                     portnum = 4
                 else:
                     portnum = 8
@@ -78,8 +78,8 @@ class Command(BaseCommand):
                 order.placed = True
                 order.placed_at = spot_date
                 order.save()
-            if order.status == 'pending':
-                order.status = 'filled'
+            if order.status == "pending":
+                order.status = "filled"
                 order.filled_at = spot_date
                 order.save()
                 position_uid = PositionPerformance.objects.get(
@@ -87,5 +87,5 @@ class Command(BaseCommand):
                 queue.position_uid = position_uid
                 queue.has_position = True
                 queue.save()
-                print(user.user_id, user.extra_data['service_type'],
-                      user.extra_data['capital'], queue.ticker, 'created')
+                print(user.user_id, user.extra_data["service_type"],
+                      user.extra_data["capital"], queue.ticker, "created")

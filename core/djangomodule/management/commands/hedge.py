@@ -10,29 +10,29 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
 
         parser.add_argument(
-            '-c', '--celery', action='store_true', help='for celery')
-        parser.add_argument('-q', '--queue', type=str, help='queue')
+            "-c", "--celery", action="store_true", help="for celery")
+        parser.add_argument("-q", "--queue", type=str, help="queue")
 
     def handle(self, *args, **options):
         positions = OrderPosition.objects.filter(is_live=True)
         for position in positions:
             position_uid = position.position_uid
             if (position.bot.is_uno()):
-                if options['celery']:
+                if options["celery"]:
                     status = uno_position_check.apply_async(
-                        args=(position_uid,), queue=options['queue'])
+                        args=(position_uid,), queue=options["queue"])
                 else:
                     status = uno_position_check(position_uid)
             elif (position.bot.is_ucdc()):
-                if options['celery']:
+                if options["celery"]:
                     status = ucdc_position_check.apply_async(
-                        args=(position_uid,), queue=options['queue'])
+                        args=(position_uid,), queue=options["queue"])
                 else:
                     status = ucdc_position_check(position_uid)
             elif (position.bot.is_classic()):
-                if options['celery']:
+                if options["celery"]:
                     status = classic_position_check.apply_async(
-                        args=(position_uid,), queue=options['queue'])
+                        args=(position_uid,), queue=options["queue"])
                 else:
                     status = classic_position_check(position_uid)
-            print(status,'done')
+            print(status,"done")
