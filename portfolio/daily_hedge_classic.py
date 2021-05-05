@@ -105,7 +105,6 @@ def create_performance(price_data, position, latest_price=False):
             amount=position.share_num * live_price,
             user_id=position.user_id,
             side="sell",
-            performance_uid=performance.performance_uid,
             qty=position.share_num,
             setup=setup
         )
