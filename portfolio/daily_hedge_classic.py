@@ -65,7 +65,8 @@ def create_performance(price_data, position, latest_price=False):
         current_investment_amount=round(current_investment_amount, 2),
         current_bot_cash_balance=round(bot_cash_balance, 2),
         updated=str(log_time),
-        created=str(log_time)
+        created=str(log_time),
+        last_hedge_delta=100
     )
 
     if status_expiry:
