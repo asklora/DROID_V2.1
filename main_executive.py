@@ -412,8 +412,8 @@ def bot_ranking_daily(ticker=None, currency_code=None, mod=False, time_to_exp=ti
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     start_date = get_bot_data_latest_date(daily=True)
-    if(start_date < str_to_date(backdate_by_month(3))):
-        start_date = str_to_date(backdate_by_year(1))
+    if(start_date > str_to_date(backdate_by_month(6))):
+        start_date = str_to_date(backdate_by_month(6))
     end_date = str_to_date(dateNow())
     populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, currency_code=currency_code, mod=mod)
     print(f"The start date is set as: {start_date}")

@@ -37,6 +37,8 @@ from ingestion.currency import (
     update_utc_offset_from_timezone
     )
 from ingestion.ai_value import (
+    populate_ibes_table,
+    populate_macro_table,
     update_ibes_data_monthly_from_dsws, 
     update_macro_data_monthly_from_dsws, 
     update_worldscope_quarter_summary_from_dsws)
@@ -298,11 +300,14 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 if __name__ == "__main__":
+    
     # update_ticker_symbol_from_dss()
     from migrate import weekly_migrations, daily_migrations
     # do_function("universe_populate")
     # update_currency_code_from_dss()
     weekly_migrations()
+    populate_macro_table()
+    populate_ibes_table()
     update_quandl_orats_from_quandl()
     
     do_function("master_ohlcvtr_update")
