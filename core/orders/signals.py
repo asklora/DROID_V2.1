@@ -113,6 +113,7 @@ def order_signal(sender, instance, created, **kwargs):
                     side='debit',
                     amount=order.investment_amount,
                     transaction_detail={
+                        'description':'bot order',
                         'position': f'{order.position_uid}',
                         'event': 'create',
                     },
@@ -165,6 +166,7 @@ def order_signal(sender, instance, created, **kwargs):
                             side='credit',
                             amount=amt,
                             transaction_detail={
+                                'description':'bot return',
                                 'position': f'{order_position.position_uid}',
                                 'event': 'return',
                             },

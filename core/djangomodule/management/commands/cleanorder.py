@@ -25,6 +25,7 @@ class Command(BaseCommand):
                 for data in balancedata:
                     user_id = data.pop('user')
                     currency = data.pop('currency_code')
+                    amount = data.pop('amount')
                     Accountbalance.objects.create(
                         user_id=user_id,
                         currency_code_id=currency,
@@ -39,7 +40,10 @@ class Command(BaseCommand):
                     TransactionHistory.objects.create(
                         balance_uid_id=balance_uid,
                         amount=data['amount'],
-                        side='credit'
+                        side='credit',
+                        transaction_detail={
+                        'description':'first deposit',
+                        }
                         
                     )
             ftr.close()
