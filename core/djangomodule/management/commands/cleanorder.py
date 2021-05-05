@@ -31,13 +31,15 @@ class Command(BaseCommand):
                         **data
                     )
             f.close()
-        with open('files/transaction.json') as ftr:
+        with open('files/balance.json') as ftr:
             transdata = json.load(ftr)
             if transdata:
                 for data in transdata:
                     balance_uid = data.pop('balance_uid')
                     TransactionHistory.objects.create(
                         balance_uid_id=balance_uid,
-                        **data
+                        amount=data['amount'],
+                        side='credit'
+                        
                     )
             ftr.close()
