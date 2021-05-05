@@ -8,7 +8,16 @@ from main import (
     dlpa_weekly, populate_latest_price,
     update_worldscope_quarter_summary_from_dsws,
     daily_uno_ucdc,
-    update_fundamentals_score_from_dsws
+    update_fundamentals_score_from_dsws, populate_macro_table,
+    populate_ibes_table,
+    update_quandl_orats_from_quandl,
+    do_function,
+    master_ohlctr_update,
+    master_tac_update,
+    update_currency_price_from_dss,
+    interest_update,
+    dividend_daily_update,
+    interest_daily_update
 )
 from core.universe.models import Universe
 import sys
@@ -292,6 +301,15 @@ def migrate():
             # Change the standard output to the file we created.
             sys.stdout = f
             daily_migrations()  # triger ingestion function
+            populate_macro_table()
+            populate_ibes_table()
+            do_function("master_ohlcvtr_update")
+            master_ohlctr_update()
+            master_tac_update()
+            update_currency_price_from_dss()
+            interest_update()
+            dividend_daily_update()
+            interest_daily_update()
             sys.stdout = original_stdout
         return {"result": f"migrate daily done"}
     except Exception as e:
