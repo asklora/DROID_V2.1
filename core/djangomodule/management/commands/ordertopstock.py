@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from core.orders.models import Order, PositionPerformance
+from core.bot.models import BotOptionType
 from core.master.models import MasterOhlcvtr
 from core.Clients.models import UserClient, Client
 import pandas as pd
@@ -30,6 +31,7 @@ class Command(BaseCommand):
                 extra_data__capital=queue.capital,
                 extra_data__type=queue.bot
             )
+            bot = BotOptionType.objects.get(bot_id=queue.bot_id)
             if options["debug"]:
                 last_spot_date = queue.spot_date - timedelta(days=1)
                 if last_spot_date.weekday() == 6:
@@ -56,7 +58,7 @@ class Command(BaseCommand):
                 price = queue.ticker.latest_price_ticker.close
                 spot_date = datetime.now()
             if user.extra_data["service_type"] == "bot_advisor":
-                portnum =8
+                portnum = 8
             elif user.extra_data["service_type"] == "bot_tester":
                 if user.extra_data["capital"] == "small":
                     portnum = 4
@@ -64,6 +66,10 @@ class Command(BaseCommand):
                     portnum = 8
             investment_amount = min(
                 user.user.current_assets / portnum, user.user.balance / 3)
+
+            # Margin
+            if user.extra_data["capital"] == "large_margin" and bot.bot_type != 'CLASSIC':
+                investment_amount = investment_amount * 1.5
 
             digits = max(min(5-len(str(int(price))), 2), -1)
             order = Order.objects.create(
