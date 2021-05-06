@@ -48,6 +48,14 @@ def calculate_minutes_hours_to_time(market_close_time, utc_offset, close_ingesti
     else:
         different_minutes = int(market_time[1]) + int(utc[1]) + int(close_offset[1]) + int(classic[1])
 
+    if(int(classic[1]) < 0):
+        different_minutes -= int(classic[1])
+    else:
+        different_minutes += int(classic[1])
+
+    return convert_diff_to_time(different_minutes, different_hours)
+    
+def convert_diff_to_time(different_minutes, different_hours):
     #Convert Minutes to Hours
     if(different_minutes >= 60):
         different_hours = different_hours + (int(different_minutes / 60))
@@ -80,7 +88,7 @@ def update_utc_offset_from_timezone():
     print(currency.columns)
     result = calculate_timezone(currency)
     print(result)
-    classic_offset = "00:15:00"
+    classic_offset = "00:-15:00"
     result["classic_schedule"] = ""
     for index, row in result.iterrows():
         result.loc[index, "classic_schedule"] = calculate_minutes_hours_to_time(str(row["market_close_time"]), str(row["utc_offset"]), str(row["close_ingestion_offset"]), classic_offset)
