@@ -39,10 +39,10 @@ def order_signal(sender, instance, created, **kwargs):
                                     bot.time_to_exp, instance.amount, instance.price, expiry)
             elif bot.bot_type.bot_type == 'UNO':
                 setup = get_uno(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
-                                instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type)
+                                instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=instance.user_id.is_large_margin)
             elif bot.bot_type.bot_type == 'UCDC':
                 setup = get_ucdc(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
-                                 instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type)
+                                 instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=instance.user_id.is_large_margin)
 
             instance.setup = setup
             instance.qty = setup['share_num']

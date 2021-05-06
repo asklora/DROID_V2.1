@@ -292,6 +292,7 @@ def get_daily_uno_ucdc(currency, infer=True):
         return {"err": str(e)}
 
 
+@aws_batch
 @app.task
 def migrate():
     now = datetime.now()

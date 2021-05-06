@@ -66,7 +66,7 @@ def create_performance(price_data, position, latest_price=False):
             delta, hedge = get_ucdc_hedge(
                 currency_code, delta, last_performance.last_hedge_delta)
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(
-                ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta, 
+                ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta,
                 hedge=hedge, ucdc=True, margin=position.is_large_margin())
         bot_cash_balance = last_performance.current_bot_cash_balance + \
             ((last_performance.share_num - share_num) * live_price)

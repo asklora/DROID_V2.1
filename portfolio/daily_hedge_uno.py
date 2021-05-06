@@ -67,7 +67,7 @@ def create_performance(price_data, position, latest_price=False):
             delta, hedge = get_uno_hedge(
                 live_price, strike, delta, last_performance.last_hedge_delta)
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(
-                ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta, 
+                ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta,
                 hedge=hedge, uno=True, margin=position.is_large_margin())
         bot_cash_balance = last_performance.current_bot_cash_balance + \
             ((last_performance.share_num - share_num) * live_price)
@@ -91,7 +91,8 @@ def create_performance(price_data, position, latest_price=False):
             share_num = position.share_num * 1.5
         else:
             share_num = position.share_num
-        bot_cash_balance = position.investment_amount - (share_num * live_price)
+        bot_cash_balance = position.investment_amount - \
+            (share_num * live_price)
 
     current_investment_amount = live_price * share_num
     current_pnl_ret = (bot_cash_balance + current_investment_amount -
@@ -122,7 +123,10 @@ def create_performance(price_data, position, latest_price=False):
         q=q,
         strike=strike,
         barrier=barrier,
-        option_price=option_price
+        option_price=option_price,
+        order_summary={
+            'hedge_shares': hedge_shares
+        }
     )
 
     if status_expiry:
