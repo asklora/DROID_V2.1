@@ -29,42 +29,18 @@ def update_currency_price_from_dss():
         upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
         report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
 
-# def calculate_minutes_hours_to_time(market_close_time, utc_offset, close_ingestion_offset, classic_offset):
-#     market_time = market_close_time.split(":")
-#     utc = utc_offset.split(":")
-#     close_offset = close_ingestion_offset.split(":")
-#     classic = classic_offset.split(":")
-
-#     #Calculate Hours
-#     different_hours =int(market_time[0]) + int(utc[0]) + int(close_offset[0])
-
-#     #Calculate Minutes
-#     if(int(utc[0]) < 0):
-#         different_minutes = int(market_time[1]) - int(utc[1]) + int(close_offset[1]) + int(classic[1])
-#     elif(int(close_offset[0]) < 0):
-#         different_minutes = int(market_time[1]) + int(utc[1]) - int(close_offset[1]) + int(classic[1])
-#     elif(int(utc[0]) < 0 & int(close_offset[0]) < 0):
-#         different_minutes = int(market_time[1]) - int(utc[1]) - int(close_offset[1]) + int(classic[1])
-#     else:
-#         different_minutes = int(market_time[1]) + int(utc[1]) + int(close_offset[1]) + int(classic[1])
-
-#     if(int(classic[1]) < 0):
-#         different_minutes -= int(classic[1])
-#     else:
-#         different_minutes += int(classic[1])
-
-def calculate_minutes_hours_to_time(time1, time2):
+def calculate_minutes_hours_to_time(time1, time2, minus=False):
     time1 = time1.split(":")
     time2 = time2.split(":")
-
     different_hours = int(time1[0]) + int(time2[0])
 
-    if(int(time1[0]) < 0 and int(time2[0]) < 0):
-        different_minutes = int(time1[1]) + int(time2[1])
-    elif(int(time1[0]) < 0):
+    if(minus):
+        different_hours = int(time1[0]) + int(time2[0])
         different_minutes = int(time1[1]) - int(time2[1])
-    elif(int(time2[0]) < 0):
+    elif(int(time1[0]) < 0 or int(time1[1]) < 0):
         different_minutes = int(time2[1]) - int(time1[1])
+    elif(int(time2[0]) < 0 or int(time2[1]) < 0):
+        different_minutes = int(time1[1]) - int(time2[1])
     else:
         different_minutes = int(time1[1]) + int(time2[1])
 
@@ -100,10 +76,10 @@ def calculate_timezone(data):
 
 def update_utc_offset_from_timezone():
     currency = get_active_currency()
+    print(currency)
     print(currency.columns)
     result = calculate_timezone(currency)
     print(result)
-    result["classic_schedule"] = ""
     for index, row in result.iterrows():
         backtest_schedule = calculate_minutes_hours_to_time(str(row["market_close_time"]), str(row["utc_offset"]))
         backtest_schedule = calculate_minutes_hours_to_time(str(backtest_schedule), str(row["close_ingestion_offset"]))
@@ -111,19 +87,12 @@ def update_utc_offset_from_timezone():
         result.loc[index, "backtest_schedule"] = backtest_schedule
 
         hedge_schedule = calculate_minutes_hours_to_time(str(row["market_close_time"]), str(row["utc_offset"]))
-        hedge_schedule = calculate_minutes_hours_to_time(str(hedge_schedule), str(row["close_ingestion_offset"]))
-        hedge_schedule = calculate_minutes_hours_to_time(str(hedge_schedule), "00:15:00")
+        hedge_schedule = calculate_minutes_hours_to_time(str(hedge_schedule), "00:15:00", minus=True)
         result.loc[index, "hedge_schedule"] = hedge_schedule
 
-        top_stock_schedule = calculate_minutes_hours_to_time(str(row["market_close_time"]), str(row["utc_offset"]))
-        top_stock_schedule = calculate_minutes_hours_to_time(str(top_stock_schedule), str(row["close_ingestion_offset"]))
+        top_stock_schedule = calculate_minutes_hours_to_time(str(row["market_open_time"]), str(row["utc_offset"]))
         top_stock_schedule = calculate_minutes_hours_to_time(str(top_stock_schedule), "00:15:00")
         result.loc[index, "top_stock_schedule"] = top_stock_schedule
-
-        # result.loc[index, "backtest_schedule"] = calculate_minutes_hours_to_time(str(row["market_close_time"]), str(row["utc_offset"]), 
-        #     str(row["close_ingestion_offset"]), "00:15:00")
-        # result.loc[index, "backtest_schedule"] = calculate_minutes_hours_to_time(str(row["market_close_time"]), str(row["utc_offset"]), 
-        #     str(row["close_ingestion_offset"]), "00:-15:00")
-    print(result)
+    print(result[["currency_code", "market_open_time", "utc_offset", "market_close_time", "close_ingestion_offset", "backtest_schedule", "hedge_schedule", "top_stock_schedule"]])
     upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
     report_to_slack("{} : === UTC Offset & Classic Schedule Updated ===".format(datetimeNow()))
