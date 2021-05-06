@@ -104,7 +104,7 @@ class OrderPosition(BaseTimeStampModel):
         performance = self.order_position.filter(
             position_uid=self.position_uid)
         if performance.exists():
-            perf = performance.latest('created')
+            perf = performance.latest("created")
             ret = perf.current_bot_cash_balance + \
                 perf.current_investment_amount - self.investment_amount
             # if self.user_currency != self.currency:
@@ -117,7 +117,7 @@ class OrderPosition(BaseTimeStampModel):
         performance = self.order_position.filter(
             position_uid=self.position_uid)
         if performance.exists():
-            perf = performance.latest('created')
+            perf = performance.latest("created")
             ret = perf.current_bot_cash_balance + perf.current_investment_amount
             # if self.user_currency != self.currency:
             #     ret = ret * self.currency_rate
@@ -206,3 +206,17 @@ class PositionPerformance(BaseTimeStampModel):
 
     def __str__(self):
         return str(self.created)
+
+class OrderFee(BaseTimeStampModel):
+    order_uid = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="orders_fee_orders", db_column="order_uid")
+    fee_type = models.TextField(null=True,blank=True)
+    commissions = models.FloatField(default=0)
+    stamp_duty = models.FloatField(default=0)
+    total_fee = models.FloatField(default=0)
+
+    class Meta:
+        managed = True
+        db_table = "orders_fee"
+
+    def __str__(self):
+        return f"{self.order_uid.order_uid}-{self.created}-{self.fee_type}"

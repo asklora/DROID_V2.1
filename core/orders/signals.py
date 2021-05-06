@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from .models import Order, OrderPosition, PositionPerformance
+from .models import Order, OrderFee, OrderPosition, PositionPerformance
 from core.bot.models import BotOptionType
 from bot.calculate_bot import get_classic, get_expiry_date, get_uno, get_ucdc
 from datetime import datetime
@@ -17,45 +17,45 @@ def order_signal_check(sender, instance, **kwargs):
     if instance.placed:
         # instance.placed_at =datetime.now()
         if instance.setup and instance.is_init:
-            if instance.setup['share_num'] == 0:
-                instance.status = 'allocated'
-            elif instance.status == 'filled':
-                instance.status = 'filled'
+            if instance.setup["share_num"] == 0:
+                instance.status = "allocated"
+            elif instance.status == "filled":
+                instance.status = "filled"
                 # instance.filled_at = datetime.now()
             else:
-                instance.status = 'pending'
+                instance.status = "pending"
 
 
 @receiver(post_save, sender=Order)
 def order_signal(sender, instance, created, **kwargs):
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
-        if instance.bot_id != 'stock':
+        if instance.bot_id != "stock":
             bot = BotOptionType.objects.get(bot_id=instance.bot_id)
             expiry = get_expiry_date(
                 bot.time_to_exp, instance.created, instance.ticker.currency_code.currency_code)
-            if bot.bot_type.bot_type == 'CLASSIC':
+            if bot.bot_type.bot_type == "CLASSIC":
                 setup = get_classic(instance.ticker.ticker, instance.created,
                                     bot.time_to_exp, instance.amount, instance.price, expiry)
-            elif bot.bot_type.bot_type == 'UNO':
+            elif bot.bot_type.bot_type == "UNO":
                 setup = get_uno(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
                                 instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=instance.user_id.is_large_margin)
-            elif bot.bot_type.bot_type == 'UCDC':
+            elif bot.bot_type.bot_type == "UCDC":
                 setup = get_ucdc(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
                                  instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=instance.user_id.is_large_margin)
 
             instance.setup = setup
-            instance.qty = setup['share_num']
+            instance.qty = setup["share_num"]
             instance.save()
 
         # if not user can create the setup TP and SL
-    elif created and not instance.is_init and instance.bot_id != 'stock':
+    elif created and not instance.is_init and instance.bot_id != "stock":
         pass
 
-    elif not created and instance.status in 'filled' and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
+    elif not created and instance.status in "filled" and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         # update the status and create new position
         if instance.is_init:
-            if instance.status == 'filled':
+            if instance.status == "filled":
                 spot_date = instance.filled_at
             order = OrderPosition.objects.create(
                 user_id=instance.user_id,
@@ -82,11 +82,11 @@ def order_signal(sender, instance, created, **kwargs):
 
                 orderserialize = OrderPositionSerializer(order).data
                 orderdata = {
-                    'type': 'function',
-                    'module': 'core.djangomodule.crudlib.order.sync_position',
-                    'payload': dict(orderserialize)
+                    "type": "function",
+                    "module": "core.djangomodule.crudlib.order.sync_position",
+                    "payload": dict(orderserialize)
                 }
-                # services.celery_app.send_task('config.celery.listener',args=(orderdata,),queue='asklora',)
+                # services.celery_app.send_task("config.celery.listener",args=(orderdata,),queue="asklora",)
                 perf.current_pnl_amt = 0
                 digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
                 perf.current_bot_cash_balance = order.bot_cash_balance
@@ -99,58 +99,79 @@ def order_signal(sender, instance, created, **kwargs):
                 order.save()
                 perfserialize = PositionPerformanceSerializer(perf).data
                 perfdata = {
-                    'type': 'function',
-                    'module': 'core.djangomodule.crudlib.order.sync_performance',
-                    'payload': dict(perfserialize)
+                    "type": "function",
+                    "module": "core.djangomodule.crudlib.order.sync_performance",
+                    "payload": dict(perfserialize)
                 }
                 instance.amount = perf.current_investment_amount
-                if instance.bot_id != 'stock':
+                if instance.bot_id != "stock":
                     instance.performance_uid = perf.performance_uid
                 else:
-                    instance.performance_uid = 'stock'
+                    instance.performance_uid = "stock"
                 instance.save()
                 TransactionHistory.objects.create(
                     balance_uid=order.user_id.wallet,
-                    side='debit',
+                    side="debit",
                     amount=order.investment_amount,
                     transaction_detail={
-                        'description': 'bot order',
-                        'position': f'{order.position_uid}',
-                        'event': 'create',
+                        "description": "bot order",
+                        "position": f"{order.position_uid}",
+                        "event": "create",
                     },
                 )
-                # services.celery_app.send_task('config.celery.listener',args=(perfdata,),queue='asklora')
+                # if(instance.side)
+                # commissions = 
+                # stamp_duty = 
+                OrderFee.objects.create(
+                    order = instance,
+                    fee_type = f"{instance.side} fee",
+                    commissions = commissions,
+                    stamp_duty = stamp_duty,
+                    total_fee = commissions + stamp_duty
+                )
+                TransactionHistory.objects.create(
+                    balance_uid = order.user_id.wallet,
+                    side = "debit",
+                    amount = commissions + stamp_duty,
+                    transaction_detail = {
+                        "description": "order fee",
+                        "position": f"{order.position_uid}",
+                        "event": "fee",
+                    },
+                )
+                
+                # services.celery_app.send_task("config.celery.listener",args=(perfdata,),queue="asklora")
 
         else:
             # hedging daily here
-            if instance.bot_id != 'stock':
+            if instance.bot_id != "stock":
                 if instance.setup:
                     # getting existing position from setup
                     order_position = OrderPosition.objects.get(
-                        position_uid=instance.setup['position']['position_uid'])
-                    key_list = list(instance.setup['position'])
+                        position_uid=instance.setup["position"]["position_uid"])
+                    key_list = list(instance.setup["position"])
 
                     # update the position
                     for key in key_list:
-                        if not key in ['created', 'updated']:
+                        if not key in ["created", "updated"]:
                             if hasattr(order_position, key):
                                 field = order_position._meta.get_field(key)
                                 if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
-                                    raw_key = f'{key}_id'
+                                    raw_key = f"{key}_id"
                                     setattr(
-                                        order_position, raw_key, instance.setup['position'].pop(key))
-                                elif key == 'share_num':
+                                        order_position, raw_key, instance.setup["position"].pop(key))
+                                elif key == "share_num":
                                     setattr(order_position, key,
-                                            instance.setup['position'].get(key))
+                                            instance.setup["position"].get(key))
                                 else:
                                     setattr(order_position, key,
-                                            instance.setup['position'].pop(key))
+                                            instance.setup["position"].pop(key))
                      # remove field position_uid, cause it will double
-                    instance.setup['performance'].pop('position_uid')
+                    instance.setup["performance"].pop("position_uid")
                     signal_performance = PositionPerformance.objects.create(
                         position_uid=order_position,  # replace with instance
                         # the rest is value from setup
-                        **instance.setup['performance']
+                        **instance.setup["performance"]
                     )
 
                     signal_performance.order_uid = instance
@@ -164,42 +185,42 @@ def order_signal(sender, instance, created, **kwargs):
                         amt = order_position.investment_amount + order_position.final_pnl_amount
                         TransactionHistory.objects.create(
                             balance_uid=order_position.user_id.wallet,
-                            side='credit',
+                            side="credit",
                             amount=amt,
                             transaction_detail={
-                                'description': 'bot return',
-                                'position': f'{order_position.position_uid}',
-                                'event': 'return',
+                                "description": "bot return",
+                                "position": f"{order_position.position_uid}",
+                                "event": "return",
                             },
                         )
 
     # send payload to asklora
     instanceserialize = OrderSerializer(instance).data
     data = {
-        'type': 'function',
-        'module': 'core.djangomodule.crudlib.order.sync_order',
-        'payload': dict(instanceserialize)
+        "type": "function",
+        "module": "core.djangomodule.crudlib.order.sync_order",
+        "payload": dict(instanceserialize)
     }
-    # services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
+    # services.celery_app.send_task("config.celery.listener",args=(data,),queue="asklora")
 
 
 @receiver(post_save, sender=OrderPosition)
 def order_position_signal(sender, instance, created, **kwargs):
     instanceserialize = OrderPositionSerializer(instance).data
     data = {
-        'type': 'function',
-        'module': 'core.djangomodule.crudlib.order.sync_position',
-        'payload': dict(instanceserialize)
+        "type": "function",
+        "module": "core.djangomodule.crudlib.order.sync_position",
+        "payload": dict(instanceserialize)
     }
-#     services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora')
+#     services.celery_app.send_task("config.celery.listener",args=(data,),queue="asklora")
 
 
 @receiver(post_save, sender=PositionPerformance)
 def order_perfromance_signal(sender, instance, created, **kwargs):
     instanceserialize = PositionPerformanceSerializer(instance).data
     data = {
-        'type': 'function',
-        'module': 'core.djangomodule.crudlib.order.sync_performance',
-        'payload': dict(instanceserialize)
+        "type": "function",
+        "module": "core.djangomodule.crudlib.order.sync_performance",
+        "payload": dict(instanceserialize)
     }
-#     services.celery_app.send_task('config.celery.listener',args=(data,),queue='asklora',countdown=5)
+#     services.celery_app.send_task("config.celery.listener",args=(data,),queue="asklora",countdown=5)
