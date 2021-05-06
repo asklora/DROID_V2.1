@@ -1,3 +1,4 @@
+from core.Clients.models import UserClient
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from .models import Order, OrderFee, OrderPosition, PositionPerformance
@@ -134,20 +135,36 @@ def order_signal(sender, instance, created, **kwargs):
                         "event": "create",
                     },
                 )
-                # if(instance.side)
-                # commissions = 
-                # stamp_duty = 
+                user_id = instance.user_id
+                user_client = UserClient.objects.get(user_id=user_id)
+                if(instance.side == "sell"):
+                    commissions = user_client.client_uid.commissions_sell
+                    stamp_duty = user_client.stamp_duty_sell
+                else:
+                    commissions = user_client.client_uid.commissions_buy
+                    stamp_duty = user_client.stamp_duty_buy
+
+                if(user_client.client_uid.commissions_type == "percent"):
+                    commissions_fee = instance.amount * commissions / 100
+                else:
+                    commissions_fee = commissions
+
+                if(user_client.stamp_duty_type == "percent"):
+                    stamp_duty_fee = instance.amount * stamp_duty / 100
+                else:
+                    stamp_duty_fee = stamp_duty
+                total_fee = commissions_fee + stamp_duty_fee
                 OrderFee.objects.create(
                     order = instance,
                     fee_type = f"{instance.side} fee",
-                    commissions = commissions,
-                    stamp_duty = stamp_duty,
-                    total_fee = commissions + stamp_duty
+                    commissions = commissions_fee,
+                    stamp_duty = stamp_duty_fee,
+                    total_fee = total_fee
                 )
                 TransactionHistory.objects.create(
                     balance_uid = order.user_id.wallet,
                     side = "debit",
-                    amount = commissions + stamp_duty,
+                    amount = total_fee,
                     transaction_detail = {
                         "description": "order fee",
                         "position": f"{order.position_uid}",
