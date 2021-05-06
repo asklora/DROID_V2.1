@@ -12,6 +12,26 @@ from core.djangomodule.serializers import (OrderSerializer,
 import pandas as pd
 from core.user.models import TransactionHistory
 
+def calculate_fee(user_id):
+    user_client = UserClient.objects.get(user_id=user_id)
+    if(instance.side == "sell"):
+        commissions = user_client.client_uid.commissions_sell
+        stamp_duty = user_client.stamp_duty_sell
+    else:
+        commissions = user_client.client_uid.commissions_buy
+        stamp_duty = user_client.stamp_duty_buy
+
+    if(user_client.client_uid.commissions_type == "percent"):
+        commissions_fee = instance.amount * commissions / 100
+    else:
+        commissions_fee = commissions
+
+    if(user_client.stamp_duty_type == "percent"):
+        stamp_duty_fee = instance.amount * stamp_duty / 100
+    else:
+        stamp_duty_fee = stamp_duty
+    total_fee = commissions_fee + stamp_duty_fee
+    return commissions_fee, stamp_duty_fee, total_fee
 
 @receiver(pre_save, sender=Order)
 def order_signal_check(sender, instance, **kwargs):
@@ -45,7 +65,7 @@ def order_signal(sender, instance, created, **kwargs):
             elif bot.bot_type.bot_type == "UNO":
                 setup = get_uno(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
                                 instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
-            elif bot.bot_type.bot_type == 'UCDC':
+            elif bot.bot_type.bot_type == "UCDC":
                 setup = get_ucdc(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
                                  instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
             instance.setup = setup
@@ -63,7 +83,7 @@ def order_signal(sender, instance, created, **kwargs):
             investment_amount = instance.amount
             if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
                 investment_amount = instance.price * instance.qty
-            if instance.status == 'filled':
+            if instance.status == "filled":
                 spot_date = instance.filled_at
                 order = OrderPosition.objects.create(
                     user_id=instance.user_id,
@@ -86,8 +106,8 @@ def order_signal(sender, instance, created, **kwargs):
                     if hasattr(order, key):
                         setattr(order, key, val)
                     # else:
-                    #     if key == 'bot_share_num' and instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
-                    #         setattr(order, 'share_num', val)
+                    #     if key == "bot_share_num" and instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
+                    #         setattr(order, "share_num", val)
                     if hasattr(perf, key):
                         setattr(perf, key, val)
 
@@ -115,19 +135,22 @@ def order_signal(sender, instance, created, **kwargs):
                     "payload": dict(perfserialize)
                 }
                 if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
-                    print('margin')
+                    print("margin")
                     pass
                 else:
                     instance.amount = perf.current_investment_amount
 
-                if instance.bot_id != 'stock':
+                if instance.bot_id != "stock":
                     instance.performance_uid = perf.performance_uid
                 else:
                     instance.performance_uid = "stock"
                 instance.save()
+
+                commissions_fee, stamp_duty_fee, total_fee = calculate_fee(instance.user_id)
+
                 TransactionHistory.objects.create(
                     balance_uid=order.user_id.wallet,
-                    side='debit',
+                    side="debit",
                     amount=instance.amount,
                     transaction_detail={
                         "description": "bot order",
@@ -135,25 +158,7 @@ def order_signal(sender, instance, created, **kwargs):
                         "event": "create",
                     },
                 )
-                user_id = instance.user_id
-                user_client = UserClient.objects.get(user_id=user_id)
-                if(instance.side == "sell"):
-                    commissions = user_client.client_uid.commissions_sell
-                    stamp_duty = user_client.stamp_duty_sell
-                else:
-                    commissions = user_client.client_uid.commissions_buy
-                    stamp_duty = user_client.stamp_duty_buy
-
-                if(user_client.client_uid.commissions_type == "percent"):
-                    commissions_fee = instance.amount * commissions / 100
-                else:
-                    commissions_fee = commissions
-
-                if(user_client.stamp_duty_type == "percent"):
-                    stamp_duty_fee = instance.amount * stamp_duty / 100
-                else:
-                    stamp_duty_fee = stamp_duty
-                total_fee = commissions_fee + stamp_duty_fee
+                
                 OrderFee.objects.create(
                     order = instance,
                     fee_type = f"{instance.side} fee",
@@ -161,12 +166,13 @@ def order_signal(sender, instance, created, **kwargs):
                     stamp_duty = stamp_duty_fee,
                     total_fee = total_fee
                 )
+
                 TransactionHistory.objects.create(
                     balance_uid = order.user_id.wallet,
                     side = "debit",
                     amount = total_fee,
                     transaction_detail = {
-                        "description": "order fee",
+                        "description": f"{instance.side} fee",
                         "position": f"{order.position_uid}",
                         "event": "fee",
                     },
@@ -191,10 +197,10 @@ def order_signal(sender, instance, created, **kwargs):
                                 if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
                                     raw_key = f"{key}_id"
                                     setattr(
-                                        order_position, raw_key, instance.setup['position'].pop(key))
-                                elif key == 'share_num':
+                                        order_position, raw_key, instance.setup["position"].pop(key))
+                                elif key == "share_num":
                                     # setattr(order_position, key,
-                                    #         instance.setup['position'].get(key))
+                                    #         instance.setup["position"].get(key))
                                     pass
                                 else:
                                     setattr(order_position, key,
@@ -235,6 +241,7 @@ def order_signal(sender, instance, created, **kwargs):
         "payload": dict(instanceserialize)
     }
     # services.celery_app.send_task("config.celery.listener",args=(data,),queue="asklora")
+
 
 
 @receiver(post_save, sender=OrderPosition)
