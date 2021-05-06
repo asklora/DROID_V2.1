@@ -72,7 +72,7 @@ class CsvSerializer(serializers.ModelSerializer):
 
     def get_hedge_shares(self, obj):
         prev = PositionPerformance.objects.filter(
-            position_uid=obj.position_uid, created__lt=obj.created).first()
+            position_uid=obj.position_uid, created__lt=obj.created).order_by('created').last()
         if prev:
             return int(obj.share_num - prev.share_num)
             # if prev.share_num > obj.share_num:
@@ -85,14 +85,14 @@ class CsvSerializer(serializers.ModelSerializer):
 
     def get_prev_delta(self, obj):
         prev = PositionPerformance.objects.filter(
-            position_uid=obj.position_uid, created__lt=obj.created).first()
+            position_uid=obj.position_uid, created__lt=obj.created).order_by('created').last()
         if prev:
             return prev.last_hedge_delta
         return 0
 
     def get_prev_bot_share_num(self, obj):
         prev = PositionPerformance.objects.filter(
-            position_uid=obj.position_uid, created__lt=obj.created).first()
+            position_uid=obj.position_uid, created__lt=obj.created).order_by('created').last()
         if prev:
             return int(prev.share_num)
         return 0
@@ -124,10 +124,9 @@ class Command(BaseCommand):
         dates = [
             str(perf.created) for perf in PositionPerformance.objects.all().order_by("created").distinct("created")]
         curr = [
-            "KRW",
-            "USD",
+
             "CNY",
-            "HKD",
+
         ]
         for created in dates:
             for currency in curr:

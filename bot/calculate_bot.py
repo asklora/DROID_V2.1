@@ -195,7 +195,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry
         (data["target_profit_price"] - price) * data["share_num"], digits)
     data["bot_cash_balance"] = round(
         investment_amount - (data["share_num"] * price), 2)
-    data["last_hedge_delta"] = 100
+    data["last_hedge_delta"] = 1
 
     return data
 

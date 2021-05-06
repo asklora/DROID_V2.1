@@ -43,6 +43,7 @@ def order_signal(sender, instance, created, **kwargs):
             elif bot.bot_type.bot_type == 'UCDC':
                 setup = get_ucdc(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
                                  instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type)
+
             instance.setup = setup
             instance.qty = setup['share_num']
             instance.save()
@@ -113,7 +114,7 @@ def order_signal(sender, instance, created, **kwargs):
                     side='debit',
                     amount=order.investment_amount,
                     transaction_detail={
-                        'description':'bot order',
+                        'description': 'bot order',
                         'position': f'{order.position_uid}',
                         'event': 'create',
                     },
@@ -166,13 +167,11 @@ def order_signal(sender, instance, created, **kwargs):
                             side='credit',
                             amount=amt,
                             transaction_detail={
-                                'description':'bot return',
+                                'description': 'bot return',
                                 'position': f'{order_position.position_uid}',
                                 'event': 'return',
                             },
                         )
-                
-                
 
     # send payload to asklora
     instanceserialize = OrderSerializer(instance).data

@@ -58,18 +58,14 @@ class Command(BaseCommand):
                 price = queue.ticker.latest_price_ticker.close
                 spot_date = datetime.now()
             if user.extra_data["service_type"] == "bot_advisor":
-                portnum = 8
+                portnum = 8.32
             elif user.extra_data["service_type"] == "bot_tester":
                 if user.extra_data["capital"] == "small":
                     portnum = 4
                 else:
-                    portnum = 8
+                    portnum = 8.32
             investment_amount = min(
                 user.user.current_assets / portnum, user.user.balance / 3)
-
-            # Margin
-            if user.extra_data["capital"] == "large_margin" and bot.bot_type != 'CLASSIC':
-                investment_amount = investment_amount * 1.5
 
             digits = max(min(5-len(str(int(price))), 2), -1)
             order = Order.objects.create(
