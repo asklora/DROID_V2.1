@@ -22,7 +22,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         client = Client.objects.get(client_name="HANWHA")
         topstock = client.client_top_stock.filter(
-            has_position=False).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
+            has_position=False, spot_date='2021-04-05', currency_code='CNY', capital='large_margin', service_type='bot_advisor').order_by("service_type", "spot_date", "currency_code", "capital", "rank")
 
         for queue in topstock:
             user = UserClient.objects.get(
@@ -58,12 +58,12 @@ class Command(BaseCommand):
                 price = queue.ticker.latest_price_ticker.close
                 spot_date = datetime.now()
             if user.extra_data["service_type"] == "bot_advisor":
-                portnum = 8.32
+                portnum = 8*1.04
             elif user.extra_data["service_type"] == "bot_tester":
                 if user.extra_data["capital"] == "small":
-                    portnum = 4
+                    portnum = 4*1.04
                 else:
-                    portnum = 8.32
+                    portnum = 8*1.04
             investment_amount = min(
                 user.user.current_assets / portnum, user.user.balance / 3)
 

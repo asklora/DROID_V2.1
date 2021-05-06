@@ -68,7 +68,7 @@ def create_performance(price_data, position, latest_price=False):
                 live_price, strike, delta, last_performance.last_hedge_delta)
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(
                 ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta,
-                hedge=hedge, uno=True, margin=position.is_large_margin())
+                hedge=hedge, uno=True, margin=position.user_id.is_large_margin)
         bot_cash_balance = last_performance.current_bot_cash_balance + \
             ((last_performance.share_num - share_num) * live_price)
         current_pnl_amt = last_performance.current_pnl_amt + \
@@ -87,7 +87,7 @@ def create_performance(price_data, position, latest_price=False):
                            trading_day, t, r, q, strike, barrier)
         delta = uno.deltaUnOC(live_price, strike, barrier,
                               rebate, t/365, r, q, v1, v2)
-        if(position.is_large_margin()):
+        if(position.user_id.is_large_margin):
             share_num = position.share_num * 1.5
         else:
             share_num = position.share_num

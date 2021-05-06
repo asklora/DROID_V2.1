@@ -28,10 +28,14 @@ def order_signal_check(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Order)
 def order_signal(sender, instance, created, **kwargs):
+
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
         if instance.bot_id != "stock":
             bot = BotOptionType.objects.get(bot_id=instance.bot_id)
+            margin = False
+            if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
+                margin = True
             expiry = get_expiry_date(
                 bot.time_to_exp, instance.created, instance.ticker.currency_code.currency_code)
             if bot.bot_type.bot_type == "CLASSIC":
@@ -39,11 +43,10 @@ def order_signal(sender, instance, created, **kwargs):
                                     bot.time_to_exp, instance.amount, instance.price, expiry)
             elif bot.bot_type.bot_type == "UNO":
                 setup = get_uno(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
-                                instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=instance.user_id.is_large_margin)
-            elif bot.bot_type.bot_type == "UCDC":
+                                instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
+            elif bot.bot_type.bot_type == 'UCDC':
                 setup = get_ucdc(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
-                                 instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=instance.user_id.is_large_margin)
-
+                                 instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
             instance.setup = setup
             instance.qty = setup["share_num"]
             instance.save()
@@ -55,28 +58,35 @@ def order_signal(sender, instance, created, **kwargs):
     elif not created and instance.status in "filled" and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         # update the status and create new position
         if instance.is_init:
-            if instance.status == "filled":
+            bot = BotOptionType.objects.get(bot_id=instance.bot_id)
+            investment_amount = instance.amount
+            if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
+                investment_amount = instance.price * instance.qty
+            if instance.status == 'filled':
                 spot_date = instance.filled_at
-            order = OrderPosition.objects.create(
-                user_id=instance.user_id,
-                ticker=instance.ticker,
-                bot_id=instance.bot_id,
-                spot_date=spot_date.date(),
-                entry_price=instance.price,
-                investment_amount=instance.amount,
-                is_live=True
-            )
-            perf = PositionPerformance.objects.create(
-                created=pd.Timestamp(order.spot_date),
-                position_uid=order,
-                last_spot_price=instance.price,
-                last_live_price=instance.price,
-                order_uid=instance
-            )
+                order = OrderPosition.objects.create(
+                    user_id=instance.user_id,
+                    ticker=instance.ticker,
+                    bot_id=instance.bot_id,
+                    spot_date=spot_date.date(),
+                    entry_price=instance.price,
+                    investment_amount=investment_amount,
+                    is_live=True
+                )
+                perf = PositionPerformance.objects.create(
+                    created=pd.Timestamp(order.spot_date),
+                    position_uid=order,
+                    last_spot_price=instance.price,
+                    last_live_price=instance.price,
+                    order_uid=instance
+                )
             if instance.setup:
                 for key, val in instance.setup.items():
                     if hasattr(order, key):
                         setattr(order, key, val)
+                    # else:
+                    #     if key == 'bot_share_num' and instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
+                    #         setattr(order, 'share_num', val)
                     if hasattr(perf, key):
                         setattr(perf, key, val)
 
@@ -103,16 +113,21 @@ def order_signal(sender, instance, created, **kwargs):
                     "module": "core.djangomodule.crudlib.order.sync_performance",
                     "payload": dict(perfserialize)
                 }
-                instance.amount = perf.current_investment_amount
-                if instance.bot_id != "stock":
+                if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
+                    print('margin')
+                    pass
+                else:
+                    instance.amount = perf.current_investment_amount
+
+                if instance.bot_id != 'stock':
                     instance.performance_uid = perf.performance_uid
                 else:
                     instance.performance_uid = "stock"
                 instance.save()
                 TransactionHistory.objects.create(
                     balance_uid=order.user_id.wallet,
-                    side="debit",
-                    amount=order.investment_amount,
+                    side='debit',
+                    amount=instance.amount,
                     transaction_detail={
                         "description": "bot order",
                         "position": f"{order.position_uid}",
@@ -159,10 +174,11 @@ def order_signal(sender, instance, created, **kwargs):
                                 if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
                                     raw_key = f"{key}_id"
                                     setattr(
-                                        order_position, raw_key, instance.setup["position"].pop(key))
-                                elif key == "share_num":
-                                    setattr(order_position, key,
-                                            instance.setup["position"].get(key))
+                                        order_position, raw_key, instance.setup['position'].pop(key))
+                                elif key == 'share_num':
+                                    # setattr(order_position, key,
+                                    #         instance.setup['position'].get(key))
+                                    pass
                                 else:
                                     setattr(order_position, key,
                                             instance.setup["position"].pop(key))
