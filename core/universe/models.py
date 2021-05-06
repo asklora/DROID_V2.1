@@ -56,7 +56,9 @@ class Currency(models.Model):
         blank=True, null=True, max_length=100)
     intraday_offset_open = models.CharField(
         blank=True, null=True, max_length=100)
-    # classic_schedule = models.TimeField(blank=True, null=True)
+    backtest_schedule = models.TimeField(blank=True, null=True)
+    top_stock_schedule = models.TimeField(blank=True, null=True)
+    hedge_schedule = models.TimeField(blank=True, null=True)
 
     def __str__(self):
         return self.currency_code
