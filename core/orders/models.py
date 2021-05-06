@@ -14,14 +14,15 @@ from core.djangomodule.general import generate_id
 class Order(BaseTimeStampModel):
     order_uid = models.UUIDField(primary_key=True, editable=False)
     user_id = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="user_order",db_column="user_id")
+        User, on_delete=models.CASCADE, related_name="user_order", db_column="user_id")
     ticker = models.ForeignKey(
-        Universe, on_delete=models.CASCADE, related_name="symbol_order",db_column="ticker")
+        Universe, on_delete=models.CASCADE, related_name="symbol_order", db_column="ticker")
     bot_id = models.CharField(max_length=255, null=True, blank=True)
     setup = models.JSONField(blank=True, null=True, default=dict)
     order_type = models.CharField(max_length=75, null=True, blank=True)
     placed = models.BooleanField(default=False)
-    status = models.CharField(max_length=10, null=True,blank=True, default="review")
+    status = models.CharField(max_length=10, null=True,
+                              blank=True, default="review")
     side = models.CharField(max_length=10, default="buy")
     amount = models.FloatField()
     placed_at = models.DateTimeField(null=True, blank=True)
@@ -32,14 +33,11 @@ class Order(BaseTimeStampModel):
     price = models.FloatField()
     performance_uid = models.CharField(null=True, blank=True, max_length=255)
     qty = models.FloatField(null=True, blank=True)
-    
-    
+
     class Meta:
         managed = True
         db_table = "orders"
-        
-        
-        
+
     def save(self, *args, **kwargs):
 
         if not self.order_uid:
@@ -64,11 +62,12 @@ class Order(BaseTimeStampModel):
 
 class OrderPosition(BaseTimeStampModel):
 
-    position_uid = models.CharField(primary_key=True, editable=False,max_length=500)
+    position_uid = models.CharField(
+        primary_key=True, editable=False, max_length=500)
     user_id = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="user_position",db_column="user_id")
+        User, on_delete=models.CASCADE, related_name="user_position", db_column="user_id")
     ticker = models.ForeignKey(
-        Universe, on_delete=models.CASCADE, related_name="ticker_ordered",db_column="ticker")
+        Universe, on_delete=models.CASCADE, related_name="ticker_ordered", db_column="ticker")
     bot_id = models.CharField(
         max_length=255, null=True, blank=True)  # user = stock
     expiry = models.DateField(null=True, blank=True)
@@ -97,54 +96,43 @@ class OrderPosition(BaseTimeStampModel):
     commision_fee_sell = models.FloatField(null=True, blank=True, default=0)
     vol = models.FloatField(null=True, blank=True)
 
-
     class Meta:
         managed = True
         db_table = "orders_position"
-    
-    def is_small(self):
-        user_client = UserClient.objects.get(user_id=self.user_id.id)
-        return user_client.extra_data["capital"] == "small"
-
-    def is_large(self):
-        user_client = UserClient.objects.get(user_id=self.user_id.id)
-        return user_client.extra_data["capital"] == "large"
-    
-    def is_large_margin(self):
-        user_client = UserClient.objects.get(user_id=self.user_id.id)
-        return user_client.extra_data["capital"] == "large_margin"
 
     def current_return(self):
-        performance = self.order_position.filter(position_uid=self.position_uid)
+        performance = self.order_position.filter(
+            position_uid=self.position_uid)
         if performance.exists():
             perf = performance.latest('created')
-            ret = perf.current_bot_cash_balance + perf.current_investment_amount - self.investment_amount
+            ret = perf.current_bot_cash_balance + \
+                perf.current_investment_amount - self.investment_amount
             # if self.user_currency != self.currency:
             #     ret = ret * self.currency_rate
-            ret = round(ret,2)
+            ret = round(ret, 2)
             return ret
         return 0
-    
-    
+
     def current_value(self):
-        performance = self.order_position.filter(position_uid=self.position_uid)
+        performance = self.order_position.filter(
+            position_uid=self.position_uid)
         if performance.exists():
             perf = performance.latest('created')
             ret = perf.current_bot_cash_balance + perf.current_investment_amount
             # if self.user_currency != self.currency:
             #     ret = ret * self.currency_rate
-            ret = round(ret,2)
+            ret = round(ret, 2)
             return ret
         return 0
-    
+
     @property
     def bot(self):
         _bot = BotOptionType.objects.get(bot_id=self.bot_id)
         return _bot
 
     def save(self, *args, **kwargs):
-        self.current_values=self.current_value()
-        self.current_returns=self.current_return()
+        self.current_values = self.current_value()
+        self.current_returns = self.current_return()
         if not self.position_uid:
             self.position_uid = uuid.uuid4().hex
             # using your function as above or anything else
@@ -167,9 +155,10 @@ class OrderPosition(BaseTimeStampModel):
 
 
 class PositionPerformance(BaseTimeStampModel):
-    performance_uid = models.CharField(max_length=255, primary_key=True,editable=False)
+    performance_uid = models.CharField(
+        max_length=255, primary_key=True, editable=False)
     position_uid = models.ForeignKey(
-        OrderPosition, on_delete=models.CASCADE, related_name="order_position",db_column="position_uid")
+        OrderPosition, on_delete=models.CASCADE, related_name="order_position", db_column="position_uid")
     last_spot_price = models.FloatField(null=True, blank=True)
     last_live_price = models.FloatField(null=True, blank=True)
     current_pnl_ret = models.FloatField(null=True, blank=True)
@@ -190,10 +179,8 @@ class PositionPerformance(BaseTimeStampModel):
     # order response from third party
     order_summary = models.JSONField(null=True, blank=True)
     order_uid = models.ForeignKey(
-        "Order", null=True, blank=True, on_delete=models.SET_NULL,db_column="order_uid")
-    
+        "Order", null=True, blank=True, on_delete=models.SET_NULL, db_column="order_uid")
 
-    
     def save(self, *args, **kwargs):
         if not self.performance_uid:
             self.performance_uid = generate_id(9)
@@ -212,6 +199,7 @@ class PositionPerformance(BaseTimeStampModel):
                     self.performance_uid = generate_id(9)
             else:
                 success = True
+
     class Meta:
         managed = True
         db_table = "orders_position_performance"

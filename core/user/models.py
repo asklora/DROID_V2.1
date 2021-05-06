@@ -59,6 +59,22 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = AppUserManager()
 
     @property
+    def is_small(self):
+        user_client = self.client_user.all()[0]
+        return user_client.extra_data["capital"] == "small"
+
+    @property
+    def is_large(self):
+        user_client = self.client_user.all()[0]
+
+        return user_client.extra_data["capital"] == "large"
+
+    @property
+    def is_large_margin(self):
+        user_client = self.client_user.all()[0]
+        return user_client.extra_data["capital"] == "large_margin"
+
+    @property
     def get_dial_phone(self):
         phones = list(self.phone)
         if phones[0] == '0':
