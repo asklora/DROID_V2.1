@@ -173,32 +173,3 @@ class TransactionHistory(BaseTimeStampModel):
 
     class Meta:
         db_table = 'user_transaction'
-
-
-# class UserLogHistory(models.Model):
-#     user = models.ForeignKey(
-#         User, on_delete=models.CASCADE, related_name='user_log_history')
-#     name = models.CharField(max_length=255, null=True, blank=True)
-#     email = models.CharField(max_length=255, null=True, blank=True)
-#     login_time = models.TimeField(max_length=255, null=True, blank=True)
-#     login_date = models.DateField(max_length=255, null=True, blank=True)
-#     timeZone = models.CharField(max_length=255, null=True, blank=True)
-
-#     def __str__(self):
-#         date = str(self.login_time)
-#         return f'{self.email} @{date}'
-
-#     class Meta:
-#         db_table = 'user_logs'
-#         get_latest_by = "login_time"
-#         ordering = ['-login_time', '-login_date']
-#         verbose_name = 'USER LOG HISTORIE'
-#         verbose_name_plural = 'USER LOG HISTORIES'
-
-
-# class UserActivity(User):
-
-#     class Meta:
-#         proxy = True
-#         verbose_name = 'User activitie'
-#         verbose_name_plural = 'User activities'
