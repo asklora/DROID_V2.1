@@ -94,7 +94,10 @@ def create_performance(price_data, position, latest_price=False):
     current_pnl_ret = (bot_cash_balance + current_investment_amount -
                        position.investment_amount) / position.investment_amount
     position.bot_cash_balance = round(bot_cash_balance, 2)
-    position.share_num = round((position.investment_amount / live_price), 1)
+    if(position.is_large_margin()):
+        position.share_num = round(((position.investment_amount * 1.5) / live_price), 1)
+    else:
+        position.share_num = round((position.investment_amount / live_price), 1)
     position.save()
     digits = max(min(5-len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)

@@ -1,3 +1,4 @@
+from core.Clients.models import UserClient
 from django.db import models
 from core.djangomodule.models import BaseTimeStampModel
 from core.universe.models import Universe
@@ -100,6 +101,19 @@ class OrderPosition(BaseTimeStampModel):
     class Meta:
         managed = True
         db_table = "orders_position"
+    
+    def is_small(self):
+        user_client = UserClient.objects.get(user_id=self.user_id.id)
+        return user_client.extra_data["capital"] == "small"
+
+    def is_large(self):
+        user_client = UserClient.objects.get(user_id=self.user_id.id)
+        return user_client.extra_data["capital"] == "large"
+    
+    def is_large_margin(self):
+        user_client = UserClient.objects.get(user_id=self.user_id.id)
+        return user_client.extra_data["capital"] == "large_margin"
+
     def current_return(self):
         performance = self.order_position.filter(position_uid=self.position_uid)
         if performance.exists():

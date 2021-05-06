@@ -48,14 +48,14 @@ class UserClient(BaseTimeStampModel):
         Currency, on_delete=models.CASCADE, related_name="client_currency", db_column='currency_code', null=True, blank=True)
     use_currency = models.BooleanField(default=True)
     extra_data = models.JSONField(null=True, blank=True)
-
+    
     def __str__(self):
         return self.uid
 
     class Meta:
         managed = True
         db_table = "user_clients"
-
+        
     def save(self, *args, **kwargs):
         if not self.uid:
             self.uid = generate_id(12)
