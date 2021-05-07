@@ -13,9 +13,9 @@ import pandas as pd
 from core.user.models import TransactionHistory
 
 
-def calculate_fee(instance):
-    user_client = UserClient.objects.get(user_id=instance.user_id)
-    if(instance.side == "sell"):
+def calculate_fee(amount, side, user_id):
+    user_client = UserClient.objects.get(user_id=user_id)
+    if(side == "sell"):
         commissions = user_client.client.commissions_sell
         stamp_duty = user_client.stamp_duty_sell
     else:
@@ -23,12 +23,12 @@ def calculate_fee(instance):
         stamp_duty = user_client.stamp_duty_buy
 
     if(user_client.client.commissions_type == "percent"):
-        commissions_fee = instance.amount * commissions / 100
+        commissions_fee = amount * commissions / 100
     else:
         commissions_fee = commissions
 
     if(user_client.stamp_duty_type == "percent"):
-        stamp_duty_fee = instance.amount * stamp_duty / 100
+        stamp_duty_fee = amount * stamp_duty / 100
     else:
         stamp_duty_fee = stamp_duty
     total_fee = commissions_fee + stamp_duty_fee
@@ -148,8 +148,7 @@ def order_signal(sender, instance, created, **kwargs):
                     instance.performance_uid = "stock"
                 instance.save()
 
-                commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
-                    instance)
+                commissions_fee, stamp_duty_fee, total_fee = calculate_fee(instance.amount, instance.side, instance.user_id)
 
                 TransactionHistory.objects.create(
                     balance_uid=order.user_id.wallet,
@@ -225,6 +224,8 @@ def order_signal(sender, instance, created, **kwargs):
                         instance.save()
                     if not order_position.is_live:
                         amt = order_position.investment_amount + order_position.final_pnl_amount
+
+                        commissions_fee, stamp_duty_fee, total_fee = calculate_fee(amt, "sell", order_position.user_id)
                         TransactionHistory.objects.create(
                             balance_uid=order_position.user_id.wallet,
                             side="credit",
@@ -233,6 +234,25 @@ def order_signal(sender, instance, created, **kwargs):
                                 "description": "bot return",
                                 "position": f"{order_position.position_uid}",
                                 "event": "return",
+                            },
+                        )
+                    
+                        OrderFee.objects.create(
+                            order_uid=instance,
+                            fee_type=f"{instance.side} fee",
+                            commissions=commissions_fee,
+                            stamp_duty=stamp_duty_fee,
+                            total_fee=total_fee
+                        )
+
+                        TransactionHistory.objects.create(
+                            balance_uid=order_position.user_id.wallet,
+                            side="debit",
+                            amount=total_fee,
+                            transaction_detail={
+                                "description": f"{instance.side} fee",
+                                "position": f"{order_position.position_uid}",
+                                "event": "fee",
                             },
                         )
 
