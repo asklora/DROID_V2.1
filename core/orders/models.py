@@ -95,6 +95,8 @@ class OrderPosition(BaseTimeStampModel):
     commision_fee = models.FloatField(null=True, blank=True, default=0)
     commision_fee_sell = models.FloatField(null=True, blank=True, default=0)
     vol = models.FloatField(null=True, blank=True)
+    margin = models.FloatField(default=1)
+    margin_value = models.FloatField(default=0)
 
     class Meta:
         managed = True
@@ -118,7 +120,8 @@ class OrderPosition(BaseTimeStampModel):
             position_uid=self.position_uid)
         if performance.exists():
             perf = performance.latest("created")
-            ret = perf.current_bot_cash_balance + perf.current_investment_amount
+            ret = (perf.current_bot_cash_balance +
+                   perf.current_investment_amount) / self.margin
             # if self.user_currency != self.currency:
             #     ret = ret * self.currency_rate
             ret = round(ret, 2)
@@ -131,6 +134,15 @@ class OrderPosition(BaseTimeStampModel):
         return _bot
 
     def save(self, *args, **kwargs):
+        if not self.share_num:
+            shares = round(self.investment_amount / self.entry_price, 0)
+            margin = round(shares * self.margin, 0)
+            margin_invest = round(self.entry_price * margin, 0)
+            self.margin_value = margin_invest - self.investment_amount
+        else:
+            self.share_num = round(self.share_num * self.margin, 0)
+            self.investment_amount = round(
+                self.entry_price * self.share_num, 0)
         self.current_values = self.current_value()
         self.current_returns = self.current_return()
         if not self.position_uid:

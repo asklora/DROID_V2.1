@@ -237,7 +237,7 @@ def get_ucdc_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, 
     return data
 
 
-def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group, margin=False):
+def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group):
     """
     - ticker -> str
     - currency_code -> str
@@ -249,7 +249,6 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     - bot_group -> str
     - investment_amount -> str
     """
-    print("bot", margin)
     spot_date = check_date(spot_date)
     expiry_date = check_date(expiry_date)
     digits = max(min(4-len(str(int(price))), 2), -1)
@@ -280,11 +279,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
     data["vol"] = vol
     data["bot_share_num"] = round(investment_amount / price, 1)
-    if(margin):
-        data["share_num"] = math.floor(delta * (data["bot_share_num"] * 1.5))
-        investment_amount = round(data["share_num"] * price, 2)
-    else:
-        data["share_num"] = math.floor(delta * data["bot_share_num"])
+    data["share_num"] = math.floor(delta * data["bot_share_num"])
     data["max_loss_pct"] = potential_loss
     data["max_loss_pct_display"] = round(data["max_loss_pct"] * 100, 2)
     data["max_loss_amount"] = round(
@@ -298,7 +293,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     data["target_profit_amount"] = round(
         option_price * data["bot_share_num"], int(digits)) * -1
     data["bot_cash_balance"] = round(
-        investment_amount - (data["bot_share_num"] * price), 2)
+        investment_amount - (data["share_num"] * price), 2)
     return data
 
 
@@ -339,7 +334,7 @@ def get_uno_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, p
     return data
 
 
-def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group, margin=False):
+def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group):
     """
     - ticker -> str
     - currency_code -> str
@@ -382,23 +377,19 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     data["v2"] = v2
     data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
     data["bot_share_num"] = round(investment_amount / price, 1)
-    if(margin):
-        data["share_num"] = math.floor(delta * (data["bot_share_num"] * 1.5))
-        investment_amount = round(data["share_num"] * price, 2)
-    else:
-        data["share_num"] = math.floor(delta * data["bot_share_num"])
+    data["share_num"] = math.floor(delta * data["bot_share_num"])
     data["max_loss_pct"] = potential_loss
     data["vol"] = vol
     data["max_loss_pct_display"] = round(data["max_loss_pct"] * 100, 2)
     data["max_loss_amount"] = round(
-        option_price * data["share_num"], int(digits)) * -1
+        option_price * data["bot_share_num"], int(digits)) * -1
     data["max_loss_price"] = round(price - option_price, int(digits))
     data["target_profit_pct"] = targeted_profit
     data["target_profit_pct_display"] = round(
         data["target_profit_pct"] * 100, 2)
     data["target_profit_price"] = round(barrier, int(digits))
     data["target_profit_amount"] = round(
-        rebate * data["share_num"], int(digits))
+        rebate * data["bot_share_num"], int(digits))
     data["bot_cash_balance"] = round(
         investment_amount - (data["share_num"] * price), 2)
     return data
