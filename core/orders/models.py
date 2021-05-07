@@ -107,8 +107,8 @@ class OrderPosition(BaseTimeStampModel):
             position_uid=self.position_uid)
         if performance.exists():
             perf = performance.latest("created")
-            ret = perf.current_bot_cash_balance + \
-                perf.current_investment_amount - self.investment_amount
+            ret = (perf.current_bot_cash_balance + \
+                perf.current_investment_amount - self.investment_amount) * self.margin
             # if self.user_currency != self.currency:
             #     ret = ret * self.currency_rate
             ret = round(ret, 2)

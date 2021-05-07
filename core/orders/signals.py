@@ -268,7 +268,7 @@ def order_signal(sender, instance, created, **kwargs):
                             transaction_detail={
                                 "description": "bot perform buy",
                                 "position": f"{order_position.position_uid}",
-                                "event": "return",
+                                "event": "create",
                             },
                         )
                         OrderFee.objects.create(
