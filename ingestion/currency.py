@@ -29,6 +29,29 @@ def update_currency_price_from_dss():
         upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
         report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
 
+def update_index_price_from_dss():
+    print("{} : === Currency Price Ingestion ===".format(datetimeNow()))
+    # currency_code=["USD", "KRW", "TWD", "SGD", "GBP", "HKD", "CNY", "EUR"]
+    currencylist = get_active_currency()
+    currencylist = currencylist.drop(columns=["index_price"])
+    currency = "/" + currencylist["index_ticker"]
+    jsonFileName = "files/file_json/index_price.json"
+    result = get_data_from_dss("start_date", "end_date", currency, jsonFileName, report=REPORT_INTRADAY)
+    result = result.drop(columns=["IdentifierType", "Identifier"])
+    print(result)
+    if(len(result) > 0):
+        result = result.rename(columns={
+            "RIC": "index_ticker",
+            "Last Price": "index_price"
+        })
+        result["index_ticker"]=result["index_ticker"].str.replace("/", "", regex=True)
+        result["index_ticker"]=result["index_ticker"].str.strip()
+        result = result.dropna(subset=["index_price"])
+        result = result.merge(currencylist, how="left", on="index_ticker")
+        print(result)
+        upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
+        report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
+
 def calculate_minutes_hours_to_time(time1, time2, minus=False):
     time1 = time1.split(":")
     time2 = time2.split(":")

@@ -34,6 +34,7 @@ from ingestion.master_data import (
     update_fundamentals_quality_value)
 from ingestion.currency import (
     update_currency_price_from_dss,
+    update_index_price_from_dss,
     update_utc_offset_from_timezone
 )
 from ingestion.ai_value import (
@@ -325,8 +326,8 @@ def update_universe_data(ticker=None):
 
 
 if __name__ == "__main__":
-    update_utc_offset_from_timezone()
-
+    # update_utc_offset_from_timezone()
+    update_index_price_from_dss()
     # # update_ticker_symbol_from_dss()
     # from migrate import weekly_migrations, daily_migrations
     # # do_function("universe_populate")
