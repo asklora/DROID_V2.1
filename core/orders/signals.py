@@ -121,7 +121,7 @@ def order_signal(sender, instance, created, **kwargs):
                             setattr(order, "share_num", val)
                 digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
                 margin_investment_amount = round(
-                    (order.share_num * order.entry_price)+order.bot_cash_balance, digits)
+                    order.investment_amount*order.margin, digits)
                 order.margin_value = round(
                     margin_investment_amount - order.investment_amount, digits)
                 order.investment_amount = margin_investment_amount

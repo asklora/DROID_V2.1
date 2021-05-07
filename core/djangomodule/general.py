@@ -97,7 +97,7 @@ def nonetozero(value):
     return 0
 
 
-def formatdigit(value, currency_decimal):
+def formatdigit(value, currency_decimal=False):
     # digit = max(min(5 - len(str(int(value))), 2), -1)
     if(currency_decimal):
         return round(value, 2)

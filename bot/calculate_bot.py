@@ -281,6 +281,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     if(margin):
         data["bot_share_num"] = round((investment_amount * 1.5) / price, 0)
         data["share_num"] = math.floor(delta * (data["bot_share_num"]))
+        investment_amount =  round(investment_amount *1.5,digits)
     else:
         data["bot_share_num"] = round(investment_amount / price, 0)
         data["share_num"] = math.floor(delta * data["bot_share_num"])
@@ -384,6 +385,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     if(margin):
         data["bot_share_num"] = round((investment_amount * 1.5) / price, 0)
         data["share_num"] = math.floor(delta * (data["bot_share_num"]))
+        investment_amount =  round(investment_amount *1.5,digits)
     else:
         data["bot_share_num"] = round(investment_amount / price, 0)
         data["share_num"] = math.floor(delta * data["bot_share_num"])
