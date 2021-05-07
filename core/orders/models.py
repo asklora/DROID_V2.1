@@ -133,8 +133,7 @@ class OrderPosition(BaseTimeStampModel):
     def save(self, *args, **kwargs):
         self.current_values = self.current_value()
         bot_current_amount = self.current_values + self.user_id.balance
-        self.current_returns = formatdigit(
-            bot_current_amount / self.investment_amount)
+        self.current_returns = formatdigit(bot_current_amount / self.investment_amount, self.ticker.currency_code.is_decimal)
         if not self.position_uid:
             self.position_uid = uuid.uuid4().hex
             # using your function as above or anything else
