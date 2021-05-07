@@ -6,7 +6,7 @@ from core.user.models import User
 from core.bot.models import BotOptionType
 from django.db import IntegrityError
 import uuid
-from core.djangomodule.general import generate_id
+from core.djangomodule.general import generate_id, formatdigit
 
 # Create your models here.
 
@@ -132,7 +132,9 @@ class OrderPosition(BaseTimeStampModel):
 
     def save(self, *args, **kwargs):
         self.current_values = self.current_value()
-        self.current_returns = self.current_return()
+        bot_current_amount = self.current_values + self.user_id.balance
+        self.current_returns = formatdigit(
+            bot_current_amount / self.investment_amount)
         if not self.position_uid:
             self.position_uid = uuid.uuid4().hex
             # using your function as above or anything else
@@ -207,9 +209,11 @@ class PositionPerformance(BaseTimeStampModel):
     def __str__(self):
         return str(self.created)
 
+
 class OrderFee(BaseTimeStampModel):
-    order_uid = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="orders_fee_orders", db_column="order_uid")
-    fee_type = models.TextField(null=True,blank=True)
+    order_uid = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name="orders_fee_orders", db_column="order_uid")
+    fee_type = models.TextField(null=True, blank=True)
     commissions = models.FloatField(default=0)
     stamp_duty = models.FloatField(default=0)
     total_fee = models.FloatField(default=0)

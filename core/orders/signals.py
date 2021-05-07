@@ -12,16 +12,17 @@ from core.djangomodule.serializers import (OrderSerializer,
 import pandas as pd
 from core.user.models import TransactionHistory
 
-def calculate_fee(user_id):
-    user_client = UserClient.objects.get(user_id=user_id)
+
+def calculate_fee(instance):
+    user_client = UserClient.objects.get(user_id=instance.user_id)
     if(instance.side == "sell"):
-        commissions = user_client.client_uid.commissions_sell
+        commissions = user_client.client.commissions_sell
         stamp_duty = user_client.stamp_duty_sell
     else:
-        commissions = user_client.client_uid.commissions_buy
+        commissions = user_client.client.commissions_buy
         stamp_duty = user_client.stamp_duty_buy
 
-    if(user_client.client_uid.commissions_type == "percent"):
+    if(user_client.client.commissions_type == "percent"):
         commissions_fee = instance.amount * commissions / 100
     else:
         commissions_fee = commissions
@@ -32,6 +33,7 @@ def calculate_fee(user_id):
         stamp_duty_fee = stamp_duty
     total_fee = commissions_fee + stamp_duty_fee
     return commissions_fee, stamp_duty_fee, total_fee
+
 
 @receiver(pre_save, sender=Order)
 def order_signal_check(sender, instance, **kwargs):
@@ -146,7 +148,8 @@ def order_signal(sender, instance, created, **kwargs):
                     instance.performance_uid = "stock"
                 instance.save()
 
-                commissions_fee, stamp_duty_fee, total_fee = calculate_fee(instance.user_id)
+                commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
+                    instance)
 
                 TransactionHistory.objects.create(
                     balance_uid=order.user_id.wallet,
@@ -158,26 +161,26 @@ def order_signal(sender, instance, created, **kwargs):
                         "event": "create",
                     },
                 )
-                
+
                 OrderFee.objects.create(
-                    order = instance,
-                    fee_type = f"{instance.side} fee",
-                    commissions = commissions_fee,
-                    stamp_duty = stamp_duty_fee,
-                    total_fee = total_fee
+                    order_uid=instance,
+                    fee_type=f"{instance.side} fee",
+                    commissions=commissions_fee,
+                    stamp_duty=stamp_duty_fee,
+                    total_fee=total_fee
                 )
 
                 TransactionHistory.objects.create(
-                    balance_uid = order.user_id.wallet,
-                    side = "debit",
-                    amount = total_fee,
-                    transaction_detail = {
+                    balance_uid=order.user_id.wallet,
+                    side="debit",
+                    amount=total_fee,
+                    transaction_detail={
                         "description": f"{instance.side} fee",
                         "position": f"{order.position_uid}",
                         "event": "fee",
                     },
                 )
-                
+
                 # services.celery_app.send_task("config.celery.listener",args=(perfdata,),queue="asklora")
 
         else:
@@ -241,7 +244,6 @@ def order_signal(sender, instance, created, **kwargs):
         "payload": dict(instanceserialize)
     }
     # services.celery_app.send_task("config.celery.listener",args=(data,),queue="asklora")
-
 
 
 @receiver(post_save, sender=OrderPosition)
