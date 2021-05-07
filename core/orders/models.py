@@ -6,7 +6,7 @@ from core.user.models import User
 from core.bot.models import BotOptionType
 from django.db import IntegrityError
 import uuid
-from core.djangomodule.general import generate_id, formatdigit
+from core.djangomodule.general import generate_id
 
 # Create your models here.
 
@@ -132,9 +132,7 @@ class OrderPosition(BaseTimeStampModel):
 
     def save(self, *args, **kwargs):
         self.current_values = self.current_value()
-        bot_current_amount = self.current_values + self.user_id.balance
-        self.current_returns = formatdigit(
-            bot_current_amount / self.investment_amount)
+        self.current_returns = self.current_return()
         if not self.position_uid:
             self.position_uid = uuid.uuid4().hex
             # using your function as above or anything else
