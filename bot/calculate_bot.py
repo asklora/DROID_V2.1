@@ -237,7 +237,7 @@ def get_ucdc_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, 
     return data
 
 
-def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group):
+def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group, margin=False):
     """
     - ticker -> str
     - currency_code -> str
@@ -278,8 +278,12 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     data["v2"] = v2
     data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
     data["vol"] = vol
-    data["bot_share_num"] = round(investment_amount / price, 1)
-    data["share_num"] = math.floor(delta * data["bot_share_num"])
+    if(margin):
+        data["bot_share_num"] = round((investment_amount * 1.5) / price, 0)
+        data["share_num"] = math.floor(delta * (data["bot_share_num"]))
+    else:
+        data["bot_share_num"] = round(investment_amount / price, 0)
+        data["share_num"] = math.floor(delta * data["bot_share_num"])
     data["max_loss_pct"] = potential_loss
     data["max_loss_pct_display"] = round(data["max_loss_pct"] * 100, 2)
     data["max_loss_amount"] = round(
@@ -293,7 +297,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     data["target_profit_amount"] = round(
         option_price * data["bot_share_num"], int(digits)) * -1
     data["bot_cash_balance"] = round(
-        investment_amount - (data["share_num"] * price), 2)
+        investment_amount - (data["bot_share_num"] * price), digits)
     return data
 
 
@@ -334,7 +338,7 @@ def get_uno_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, p
     return data
 
 
-def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group):
+def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group, margin=False):
     """
     - ticker -> str
     - currency_code -> str
@@ -346,6 +350,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     - bot_group -> str
     - investment_amount -> float
     """
+
     spot_date = check_date(spot_date)
     expiry_date = check_date(expiry_date)
     digits = max(min(4-len(str(int(price))), 2), -1)
@@ -377,21 +382,26 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     data["v2"] = v2
     data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
     data["bot_share_num"] = round(investment_amount / price, 1)
-    data["share_num"] = math.floor(delta * data["bot_share_num"])
+    if(margin):
+        data["bot_share_num"] = round((investment_amount * 1.5) / price, 0)
+        data["share_num"] = math.floor(delta * (data["bot_share_num"]))
+    else:
+        data["bot_share_num"] = round(investment_amount / price, 0)
+        data["share_num"] = math.floor(delta * data["bot_share_num"])
     data["max_loss_pct"] = potential_loss
     data["vol"] = vol
     data["max_loss_pct_display"] = round(data["max_loss_pct"] * 100, 2)
     data["max_loss_amount"] = round(
-        option_price * data["bot_share_num"], int(digits)) * -1
+        option_price * data["share_num"], int(digits)) * -1
     data["max_loss_price"] = round(price - option_price, int(digits))
     data["target_profit_pct"] = targeted_profit
     data["target_profit_pct_display"] = round(
         data["target_profit_pct"] * 100, 2)
     data["target_profit_price"] = round(barrier, int(digits))
     data["target_profit_amount"] = round(
-        rebate * data["bot_share_num"], int(digits))
+        rebate * data["share_num"], int(digits))
     data["bot_cash_balance"] = round(
-        investment_amount - (data["share_num"] * price), 2)
+        investment_amount - (data["share_num"] * price), digits)
     return data
 
 
@@ -511,9 +521,9 @@ def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
     return delta, hedge
 
 
-def get_hedge_detail(ask_price, bid_price, last_share_num, bot_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False):
-    # if(margin):
-    #     bot_share_num = bot_share_num * 1.5
+def get_hedge_detail(ask_price, bid_price, last_share_num, bot_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False, margin=False):
+    if(margin):
+        bot_share_num = bot_share_num * 1.5
 
     if(hedge):
         hedge_shares = round((delta - last_hedge_delta) * bot_share_num, 0)

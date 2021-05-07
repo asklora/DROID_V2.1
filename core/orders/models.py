@@ -134,15 +134,7 @@ class OrderPosition(BaseTimeStampModel):
         return _bot
 
     def save(self, *args, **kwargs):
-        if not self.share_num:
-            shares = round(self.investment_amount / self.entry_price, 0)
-            margin = round(shares * self.margin, 0)
-            margin_invest = round(self.entry_price * margin, 0)
-            self.margin_value = margin_invest - self.investment_amount
-        else:
-            self.share_num = round(self.share_num * self.margin, 0)
-            self.investment_amount = round(
-                self.entry_price * self.share_num, 0)
+
         self.current_values = self.current_value()
         self.current_returns = self.current_return()
         if not self.position_uid:
