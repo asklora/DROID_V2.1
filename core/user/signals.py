@@ -16,9 +16,9 @@ def transaction(sender, instance, created, **kwargs):
     if created:
         if trans_type == 'debit':
             result = wallet.amount - instance.amount
-            wallet.amount = formatdigit(result)
+            wallet.amount = formatdigit(result, wallet.currency_code.is_decimal)
             wallet.save()
         elif trans_type == 'credit':
             result = wallet.amount + instance.amount
-            wallet.amount = formatdigit(result)
+            wallet.amount = formatdigit(result, wallet.currency_code.is_decimal)
             wallet.save()
