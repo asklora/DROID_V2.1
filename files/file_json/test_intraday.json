@@ -3,10 +3,7 @@
         "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
         "ContentFieldNames": [
             "RIC",
-            "Instrument Trading Status",
-            "Instrument Trading Status Description",
-            "Quote Date",
-            "Trade Date"
+            "Last Price"
         ],
         "IdentifierList": {
             "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",

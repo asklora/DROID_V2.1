@@ -43,7 +43,6 @@ class Currency(models.Model):
     amount = models.FloatField(blank=True, null=True)
     last_price = models.FloatField(blank=True, null=True)
     last_date = models.DateField(blank=True, null=True)
-
     utc_timezone_location = models.CharField(
         blank=True, null=True, max_length=255)
     ingestion_time = models.TimeField(null=True, blank=True)
@@ -59,6 +58,8 @@ class Currency(models.Model):
     backtest_schedule = models.TimeField(blank=True, null=True)
     top_stock_schedule = models.TimeField(blank=True, null=True)
     hedge_schedule = models.TimeField(blank=True, null=True)
+    index_ticker = models.TextField(blank=True, null=True)
+    index_price = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return self.currency_code
