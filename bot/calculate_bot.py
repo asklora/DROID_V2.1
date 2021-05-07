@@ -381,7 +381,6 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     data["v1"] = v1
     data["v2"] = v2
     data["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
-    data["bot_share_num"] = round(investment_amount / price, 1)
     if(margin):
         data["bot_share_num"] = round((investment_amount * 1.5) / price, 0)
         data["share_num"] = math.floor(delta * (data["bot_share_num"]))
