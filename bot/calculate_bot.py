@@ -282,6 +282,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     data["bot_share_num"] = round(investment_amount / price, 1)
     if(margin):
         data["share_num"] = math.floor(delta * (data["bot_share_num"] * 1.5))
+        investment_amount = round(data["share_num"] * price, 2)
     else:
         data["share_num"] = math.floor(delta * data["bot_share_num"])
     data["max_loss_pct"] = potential_loss
@@ -350,7 +351,6 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     - bot_group -> str
     - investment_amount -> float
     """
-    print("bot", margin)
     spot_date = check_date(spot_date)
     expiry_date = check_date(expiry_date)
     digits = max(min(4-len(str(int(price))), 2), -1)
@@ -384,6 +384,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     data["bot_share_num"] = round(investment_amount / price, 1)
     if(margin):
         data["share_num"] = math.floor(delta * (data["bot_share_num"] * 1.5))
+        investment_amount = round(data["share_num"] * price, 2)
     else:
         data["share_num"] = math.floor(delta * data["bot_share_num"])
     data["max_loss_pct"] = potential_loss
@@ -519,9 +520,9 @@ def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
     return delta, hedge
 
 
-def get_hedge_detail(ask_price, bid_price, last_share_num, bot_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False, margin=False):
-    if(margin):
-        bot_share_num = bot_share_num * 1.5
+def get_hedge_detail(ask_price, bid_price, last_share_num, bot_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False):
+    # if(margin):
+    #     bot_share_num = bot_share_num * 1.5
 
     if(hedge):
         hedge_shares = round((delta - last_hedge_delta) * bot_share_num, 0)
