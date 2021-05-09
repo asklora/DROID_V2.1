@@ -196,7 +196,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry
     data["bot_cash_balance"] = round(
         investment_amount - (data["share_num"] * price), 2)
     data["last_hedge_delta"] = 1
-
+    data["investment_amount"]=investment_amount
     return data
 
 
@@ -299,6 +299,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
         option_price * data["bot_share_num"], int(digits)) * -1
     data["bot_cash_balance"] = round(
         investment_amount - (data["bot_share_num"] * price), digits)
+    data["investment_amount"]=investment_amount
     return data
 
 
@@ -403,6 +404,9 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
         rebate * data["share_num"], int(digits))
     data["bot_cash_balance"] = round(
         investment_amount - (data["share_num"] * price), digits)
+
+    data["investment_amount"]=investment_amount
+    
     return data
 
 

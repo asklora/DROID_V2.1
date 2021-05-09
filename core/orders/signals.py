@@ -9,9 +9,9 @@ from core import services
 from core.djangomodule.serializers import (OrderSerializer,
                                            OrderPositionSerializer,
                                            PositionPerformanceSerializer)
-import pandas as pd
+from core.djangomodule.general import formatdigit
 from core.user.models import TransactionHistory
-
+import pandas as pd
 
 def calculate_fee(amount, side, user_id):
     user_client = UserClient.objects.get(user_id=user_id)
@@ -72,6 +72,7 @@ def order_signal(sender, instance, created, **kwargs):
                                  instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
             instance.setup = setup
             instance.qty = setup["share_num"]
+            instance.amount = formatdigit(setup["share_num"] * setup['price'])
             instance.save()
 
         # if not user can create the setup TP and SL
@@ -95,7 +96,7 @@ def order_signal(sender, instance, created, **kwargs):
                     bot_id=instance.bot_id,
                     spot_date=spot_date.date(),
                     entry_price=instance.price,
-                    investment_amount=instance.amount,
+                    # investment_amount=instance.amount,
                     is_live=True,
                     margin=margin
                 )
@@ -120,11 +121,12 @@ def order_signal(sender, instance, created, **kwargs):
                         if key == "bot_share_num" and instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
                             setattr(order, "share_num", val)
                 digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
+                
+                # multiplier bot cash balance
                 margin_investment_amount = round(
-                    order.investment_amount*order.margin, digits)
+                    order.investment_amount/order.margin, digits)
                 order.margin_value = round(
-                    margin_investment_amount - order.investment_amount, digits)
-                order.investment_amount = margin_investment_amount
+                    order.investment_amount - margin_investment_amount, digits)
                 orderserialize = OrderPositionSerializer(order).data
                 orderdata = {
                     "type": "function",
@@ -132,7 +134,7 @@ def order_signal(sender, instance, created, **kwargs):
                     "payload": dict(orderserialize)
                 }
                 # services.celery_app.send_task("config.celery.listener",args=(orderdata,),queue="asklora",)
-                perf.current_pnl_amt = 0
+                perf.current_pnl_amt = 0 # need to calculate with fee
                 perf.current_bot_cash_balance = order.bot_cash_balance
                 perf.current_pnl_ret = (
                     perf.current_pnl_amt + perf.current_bot_cash_balance) / order.investment_amount
@@ -156,11 +158,13 @@ def order_signal(sender, instance, created, **kwargs):
 
                 commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                     instance.amount, instance.side, instance.user_id)
+                
+                # first transaction, user put the money to bot cash balance
 
                 TransactionHistory.objects.create(
                     balance_uid=order.user_id.wallet,
                     side="debit",
-                    amount=instance.amount,
+                    amount=order.investment_amount / order.margin,
                     transaction_detail={
                         "description": "bot order",
                         "position": f"{order.position_uid}",
@@ -226,20 +230,20 @@ def order_signal(sender, instance, created, **kwargs):
                         instance.performance_uid = signal_performance.performance_uid
                         instance.save()
 
-                    # bot perform
+                    # should be no transaction here except fee coz user already  put the money into bot
                     if instance.side == "sell" and order_position.is_live:
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             instance.amount, "sell", order_position.user_id)
-                        TransactionHistory.objects.create(
-                            balance_uid=order_position.user_id.wallet,
-                            side="credit",
-                            amount=instance.amount,
-                            transaction_detail={
-                                "description": "bot perform sell",
-                                "position": f"{order_position.position_uid}",
-                                "event": "return",
-                            },
-                        )
+                        # TransactionHistory.objects.create(
+                        #     balance_uid=order_position.user_id.wallet,
+                        #     side="credit",
+                        #     amount=instance.amount,
+                        #     transaction_detail={
+                        #         "description": "bot perform sell",
+                        #         "position": f"{order_position.position_uid}",
+                        #         "event": "return",
+                        #     },
+                        # )
                         OrderFee.objects.create(
                             order_uid=instance,
                             fee_type=f"{instance.side} fee",
@@ -261,16 +265,16 @@ def order_signal(sender, instance, created, **kwargs):
                     elif instance.side == "buy" and order_position.is_live:
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             instance.amount, "buy", order_position.user_id)
-                        TransactionHistory.objects.create(
-                            balance_uid=order_position.user_id.wallet,
-                            side="debit",
-                            amount=instance.amount,
-                            transaction_detail={
-                                "description": "bot perform buy",
-                                "position": f"{order_position.position_uid}",
-                                "event": "create",
-                            },
-                        )
+                        # TransactionHistory.objects.create(
+                        #     balance_uid=order_position.user_id.wallet,
+                        #     side="debit",
+                        #     amount=instance.amount,
+                        #     transaction_detail={
+                        #         "description": "bot perform buy",
+                        #         "position": f"{order_position.position_uid}",
+                        #         "event": "create",
+                        #     },
+                        # )
                         OrderFee.objects.create(
                             order_uid=instance,
                             fee_type=f"{instance.side} fee",
@@ -291,7 +295,7 @@ def order_signal(sender, instance, created, **kwargs):
                         )
                     # end portfolio / bot
                     if not order_position.is_live:
-                        amt = order_position.investment_amount + order_position.final_pnl_amount
+                        amt = (order_position.investment_amount/order_position.margin) + order_position.final_pnl_amount
 
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             amt, "sell", order_position.user_id)

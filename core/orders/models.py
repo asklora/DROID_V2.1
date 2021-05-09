@@ -6,7 +6,7 @@ from core.user.models import User
 from core.bot.models import BotOptionType
 from django.db import IntegrityError
 import uuid
-from core.djangomodule.general import generate_id
+from core.djangomodule.general import generate_id,nonetozero, formatdigit
 
 # Create your models here.
 
@@ -73,7 +73,7 @@ class OrderPosition(BaseTimeStampModel):
     expiry = models.DateField(null=True, blank=True)
     spot_date = models.DateField(null=True, blank=True)
     entry_price = models.FloatField(null=True, blank=True)
-    investment_amount = models.FloatField(null=True, blank=True)
+    investment_amount = models.FloatField(default=0)
     max_loss_pct = models.FloatField(null=True, blank=True)
     max_loss_price = models.FloatField(null=True, blank=True)
     max_loss_amount = models.FloatField(null=True, blank=True)
@@ -107,8 +107,8 @@ class OrderPosition(BaseTimeStampModel):
             position_uid=self.position_uid)
         if performance.exists():
             perf = performance.latest("created")
-            ret = (perf.current_bot_cash_balance + \
-                perf.current_investment_amount - self.investment_amount) * self.margin
+            ret = ((perf.current_bot_cash_balance + \
+                perf.current_investment_amount) - self.investment_amount)
             # if self.user_currency != self.currency:
             #     ret = ret * self.currency_rate
             ret = round(ret, 2)
@@ -116,17 +116,7 @@ class OrderPosition(BaseTimeStampModel):
         return 0
 
     def current_value(self):
-        performance = self.order_position.filter(
-            position_uid=self.position_uid)
-        if performance.exists():
-            perf = performance.latest("created")
-            ret = (perf.current_bot_cash_balance +
-                   perf.current_investment_amount) / self.margin
-            # if self.user_currency != self.currency:
-            #     ret = ret * self.currency_rate
-            ret = round(ret, 2)
-            return ret
-        return 0
+        return formatdigit((nonetozero(self.investment_amount) / self.margin) + self.current_returns, self.ticker.currency_code.is_decimal)
 
     @property
     def bot(self):
@@ -134,9 +124,8 @@ class OrderPosition(BaseTimeStampModel):
         return _bot
 
     def save(self, *args, **kwargs):
-
-        self.current_values = self.current_value()
         self.current_returns = self.current_return()
+        self.current_values = self.current_value()
         if not self.position_uid:
             self.position_uid = uuid.uuid4().hex
             # using your function as above or anything else
