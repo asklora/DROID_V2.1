@@ -173,7 +173,7 @@ class PositionPerformance(BaseTimeStampModel):
     order_summary = models.JSONField(null=True, blank=True)
     order_uid = models.ForeignKey(
         "Order", null=True, blank=True, on_delete=models.SET_NULL, db_column="order_uid")
-    balance = models.FloatField(default=0)
+    margin_balance = models.FloatField(default=0)
 
     def save(self, *args, **kwargs):
         if not self.performance_uid:
@@ -206,9 +206,7 @@ class OrderFee(BaseTimeStampModel):
     order_uid = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="orders_fee_orders", db_column="order_uid")
     fee_type = models.TextField(null=True, blank=True)
-    commissions = models.FloatField(default=0)
-    stamp_duty = models.FloatField(default=0)
-    total_fee = models.FloatField(default=0)
+    amount = models.FloatField(default=0)
 
     class Meta:
         managed = True

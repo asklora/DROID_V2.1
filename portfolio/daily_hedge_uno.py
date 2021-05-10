@@ -75,6 +75,8 @@ def create_performance(price_data, position, latest_price=False):
         current_pnl_amt = last_performance.current_pnl_amt + \
             (live_price - last_performance.last_live_price) * \
             last_performance.share_num
+        balance = formatdigit(
+            last_performance.margin_balance-(share_num-last_performance.share_num)*live_price)
     else:
         current_pnl_amt = 0  # initial value
         share_num = round((position.investment_amount / live_price), 1)
@@ -94,11 +96,13 @@ def create_performance(price_data, position, latest_price=False):
             (share_num * live_price)
 
     current_investment_amount = live_price * share_num
-    current_pnl_ret = (bot_cash_balance + current_investment_amount -
-                       position.investment_amount) / position.investment_amount
+    # current_pnl_ret = (bot_cash_balance + current_investment_amount -
+    #                    position.investment_amount) / position.investment_amount
+    current_pnl_ret = current_pnl_amt / \
+        (position.investment_amount / position.margin)
+
     position.bot_cash_balance = round(bot_cash_balance, 2)
-    balance = formatdigit((position.investment_amount /
-                           position.margin) - current_investment_amount)
+
     position.save()
     digits = max(min(5-len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)
@@ -125,7 +129,7 @@ def create_performance(price_data, position, latest_price=False):
         strike=strike,
         barrier=barrier,
         option_price=option_price,
-        balance=balance,
+        margin_balance=balance,
         order_summary={
             'hedge_shares': hedge_shares
         }

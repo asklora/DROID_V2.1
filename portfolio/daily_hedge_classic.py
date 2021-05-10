@@ -43,15 +43,16 @@ def create_performance(price_data, position, latest_price=False):
         current_pnl_amt = last_performance.current_pnl_amt + \
             (live_price - last_performance.last_live_price) * \
             last_performance.share_num
+        balance = formatdigit(
+            last_performance.margin_balance-(share_num-last_performance.share_num)*live_price)
     else:
         live_price = position.entry_price
         current_pnl_amt = 0
         share_num = position.share_num
     current_investment_amount = live_price * share_num
-    current_pnl_ret = (bot_cash_balance + current_investment_amount -
-                       position.investment_amount) / position.investment_amount
-    balance = formatdigit((position.investment_amount /
-                           position.margin) - current_investment_amount)
+    current_pnl_ret = current_pnl_amt / \
+        (position.investment_amount / position.margin)
+
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.save()
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
@@ -70,7 +71,7 @@ def create_performance(price_data, position, latest_price=False):
         updated=str(log_time),
         created=str(log_time),
         last_hedge_delta=1,
-        balance=balance
+        margin_balance=balance
     )
 
     if status_expiry:
