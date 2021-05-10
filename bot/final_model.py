@@ -197,7 +197,7 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
             upsert_data_to_database(final_inferred, table_name, "uid", how="update", cpu_count=True, Text=True)
         else:
             final_inferred.to_csv("vol_history_infered.csv")
-            truncate_table(table_name)
+            # truncate_table(table_name)
             upsert_data_to_database(final_inferred, table_name, "uid", how="update", cpu_count=True, Text=True)
     # do_function("calculate_latest_vol_updates_not_us")
     # do_function("calculate_latest_vol_updates_us")

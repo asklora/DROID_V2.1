@@ -212,5 +212,5 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=True, Text=True)
     else:
         main_df.to_csv("main_df_executive.csv")
-        truncate_table(table_name)
+        # truncate_table(table_name)
         upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=True, Text=True)
