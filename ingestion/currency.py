@@ -110,11 +110,11 @@ def update_utc_offset_from_timezone():
         result.loc[index, "backtest_schedule"] = backtest_schedule
 
         hedge_schedule = calculate_minutes_hours_to_time(str(row["market_close_time"]), str(row["utc_offset"]))
-        hedge_schedule = calculate_minutes_hours_to_time(str(hedge_schedule), "00:15:00", minus=True)
+        hedge_schedule = calculate_minutes_hours_to_time(str(hedge_schedule), "00:30:00", minus=True)
         result.loc[index, "hedge_schedule"] = hedge_schedule
 
         top_stock_schedule = calculate_minutes_hours_to_time(str(row["market_open_time"]), str(row["utc_offset"]))
-        top_stock_schedule = calculate_minutes_hours_to_time(str(top_stock_schedule), "00:15:00")
+        top_stock_schedule = calculate_minutes_hours_to_time(str(top_stock_schedule), "00:30:00")
         result.loc[index, "top_stock_schedule"] = top_stock_schedule
     print(result[["currency_code", "market_open_time", "utc_offset", "market_close_time", "close_ingestion_offset", "backtest_schedule", "hedge_schedule", "top_stock_schedule"]])
     upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
