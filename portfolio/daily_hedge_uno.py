@@ -87,10 +87,8 @@ def create_performance(price_data, position, latest_price=False):
                            trading_day, t, r, q, strike, barrier)
         delta = uno.deltaUnOC(live_price, strike, barrier,
                               rebate, t/365, r, q, v1, v2)
-        if(position.user_id.is_large_margin):
-            share_num = position.share_num * 1.5
-        else:
-            share_num = position.share_num
+
+        share_num = position.share_num
         bot_cash_balance = position.investment_amount - \
             (share_num * live_price)
 
