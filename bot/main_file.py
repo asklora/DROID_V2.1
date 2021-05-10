@@ -164,14 +164,14 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
 
     currency_code_to_etf = pd.read_csv(currency_code_to_etf_file, names=["currency_code", "etf"])
     universe_df = get_active_universe()
-    universe_df = universe_df.merge(currency_code_to_etf, on="currency_code")
+    universe_df = universe_df.merge(currency_code_to_etf, on="currency_code", how="left")
     etf_list = currency_code_to_etf.etf.unique()
 
     main_df2 = main_df.copy()
     main_df = main_df2.copy()
 
     # Adding index vols to the main dataframe
-    main_df = main_df.merge(universe_df[["etf", "ticker"]], on="ticker", how="inner")
+    main_df = main_df.merge(universe_df[["etf", "ticker"]], on="ticker", how="left")
     etf_df = main_df[main_df.ticker.isin(etf_list)].copy()
 
     # main_df = main_df[~main_df.ticker.isin(etf_list)]
@@ -208,9 +208,9 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     if(daily):
         upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=True, Text=True)
     elif(new_ticker):
-        latest_main_df = main_df[main_df.trading_day == main_df.trading_day.max()]
-        upsert_data_to_database(latest_main_df, table_name, "uid", how="update", cpu_count=True, Text=True)
+        # latest_main_df = main_df[main_df.trading_day == main_df.trading_day.max()]
+        upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=True, Text=True)
     else:
         main_df.to_csv("main_df_executive.csv")
-        truncate_table(table_name)
+        # truncate_table(table_name)
         upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=True, Text=True)

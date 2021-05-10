@@ -127,14 +127,14 @@ def data_prep_check_new_ticker(ticker=None, currency_code=None):
         report_to_slack("{} : === DATA PREPERATION CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
 
-def data_prep_history():
+def data_prep_history(currency_code=None):
     print("{} : === DATA PREPERATION HISTORY STARTED ===".format(dateNow()))
     start_date = str_to_date(droid_start_date_buffer())
     end_date = str_to_date(dateNow())
     print("Data preparation history started!")
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
-    ticker = get_active_universe()["ticker"].tolist()
+    ticker = get_active_universe(currency_code=currency_code)["ticker"].tolist()
 
     populate_bot_data(start_date=start_date, end_date=end_date, ticker=ticker, history=True)
     print("{} : === DATA PREPERATION HISTORY COMPLETED ===".format(dateNow()))
