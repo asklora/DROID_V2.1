@@ -326,26 +326,21 @@ def update_universe_data(ticker=None):
 
 
 if __name__ == "__main__":
-    # update_utc_offset_from_timezone()
+    from migrate import weekly_migrations, daily_migrations
+    do_function("universe_populate")
+    daily_migrations()
+    populate_macro_table()
+    populate_ibes_table()
+    update_quandl_orats_from_quandl()
+
+    do_function("master_ohlcvtr_update")
+    master_ohlctr_update()
+    master_tac_update()
+    update_currency_price_from_dss()
+
+    interest_update()
+    dividend_daily_update()
+    interest_daily_update()
+    update_utc_offset_from_timezone()
     update_index_price_from_dss()
-    # # update_ticker_symbol_from_dss()
-    # from migrate import weekly_migrations, daily_migrations
-    # # do_function("universe_populate")
-    # # update_currency_code_from_dss()
-    # # master_multiple_update()
-
-    # # update_utc_offset_from_timezone()
-    # daily_migrations()
-    # populate_macro_table()
-    # populate_ibes_table()
-    # update_quandl_orats_from_quandl()
-
-    # do_function("master_ohlcvtr_update")
-    # master_ohlctr_update()
-    # master_tac_update()
-    # update_currency_price_from_dss()
-
-    # interest_update()
-    # dividend_daily_update()
-    # interest_daily_update()
-    # print("Done")
+    print("Done")
