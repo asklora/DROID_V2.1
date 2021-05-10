@@ -69,10 +69,11 @@ def create_performance(price_data, position, latest_price=False):
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(
                 ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta,
                 hedge=hedge, ucdc=True)
-        bot_cash_balance = last_performance.current_bot_cash_balance + \
-            ((last_performance.share_num - share_num) * live_price)
-        balance = formatdigit(
-            last_performance.margin_balance-(share_num-last_performance.share_num)*live_price)
+        # bot_cash_balance = last_performance.current_bot_cash_balance + \
+        #     ((last_performance.share_num - share_num) * live_price)
+        bot_cash_balance = formatdigit(
+            last_performance.current_bot_cash_balance-(share_num-last_performance.share_num)*live_price)
+
     else:
         current_pnl_amt = 0  # initial value
         vol = get_vol(position.ticker, trading_day, t, r,
@@ -95,8 +96,7 @@ def create_performance(price_data, position, latest_price=False):
     current_investment_amount = live_price * share_num
     # current_pnl_ret = (bot_cash_balance + current_investment_amount -
     #                    position.investment_amount) / position.investment_amount
-    current_pnl_ret = current_pnl_amt / \
-        (position.investment_amount / position.margin)
+    current_pnl_ret = current_pnl_amt / position.investment_amount 
     position.bot_cash_balance = round(bot_cash_balance, 2)
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)
@@ -123,7 +123,6 @@ def create_performance(price_data, position, latest_price=False):
         strike=strike,
         strike_2=strike_2,
         option_price=option_price,
-        margin_balance=balance
     )
 
     if status_expiry:

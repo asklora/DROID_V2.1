@@ -124,10 +124,10 @@ def order_signal(sender, instance, created, **kwargs):
                 digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
 
                 # multiplier bot cash balance
-                margin_investment_amount = round(
-                    order.investment_amount/order.margin, digits)
-                order.margin_value = round(
-                    order.investment_amount - margin_investment_amount, digits)
+                # margin_investment_amount = round(
+                #     order.investment_amount/order.margin, digits)
+                # order.margin_value = round(
+                #     order.investment_amount - margin_investment_amount, digits)
                 orderserialize = OrderPositionSerializer(order).data
                 orderdata = {
                     "type": "function",
@@ -143,8 +143,8 @@ def order_signal(sender, instance, created, **kwargs):
                     perf.last_live_price * perf.share_num, digits)
                 perf.current_pnl_ret = (perf.current_bot_cash_balance + perf.current_investment_amount -
                                         order.investment_amount) / order.investment_amount
-                perf.margin_balance = formatdigit((order.investment_amount /
-                                                   order.margin) - perf.current_investment_amount)
+                # perf.margin_balance = formatdigit((order.investment_amount /
+                #                                    order.margin) - perf.current_investment_amount)
                 perf.order_id = instance
                 perf.save()
                 order.save()
@@ -169,8 +169,7 @@ def order_signal(sender, instance, created, **kwargs):
                 TransactionHistory.objects.create(
                     balance_uid=order.user_id.wallet,
                     side="debit",
-                    amount=round(order.investment_amount /
-                                 order.margin, digits),
+                    amount=round(order.investment_amount, digits),
                     transaction_detail={
                         "description": "bot order",
                         "position": f"{order.position_uid}",
@@ -328,8 +327,7 @@ def order_signal(sender, instance, created, **kwargs):
 
                     # end portfolio / bot
                     if not order_position.is_live:
-                        amt = (order_position.investment_amount /
-                               order_position.margin) + order_position.final_pnl_amount
+                        amt = order_position.investment_amount  + order_position.final_pnl_amount
 
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             amt, "sell", order_position.user_id)

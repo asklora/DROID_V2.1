@@ -38,20 +38,21 @@ def create_performance(price_data, position, latest_price=False):
         share_num = last_performance.share_num
         if(status_expiry):
             share_num = 0
-        bot_cash_balance = last_performance.current_bot_cash_balance + \
-            ((last_performance.share_num - share_num) * live_price)
+        # bot_cash_balance = last_performance.current_bot_cash_balance + \
+        #     ((last_performance.share_num - share_num) * live_price)
+        bot_cash_balance = formatdigit(
+            last_performance.current_bot_cash_balance-(share_num-last_performance.share_num)*live_price)
         current_pnl_amt = last_performance.current_pnl_amt + \
             (live_price - last_performance.last_live_price) * \
             last_performance.share_num
-        balance = formatdigit(
-            last_performance.margin_balance-(share_num-last_performance.share_num)*live_price)
+
     else:
         live_price = position.entry_price
         current_pnl_amt = 0
         share_num = position.share_num
     current_investment_amount = live_price * share_num
-    current_pnl_ret = current_pnl_amt / \
-        (position.investment_amount / position.margin)
+    current_pnl_ret = current_pnl_amt / position.investment_amount 
+
 
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.save()
@@ -71,7 +72,6 @@ def create_performance(price_data, position, latest_price=False):
         updated=str(log_time),
         created=str(log_time),
         last_hedge_delta=1,
-        margin_balance=balance
     )
 
     if status_expiry:
@@ -140,7 +140,7 @@ def create_performance(price_data, position, latest_price=False):
 
 
 @app.task
-def classic_position_check(position_uid):
+def classic_position_check(position_uid,to_date=None):
     try:
         position = OrderPosition.objects.get(
             position_uid=position_uid, is_live=True)
@@ -151,23 +151,26 @@ def classic_position_check(position_uid):
         except PositionPerformance.DoesNotExist:
             performance = False
             trading_day = position.spot_date
+        if to_date:
+            exp_date = pd.to_datetime(to_date)
+        else:
+            exp_date=position.expiry
         tac_data = MasterOhlcvtr.objects.filter(
-            ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=position.expiry, day_status='trading_day').order_by("trading_day")
+            ticker=position.ticker, trading_day__gt=trading_day.date(), trading_day__lte=exp_date, day_status='trading_day').order_by("trading_day")
         status = False
         for tac in tac_data:
-            trading_day = tac.trading_day
-            print(f"tac {trading_day} done")
+            # trading_day = tac.trading_day
             status, order_id = create_performance(tac, position)
-            # position.save()
+            # this is for debug only, make function this can be on/off
             if order_id:
                 order = Order.objects.get(order_uid=order_id)
-                log_time = pd.Timestamp(trading_day)
+                log_time = pd.Timestamp(tac.trading_day)
                 if order.status in ["pending", "review"]:
                     order.status = "filled"
                     order.filled_at = log_time
                     order.save()
+            print(f"tac {tac.trading_day} done")
             if status:
-                print(f"position end")
                 break
         if(type(trading_day) == datetime):
             trading_day = trading_day.date()
@@ -175,7 +178,7 @@ def classic_position_check(position_uid):
         if(not status and trading_day < lastest_price_data.last_date and position.expiry >= lastest_price_data.last_date):
             trading_day = lastest_price_data.last_date
             print(f"latest price {trading_day} done")
-            status, order_id = create_performance(tac, position)
+            status, order_id = create_performance(lastest_price_data, position)
             # position.save()
             if order_id:
                 order = Order.objects.get(order_uid=order_id)
@@ -186,27 +189,27 @@ def classic_position_check(position_uid):
                     order.save()
             if status:
                 print(f"position end")
-        try:
-            tac_data = MasterOhlcvtr.objects.filter(
-                ticker=position.ticker, trading_day__gte=position.expiry, day_status='trading_day').latest("trading_day")
-            if(not status and tac_data):
-                position.expiry = tac_data.trading_day
-                position.save()
-                print(f"force sell {tac_data.trading_day} done")
-                status = create_performance(tac_data, position)
-                status, order_id = create_performance(tac, position)
-                # position.save()
-                if order_id:
-                    order = Order.objects.get(order_uid=order_id)
-                    log_time = pd.Timestamp(trading_day)
-                    if order.status in ["pending", "review"]:
-                        order.status = "filled"
-                        order.filled_at = log_time
-                        order.save()
-                if status:
-                    print(f"position end")
-        except MasterOhlcvtr.DoesNotExist:
-            status = False
+        if trading_day >=  position.expiry:
+            try:
+                tac_data = MasterOhlcvtr.objects.filter(
+                    ticker=position.ticker, trading_day__gte=position.expiry, day_status='trading_day').latest("trading_day")
+                if(not status and tac_data):
+                    position.expiry = tac_data.trading_day
+                    position.save()
+                    print(f"force sell {tac_data.trading_day} done")
+                    status, order_id = create_performance(tac_data, position)
+                    # position.save()
+                    if order_id:
+                        order = Order.objects.get(order_uid=order_id)
+                        log_time = pd.Timestamp(trading_day)
+                        if order.status in ["pending", "review"]:
+                            order.status = "filled"
+                            order.filled_at = log_time
+                            order.save()
+                    if status:
+                        print(f"position end")
+            except MasterOhlcvtr.DoesNotExist:
+                status = False
         return True
     except OrderPosition.DoesNotExist:
         return False
