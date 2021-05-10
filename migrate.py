@@ -708,7 +708,6 @@ def daily_migrations():
     data_dsws()
     data_quandl()
     latest_price()
-    data_interest()
 
 def weekly_migrations():
     currency()
@@ -719,7 +718,7 @@ def weekly_migrations():
     data_dsws()
     data_quandl()
     latest_price()
-    data_interest()
+    # data_interest()
     data_ibes()
     data_ibes_monthly()
     data_fred()

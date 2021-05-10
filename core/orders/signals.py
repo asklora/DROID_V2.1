@@ -13,6 +13,7 @@ from core.djangomodule.general import formatdigit
 from core.user.models import TransactionHistory
 import pandas as pd
 
+
 def calculate_fee(amount, side, user_id):
     user_client = UserClient.objects.get(user_id=user_id)
     if(side == "sell"):
@@ -32,7 +33,7 @@ def calculate_fee(amount, side, user_id):
     else:
         stamp_duty_fee = stamp_duty
     total_fee = commissions_fee + stamp_duty_fee
-    return commissions_fee, stamp_duty_fee, total_fee
+    return formatdigit(commissions_fee), formatdigit(stamp_duty_fee), formatdigit(total_fee)
 
 
 @receiver(pre_save, sender=Order)
@@ -121,7 +122,7 @@ def order_signal(sender, instance, created, **kwargs):
                         if key == "bot_share_num" and instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
                             setattr(order, "share_num", val)
                 digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
-                
+
                 # multiplier bot cash balance
                 margin_investment_amount = round(
                     order.investment_amount/order.margin, digits)
@@ -134,12 +135,16 @@ def order_signal(sender, instance, created, **kwargs):
                     "payload": dict(orderserialize)
                 }
                 # services.celery_app.send_task("config.celery.listener",args=(orderdata,),queue="asklora",)
-                perf.current_pnl_amt = 0 # need to calculate with fee
+
+                perf.current_pnl_amt = 0  # need to calculate with fee
                 perf.current_bot_cash_balance = order.bot_cash_balance
-                perf.current_pnl_ret = (
-                    perf.current_pnl_amt + perf.current_bot_cash_balance) / order.investment_amount
+
                 perf.current_investment_amount = round(
                     perf.last_live_price * perf.share_num, digits)
+                perf.current_pnl_ret = (perf.current_bot_cash_balance + perf.current_investment_amount -
+                                        order.investment_amount) / order.investment_amount
+                perf.balance = formatdigit((order.investment_amount /
+                                            order.margin) - perf.current_investment_amount)
                 perf.order_id = instance
                 perf.save()
                 order.save()
@@ -158,7 +163,7 @@ def order_signal(sender, instance, created, **kwargs):
 
                 commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                     instance.amount, instance.side, instance.user_id)
-                
+
                 # first transaction, user put the money to bot cash balance
 
                 TransactionHistory.objects.create(
@@ -295,7 +300,8 @@ def order_signal(sender, instance, created, **kwargs):
                         )
                     # end portfolio / bot
                     if not order_position.is_live:
-                        amt = (order_position.investment_amount/order_position.margin) + order_position.final_pnl_amount
+                        amt = (order_position.investment_amount /
+                               order_position.margin) + order_position.final_pnl_amount
 
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             amt, "sell", order_position.user_id)

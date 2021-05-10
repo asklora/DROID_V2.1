@@ -6,7 +6,7 @@ from core.user.models import User
 from core.bot.models import BotOptionType
 from django.db import IntegrityError
 import uuid
-from core.djangomodule.general import generate_id,nonetozero, formatdigit
+from core.djangomodule.general import generate_id, nonetozero, formatdigit
 
 # Create your models here.
 
@@ -107,8 +107,8 @@ class OrderPosition(BaseTimeStampModel):
             position_uid=self.position_uid)
         if performance.exists():
             perf = performance.latest("created")
-            ret = ((perf.current_bot_cash_balance + \
-                perf.current_investment_amount) - self.investment_amount)
+            ret = ((perf.current_bot_cash_balance +
+                    perf.current_investment_amount) - self.investment_amount)
             # if self.user_currency != self.currency:
             #     ret = ret * self.currency_rate
             ret = round(ret, 2)
@@ -173,6 +173,7 @@ class PositionPerformance(BaseTimeStampModel):
     order_summary = models.JSONField(null=True, blank=True)
     order_uid = models.ForeignKey(
         "Order", null=True, blank=True, on_delete=models.SET_NULL, db_column="order_uid")
+    balance = models.FloatField(default=0)
 
     def save(self, *args, **kwargs):
         if not self.performance_uid:
