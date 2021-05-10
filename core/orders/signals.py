@@ -33,7 +33,7 @@ def calculate_fee(amount, side, user_id):
     else:
         stamp_duty_fee = stamp_duty
     total_fee = commissions_fee + stamp_duty_fee
-    return commissions_fee, stamp_duty_fee, total_fee
+    return formatdigit(commissions_fee), formatdigit(stamp_duty_fee), formatdigit(total_fee)
 
 
 @receiver(pre_save, sender=Order)
