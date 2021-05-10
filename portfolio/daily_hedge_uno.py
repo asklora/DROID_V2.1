@@ -13,6 +13,7 @@ from bot.calculate_bot import (
 from config.celery import app
 import pandas as pd
 from core.djangomodule.serializers import OrderPositionSerializer
+from core.djangomodule.general import formatdigit
 
 
 def create_performance(price_data, position, latest_price=False):
@@ -96,6 +97,8 @@ def create_performance(price_data, position, latest_price=False):
     current_pnl_ret = (bot_cash_balance + current_investment_amount -
                        position.investment_amount) / position.investment_amount
     position.bot_cash_balance = round(bot_cash_balance, 2)
+    balance = formatdigit((position.investment_amount /
+                           position.margin) - current_investment_amount)
     position.save()
     digits = max(min(5-len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)
@@ -122,6 +125,7 @@ def create_performance(price_data, position, latest_price=False):
         strike=strike,
         barrier=barrier,
         option_price=option_price,
+        balance=balance,
         order_summary={
             'hedge_shares': hedge_shares
         }
