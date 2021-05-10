@@ -18,11 +18,11 @@ from main_executive import (
 
 if __name__ == "__main__":
     print("Start Process")
-    data_prep_history(urrency_code=["KRW"])
-    data_prep_history(urrency_code=["KRW"])
-    data_prep_history(urrency_code=["KRW"])
-    data_prep_history(urrency_code=["KRW"])
-    data_prep_history(urrency_code=["KRW"])
+    data_prep_history(currency_code=["KRW"])
+    data_prep_history(currency_code=["HKD"])
+    data_prep_history(currency_code=["CNY"])
+    data_prep_history(currency_code=["USD"])
+    data_prep_history(currency_code=["EUR"])
     
     daily_uno_ucdc(currency_code=["KRW"], infer=True)
     daily_uno_ucdc(currency_code=["HKD"], infer=True)
