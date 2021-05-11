@@ -21,7 +21,8 @@ from general.table_name import (
     get_data_vol_surface_inferred_table_name, 
     get_data_vol_surface_table_name,
     get_latest_bot_update_table_name, 
-    get_latest_price_table_name, get_latest_vol_table_name, 
+    get_latest_price_table_name, get_latest_vol_table_name,
+    get_master_ohlcvtr_table_name, 
     get_universe_table_name,
     get_master_tac_table_name
 )
@@ -182,7 +183,7 @@ def get_new_ticker_from_bot_backtest(ticker=None, currency_code=None, ucdc=False
     query += f"left join (select ticker, min(cb.spot_date)::date as uno_min_date, max(cb.spot_date)::date as uno_max_date "
     query += f"from {table_name} cb where cb.spot_date>='{start_date}' group by cb.ticker) result1 on result1.ticker=du.ticker  "
     query += f"left join (select ticker, min(mo.trading_day)::date as ohlctr_min_date, max(mo.trading_day)::date as ohlctr_max_date "
-    query += f"from {get_master_tac_table_name()} mo where mo.trading_day>='{start_date}' group by mo.ticker) result2 "
+    query += f"from {get_master_ohlcvtr_table_name()} mo where mo.trading_day>='{start_date}' and mo.close is not null  group by mo.ticker) result2 "
     query += f"on result2.ticker=du.ticker  where du.is_active=True and "
     if type(ticker) != type(None):
         query += f"du.ticker in {tuple_data(ticker)} and  "
