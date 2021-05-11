@@ -114,12 +114,12 @@ def order_signal(sender, instance, created, **kwargs):
                     if hasattr(perf, key):
                         setattr(perf, key, val)
                     if hasattr(order, key):
-                        if key == "share_num" and instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
+                        if key == "share_num":
                             continue
                         else:
                             setattr(order, key, val)
                     else:
-                        if key == "total_bot_share_num" and instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
+                        if key == "total_bot_share_num":
                             setattr(order, "total_bot_share_num", val)
                 digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
 
