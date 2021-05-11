@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from portfolio.daily_hedge_classic import classic_position_check
 from portfolio.daily_hedge_ucdc import ucdc_position_check
 from portfolio.daily_hedge_uno import uno_position_check
-
+import sys
 class Command(BaseCommand):
     def add_arguments(self, parser):
 
@@ -24,14 +24,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         client = Client.objects.get(client_name="HANWHA")
         topstock = client.client_top_stock.filter(
-            has_position=False, service_type='bot_advisor',currency_code='CNY',capital='large_margin')
+            has_position=False, service_type='bot_advisor')
         topstock_date = [ d['spot_date'] for d in topstock.distinct('spot_date').values('spot_date')]
         for date in topstock_date:
             index = topstock_date.index(date)
-            print(len(topstock_date))
+            print(date.strftime('%Y-%m-%d'))
             if index < len(topstock_date)-1:
                 index+=1
-            print(index)
+            
             topstock_picks = topstock.filter(spot_date=date).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
             for queue in topstock_picks:
                 user = UserClient.objects.get(
@@ -60,8 +60,18 @@ class Command(BaseCommand):
                         print(dates, "go back")
                         price = MasterOhlcvtr.objects.get(
                             ticker=queue.ticker, trading_day=dates).close
-
-                    spot_date = pd.Timestamp(queue.spot_date)
+                    is_trading_day = MasterOhlcvtr.objects.filter(
+                        ticker=queue.ticker, trading_day=queue.spot_date,day_status='trading_day')
+                    if is_trading_day.exists():
+                        spot_date = pd.Timestamp(queue.spot_date)
+                    else:
+                        n=1
+                        while not is_trading_day.exists():
+                            spot_date = pd.to_datetime(queue.spot_date + timedelta(days=n))
+                            print(f'{queue.spot_date} not trading day, forward to {spot_date}')
+                            is_trading_day = MasterOhlcvtr.objects.filter(
+                                            ticker=queue.ticker, trading_day=spot_date,day_status='trading_day')
+                            n+=1
                 else:
                     price = queue.ticker.latest_price_ticker.close
                     spot_date = datetime.now()
