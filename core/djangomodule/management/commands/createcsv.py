@@ -41,7 +41,6 @@ class CsvSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PositionPerformance
-        # fields = "__all__"
         fields = ("service_type", "capital", "bot_id", "option_type", "created",
                   "side", "bot_status", "ticker", "currency",  "current_investment_amount",
                   "entry_price", "price", "max_loss_price", "max_loss_pct",
