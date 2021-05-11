@@ -124,9 +124,10 @@ class Command(BaseCommand):
         dates = [
             str(perf.created) for perf in PositionPerformance.objects.all().order_by("created").distinct("created")]
         curr = [
-
             "CNY",
-
+            "HKD",
+            "USD",
+            "KRW",
         ]
         for created in dates:
             for currency in curr:
