@@ -333,6 +333,7 @@ if __name__ == "__main__":
     populate_ibes_table()
     update_quandl_orats_from_quandl()
 
+    do_function("special_cases_1")
     do_function("master_ohlcvtr_update")
     master_ohlctr_update()
     master_tac_update()
