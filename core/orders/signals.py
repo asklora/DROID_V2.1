@@ -120,7 +120,7 @@ def order_signal(sender, instance, created, **kwargs):
                             setattr(order, key, val)
                     else:
                         if key == "bot_share_num" and instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
-                            setattr(order, "share_num", val)
+                            setattr(order, "bot_share_num", val)
                 digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
 
                 # multiplier bot cash balance

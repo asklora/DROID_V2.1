@@ -1,3 +1,4 @@
+from core.master.models import MasterOhlcvtr
 from django.core.management.base import BaseCommand, CommandError
 
 from core.orders.models import Order, PositionPerformance, OrderPosition
@@ -38,6 +39,10 @@ class CsvSerializer(serializers.ModelSerializer):
     capital = serializers.SerializerMethodField()
     currency = serializers.CharField(
         source="position_uid.ticker.currency_code")
+    index = serializers.SerializerMethodField()
+    index_price = serializers.SerializerMethodField()
+    
+     
 
     class Meta:
         model = PositionPerformance
@@ -49,7 +54,7 @@ class CsvSerializer(serializers.ModelSerializer):
                   "prev_bot_share_num", "bot_share_num",  "hedge_shares", "prev_delta", "delta",
                   "strike", "v1", "v2",
                   "barrier", "expired_in",
-                  "uuid", "position_id",
+                  "uuid", "position_id",'index','index_price'
 
                   )
 
@@ -113,6 +118,17 @@ class CsvSerializer(serializers.ModelSerializer):
             return obj.position_uid.event
         else:
             return "live"
+        
+    def get_index(self, obj):
+        return obj.position_uid.ticker.currency_code.index_ticker
+    
+    
+    def get_index_price(self, obj):
+        if obj.created == datetime.now():
+            return obj.position_uid.ticker.currency_code.index_price
+        price = MasterOhlcvtr.objects.get(trading_day=obj.created,ticker=obj.position_uid.ticker.currency_code.index_ticker)
+        return price.close
+        
 
 
 class Command(BaseCommand):
@@ -123,10 +139,10 @@ class Command(BaseCommand):
         dates = [
             str(perf.created) for perf in PositionPerformance.objects.all().order_by("created").distinct("created")]
         curr = [
-            "CNY",
-            "HKD",
+            # "CNY",
+            # "HKD",
             "USD",
-            "KRW",
+            # "KRW",
         ]
         for created in dates:
             for currency in curr:
