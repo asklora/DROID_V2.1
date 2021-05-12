@@ -102,7 +102,7 @@ def order_signal(sender, instance, created, **kwargs):
                     margin=margin
                 )
                 perf = PositionPerformance.objects.create(
-                    created=pd.Timestamp(order.spot_date),
+                    created=spot_date,
                     position_uid=order,
                     last_spot_price=instance.price,
                     last_live_price=instance.price,

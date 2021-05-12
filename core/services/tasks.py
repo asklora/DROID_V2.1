@@ -2,15 +2,15 @@ from config.celery import app
 from core.universe.models import Universe, UniverseConsolidated
 from core.Clients.models import UniverseClient
 from core.user.models import User
-from main import new_ticker_ingestion
+from main import new_ticker_ingestion,populate_latest_price
 from general.sql_process import do_function
-
-
-@app.task
-def crudinstance(instance_id, model_name, method=None):
-    if method == "delete":
-        model = eval(model_name)
-        model.objects.get(uid=instance_id).delete()
+from core.orders.models import Order, PositionPerformance,OrderPosition
+from core.Clients.models import UserClient, Client
+from datetime import datetime
+from client_test_pick import test_pick, populate_bot_advisor
+from portfolio.daily_hedge_classic import classic_position_check
+from portfolio.daily_hedge_ucdc import ucdc_position_check
+from portfolio.daily_hedge_uno import uno_position_check
 
 
 @app.task
@@ -85,3 +85,82 @@ def get_isin_populate_universe(ticker, user_id):
                 return {"result": f"relation {user.client_user.all()[0].client.client_uid} and {ticker} created"}
     except Exception as e:
         return {'err': str(e)}
+    
+
+@app.task
+def populate_client_top_stock_weekly(currency=None,client_name=None):
+    test_pick(currency_code=[currency])
+    populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="small")
+    populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="large")
+    populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="large_margin")
+
+  
+@app.task
+def order_client_topstock(currency=None,client_name=None):
+    # need to change to client price
+    populate_latest_price(currency_code=[currency])
+    client = Client.objects.get(client_name="HANWHA")
+    topstock = client.client_top_stock.filter(
+        has_position=False,service_type='bot_advisor',currency_code=currency).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
+
+    for queue in topstock:
+        user = UserClient.objects.get(
+            currency_code=queue.currency_code,
+            extra_data__service_type=queue.service_type,
+            extra_data__capital=queue.capital,
+            extra_data__type=queue.bot
+        )
+        # need to change live price
+        price = queue.ticker.latest_price_ticker.close
+        spot_date = datetime.now()
+        if user.extra_data["service_type"] == "bot_advisor":
+            portnum = 8*1.04
+        elif user.extra_data["service_type"] == "bot_tester":
+            if user.extra_data["capital"] == "small":
+                portnum = 4*1.04
+            else:
+                portnum = 8*1.04
+        investment_amount = min(
+            user.user.current_assets / portnum, user.user.balance / 3)
+
+        digits = max(min(5-len(str(int(price))), 2), -1)
+        order = Order.objects.create(
+            ticker=queue.ticker,
+            created=spot_date,
+            price=price,
+            bot_id=queue.bot_id,
+            amount=round(investment_amount, digits),
+            user_id=user.user
+        )
+        if order:
+            order.placed = True
+            order.placed_at = spot_date
+            order.save()
+        if order.status == "pending":
+            order.status = "filled"
+            order.filled_at = spot_date
+            order.save()
+            position_uid = PositionPerformance.objects.get(
+                performance_uid=order.performance_uid).position_uid.position_uid
+            queue.position_uid = position_uid
+            queue.has_position = True
+            queue.save()
+            
+            
+@app.task
+def daily_hedge(currency=None):
+    positions = OrderPosition.objects.filter(is_live=True,ticker__currency_code=currency)
+    for position in positions:
+        position_uid = position.position_uid
+        if (position.bot.is_uno()):
+            uno_position_check.apply_async(
+                args=(position_uid,))
+            
+        elif (position.bot.is_ucdc()):
+            ucdc_position_check.apply_async(
+                args=(position_uid,))
+
+        elif (position.bot.is_classic()):
+            classic_position_check.apply_async(
+                args=(position_uid,))
+               
