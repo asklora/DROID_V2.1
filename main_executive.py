@@ -26,14 +26,14 @@ def training(ticker=None, currency_code=None):
     train_lebeler_model(ticker=ticker, currency_code=currency_code)
 
 # follow currency schedule
-def daily_shcedule_uno_ucdc(ticker=None, currency_code=None, time_to_exp=time_to_expiry, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0, uno=False, ucdc=False, prep=False, statistic=False, infer=True, latest_data=False, ranking=False, backtest=False):
+def daily_shcedule_uno_ucdc(ticker=None, currency_code=None, time_to_exp=time_to_expiry, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0, uno=False, ucdc=False, prep=False, statistic=False, do_infer=True, infer=True, latest_data=False, ranking=False, backtest=False):
     #Data Preparation
     if(prep):
         data_prep_daily(ticker=ticker, currency_code=currency_code)
         data_prep_check_new_ticker(ticker=ticker, currency_code=currency_code)
         do_function("latest_bot_data")
     #Populate Volatility Infer
-    if(infer):
+    if(do_infer):
         infer_daily(ticker=ticker, currency_code=currency_code)
         do_function("latest_vol")
     if(latest_data):

@@ -10,6 +10,7 @@ class Command(BaseCommand):
         parser.add_argument("-uno", "--uno", type=bool, help="uno", default=False)
         parser.add_argument("-ucdc", "--ucdc", type=bool, help="ucdc", default=False)
         parser.add_argument("-classic", "--classic", type=bool, help="classic", default=False)
+        parser.add_argument("-do_infer", "--do_infer", type=bool, help="do_infer", default=False)
         parser.add_argument("-infer", "--infer", type=bool, help="infer", default=False)
         parser.add_argument("-option_maker", "--option_maker", type=bool, help="option_maker", default=False)
         parser.add_argument("-null_filler", "--null_filler", type=bool, help="null_filler", default=False)
@@ -23,6 +24,14 @@ class Command(BaseCommand):
             daily_classic()
         else:
             daily_shcedule_uno_ucdc(currency_code=[options["currency_code"]], uno=options["uno"], 
-            ucdc=options["ucdc"], infer=options["infer"], option_maker=options["option_maker"], 
+            ucdc=options["ucdc"], do_infer=options["do_infer"], infer=options["infer"], option_maker=options["option_maker"], 
             null_filler=options["null_filler"], statistic=options["statistic"], prep=options["prep"], 
             latest_data=options["latest_data"], ranking=options["ranking"], backtest=options["backtest"])
+
+# python manage.py backtest --classic True
+
+# python manage.py backtest --prep True --do_infer True
+# python manage.py backtest --option_maker True --null_filler True --currency_code USD --uno True --infer True
+# python manage.py backtest --option_maker True --null_filler True --currency_code USD --ucdc True --infer True
+# python manage.py backtest --backtest True --ranking True --currency_code USD
+# python manage.py backtest --statistic True
