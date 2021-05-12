@@ -169,7 +169,7 @@ def classic_position_check(position_uid,to_date=None):
                     order.status = "filled"
                     order.filled_at = log_time
                     order.save()
-            print(f"tac {trading_day}-{tac_data.ticker} done")
+            print(f"tac {trading_day}-{tac.ticker} done")
             if status:
                 break
         if(type(trading_day) == datetime):

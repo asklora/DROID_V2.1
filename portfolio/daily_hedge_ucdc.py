@@ -221,7 +221,7 @@ def ucdc_position_check(position_uid,to_date=None):
                     order.status = "filled"
                     order.filled_at = log_time
                     order.save()
-            print(f"tac {trading_day}-{tac_data.ticker} done")
+            print(f"tac {trading_day}-{tac.ticker} done")
             if status:
                 print(f"position end tac")
                 break
