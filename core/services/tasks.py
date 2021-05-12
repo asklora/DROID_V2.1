@@ -34,7 +34,7 @@ app.conf.beat_schedule ={
     },
     'HKD-HEDGE': {
         'task': 'core.services.tasks.daily_hedge',
-        'schedule': crontab(minute=47,hour=HKD_CUR.hedge_schedule.hour, day_of_week="1-5"),
+        'schedule': crontab(minute=21,hour=8, day_of_week="1-5"),
         'kwargs': {"currency":"HKD"},
     },
     'KRW-HEDGE': {
@@ -196,16 +196,12 @@ def daily_hedge(currency=None):
     for position in positions:
         position_uid = position.position_uid
         if (position.bot.is_uno()):
-            uno_position_check.apply_async(
-                args=(position_uid,),queue='droid')
+            uno_position_check.delay(position_uid)
             
         elif (position.bot.is_ucdc()):
-            ucdc_position_check.apply_async(
-                args=(position_uid,),queue='droid')
-
+            ucdc_position_check.delay(position_uid)
         elif (position.bot.is_classic()):
-            classic_position_check.apply_async(
-                args=(position_uid,),queue='droid')
+            classic_position_check.delay(position_uid)
         
             
             

@@ -58,7 +58,7 @@ def create_performance(price_data, position, latest_price=False):
     position.save()
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)
-    if log_time == datetime.now():
+    if log_time.date() == datetime.now().date():
         log_time = datetime.now()
     performance = dict(
         position_uid=str(position.position_uid),
@@ -169,7 +169,7 @@ def classic_position_check(position_uid,to_date=None):
                     order.status = "filled"
                     order.filled_at = log_time
                     order.save()
-            print(f"tac {tac.trading_day} done")
+            print(f"tac {trading_day}-{tac_data.ticker} done")
             if status:
                 break
         if(type(trading_day) == datetime):
