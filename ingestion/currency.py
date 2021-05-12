@@ -29,10 +29,10 @@ def update_currency_price_from_dss():
         upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
         report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
 
-def update_index_price_from_dss():
+def update_index_price_from_dss(currency_code=None):
     print("{} : === Currency Price Ingestion ===".format(datetimeNow()))
     # currency_code=["USD", "KRW", "TWD", "SGD", "GBP", "HKD", "CNY", "EUR"]
-    currencylist = get_active_currency()
+    currencylist = get_active_currency(currency_code=currency_code)
     currencylist = currencylist.drop(columns=["index_price"])
     currency = "/" + currencylist["index_ticker"]
     jsonFileName = "files/file_json/index_price.json"
