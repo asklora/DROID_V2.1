@@ -100,7 +100,7 @@ def create_performance(price_data, position, latest_price=False):
     position.bot_cash_balance = round(bot_cash_balance, 2)
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)
-    if log_time == datetime.now():
+    if log_time.date() == datetime.now().date():
         log_time = datetime.now()
     # not creating performance first, value stored at dict and placed in setup order we can use it later after the order filled
     # see below
@@ -211,7 +211,7 @@ def ucdc_position_check(position_uid,to_date=None):
         
         for tac in tac_data:
             trading_day = tac.trading_day
-            print(f"tac {trading_day} done")
+            
             status, order_id = create_performance(tac, position)
             # position.save()
             if order_id:
@@ -221,6 +221,7 @@ def ucdc_position_check(position_uid,to_date=None):
                     order.status = "filled"
                     order.filled_at = log_time
                     order.save()
+            print(f"tac {trading_day}-{tac.ticker} done")
             if status:
                 print(f"position end tac")
                 break

@@ -2,6 +2,7 @@ from django.db import models
 from core.universe.models import Universe, Currency, Vix
 from psqlextra.manager import PostgresManager
 # from .manager import MasterOhlcvtrManager, DataQuandlManager, DssDataManager, DswsDataManager, DataDividendManager
+from global_vars import buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem
 
 
 class DataDss(models.Model):
@@ -445,3 +446,11 @@ class LatestPrice(models.Model):
 
     def __str__(self):
         return f"{self.ticker.ticker}"
+    
+    # def uno_ask_price(self):
+    # def uno_bid_price(self):
+        
+    
+    # def ucdc_ask_price(self):
+    # def ucdc_bid_price(self):
+        
