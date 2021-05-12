@@ -6,9 +6,13 @@ from core.Clients.models import UserClient, ClientTopStock
 import pandas as pd
 from core.djangomodule.serializers import CsvSerializer
 
+import io
 
-        
 
+def export_csv(df):
+  with io.StringIO() as buffer:
+    df.to_csv(buffer,index=False)
+    return buffer.getvalue()
 
 class Command(BaseCommand):
 
@@ -31,5 +35,7 @@ class Command(BaseCommand):
                 if perf.exists():
                     df = pd.DataFrame(CsvSerializer(perf, many=True).data)
                     df = df.fillna(0)
-                    df.to_csv(
-                        f"files/file_csv/hanwha/{currency}/{currency}_{created}_asklora.csv", index=False)
+                    # df.to_csv(
+                    #     f"files/file_csv/hanwha/{currency}/{currency}_{created}_asklora.csv", index=False)
+                    files = export_csv(df)
+                    print(files)

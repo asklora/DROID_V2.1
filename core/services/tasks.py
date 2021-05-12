@@ -2,7 +2,8 @@ from config.celery import app
 from core.universe.models import Universe, UniverseConsolidated
 from core.Clients.models import UniverseClient
 from core.user.models import User
-from main import new_ticker_ingestion,populate_latest_price,
+from core.master.models import Currency
+from main import new_ticker_ingestion,populate_latest_price,update_index_price_from_dss
 from general.sql_process import do_function
 from core.orders.models import Order, PositionPerformance,OrderPosition
 from core.Clients.models import UserClient, Client
@@ -13,9 +14,45 @@ from portfolio.daily_hedge_ucdc import ucdc_position_check
 from portfolio.daily_hedge_uno import uno_position_check
 import pandas as pd
 from core.djangomodule.serializers import CsvSerializer
+from django.core.mail import send_mail, EmailMessage
+from celery.schedules import crontab
+
+
+import io
 
 
 
+USD_CUR=Currency.objects.get(currency_code="USD")
+HKD_CUR=Currency.objects.get(currency_code="HKD")
+KRW_CUR=Currency.objects.get(currency_code="KRW")
+CNY_CUR=Currency.objects.get(currency_code="CNY")
+app.conf.beat_schedule ={
+    'USD-HEDGE': {
+        'task': 'core.services.tasks.daily_hedge',
+        'schedule': crontab(minute=USD_CUR.hedge_schedule.minute,hour=USD_CUR.hedge_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency":"USD"},
+    },
+    'HKD-HEDGE': {
+        'task': 'core.services.tasks.daily_hedge',
+        'schedule': crontab(minute=47,hour=HKD_CUR.hedge_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency":"HKD"},
+    },
+    'KRW-HEDGE': {
+        'task': 'core.services.tasks.daily_hedge',
+        'schedule': crontab(minute=KRW_CUR.hedge_schedule.minute,hour=KRW_CUR.hedge_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency":"KRW"},
+    },
+    'CNY-HEDGE': {
+        'task': 'core.services.tasks.daily_hedge',
+        'schedule': crontab(minute=CNY_CUR.hedge_schedule.minute,hour=CNY_CUR.hedge_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency":"CNY"},
+    },
+    
+}
+def export_csv(df):
+  with io.StringIO() as buffer:
+    df.to_csv(buffer,index=False)
+    return buffer.getvalue()
 @app.task
 def get_isin_populate_universe(ticker, user_id):
     user = User.objects.get(id=user_id)
@@ -102,6 +139,7 @@ def populate_client_top_stock_weekly(currency=None,client_name=None):
 def order_client_topstock(currency=None,client_name=None):
     # need to change to client price
     populate_latest_price(currency_code=[currency])
+    update_index_price_from_dss(currency_code=[currency])
     client = Client.objects.get(client_name="HANWHA")
     topstock = client.client_top_stock.filter(
         has_position=False,service_type='bot_advisor',currency_code=currency).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
@@ -152,20 +190,23 @@ def order_client_topstock(currency=None,client_name=None):
             
 @app.task
 def daily_hedge(currency=None):
+    populate_latest_price(currency_code=[currency])
+    update_index_price_from_dss(currency_code=[currency])
     positions = OrderPosition.objects.filter(is_live=True,ticker__currency_code=currency)
     for position in positions:
         position_uid = position.position_uid
         if (position.bot.is_uno()):
             uno_position_check.apply_async(
-                args=(position_uid,))
+                args=(position_uid,),queue='droid')
             
         elif (position.bot.is_ucdc()):
             ucdc_position_check.apply_async(
-                args=(position_uid,))
+                args=(position_uid,),queue='droid')
 
         elif (position.bot.is_classic()):
             classic_position_check.apply_async(
-                args=(position_uid,))
+                args=(position_uid,),queue='droid')
+        
             
             
 @app.task
@@ -177,4 +218,15 @@ def send_csv_hanwha(currency=None,client_name=None):
     if perf.exists():
         df = pd.DataFrame(CsvSerializer(perf, many=True).data)
         df = df.fillna(0)
+        csv = export_csv(df)
+        draft_email = EmailMessage(
+            'hedge',
+            'asklora csv',
+            'asklora@loratechai.com',
+            ['ribonred@gmail.com'],
+        )
+       
+        draft_email.attach(f"{currency}_{datetime.now()}_asklora.csv", csv, mimetype="text/csv")
+        draft_email.send()
+        # csv = df.to_csv(f"files/file_csv/hanwha/{currency}/{currency}_{datetime.now()}_asklora.csv", index=False)
                
