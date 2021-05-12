@@ -2,7 +2,7 @@ from config.celery import app
 from core.universe.models import Universe, UniverseConsolidated
 from core.Clients.models import UniverseClient
 from core.user.models import User
-from main import new_ticker_ingestion,populate_latest_price
+from main import new_ticker_ingestion,populate_latest_price,
 from general.sql_process import do_function
 from core.orders.models import Order, PositionPerformance,OrderPosition
 from core.Clients.models import UserClient, Client
@@ -11,6 +11,9 @@ from client_test_pick import test_pick, populate_bot_advisor
 from portfolio.daily_hedge_classic import classic_position_check
 from portfolio.daily_hedge_ucdc import ucdc_position_check
 from portfolio.daily_hedge_uno import uno_position_check
+import pandas as pd
+from core.djangomodule.serializers import CsvSerializer
+
 
 
 @app.task
@@ -163,4 +166,15 @@ def daily_hedge(currency=None):
         elif (position.bot.is_classic()):
             classic_position_check.apply_async(
                 args=(position_uid,))
+            
+            
+@app.task
+def send_csv_hanwha(currency=None,client_name=None):
+    hanwha = [user["user"] for user in UserClient.objects.filter(
+            client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
+    perf = PositionPerformance.objects.filter(
+                    position_uid__user_id__in=hanwha, created=datetime.now().date(), position_uid__ticker__currency_code=currency).order_by("created")
+    if perf.exists():
+        df = pd.DataFrame(CsvSerializer(perf, many=True).data)
+        df = df.fillna(0)
                
