@@ -3,7 +3,7 @@ from core.universe.models import Universe, UniverseConsolidated
 from core.Clients.models import UniverseClient
 from core.user.models import User
 from core.master.models import Currency
-from main import new_ticker_ingestion,populate_latest_price,update_index_price_from_dss
+from main import new_ticker_ingestion,populate_latest_price,update_index_price_from_dss,populate_intraday_latest_price
 from general.sql_process import do_function
 from core.orders.models import Order, PositionPerformance,OrderPosition
 from core.Clients.models import UserClient, Client
@@ -34,7 +34,7 @@ app.conf.beat_schedule ={
     },
     'HKD-HEDGE': {
         'task': 'core.services.tasks.daily_hedge',
-        'schedule': crontab(minute=21,hour=8, day_of_week="1-5"),
+        'schedule': crontab(minute=HKD_CUR.hedge_schedule.minute,hour=HKD_CUR.hedge_schedule.hour, day_of_week="1-5"),
         'kwargs': {"currency":"HKD"},
     },
     'KRW-HEDGE': {
@@ -138,12 +138,11 @@ def populate_client_top_stock_weekly(currency=None,client_name=None):
 @app.task
 def order_client_topstock(currency=None,client_name=None):
     # need to change to client price
-    populate_latest_price(currency_code=[currency])
-    update_index_price_from_dss(currency_code=[currency])
+    populate_intraday_latest_price(currency_code=[currency])
     client = Client.objects.get(client_name="HANWHA")
     topstock = client.client_top_stock.filter(
         has_position=False,service_type='bot_advisor',currency_code=currency).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
-
+    pos_list=[]
     for queue in topstock:
         user = UserClient.objects.get(
             currency_code=queue.currency_code,
@@ -186,43 +185,66 @@ def order_client_topstock(currency=None,client_name=None):
             queue.position_uid = position_uid
             queue.has_position = True
             queue.save()
+            pos_list.append(str(order.order_uid))
+    send_csv_hanwha.delay(currency=currency,new={'pos_list':pos_list})
             
             
 @app.task
 def daily_hedge(currency=None):
-    populate_latest_price(currency_code=[currency])
+    populate_intraday_latest_price(currency_code=[currency])
     update_index_price_from_dss(currency_code=[currency])
     positions = OrderPosition.objects.filter(is_live=True,ticker__currency_code=currency)
     for position in positions:
         position_uid = position.position_uid
         if (position.bot.is_uno()):
-            uno_position_check.delay(position_uid)
+            uno_position_check(position_uid)
             
         elif (position.bot.is_ucdc()):
-            ucdc_position_check.delay(position_uid)
+            ucdc_position_check(position_uid)
         elif (position.bot.is_classic()):
-            classic_position_check.delay(position_uid)
+            classic_position_check(position_uid)
+    send_csv_hanwha.delay(currency=currency)
+    return {'result':f'hedge {currency} done'}
         
             
             
 @app.task
-def send_csv_hanwha(currency=None,client_name=None):
+def send_csv_hanwha(currency=None,client_name=None,new=None):
     hanwha = [user["user"] for user in UserClient.objects.filter(
             client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
-    perf = PositionPerformance.objects.filter(
-                    position_uid__user_id__in=hanwha, created=datetime.now().date(), position_uid__ticker__currency_code=currency).order_by("created")
+    if new:
+        print(new['pos_list'])
+        perf = PositionPerformance.objects.filter(order_uid__in=new['pos_list']).order_by("created")
+    else:
+        perf = PositionPerformance.objects.filter(
+                        position_uid__user_id__in=hanwha, created__gte=datetime.now().date(), position_uid__ticker__currency_code=currency).order_by("created")
+        
+
     if perf.exists():
         df = pd.DataFrame(CsvSerializer(perf, many=True).data)
         df = df.fillna(0)
+        hanwha_df = df.drop(columns=['prev_delta', 'delta', 'v1', 'v2', 'uuid'])
         csv = export_csv(df)
+        hanwha_csv = export_csv(hanwha_df)
+        if new:
+            subject = 'new bot pick'
+        else:
+            subject = 'hedge'
         draft_email = EmailMessage(
-            'hedge',
+            subject,
             'asklora csv',
             'asklora@loratechai.com',
-            ['ribonred@gmail.com'],
+            ['rede.akbar@loratechai.com','stepchoi@loratechai.com','joseph.chang@loratechai.com'],
         )
-       
+        hanwha_email = EmailMessage(
+            subject,
+            'asklora csv',
+            'asklora@loratechai.com',
+            ['rede.akbar@loratechai.com','stepchoi@loratechai.com','nick.choi@loratechai.com'],
+        )
+        hanwha_email.attach(f"{currency}_{datetime.now()}_asklora.csv", hanwha_csv, mimetype="text/csv")
         draft_email.attach(f"{currency}_{datetime.now()}_asklora.csv", csv, mimetype="text/csv")
         draft_email.send()
-        # csv = df.to_csv(f"files/file_csv/hanwha/{currency}/{currency}_{datetime.now()}_asklora.csv", index=False)
+        hanwha_email.send()
+    return {'result':f'send email {currency} done'}
                
