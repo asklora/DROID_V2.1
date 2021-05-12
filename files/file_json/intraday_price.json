@@ -3,9 +3,14 @@
         "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
         "ContentFieldNames": [
             "RIC",
-            "Last Update Time",
+            "Bid Price",
             "Ask Price",
-            "Bid Price"
+            "Open Price",
+            "High Price",
+            "Low Price",
+            "Trade Date",
+            "Last Price",
+            "Last Update Time"
         ],
         "IdentifierList": {
             "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",

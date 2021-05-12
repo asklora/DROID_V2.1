@@ -468,3 +468,54 @@ def populate_latest_price(ticker=None, currency_code=None):
             clean_latest_price()
             report_to_slack("{} : === {} Latest Price Updated ===".format(dateNow(), currency_code))
             split_order_and_performance(ticker=ticker, currency_code=currency_code)
+
+def populate_intraday_latest_price(ticker=None, currency_code=None):
+    jsonFileName = "files/file_json/intraday_price.json"
+    start_date = backdate_by_day(1)
+    end_date = dateNow()
+    latest_price = get_latest_price_data(ticker=ticker, currency_code=currency_code)
+    latest_price = latest_price[["ticker", "classic_vol", "capital_change"]]
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    ticker = "/" + universe["ticker"]
+    data = get_data_from_dss("start_date", "end_date", ticker, jsonFileName, report=REPORT_INTRADAY)
+    percentage_change =  get_yesterday_close_price(ticker=universe["ticker"], currency_code=currency_code)
+    data  =data.drop(columns=["IdentifierType", "Identifier"])
+    print(data)
+    if(len(data) > 0):
+        data = data.rename(columns={
+            "RIC": "ticker",
+            "Bid Price": "intraday_bid",
+            "Ask Price": "intraday_ask",
+            "Open Price": "open",
+            "High Price": "high",
+            "Low Price": "low",
+            "Last Price": "close",
+            "Trade Date": "last_date",
+            "Last Update Time": "intraday_time"
+        })
+        data["ticker"]=data["ticker"].str.replace("/", "", regex=True)
+        data["ticker"]=data["ticker"].str.strip()
+        data = pd.DataFrame(data)
+        holiday = data.copy()
+        holiday = data.dropna(subset=["close"])
+        if(len(holiday) == 0):
+            report_to_slack("{} : === {} is Holiday. Latest Price Not Updated ===".format(dateNow(), currency_code))
+            return False
+        data["last_date"] = pd.to_datetime(data["last_date"])
+        data["intraday_time"] = pd.to_datetime(data["intraday_time"])
+        result = data.merge(percentage_change, how="left", on="ticker")
+        result = result.merge(latest_price, on=["ticker"], how="left")
+        result["yesterday_close"] = np.where(result["yesterday_close"].isnull(), 0, result["yesterday_close"])
+        result["latest_price_change"] = round(((result["close"] - result["yesterday_close"]) / result["yesterday_close"]) * 100, 4)
+        result = result.drop(columns=["yesterday_close", "trading_day"])
+        result = result.dropna(subset=["close"])
+        result = remove_null(result, "latest_price_change")
+        if(len(result) > 0):
+            result["intraday_date"] = result["last_date"]
+            result = result.sort_values(by="last_date", ascending=True)
+            result = result.drop_duplicates(subset="ticker", keep="last")
+            print(result)
+            upsert_data_to_database(data, get_latest_price_table_name(), "ticker", how="update", Text=True)
+            clean_latest_price()
+            report_to_slack("{} : === {} Latest Price Updated ===".format(dateNow(), currency_code))
+            # split_order_and_performance(ticker=ticker, currency_code=currency_code)
