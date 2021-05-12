@@ -343,5 +343,5 @@ if __name__ == "__main__":
     dividend_daily_update()
     interest_daily_update()
     update_utc_offset_from_timezone()
-    update_index_price_from_dss()
+    update_index_price_from_dss(currency_code=["USD"])
     print("Done")
