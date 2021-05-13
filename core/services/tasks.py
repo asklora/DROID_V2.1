@@ -160,7 +160,7 @@ def populate_client_top_stock_weekly(currency=None,client_name=None):
   
 @app.task
 def order_client_topstock(currency=None,client_name=None):
-    # need to change to client price
+    # need to change to client prices
     populate_intraday_latest_price(currency_code=[currency])
     client = Client.objects.get(client_name="HANWHA")
     topstock = client.client_top_stock.filter(
