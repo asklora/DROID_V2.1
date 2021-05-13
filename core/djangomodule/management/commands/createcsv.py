@@ -35,7 +35,7 @@ class Command(BaseCommand):
                 if perf.exists():
                     df = pd.DataFrame(CsvSerializer(perf, many=True).data)
                     df = df.fillna(0)
-                    # df.to_csv(
-                    #     f"files/file_csv/hanwha/{currency}/{currency}_{created}_asklora.csv", index=False)
-                    files = export_csv(df)
-                    print(files)
+                    df.to_csv(
+                        f"files/file_csv/hanwha/{currency}/{currency}_{created}_asklora.csv", index=False)
+                    # files = export_csv(df)
+                    # print(files)

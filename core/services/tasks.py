@@ -47,6 +47,26 @@ app.conf.beat_schedule ={
         'schedule': crontab(minute=CNY_CUR.hedge_schedule.minute,hour=CNY_CUR.hedge_schedule.hour, day_of_week="1-5"),
         'kwargs': {"currency":"CNY"},
     },
+     'USD-POPULATE-PICK': {
+        'task': 'core.services.tasks.populate_client_top_stock_weekly',
+        'schedule': crontab(minute=USD_CUR.top_stock_schedule.minute,hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency":"USD"},
+    },
+    'HKD-POPULATE-PICK': {
+        'task': 'core.services.tasks.populate_client_top_stock_weekly',
+        'schedule': crontab(minute=HKD_CUR.top_stock_schedule.minute,hour=HKD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency":"HKD"},
+    },
+    'KRW-POPULATE-PICK': {
+        'task': 'core.services.tasks.populate_client_top_stock_weekly',
+        'schedule': crontab(minute=KRW_CUR.top_stock_schedule.minute,hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency":"KRW"},
+    },
+    'CNY-POPULATE-PICK': {
+        'task': 'core.services.tasks.populate_client_top_stock_weekly',
+        'schedule': crontab(minute=CNY_CUR.top_stock_schedule.minute,hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency":"CNY"},
+    },
     
 }
 def export_csv(df):
@@ -129,11 +149,15 @@ def get_isin_populate_universe(ticker, user_id):
 
 @app.task
 def populate_client_top_stock_weekly(currency=None,client_name=None):
-    test_pick(currency_code=[currency])
-    populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="small")
-    populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="large")
-    populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="large_margin")
-
+    try:
+        test_pick(currency_code=[currency])
+        populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="small")
+        populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="large")
+        populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="large_margin")
+        order_client_topstock(currency=currency)
+    except Exception as e:
+        return {'err':str(e)}
+    return {'result':f'populate and order {currency} done'}
   
 @app.task
 def order_client_topstock(currency=None,client_name=None):
