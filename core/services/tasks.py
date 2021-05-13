@@ -149,14 +149,13 @@ def get_isin_populate_universe(ticker, user_id):
 
 @app.task
 def populate_client_top_stock_weekly(currency=None,client_name=None):
-    try:
-        test_pick(currency_code=[currency])
-        populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="small")
-        populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="large")
-        populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="large_margin")
-        order_client_topstock(currency=currency)
-    except Exception as e:
-        return {'err':str(e)}
+ 
+    test_pick(currency_code=[currency])
+    populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="small")
+    populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="large")
+    populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="large_margin")
+    order_client_topstock(currency=currency)
+    
     return {'result':f'populate and order {currency} done'}
   
 @app.task
@@ -237,7 +236,6 @@ def send_csv_hanwha(currency=None,client_name=None,new=None):
     hanwha = [user["user"] for user in UserClient.objects.filter(
             client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
     if new:
-        print(new['pos_list'])
         perf = PositionPerformance.objects.filter(order_uid__in=new['pos_list']).order_by("created")
     else:
         perf = PositionPerformance.objects.filter(
@@ -266,8 +264,9 @@ def send_csv_hanwha(currency=None,client_name=None,new=None):
             'asklora@loratechai.com',
             ['rede.akbar@loratechai.com','stepchoi@loratechai.com','nick.choi@loratechai.com'],
         )
-        hanwha_email.attach(f"{currency}_{datetime.now()}_asklora.csv", hanwha_csv, mimetype="text/csv")
-        draft_email.attach(f"{currency}_{datetime.now()}_asklora.csv", csv, mimetype="text/csv")
+        now =datetime.now()
+        hanwha_email.attach(f"{currency}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
+        draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
         draft_email.send()
         hanwha_email.send()
     return {'result':f'send email {currency} done'}
