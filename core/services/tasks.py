@@ -191,14 +191,14 @@ def order_client_topstock(currency=None,client_name=None):
             
 @app.task
 def daily_hedge(currency=None):
-    populate_intraday_latest_price(currency_code=[currency])
     update_index_price_from_dss(currency_code=[currency])
+    populate_intraday_latest_price(currency_code=[currency])
+    
     positions = OrderPosition.objects.filter(is_live=True,ticker__currency_code=currency)
     for position in positions:
         position_uid = position.position_uid
         if (position.bot.is_uno()):
             uno_position_check(position_uid)
-            
         elif (position.bot.is_ucdc()):
             ucdc_position_check(position_uid)
         elif (position.bot.is_classic()):
