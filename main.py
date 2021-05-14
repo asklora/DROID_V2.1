@@ -328,8 +328,8 @@ def update_universe_data(ticker=None):
 
 if __name__ == "__main__":
     from migrate import weekly_migrations, daily_migrations
-    # populate_latest_price(ticker=["AMD.O"])
-    populate_intraday_latest_price(ticker=["AMD.O"])
+    populate_latest_price()
+    populate_intraday_latest_price()
     # do_function("universe_populate")
     # daily_migrations()
     # populate_macro_table()
