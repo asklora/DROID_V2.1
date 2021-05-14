@@ -8,6 +8,7 @@ from main import populate_intraday_latest_price
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
+        # populate_intraday_latest_price(currency_code="USD")
         populate_latest_price(currency_code="USD")
 #         send_csv_hanwha(currency=currency,new={'pos_list':[
 #             '5553f811-f79f-4dcd-bbf2-fc7d3662213d',
@@ -17,6 +18,6 @@ class Command(BaseCommand):
 #             '5142bc48-dd46-41e6-8381-7b25860988c9',
 #             'd3521289-3d1f-48f0-85d3-67410afcc545'
 # ]})
-        daily_hedge(currency="USD")
+        # daily_hedge(currency="USD")
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
