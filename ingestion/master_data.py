@@ -468,21 +468,21 @@ def populate_latest_price(ticker=None, currency_code=None):
             upsert_data_to_database(data, get_latest_price_table_name(), "ticker", how="update", Text=True)
             clean_latest_price()
             report_to_slack("{} : === {} Latest Price Updated ===".format(dateNow(), currency_code))
-            split_order_and_performance(ticker=ticker, currency_code=currency_code)
+            # split_order_and_performance(ticker=ticker, currency_code=currency_code)
 
-        # latest_price = latest_price.loc[~latest_price["ticker"].isin(result["ticker"].tolist())]
-        # if(len(latest_price) > 0):
-        #     print(latest_price)
-        #     latest_price = latest_price.merge(percentage_change, how="left", on="ticker")
-        #     latest_price["close"] = latest_price["yesterday_close"]
-        #     latest_price["high"] = latest_price["yesterday_close"]
-        #     latest_price["low"] = latest_price["yesterday_close"]
-        #     latest_price["open"] = latest_price["yesterday_close"]
-        #     latest_price["intraday_bid"] = latest_price["yesterday_close"]
-        #     latest_price["intraday_ask"] = latest_price["yesterday_close"]
-        #     latest_price["last_date"] = str_to_date(dateNow())
-        #     print(latest_price)
-        #     upsert_data_to_database(data, get_latest_price_table_name(), "ticker", how="update", Text=True)
+        latest_price = latest_price.loc[~latest_price["ticker"].isin(result["ticker"].tolist())]
+        if(len(latest_price) > 0):
+            print(latest_price)
+            latest_price = latest_price.merge(percentage_change, how="left", on="ticker")
+            latest_price["close"] = latest_price["yesterday_close"]
+            latest_price["high"] = latest_price["yesterday_close"]
+            latest_price["low"] = latest_price["yesterday_close"]
+            latest_price["open"] = latest_price["yesterday_close"]
+            latest_price["intraday_bid"] = latest_price["yesterday_close"]
+            latest_price["intraday_ask"] = latest_price["yesterday_close"]
+            latest_price["last_date"] = str_to_date(dateNow())
+            print(latest_price)
+            upsert_data_to_database(data, get_latest_price_table_name(), "ticker", how="update", Text=True)
 
 def populate_intraday_latest_price(ticker=None, currency_code=None):
     jsonFileName = "files/file_json/intraday_price.json"
