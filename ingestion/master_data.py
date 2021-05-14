@@ -468,7 +468,7 @@ def populate_latest_price(ticker=None, currency_code=None):
             upsert_data_to_database(data, get_latest_price_table_name(), "ticker", how="update", Text=True)
             clean_latest_price()
             report_to_slack("{} : === {} Latest Price Updated ===".format(dateNow(), currency_code))
-            split_order_and_performance(ticker=ticker, currency_code=currency_code)
+            # split_order_and_performance(ticker=ticker, currency_code=currency_code)
 
         latest_price = latest_price.loc[~latest_price["ticker"].isin(result["ticker"].tolist())]
         if(len(latest_price) > 0):
