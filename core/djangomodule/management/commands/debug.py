@@ -18,7 +18,7 @@ class Command(BaseCommand):
                                        109,
                                        110], created__gte=datetime.now().date(), position_uid__ticker__currency_code="KRW").order_by("created")
         perf = perf.exclude(order_uid__in=orders)
-        # print(perf.count())
+        print(perf.count())
         # populate_latest_price(currency_code="KRW")
 #         send_csv_hanwha(currency=currency,new={'pos_list':[
 #             '5553f811-f79f-4dcd-bbf2-fc7d3662213d',
