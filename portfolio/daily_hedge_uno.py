@@ -198,7 +198,7 @@ def create_performance(price_data, position, latest_price=False):
 
 
 @app.task
-def uno_position_check(position_uid, to_date=None, debug=False):
+def uno_position_check(position_uid, to_date=None):
     try:
         position = OrderPosition.objects.get(
             position_uid=position_uid, is_live=True)
@@ -218,6 +218,7 @@ def uno_position_check(position_uid, to_date=None, debug=False):
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day
+
             status, order_id = create_performance(tac, position)
             # this is for debug only, make function this can be on/off
             if order_id:
