@@ -151,9 +151,9 @@ def get_isin_populate_universe(ticker, user_id):
 
 @app.task
 def populate_client_top_stock_weekly(currency=None, client_name=None):
-    client = Client.objects.get(client_name="HANWHA")
-    topstock = client.client_top_stock.filter(
-        has_position=False, service_type='bot_advisor', currency_code=currency).distinct('spot_date')
+    # client = Client.objects.get(client_name="HANWHA")
+    # topstock = client.client_top_stock.filter(
+    #     has_position=False, service_type='bot_advisor', currency_code=currency).distinct('spot_date')
     test_pick(currency_code=[currency])
     populate_bot_advisor(
         currency_code=[currency], client_name="HANWHA", capital="small")
@@ -255,6 +255,8 @@ def send_csv_hanwha(currency=None, client_name=None, new=None):
         perf = perf.exclude(order_uid__in=orders)
 
     if perf.exists():
+        now = datetime.now()
+        datenow = now.date()
         df = pd.DataFrame(CsvSerializer(perf, many=True).data)
         df = df.fillna(0)
         hanwha_df = df.drop(
@@ -267,18 +269,18 @@ def send_csv_hanwha(currency=None, client_name=None, new=None):
             subject = 'hedge'
         draft_email = EmailMessage(
             subject,
-            'asklora csv',
+            f'asklora csv {currency} - {datenow}',
             'asklora@loratechai.com',
-            ['rede.akbar@loratechai.com', 'stepchoi@loratechai.com'],
+            ['rede.akbar@loratechai.com', 'stepchoi@loratechai.com', 'joseph.chang@loratechai.com',
+                'john.kim@loratechai.com',  'kenson.lau@loratechai.com']
         )
         hanwha_email = EmailMessage(
             subject,
-            'asklora csv',
+            f'asklora csv {currency} - {datenow}',
             'asklora@loratechai.com',
             ['200200648@hanwha.com', 'noblerain72@hanwha.com',
                 'nick.choi@loratechai.com'],
         )
-        now = datetime.now()
         hanwha_email.attach(f"{currency}_{now}_asklora.csv",
                             hanwha_csv, mimetype="text/csv")
         draft_email.attach(f"{currency}_{now}_asklora.csv",
