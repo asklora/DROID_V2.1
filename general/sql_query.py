@@ -114,8 +114,12 @@ def get_active_universe_consolidated_by_field(isin=False, cusip=False, sedol=Fal
     data = read_query(query, table=universe_consolidated_table)
     return data
 
-def get_all_universe():
-    query = f"select * from {universe_table} order by ticker"
+def get_all_universe(ticker=None, currency_code=None):
+    query = f"select * from {universe_table} "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += f"and " + check
+    query += f" order by ticker"
     data = read_query(query, table=universe_table)
     return data
 
