@@ -3,9 +3,9 @@ from core.universe.models import Universe, UniverseConsolidated
 from core.Clients.models import UniverseClient
 from core.user.models import User
 from core.master.models import Currency
-from main import new_ticker_ingestion,populate_latest_price,update_index_price_from_dss,populate_intraday_latest_price
+from main import new_ticker_ingestion, populate_latest_price, update_index_price_from_dss, populate_intraday_latest_price
 from general.sql_process import do_function
-from core.orders.models import Order, PositionPerformance,OrderPosition
+from core.orders.models import Order, PositionPerformance, OrderPosition
 from core.Clients.models import UserClient, Client
 from datetime import datetime
 from client_test_pick import test_pick, populate_bot_advisor
@@ -20,59 +20,61 @@ from celery.schedules import crontab
 
 import io
 
-
-
-USD_CUR=Currency.objects.get(currency_code="USD")
-HKD_CUR=Currency.objects.get(currency_code="HKD")
-KRW_CUR=Currency.objects.get(currency_code="KRW")
-CNY_CUR=Currency.objects.get(currency_code="CNY")
-app.conf.beat_schedule ={
+USD_CUR = Currency.objects.get(currency_code="USD")
+HKD_CUR = Currency.objects.get(currency_code="HKD")
+KRW_CUR = Currency.objects.get(currency_code="KRW")
+CNY_CUR = Currency.objects.get(currency_code="CNY")
+app.conf.beat_schedule = {
     'USD-HEDGE': {
         'task': 'core.services.tasks.daily_hedge',
-        'schedule': crontab(minute=USD_CUR.hedge_schedule.minute,hour=USD_CUR.hedge_schedule.hour, day_of_week="1-5"),
-        'kwargs': {"currency":"USD"},
+        'schedule': crontab(minute=USD_CUR.hedge_schedule.minute, hour=USD_CUR.hedge_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency": "USD"},
     },
     'HKD-HEDGE': {
         'task': 'core.services.tasks.daily_hedge',
-        'schedule': crontab(minute=HKD_CUR.hedge_schedule.minute,hour=HKD_CUR.hedge_schedule.hour, day_of_week="1-5"),
-        'kwargs': {"currency":"HKD"},
+        'schedule': crontab(minute=HKD_CUR.hedge_schedule.minute, hour=HKD_CUR.hedge_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency": "HKD"},
     },
     'KRW-HEDGE': {
         'task': 'core.services.tasks.daily_hedge',
-        'schedule': crontab(minute=KRW_CUR.hedge_schedule.minute,hour=KRW_CUR.hedge_schedule.hour, day_of_week="1-5"),
-        'kwargs': {"currency":"KRW"},
+        'schedule': crontab(minute=KRW_CUR.hedge_schedule.minute, hour=KRW_CUR.hedge_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency": "KRW"},
     },
     'CNY-HEDGE': {
         'task': 'core.services.tasks.daily_hedge',
-        'schedule': crontab(minute=CNY_CUR.hedge_schedule.minute,hour=CNY_CUR.hedge_schedule.hour, day_of_week="1-5"),
-        'kwargs': {"currency":"CNY"},
+        'schedule': crontab(minute=CNY_CUR.hedge_schedule.minute, hour=CNY_CUR.hedge_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency": "CNY"},
     },
-     'USD-POPULATE-PICK': {
+    'USD-POPULATE-PICK': {
         'task': 'core.services.tasks.populate_client_top_stock_weekly',
-        'schedule': crontab(minute=USD_CUR.top_stock_schedule.minute,hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-        'kwargs': {"currency":"USD"},
+        'schedule': crontab(minute=USD_CUR.top_stock_schedule.minute, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency": "USD"},
     },
     'HKD-POPULATE-PICK': {
         'task': 'core.services.tasks.populate_client_top_stock_weekly',
-        'schedule': crontab(minute=HKD_CUR.top_stock_schedule.minute,hour=HKD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-        'kwargs': {"currency":"HKD"},
+        'schedule': crontab(minute=HKD_CUR.top_stock_schedule.minute, hour=HKD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency": "HKD"},
     },
     'KRW-POPULATE-PICK': {
         'task': 'core.services.tasks.populate_client_top_stock_weekly',
-        'schedule': crontab(minute=KRW_CUR.top_stock_schedule.minute,hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-        'kwargs': {"currency":"KRW"},
+        'schedule': crontab(minute=KRW_CUR.top_stock_schedule.minute, hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency": "KRW"},
     },
     'CNY-POPULATE-PICK': {
         'task': 'core.services.tasks.populate_client_top_stock_weekly',
-        'schedule': crontab(minute=CNY_CUR.top_stock_schedule.minute,hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-        'kwargs': {"currency":"CNY"},
+        'schedule': crontab(minute=CNY_CUR.top_stock_schedule.minute, hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency": "CNY"},
     },
-    
+
 }
+
+
 def export_csv(df):
-  with io.StringIO() as buffer:
-    df.to_csv(buffer,index=False)
-    return buffer.getvalue()
+    with io.StringIO() as buffer:
+        df.to_csv(buffer, index=False)
+        return buffer.getvalue()
+
+
 @app.task
 def get_isin_populate_universe(ticker, user_id):
     user = User.objects.get(id=user_id)
@@ -145,27 +147,31 @@ def get_isin_populate_universe(ticker, user_id):
                 return {"result": f"relation {user.client_user.all()[0].client.client_uid} and {ticker} created"}
     except Exception as e:
         return {'err': str(e)}
-    
+
 
 @app.task
-def populate_client_top_stock_weekly(currency=None,client_name=None):
- 
+def populate_client_top_stock_weekly(currency=None, client_name=None):
+
     test_pick(currency_code=[currency])
-    populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="small")
-    populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="large")
-    populate_bot_advisor(currency_code=[currency], client_name="HANWHA", capital="large_margin")
+    populate_bot_advisor(
+        currency_code=[currency], client_name="HANWHA", capital="small")
+    populate_bot_advisor(
+        currency_code=[currency], client_name="HANWHA", capital="large")
+    populate_bot_advisor(
+        currency_code=[currency], client_name="HANWHA", capital="large_margin")
     order_client_topstock(currency=currency)
-    
-    return {'result':f'populate and order {currency} done'}
-  
+
+    return {'result': f'populate and order {currency} done'}
+
+
 @app.task
-def order_client_topstock(currency=None,client_name=None):
+def order_client_topstock(currency=None, client_name=None):
     # need to change to client prices
     populate_intraday_latest_price(currency_code=[currency])
     client = Client.objects.get(client_name="HANWHA")
     topstock = client.client_top_stock.filter(
-        has_position=False,service_type='bot_advisor',currency_code=currency).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
-    pos_list=[]
+        has_position=False, service_type='bot_advisor', currency_code=currency).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
+    pos_list = []
     for queue in topstock:
         user = UserClient.objects.get(
             currency_code=queue.currency_code,
@@ -209,15 +215,16 @@ def order_client_topstock(currency=None,client_name=None):
             queue.has_position = True
             queue.save()
             pos_list.append(str(order.order_uid))
-    send_csv_hanwha.delay(currency=currency,new={'pos_list':pos_list})
-            
-            
+    send_csv_hanwha.delay(currency=currency, new={'pos_list': pos_list})
+
+
 @app.task
 def daily_hedge(currency=None):
     update_index_price_from_dss(currency_code=[currency])
     populate_intraday_latest_price(currency_code=[currency])
-    
-    positions = OrderPosition.objects.filter(is_live=True,ticker__currency_code=currency)
+
+    positions = OrderPosition.objects.filter(
+        is_live=True, ticker__currency_code=currency)
     for position in positions:
         position_uid = position.position_uid
         if (position.bot.is_uno()):
@@ -227,25 +234,28 @@ def daily_hedge(currency=None):
         elif (position.bot.is_classic()):
             classic_position_check(position_uid)
     send_csv_hanwha.delay(currency=currency)
-    return {'result':f'hedge {currency} done'}
-        
-            
-            
+    return {'result': f'hedge {currency} done'}
+
+
 @app.task
-def send_csv_hanwha(currency=None,client_name=None,new=None):
+def send_csv_hanwha(currency=None, client_name=None, new=None):
     hanwha = [user["user"] for user in UserClient.objects.filter(
-            client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
+        client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
     if new:
-        perf = PositionPerformance.objects.filter(order_uid__in=new['pos_list']).order_by("created")
+        perf = PositionPerformance.objects.filter(
+            order_uid__in=new['pos_list']).order_by("created")
     else:
         perf = PositionPerformance.objects.filter(
-                        position_uid__user_id__in=hanwha, created__gte=datetime.now().date(), position_uid__ticker__currency_code=currency).order_by("created")
-        
+            position_uid__user_id__in=hanwha, created__gte=datetime.now().date(), position_uid__ticker__currency_code=currency).order_by("created")
+        # not include new
+        orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
+        perf = perf.exclude(order_uid__in=orders)
 
     if perf.exists():
         df = pd.DataFrame(CsvSerializer(perf, many=True).data)
         df = df.fillna(0)
-        hanwha_df = df.drop(columns=['prev_delta', 'delta', 'v1', 'v2', 'uuid'])
+        hanwha_df = df.drop(
+            columns=['prev_delta', 'delta', 'v1', 'v2', 'uuid'])
         csv = export_csv(df)
         hanwha_csv = export_csv(hanwha_df)
         if new:
@@ -256,18 +266,20 @@ def send_csv_hanwha(currency=None,client_name=None,new=None):
             subject,
             'asklora csv',
             'asklora@loratechai.com',
-            ['rede.akbar@loratechai.com','stepchoi@loratechai.com'],
+            ['rede.akbar@loratechai.com', 'stepchoi@loratechai.com'],
         )
         hanwha_email = EmailMessage(
             subject,
             'asklora csv',
             'asklora@loratechai.com',
-            ['200200648@hanwha.com','noblerain72@hanwha.com','nick.choi@loratechai.com'],
+            ['200200648@hanwha.com', 'noblerain72@hanwha.com',
+                'nick.choi@loratechai.com'],
         )
-        now =datetime.now()
-        hanwha_email.attach(f"{currency}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
-        draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
+        now = datetime.now()
+        hanwha_email.attach(f"{currency}_{now}_asklora.csv",
+                            hanwha_csv, mimetype="text/csv")
+        draft_email.attach(f"{currency}_{now}_asklora.csv",
+                           csv, mimetype="text/csv")
         draft_email.send()
         hanwha_email.send()
-    return {'result':f'send email {currency} done'}
-               
+    return {'result': f'send email {currency} done'}

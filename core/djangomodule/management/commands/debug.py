@@ -1,14 +1,24 @@
 from migrate import currency
 from django.core.management.base import BaseCommand, CommandError
 from core.user.models import User
+from core.orders.models import PositionPerformance, Order
 from core.services.ingestiontask import migrate_droid1
-from core.services.tasks import send_csv_hanwha,populate_client_top_stock_weekly,order_client_topstock,daily_hedge,populate_latest_price
+from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price
 from main import populate_intraday_latest_price
+from datetime import datetime
+
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        populate_client_top_stock_weekly(currency="KRW")
+        # populate_client_top_stock_weekly(currency="KRW")
+        orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
+        perf = PositionPerformance.objects.filter(
+            position_uid__user_id__in=[108,
+                                       109,
+                                       110], created__gte=datetime.now().date(), position_uid__ticker__currency_code="KRW").order_by("created")
+        perf = perf.exclude(order_uid__in=orders)
+        print(perf.count())
         # populate_latest_price(currency_code="KRW")
 #         send_csv_hanwha(currency=currency,new={'pos_list':[
 #             '5553f811-f79f-4dcd-bbf2-fc7d3662213d',
