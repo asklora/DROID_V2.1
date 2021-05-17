@@ -47,26 +47,26 @@ app.conf.beat_schedule ={
         'schedule': crontab(minute=CNY_CUR.hedge_schedule.minute,hour=CNY_CUR.hedge_schedule.hour, day_of_week="1-5"),
         'kwargs': {"currency":"CNY"},
     },
-     'USD-POPULATE-PICK': {
-        'task': 'core.services.tasks.populate_client_top_stock_weekly',
-        'schedule': crontab(minute=USD_CUR.top_stock_schedule.minute,hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-        'kwargs': {"currency":"USD"},
-    },
-    'HKD-POPULATE-PICK': {
-        'task': 'core.services.tasks.populate_client_top_stock_weekly',
-        'schedule': crontab(minute=HKD_CUR.top_stock_schedule.minute,hour=HKD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-        'kwargs': {"currency":"HKD"},
-    },
-    'KRW-POPULATE-PICK': {
-        'task': 'core.services.tasks.populate_client_top_stock_weekly',
-        'schedule': crontab(minute=KRW_CUR.top_stock_schedule.minute,hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-        'kwargs': {"currency":"KRW"},
-    },
-    'CNY-POPULATE-PICK': {
-        'task': 'core.services.tasks.populate_client_top_stock_weekly',
-        'schedule': crontab(minute=CNY_CUR.top_stock_schedule.minute,hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-        'kwargs': {"currency":"CNY"},
-    },
+    #  'USD-POPULATE-PICK': {
+    #     'task': 'core.services.tasks.populate_client_top_stock_weekly',
+    #     'schedule': crontab(minute=USD_CUR.top_stock_schedule.minute,hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+    #     'kwargs': {"currency":"USD"},
+    # },
+    # 'HKD-POPULATE-PICK': {
+    #     'task': 'core.services.tasks.populate_client_top_stock_weekly',
+    #     'schedule': crontab(minute=HKD_CUR.top_stock_schedule.minute,hour=HKD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+    #     'kwargs': {"currency":"HKD"},
+    # },
+    # 'KRW-POPULATE-PICK': {
+    #     'task': 'core.services.tasks.populate_client_top_stock_weekly',
+    #     'schedule': crontab(minute=KRW_CUR.top_stock_schedule.minute,hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+    #     'kwargs': {"currency":"KRW"},
+    # },
+    # 'CNY-POPULATE-PICK': {
+    #     'task': 'core.services.tasks.populate_client_top_stock_weekly',
+    #     'schedule': crontab(minute=CNY_CUR.top_stock_schedule.minute,hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+    #     'kwargs': {"currency":"CNY"},
+    # },
     
 }
 def export_csv(df):
@@ -161,7 +161,7 @@ def populate_client_top_stock_weekly(currency=None,client_name=None):
 @app.task
 def order_client_topstock(currency=None,client_name=None):
     # need to change to client prices
-    populate_intraday_latest_price(currency_code=[currency])
+    # populate_intraday_latest_price(currency_code=[currency])
     client = Client.objects.get(client_name="HANWHA")
     topstock = client.client_top_stock.filter(
         has_position=False,service_type='bot_advisor',currency_code=currency).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
@@ -215,7 +215,7 @@ def order_client_topstock(currency=None,client_name=None):
 @app.task
 def daily_hedge(currency=None):
     update_index_price_from_dss(currency_code=[currency])
-    populate_intraday_latest_price(currency_code=[currency])
+    # populate_intraday_latest_price(currency_code=[currency])
     
     positions = OrderPosition.objects.filter(is_live=True,ticker__currency_code=currency)
     for position in positions:
