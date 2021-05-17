@@ -23,8 +23,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if(options["training"]):
             train_model()
-            train_lebeler_model()
-            
+            train_lebeler_model(currency_code=["KRW"])
+            train_lebeler_model(currency_code=["HKD"])
+            train_lebeler_model(currency_code=["CNY"])
+            train_lebeler_model(currency_code=["EUR"])
+            train_lebeler_model(currency_code=["USD"])
+
         if(options["classic"]):
             daily_classic()
         else:
