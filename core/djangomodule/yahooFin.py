@@ -4,16 +4,20 @@ import json
 import ast
 # from core.djangomodule.network.cloud import DroidDb
 from core.universe.models import Universe
+from core.master.models import Currency
 
 def get_quote_yahoo(ticker, use_symbol=False):
-	api_key = "48c15ceb22mshe6bb12d6f379d74p146379jsnffadab4cee19"
-	url = "https://yahoo-finance-low-latency.p.rapidapi.com/v6/finance/quote"
-	header = {
+    api_key = "48c15ceb22mshe6bb12d6f379d74p146379jsnffadab4cee19"
+    url = "https://yahoo-finance-low-latency.p.rapidapi.com/v6/finance/quote"
+    header = {
 		'x-rapidapi-key': api_key,
 		'x-rapidapi-host': "yahoo-finance-low-latency.p.rapidapi.com"
 	}
+    # buat list sementara aq off in.. urgent
+    
+    
 
-	# if isinstance(ticker, list):
+    # if isinstance(ticker, list):
 	# 	if use_symbol:
 	# 		ticker_ric = []
 	# 		for tick in ticker:
@@ -52,38 +56,72 @@ def get_quote_yahoo(ticker, use_symbol=False):
 	# 				"bid":[]
 	# 			}
 	# 		return pd.DataFrame(data)
-	if use_symbol:
-		ric = Universe.objects.get(ticker_symbol=ticker)
-		identifier = ric.ticker_symbol
-	else:
-		ric= Universe.objects.get(ticker=ticker)
-		identifier = ric.ticker
-  
-
-	symbol = {
+    if use_symbol:
+        ric = Universe.objects.get(ticker_symbol=ticker)
+        identifier = ric.ticker_symbol
+    else:
+        ric= Universe.objects.get(ticker=ticker)
+        identifier = ric.ticker
+    symbol = {
 		"symbols" : identifier
 	}
 	# print(symbol)
-	req = requests.get(url, headers=header, params=symbol)
-	res = req.json()
-	res = res['quoteResponse']['result']
+    req = requests.get(url, headers=header, params=symbol)
+    res = req.json()
+    res = res['quoteResponse']['result']
+    # last = []
+    data = {
+                "ticker":[],
+                "ask":[],
+                "bid":[]
+                }
+    for resp in res:
+        ### CARA SAVE DJANGO ONE BY ONE ###
+        if use_symbol:
+            ric = Universe.objects.get(ticker_symbol=resp['ticker'])
+        else:
+            ric= Universe.objects.get(ticker=resp['ticker'])
+        ric.ask =resp['ask']
+        ric.bid =resp['bid']
+        ric.close =round((ric.ask + ric.bid) / 2)
+        ric.save()
+        ### END SAVE DJANGO ONE BY ONE ###
+        
+        data['ticker'].append(resp['symbol'])
+        data['bid'].append(resp['bid'])
+        data['ask'].append(resp['ask'])
+    df = pd.DataFrame(data)
+    print(df)
+    return df
+
+
+def get_quote_index(currency):
+    api_key = "48c15ceb22mshe6bb12d6f379d74p146379jsnffadab4cee19"
+    url = "https://yahoo-finance-low-latency.p.rapidapi.com/v6/finance/quote"
+    header = {
+		'x-rapidapi-key': api_key,
+		'x-rapidapi-host': "yahoo-finance-low-latency.p.rapidapi.com"
+	}
+    curr = Currency.objects.get(currency_code=currency)
+    identifier = curr.index_ticker.replace('.','^')
+    symbol = {
+		"symbols" : identifier
+	}
+	# print(symbol)
+    req = requests.get(url, headers=header, params=symbol)
+    res = req.json()
+    res = res['quoteResponse']['result']
 	# last = []
-	data = {
+    data = {
 		"ticker":[],
 		"ask":[],
 		"bid":[]
 	}
-	for resp in res:
-		data['ticker'].append(resp['symbol'])
-		data['bid'].append(resp['bid'])
-		data['ask'].append(resp['ask'])
-		ric.ask =data['ask']
-		ric.bid =data['bid']
-		ric.close =ric.ask + ric.bid / 2
-		ric.save()
-	df = pd.DataFrame(data)
-	print(df)
-	return df
+    for resp in res:
+        curr.index_price =round((resp['ask'] + resp['bid']) / 2,2)
+        curr.save()
+
+
 
 # # if __name__ == "__main__":
 # theList = "AAPL.O,FB,AMZN,TSLA"

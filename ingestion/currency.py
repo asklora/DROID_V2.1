@@ -41,8 +41,10 @@ def update_index_price_from_dss(currency_code=None):
     currencylist = currencylist.drop(columns=["index_price"])
     currency = "/" + currencylist["index_ticker"]
     jsonFileName = "files/file_json/index_price.json"
+    print(currency)
     result = get_data_from_dss(
         "start_date", "end_date", currency, jsonFileName, report=REPORT_INTRADAY)
+    print(result)
     result = result.drop(columns=["IdentifierType", "Identifier"])
     print(result)
     if(len(result) > 0):

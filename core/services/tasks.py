@@ -14,6 +14,7 @@ from portfolio.daily_hedge_ucdc import ucdc_position_check
 from portfolio.daily_hedge_uno import uno_position_check
 import pandas as pd
 from core.djangomodule.serializers import CsvSerializer
+from core.djangomodule.yahooFin import get_quote_index
 from django.core.mail import send_mail, EmailMessage
 from celery.schedules import crontab
 
@@ -171,6 +172,8 @@ def order_client_topstock(currency=None, client_name=None):
     # need to change to client prices
     populate_intraday_latest_price(currency_code=[currency])
     update_index_price_from_dss(currency_code=[currency])
+    if currency == "USD":
+        get_quote_index(currency)
     client = Client.objects.get(client_name="HANWHA")
     topstock = client.client_top_stock.filter(
         has_position=False, service_type='bot_advisor', currency_code=currency).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
@@ -225,7 +228,8 @@ def order_client_topstock(currency=None, client_name=None):
 def daily_hedge(currency=None):
     update_index_price_from_dss(currency_code=[currency])
     populate_intraday_latest_price(currency_code=[currency])
-
+    if currency == "USD":
+        get_quote_index(currency)
     positions = OrderPosition.objects.filter(
         is_live=True, ticker__currency_code=currency)
     for position in positions:
