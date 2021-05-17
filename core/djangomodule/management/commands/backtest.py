@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from main_executive import daily_classic, daily_shcedule_uno_ucdc
+from main_executive import daily_classic, daily_shcedule_uno_ucdc, train_lebeler_model, train_model
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
@@ -10,6 +10,7 @@ class Command(BaseCommand):
         parser.add_argument("-uno", "--uno", type=bool, help="uno", default=False)
         parser.add_argument("-ucdc", "--ucdc", type=bool, help="ucdc", default=False)
         parser.add_argument("-classic", "--classic", type=bool, help="classic", default=False)
+        parser.add_argument("-training", "--training", type=bool, help="training", default=False)
         parser.add_argument("-do_infer", "--do_infer", type=bool, help="do_infer", default=False)
         parser.add_argument("-infer", "--infer", type=bool, help="infer", default=False)
         parser.add_argument("-option_maker", "--option_maker", type=bool, help="option_maker", default=False)
@@ -20,6 +21,14 @@ class Command(BaseCommand):
         parser.add_argument("-ranking", "--ranking", type=bool, help="ranking", default=False)
         parser.add_argument("-backtest", "--backtest", type=bool, help="backtest", default=False)
     def handle(self, *args, **options):
+        if(options["training"]):
+            train_model()
+            train_lebeler_model(currency_code=["KRW"])
+            train_lebeler_model(currency_code=["HKD"])
+            train_lebeler_model(currency_code=["CNY"])
+            train_lebeler_model(currency_code=["EUR"])
+            train_lebeler_model(currency_code=["USD"])
+
         if(options["classic"]):
             daily_classic()
         else:
