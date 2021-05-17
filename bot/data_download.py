@@ -156,7 +156,7 @@ def get_new_tickers_from_bot_data(start_date, start_date2, date_identifier, tick
     query += f"left join (select ticker, coalesce(count(cb.{date_identifier}), 0) as count_data "
     query += f"from {table_name} cb where cb.{date_identifier}>='{start_date}' group by cb.ticker) result1 on result1.ticker=du.ticker "
     query += f"left join (select ticker, coalesce(count(mo.trading_day), 0) as count_price "
-    query += f"from {get_master_tac_table_name()} mo where mo.trading_day>='{start_date2}' group by mo.ticker) "
+    query += f"from {get_master_ohlcvtr_table_name()} mo where mo.trading_day>='{start_date2}'  and mo.close is not null group by mo.ticker) "
     query += f"result2 on result2.ticker=du.ticker "
     query += f"where du.is_active=True and "
     if type(ticker) != type(None):
