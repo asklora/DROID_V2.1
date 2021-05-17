@@ -43,7 +43,6 @@ class UniverseResource(resources.ModelResource):
 
         else:
             self.ticker.append(instance.origin_ticker)
-            # crudinstance(instance.uid,instance.__class__.__name__)
             instance.delete()
 
     def before_import_row(self, row, row_number=None, **kwargs):

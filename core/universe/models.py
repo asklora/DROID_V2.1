@@ -287,3 +287,19 @@ class UniverseExcluded(models.Model):
 
     def __str__(self):
         return str(self.ticker.ticker)
+
+
+class SpecialCases(models.Model):
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="special_cases_ticker")
+    cases = models.IntegerField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    last_updated = models.DateField(blank=True, null=True)
+    date_source = models.DateField(blank=True, null=True)
+    date_replace = models.DateField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = "special_cases"
+
+    def __str__(self):
+        return str(self.ticker.ticker)

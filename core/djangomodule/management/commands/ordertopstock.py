@@ -22,7 +22,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         client = Client.objects.get(client_name="HANWHA")
         topstock = client.client_top_stock.filter(
-            has_position=False, spot_date='2021-04-05', currency_code='CNY', capital='large_margin', service_type='bot_advisor').order_by("service_type", "spot_date", "currency_code", "capital", "rank")
+            has_position=False,service_type='bot_advisor').order_by("service_type", "spot_date", "currency_code", "capital", "rank")
 
         for queue in topstock:
             user = UserClient.objects.get(

@@ -5,7 +5,7 @@ services:
     container_name: Celery
     image: 736885973837.dkr.ecr.ap-northeast-2.amazonaws.com/celery-portfolio-job:latest
     command: sh deployment/jenkins/bastion/celery_pc1.sh
-    env_file: /home/loratech/Desktop/RT/DROID_V2.1/.env
+    env_file: /home/loratech/PycharmProjects/DROID_V2.1/.env
     volumes:
-      - /home/loratech/Desktop/RT/DROID_V2.1:/code
+      - /home/loratech/PycharmProjects/DROID_V2.1:/code
     restart: always

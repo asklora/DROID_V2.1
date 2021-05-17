@@ -6,7 +6,8 @@ from general.data_process import remove_null
 from general.sql_query import (
     get_active_universe, 
     get_active_universe_consolidated_by_field,
-    get_active_universe_company_description_null)
+    get_active_universe_company_description_null,
+    get_all_universe)
 from general.sql_output import update_universe_where_currency_code_null, upsert_data_to_database, fill_null_company_desc_with_ticker_name
 from datasource.dsws import get_data_static_from_dsws
 from datasource.dss import get_data_from_dss
@@ -91,7 +92,7 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
 
 def update_ticker_name_from_dsws(ticker=None):
     print("{} : === Ticker Name Start Ingestion ===".format(datetimeNow()))
-    universe = get_active_universe(ticker=ticker)
+    universe = get_all_universe(ticker=ticker)
     universe = universe.drop(columns=["ticker_name", "ticker_fullname"])
     print(universe)
     filter_field = ["WC06003", "NAME"]

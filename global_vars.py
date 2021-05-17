@@ -1,4 +1,5 @@
 import os
+import uuid
 from dotenv import load_dotenv
 load_dotenv()
 import time
@@ -85,7 +86,8 @@ tp_multiplier_3m = 1.75
 
 #BOT TRAINING
 bot_labeler_training_num_years = 2
-bot_labeler_threshold = 0.02
+bot_labeler_threshold = 0.02 # threshold to be deemed "profitable" for a bot
+bot_slippage = 0.0025 # comms + fees + slippage each way for bots
 bots_list = ["uno", "ucdc", "classic"]
 labeler_model_type = "rf"
 

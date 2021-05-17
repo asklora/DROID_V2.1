@@ -96,7 +96,6 @@ class OrderPosition(BaseTimeStampModel):
     commision_fee_sell = models.FloatField(null=True, blank=True, default=0)
     vol = models.FloatField(null=True, blank=True)
     margin = models.FloatField(default=1)
-    margin_value = models.FloatField(default=0)
 
     class Meta:
         managed = True
@@ -116,8 +115,14 @@ class OrderPosition(BaseTimeStampModel):
         return 0
 
     def current_value(self):
-        return formatdigit((nonetozero(self.investment_amount) / self.margin) + self.current_returns, self.ticker.currency_code.is_decimal)
-
+        performance = self.order_position.filter(
+            position_uid=self.position_uid)
+        if performance.exists():
+            perf = performance.latest("created")
+            return formatdigit(perf.current_investment_amount + perf.current_bot_cash_balance, self.ticker.currency_code.is_decimal)
+        return 0
+    
+    
     @property
     def bot(self):
         _bot = BotOptionType.objects.get(bot_id=self.bot_id)
@@ -173,7 +178,6 @@ class PositionPerformance(BaseTimeStampModel):
     order_summary = models.JSONField(null=True, blank=True)
     order_uid = models.ForeignKey(
         "Order", null=True, blank=True, on_delete=models.SET_NULL, db_column="order_uid")
-    balance = models.FloatField(default=0)
 
     def save(self, *args, **kwargs):
         if not self.performance_uid:
@@ -206,9 +210,7 @@ class OrderFee(BaseTimeStampModel):
     order_uid = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="orders_fee_orders", db_column="order_uid")
     fee_type = models.TextField(null=True, blank=True)
-    commissions = models.FloatField(default=0)
-    stamp_duty = models.FloatField(default=0)
-    total_fee = models.FloatField(default=0)
+    amount = models.FloatField(default=0)
 
     class Meta:
         managed = True

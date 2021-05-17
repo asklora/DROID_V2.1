@@ -17,7 +17,7 @@ from bot.data_download import (
 from dateutil.relativedelta import relativedelta
 
 from bot.final_model import model_trainer, bot_infer, find_rank
-from global_vars import X_columns, bots_list, labeler_model_type, bot_labeler_threshold, time_to_expiry
+from global_vars import X_columns, bots_list, labeler_model_type, bot_labeler_threshold, time_to_expiry, bot_slippage
 
 def populate_bot_labeler(start_date=None, end_date=None, model_type=labeler_model_type, ticker=None, currency_code=None, time_to_exp=time_to_expiry, mod=False, bots_list=bots_list, bot_labeler_train = False, history=False):
     # ************************************************************************
@@ -66,10 +66,10 @@ def populate_bot_labeler(start_date=None, end_date=None, model_type=labeler_mode
         print(df)
         if bot == "classic":
             df["option_type"] = "classic"
-            df["ret"] = df["bot_return"] - 0.01  #0.5% X 2 (in/out) slippage/comms
+            df["ret"] = df["bot_return"] - (bot_slippage *  2) #slippage/comms X 2 (in/out)
         else:
             df["delta_churn"] = df["delta_churn"].astype(float)
-            df["ret"] = df["bot_return"] - df["delta_churn"] * 0.005 # 0.5% slippage/comms
+            df["ret"] = df["bot_return"] - df["delta_churn"] * bot_slippage #ALL delta trading X slippage/comms
         df = df[["ticker", "pnl", "ret", "option_type", "time_to_exp", "spot_date", "spot_price"]]
         df.loc[df.ret >= bot_labeler_threshold, "pnl_class"] = 1 #greater than threshold to deem "profitable"
         df.loc[df.ret < bot_labeler_threshold, "pnl_class"] = 0 #greater than threshold to deem "profitable"

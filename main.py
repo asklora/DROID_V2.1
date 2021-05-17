@@ -25,7 +25,8 @@ from ingestion.master_ohlcvtr import master_ohlctr_update
 from ingestion.master_multiple import master_multiple_update
 from ingestion.master_data import (
     interest_update,
-    dividend_updated, populate_latest_price,
+    dividend_updated,
+    populate_intraday_latest_price, populate_latest_price,
     update_data_dss_from_dss,
     update_data_dsws_from_dsws,
     update_vix_from_dsws,
@@ -95,7 +96,7 @@ def daily_ws():
 
 def weekly():
     update_ticker_name_from_dsws()
-    do_function("latest_universe")
+    do_function("universe_populate")
     update_lot_size_from_dss()
     update_ticker_symbol_from_dss()
     update_entity_type_from_dsws()
@@ -327,20 +328,27 @@ def update_universe_data(ticker=None):
 
 if __name__ == "__main__":
     from migrate import weekly_migrations, daily_migrations
-    do_function("universe_populate")
-    daily_migrations()
-    populate_macro_table()
-    populate_ibes_table()
-    update_quandl_orats_from_quandl()
+    update_ticker_name_from_dsws()
+    # do_function("universe_populate")
+    # populate_intraday_latest_price(currency_code=["USD"])
+    # populate_intraday_latest_price(ticker=['003550.KS', '007700.KS'])
+    # populate_latest_price(currency_code=["CNY"])
+    # populate_latest_price(ticker=['003550.KS', '007700.KS'])
+    # do_function("universe_populate")
+    # daily_migrations()
+    # populate_macro_table()
+    # populate_ibes_table()
+    # update_quandl_orats_from_quandl()
 
-    do_function("master_ohlcvtr_update")
-    master_ohlctr_update()
-    master_tac_update()
-    update_currency_price_from_dss()
+    # do_function("special_cases_1")
+    # do_function("master_ohlcvtr_update")
+    # master_ohlctr_update()
+    # master_tac_update()
+    # update_currency_price_from_dss()
 
-    interest_update()
-    dividend_daily_update()
-    interest_daily_update()
-    update_utc_offset_from_timezone()
-    update_index_price_from_dss()
-    print("Done")
+    # interest_update()
+    # dividend_daily_update()
+    # interest_daily_update()
+    # update_utc_offset_from_timezone()
+    # update_index_price_from_dss(currency_code=["USD"])
+    # print("Done")
