@@ -233,7 +233,7 @@ def daily_hedge(currency=None):
             ucdc_position_check(position_uid)
         elif (position.bot.is_classic()):
             classic_position_check(position_uid)
-    # send_csv_hanwha.delay(currency=currency)
+    send_csv_hanwha.delay(currency=currency)
     return {'result': f'hedge {currency} done'}
 
 
