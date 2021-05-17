@@ -246,9 +246,14 @@ def ucdc_position_check(position_uid, to_date=None, lookback=False):
         else:
             if(type(trading_day) == datetime):
                 trading_day = trading_day.date()
+<<<<<<< HEAD
             lastest_price_data = LatestPrice.objects.get(
                 ticker=position.ticker)
             if(not status and trading_day < lastest_price_data.last_date and exp_date >= lastest_price_data.last_date):
+=======
+            lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
+            if(not status and trading_day <= lastest_price_data.last_date and exp_date>=lastest_price_data.last_date):
+>>>>>>> a34130c1f130fffd3b5e2f63464a2e037fc91de5
                 trading_day = lastest_price_data.last_date
                 print(f"latest price {trading_day} done")
                 status, order_id = create_performance(
