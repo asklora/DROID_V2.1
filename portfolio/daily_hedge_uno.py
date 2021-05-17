@@ -258,7 +258,7 @@ def uno_position_check(position_uid,to_date=None, lookback=False):
             if(type(trading_day) == datetime):
                 trading_day = trading_day.date()
             lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
-            if(not status and trading_day < lastest_price_data.last_date and exp_date>=lastest_price_data.last_date):
+            if(not status and trading_day <= lastest_price_data.last_date and exp_date>=lastest_price_data.last_date):
                 trading_day = lastest_price_data.last_date
                 print(f"latest price {trading_day} done")
                 status, order_id = create_performance(lastest_price_data, position, latest_price=True)
