@@ -191,7 +191,7 @@ def update_ticker_symbol_from_dss(ticker=None):
         })
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
-        # upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+        upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Ticker Symbol Updated ===".format(datetimeNow()))
 
 def update_company_desc_from_dsws(ticker=None):
