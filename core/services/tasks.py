@@ -151,7 +151,9 @@ def get_isin_populate_universe(ticker, user_id):
 
 @app.task
 def populate_client_top_stock_weekly(currency=None, client_name=None):
-
+    client = Client.objects.get(client_name="HANWHA")
+    topstock = client.client_top_stock.filter(
+        has_position=False, service_type='bot_advisor', currency_code=currency).distinct('spot_date')
     test_pick(currency_code=[currency])
     populate_bot_advisor(
         currency_code=[currency], client_name="HANWHA", capital="small")
@@ -168,6 +170,7 @@ def populate_client_top_stock_weekly(currency=None, client_name=None):
 def order_client_topstock(currency=None, client_name=None):
     # need to change to client prices
     populate_intraday_latest_price(currency_code=[currency])
+    update_index_price_from_dss(currency_code=[currency])
     client = Client.objects.get(client_name="HANWHA")
     topstock = client.client_top_stock.filter(
         has_position=False, service_type='bot_advisor', currency_code=currency).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
