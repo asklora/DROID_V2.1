@@ -96,7 +96,7 @@ def create_performance(price_data, position, latest_price=False):
     current_investment_amount = live_price * share_num
     # current_pnl_ret = (bot_cash_balance + current_investment_amount -
     #                    position.investment_amount) / position.investment_amount
-    current_pnl_ret = current_pnl_amt / position.investment_amount 
+    current_pnl_ret = current_pnl_amt / position.investment_amount
 
     position.bot_cash_balance = round(bot_cash_balance, 2)
 
@@ -198,7 +198,7 @@ def create_performance(price_data, position, latest_price=False):
 
 
 @app.task
-def uno_position_check(position_uid,to_date=None):
+def uno_position_check(position_uid, to_date=None, debug=False):
     try:
         position = OrderPosition.objects.get(
             position_uid=position_uid, is_live=True)
@@ -212,13 +212,12 @@ def uno_position_check(position_uid,to_date=None):
         if to_date:
             exp_date = pd.to_datetime(to_date)
         else:
-            exp_date=position.expiry
+            exp_date = position.expiry
         tac_data = MasterOhlcvtr.objects.filter(
             ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=exp_date, day_status='trading_day').order_by("trading_day")
         status = False
         for tac in tac_data:
             trading_day = tac.trading_day
-            
             status, order_id = create_performance(tac, position)
             # this is for debug only, make function this can be on/off
             if order_id:
@@ -249,7 +248,7 @@ def uno_position_check(position_uid,to_date=None):
                     order.save()
             if status:
                 print(f"position end not tac")
-        if trading_day >=  position.expiry:
+        if trading_day >= position.expiry:
             try:
                 tac_data = MasterOhlcvtr.objects.filter(
                     ticker=position.ticker, trading_day__gte=position.expiry, day_status='trading_day').latest("trading_day")
