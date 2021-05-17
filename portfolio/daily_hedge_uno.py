@@ -96,7 +96,7 @@ def create_performance(price_data, position, latest_price=False):
     current_investment_amount = live_price * share_num
     # current_pnl_ret = (bot_cash_balance + current_investment_amount -
     #                    position.investment_amount) / position.investment_amount
-    current_pnl_ret = current_pnl_amt / position.investment_amount 
+    current_pnl_ret = current_pnl_amt / position.investment_amount
 
     position.bot_cash_balance = round(bot_cash_balance, 2)
 
@@ -198,7 +198,7 @@ def create_performance(price_data, position, latest_price=False):
 
 
 @app.task
-def uno_position_check(position_uid,to_date=None, lookback=False):
+def uno_position_check(position_uid, to_date=None, lookback=False):
     try:
         position = OrderPosition.objects.get(
             position_uid=position_uid, is_live=True)
@@ -212,7 +212,7 @@ def uno_position_check(position_uid,to_date=None, lookback=False):
         if to_date:
             exp_date = pd.to_datetime(to_date)
         else:
-            exp_date=position.expiry
+            exp_date = position.expiry
         tac_data = MasterOhlcvtr.objects.filter(
             ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=exp_date, day_status='trading_day').order_by("trading_day")
         status = False
@@ -233,7 +233,7 @@ def uno_position_check(position_uid,to_date=None, lookback=False):
                     break
             if(type(trading_day) == datetime):
                 trading_day = trading_day.date()
-            if trading_day >=  position.expiry:
+            if trading_day >= position.expiry:
                 try:
                     tac_data = MasterOhlcvtr.objects.filter(
                         ticker=position.ticker, trading_day__gte=position.expiry, day_status='trading_day').latest("trading_day")
@@ -241,7 +241,8 @@ def uno_position_check(position_uid,to_date=None, lookback=False):
                         position.expiry = tac_data.trading_day
                         position.save()
                         print(f"force sell {tac_data.trading_day} done")
-                        status, order_id = create_performance(tac_data, position)
+                        status, order_id = create_performance(
+                            tac_data, position)
                         # position.save()
                         if order_id:
                             order = Order.objects.get(order_uid=order_id)
@@ -257,11 +258,13 @@ def uno_position_check(position_uid,to_date=None, lookback=False):
         else:
             if(type(trading_day) == datetime):
                 trading_day = trading_day.date()
-            lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
-            if(not status and trading_day <= lastest_price_data.last_date and exp_date>=lastest_price_data.last_date):
+            lastest_price_data = LatestPrice.objects.get(
+                ticker=position.ticker)
+            if(not status and trading_day <= lastest_price_data.last_date and exp_date >= lastest_price_data.last_date):
                 trading_day = lastest_price_data.last_date
                 print(f"latest price {trading_day} done")
-                status, order_id = create_performance(lastest_price_data, position, latest_price=True)
+                status, order_id = create_performance(
+                    lastest_price_data, position, latest_price=True)
                 # position.save()
                 if order_id:
                     order = Order.objects.get(order_uid=order_id)
