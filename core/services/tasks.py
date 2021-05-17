@@ -47,26 +47,26 @@ app.conf.beat_schedule ={
         'schedule': crontab(minute=CNY_CUR.hedge_schedule.minute,hour=CNY_CUR.hedge_schedule.hour, day_of_week="1-5"),
         'kwargs': {"currency":"CNY"},
     },
-    #  'USD-POPULATE-PICK': {
-    #     'task': 'core.services.tasks.populate_client_top_stock_weekly',
-    #     'schedule': crontab(minute=USD_CUR.top_stock_schedule.minute,hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-    #     'kwargs': {"currency":"USD"},
-    # },
-    # 'HKD-POPULATE-PICK': {
-    #     'task': 'core.services.tasks.populate_client_top_stock_weekly',
-    #     'schedule': crontab(minute=HKD_CUR.top_stock_schedule.minute,hour=HKD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-    #     'kwargs': {"currency":"HKD"},
-    # },
-    # 'KRW-POPULATE-PICK': {
-    #     'task': 'core.services.tasks.populate_client_top_stock_weekly',
-    #     'schedule': crontab(minute=KRW_CUR.top_stock_schedule.minute,hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-    #     'kwargs': {"currency":"KRW"},
-    # },
-    # 'CNY-POPULATE-PICK': {
-    #     'task': 'core.services.tasks.populate_client_top_stock_weekly',
-    #     'schedule': crontab(minute=CNY_CUR.top_stock_schedule.minute,hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-    #     'kwargs': {"currency":"CNY"},
-    # },
+     'USD-POPULATE-PICK': {
+        'task': 'core.services.tasks.populate_client_top_stock_weekly',
+        'schedule': crontab(minute=USD_CUR.top_stock_schedule.minute,hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency":"USD"},
+    },
+    'HKD-POPULATE-PICK': {
+        'task': 'core.services.tasks.populate_client_top_stock_weekly',
+        'schedule': crontab(minute=HKD_CUR.top_stock_schedule.minute,hour=HKD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency":"HKD"},
+    },
+    'KRW-POPULATE-PICK': {
+        'task': 'core.services.tasks.populate_client_top_stock_weekly',
+        'schedule': crontab(minute=KRW_CUR.top_stock_schedule.minute,hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency":"KRW"},
+    },
+    'CNY-POPULATE-PICK': {
+        'task': 'core.services.tasks.populate_client_top_stock_weekly',
+        'schedule': crontab(minute=CNY_CUR.top_stock_schedule.minute,hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        'kwargs': {"currency":"CNY"},
+    },
     
 }
 def export_csv(df):
@@ -256,18 +256,18 @@ def send_csv_hanwha(currency=None,client_name=None,new=None):
             subject,
             'asklora csv',
             'asklora@loratechai.com',
-            ['rede.akbar@loratechai.com','stepchoi@loratechai.com','joseph.chang@loratechai.com'],
+            ['rede.akbar@loratechai.com','stepchoi@loratechai.com'],
         )
         hanwha_email = EmailMessage(
             subject,
             'asklora csv',
             'asklora@loratechai.com',
-            ['rede.akbar@loratechai.com','stepchoi@loratechai.com','nick.choi@loratechai.com'],
+            ['200200648@hanwha.com','noblerain72@hanwha.com','nick.choi@loratechai.com'],
         )
         now =datetime.now()
         hanwha_email.attach(f"{currency}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
         draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
         draft_email.send()
-        hanwha_email.send()
+        # hanwha_email.send()
     return {'result':f'send email {currency} done'}
                
