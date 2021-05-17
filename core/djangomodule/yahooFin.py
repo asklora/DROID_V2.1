@@ -13,48 +13,55 @@ def get_quote_yahoo(ticker, use_symbol=False):
 		'x-rapidapi-host': "yahoo-finance-low-latency.p.rapidapi.com"
 	}
 
-	if isinstance(ticker, list):
-		if use_symbol:
-			ticker_ric = []
-			for tick in ticker:
-				try:
-					ric = Universe.objects.get(ticker_symbol=tick)
-					if ric.currency_code.currency_code != 'USD':
-						ticker_ric.append(ric.ticker)
-					else:
-						ticker_ric.append(tick)
-				except Universe.DoesNotExist:
-					pass
-			ticker = ticker_ric
-		if ticker != []:
-			ticker = ','.join([str(elem) for elem in ticker])
-		else:
-			data = {
-					"ticker":[],
-					"ask":[],
-					"bid":[]
-				}
-			return pd.DataFrame(data)
+	# if isinstance(ticker, list):
+	# 	if use_symbol:
+	# 		ticker_ric = []
+	# 		for tick in ticker:
+	# 			try:
+	# 				ric = Universe.objects.get(ticker_symbol=tick)
+	# 				if ric.currency_code.currency_code != 'USD':
+	# 					ticker_ric.append(ric.ticker)
+	# 				else:
+	# 					ticker_ric.append(tick)
+	# 			except Universe.DoesNotExist:
+	# 				pass
+	# 		ticker = ticker_ric
+	# 	if ticker != []:
+	# 		ticker = ','.join([str(elem) for elem in ticker])
+	# 	else:
+	# 		data = {
+	# 				"ticker":[],
+	# 				"ask":[],
+	# 				"bid":[]
+	# 			}
+	# 		return pd.DataFrame(data)
+	# else:
+	# 	try:
+	# 		ric = Universe.objects.get(ticker_symbol=ticker)
+	# 		if ric.currency_code.currency_code == 'USD':
+	# 			ticker = ric.ticker_symbol
+	# 		else:
+	# 			if use_symbol:
+	# 				ticker = ric.ticker
+	# 			else:
+	# 				ticker = ticker
+	# 	except Universe.DoesNotExist:
+	# 		data = {
+	# 				"ticker":[],
+	# 				"ask":[],
+	# 				"bid":[]
+	# 			}
+	# 		return pd.DataFrame(data)
+	if use_symbol:
+		ric = Universe.objects.get(ticker_symbol=ticker)
+		identifier = ric.ticker_symbol
 	else:
-		try:
-			ric = Universe.objects.get(ticker_symbol=ticker)
-			if ric.currency_code.currency_code == 'USD':
-				ticker = ric.ticker_symbol
-			else:
-				if use_symbol:
-					ticker = ric.ticker
-				else:
-					ticker = ticker
-		except Universe.DoesNotExist:
-			data = {
-					"ticker":[],
-					"ask":[],
-					"bid":[]
-				}
-			return pd.DataFrame(data)
+		ric= Universe.objects.get(ticker=ticker)
+		identifier = ric.ticker
+  
 
 	symbol = {
-		"symbols" : ticker
+		"symbols" : identifier
 	}
 	# print(symbol)
 	req = requests.get(url, headers=header, params=symbol)
@@ -70,6 +77,10 @@ def get_quote_yahoo(ticker, use_symbol=False):
 		data['ticker'].append(resp['symbol'])
 		data['bid'].append(resp['bid'])
 		data['ask'].append(resp['ask'])
+		ric.ask =data['ask']
+		ric.bid =data['bid']
+		ric.close =ric.ask + ric.bid / 2
+		ric.save()
 	df = pd.DataFrame(data)
 	print(df)
 	return df
