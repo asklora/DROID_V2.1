@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from main_executive import daily_classic, daily_shcedule_uno_ucdc, train_lebeler_model, train_model
 from global_vars import time_to_expiry, bots_list
-
+import gc
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("-run_number", "--run_number", help="run_number", type=int, default=0)
@@ -24,9 +24,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if(options["training"]):
             train_model()
+            gc.collect()
             for bot in  bots_list:
                 for time_to_exp in time_to_expiry:
                     train_lebeler_model(time_to_exp=[time_to_exp], bots_list=[bot])
+                    gc.collect()
 
         if(options["classic"]):
             daily_classic()
