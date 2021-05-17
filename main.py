@@ -328,8 +328,12 @@ def update_universe_data(ticker=None):
 
 if __name__ == "__main__":
     from migrate import weekly_migrations, daily_migrations
-    populate_intraday_latest_price()
-    populate_latest_price()
+    # update_ticker_name_from_dsws()
+    # do_function("universe_populate")
+    # populate_intraday_latest_price(currency_code=["CNY"])
+    # populate_intraday_latest_price(ticker=['003550.KS', '007700.KS'])
+    # populate_latest_price(currency_code=["CNY"])
+    # populate_latest_price(ticker=['003550.KS', '007700.KS'])
     # do_function("universe_populate")
     # daily_migrations()
     # populate_macro_table()
