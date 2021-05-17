@@ -268,6 +268,6 @@ def send_csv_hanwha(currency=None,client_name=None,new=None):
         hanwha_email.attach(f"{currency}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
         draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
         draft_email.send()
-        # hanwha_email.send()
+        hanwha_email.send()
     return {'result':f'send email {currency} done'}
                
