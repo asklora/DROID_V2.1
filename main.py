@@ -96,7 +96,7 @@ def daily_ws():
 
 def weekly():
     update_ticker_name_from_dsws()
-    do_function("latest_universe")
+    do_function("universe_populate")
     update_lot_size_from_dss()
     update_ticker_symbol_from_dss()
     update_entity_type_from_dsws()
@@ -328,7 +328,7 @@ def update_universe_data(ticker=None):
 
 if __name__ == "__main__":
     from migrate import weekly_migrations, daily_migrations
-    # update_ticker_name_from_dsws()
+    update_ticker_name_from_dsws()
     # do_function("universe_populate")
     # populate_intraday_latest_price(currency_code=["USD"])
     # populate_intraday_latest_price(ticker=['003550.KS', '007700.KS'])
