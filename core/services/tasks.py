@@ -173,7 +173,7 @@ def order_client_topstock(currency=None,client_name=None):
             extra_data__capital=queue.capital,
             extra_data__type=queue.bot
         )
-        # need to change live price
+        # need to change live price, problem with nan
         price = queue.ticker.latest_price_ticker.close
         spot_date = datetime.now()
         if user.extra_data["service_type"] == "bot_advisor":
@@ -268,6 +268,6 @@ def send_csv_hanwha(currency=None,client_name=None,new=None):
         hanwha_email.attach(f"{currency}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
         draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
         draft_email.send()
-        # hanwha_email.send()
+        hanwha_email.send()
     return {'result':f'send email {currency} done'}
                
