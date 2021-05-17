@@ -19,7 +19,7 @@ from bot.statistic_classic import populate_classic_statistic
 from bot.statistic_ucdc import populate_ucdc_statistic
 from bot.statistic_uno import populate_uno_statistic
 from bot.data_process import check_bot_list, check_time_to_exp
-from global_vars import folder_check, time_to_expiry
+from global_vars import folder_check, time_to_expiry, bots_list
 
 def training(ticker=None, currency_code=None):
     train_model(ticker=ticker, currency_code=currency_code)
@@ -99,7 +99,7 @@ def daily_classic(ticker=None, currency_code=None, time_to_exp=time_to_expiry, m
 # ************************************************************************************************************************************************************************************
 # *************************** MODEL TRAINING *****************************************************************************************************************************************
 # ************************************************************************************************************************************************************************************
-def train_lebeler_model(ticker=None, currency_code=None):
+def train_lebeler_model(ticker=None, currency_code=None, time_to_exp=time_to_expiry, bots_list=bots_list):
     folder_check()
     time_to_exp = check_time_to_exp(time_to_expiry)
     print("{} : === BOT RANKING TRAIN MODEL STARTED ===".format(dateNow()))
@@ -107,7 +107,7 @@ def train_lebeler_model(ticker=None, currency_code=None):
         ticker = get_active_universe()["ticker"].tolist()
     start_date = str_to_date(droid_start_date())
     end_date = str_to_date(dateNow())
-    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, bot_labeler_train = True)
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, bot_labeler_train = True, bots_list=bots_list)
     print("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === BOT RANKING TRAIN MODEL COMPLETED ===".format(dateNow()))
 

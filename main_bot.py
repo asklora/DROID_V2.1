@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     # train_model()
     # do_function("bot_backtest_updates")
-    # train_lebeler_model()
+    # train_lebeler_model(time_to_exp=time_to_expiry, bots_list=bots_list)
     # time_to_expiry = [0.03846, 0.07692, 0.08333, 0.15384, 0.16666, 0.25, 0.5]
     # time_to_expiry = [0.03846, 0.07692, 0.08333, 0.15384, 0.16666, 0.25, 0.5]
     # bot_ranking_history(time_to_exp=time_to_expiry)
