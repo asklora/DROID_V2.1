@@ -344,7 +344,7 @@ if __name__ == "__main__":
     # update_ticker_name_from_dsws()
     # update_ticker_symbol_from_dss(ticker=None)
     # do_function("universe_populate")
-    # populate_intraday_latest_price(currency_code=["USD"])
+    populate_intraday_latest_price(currency_code=["KRW"])
     # populate_intraday_latest_price(ticker=['003550.KS', '007700.KS'])
     # populate_latest_price(currency_code=["CNY"])
     # populate_latest_price(ticker=['.SPX'])
