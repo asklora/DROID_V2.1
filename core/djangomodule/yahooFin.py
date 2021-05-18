@@ -2,9 +2,11 @@ import pandas as pd
 import requests
 import json
 import ast
-# from core.djangomodule.network.cloud import DroidDb
+from core.djangomodule.network.cloud import DroidDb
 from core.universe.models import Universe
 from core.master.models import Currency
+from bs4 import BeautifulSoup as soup
+from urllib.request import urlopen as uReq
 
 def get_quote_yahoo(ticker, use_symbol=False):
     api_key = "48c15ceb22mshe6bb12d6f379d74p146379jsnffadab4cee19"
@@ -94,6 +96,21 @@ def get_quote_yahoo(ticker, use_symbol=False):
     print(df)
     return df
 
+def scrap_csi():
+    price_float = None
+    url = "http://www.csindex.com.cn/en/homeApply"
+    client = uReq(url)
+    html_page = client.read()
+    close_client = client.close()
+    page_soup = soup(html_page, "html.parser")
+    owls = page_soup.find_all("div", {"class":"item"})
+    for owl in owls:
+        head = owl.find("h2",{"class":"g_name"})
+        head_name = head.text.replace("\n","")
+        if head_name == 'CSI 300':
+            price = owl.find('span', {'class':'g_num'})
+            price_float = float(price.text)
+    return price_float
 
 def get_quote_index(currency):
     api_key = "48c15ceb22mshe6bb12d6f379d74p146379jsnffadab4cee19"
@@ -102,28 +119,34 @@ def get_quote_index(currency):
 		'x-rapidapi-key': api_key,
 		'x-rapidapi-host': "yahoo-finance-low-latency.p.rapidapi.com"
 	}
-    curr = Currency.objects.get(currency_code=currency)
-    identifier = curr.index_ticker.replace('.','^')
-    symbol = {
-		"symbols" : identifier
-	}
-	# print(symbol)
-    req = requests.get(url, headers=header, params=symbol)
-    res = req.json()
-    res = res['quoteResponse']['result']
-	# last = []
-    data = {
-		"ticker":[],
-		"ask":[],
-		"bid":[]
-	}
-    for resp in res:
-        curr.index_price =resp['regularMarketPrice']
+    curr = Currency.objects.get(currency_code=currency) # IF CNY
+    if currency == "CNY":
+        price = scrap_csi()
+        curr.index_price = price
         curr.save()
+    else:
+        identifier = curr.index_ticker.replace('.','^')
+        symbol = {
+    		"symbols" : identifier
+    	}
+    	# print(symbol)
+        req = requests.get(url, headers=header, params=symbol)
+        res = req.json()
+        res = res['quoteResponse']['result']
+    	# last = []
+        data = {
+    		"ticker":[],
+    		"ask":[],
+    		"bid":[]
+    	}
+        for resp in res:
+            curr.index_price =resp['regularMarketPrice'] # USE FROM THE SCRAPPING ONE
+            curr.save()
 
 
 
-# # if __name__ == "__main__":
+# if __name__ == "__main__":
+# scrap_csi()
 # theList = "AAPL.O,FB,AMZN,TSLA"
 # add = ["002271.SZ","002304.SZ","601066.SS","601088.SS","005930.KS","039490.KS","042660.KS"]
 # for data in add:
