@@ -1,10 +1,14 @@
 import pandas as pd 
 import requests
 import json
-import ast
-# from core.djangomodule.network.cloud import DroidDb
 from core.universe.models import Universe
 from core.master.models import Currency
+from datetime import datetime
+
+
+
+
+
 
 def get_quote_yahoo(ticker, use_symbol=False):
     api_key = "48c15ceb22mshe6bb12d6f379d74p146379jsnffadab4cee19"
@@ -84,6 +88,7 @@ def get_quote_yahoo(ticker, use_symbol=False):
         ric.ask =resp['ask']
         ric.bid =resp['bid']
         ric.close =resp['regularMarketPrice']
+        ric.last_date = datetime.now().date()
         ric.save()
         ### END SAVE DJANGO ONE BY ONE ###
         
@@ -107,7 +112,6 @@ def get_quote_index(currency):
     symbol = {
 		"symbols" : identifier
 	}
-	# print(symbol)
     req = requests.get(url, headers=header, params=symbol)
     res = req.json()
     res = res['quoteResponse']['result']

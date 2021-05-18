@@ -14,7 +14,7 @@ from portfolio.daily_hedge_ucdc import ucdc_position_check
 from portfolio.daily_hedge_uno import uno_position_check
 import pandas as pd
 from core.djangomodule.serializers import CsvSerializer
-from core.djangomodule.yahooFin import get_quote_index
+from core.djangomodule.yahooFin import get_quote_index,get_quote_yahoo
 from django.core.mail import send_mail, EmailMessage
 from celery.schedules import crontab
 
@@ -186,6 +186,11 @@ def order_client_topstock(currency=None, client_name=None):
             extra_data__type=queue.bot
         )
         # need to change live price, problem with nan
+        # yahoo finance price
+        if currency == "USD":
+            get_quote_yahoo(queue.ticker.ticker, use_symbol=True)
+        else:
+            get_quote_yahoo(queue.ticker.ticker, use_symbol=False)
         price = queue.ticker.latest_price_ticker.close
         spot_date = datetime.now()
         if user.extra_data["service_type"] == "bot_advisor":
@@ -228,12 +233,16 @@ def order_client_topstock(currency=None, client_name=None):
 def daily_hedge(currency=None):
     update_index_price_from_dss(currency_code=[currency])
     populate_intraday_latest_price(currency_code=[currency])
-    if currency == "USD":
+    if currency != "CNY":
         get_quote_index(currency)
     positions = OrderPosition.objects.filter(
         is_live=True, ticker__currency_code=currency)
     for position in positions:
         position_uid = position.position_uid
+        if currency == "USD":
+            get_quote_yahoo(position.ticker.ticker_symbol, use_symbol=True)
+        else:
+            get_quote_yahoo(position.ticker.ticker, use_symbol=False)
         if (position.bot.is_uno()):
             uno_position_check(position_uid)
         elif (position.bot.is_ucdc()):
