@@ -88,8 +88,7 @@ def get_quote_yahoo(ticker, use_symbol=False):
         ric.bid =resp['bid']
         ric.close =resp['regularMarketPrice']
         ric.last_date = datetime.now().date()
-        # ric.save()
-		print(ric)
+        ric.save()
         ### END SAVE DJANGO ONE BY ONE ###
         
         data['ticker'].append(resp['symbol'])
