@@ -83,7 +83,7 @@ def get_quote_yahoo(ticker, use_symbol=False):
             ric= Universe.objects.get(ticker=resp['ticker'])
         ric.ask =resp['ask']
         ric.bid =resp['bid']
-        ric.close =round((ric.ask + ric.bid) / 2)
+        ric.close =resp['regularMarketPrice']
         ric.save()
         ### END SAVE DJANGO ONE BY ONE ###
         
@@ -118,7 +118,7 @@ def get_quote_index(currency):
 		"bid":[]
 	}
     for resp in res:
-        curr.index_price =round((resp['ask'] + resp['bid']) / 2,2)
+        curr.index_price =resp['regularMarketPrice']
         curr.save()
 
 
