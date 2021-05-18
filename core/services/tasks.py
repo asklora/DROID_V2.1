@@ -242,13 +242,13 @@ def daily_hedge(currency=None):
             get_quote_yahoo(position.ticker.ticker_symbol, use_symbol=True)
         else:
             get_quote_yahoo(position.ticker.ticker, use_symbol=False)
-    #     if (position.bot.is_uno()):
-    #         uno_position_check(position_uid)
-    #     elif (position.bot.is_ucdc()):
-    #         ucdc_position_check(position_uid)
-    #     elif (position.bot.is_classic()):
-    #         classic_position_check(position_uid)
-    # send_csv_hanwha.delay(currency=currency)
+        if (position.bot.is_uno()):
+            uno_position_check(position_uid)
+        elif (position.bot.is_ucdc()):
+            ucdc_position_check(position_uid)
+        elif (position.bot.is_classic()):
+            classic_position_check(position_uid)
+    send_csv_hanwha.delay(currency=currency)
     return {'result': f'hedge {currency} done'}
 
 
