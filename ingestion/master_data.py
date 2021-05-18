@@ -545,4 +545,4 @@ def populate_intraday_latest_price(ticker=None, currency_code=None):
             print(latest_price)
             latest_price["last_date"] = str_to_date(dateNow())
             print(latest_price)
-            upsert_data_to_database(data, get_latest_price_table_name(), "ticker", how="update", Text=True)
+            upsert_data_to_database(latest_price, get_latest_price_table_name(), "ticker", how="update", Text=True)
