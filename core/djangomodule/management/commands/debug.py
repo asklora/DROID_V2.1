@@ -30,6 +30,6 @@ class Command(BaseCommand):
         #             '5142bc48-dd46-41e6-8381-7b25860988c9',
         #             'd3521289-3d1f-48f0-85d3-67410afcc545'
         # ]})
-        get_quote_index("USD")
+        populate_intraday_latest_price(currency_code=["KRW"])
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
