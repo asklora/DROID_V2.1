@@ -117,6 +117,25 @@ def get_vix():
         return {"err": str(e)}
 
 
+@aws_batch
+@app.task
+def batch_weekly():
+    """
+    Sat at 03:15
+    """
+    now = datetime.now()
+    try:
+        original_stdout = sys.stdout  # Save a reference to the original standard output
+        with open(f"logger/weekly_{now}.txt", "w") as f:
+            # Change the standard output to the file we created.
+            sys.stdout = f
+            weekly()  # triger ingestion function
+            sys.stdout = original_stdout
+        return {"result": f"weekly is updated"}
+    except Exception as e:
+        return {"err": str(e)}
+
+
 @app.task
 def get_weekly():
     """
@@ -128,7 +147,7 @@ def get_weekly():
         with open(f"logger/weekly_{now}.txt", "w") as f:
             # Change the standard output to the file we created.
             sys.stdout = f
-            weekly()  # triger ingestion function
+            batch_weekly()  # triger ingestion function
             sys.stdout = original_stdout
         return {"result": f"weekly is updated"}
     except Exception as e:

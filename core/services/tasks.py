@@ -233,8 +233,7 @@ def order_client_topstock(currency=None, client_name=None):
 def daily_hedge(currency=None):
     update_index_price_from_dss(currency_code=[currency])
     populate_intraday_latest_price(currency_code=[currency])
-    if currency != "CNY":
-        get_quote_index(currency)
+    get_quote_index(currency)
     positions = OrderPosition.objects.filter(
         is_live=True, ticker__currency_code=currency)
     for position in positions:

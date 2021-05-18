@@ -1,0 +1,4 @@
+import requests
+import json
+
+tradinghours_token = "1M1a35Qhk8gUbCsOSl6XRY2z3Qjj0of7y5ZEfE5MasUYm5b9YsoooA7RSxW7"
