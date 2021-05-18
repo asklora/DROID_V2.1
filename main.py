@@ -347,7 +347,7 @@ if __name__ == "__main__":
     # populate_intraday_latest_price(currency_code=["USD"])
     # populate_intraday_latest_price(ticker=['003550.KS', '007700.KS'])
     # populate_latest_price(currency_code=["CNY"])
-    # populate_latest_price(ticker=['003550.KS', '007700.KS'])
+    # populate_latest_price(ticker=['.SPX'])
     # do_function("universe_populate")
     # daily_migrations()
     # populate_macro_table()
