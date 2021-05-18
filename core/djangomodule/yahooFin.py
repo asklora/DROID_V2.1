@@ -84,13 +84,13 @@ def get_quote_yahoo(ticker, use_symbol=False):
             ric = Universe.objects.get(ticker_symbol=resp['ticker'])
         else:
             ric= Universe.objects.get(ticker=resp['ticker'])
+			
         ric.ask =resp['ask']
         ric.bid =resp['bid']
         ric.close =resp['regularMarketPrice']
         ric.last_date = datetime.now().date()
         ric.save()
         ### END SAVE DJANGO ONE BY ONE ###
-        
         data['ticker'].append(resp['symbol'])
         data['bid'].append(resp['bid'])
         data['ask'].append(resp['ask'])
