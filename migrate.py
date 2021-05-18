@@ -110,7 +110,7 @@ def get_ticker_from_new_droid():
     engine.dispose()
     data = pd.DataFrame(data)
     print("DONE")
-    return tuple(data["ticker"].to_list())
+    return data
 
 def get_data_from_database(db_url, table):
     print("Get Data From Database")
@@ -733,7 +733,16 @@ def new_ticker_migration():
     
 if __name__ == '__main__':
     print("Do Process")
-    daily_migrations()
+    # daily_migrations()
+    # dlp_ticker = get_data_from_database_condition(dlp, "universe", "is_active = True")
+    # print(dlp_ticker)
+    # droid_ticker = get_ticker_from_new_droid()
+    # print(droid_ticker)
+    # dlp_ticker = dlp_ticker.loc[dlp_ticker["ticker"].isin(droid_ticker["ticker"].to_list())]
+    # print(dlp_ticker)
+    # droid_ticker = droid_ticker.loc[~droid_ticker["ticker"].isin(dlp_ticker["ticker"].to_list())]
+    # print(droid_ticker["ticker"].to_list())
+    # print(result["ticker"].to_list())
     # data_worldscope_summary()
     # ai_value_lgbm_pred()
     # ai_value_lgbm_pred_final()

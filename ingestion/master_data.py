@@ -463,16 +463,19 @@ def populate_latest_price(ticker=None, currency_code=None):
             result["intraday_ask"] = result["close"]
             result["intraday_time"] = datetimeNow()
             result["intraday_date"] = result["last_date"]
+            result["last_date"] = str_to_date(dateNow())
             result = result.sort_values(by="last_date", ascending=True)
             result = result.drop_duplicates(subset="ticker", keep="last")
             print(result)
-            # upsert_data_to_database(data, get_latest_price_table_name(), "ticker", how="update", Text=True)
+            upsert_data_to_database(result, get_latest_price_table_name(), "ticker", how="update", Text=True)
             clean_latest_price()
             report_to_slack("{} : === {} Latest Price Updated ===".format(dateNow(), currency_code))
             null_ticker = result["ticker"].tolist()
+            
             # split_order_and_performance(ticker=ticker, currency_code=currency_code)
 
     latest_price = latest_price.loc[~latest_price["ticker"].isin(null_ticker)]
+    print(latest_price)
     if(len(latest_price) > 0):
         print(latest_price)
         latest_price = latest_price.merge(percentage_change, how="left", on="ticker")
@@ -484,7 +487,7 @@ def populate_latest_price(ticker=None, currency_code=None):
         latest_price["intraday_ask"] = latest_price["yesterday_close"]
         latest_price["last_date"] = str_to_date(dateNow())
         print(latest_price)
-        upsert_data_to_database(data, get_latest_price_table_name(), "ticker", how="update", Text=True)
+        upsert_data_to_database(latest_price, get_latest_price_table_name(), "ticker", how="update", Text=True)
 
 def populate_intraday_latest_price(ticker=None, currency_code=None):
     jsonFileName = "files/file_json/intraday_price.json"
@@ -533,7 +536,7 @@ def populate_intraday_latest_price(ticker=None, currency_code=None):
             result = result.sort_values(by="last_date", ascending=True)
             result = result.drop_duplicates(subset="ticker", keep="last")
             print(result)
-            upsert_data_to_database(data, get_latest_price_table_name(), "ticker", how="update", Text=True)
+            upsert_data_to_database(result, get_latest_price_table_name(), "ticker", how="update", Text=True)
             clean_latest_price()
             report_to_slack("{} : === {} Latest Price Updated ===".format(dateNow(), currency_code))
             # split_order_and_performance(ticker=ticker, currency_code=currency_code)
