@@ -81,9 +81,9 @@ def get_quote_yahoo(ticker, use_symbol=False):
     for resp in res:
         ### CARA SAVE DJANGO ONE BY ONE ###
         if use_symbol:
-            ric = Universe.objects.get(ticker_symbol=resp['ticker'])
+            ric = Universe.objects.get(ticker_symbol=resp['symbol'])
         else:
-            ric= Universe.objects.get(ticker=resp['ticker'])
+            ric= Universe.objects.get(ticker=resp['symbol'])
 			
         ric.ask =resp['ask']
         ric.bid =resp['bid']
