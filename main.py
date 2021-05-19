@@ -325,26 +325,28 @@ def update_universe_data(ticker=None):
     update_company_desc_from_dsws(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
-def daily_ingestion(region_code):
-    dlp_ticker = get_universe_by_region(region_code=region_code)
+def daily_ingestion(region_id=None):
+    dlp_ticker = get_universe_by_region(region_code=region_id)
     print(dlp_ticker)
     droid2_ticker = get_active_universe()
     print(droid2_ticker)
     dlp_ticker = dlp_ticker.loc[dlp_ticker["ticker"].isin(droid2_ticker["ticker"].to_list())]
     print(dlp_ticker)
-    ticker = droid2_ticker.loc[~droid2_ticker["ticker"].isin(dlp_ticker["ticker"].to_list())]["ticker"].to_list()
+    ticker = droid2_ticker.loc[~droid2_ticker["ticker"].isin(dlp_ticker["ticker"].to_list())]
+    ticker = ticker["ticker"].to_list()
     print(ticker)
+    print(len(ticker))
     update_data_dss_from_dss(ticker=ticker)
     update_data_dsws_from_dsws(ticker=ticker)
 
 # Main Process
 if __name__ == "__main__":
     from migrate import weekly_migrations, daily_migrations
-    # daily_ingestion()
+    daily_ingestion()
     # update_ticker_name_from_dsws()
     # update_ticker_symbol_from_dss(ticker=None)
     # do_function("universe_populate")
-    populate_intraday_latest_price(currency_code=["KRW"])
+    # populate_intraday_latest_price(currency_code=["KRW"])
     # populate_intraday_latest_price(ticker=['003550.KS', '007700.KS'])
     # populate_latest_price(currency_code=["CNY"])
     # populate_latest_price(ticker=['.SPX'])
