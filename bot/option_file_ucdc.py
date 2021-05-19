@@ -265,10 +265,10 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
         options_df = options_df[options_df.spot_date >= start_date]
         # truncate_table(table_name)
         upsert_data_to_database(options_df, table_name, "uid", how="update", cpu_count=True, Text=True)
-    elif new_ticker:
-        print("NEW TICKER")
-        options_df = options_df[options_df.spot_date == options_df.spot_date.max()]
-        upsert_data_to_database(options_df, table_name, "uid", how="ignore", cpu_count=True, Text=True)
+    # elif new_ticker:
+    #     print("NEW TICKER")
+    #     # options_df = options_df[options_df.spot_date == options_df.spot_date.max()]
+    #     upsert_data_to_database(options_df, table_name, "uid", how="ignore", cpu_count=True, Text=True)
     else:
         upsert_data_to_database(options_df, table_name, "uid", how="ignore", cpu_count=True, Text=True)
 

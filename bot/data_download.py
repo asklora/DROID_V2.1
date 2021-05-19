@@ -168,28 +168,62 @@ def get_new_tickers_from_bot_data(start_date, start_date2, date_identifier, tick
     data = read_query(query, table=get_universe_table_name())
     return data
 
-def get_new_ticker_from_bot_backtest(ticker=None, currency_code=None, ucdc=False, uno=False, classic=False, mod=False):
+def get_new_ticker_from_classic_bot_backtest(ticker=None, currency_code=None, mod=False):
     start_date = droid_start_date()
-    if(uno):
-        table_name = get_bot_uno_backtest_table_name()
-    elif(ucdc):
-        table_name = get_bot_ucdc_backtest_table_name()
-    else:
-        table_name = get_bot_classic_backtest_table_name()
+    print(start_date)
+    table_name = get_bot_classic_backtest_table_name()
     if(mod):
         table_name += "_mod"
-    query = f"select du.ticker, du.currency_code, result1.uno_min_date, result2.ohlctr_min_date, result1.uno_max_date, result2.ohlctr_max_date "
+    query = f"select du.ticker, du.currency_code, result1.uno_min_date, result2.ohlctr_min_date, result1.uno_max_date, "
+    query += f"result2.ohlctr_max_date, result1.uno_min_date - result2.ohlctr_min_date as uno_diff "
     query += f"from {get_universe_table_name()} du "
     query += f"left join (select ticker, min(cb.spot_date)::date as uno_min_date, max(cb.spot_date)::date as uno_max_date "
     query += f"from {table_name} cb where cb.spot_date>='{start_date}' group by cb.ticker) result1 on result1.ticker=du.ticker  "
     query += f"left join (select ticker, min(mo.trading_day)::date as ohlctr_min_date, max(mo.trading_day)::date as ohlctr_max_date "
     query += f"from {get_master_ohlcvtr_table_name()} mo where mo.trading_day>='{start_date}' and mo.close is not null  group by mo.ticker) result2 "
-    query += f"on result2.ticker=du.ticker  where du.is_active=True and "
+    query += f"on result2.ticker=du.ticker  "
+    query += f"where du.is_active=True and "
     if type(ticker) != type(None):
         query += f"du.ticker in {tuple_data(ticker)} and  "
     elif type(currency_code) != type(None):
         query += f"du.currency_code in {tuple_data(currency_code)} and "
-    query += f"result1.uno_min_date > result2.ohlctr_min_date + interval '1 years' "
+    query += f"(result1.uno_min_date > result2.ohlctr_min_date + interval '13 months') "
+    query += f"order by du.currency_code;"
+    data = read_query(query, table=get_universe_table_name())
+    return data
+
+def get_new_ticker_from_uno_ucdc_bot_backtest(ticker=None, currency_code=None, ucdc=False, uno=False, mod=False):
+    start_date = droid_start_date()
+    print(start_date)
+    if(uno):
+        table_name = get_bot_uno_backtest_table_name()
+    elif(ucdc):
+        table_name = get_bot_ucdc_backtest_table_name()
+    else:
+        table_name = get_bot_uno_backtest_table_name()
+    if(mod):
+        table_name += "_mod"
+    query = f"select du.ticker, du.currency_code, result1.uno_min_date, result2.ohlctr_min_date, result1.uno_max_date, "
+    query += f"result2.ohlctr_max_date, result3.vol_min_date, result3.vol_max_date, "
+    query += f"result1.uno_min_date - result2.ohlctr_min_date as uno_diff, result3.vol_min_date - result2.ohlctr_min_date as vol_diff "
+    query += f"from {get_universe_table_name()} du "
+    query += f"left join (select ticker, min(cb.spot_date)::date as uno_min_date, max(cb.spot_date)::date as uno_max_date "
+    query += f"from {table_name} cb where cb.spot_date>='{start_date}' group by cb.ticker) result1 on result1.ticker=du.ticker  "
+    query += f"left join (select ticker, min(mo.trading_day)::date as ohlctr_min_date, max(mo.trading_day)::date as ohlctr_max_date "
+    query += f"from {get_master_ohlcvtr_table_name()} mo where mo.trading_day>='{start_date}' and mo.close is not null  group by mo.ticker) result2 "
+    query += f"on result2.ticker=du.ticker  "
+    query += f"left join (select ticker, min(vol.trading_day)::date as vol_min_date, max(vol.trading_day)::date as vol_max_date "
+    query += f"from data_vol_surface vol where vol.trading_day>='2018-05-19' group by vol.ticker "
+    query += f"UNION "
+    query += f"select ticker, min(infer.trading_day)::date as vol_min_date, max(infer.trading_day)::date as vol_max_date "
+    query += f"from data_vol_surface_inferred infer where infer.trading_day>='2018-05-19' group by infer.ticker) result3 "
+    query += f"on result3.ticker=du.ticker "
+    query += f"where du.is_active=True and "
+    if type(ticker) != type(None):
+        query += f"du.ticker in {tuple_data(ticker)} and  "
+    elif type(currency_code) != type(None):
+        query += f"du.currency_code in {tuple_data(currency_code)} and "
+    query += f"(result1.uno_min_date > result2.ohlctr_min_date + interval '13 months' and result1.uno_min_date > result3.vol_min_date + interval '1 months') "
     query += f"order by du.currency_code;"
     data = read_query(query, table=get_universe_table_name())
     return data

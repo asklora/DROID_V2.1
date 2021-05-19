@@ -1,3 +1,4 @@
+from bot.data_download import get_new_ticker_from_classic_bot_backtest, get_new_ticker_from_uno_ucdc_bot_backtest
 from bot.calculate_bot import get_ucdc, get_uno
 from main_executive import daily_classic, daily_uno_ucdc
 from general.date_process import dateNow
@@ -6,6 +7,7 @@ from general.sql_output import fill_null_quandl_symbol
 from bot.preprocess import dividend_daily_update, interest_daily_update
 import os
 import sys
+from general.slack import report_to_slack
 import pandas as pd
 from pandas.core.series import Series
 from general.sql_process import do_function
@@ -342,7 +344,13 @@ def daily_ingestion(region_id=None):
 # Main Process
 if __name__ == "__main__":
     from migrate import weekly_migrations, daily_migrations
-    daily_ingestion()
+    # data = get_new_ticker_from_uno_ucdc_bot_backtest(ticker=None, currency_code=["USD"], ucdc=True, mod=False)
+    # print(data)
+    # data = get_new_ticker_from_uno_ucdc_bot_backtest(ticker=None, currency_code=["USD"],uno=True, mod=False)
+    # print(data)
+    # data = get_new_ticker_from_classic_bot_backtest(currency_code=["USD"])
+    # print(data)
+    # daily_ingestion()
     # update_ticker_name_from_dsws()
     # update_ticker_symbol_from_dss(ticker=None)
     # do_function("universe_populate")

@@ -7,7 +7,8 @@ from general.sql_query import get_active_universe
 from bot.data_download import (
     get_backtest_latest_date, 
     get_bot_data_latest_date, 
-    get_new_ticker_from_bot_backtest, 
+    get_new_ticker_from_classic_bot_backtest,
+    get_new_ticker_from_uno_ucdc_bot_backtest, 
      get_new_tickers_from_bot_data, 
      get_volatility_latest_date)
 from general.slack import report_to_slack
@@ -225,7 +226,7 @@ def option_maker_classic_check_new_ticker(ticker=None, currency_code=None, time_
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
-    new_ticker = get_new_ticker_from_bot_backtest(ticker=ticker, currency_code=currency_code, uno=True, mod=mod)["ticker"].to_list()
+    new_ticker = get_new_ticker_from_classic_bot_backtest(ticker=ticker, currency_code=currency_code, uno=True, mod=mod)["ticker"].to_list()
     print(new_ticker)
     if (len(new_ticker) > 0):
         ticker_length = len(new_ticker)
@@ -285,7 +286,7 @@ def option_maker_uno_check_new_ticker(ticker=None, currency_code=None, time_to_e
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
-    new_ticker = get_new_ticker_from_bot_backtest(ticker=ticker, currency_code=currency_code, uno=True, mod=mod)["ticker"].to_list()
+    new_ticker = get_new_ticker_from_uno_ucdc_bot_backtest(ticker=ticker, currency_code=currency_code, uno=True, mod=mod)["ticker"].to_list()
     print(new_ticker)
     if (len(new_ticker) > 0):
         ticker_length = len(new_ticker)
@@ -346,7 +347,7 @@ def option_maker_ucdc_check_new_ticker(ticker=None, currency_code=None, time_to_
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
-    new_ticker = get_new_ticker_from_bot_backtest(ticker=ticker, currency_code=currency_code, ucdc=True, mod=mod)["ticker"].to_list()
+    new_ticker = get_new_ticker_from_uno_ucdc_bot_backtest(ticker=ticker, currency_code=currency_code, ucdc=True, mod=mod)["ticker"].to_list()
     print(new_ticker)
     if (len(new_ticker) > 0):
         ticker_length = len(new_ticker)
