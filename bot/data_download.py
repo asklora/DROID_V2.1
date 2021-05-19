@@ -351,7 +351,6 @@ def get_bot_backtest_data(start_date=None, end_date=None, time_to_exp=None, tick
         query += f"and event is null "
     if(not_null):
         query += f"and event is not null "
-    print(query)
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
