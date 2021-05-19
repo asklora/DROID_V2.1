@@ -33,4 +33,4 @@ class Command(BaseCommand):
         # populate_intraday_latest_price(currency_code=["KRW"])
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
-        print(scrap_csi())
+        print(daily_hedge(currency="KRW"))
