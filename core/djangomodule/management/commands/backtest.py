@@ -30,7 +30,7 @@ class Command(BaseCommand):
                 gc.collect()
 
         if(options["classic"]):
-            daily_classic()
+            daily_classic(currency_code=[options["currency_code"]], option_maker=options["option_maker"], null_filler=options["null_filler"])
         else:
             daily_shcedule_uno_ucdc(currency_code=[options["currency_code"]], uno=options["uno"], 
             ucdc=options["ucdc"], do_infer=options["do_infer"], infer=options["infer"], option_maker=options["option_maker"], 
