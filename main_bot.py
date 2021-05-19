@@ -7,7 +7,7 @@ from bot.calculate_latest_bot import populate_latest_bot_update
 from general.sql_query import get_active_universe
 from general.sql_process import do_function
 from main_executive import (
-    bot_ranking_history, bot_statistic_classic, bot_statistic_ucdc, bot_statistic_uno, daily_classic, daily_uno_ucdc, data_prep_daily, 
+    bot_ranking_daily, bot_ranking_history, bot_statistic_classic, bot_statistic_ucdc, bot_statistic_uno, daily_classic, daily_uno_ucdc, data_prep_daily, 
     data_prep_history, 
     infer_daily, 
     infer_history, 
@@ -18,19 +18,20 @@ from main_executive import (
 
 if __name__ == "__main__":
     print("Start Process")
-    data_prep_history(currency_code=["KRW"])
-    data_prep_history(currency_code=["HKD"])
-    data_prep_history(currency_code=["CNY"])
-    data_prep_history(currency_code=["USD"])
-    data_prep_history(currency_code=["EUR"])
+    # bot_ranking_daily(currency_code=["USD"], mod=False)
+    # data_prep_history(currency_code=["KRW"])
+    # data_prep_history(currency_code=["HKD"])
+    # data_prep_history(currency_code=["CNY"])
+    # data_prep_history(currency_code=["USD"])
+    # data_prep_history(currency_code=["EUR"])
     
-    daily_uno_ucdc(currency_code=["KRW"], infer=True)
-    daily_uno_ucdc(currency_code=["HKD"], infer=True)
-    daily_uno_ucdc(currency_code=["CNY"], infer=True)
-    daily_uno_ucdc(currency_code=["USD"], infer=False)
-    daily_uno_ucdc(currency_code=["EUR"], infer=True)
+    # daily_uno_ucdc(currency_code=["KRW"], infer=True)
+    # daily_uno_ucdc(currency_code=["HKD"], infer=True)
+    # daily_uno_ucdc(currency_code=["CNY"], infer=True)
+    # daily_uno_ucdc(currency_code=["USD"], infer=False)
+    # daily_uno_ucdc(currency_code=["EUR"], infer=True)
 
-    daily_classic()
+    # daily_classic()
     
     # update_quandl_orats_from_quandl()
     # do_function("data_vol_surface_update")

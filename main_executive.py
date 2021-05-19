@@ -1,3 +1,4 @@
+import sys
 from bot.calculate_latest_bot import populate_latest_bot_update
 from bot.bot_labeler import populate_bot_labeler
 from bot.final_model import populate_vol_infer
@@ -244,8 +245,8 @@ def option_maker_daily_classic(ticker=None, currency_code=None, time_to_exp=None
     print("{} : === OPTION MAKER CLASSIC STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, classic=True)
     start_date = latest_dates_db["max_date"].min()
-    if(start_date > str_to_date(backdate_by_month(6))):
-        start_date = str_to_date(backdate_by_month(6))
+    if(start_date > str_to_date(backdate_by_month(7))):
+        start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -305,8 +306,8 @@ def option_maker_daily_uno(ticker=None, currency_code=None, time_to_exp=None, mo
     print("{} : === OPTION MAKER UNO STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, uno=True)
     start_date = latest_dates_db["max_date"].min()
-    if(start_date > str_to_date(backdate_by_month(6))):
-        start_date = str_to_date(backdate_by_month(6))
+    if(start_date > str_to_date(backdate_by_month(7))):
+        start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
     latest_date = get_volatility_latest_date(ticker=ticker, currency_code=currency_code, infer=True)
     if start_date is None:
@@ -366,8 +367,8 @@ def option_maker_daily_ucdc(ticker=None, currency_code=None, time_to_exp=None, m
     print("{} : === OPTION MAKER UCDC STARTED ===".format(dateNow()))
     latest_dates_db = get_backtest_latest_date(ticker=ticker, currency_code=currency_code, mod=mod, ucdc=True)
     start_date = latest_dates_db["max_date"].min()
-    if(start_date > str_to_date(backdate_by_month(6))):
-        start_date = str_to_date(backdate_by_month(6))
+    if(start_date > str_to_date(backdate_by_month(7))):
+        start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
     latest_date = get_volatility_latest_date(ticker=ticker, currency_code=currency_code, infer=True)
     if start_date is None:
@@ -434,9 +435,9 @@ def bot_ranking_history(ticker=None, currency_code=None, mod=False, time_to_exp=
         ticker = get_active_universe()["ticker"].tolist()
     start_date = str_to_date(droid_start_date())
     end_date = str_to_date(dateNow())
-    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, currency_code=currency_code, mod=mod, history=True)
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, currency_code=currency_code, mod=mod, history=True)
     print("{} : === BOT RANKING HISTORY COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === BOT RANKING HISTORY COMPLETED ===".format(dateNow()))
 
@@ -447,11 +448,12 @@ def bot_ranking_daily(ticker=None, currency_code=None, mod=False, time_to_exp=ti
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     start_date = get_bot_data_latest_date(daily=True)
-    if(start_date > str_to_date(backdate_by_month(6))):
-        start_date = str_to_date(backdate_by_month(6))
+    if(start_date > str_to_date(backdate_by_month(7))):
+        start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
-    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, currency_code=currency_code, mod=mod)
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
+    populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, currency_code=currency_code, mod=mod)
+    
     print("{} : === BOT RANKING DAILY COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === BOT RANKING DAILY COMPLETED ===".format(dateNow()))
