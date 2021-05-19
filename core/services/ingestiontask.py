@@ -2,7 +2,7 @@ from ingestion.master_data import update_fundamentals_quality_value
 from config.celery import app
 from datetime import datetime
 from main import (
-    update_lot_size_from_dss, quandl,
+    daily_ingestion, update_lot_size_from_dss, quandl,
     vix, daily_na, daily_ws,
     weekly, timezones, monthly,
     dlpa_weekly, populate_latest_price,
@@ -305,6 +305,8 @@ def migrate():
             # Change the standard output to the file we created.
             sys.stdout = f
             daily_migrations()  # triger ingestion function
+            daily_ingestion(region_id=["na"])
+            daily_ingestion(region_id=["ws"])
             populate_macro_table()
             populate_ibes_table()
             do_function("master_ohlcvtr_update")
