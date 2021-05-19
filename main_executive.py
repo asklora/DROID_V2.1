@@ -102,7 +102,7 @@ def daily_classic(ticker=None, currency_code=None, time_to_exp=time_to_expiry, m
 # ************************************************************************************************************************************************************************************
 def train_lebeler_model(ticker=None, currency_code=None, time_to_exp=time_to_expiry, bots_list=bots_list):
     folder_check()
-    time_to_exp = check_time_to_exp(time_to_expiry)
+    time_to_exp = check_time_to_exp(time_to_exp)
     print("{} : === BOT RANKING TRAIN MODEL STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
