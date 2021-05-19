@@ -226,7 +226,7 @@ def option_maker_classic_check_new_ticker(ticker=None, currency_code=None, time_
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
-    new_ticker = get_new_ticker_from_classic_bot_backtest(ticker=ticker, currency_code=currency_code, uno=True, mod=mod)["ticker"].to_list()
+    new_ticker = get_new_ticker_from_classic_bot_backtest(ticker=ticker, currency_code=currency_code, mod=mod)["ticker"].to_list()
     print(new_ticker)
     if (len(new_ticker) > 0):
         ticker_length = len(new_ticker)
