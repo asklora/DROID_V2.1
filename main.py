@@ -348,7 +348,7 @@ def daily_ingestion(region_id=None):
 
 # Main Process
 if __name__ == "__main__":
-    update_mic_from_dss()
+    # update_mic_from_dss()
     from migrate import weekly_migrations, daily_migrations
     # data = get_new_ticker_from_uno_ucdc_bot_backtest(ticker=None, currency_code=["USD"], ucdc=True, mod=False)
     # print(data)
@@ -361,9 +361,10 @@ if __name__ == "__main__":
     # update_ticker_symbol_from_dss(ticker=None)
     # do_function("universe_populate")
     # populate_intraday_latest_price(currency_code=["KRW"])
-    # populate_intraday_latest_price(ticker=['003550.KS', '007700.KS'])
+    # populate_intraday_latest_price(ticker=["TCOM.O"])
     # populate_latest_price(currency_code=["CNY"])
-    # populate_latest_price(ticker=['.SPX'])
+    ticker = get_universe_by_region(region_id="na")
+    populate_latest_price(ticker=ticker["ticker"])
     # do_function("universe_populate")
     # daily_migrations()
     # populate_macro_table()
