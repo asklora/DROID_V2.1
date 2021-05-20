@@ -3,9 +3,8 @@
         "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.PriceHistoryExtractionRequest",
         "ContentFieldNames": [
             "RIC",
-            "Trade Date",
-            "Total Return",
-            "Universal Close Price"
+            "Exchange Code",
+            "Exchange Description"
 
         ],
         "IdentifierList": {

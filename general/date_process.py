@@ -4,6 +4,7 @@ import pandas as pd
 from pytz import timezone
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from pandas.tseries.offsets import BDay
 
 def get_time_by_timezone(timezone_location):
     return datetime.now(timezone(timezone_location)).utcoffset() / timedelta(minutes =15)
@@ -67,6 +68,20 @@ def forwarddate_by_month(month):
 
 def forwarddate_by_year(year):
     return (datetime.now().date() + relativedelta(years=year)).strftime("%Y-%m-%d")
+
+def date_plus_bday(start_date, days=1):
+    if(type(start_date) == str):
+        start_date = (str_to_date(start_date) + BDay(days)).strftime("%Y-%m-%d")
+    else:
+        start_date = ((start_date) + BDay(days)).strftime("%Y-%m-%d")
+    return start_date
+
+def date_minus_bday(start_date, days=1):
+    if(type(start_date) == str):
+        start_date = (str_to_date(start_date) - BDay(days)).strftime("%Y-%m-%d")
+    else:
+        start_date = ((start_date) - BDay(days)).strftime("%Y-%m-%d")
+    return start_date
 
 def BackTimeFormat(days,strip=None):
     time = date.today() - timedelta(days=days)

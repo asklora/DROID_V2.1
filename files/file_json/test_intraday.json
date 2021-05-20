@@ -3,7 +3,7 @@
         "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
         "ContentFieldNames": [
             "RIC",
-            "Last Price"
+            "Exchange Code"
         ],
         "IdentifierList": {
             "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
