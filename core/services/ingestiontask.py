@@ -23,6 +23,7 @@ from core.universe.models import Universe
 import sys
 from core.djangomodule.general import aws_batch
 from migrate import daily_migrations
+from general.slack import report_to_slack
 
 
 @app.task
@@ -330,7 +331,10 @@ def migrate_droid1():
         with open(f"files/migrate{now}.txt", "w") as f:
             # Change the standard output to the file we created.
             sys.stdout = f
+            report_to_slack("===  CREATE AWS BATCH FOR DAILY MIGRATIONS ===")
             migrate()  # triger ingestion function
+            report_to_slack("===  CLOSING AWS BATCH FOR DAILY MIGRATIONS JOB DONE ===")
+            
             sys.stdout = original_stdout
         return {"result": f"migrate daily done"}
     except Exception as e:
