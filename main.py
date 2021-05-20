@@ -328,9 +328,9 @@ def update_universe_data(ticker=None):
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 def daily_ingestion(region_id=None):
-    dlp_ticker = get_universe_by_region(region_code=region_id)
+    dlp_ticker = get_active_universe_droid1()
     print(dlp_ticker)
-    droid2_ticker = get_active_universe()
+    droid2_ticker = get_universe_by_region(region_code=region_id)
     print(droid2_ticker)
     dlp_ticker = dlp_ticker.loc[dlp_ticker["ticker"].isin(droid2_ticker["ticker"].to_list())]
     print(dlp_ticker)
@@ -350,7 +350,7 @@ if __name__ == "__main__":
     # print(data)
     # data = get_new_ticker_from_classic_bot_backtest(currency_code=["USD"])
     # print(data)
-    # daily_ingestion()
+    daily_ingestion()
     # update_ticker_name_from_dsws()
     # update_ticker_symbol_from_dss(ticker=None)
     # do_function("universe_populate")
