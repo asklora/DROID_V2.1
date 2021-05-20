@@ -1,3 +1,4 @@
+from general.sql_query import get_universe_by_region
 from ingestion.master_data import update_fundamentals_quality_value
 from config.celery import app
 from datetime import datetime
@@ -306,8 +307,15 @@ def migrate():
             # Change the standard output to the file we created.
             sys.stdout = f
             daily_migrations()  # triger ingestion function
+
             daily_ingestion(region_id=["na"])
             daily_ingestion(region_id=["ws"])
+
+            ticker = get_universe_by_region(region_id="na")
+            populate_latest_price(ticker=ticker["ticker"])
+            ticker = get_universe_by_region(region_id="ws")
+            populate_latest_price(ticker=ticker["ticker"])
+
             populate_macro_table()
             populate_ibes_table()
             do_function("master_ohlcvtr_update")
