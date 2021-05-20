@@ -1,3 +1,4 @@
+import numpy as np
 from general.date_process import (
     backdate_by_day, datetimeNow,
     dateNow)
@@ -180,12 +181,17 @@ def update_mic_from_dss(ticker=None):
     result = get_data_from_dss("start_date", "end_date", universe["ticker"], jsonFileName, report=REPORT_INTRADAY)
     print(result)
     result = result.drop(columns=["IdentifierType", "Identifier"])
+    
     print(result)
     if (len(result) > 0 ):
         result = result.rename(columns={
             "RIC": "ticker",
             "Market MIC": "mic"
         })
+        result["mic"] = np.where(result["mic"] == "XETB", "XETA", result["mic"])
+        result["mic"] = np.where(result["mic"] == "XXXX", "XNAS", result["mic"])
+        result["mic"] = np.where(result["mic"] == "MTAA", "XMIL", result["mic"])
+        result["mic"] = np.where(result["mic"] == "WBAH", "XEUR", result["mic"])
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
