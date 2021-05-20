@@ -3,7 +3,9 @@
         "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
         "ContentFieldNames": [
             "RIC",
-            "Exchange Code"
+            "Exchange Code",
+            "Exchange Description",
+            "Market MIC"
         ],
         "IdentifierList": {
             "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",

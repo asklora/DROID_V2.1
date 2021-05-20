@@ -12,6 +12,7 @@ import pandas as pd
 from pandas.core.series import Series
 from general.sql_process import do_function
 from ingestion.universe import (
+    update_mic_from_dss,
     update_ticker_name_from_dsws,
     update_entity_type_from_dsws,
     update_lot_size_from_dss,
@@ -257,6 +258,7 @@ def new_ticker_ingestion(ticker=None):
     update_currency_code_from_dss(ticker=ticker)
     update_industry_from_dsws(ticker=ticker)
     update_company_desc_from_dsws(ticker=ticker)
+    update_mic_from_dss(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
     update_quandl_orats_from_quandl(ticker=ticker)
     populate_latest_price(ticker=ticker)
@@ -346,6 +348,7 @@ def daily_ingestion(region_id=None):
 
 # Main Process
 if __name__ == "__main__":
+    update_mic_from_dss()
     from migrate import weekly_migrations, daily_migrations
     # data = get_new_ticker_from_uno_ucdc_bot_backtest(ticker=None, currency_code=["USD"], ucdc=True, mod=False)
     # print(data)
@@ -353,7 +356,7 @@ if __name__ == "__main__":
     # print(data)
     # data = get_new_ticker_from_classic_bot_backtest(currency_code=["USD"])
     # print(data)
-    daily_ingestion()
+    # daily_ingestion()
     # update_ticker_name_from_dsws()
     # update_ticker_symbol_from_dss(ticker=None)
     # do_function("universe_populate")
