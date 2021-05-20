@@ -268,7 +268,9 @@
         "mic": "XSGO",
         "asset_type": "Equities",
         "group": "Extended",
-        "currency_code":"EUR"
+        "currency_code_id":null,
+        "created":null,
+        "updated":null
     },
     {
         "fin_id": "CN.SSE",
