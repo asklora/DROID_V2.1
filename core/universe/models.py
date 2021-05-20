@@ -303,3 +303,27 @@ class SpecialCases(models.Model):
 
     def __str__(self):
         return str(self.ticker.ticker)
+    
+class ExchangeCode(models.Model):
+    exchange_code = models.CharField(max_length=20, primary_key=True)
+    exchange_name = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = "exchange_code"
+
+    def __str__(self):
+        return str(self.exchange_code)
+
+class ExchangeCodeReference(models.Model):
+    uid = models.CharField(max_length=20, primary_key=True)
+    source_id = models.ForeignKey(Source, on_delete=models.CASCADE, db_column="source_id", related_name="exchange_code_reference_source_id")
+    exchange_code = models.ForeignKey(ExchangeCode, on_delete=models.CASCADE, db_column="exchange_code", related_name="exchange_code_reference_exchange_code")
+    exchange_code_reference = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = "exchange_code_reference"
+
+    def __str__(self):
+        return str(self.uid)
