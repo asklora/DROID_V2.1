@@ -5,6 +5,7 @@ from core.user.models import User
 from core.master.models import Currency
 from main import new_ticker_ingestion, populate_latest_price, update_index_price_from_dss, populate_intraday_latest_price
 from general.sql_process import do_function
+from general.slack import report_to_slack
 from core.orders.models import Order, PositionPerformance, OrderPosition
 from core.Clients.models import UserClient, Client
 from datetime import datetime
@@ -151,18 +152,28 @@ def get_isin_populate_universe(ticker, user_id):
 
 
 @app.task
-def populate_client_top_stock_weekly(currency=None, client_name=None):
-    # client = Client.objects.get(client_name="HANWHA")
-    # topstock = client.client_top_stock.filter(
-    #     has_position=False, service_type='bot_advisor', currency_code=currency).distinct('spot_date')
-    test_pick(currency_code=[currency])
-    populate_bot_advisor(
-        currency_code=[currency], client_name="HANWHA", capital="small")
-    populate_bot_advisor(
-        currency_code=[currency], client_name="HANWHA", capital="large")
-    populate_bot_advisor(
-        currency_code=[currency], client_name="HANWHA", capital="large_margin")
-    order_client_topstock(currency=currency)
+def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
+    report_to_slack(f"===  POPULATING {client_name} TOP PICK {currency} ===")
+    try:
+        test_pick(currency_code=[currency])
+        populate_bot_advisor(
+            currency_code=[currency], client_name=client_name, capital="small")
+        populate_bot_advisor(
+            currency_code=[currency], client_name=client_name, capital="large")
+        populate_bot_advisor(
+            currency_code=[currency], client_name=client_name, capital="large_margin")
+    except Exception as e:
+        report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
+        report_to_slack(str(e))
+        return {'err': str(e)}
+    report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
+    try:
+        order_client_topstock(currency=currency)
+    except Exception as e:
+        report_to_slack(f"===  ERROR IN ORDER FOR {currency} ===")
+        report_to_slack(str(e))
+        return {'err': str(e)}
+    report_to_slack(f"===  {client_name} TOP PICK {currency} ORDER COMPLETED ===")
 
     return {'result': f'populate and order {currency} done'}
 
@@ -231,24 +242,31 @@ def order_client_topstock(currency=None, client_name=None):
 
 @app.task
 def daily_hedge(currency=None):
-    update_index_price_from_dss(currency_code=[currency])
-    populate_intraday_latest_price(currency_code=[currency])
-    get_quote_index(currency)
-    positions = OrderPosition.objects.filter(
-        is_live=True, ticker__currency_code=currency)
-    for position in positions:
-        position_uid = position.position_uid
-        if currency == "USD":
-            get_quote_yahoo(position.ticker.ticker_symbol, use_symbol=True)
-        else:
-            get_quote_yahoo(position.ticker.ticker, use_symbol=False)
-        if (position.bot.is_uno()):
-            uno_position_check(position_uid)
-        elif (position.bot.is_ucdc()):
-            ucdc_position_check(position_uid)
-        elif (position.bot.is_classic()):
-            classic_position_check(position_uid)
+    report_to_slack(f"===  START HEDGE FOR {currency} ===")
+    try:
+        update_index_price_from_dss(currency_code=[currency])
+        populate_intraday_latest_price(currency_code=[currency])
+        get_quote_index(currency)
+        positions = OrderPosition.objects.filter(
+            is_live=True, ticker__currency_code=currency)
+        for position in positions:
+            position_uid = position.position_uid
+            if currency == "USD":
+                get_quote_yahoo(position.ticker.ticker_symbol, use_symbol=True)
+            else:
+                get_quote_yahoo(position.ticker.ticker, use_symbol=False)
+            if (position.bot.is_uno()):
+                uno_position_check(position_uid)
+            elif (position.bot.is_ucdc()):
+                ucdc_position_check(position_uid)
+            elif (position.bot.is_classic()):
+                classic_position_check(position_uid)
+    except Exception as e:
+        report_to_slack(f"===  ERROR IN HEDGE FOR {currency} ===")
+        report_to_slack(str(e))
+        return {'err': str(e)}
     send_csv_hanwha.delay(currency=currency)
+    report_to_slack(f"===  EMAIL HEDGE SENT FOR {currency} ===")
     return {'result': f'hedge {currency} done'}
 
 
