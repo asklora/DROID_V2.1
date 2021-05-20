@@ -3,8 +3,7 @@
         "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.PriceHistoryExtractionRequest",
         "ContentFieldNames": [
             "RIC",
-            "Ticker",
-            "Exchange Code"
+            "Ticker"
         ],
         "IdentifierList": {
             "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
