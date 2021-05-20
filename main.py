@@ -330,7 +330,10 @@ def update_universe_data(ticker=None):
 def daily_ingestion(region_id=None):
     dlp_ticker = get_active_universe_droid1()
     print(dlp_ticker)
-    droid2_ticker = get_universe_by_region(region_code=region_id)
+    if(region_id == None):
+        droid2_ticker = get_active_universe()
+    else:
+        droid2_ticker = get_universe_by_region(region_code=region_id)
     print(droid2_ticker)
     dlp_ticker = dlp_ticker.loc[dlp_ticker["ticker"].isin(droid2_ticker["ticker"].to_list())]
     print(dlp_ticker)
