@@ -99,6 +99,8 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
 
             X_infer = main_infer_copy[X_col_list]
 
+            # ERASE any data with Nones or NA--------------------------------------------
+            # If None or NA in any, ERASE IN ALL THREE X_train, Y_train, X_infer
             # We didn"t have vol data for some etfs so I add the following lines so the model can work.
             X_train = X_train.bfill().ffill()
             Y_train = Y_train.bfill().ffill()
@@ -127,6 +129,8 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
                 Y_train = Y_train.astype(int)
                 X_infer = main_infer[X_col_list]
 
+                # ERASE any data with Nones or NA--------------------------------------------
+                # If None or NA in any, ERASE IN ALL THREE X_train, Y_train, X_infer
                 # We didn"t have vol data for some etfs so I add this line so the model can work.
                 X_train = X_train.bfill().ffill()
                 Y_train = Y_train.bfill().ffill()
