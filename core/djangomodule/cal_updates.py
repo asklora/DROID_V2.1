@@ -1,6 +1,7 @@
 import requests
 import json
 import ast
+from datetime import datetime, timedelta
 from collections import OrderedDict
 
 # USD, HKD, CNY, KRW, EUR, GBP, TWD, JPY, SGD
@@ -106,148 +107,196 @@ comparation = {
 			"fin_id":"JP.JPX"
 		},
 	"EUR":{},
-	"GBP":{}
+	"GBP":{
+			"mic":"XLON",
+			"fin_id":"GB.LSE"
+	}
 }
-def get_index_symbol():
-	url = "https://api.tradinghours.com/v3/markets?group=core&token="+tradinghours_token
-	req = requests.get(url)
-	res = req.json()
-	print(res)
-	return True
+class tradingHours():
 
-def get_trading_hour(currencylist):
-	fin_id = []
-	for curr in currencylist:
-		if comparation[curr] == {}:
-			pass
+	def __init__(self, fins):
+		self.fin_id = fins
+		self.token = tradinghours_token
+	
+	def get_index_symbol():
+		url = "https://api.tradinghours.com/v3/markets?group=core&token="+self.token
+		req = requests.get(url)
+		res = req.json()
+		print(res)
+		return res
+
+	def get_weekly_holiday(self):
+		print(self.fin_id)
+		if type(self.fin_id) == list:
+			fin_id = (",").join(self.fin_id)
 		else:
-			fin_id.append(comparation[curr]["fin_id"])
-	if fin_id != []:
-		fin_id = (",").join(fin_id)
-	else:
-		print("Currency does not available")
-		return False
-	url = "http://api.tradinghours.com/v3/markets/status?fin_id="+fin_id+"&token="+tradinghours_token
-	req = requests.get(url)
-	res = req.json()
-	# print(res)
-	list_index = list(fin_id.split(","))
-	# print(len(list_index))
-	# for data in res['data'].keys():
-	#   print(data)
-	for data in list_index:
-		print(data, ": ", res['data'][data]['status'])
-		print("===========================================")
+			fin_id = self.fin_id
+		start_date = datetime.now()
+		end_date = start_date+timedelta(days=5)
+		start_date = start_date.strftime("%Y-%m-%d")
+		end_date = end_date.strftime("%Y-%m-%d")
+		url = "https://api.tradinghours.com/v3/markets/holidays?fin_id="+fin_id+"&start="+start_date+"&end="+end_date+"&token="+self.token
+		req = requests.get(url)
+		if req.status_code == 200:
+			resp = req.json()
+			#########################save it to currency calendar##################################
+			#######################################################################################
+		else:
+			resp = req.text
+		print(resp)
+		return True
 
-	dss_date = get_quote_date_dss()
-	if dss_date != False:
-		if type(dss_date) == dict:
-			for dss in dss_date['value']:
-				print(dss)
-				print("===========================================")
-	return True
+	def check_for_market(self):
+		status = None
+		# print(self.fin_id)
+		fin_type = None
+		if type(self.fin_id) == list:
+			fin_type = "list"
+			fin_param = (",").join(self.fin_id)
+		else:
+			fin_type = "str"
+			fin_param = self.fin_id
+		url = "http://api.tradinghours.com/v3/markets/status?fin_id="+fin_param+"&token="+self.token
+		req = requests.get(url)
 
-def makeExtractHeader(token):
-	_header = {}
-	_header['Prefer'] = 'respond-async, wait=5'
-	_header['Content-Type'] = 'application/json; odata.metadata=minimal'
-	_header['Accept-Charset'] = 'UTF-8'
-	_header['Authorization'] = token
-	return _header
+		if req.status_code == 200:
+			resp = req.json()
+			if fin_type == "str":
+				stat = resp['data'][self.fin_id]['status']
+				print(stat)
+				if stat == "Closed":
+					return False
+				else:
+					return True
+			else:
+				status = []
+				for fin in self.fin_id:
+					stat = resp["data"][fin]['status']
+					if stat == "Closed":
+						data = {fin:False}
+					else:
+						data = {fin:True}
+					status.append(data)
+		else:
+			resp = req.text
+			print(resp)
+			status = False
+		return status
+
+# def get_trading_hour(currencylist):
+# 	fin_id = []
+# 	for curr in currencylist:
+# 		if comparation[curr] == {}:
+# 			pass
+# 		else:
+# 			fin_id.append(comparation[curr]["fin_id"])
+# 	if fin_id != []:
+# 		fin_id = (",").join(fin_id)
+# 	else:
+# 		print("Currency does not available")
+# 		return False
+# 	url = "http://api.tradinghours.com/v3/markets/status?fin_id="+fin_id+"&token="+tradinghours_token
+# 	req = requests.get(url)
+# 	res = req.json()
+# 	# print(res)
+# 	list_index = list(fin_id.split(","))
+# 	# print(len(list_index))
+# 	# for data in res['data'].keys():
+# 	#   print(data)
+# 	for data in list_index:
+# 		print(data, ": ", res['data'][data]['status'])
+# 		print("===========================================")
+
+# 	dss_date = get_quote_date_dss()
+# 	if dss_date != False:
+# 		if type(dss_date) == dict:
+# 			for dss in dss_date['value']:
+# 				print(dss)
+# 				print("===========================================")
+# 	return True
+
+# def makeExtractHeader(token):
+# 	_header = {}
+# 	_header['Prefer'] = 'respond-async, wait=5'
+# 	_header['Content-Type'] = 'application/json; odata.metadata=minimal'
+# 	_header['Accept-Charset'] = 'UTF-8'
+# 	_header['Authorization'] = token
+# 	return _header
 
 
-def get_quote_date_dss():
-	# print("=====================")
-	authToken = None
-	header_get_token = {
-		"Content-Type": "application/json; odata.metadata=minimal",
-		"Prefer": "respond-async"
-	}
+# def get_quote_date_dss():
+# 	# print("=====================")
+# 	authToken = None
+# 	header_get_token = {
+# 		"Content-Type": "application/json; odata.metadata=minimal",
+# 		"Prefer": "respond-async"
+# 	}
 
-	req_get_token = {'Credentials': {'Password': DSS_PASSWORD, 'Username': DSS_USERNAME}}
+# 	req_get_token = {'Credentials': {'Password': DSS_PASSWORD, 'Username': DSS_USERNAME}}
    
-	req_get_token = json.dumps(req_get_token)
+# 	req_get_token = json.dumps(req_get_token)
 
-	req = requests.post(URL_AuthToken, data=req_get_token, headers=header_get_token)
-	# print("req_token_payload >> ", req_get_token)
-	if req.status_code == 200:
-		resp = req.json()
-		authToken = resp['value']
-	else:
-		# print("token respo >> ", req.text)
-		return False
+# 	req = requests.post(URL_AuthToken, data=req_get_token, headers=header_get_token)
+# 	# print("req_token_payload >> ", req_get_token)
+# 	if req.status_code == 200:
+# 		resp = req.json()
+# 		authToken = resp['value']
+# 	else:
+# 		# print("token respo >> ", req.text)
+# 		return False
 
-	# print("authToken >> ", authToken)
+# 	# print("authToken >> ", authToken)
 
-	if authToken != None:
-		token = "Token "+authToken
-		header = makeExtractHeader(token)
-	data = {
-		"ExtractionRequest": {
-			"@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
-			"ContentFieldNames": [
-				"RIC",
-				"Trade Date"
-			],
-			"IdentifierList": {
-				"@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
-				"InstrumentIdentifiers": [
-				],
-				"ValidationOptions":{"AllowHistoricalInstruments":True,"AllowOpenAccessInstruments":True},
-				"UseUserPreferencesForValidationOptions": False
-			},
-			"Condition":
-			{
+# 	if authToken != None:
+# 		token = "Token "+authToken
+# 		header = makeExtractHeader(token)
+# 	data = {
+# 		"ExtractionRequest": {
+# 			"@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
+# 			"ContentFieldNames": [
+# 				"RIC",
+# 				"Trade Date"
+# 			],
+# 			"IdentifierList": {
+# 				"@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+# 				"InstrumentIdentifiers": [
+# 				],
+# 				"ValidationOptions":{"AllowHistoricalInstruments":True,"AllowOpenAccessInstruments":True},
+# 				"UseUserPreferencesForValidationOptions": False
+# 			},
+# 			"Condition":
+# 			{
 				
-		  }
-		}
-	}
-	data['ExtractionRequest']['Condition'] = OrderedDict(data['ExtractionRequest']['Condition'])
-	data['ExtractionRequest']['IdentifierList']['ValidationOptions'] = OrderedDict(data['ExtractionRequest']['IdentifierList']['ValidationOptions'])
-	data['ExtractionRequest']['IdentifierList'] = OrderedDict(data['ExtractionRequest']['IdentifierList'])
-	data['ExtractionRequest'] = OrderedDict(data['ExtractionRequest'])
-	data = OrderedDict(data)
-	# data = json.dumps(data)
-	# data = json.load(data, object_pairs_hook=OrderedDict)
+# 		  }
+# 		}
+# 	}
+# 	data['ExtractionRequest']['Condition'] = OrderedDict(data['ExtractionRequest']['Condition'])
+# 	data['ExtractionRequest']['IdentifierList']['ValidationOptions'] = OrderedDict(data['ExtractionRequest']['IdentifierList']['ValidationOptions'])
+# 	data['ExtractionRequest']['IdentifierList'] = OrderedDict(data['ExtractionRequest']['IdentifierList'])
+# 	data['ExtractionRequest'] = OrderedDict(data['ExtractionRequest'])
+# 	data = OrderedDict(data)
+# 	# data = json.dumps(data)
+# 	# data = json.load(data, object_pairs_hook=OrderedDict)
 
-	listofticker = [".KS200", ".SPX", ".HSLI", ".CSI300"]
-
-
-	# stocks = universe.objects.filter(is_active=True, ticker=listofticker)
-	for _inst in listofticker:
-		_inst = "/"+_inst
-		data["ExtractionRequest"]["IdentifierList"]["InstrumentIdentifiers"].append(
-				{"IdentifierType": "Ric", "Identifier": _inst})
-	dss_resp = requests.post(URL_Extrations, data=None, json=data, headers=header)
-	print("status_code", dss_resp.status_code)
-	print(dss_resp.text)
-	if dss_resp.status_code == 200:
-		return ast.literal_eval(dss_resp.text)
-	else:
-		print("False")
-		return dss_resp.text
+# 	listofticker = [".KS200", ".SPX", ".HSLI", ".CSI300"]
 
 
-# import pandas as pd
-# from general.sql_query import get_active_universe
-# from general.date_process import datetimeNow
-# from global_vars import REPORT_INTRADAY, REPORT_HISTORY
-# from datasource.dss import get_data_from_dss
+# 	# stocks = universe.objects.filter(is_active=True, ticker=listofticker)
+# 	for _inst in listofticker:
+# 		_inst = "/"+_inst
+# 		data["ExtractionRequest"]["IdentifierList"]["InstrumentIdentifiers"].append(
+# 				{"IdentifierType": "Ric", "Identifier": _inst})
+# 	dss_resp = requests.post(URL_Extrations, data=None, json=data, headers=header)
+# 	print("status_code", dss_resp.status_code)
+# 	print(dss_resp.text)
+# 	if dss_resp.status_code == 200:
+# 		return ast.literal_eval(dss_resp.text)
+# 	else:
+# 		print("False")
+# 		return dss_resp.text
 
-if __name__ == '__main__':
-#     print("Do Process")
-#     print("{} : === Currency Price Ingestion ===".format(datetimeNow()))
-#     currencylist = get_active_universe(ticker=[".KS200", ".SPX", ".HSLI", ".CSI300"])
-#     # "select * from universe where is_active=True and ticker in (select ticker from universe where is_active=True and ticker in ('.KS200', '.SPX', '.HSLI', '.CSI300')) order by ticker"
-#     currencylist = pd.DataFrame({"ticker" : [".KS200", ".SPX", ".HSLI", ".CSI300"]}, index=[0, 1, 2, 3])
-#     jsonFileName = "files/file_json/intraday_capital_change.json"
-#     currencylist["ticker"] = "/" + currencylist["ticker"]
-#     # "/.KS200", "/.SPX", "/.HSLI", "/.CSI300"
-#     print(currencylist)
-#     result = get_data_from_dss("start_date", "end_date", currencylist["ticker"], jsonFileName, report=REPORT_INTRADAY)
-#     print(result)
-#     # result = result.drop(columns=["IdentifierType", "Identifier"])
-#     print(result)
-
-	get_trading_hour()
+# if __name__ == '__main__':
+# 	# get_trading_hour()
+# 	x = tradingHours(["GB.LSE", "CN.SSE"])
+# 	x.check_for_market()
 
