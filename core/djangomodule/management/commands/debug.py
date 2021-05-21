@@ -2,6 +2,7 @@ from migrate import currency
 from django.core.management.base import BaseCommand, CommandError
 from core.user.models import User
 from core.djangomodule.yahooFin import get_quote_index,scrap_csi
+from core.djangomodule.calendar import TradingHours
 from core.orders.models import PositionPerformance, Order
 from core.services.ingestiontask import migrate_droid1
 from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo
@@ -13,7 +14,9 @@ from datetime import datetime
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        get_quote_yahoo("TCOM", use_symbol=True)
+        market = TradingHours(mic='XNAS')
+        print(market.is_open)
+        # get_quote_yahoo("TCOM", use_symbol=True)
         # populate_client_top_stock_weekly(currency="KRW")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(

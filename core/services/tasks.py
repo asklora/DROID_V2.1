@@ -16,9 +16,9 @@ from portfolio.daily_hedge_uno import uno_position_check
 import pandas as pd
 from core.djangomodule.serializers import CsvSerializer
 from core.djangomodule.yahooFin import get_quote_index,get_quote_yahoo
+from core.djangomodule.calendar import TradingHours
 from django.core.mail import send_mail, EmailMessage
 from celery.schedules import crontab
-
 
 import io
 
@@ -179,13 +179,13 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
 
 
 @app.task
-def order_client_topstock(currency=None, client_name=None):
+def order_client_topstock(currency=None, client_name="HANWHA"):
     # need to change to client prices
     populate_intraday_latest_price(currency_code=[currency])
     update_index_price_from_dss(currency_code=[currency])
     if currency == "USD":
         get_quote_index(currency)
-    client = Client.objects.get(client_name="HANWHA")
+    client = Client.objects.get(client_name=client_name)
     topstock = client.client_top_stock.filter(
         has_position=False, service_type='bot_advisor', currency_code=currency).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
     pos_list = []
@@ -196,48 +196,61 @@ def order_client_topstock(currency=None, client_name=None):
             extra_data__capital=queue.capital,
             extra_data__type=queue.bot
         )
-        # need to change live price, problem with nan
-        # yahoo finance price
-        if currency == "USD":
-            get_quote_yahoo(queue.ticker.ticker, use_symbol=True)
-        else:
-            get_quote_yahoo(queue.ticker.ticker, use_symbol=False)
-        price = queue.ticker.latest_price_ticker.close
-        spot_date = datetime.now()
-        if user.extra_data["service_type"] == "bot_advisor":
-            portnum = 8*1.04
-        elif user.extra_data["service_type"] == "bot_tester":
-            if user.extra_data["capital"] == "small":
-                portnum = 4*1.04
+        market = TradingHours(mic=queue.ticker.mic)
+        
+        if market.is_open:
+            report_to_slack(f"===  MARKET {queue.ticker} IS OPEN AND CREATING INITIAL ORDER ===")
+            # need to change live price, problem with nan
+            # yahoo finance price
+            if currency == "USD":
+                get_quote_yahoo(queue.ticker.ticker, use_symbol=True)
             else:
+                get_quote_yahoo(queue.ticker.ticker, use_symbol=False)
+            price = queue.ticker.latest_price_ticker.close
+            spot_date = datetime.now()
+            if user.extra_data["service_type"] == "bot_advisor":
                 portnum = 8*1.04
-        investment_amount = min(
-            user.user.current_assets / portnum, user.user.balance / 3)
+            elif user.extra_data["service_type"] == "bot_tester":
+                if user.extra_data["capital"] == "small":
+                    portnum = 4*1.04
+                else:
+                    portnum = 8*1.04
+            investment_amount = min(
+                user.user.current_assets / portnum, user.user.balance / 3)
 
-        digits = max(min(5-len(str(int(price))), 2), -1)
-        order = Order.objects.create(
-            ticker=queue.ticker,
-            created=spot_date,
-            price=price,
-            bot_id=queue.bot_id,
-            amount=round(investment_amount, digits),
-            user_id=user.user
-        )
-        if order:
-            order.placed = True
-            order.placed_at = spot_date
-            order.save()
-        if order.status == "pending":
-            order.status = "filled"
-            order.filled_at = spot_date
-            order.save()
-            position_uid = PositionPerformance.objects.get(
-                performance_uid=order.performance_uid).position_uid.position_uid
-            queue.position_uid = position_uid
-            queue.has_position = True
-            queue.save()
-            pos_list.append(str(order.order_uid))
-    send_csv_hanwha.delay(currency=currency, new={'pos_list': pos_list})
+            digits = max(min(5-len(str(int(price))), 2), -1)
+            order = Order.objects.create(
+                ticker=queue.ticker,
+                created=spot_date,
+                price=price,
+                bot_id=queue.bot_id,
+                amount=round(investment_amount, digits),
+                user_id=user.user
+            )
+            if order:
+                order.placed = True
+                order.placed_at = spot_date
+                order.save()
+            if order.status == "pending":
+                order.status = "filled"
+                order.filled_at = spot_date
+                order.save()
+                position_uid = PositionPerformance.objects.get(
+                    performance_uid=order.performance_uid).position_uid.position_uid
+                queue.position_uid = position_uid
+                queue.has_position = True
+                queue.save()
+                pos_list.append(str(order.order_uid))
+                report_to_slack(f"===  ORDER {queue.ticker} - {queue.service_type} - {queue.capital} IS CREATED ===")
+        else:
+            report_to_slack(f"===  MARKET {queue.ticker} IS CLOSE SKIPPING INITIAL ORDER ===")
+        
+        del market
+
+    if pos_list:
+        send_csv_hanwha.delay(currency=currency, new={'pos_list': pos_list})
+        report_to_slack(f"===  NEW PICK CSV {client_name} EMAIL SENT ===")
+
 
 
 @app.task
@@ -251,16 +264,20 @@ def daily_hedge(currency=None):
             is_live=True, ticker__currency_code=currency)
         for position in positions:
             position_uid = position.position_uid
-            if currency == "USD":
-                get_quote_yahoo(position.ticker.ticker_symbol, use_symbol=True)
+            market = TradingHours(mic=position.ticker.mic)
+            if market.is_open:
+                if currency == "USD":
+                    get_quote_yahoo(position.ticker.ticker_symbol, use_symbol=True)
+                else:
+                    get_quote_yahoo(position.ticker.ticker, use_symbol=False)
+                if (position.bot.is_uno()):
+                    uno_position_check(position_uid)
+                elif (position.bot.is_ucdc()):
+                    ucdc_position_check(position_uid)
+                elif (position.bot.is_classic()):
+                    classic_position_check(position_uid)
             else:
-                get_quote_yahoo(position.ticker.ticker, use_symbol=False)
-            if (position.bot.is_uno()):
-                uno_position_check(position_uid)
-            elif (position.bot.is_ucdc()):
-                ucdc_position_check(position_uid)
-            elif (position.bot.is_classic()):
-                classic_position_check(position_uid)
+                report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE ===")
     except Exception as e:
         report_to_slack(f"===  ERROR IN HEDGE FOR {currency} ===")
         report_to_slack(str(e))
