@@ -307,10 +307,8 @@ def migrate():
             # Change the standard output to the file we created.
             sys.stdout = f
             daily_migrations()  # triger ingestion function
-
-            daily_ingestion(region_id=["na"])
+            daily_ingestion(region_id=["na"]) # one region
             daily_ingestion(region_id=["ws"])
-
             ticker = get_universe_by_region(region_id="na")
             populate_latest_price(ticker=ticker["ticker"])
             ticker = get_universe_by_region(region_id="ws")
