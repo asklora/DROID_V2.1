@@ -4,7 +4,7 @@ from core.user.models import User
 from core.djangomodule.yahooFin import get_quote_index,scrap_csi
 from core.orders.models import PositionPerformance, Order
 from core.services.ingestiontask import migrate_droid1
-from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price
+from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo
 from main import populate_intraday_latest_price,update_index_price_from_dss
 from datetime import datetime
 
@@ -13,6 +13,7 @@ from datetime import datetime
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
+        get_quote_yahoo("TCOM", use_symbol=True)
         # populate_client_top_stock_weekly(currency="KRW")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
@@ -33,4 +34,4 @@ class Command(BaseCommand):
         # populate_intraday_latest_price(currency_code=["KRW"])
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
-        daily_hedge(currency="KRW")
+        # print(daily_hedge(currency="KRW"))

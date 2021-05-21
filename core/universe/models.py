@@ -317,7 +317,7 @@ class ExchangeMarket(BaseTimeStampModel):
 
     class Meta:
         managed = True
-        db_table = "exchange_market"
+        db_table = "universe_exchange_market"
 
     def __str__(self):
         return self.mic
