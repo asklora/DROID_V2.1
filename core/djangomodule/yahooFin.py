@@ -4,7 +4,7 @@ import json
 import ast
 from core.djangomodule.network.cloud import DroidDb
 from core.universe.models import Universe
-from core.master.models import Currency
+from core.master.models import Currency,LatestPrice
 from bs4 import BeautifulSoup as soup
 from urllib.request import urlopen as uReq
 from datetime import datetime
@@ -81,12 +81,14 @@ def get_quote_yahoo(ticker, use_symbol=False):
     for resp in res:
         ### CARA SAVE DJANGO ONE BY ONE ###
         if use_symbol:
-            ric = Universe.objects.get(ticker_symbol=resp['symbol'])
+            ticker = Universe.objects.get(ticker_symbol=resp['symbol'])
+            ric = LatestPrice.objects.get(ticker=ticker)
         else:
-            ric= Universe.objects.get(ticker=resp['symbol'])
-			
-        ric.ask =resp['ask']
-        ric.bid =resp['bid']
+            ric = LatestPrice.objects.get(ticker=resp['symbol'])
+
+        print(ric.ticker)
+        ric.intraday_ask =resp['ask']
+        ric.intraday_bid =resp['bid']
         ric.close =resp['regularMarketPrice']
         ric.last_date = datetime.now().date()
         ric.save()
