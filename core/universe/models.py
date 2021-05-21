@@ -1,3 +1,4 @@
+from core.djangomodule.models import BaseTimeStampModel
 from django.db import models
 from .manager import ConsolidatedManager, UniverseManager
 from core.djangomodule.general import generate_id
@@ -246,7 +247,7 @@ class Universe(models.Model):
     fiscal_year_end = models.CharField(max_length=500, blank=True, null=True)
     entity_type = models.TextField(blank=True, null=True)
     ticker_symbol = models.TextField(blank=True, null=True)
-    exchange_code = models.TextField(blank=True, null=True)
+    mic = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.ticker
@@ -303,3 +304,21 @@ class SpecialCases(models.Model):
 
     def __str__(self):
         return str(self.ticker.ticker)
+    
+class ExchangeMarket(BaseTimeStampModel):
+    mic=models.CharField(max_length=20, primary_key=True)
+    fin_id= models.CharField(blank=True, null=True,max_length=255)
+    exchange= models.CharField(blank=True, null=True,max_length=255)
+    market= models.CharField(blank=True, null=True,max_length=255)
+    products= models.CharField(blank=True, null=True,max_length=255)
+    asset_type= models.CharField(blank=True, null=True,max_length=255)
+    group= models.CharField(blank=True, null=True,max_length=100)
+    currency_code = models.ForeignKey(Currency,null=True,blank=True,related_name="currency_exchange", on_delete=models.CASCADE,db_column="currency_code")
+
+    class Meta:
+        managed = True
+        db_table = "exchange_market"
+
+    def __str__(self):
+        return self.mic
+

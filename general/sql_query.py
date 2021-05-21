@@ -197,8 +197,10 @@ def get_active_universe_by_quandl_symbol(null_symbol=False, ticker=None, quandl_
         data = read_query(query, table=universe_table)
     return data
 
-def get_universe_by_region(region_code):
-    query = f"select * from {universe_table} where is_active=True and currency_code in (select currency_code from {currency_table} where region_code='{region_code}')"
+def get_universe_by_region(region_id=None):
+    query = f"select * from {universe_table} where is_active=True "
+    if type(region_id) != type(None):
+        query += f"and currency_code in (select currency_code from {currency_table} where region_id='{region_id}') "
     data = read_query(query, table=universe_table)
     return data
 

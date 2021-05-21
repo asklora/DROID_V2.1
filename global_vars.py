@@ -32,8 +32,12 @@ DSWS_PASSWORD2="YOUNG862"
 DSS_USERNAME="9023786"
 DSS_PASSWORD="askLORA20$"
 
+# SLACK_API="xoxb-305855338628-1139022048576-2KsNu5mJCbgRGh8z8S8NOdGI"
+# SLACK_CHANNEL="#droid_report"
+
 SLACK_API="xoxb-305855338628-1139022048576-2KsNu5mJCbgRGh8z8S8NOdGI"
-SLACK_CHANNEL="#droid_report"
+SLACK_CHANNEL="#droid_v2_report"
+
 
 URL_Extrations="https://hosted.datascopeapi.reuters.com/RestApi/v1/Extractions/Extract"
 URL_AuthToken="https://hosted.datascopeapi.reuters.com/RestApi/v1/Authentication/RequestToken"

@@ -1,3 +1,4 @@
+from bot.data_download import get_new_ticker_from_classic_bot_backtest, get_new_ticker_from_uno_ucdc_bot_backtest
 from bot.calculate_bot import get_ucdc, get_uno
 from main_executive import daily_classic, daily_uno_ucdc
 from general.date_process import dateNow
@@ -6,10 +7,12 @@ from general.sql_output import fill_null_quandl_symbol
 from bot.preprocess import dividend_daily_update, interest_daily_update
 import os
 import sys
+from general.slack import report_to_slack
 import pandas as pd
 from pandas.core.series import Series
 from general.sql_process import do_function
 from ingestion.universe import (
+    update_mic_from_dss,
     update_ticker_name_from_dsws,
     update_entity_type_from_dsws,
     update_lot_size_from_dss,
@@ -255,6 +258,7 @@ def new_ticker_ingestion(ticker=None):
     update_currency_code_from_dss(ticker=ticker)
     update_industry_from_dsws(ticker=ticker)
     update_company_desc_from_dsws(ticker=ticker)
+    update_mic_from_dss(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
     update_quandl_orats_from_quandl(ticker=ticker)
     populate_latest_price(ticker=ticker)
@@ -325,29 +329,42 @@ def update_universe_data(ticker=None):
     update_company_desc_from_dsws(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
-def daily_ingestion(region_code):
-    dlp_ticker = get_universe_by_region(region_code=region_code)
+def daily_ingestion(region_id=None):
+    dlp_ticker = get_active_universe_droid1()
     print(dlp_ticker)
-    droid2_ticker = get_active_universe()
+    if(region_id == None):
+        droid2_ticker = get_active_universe()
+    else:
+        droid2_ticker = get_universe_by_region(region_code=region_id)
     print(droid2_ticker)
     dlp_ticker = dlp_ticker.loc[dlp_ticker["ticker"].isin(droid2_ticker["ticker"].to_list())]
     print(dlp_ticker)
-    ticker = droid2_ticker.loc[~droid2_ticker["ticker"].isin(dlp_ticker["ticker"].to_list())]["ticker"].to_list()
+    ticker = droid2_ticker.loc[~droid2_ticker["ticker"].isin(dlp_ticker["ticker"].to_list())]
+    ticker = ticker["ticker"].to_list()
     print(ticker)
+    print(len(ticker))
     update_data_dss_from_dss(ticker=ticker)
     update_data_dsws_from_dsws(ticker=ticker)
 
 # Main Process
 if __name__ == "__main__":
+    # update_mic_from_dss()
     from migrate import weekly_migrations, daily_migrations
+    # data = get_new_ticker_from_uno_ucdc_bot_backtest(ticker=None, currency_code=["USD"], ucdc=True, mod=False)
+    # print(data)
+    # data = get_new_ticker_from_uno_ucdc_bot_backtest(ticker=None, currency_code=["USD"],uno=True, mod=False)
+    # print(data)
+    # data = get_new_ticker_from_classic_bot_backtest(currency_code=["USD"])
+    # print(data)
     # daily_ingestion()
     # update_ticker_name_from_dsws()
     # update_ticker_symbol_from_dss(ticker=None)
     # do_function("universe_populate")
-    populate_intraday_latest_price(currency_code=["KRW"])
-    # populate_intraday_latest_price(ticker=['003550.KS', '007700.KS'])
+    # populate_intraday_latest_price(currency_code=["KRW"])
+    # populate_intraday_latest_price(ticker=["TCOM.O"])
     # populate_latest_price(currency_code=["CNY"])
-    # populate_latest_price(ticker=['.SPX'])
+    ticker = get_universe_by_region(region_id="na")
+    populate_latest_price(ticker=ticker["ticker"])
     # do_function("universe_populate")
     # daily_migrations()
     # populate_macro_table()

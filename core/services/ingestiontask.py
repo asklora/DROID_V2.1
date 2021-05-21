@@ -1,8 +1,9 @@
+from general.sql_query import get_universe_by_region
 from ingestion.master_data import update_fundamentals_quality_value
 from config.celery import app
 from datetime import datetime
 from main import (
-    update_lot_size_from_dss, quandl,
+    daily_ingestion, update_lot_size_from_dss, quandl,
     vix, daily_na, daily_ws,
     weekly, timezones, monthly,
     dlpa_weekly, populate_latest_price,
@@ -23,6 +24,7 @@ from core.universe.models import Universe
 import sys
 from core.djangomodule.general import aws_batch
 from migrate import daily_migrations
+from general.slack import report_to_slack
 
 
 @app.task
@@ -305,6 +307,15 @@ def migrate():
             # Change the standard output to the file we created.
             sys.stdout = f
             daily_migrations()  # triger ingestion function
+
+            daily_ingestion(region_id=["na"])
+            daily_ingestion(region_id=["ws"])
+
+            ticker = get_universe_by_region(region_id="na")
+            populate_latest_price(ticker=ticker["ticker"])
+            ticker = get_universe_by_region(region_id="ws")
+            populate_latest_price(ticker=ticker["ticker"])
+
             populate_macro_table()
             populate_ibes_table()
             do_function("master_ohlcvtr_update")
@@ -328,7 +339,10 @@ def migrate_droid1():
         with open(f"files/migrate{now}.txt", "w") as f:
             # Change the standard output to the file we created.
             sys.stdout = f
+            report_to_slack("===  CREATE AWS BATCH FOR DAILY MIGRATIONS ===")
             migrate()  # triger ingestion function
+            report_to_slack("===  CLOSING AWS BATCH FOR DAILY MIGRATIONS JOB DONE ===")
+            
             sys.stdout = original_stdout
         return {"result": f"migrate daily done"}
     except Exception as e:
