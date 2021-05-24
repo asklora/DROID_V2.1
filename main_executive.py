@@ -7,7 +7,9 @@ from general.sql_process import do_function
 from general.sql_query import get_active_universe
 from bot.data_download import (
     get_backtest_latest_date, 
-    get_bot_data_latest_date, 
+    get_bot_data_latest_date,
+    get_new_ticker_from_bot_ranking,
+    get_new_ticker_from_bot_vol_surface_infer, 
     get_new_ticker_from_classic_bot_backtest,
     get_new_ticker_from_uno_ucdc_bot_backtest, 
      get_new_tickers_from_bot_data, 
@@ -36,6 +38,7 @@ def daily_shcedule_uno_ucdc(ticker=None, currency_code=None, time_to_exp=time_to
         do_function("latest_bot_data")
     #Populate Volatility Infer
     if(do_infer):
+        infer_check_new_ticker(ticker=ticker, currency_code=currency_code)
         infer_daily(ticker=ticker, currency_code=currency_code)
         do_function("latest_vol")
     if(latest_data):
@@ -54,6 +57,7 @@ def daily_shcedule_uno_ucdc(ticker=None, currency_code=None, time_to_exp=time_to
         do_function("bot_backtest_updates")
     if(ranking):
         #Populate Bot Ranking
+        bot_ranking_check_new_ticker(ticker=ticker, currency_code=currency_code, mod=mod, time_to_exp=time_to_exp)
         bot_ranking_daily(ticker=ticker, currency_code=currency_code, mod=mod)
         #Update Bot Ranking to Latest Bot Update
         do_function("latest_bot_update")
@@ -69,6 +73,7 @@ def daily_uno_ucdc(ticker=None, currency_code=None, time_to_exp=time_to_expiry, 
     do_function("latest_bot_data")
     #Populate Volatility Infer
     if(infer):
+        infer_check_new_ticker(ticker=ticker, currency_code=currency_code)
         infer_daily(ticker=ticker, currency_code=currency_code)
         do_function("latest_vol")
     #Latest Bot Update Populate
@@ -82,7 +87,8 @@ def daily_uno_ucdc(ticker=None, currency_code=None, time_to_exp=time_to_expiry, 
     #Update Bot Backtest
     do_function("bot_backtest_updates")
     #Populate Bot Ranking
-    bot_ranking_daily(ticker=ticker, currency_code=currency_code, mod=mod)
+    bot_ranking_check_new_ticker(ticker=ticker, currency_code=currency_code, mod=mod, time_to_exp=time_to_exp)
+    bot_ranking_daily(ticker=ticker, currency_code=currency_code, mod=mod, time_to_exp=time_to_exp)
     #Update Bot Ranking to Latest Bot Update
     do_function("latest_bot_update")
     if(type(currency_code) == list):
@@ -94,6 +100,7 @@ def daily_uno_ucdc(ticker=None, currency_code=None, time_to_exp=time_to_expiry, 
 def daily_classic(ticker=None, currency_code=None, time_to_exp=time_to_expiry, mod=False, option_maker=True, null_filler=True):
     option_maker_classic_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
     option_maker_daily_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
+    bot_ranking_check_new_ticker()
     bot_ranking_daily()
     bot_statistic_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
 
@@ -198,6 +205,20 @@ def infer_daily(ticker=None, currency_code=None):
     else:
         report_to_slack("{} : === VOLATILITY INFER DAILY COMPLETED ===".format(dateNow()))
 
+def infer_check_new_ticker(ticker=None, currency_code=None):
+    folder_check()
+    print("{} : === VOLATILITY INFER CHECK NEW TICKER STARTED ===".format(dateNow()))
+    start_date = str_to_date(droid_start_date_buffer())
+    end_date = str_to_date(dateNow())
+    new_ticker = get_new_ticker_from_bot_vol_surface_infer(ticker=ticker, currency_code=currency_code)["ticker"].to_list()
+    if(len(new_ticker) > 0):
+        ticker_length = len(new_ticker)
+        print(f"Found {ticker_length} New Ticker")
+        print(f"The start date is set as: {start_date}")
+        print(f"The end date is set as: {end_date}")
+        populate_vol_infer(start_date, end_date, ticker=new_ticker, history=True)
+        print("{} : === VOLATILITY INFER CHECK NEW TICKER COMPLETED ===".format(dateNow()))
+        report_to_slack("{} : === VOLATILITY INFER CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
 def infer_history():
     folder_check()
@@ -441,6 +462,21 @@ def bot_ranking_history(ticker=None, currency_code=None, mod=False, time_to_exp=
     print("{} : === BOT RANKING HISTORY COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === BOT RANKING HISTORY COMPLETED ===".format(dateNow()))
 
+def bot_ranking_check_new_ticker(ticker=None, currency_code=None, mod=False, time_to_exp=time_to_expiry):
+    folder_check()
+    print("{} : === BOT RANKING CHECK NEW TICKER STARTED ===".format(dateNow()))
+    start_date = str_to_date(droid_start_date())
+    end_date = str_to_date(dateNow())
+    new_ticker = get_new_ticker_from_bot_ranking(ticker=ticker, currency_code=currency_code, mod=mod)["ticker"].to_list()
+    if(len(new_ticker) > 0):
+        ticker_length = len(new_ticker)
+        print(f"Found {ticker_length} New Ticker")
+        print(f"The start date is set as: {start_date}")
+        print(f"The end date is set as: {end_date}")
+        populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, currency_code=currency_code, mod=mod)
+        
+        print("{} : === BOT RANKING CHECK NEW TICKER COMPLETED ===".format(dateNow()))
+        report_to_slack("{} : === BOT RANKING CHECK NEW TICKER COMPLETED ===".format(dateNow()))
 
 def bot_ranking_daily(ticker=None, currency_code=None, mod=False, time_to_exp=time_to_expiry):
     folder_check()
@@ -448,8 +484,6 @@ def bot_ranking_daily(ticker=None, currency_code=None, mod=False, time_to_exp=ti
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     start_date = get_bot_data_latest_date(daily=True)
-    if(start_date > str_to_date(backdate_by_month(7))):
-        start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")

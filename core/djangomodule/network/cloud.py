@@ -7,8 +7,8 @@ class Cloud:
         if not region:
             raise ValueError('region cant be none/null')
         boto3.setup_default_session(region_name=region)
-        self.ec2_client = boto3.client('ec2')
-        self.rds_client = boto3.client('rds')
+        self.ec2_client = boto3.client('ec2', aws_access_key_id='AKIA2XEOTUNGWEQ43TB6', aws_secret_access_key='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')
+        self.rds_client = boto3.client('rds', aws_access_key_id='AKIA2XEOTUNGWEQ43TB6', aws_secret_access_key='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')
         self.cloud_formation_client = boto3.client('cloudformation')
     
     def validate_stack(self,stack_name):

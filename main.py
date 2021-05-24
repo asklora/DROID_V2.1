@@ -277,9 +277,14 @@ def new_ticker_ingestion(ticker=None):
     # master_multiple_update()
 
 
-def update_ohlcvtr(ticker=None, currency_code=None):
-    update_data_dss_from_dss(ticker=ticker, currency_code=currency_code)
-    update_data_dsws_from_dsws(ticker=ticker, currency_code=currency_code)
+def daily_process_ohlcvtr(region_id = None):
+    if(type(region_id) != type(None)):
+        ticker = get_universe_by_region(region_id=region_id)
+    else:
+        ticker = get_active_universe()
+    update_data_dss_from_dss(ticker=ticker)
+    update_data_dsws_from_dsws(ticker=ticker)
+    do_function("special_cases_1")
     do_function("master_ohlcvtr_update")
     master_ohlctr_update()
     master_tac_update()
@@ -350,12 +355,8 @@ def daily_ingestion(region_id=None):
 if __name__ == "__main__":
     # update_mic_from_dss()
     from migrate import weekly_migrations, daily_migrations
-    # data = get_new_ticker_from_uno_ucdc_bot_backtest(ticker=None, currency_code=["USD"], ucdc=True, mod=False)
-    # print(data)
-    # data = get_new_ticker_from_uno_ucdc_bot_backtest(ticker=None, currency_code=["USD"],uno=True, mod=False)
-    # print(data)
-    # data = get_new_ticker_from_classic_bot_backtest(currency_code=["USD"])
-    # print(data)
+    update_ibes_data_monthly_from_dsws(ticker=[".HSI"])
+    # weekly_migrations()
     # daily_ingestion()
     # update_ticker_name_from_dsws()
     # update_ticker_symbol_from_dss(ticker=None)
@@ -363,8 +364,8 @@ if __name__ == "__main__":
     # populate_intraday_latest_price(currency_code=["KRW"])
     # populate_intraday_latest_price(ticker=["TCOM.O"])
     # populate_latest_price(currency_code=["CNY"])
-    ticker = get_universe_by_region(region_id="na")
-    populate_latest_price(ticker=ticker["ticker"])
+    # ticker = get_universe_by_region(region_id="na")
+    # populate_latest_price(ticker=ticker["ticker"])
     # do_function("universe_populate")
     # daily_migrations()
     # populate_macro_table()
