@@ -253,7 +253,7 @@ SPECTACULAR_SETTINGS = {
     # complete public schema or a subset based on the requesting user
     'SERVE_PUBLIC': True,
     # include schema enpoint into schema
-    'SERVE_INCLUDE_SCHEMA': True,
+    'SERVE_INCLUDE_SCHEMA': False,
     # list of authentication/permission classes for spectacular's views.
     'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
 
