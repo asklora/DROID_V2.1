@@ -311,6 +311,10 @@ def get_ibes_data(start_date, end_date, ticker_list):
     result = result.set_index(["ticker", "trading_day"]).reindex(indexes).reset_index().ffill(limit=1)
     result = result[result["trading_day"].apply(lambda x: x.weekday() not in [5, 6])]
     data["trading_day"] = pd.to_datetime(data["trading_day"])
+    if(len(data) == 0 & len(result) == 0):
+        result = pd.DataFrame([], index=[], columns=data.columns)
+    else:
+        result = result.merge(data, how="left", on=["ticker", "trading_day"])
     result = result.merge(data, how="left", on=["ticker", "trading_day"])
     for col in ["eps1fd12", "eps1tr12", "cap1fd12"]:
         result[col] = result[col].bfill().ffill()

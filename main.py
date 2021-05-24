@@ -355,6 +355,7 @@ def daily_ingestion(region_id=None):
 if __name__ == "__main__":
     # update_mic_from_dss()
     from migrate import weekly_migrations, daily_migrations
+    update_ibes_data_monthly_from_dsws(ticker=[".HSI"])
     # weekly_migrations()
     # daily_ingestion()
     # update_ticker_name_from_dsws()

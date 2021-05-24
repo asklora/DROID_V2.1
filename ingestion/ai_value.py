@@ -21,7 +21,7 @@ def populate_ibes_table():
 
 def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=False):
     end_date = dateNow()
-    start_date = backdate_by_month(1)
+    start_date = backdate_by_month(48)
     filter_field = ["EPS1TR12", "EPS1FD12", "EBD1FD12", "CAP1FD12", "I0EPS", "EPSI1MD"]
 
     if(history):
@@ -30,7 +30,7 @@ def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=
         filter_field = ["EPS1TR12", "EPS1FD12"]
     
     identifier = "ticker"
-    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code, null_entity_type=True)
     print(universe)
     if len(universe) > 0:
         result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, monthly=True)
