@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 from environs import Env
 from core.djangomodule.network.cloud import DroidDb
-
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
@@ -40,6 +40,7 @@ ADDITIONAL_APPS = [
     'rest_framework',
     'import_export',
     'django_celery_beat',
+    'drf_spectacular',
 ]
 CORE_APPS = [
     'core.bot',
@@ -103,14 +104,15 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'files/staticfiles')
 AUTH_USER_MODEL = 'user.User'
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PERMISSION_CLASSES': [
         # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 10
-    # 'DEFAULT_SCHEMA_CLASS': [
-    #     'rest_framework.schemas.coreapi.AutoSchema'
-    # ]
+    'PAGE_SIZE': 10,
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
 }
 
 ELASTICSEARCH_DSL = {
@@ -219,3 +221,75 @@ EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
 EMAIL_PORT = os.getenv('EMAIL_PORT')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+LOGIN_URL = 'default-admin-login'
+
+SPECTACULAR_SETTINGS = {
+    # A regex specifying the common denominator for all operation paths. If
+    # SCHEMA_PATH_PREFIX is set to None, drf-spectacular will attempt to estimate
+    # a common prefix. use '' to disable.
+    # Mainly used for tag extraction, where paths like '/api/v1/albums' with
+    # a SCHEMA_PATH_PREFIX regex '/api/v[0-9]' would yield the tag 'albums'.
+    'SCHEMA_PATH_PREFIX': '/api/',
+    # Remove matching SCHEMA_PATH_PREFIX from operation path. Usually used in
+    # conjunction with appended prefixes in SERVERS.
+    'SCHEMA_PATH_PREFIX_TRIM': False,
+
+    'DEFAULT_GENERATOR_CLASS': 'drf_spectacular.generators.SchemaGenerator',
+
+    # Schema generation parameters to influence how components are constructed.
+    # Some schema features might not translate well to your target.
+    # Demultiplexing/modifying components might help alleviate those issues.
+    #
+    # Create separate components for PATCH endpoints (without required list)
+    'COMPONENT_SPLIT_PATCH': True,
+    # Split components into request and response parts where appropriate
+    'COMPONENT_SPLIT_REQUEST': False,
+    # Aid client generator targets that have trouble with read-only properties.
+    'COMPONENT_NO_READ_ONLY_REQUIRED': False,
+
+    # Configuration for serving a schema subset with SpectacularAPIView
+    'SERVE_URLCONF': None,
+    # complete public schema or a subset based on the requesting user
+    'SERVE_PUBLIC': True,
+    # include schema enpoint into schema
+    'SERVE_INCLUDE_SCHEMA': True,
+    # list of authentication/permission classes for spectacular's views.
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+
+
+
+    # https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.3.md#openapi-object
+    'TITLE': 'DROID CLIENT API',
+    'DESCRIPTION': 'CLIENT',
+    'VERSION': '1.0.0-beta',
+}
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+
+    'JTI_CLAIM': 'jti',
+
+    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+}
+

@@ -22,8 +22,11 @@ class Command(BaseCommand):
         # parser.add_argument("-f4w", "--fels4w", action="store_true", help="only use test account")
 
     def handle(self, *args, **options):
-        types = options["type"].upper()
-        if types == "null" or types == "NULL":
+        if options['type']:
+            types = ["type"].upper()
+            if types == "null" or types == "NULL":
+                types = None
+        else:
             types = None
         try:
             user = User.objects.get(email=options["email"])
@@ -57,14 +60,15 @@ class Command(BaseCommand):
                 wallet.delete()
                 user.delete()
                 raise NameError("client not found")
-
+            extra_data={
+                    "service_type":  options["service"],
+                    "capital": options["cap"],
+                }
+            if types:
+                extra_data['type']=types
             UserClient.objects.create(
                 user=user,
                 client=client,
                 currency_code_id=options["currency"].upper(),
-                extra_data={
-                    "service_type":  options["service"],
-                    "capital": options["cap"],
-                    "type": types
-                }
+                extra_data=extra_data
             )
