@@ -14,28 +14,8 @@ from datetime import datetime
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        markets =['XEUR',
-            'XMAD',
-            'XPAR',
-            'XTAI',
-            'XSHE',
-            'XNAS',
-            'XHEL',
-            'XLIS',
-            'XETA',
-            'XBRU',
-            'XAMS',
-            'XKRX',
-            'XMIL',
-            'FRAA',
-            'XHKG',
-            'XMSM',
-            'XSHG',]
-        for mark in markets:
-            market = TradingHours(mic=mark)
-            print(mark,market.is_open)
         # get_quote_yahoo("TCOM", use_symbol=True)
-        # populate_client_top_stock_weekly(currency="KRW")
+        populate_client_top_stock_weekly(currency="USD")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
         #     position_uid__user_id__in=[108,
