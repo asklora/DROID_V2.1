@@ -60,7 +60,7 @@ def get_quote_yahoo(ticker, use_symbol=False):
 	# 			}
 	# 		return pd.DataFrame(data)
     if use_symbol:
-        ric = Universe.objects.get(ticker_symbol=ticker)
+        ric = Universe.objects.get(ticker=ticker)
         identifier = ric.ticker_symbol
     else:
         ric= Universe.objects.get(ticker=ticker)
