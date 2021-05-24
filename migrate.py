@@ -110,6 +110,18 @@ def get_ticker_from_new_droid():
     engine.dispose()
     data = pd.DataFrame(data)
     print("DONE")
+    return tuple(data["ticker"].to_list())
+
+def get_universe_from_new_droid():
+    print("Get Data From Database")
+    engine = create_engine(droid2, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    with engine.connect() as conn:
+        metadata = db.MetaData()
+        query = f"select ticker from universe where is_active=True"
+        data = pd.read_sql(query, con=conn)
+    engine.dispose()
+    data = pd.DataFrame(data)
+    print("DONE")
     return data
 
 def get_data_from_database(db_url, table):
@@ -317,7 +329,6 @@ def currency():
         "close_ingestion_offset",
         "intraday_offset_close",
         "intraday_offset_open",
-        "classic_schedule",
         "region_id",
         "vix_id"]
     table = "currency"
