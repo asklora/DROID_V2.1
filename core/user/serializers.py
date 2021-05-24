@@ -8,3 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         # fields = '__all__'
         exclude = ('groups','user_permissions')
+
+
+
+# user client group

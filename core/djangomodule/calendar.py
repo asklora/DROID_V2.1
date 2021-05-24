@@ -110,7 +110,7 @@ class TradingHours:
                     status.append(data)
         else:
             resp = req.text
-            print(resp)
+            print(fin_param,'error')
             status = False
         return status
 
