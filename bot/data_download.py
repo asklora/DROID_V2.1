@@ -315,9 +315,9 @@ def get_ibes_data(start_date, end_date, ticker_list):
         result = pd.DataFrame([], index=[], columns=data.columns)
     else:
         result = result.merge(data, how="left", on=["ticker", "trading_day"])
-    result = result.merge(data, how="left", on=["ticker", "trading_day"])
-    for col in ["eps1fd12", "eps1tr12", "cap1fd12"]:
-        result[col] = result[col].bfill().ffill()
+        result = result.merge(data, how="left", on=["ticker", "trading_day"])
+        for col in ["eps1fd12", "eps1tr12", "cap1fd12"]:
+            result[col] = result[col].bfill().ffill()
     return result
 
 def get_stochatic_data(start_date, end_date, ticker_list):
