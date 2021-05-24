@@ -10,5 +10,5 @@ class UserSerializer(serializers.ModelSerializer):
         exclude = ('groups','user_permissions')
 
 
-
-# user client group
+class TokenRevokeSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
