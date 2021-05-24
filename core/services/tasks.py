@@ -267,7 +267,7 @@ def daily_hedge(currency=None):
             market = TradingHours(mic=position.ticker.mic)
             if market.is_open:
                 if currency == "USD":
-                    get_quote_yahoo(position.ticker.ticker_symbol, use_symbol=True)
+                    get_quote_yahoo(position.ticker.ticker, use_symbol=True)
                 else:
                     get_quote_yahoo(position.ticker.ticker, use_symbol=False)
                 if (position.bot.is_uno()):
