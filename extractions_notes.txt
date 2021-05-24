@@ -1,0 +1,18 @@
+Extraction Services Version 14.5.42294 (737b0965c07f), Built Apr  8 2021 13:46:52
+Processing started at 05/20/2021 14:46:20.
+User ID: 9023786
+Extraction ID: 2000000261294377
+Schedule: 0x078fbd6e455c976e (ID = 0x0000000000000000)
+Input List (1 items):  (ID = 0x078fbd6e455c976e) Created: 05/20/2021 14:46:20 Last Modified: 05/20/2021 14:46:20
+Total RT Open Access instruments: 1
+Total instruments after instrument expansion = 1
+Report Template (15 fields): _OnD_0x078fbd6e455c976e (ID = 0x078fbd6e457c976e) Created: 05/20/2021 14:46:19 Last Modified: 05/20/2021 14:46:19
+Schedule dispatched via message queue (0x078fbd6e455c976e)
+Schedule Time: 05/20/2021 14:46:20
+Real-time data was snapped at 05/20/2021 14:46:20.
+Processing completed successfully at 05/20/2021 14:46:20, taking 0.164 Secs.
+Extraction finished at 05/20/2021 14:46:20 UTC, with servers: x13q27, QSHC11 (0.0 secs), QSSHA1 (0.0 secs)
+Content delivery suppressed due to lack of permission for NAW (NASDAQ LEVEL 1 UTP DELAYED DATA(DATAFEED ONLY)) for quotes from NSQ
+No embargo required for this report.
+No usage to report -- 1 Instrument in the input list had no reported data.
+No Evaluated Pricing Service complex usage to report -- 1 Instrument in the input list had no reported data.

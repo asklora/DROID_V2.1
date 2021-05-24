@@ -20,7 +20,7 @@ SECRET_KEY = '!5fyj@#07=!rc9^)k0tgsl%dp@rmfe$*8t3*+m&mkwk-w^l!_a'
 DEBUG = True
 
 ALLOWED_HOSTS = ['18.167.118.164', '127.0.0.1']
-
+CORS_ALLOW_ALL_ORIGINS= True
 
 # Application definition
 
@@ -41,6 +41,7 @@ ADDITIONAL_APPS = [
     'import_export',
     'django_celery_beat',
     'drf_spectacular',
+    'corsheaders',
 ]
 CORE_APPS = [
     'core.bot',
@@ -71,6 +72,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 # END MIDDLEWARE
 
