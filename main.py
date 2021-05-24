@@ -277,9 +277,14 @@ def new_ticker_ingestion(ticker=None):
     # master_multiple_update()
 
 
-def update_ohlcvtr(ticker=None, currency_code=None):
-    update_data_dss_from_dss(ticker=ticker, currency_code=currency_code)
-    update_data_dsws_from_dsws(ticker=ticker, currency_code=currency_code)
+def daily_process_ohlcvtr(region_id = None):
+    if(type(region_id) != type(None)):
+        ticker = get_universe_by_region(region_id=region_id)
+    else:
+        ticker = get_active_universe()
+    update_data_dss_from_dss(ticker=ticker)
+    update_data_dsws_from_dsws(ticker=ticker)
+    do_function("special_cases_1")
     do_function("master_ohlcvtr_update")
     master_ohlctr_update()
     master_tac_update()
