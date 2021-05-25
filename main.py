@@ -355,7 +355,7 @@ def daily_ingestion(region_id=None):
 if __name__ == "__main__":
     # update_mic_from_dss()
     from migrate import weekly_migrations, daily_migrations
-    update_ibes_data_monthly_from_dsws(ticker=[".HSI"])
+    # update_ibes_data_monthly_from_dsws(ticker=[".HSI"])
     # weekly_migrations()
     # daily_ingestion()
     # update_ticker_name_from_dsws()
@@ -372,11 +372,13 @@ if __name__ == "__main__":
     # populate_ibes_table()
     # update_quandl_orats_from_quandl()
 
+
     # do_function("special_cases_1")
     # do_function("master_ohlcvtr_update")
     # master_ohlctr_update()
     # master_tac_update()
-    # update_currency_price_from_dss()
+    # update_quandl_orats_from_quandl()
+    # master_multiple_update()
 
     # interest_update()
     # dividend_daily_update()
