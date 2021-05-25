@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # get_quote_yahoo("TCOM", use_symbol=True)
-        daily_hedge(currency="USD")
+        send_csv_hanwha(currency="USD")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
         #     position_uid__user_id__in=[108,

@@ -3,11 +3,18 @@ from rest_framework import permissions, response,status
 from .serializers import UserSerializer,TokenRevokeSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema,OpenApiTypes,OpenApiExample
+
+
+
+
+
 class UserProfile(APIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
     
-    
+    @extend_schema(
+        operation_id='Get user information'
+    )
     def get(self, request, format=None):
         """
         Return a user profile.
@@ -22,7 +29,8 @@ class RevokeToken(APIView):
     @extend_schema(
         examples=[
             OpenApiExample('message',{'message':'string'},response_only=True)
-        ]
+        ],
+        operation_id='Destroy token'
     )
     def post(self, request):
         """

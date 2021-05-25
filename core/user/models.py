@@ -111,6 +111,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     def wallet(self):
         return self.user_balance
 
+    
+
     class Meta:
         db_table = 'user_core'
 
