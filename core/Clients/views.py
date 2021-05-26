@@ -37,7 +37,7 @@ class UserClientView(APIView):
         """
         Return a list user of client.
         """
-        users = UserClient.objects.filter(client_uid=client_id)
+        users = UserClient.objects.filter(client_id=client_id)
         res = UserClientSerializers(users,many=True).data
         return response.Response(res,status=status.HTTP_200_OK)
         

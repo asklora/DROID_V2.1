@@ -96,12 +96,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         result = round(asset, 2)
         return result
 
-    @property
-    def position_count(self):
-        position = self.user_position.filter(is_live=True).count()
-        if position >= 1:
-            return position
-        return 0
+    
 
     @property
     def balance(self):
@@ -110,7 +105,63 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def wallet(self):
         return self.user_balance
+    
+    @property
+    def currency(self):
+        return self.user_balance.currency_code.currency_code
 
+    
+    @property
+    def position_live(self):
+        position = self.user_position.filter(is_live=True).count()
+        if position >= 1:
+            return position
+        return 0
+    
+    
+    @property
+    def position_expired(self):
+        position = self.user_position.filter(is_live=False).count()
+        if position >= 1:
+            return position
+        return 0
+    
+    @property
+    def total_invested_amount(self):
+        order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum('investment_amount'))
+        if order['total']:
+            result = round(order['total'], 2)
+            return result
+        return 0
+    
+
+    @property
+    def starting_amount(self):
+        wallet = self.user_balance.account_trasaction.filter(
+            transaction_detail__event='first deposit').aggregate(total=Sum('amount'))
+        if wallet['total']:
+            return wallet['total']
+        return 0
+
+    @property
+    def current_total_invested_amount(self):
+        order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum(F('investment_amount')- F('bot_cash_balance')))
+        if order['total']:
+            result = round(order['total'], 2)
+            return result
+        return 0
+    
+    @property
+    def total_amount(self):
+        return self.balance + self.total_invested_amount
+    
+    @property
+    def total_profit_amount(self):
+        return round(self.total_amount - self.starting_amount,2)
+    
+    @property
+    def total_profit_return(self):
+        return round(self.total_amount / self.starting_amount - 1,4)
     
 
     class Meta:

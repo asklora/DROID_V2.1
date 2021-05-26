@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import pandas as pd
-import xgboost as xgb
+# import xgboost as xgb
 import lightgbm as lgb
 from joblib import dump, load
 from sklearn.ensemble import RandomForestRegressor
@@ -270,11 +270,11 @@ def model_trainer(train_df, infer_df, model_type, Y_columns=Y_columns[0], just_t
             if just_train:
                 dump(reg, saved_model_path + f"{col}_lgbm.joblib")
 
-        if model_type == "xgb":
-            reg = xgb.XGBClassifier(n_estimators=200, random_state=random_state)
-            reg.fit(X_train, Y_train[col])
-            if just_train:
-                dump(reg, saved_model_path + f"{col}_xgb.joblib")
+        # if model_type == "xgb":
+        #     reg = xgb.XGBClassifier(n_estimators=200, random_state=random_state)
+        #     reg.fit(X_train, Y_train[col])
+        #     if just_train:
+        #         dump(reg, saved_model_path + f"{col}_xgb.joblib")
 
         if not just_train:
             if len(X_infer) > 0:
@@ -346,8 +346,8 @@ def bot_infer(infer_df, model_type, rank_columns, Y_columns, time_to_exp=time_to
         if model_type == "lgbm":
             reg = load(saved_model_path + f"{col}_lgbm.joblib")
 
-        if model_type == "xgb":
-            reg = load(saved_model_path + f"{col}_xgb.joblib")
+        # if model_type == "xgb":
+        #     reg = load(saved_model_path + f"{col}_xgb.joblib")
 
         final_report[col + "_prob"] = (reg.predict_proba(X_infer))[:, 1]
         final_report["model_type"] = model_type

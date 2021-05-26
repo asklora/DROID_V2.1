@@ -1,6 +1,6 @@
-from .serializers import PositionSerializer
-from rest_framework import viewsets,views,permissions
-from .models import OrderPosition
+from .serializers import PositionSerializer,PerformanceSerializer
+from rest_framework import viewsets,views,permissions,response,status
+from .models import OrderPosition,PositionPerformance
 from core.Clients.models import UserClient
 from drf_spectacular.utils import extend_schema_view,extend_schema
 
@@ -50,4 +50,18 @@ class PositionUserViews(viewsets.ReadOnlyModelViewSet):
         if self.request.user.email == 'asklora@loratechai.com':
             return self.queryset
         if self.kwargs:
-            return OrderPosition.objects.filter(user_id=self.kwargs['user_id'])  
+            return OrderPosition.objects.filter(user_id=self.kwargs['user_id'])
+        
+class BotPerformanceViews(views.APIView):
+    """
+    get bot Performance by positions
+    """
+    serializer_class = PerformanceSerializer
+    permission_classes =(permissions.IsAdminUser,)
+
+    @extend_schema(
+        operation_id='Get bot Performance by positions'
+    )
+    def get(self,request,position_uid):
+        perf = PositionPerformance.objects.filter(position_uid=position_uid).order_by('created')
+        return response.Response(PerformanceSerializer(perf,many=True).data,status=status.HTTP_200_OK)

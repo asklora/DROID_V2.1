@@ -1,11 +1,23 @@
 from rest_framework.views import APIView
 from rest_framework import permissions, response,status
-from .serializers import UserSerializer,TokenRevokeSerializer
+from .serializers import UserSerializer,TokenRevokeSerializer,UserSummarySerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema,OpenApiTypes,OpenApiExample
+from core.user.models import User
 
-
-
+class UserSummaryView(APIView):
+    serializer_class = UserSummarySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @extend_schema(
+        operation_id='Get user summary'
+    )
+    def get(self, request,pk, format=None):
+        """
+        Return a user profile.
+        """
+        user = User.objects.get(id=pk)
+        return response.Response(UserSummarySerializer(user).data,status=status.HTTP_200_OK)
 
 
 class UserProfile(APIView):
