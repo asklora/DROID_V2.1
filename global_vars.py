@@ -40,6 +40,7 @@ SLACK_CHANNEL="#droid_v2_report"
 
 
 URL_Extrations="https://hosted.datascopeapi.reuters.com/RestApi/v1/Extractions/Extract"
+URL_Extrations_with_note="https://hosted.datascopeapi.reuters.com/RestApi/v1/Extractions/ExtractWithNotes"
 URL_AuthToken="https://hosted.datascopeapi.reuters.com/RestApi/v1/Authentication/RequestToken"
 
 URL_APIAsklora="https://api.asklora.ai"

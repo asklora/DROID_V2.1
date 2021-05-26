@@ -8,7 +8,7 @@ from getpass import GetPassWarning
 from collections import OrderedDict
 from general.date_process import datetimeNow
 from general.slack import report_to_slack
-from global_vars import DSS_PASSWORD, DSS_USERNAME, REPORT_INTRADAY, REPORT_HISTORY, URL_Extrations, URL_AuthToken
+from global_vars import DSS_PASSWORD, DSS_USERNAME, REPORT_INTRADAY, REPORT_HISTORY, URL_Extrations, URL_AuthToken,URL_Extrations_with_note
 # =============================================================================
 
 def getAuthToken():
@@ -51,6 +51,8 @@ def get_data_from_reuters(start_date, end_date, authToken, jsonFileName, stocks,
     # Step 5
     print(datetimeNow()+ " " + "*** Step 5 Post the T&C Request to DSS REST server and check response status")
     resp = requests.post(URL_Extrations, data=None, json=_jReqBody, headers=_extractReqHeader)
+    # ======== USING EXTRACT WITH NOTES =================
+    # resp = requests.post(URL_Extrations_with_note, data=None, json=_jReqBody, headers=_extractReqHeader)
     if resp.status_code != 200:
         if resp.status_code != 202:
             message = "Error: Status Code:" + \
@@ -78,6 +80,10 @@ def get_data_from_reuters(start_date, end_date, authToken, jsonFileName, stocks,
     # Process Reponse JSON object
     _jResp = resp.json()
     data = _jResp["value"]
+    
+    
+    # ========== USING NOTES BELOW ============
+    # data = _jResp["Contents"]
 
     # note = _jResp["Notes"][0]
     # with open("extractions_notes.txt", "w") as file:
