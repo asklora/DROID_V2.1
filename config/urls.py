@@ -23,4 +23,5 @@ urlpatterns = [
     path('api/auth/revoke/', RevokeToken.as_view(), name='token_revoke'),
     path('api/user/',include('core.user.urls')),
     path('api/client/',include('core.Clients.urls')),
+    path('api/order/',include('core.orders.urls')),
 ]
