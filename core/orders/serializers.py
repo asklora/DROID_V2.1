@@ -55,4 +55,5 @@ class PositionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderPosition
+        
         fields = "__all__"
