@@ -546,6 +546,7 @@ def populate_intraday_latest_price(ticker=None, currency_code=None,use_index=Fal
             print(result)
             upsert_data_to_database(result, get_latest_price_table_name(), "ticker", how="update", Text=True)
             clean_latest_price()
+            #__
             if(type(ticker) != type(None)):
                 report_to_slack("{} : === {} Intraday Price Updated ===".format(dateNow(), ticker))
             elif(type(currency_code) != type(None)):
