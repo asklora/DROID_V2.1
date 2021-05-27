@@ -64,7 +64,7 @@ def get_latest_price(currency):
 def migrate_na():
     now = datetime.now()
     try:
-        original_stdout = sys.stdout  # Save a reference to the original standard
+        original_stdout = sys.stdout  # Save a reference to the original standards
         with open(f"files/migrate{now}.txt", "w") as f:
             # Change the standard output to the file we created.
             sys.stdout = f

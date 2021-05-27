@@ -15,8 +15,8 @@ def func(*args):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        
-        print(func(25,45,11))
+        migrate_droid1("na")
+        # print(func(25,45,11))
         # user = User.objects.get(email='krw_s_adv@hanwha.asklora.ai')
         # print('current_assets: ',user.current_assets)
         # print('balance: ',user.balance)

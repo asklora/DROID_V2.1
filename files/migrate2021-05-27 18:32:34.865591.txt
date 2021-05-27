@@ -1,0 +1,12 @@
+===== CREATING BATCH =====
+===== JOB SUBMITTED =====
+JOB ID : 2ca3dc13-2fc0-40e7-89b8-618d0795b31b
+state is SUBMITTED
+state is RUNNABLE
+state is STARTING
+state is RUNNING
+waiting for queue
+task active: 1
+task active: 0
+{'ResponseMetadata': {'RequestId': '2d82d062-67a7-4fdb-a827-0d564bd79d7e', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Thu, 27 May 2021 18:35:30 GMT', 'content-type': 'application/json', 'content-length': '2', 'connection': 'keep-alive', 'x-amzn-requestid': '2d82d062-67a7-4fdb-a827-0d564bd79d7e', 'access-control-allow-origin': '*', 'x-amz-apigw-id': 'AADx6GVGoE0Fbrg=', 'access-control-expose-headers': 'X-amzn-errortype,X-amzn-requestid,X-amzn-errormessage,X-amzn-trace-id,X-amz-apigw-id,date', 'x-amzn-trace-id': 'Root=1-60afe672-7fb0b81803b7104a7ffaa5a0'}, 'RetryAttempts': 0}}
+==== DONE MIGRATING =====
