@@ -126,7 +126,7 @@ north_asia_market:
 	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --na True
 
 weekly:
-	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --na True
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --weekly True
 
-monthlu:
-	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --na True
+monthly:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --monthly True
