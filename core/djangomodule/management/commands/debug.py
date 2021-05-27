@@ -9,25 +9,28 @@ from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekl
 from main import populate_intraday_latest_price,update_index_price_from_dss
 from datetime import datetime
 
-
+def func(*args):
+    print(args)
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        user = User.objects.get(email='krw_s_adv@hanwha.asklora.ai')
-        print('current_assets: ',user.current_assets)
-        print('balance: ',user.balance)
-        print('position_live: ',user.position_live)
-        print('position_expired: ',user.position_expired)
-        print('total_invested_amount: ',user.total_invested_amount)
-        print('starting_amount: ',user.starting_amount)
-        print('current_total_invested_amount: ',user.current_total_invested_amount)
-        print('total_amount: ',user.total_amount)
-        print('total_profit_amount: ',user.total_profit_amount)
-        print('total_profit_return: ',user.total_profit_return)
-        # populate_intraday_latest_price(ticker=[".SPX"])
+        
+        print(func(25,45,11))
+        # user = User.objects.get(email='krw_s_adv@hanwha.asklora.ai')
+        # print('current_assets: ',user.current_assets)
+        # print('balance: ',user.balance)
+        # print('position_live: ',user.position_live)
+        # print('position_expired: ',user.position_expired)
+        # print('total_invested_amount: ',user.total_invested_amount)
+        # print('starting_amount: ',user.starting_amount)
+        # print('current_total_invested_amount: ',user.current_total_invested_amount)
+        # print('total_amount: ',user.total_amount)
+        # print('total_profit_amount: ',user.total_profit_amount)
+        # print('total_profit_return: ',user.total_profit_return)
+        # populate_intraday_latest_price(ticker=[".CSI300"])
         # get_quote_yahoo("TCOM", use_symbol=True)
-        # daily_hedge(currency="USD")
+        # daily_hedge(currency="KRW")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
         #     position_uid__user_id__in=[108,

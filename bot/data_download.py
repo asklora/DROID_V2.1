@@ -35,12 +35,20 @@ def check_ticker_currency_code_query(ticker=None, currency_code=None):
         query += f"ticker in (select ticker from {get_universe_table_name()} where is_active=True and currency_code in {tuple_data(currency_code)}) "
     return query
     
-def get_bot_data_latest_date(daily=False, history=False):
-    if(daily):
+def get_bot_data_latest_date(bot_data=False, vol_infer=False, ranking=False):
+    if(bot_data):
         table_name = get_bot_data_table_name()
-    else:
+        indentifier = "trading_day"
+    elif(ranking):
+        table_name = get_bot_ranking_table_name()
+        indentifier = "spot_date"
+    elif(vol_infer):
         table_name = get_data_vol_surface_inferred_table_name()
-    query = f"select ticker, max(trading_day) as max_date from {table_name} group by ticker"
+        indentifier = "trading_day"
+    else:
+        table_name = get_data_vol_surface_table_name()
+        indentifier = "trading_day"
+    query = f"select ticker, max({indentifier}) as max_date from {table_name} group by ticker"
     data = read_query(query, table_name, cpu_counts=True)
     if(len(data) == 0):
         return str_to_date(droid_start_date())

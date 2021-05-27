@@ -11,7 +11,7 @@ class ClientView(APIView):
     permission_classes = [permissions.IsAdminUser]
     
     @extend_schema(
-        operation_id='Get available client',
+        operation_id='Get available client'
     )
     def get(self, request, format=None):
         """
