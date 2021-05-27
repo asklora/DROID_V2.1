@@ -282,7 +282,7 @@ def daily_hedge(currency=None):
         report_to_slack(f"===  ERROR IN HEDGE FOR {currency} ===")
         report_to_slack(str(e))
         return {'err': str(e)}
-    send_csv_hanwha(currency=currency)
+    send_csv_hanwha.delay(currency=currency)
     report_to_slack(f"===  EMAIL HEDGE SENT FOR {currency} ===")
     return {'result': f'hedge {currency} done'}
 

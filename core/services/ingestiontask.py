@@ -3,10 +3,8 @@ from ingestion.master_data import update_fundamentals_quality_value
 from config.celery import app
 from datetime import datetime
 from main import (
-    daily_ingestion, update_lot_size_from_dss, quandl,
-    vix, daily_na, daily_ws,
-    weekly, timezones, monthly,
-    dlpa_weekly, populate_latest_price,
+    daily_ingestion, update_lot_size_from_dss, daily_na, daily_ws,
+    weekly, monthly, populate_latest_price,
     update_worldscope_quarter_summary_from_dsws,
     daily_uno_ucdc,
     update_fundamentals_score_from_dsws, populate_macro_table,
@@ -94,7 +92,7 @@ def get_quandl():
         with open(f"logger/quandl_{now}.txt", "w") as f:
             # Change the standard output to the file we created.
             sys.stdout = f
-            quandl()  # triger ingestion function
+            # quandl()  # triger ingestion function
             sys.stdout = original_stdout
         return {"result": f"quandl is updated"}
     except Exception as e:
@@ -112,7 +110,7 @@ def get_vix():
         with open(f"logger/vix_{now}.txt", "w") as f:
             # Change the standard output to the file we created.
             sys.stdout = f
-            vix()  # triger ingestion function
+            # vix()  # triger ingestion function
             sys.stdout = original_stdout
         return {"result": f"Vix is updated"}
     except Exception as e:
@@ -167,7 +165,7 @@ def get_timezones():
         with open(f"logger/timezone_{now}.txt", "w") as f:
             # Change the standard output to the file we created.
             sys.stdout = f
-            timezones()  # triger ingestion function
+            # timezones()  # triger ingestion function
             sys.stdout = original_stdout
         return {"result": f"timezone is updated"}
     except Exception as e:
@@ -203,7 +201,7 @@ def get_dlpa_weekly():
         with open(f"logger/dlpa_weekly_{now}.txt", "w") as f:
             # Change the standard output to the file we created.
             sys.stdout = f
-            dlpa_weekly()  # triger ingestion function
+            # dlpa_weekly()  # triger ingestion function
             sys.stdout = original_stdout
         return {"result": f"dlpa_weekly is updated"}
     except Exception as e:
