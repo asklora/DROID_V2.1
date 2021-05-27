@@ -43,7 +43,7 @@ class ClientSerializers(serializers.ModelSerializer):
     ]
 )
 class UserClientSerializers(serializers.ModelSerializer):
-    email = serializers.CharField(read_only=True,source='user_id.email')
+    email = serializers.CharField(read_only=True,source='user.email')
     
 
 
