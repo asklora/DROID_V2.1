@@ -30,6 +30,8 @@ class UserSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model= User
         fields=(
+            'id',
+            'email',
             'current_assets',
             'balance',
             'position_live',
