@@ -7,7 +7,7 @@ class Command(BaseCommand):
         parser.add_argument("-run_number", "--run_number", help="run_number", type=int, default=0)
         parser.add_argument("-total_no_of_runs", "--total_no_of_runs", help="total_no_of_runs", type=int, default=1)
         parser.add_argument("-time_to_exp", "--time_to_exp", type=str, help="time_to_exp",)
-        parser.add_argument("-currency_code", "--currency_code", type=str, help="currency_code", default=None)
+        parser.add_argument("-currency_code", "--currency_code", nargs="+", help="currency_code", default=None)
         parser.add_argument("-uno", "--uno", type=bool, help="uno", default=False)
         parser.add_argument("-ucdc", "--ucdc", type=bool, help="ucdc", default=False)
         parser.add_argument("-classic", "--classic", type=bool, help="classic", default=False)
@@ -32,8 +32,6 @@ class Command(BaseCommand):
         if(options["classic"]):
             daily_classic()
         else:
-            if(type(options["currency_code"]) != type(None)):
-                options["currency_code"] = [options["currency_code"]]
             daily_shcedule_uno_ucdc(currency_code=options["currency_code"], uno=options["uno"], 
             ucdc=options["ucdc"], do_infer=options["do_infer"], infer=options["infer"], option_maker=options["option_maker"], 
             null_filler=options["null_filler"], statistic=options["statistic"], prep=options["prep"], 

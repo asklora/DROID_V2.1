@@ -92,8 +92,8 @@ def get_data_from_reuters(start_date, end_date, authToken, jsonFileName, stocks,
     s3 = boto3.client('s3', aws_access_key_id='AKIA2XEOTUNGWEQ43TB6' ,aws_secret_access_key='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', region_name='ap-east-1')
     file_name = pd.Timestamp.now()
     epoch = mktime(file_name.timetuple())
-    s3_file = str(int(epoch)) + ".txt"
-    upload = s3.put_object(Body=note, Bucket='dss-extraction-notes', Key=s3_file)
+    s3_file = 'dss-extraction-note/'+str(int(epoch)) + ".txt"
+    upload = s3.put_object(Body=note, Bucket='droid-v2-logs', Key=s3_file)
 
     datas = pd.DataFrame.from_dict(data, orient="columns")
     return datas

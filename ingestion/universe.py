@@ -172,10 +172,10 @@ def update_currency_code_from_dss(ticker=None):
         report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
         update_universe_where_currency_code_null()
 
-def update_mic_from_dss(ticker=None):
+def update_mic_from_dss(ticker=None, currency_code=None):
     print("{} : === MIC Start Ingestion ===".format(datetimeNow()))
     identifier="ticker"
-    universe = get_active_universe(ticker=ticker)
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe.drop(columns=["mic"])
     jsonFileName = "files/file_json/test_eod.json"
     result = get_data_from_dss("start_date", "end_date", universe["ticker"], jsonFileName, report=REPORT_INTRADAY)
