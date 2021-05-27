@@ -90,7 +90,6 @@ def migrate():
         report_to_slack(str(e))
         return {"err": str(e)}
 
-
 @app.task
 def migrate_droid1():
     now = datetime.now()
