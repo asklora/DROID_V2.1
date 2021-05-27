@@ -139,7 +139,7 @@ def train_model(ticker=None, currency_code=None):
 # ************************************************************************************************************************************************************************************
 def data_prep_daily(ticker=None, currency_code=None):
     print("{} : === {} DATA PREPERATION STARTED ===".format(dateNow(), currency_code))
-    start_date = get_bot_data_latest_date(daily=True)
+    start_date = get_bot_data_latest_date(bot_data=True)
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -190,7 +190,7 @@ def data_prep_history(currency_code=None):
 def infer_daily(ticker=None, currency_code=None):
     folder_check()
     print("{} : === {} VOLATILITY INFER STARTED ===".format(dateNow(), currency_code))
-    start_date = str_to_date(backdate_by_year(1))
+    start_date = get_bot_data_latest_date(vol_infer=True)
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -483,7 +483,7 @@ def bot_ranking_daily(ticker=None, currency_code=None, mod=False, time_to_exp=ti
     print("{} : === BOT RANKING DAILY STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
-    start_date = get_bot_data_latest_date(daily=True)
+    start_date = get_bot_data_latest_date(ranking=True)
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")

@@ -1,8 +1,9 @@
 import sys
+import boto3
 import requests
 import pandas as pd
 from json import load
-from time import sleep
+from time import sleep, mktime
 from requests import get
 from getpass import GetPassWarning
 from collections import OrderedDict
@@ -79,16 +80,21 @@ def get_data_from_reuters(start_date, end_date, authToken, jsonFileName, stocks,
 
     # Process Reponse JSON object
     _jResp = resp.json()
+    # print("response >> ", _jResp)
+    
+    # ========== WITHOUT NOTES  ============
     # data = _jResp["value"]
     
     print(_jResp)
     # ========== USING NOTES BELOW ============
     data = _jResp["Contents"]
 
-    note = _jResp["Notes"][0]
-    with open("extractions_notes.txt", "w") as file:
-        file.write(note)
-        file.close()
+    note = _jResp["Notes"][0].encode('utf-8')
+    s3 = boto3.client('s3', aws_access_key_id='AKIA2XEOTUNGWEQ43TB6' ,aws_secret_access_key='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', region_name='ap-east-1')
+    file_name = pd.Timestamp.now()
+    epoch = mktime(file_name.timetuple())
+    s3_file = str(int(epoch)) + ".txt"
+    upload = s3.put_object(Body=note, Bucket='dss-extraction-notes', Key=s3_file)
 
     datas = pd.DataFrame.from_dict(data, orient="columns")
     return datas
