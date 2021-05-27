@@ -1,0 +1,21 @@
+{
+  "@odata.context": "https://hosted.datascopeapi.reuters.com/RestApi/v1/$metadata#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.ExtractionResult",
+  "Contents": [
+    {
+      "IdentifierType": "Ric",
+      "Identifier": ".CSI300",
+      "RIC": ".CSI300",
+      "Bid Price": None,
+      "Ask Price": None,
+      "Open Price": 5311.3726,
+      "High Price": 5378.4764,
+      "Low Price": 5286.05,
+      "Trade Date": "2021-05-27",
+      "Last Price": 5322.3973,
+      "Last Update Time": "05/27/2021 03:53:44"
+    }
+  ],
+  "Notes": [
+    "Extraction Services Version 14.5.42294 (737b0965c07f), Built Apr  8 2021 13:46:52\r\nProcessing started at 05/27/2021 03:53:43.\r\nUser ID: 9023786\r\nExtraction ID: 2000000263695222\r\nSchedule: 0x0791ffa325bca1bf (ID = 0x0000000000000000)\r\nInput List (1 items):  (ID = 0x0791ffa325bca1bf) Created: 05/27/2021 03:53:43 Last Modified: 05/27/2021 03:53:43\r\nReport Template (15 fields): _OnD_0x0791ffa325bca1bf (ID = 0x0791ffa325dca1bf) Created: 05/27/2021 03:53:41 Last Modified: 05/27/2021 03:53:41\r\nSchedule dispatched via message queue (0x0791ffa325bca1bf)\r\nSchedule Time: 05/27/2021 03:53:43\r\nReal-time data was snapped at 05/27/2021 03:53:45, it was scheduled to snap at 05/27/2021 03:53:43.\r\nProcessing completed successfully at 05/27/2021 03:53:45, taking 2.042 Secs.\r\nExtraction finished at 05/27/2021 03:53:45 UTC, with servers: x15q27, QSHC11 (2.0 secs), QSSHA1 (0.0 secs)\r\nNo embargo required for this report.\r\nUsage Summary for User 9023786, Client 110381, Template Type Intraday Pricing\r\nBase Usage\r\n        Instrument                          Instrument                   Terms          Price\r\n  Count Type                                Subtype                      Source         Source\r\n------- ----------------------------------- ---------------------------- -------------- ----------------------------------------\r\n      1 Equities                                                         N/A            N/A\r\n-------\r\n      1 Total instrument charged.\r\n      0 Instruments with no reported data.\r\n=======\r\n      1 Instrument in the input list.\r\nNo Evaluated Pricing Service complex usage to report -- 1 Instrument in the input list had no reported data.\r\n"
+  ]
+}
