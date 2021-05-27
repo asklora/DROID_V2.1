@@ -1,8 +1,26 @@
 from rest_framework import serializers
 from .models import OrderPosition, PositionPerformance
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample,extend_schema_serializer
 
 
-
+@extend_schema_serializer(
+    examples = [
+         OpenApiExample(
+            'Get bot Performance by positions',
+            description='Get bot Performance by positions',
+            value=[{
+                    "created": "2021-05-27T05:25:55.776Z",
+                    "prev_bot_share_num": "string",
+                    "share_num": 0,
+                    "current_investment_amount": 0,
+                    "side": "string",
+                    "price": 0,
+                    "hedge_share": "string"
+                    }],
+            response_only=True, # signal that example only applies to responses
+        ),
+    ]
+)
 class PerformanceSerializer(serializers.ModelSerializer):
     prev_bot_share_num = serializers.SerializerMethodField()
     side = serializers.SerializerMethodField()
