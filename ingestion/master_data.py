@@ -469,7 +469,12 @@ def populate_latest_price(ticker=None, currency_code=None):
             print(result)
             upsert_data_to_database(result, get_latest_price_table_name(), "ticker", how="update", Text=True)
             clean_latest_price()
-            report_to_slack("{} : === {} Latest Price Updated ===".format(dateNow(), currency_code))
+            if(ticker != None):
+                report_to_slack("{} : === {} Latest Price Updated ===".format(dateNow(), ticker))
+            elif(currency_code != None):
+                report_to_slack("{} : === {} Latest Price Updated ===".format(dateNow(), currency_code))
+            else:
+                report_to_slack("{} : === Latest Price Updated ===".format(dateNow()))
             null_ticker = result["ticker"].tolist()
             
             # split_order_and_performance(ticker=ticker, currency_code=currency_code)
@@ -489,14 +494,17 @@ def populate_latest_price(ticker=None, currency_code=None):
         print(latest_price)
         upsert_data_to_database(latest_price, get_latest_price_table_name(), "ticker", how="update", Text=True)
 
-def populate_intraday_latest_price(ticker=None, currency_code=None):
+def populate_intraday_latest_price(ticker=None, currency_code=None,use_index=False):
     jsonFileName = "files/file_json/intraday_price.json"
     start_date = backdate_by_day(1)
     end_date = dateNow()
     latest_price = get_latest_price_data(ticker=ticker, currency_code=currency_code)
     last_price = latest_price[["ticker", "classic_vol", "capital_change"]]
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
-    ticker = "/" + universe["ticker"]
+    if use_index:
+        ticker =  universe["ticker"]
+    else:
+        ticker = "/" + universe["ticker"]
     data = get_data_from_dss("start_date", "end_date", ticker, jsonFileName, report=REPORT_INTRADAY)
     percentage_change =  get_yesterday_close_price(ticker=universe["ticker"], currency_code=currency_code)
     data  =data.drop(columns=["IdentifierType", "Identifier"])
@@ -538,7 +546,12 @@ def populate_intraday_latest_price(ticker=None, currency_code=None):
             print(result)
             upsert_data_to_database(result, get_latest_price_table_name(), "ticker", how="update", Text=True)
             clean_latest_price()
-            report_to_slack("{} : === {} Latest Price Updated ===".format(dateNow(), currency_code))
+            if(ticker != None):
+                report_to_slack("{} : === {} Intraday Price Updated ===".format(dateNow(), ticker))
+            elif(currency_code != None):
+                report_to_slack("{} : === {} Intraday Price Updated ===".format(dateNow(), currency_code))
+            else:
+                report_to_slack("{} : === Intraday Price Updated ===".format(dateNow()))
             # split_order_and_performance(ticker=ticker, currency_code=currency_code)
         latest_price = latest_price.loc[~latest_price["ticker"].isin(result["ticker"].tolist())]
         if(len(latest_price) > 0):
