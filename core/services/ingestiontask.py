@@ -81,40 +81,10 @@ def updatelotsize(currency):
         return {"err": str(e)}
 
 
-@app.task
-def get_quandl():
-    """
-    Mon-Sat at 13:45
-    """
-    now = datetime.now()
-    try:
-        original_stdout = sys.stdout  # Save a reference to the original standard output
-        with open(f"logger/quandl_{now}.txt", "w") as f:
-            # Change the standard output to the file we created.
-            sys.stdout = f
-            # quandl()  # triger ingestion function
-            sys.stdout = original_stdout
-        return {"result": f"quandl is updated"}
-    except Exception as e:
-        return {"err": str(e)}
 
 
-@app.task
-def get_vix():
-    """
-    Mon-Sat at 21:00
-    """
-    now = datetime.now()
-    try:
-        original_stdout = sys.stdout  # Save a reference to the original standard output
-        with open(f"logger/vix_{now}.txt", "w") as f:
-            # Change the standard output to the file we created.
-            sys.stdout = f
-            # vix()  # triger ingestion function
-            sys.stdout = original_stdout
-        return {"result": f"Vix is updated"}
-    except Exception as e:
-        return {"err": str(e)}
+
+
 
 
 @aws_batch
@@ -154,22 +124,7 @@ def get_weekly():
         return {"err": str(e)}
 
 
-@app.task
-def get_timezones():
-    """
-    Sun at 20:00
-    """
-    now = datetime.now()
-    try:
-        original_stdout = sys.stdout  # Save a reference to the original standard output
-        with open(f"logger/timezone_{now}.txt", "w") as f:
-            # Change the standard output to the file we created.
-            sys.stdout = f
-            # timezones()  # triger ingestion function
-            sys.stdout = original_stdout
-        return {"result": f"timezone is updated"}
-    except Exception as e:
-        return {"err": str(e)}
+
 
 
 @app.task
@@ -190,22 +145,7 @@ def get_monthly():
         return {"err": str(e)}
 
 
-@app.task
-def get_dlpa_weekly():
-    """
-    Sun at 03:30
-    """
-    now = datetime.now()
-    try:
-        original_stdout = sys.stdout  # Save a reference to the original standard output
-        with open(f"logger/dlpa_weekly_{now}.txt", "w") as f:
-            # Change the standard output to the file we created.
-            sys.stdout = f
-            # dlpa_weekly()  # triger ingestion function
-            sys.stdout = original_stdout
-        return {"result": f"dlpa_weekly is updated"}
-    except Exception as e:
-        return {"err": str(e)}
+
 
 
 @app.task
@@ -324,6 +264,8 @@ def migrate():
             sys.stdout = original_stdout
         return {"result": f"migrate daily done"}
     except Exception as e:
+        report_to_slack("===  migrate daily error ===")
+        report_to_slack(str(e))
         return {"err": str(e)}
 
 
