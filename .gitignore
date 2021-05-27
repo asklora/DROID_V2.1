@@ -12,3 +12,4 @@ db.sqlite3
 *.zip
 !currency_code_to_etf.csv
 logger/
+.log

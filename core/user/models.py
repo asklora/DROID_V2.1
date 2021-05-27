@@ -107,7 +107,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.user_balance
     
     @property
-    def currency(self):
+    def currency(self) -> str:
         return self.user_balance.currency_code.currency_code
 
     

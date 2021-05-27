@@ -158,7 +158,6 @@ def monthly():
     # #Sat at 05:05
     # update_worldscope_quarter_summary_from_dsws(currency_code=["EUR"])
     # #Sat at 05:06
-    # update_worldscope_quarter_summary_from_dsws(currency_code=["USD"])
 
 
 def latest_price():
@@ -340,7 +339,7 @@ def daily_ingestion(region_id=None):
     if(region_id == None):
         droid2_ticker = get_active_universe()
     else:
-        droid2_ticker = get_universe_by_region(region_id=region_id)
+        droid2_ticker = get_universe_by_region(region_code=region_id)
     print(droid2_ticker)
     dlp_ticker = dlp_ticker.loc[dlp_ticker["ticker"].isin(droid2_ticker["ticker"].to_list())]
     print(dlp_ticker)
