@@ -256,34 +256,34 @@ def order_client_topstock(currency=None, client_name="HANWHA"):
 @app.task
 def daily_hedge(currency=None):
     report_to_slack(f"===  START HEDGE FOR {currency} ===")
-   
-    update_index_price_from_dss(currency_code=[currency])
-    populate_intraday_latest_price(currency_code=[currency])
-    get_quote_index(currency)
-    positions = OrderPosition.objects.filter(
-        is_live=True, ticker__currency_code=currency)
-    # for position in positions:
-    #     position_uid = position.position_uid
-    #     market = TradingHours(mic=position.ticker.mic)
-    #     if market.is_open:
-    #         if currency == "USD":
-    #             get_quote_yahoo(position.ticker.ticker, use_symbol=True)
-    #         else:
-    #             get_quote_yahoo(position.ticker.ticker, use_symbol=False)
-    #         if (position.bot.is_uno()):
-    #             uno_position_check(position_uid)
-    #         elif (position.bot.is_ucdc()):
-    #             ucdc_position_check(position_uid)
-    #         elif (position.bot.is_classic()):
-    #             classic_position_check(position_uid)
-    #     else:
-    #         report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE ===")
-    # except Exception as e:
-    #     report_to_slack(f"===  ERROR IN HEDGE FOR {currency} ===")
-    #     report_to_slack(str(e))
-    #     return {'err': str(e)}
-    # send_csv_hanwha.delay(currency=currency)
-    # report_to_slack(f"===  EMAIL HEDGE SENT FOR {currency} ===")
+    try:
+        update_index_price_from_dss(currency_code=[currency])
+        populate_intraday_latest_price(currency_code=[currency])
+        get_quote_index(currency)
+        positions = OrderPosition.objects.filter(
+            is_live=True, ticker__currency_code=currency)
+        for position in positions:
+            position_uid = position.position_uid
+            market = TradingHours(mic=position.ticker.mic)
+            if market.is_open:
+                if currency == "USD":
+                    get_quote_yahoo(position.ticker.ticker, use_symbol=True)
+                else:
+                    get_quote_yahoo(position.ticker.ticker, use_symbol=False)
+                if (position.bot.is_uno()):
+                    uno_position_check(position_uid)
+                elif (position.bot.is_ucdc()):
+                    ucdc_position_check(position_uid)
+                elif (position.bot.is_classic()):
+                    classic_position_check(position_uid)
+            else:
+                report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE ===")
+    except Exception as e:
+        report_to_slack(f"===  ERROR IN HEDGE FOR {currency} ===")
+        report_to_slack(str(e))
+        return {'err': str(e)}
+    send_csv_hanwha(currency=currency)
+    report_to_slack(f"===  EMAIL HEDGE SENT FOR {currency} ===")
     return {'result': f'hedge {currency} done'}
 
 
