@@ -1,24 +1,22 @@
 Extraction Services Version 14.5.42294 (737b0965c07f), Built Apr  8 2021 13:46:52
-Processing started at 05/26/2021 03:15:14.
+Processing started at 05/27/2021 03:53:43.
 User ID: 9023786
-Extraction ID: 2000000263103591
-Schedule: 0x0791aa8327fca04a (ID = 0x0000000000000000)
-Input List (1 items):  (ID = 0x0791aa8327fca04a) Created: 05/26/2021 03:15:14 Last Modified: 05/26/2021 03:15:14
-Total RT Open Access instruments: 1
-Total instruments after instrument expansion = 1
-Report Template (15 fields): _OnD_0x0791aa8327fca04a (ID = 0x0791aa83282ca04a) Created: 05/26/2021 03:15:10 Last Modified: 05/26/2021 03:15:10
-Schedule dispatched via message queue (0x0791aa8327fca04a)
-Schedule Time: 05/26/2021 03:15:12
-Real-time data was snapped at 05/26/2021 03:15:14, it was scheduled to snap at 05/26/2021 03:15:12.
-Processing completed successfully at 05/26/2021 03:15:14, taking 0.100 Secs.
-Extraction finished at 05/26/2021 03:15:14 UTC, with servers: x09q19, QSHC11 (0.0 secs), QSSHA1 (0.0 secs)
+Extraction ID: 2000000263695222
+Schedule: 0x0791ffa325bca1bf (ID = 0x0000000000000000)
+Input List (1 items):  (ID = 0x0791ffa325bca1bf) Created: 05/27/2021 03:53:43 Last Modified: 05/27/2021 03:53:43
+Report Template (15 fields): _OnD_0x0791ffa325bca1bf (ID = 0x0791ffa325dca1bf) Created: 05/27/2021 03:53:41 Last Modified: 05/27/2021 03:53:41
+Schedule dispatched via message queue (0x0791ffa325bca1bf)
+Schedule Time: 05/27/2021 03:53:43
+Real-time data was snapped at 05/27/2021 03:53:45, it was scheduled to snap at 05/27/2021 03:53:43.
+Processing completed successfully at 05/27/2021 03:53:45, taking 2.042 Secs.
+Extraction finished at 05/27/2021 03:53:45 UTC, with servers: x15q27, QSHC11 (2.0 secs), QSSHA1 (0.0 secs)
 No embargo required for this report.
 Usage Summary for User 9023786, Client 110381, Template Type Intraday Pricing
 Base Usage
         Instrument                          Instrument                   Terms          Price
   Count Type                                Subtype                      Source         Source
 ------- ----------------------------------- ---------------------------- -------------- ----------------------------------------
-      1 Equities                            RT Open Access               N/A            N/A
+      1 Equities                                                         N/A            N/A
 -------
       1 Total instrument charged.
       0 Instruments with no reported data.

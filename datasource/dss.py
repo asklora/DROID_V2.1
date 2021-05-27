@@ -51,7 +51,6 @@ def get_data_from_reuters(start_date, end_date, authToken, jsonFileName, stocks,
     _extractReqHeader = makeExtractHeader(_token)
     # Step 5
     print(datetimeNow()+ " " + "*** Step 5 Post the T&C Request to DSS REST server and check response status")
-    # ======== USING EXTRACT WITHOUT NOTES =================
     # resp = requests.post(URL_Extrations, data=None, json=_jReqBody, headers=_extractReqHeader)
     # ======== USING EXTRACT WITH NOTES =================
     resp = requests.post(URL_Extrations_with_note, data=None, json=_jReqBody, headers=_extractReqHeader)
@@ -86,6 +85,7 @@ def get_data_from_reuters(start_date, end_date, authToken, jsonFileName, stocks,
     # ========== WITHOUT NOTES  ============
     # data = _jResp["value"]
     
+    print(_jResp)
     # ========== USING NOTES BELOW ============
     data = _jResp["Contents"]
 
