@@ -714,11 +714,8 @@ def ai_value_lgbm_score():
     print(f"Get {table} = True")
 
 def daily_migrations():
-    vix_data()
     data_dss()
     data_dsws()
-    data_quandl()
-    latest_price()
 
 def weekly_migrations():
     currency()

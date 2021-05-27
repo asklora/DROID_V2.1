@@ -1,13 +1,13 @@
 .PHONY: build
 
+training:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --training True
+
 restart_server:
 	@/sbin/shutdown -r now
 	
 stop_python:
 	@sudo pkill python
-
-migrations:
-	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py migrations --weekly True
 
 classic:
 	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --classic True
@@ -62,5 +62,71 @@ cny_uno:
 cny_ucdc:
 	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code CNY --ucdc True --infer True
 
-training:
-	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --training True
+worldscope_jpy:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --worldscope True --currency_code JPY
+
+worldscope_krw:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --worldscope True --currency_code KRW
+
+worldscope_cny:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --worldscope True --currency_code CNY
+
+worldscope_mix:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --worldscope True --currency_code SGD GBP HKD
+
+worldscope_twd:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --worldscope True --currency_code TWD
+
+worldscope_eur:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --worldscope True --currency_code EUR
+
+worldscope_usd:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --worldscope True --currency_code USD
+
+fundamentals_score_jpy:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --fundamentals_score True --currency_code JPY
+
+fundamentals_score_krw:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --fundamentals_score True --currency_code KRW
+
+fundamentals_score_cny:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --fundamentals_score True --currency_code CNY
+
+fundamentals_score_mix:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --fundamentals_score True --currency_code SGD GBP HKD
+
+fundamentals_score_twd:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --fundamentals_score True --currency_code TWD
+
+fundamentals_score_eur:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --fundamentals_score True --currency_code EUR
+
+fundamentals_score_usd:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --fundamentals_score True --currency_code USD
+
+quandl:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --quandl True
+
+vix:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --vix True
+
+interest:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --interest True
+
+dividend:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --dividend True
+
+utc_offset:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --utc_offset True
+
+west_market:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --ws True
+
+north_asia_market:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --na True
+
+weekly:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --na True
+
+monthlu:
+	@sudo /home/loratech/PycharmProjects/DROID_V2.1/env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --na True
