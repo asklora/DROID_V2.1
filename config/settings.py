@@ -19,7 +19,7 @@ SECRET_KEY = '!5fyj@#07=!rc9^)k0tgsl%dp@rmfe$*8t3*+m&mkwk-w^l!_a'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['18.167.118.164', '127.0.0.1','192.168.100.18']
+ALLOWED_HOSTS = ['18.167.118.164', '127.0.0.1','192.168.100.18', 'services.asklora.ai']
 CORS_ALLOW_ALL_ORIGINS= True
 
 # Application definition
