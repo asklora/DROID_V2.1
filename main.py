@@ -158,7 +158,6 @@ def monthly():
     # #Sat at 05:05
     # update_worldscope_quarter_summary_from_dsws(currency_code=["EUR"])
     # #Sat at 05:06
-    # update_worldscope_quarter_summary_from_dsws(currency_code=["USD"])
 
 
 def latest_price():
