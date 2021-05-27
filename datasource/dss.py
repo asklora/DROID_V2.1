@@ -85,7 +85,6 @@ def get_data_from_reuters(start_date, end_date, authToken, jsonFileName, stocks,
     # ========== WITHOUT NOTES  ============
     # data = _jResp["value"]
     
-    print(_jResp)
     # ========== USING NOTES BELOW ============
     data = _jResp["Contents"]
 

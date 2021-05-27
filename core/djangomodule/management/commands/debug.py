@@ -25,9 +25,9 @@ class Command(BaseCommand):
         # print('total_amount: ',user.total_amount)
         # print('total_profit_amount: ',user.total_profit_amount)
         # print('total_profit_return: ',user.total_profit_return)
-        populate_intraday_latest_price(ticker=[".CSI300"],use_index=True)
+        # populate_intraday_latest_price(ticker=[".CSI300"])
         # get_quote_yahoo("TCOM", use_symbol=True)
-        # daily_hedge(currency="USD")
+        daily_hedge(currency="CNY")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
         #     position_uid__user_id__in=[108,
