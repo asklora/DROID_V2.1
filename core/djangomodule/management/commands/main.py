@@ -89,7 +89,7 @@ class Command(BaseCommand):
         
             if(options["worldscope"]):
                 status = "Worldscope Ingestion"
-                update_worldscope_quarter_summary_from_dsws()
+                update_worldscope_quarter_summary_from_dsws(currency_code=options["currency_code"])
 
             if(options["fundamentals_score"]):
                 status = "Fundamentals Score Ingestion"
@@ -100,7 +100,7 @@ class Command(BaseCommand):
             if(options["quandl"]):
                 status = "Quandl Ingestion"
                 fill_null_quandl_symbol()
-                update_quandl_orats_from_quandl(ticker=[])
+                update_quandl_orats_from_quandl()
 
             if(options["vix"]):
                 status = "VIX Ingestion"
@@ -116,7 +116,7 @@ class Command(BaseCommand):
 
             if(options["dividend"]):
                 status = "Dividend Ingestion"
-                dividend_updated(currency_code=options["currency_code"])
+                dividend_updated()
                 status = "Dividend Daily Update"
                 interest_daily_update()
             
@@ -127,32 +127,32 @@ class Command(BaseCommand):
             if(options["weekly"]):
                 do_function("universe_populate")
                 status = "Ticker Name Ingestion"
-                update_ticker_name_from_dsws(currency_code=options["currency_code"])
+                update_ticker_name_from_dsws()
                 do_function("universe_populate")
                 status = "IBES Ingestion"
-                update_ibes_data_monthly_from_dsws(currency_code=options["currency_code"])
+                update_ibes_data_monthly_from_dsws()
                 status = "Macro Ingestion"
-                update_macro_data_monthly_from_dsws(currency_code=options["currency_code"])
+                update_macro_data_monthly_from_dsws()
 
             if(options["monthly"]):
                 status = "Entity Type Ingestion"
-                update_entity_type_from_dsws(currency_code=options["currency_code"])
+                update_entity_type_from_dsws()
                 status = "Lot Size Ingestion"
-                update_lot_size_from_dss(currency_code=options["currency_code"])
+                update_lot_size_from_dss()
                 status = "Currency Code Ingestion"
-                update_currency_code_from_dss(currency_code=options["currency_code"])
+                update_currency_code_from_dss()
                 status = "Industry Ingestion"
-                update_industry_from_dsws(currency_code=options["currency_code"])
+                update_industry_from_dsws()
                 status = "Company Name Ingestion"
-                update_company_desc_from_dsws(currency_code=options["currency_code"])
+                update_company_desc_from_dsws()
                 status = "Worldscope Identifier Ingestion"
-                update_worldscope_identifier_from_dsws(currency_code=options["currency_code"])
+                update_worldscope_identifier_from_dsws()
                 status = "Ticker Symbol Ingestion"
-                update_ticker_symbol_from_dss(currency_code=options["currency_code"])
+                update_ticker_symbol_from_dss()
                 status = "MIC Ingestion"
-                update_mic_from_dss(currency_code=options["currency_code"])
+                update_mic_from_dss()
                 status = "Dividend Ingestion"
-                dividend_updated(currency_code=options["currency_code"])
+                dividend_updated()
                 status = "Dividend Daily Update"
                 interest_daily_update()
 
