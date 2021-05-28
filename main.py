@@ -70,7 +70,7 @@ def vix():
 
 
 def daily_na():
-    ticker = get_universe_by_region("na")
+    ticker = get_universe_by_region(region_id="na")
     ticker = ticker["ticker"].to_list()
     update_data_dss_from_dss(ticker=ticker)
     update_data_dsws_from_dsws(ticker=ticker)
@@ -84,7 +84,7 @@ def daily_na():
 
 
 def daily_ws():
-    ticker = get_universe_by_region("ws")
+    ticker = get_universe_by_region(region_id="ws")
     ticker = ticker["ticker"].to_list()
     update_data_dss_from_dss(ticker=ticker)
     update_data_dsws_from_dsws(ticker=ticker)

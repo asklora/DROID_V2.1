@@ -73,7 +73,6 @@ def migrate_na():
             ticker = get_universe_by_region(region_id="na")
             populate_latest_price(ticker=ticker["ticker"])
 
-
             populate_macro_table()
             populate_ibes_table()
             do_function("master_ohlcvtr_update")
