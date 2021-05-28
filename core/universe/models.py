@@ -274,6 +274,25 @@ class UniverseRating(models.Model):
     class Meta:
         db_table = "universe_rating"
         managed = True
+    
+class UniverseRatingHistory(models.Model):
+    uid = models.TextField(primary_key=True)
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="universe_rating_ticker")
+    trading_day = models.DateField(blank=True, null=True)
+    classic_vol = models.FloatField(blank=True, null=True)
+    fundamentals_quality = models.FloatField(blank=True, null=True)
+    fundamentals_value = models.FloatField(blank=True, null=True)
+    dlp_1m = models.FloatField(blank=True, null=True)
+    dlp_3m = models.FloatField(blank=True, null=True)
+    wts_rating = models.FloatField(blank=True, null=True)
+    wts_rating2 = models.FloatField(blank=True, null=True)
+
+    def __str__(self):
+        return str(self.ticker.ticker)
+
+    class Meta:
+        db_table = "universe_rating_history"
+        managed = True
 
 
 class UniverseExcluded(models.Model):
