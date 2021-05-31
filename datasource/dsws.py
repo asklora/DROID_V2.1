@@ -197,7 +197,6 @@ def get_data_history_frequently_by_field_from_dsws(start_date, end_date, univers
                     result = DS.fetch("<"+ticker+">", [by_field], date_from=start_date, date_to=end_date, freq="D")
                 result[identifier] = ticker
                 result.reset_index(inplace=True)
-                print(result)
                 if (fundamentals_score):
                     result = result.groupby(identifier, as_index=False).last()
                 if (len(chunck_field) == 0) :
@@ -207,7 +206,7 @@ def get_data_history_frequently_by_field_from_dsws(start_date, end_date, univers
             except Exception as e:
                 result = pd.DataFrame({by_field:[],identifier:[]}, index=[])
                 for ranges in date_range:
-                    result = result.append(pd.DataFrame({by_field:[np.nan], identifier:[universe]}, index=[ranges]))
+                    result = result.append(pd.DataFrame({by_field:[np.nan], identifier:[ticker]}, index=[ranges]))
                 result.reset_index(inplace=True)
                 result["index"] = pd.to_datetime(result["index"])
                 if (fundamentals_score):

@@ -352,7 +352,6 @@ def daily_ingestion(region_id=None):
 
 # Main Process
 if __name__ == "__main__":
-    update_ibes_data_monthly_from_dsws(currency_code=["HKD"])
     # update_mic_from_dss()
     from migrate import weekly_migrations, daily_migrations
     # update_ibes_data_monthly_from_dsws(ticker=[".HSI"])

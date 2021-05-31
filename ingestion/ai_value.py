@@ -21,7 +21,7 @@ def populate_ibes_table():
 
 def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=False):
     end_date = dateNow()
-    start_date = backdate_by_month(48)
+    start_date = backdate_by_month(1)
     filter_field = ["EPS1TR12", "EPS1FD12", "EBD1FD12", "CAP1FD12", "I0EPS", "EPSI1MD"]
 
     if(history):
