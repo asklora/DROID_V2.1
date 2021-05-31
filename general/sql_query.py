@@ -278,7 +278,7 @@ def get_pred_mean():
     query = f"select distinct avlpf.ticker, avlpf.pred_mean, avlpf.testing_period::date from ai_value_lgbm_pred_final avlpf, "
     query += f"(select ticker, max(testing_period::date) as max_date from ai_value_lgbm_pred_final group by ticker) filter "
     query += f"where filter.ticker=avlpf.ticker and filter.max_date=avlpf.testing_period;"
-    data = read_query(query, table=master_ohlcvtr_table)
+    data = read_query(query, table=master_ohlcvtr_table, dlp=False)
     return data
 
 def get_yesterday_close_price(ticker=None, currency_code=None):
