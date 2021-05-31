@@ -233,6 +233,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     pred_mean = get_pred_mean()
     print(pred_mean)
     fundamentals_score = close_price.merge(fundamentals_score, how="left", on="ticker")
+    fundamentals_score = fundamentals_score.merge(pred_mean, how="left", on="ticker")
     fundamentals_score["earnings_yield"] = fundamentals_score["eps"] / fundamentals_score["close"]
     fundamentals_score["book_to_price"] = fundamentals_score["bps"] / fundamentals_score["close"]
     fundamentals_score["ebitda_to_ev"] = fundamentals_score["ttm_ebitda"] / fundamentals_score["ev"]
