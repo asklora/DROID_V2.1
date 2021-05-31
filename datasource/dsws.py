@@ -218,6 +218,7 @@ def get_data_history_frequently_by_field_from_dsws(start_date, end_date, univers
                     chunck_field = result
                 else:
                     chunck_field = pd.merge(chunck_field, result, how="inner",on=[identifier, "index"])
+        print(chunck_field)
         chunk_data.append(chunck_field)
     data = []
     for frame in chunk_data:
