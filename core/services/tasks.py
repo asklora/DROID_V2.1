@@ -10,7 +10,7 @@ from general.slack import report_to_slack
 from core.orders.models import Order, PositionPerformance, OrderPosition
 from core.Clients.models import UserClient, Client
 from datetime import datetime
-from client_test_pick import test_pick, populate_bot_advisor
+from client_test_pick import populate_fels_bot, test_pick, populate_bot_advisor
 from portfolio.daily_hedge_classic import classic_position_check
 from portfolio.daily_hedge_ucdc import ucdc_position_check
 from portfolio.daily_hedge_uno import uno_position_check
@@ -151,7 +151,6 @@ def get_isin_populate_universe(ticker, user_id):
     except Exception as e:
         return {"err": str(e)}
 
-
 @app.task
 def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
     today = datetime.now().date()
@@ -170,8 +169,8 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
             report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
             report_to_slack(str(e))
             return {"err": str(e)}
-        report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
     try:
+        report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
         order_client_topstock(currency=currency)
     except Exception as e:
         report_to_slack(f"===  ERROR IN ORDER FOR {currency} ===")
@@ -182,9 +181,34 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
     return {"result": f"populate and order {currency} done"}
 
 
-def order_stock(user, market, queue, currency, pos_list):
+@app.task
+def populate_fels_top_stock_weekly(currency=None, client_name="FELS"):
+    today = datetime.now().date()
+    # Monday
+    if (today.weekday() == 0):
+        report_to_slack(f"===  POPULATING {client_name} TOP PICK {currency} ===")
+        try:
+            test_pick(currency_code=[currency], client_name=client_name)
+            populate_fels_bot(currency_code=[currency], client_name=client_name, top_pick = 5)
+        except Exception as e:
+            report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
+            report_to_slack(str(e))
+            return {"err": str(e)}
+    try:
+        report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
+        test_order_client_topstock(currency=currency, client_name="FELS")
+    except Exception as e:
+        report_to_slack(f"===  ERROR IN ORDER FOR {currency} ===")
+        report_to_slack(str(e))
+        return {"err": str(e)}
+    report_to_slack(f"===  {client_name} TOP PICK {currency} ORDER COMPLETED ===")
+
+    return {"result": f"populate and order {currency} done"}
+
+
+def order_stock(client_name, user, market, queue, currency, pos_list):
     if market.is_open:
-        report_to_slack(f"===  MARKET {queue.ticker} IS OPEN AND CREATING INITIAL ORDER ===")
+        report_to_slack(f"=== {client_name} MARKET {queue.ticker} IS OPEN AND CREATING INITIAL ORDER ===")
         # need to change live price, problem with nan
         # yahoo finance price
         if currency == "USD":
@@ -193,15 +217,24 @@ def order_stock(user, market, queue, currency, pos_list):
             get_quote_yahoo(queue.ticker.ticker, use_symbol=False)
         price = queue.ticker.latest_price_ticker.close
         spot_date = datetime.now()
-        if user.extra_data["service_type"] == "bot_advisor":
-            portnum = 8*1.04
-        elif user.extra_data["service_type"] == "bot_tester":
-            if user.extra_data["capital"] == "small":
-                portnum = 4*1.04
-            else:
+        if(client_name == "HANWHA"):
+            if user.extra_data["service_type"] == "bot_advisor":
                 portnum = 8*1.04
-        investment_amount = min(
-            user.user.current_assets / portnum, user.user.balance / 3)
+            elif user.extra_data["service_type"] == "bot_tester":
+                if user.extra_data["capital"] == "small":
+                    portnum = 4*1.04
+                else:
+                    portnum = 8*1.04
+            investment_amount = min(user.user.current_assets / portnum, user.user.balance / 3)
+        elif(client_name == "FELS"):
+            position = OrderPosition.objects.filter(user_id=user.user.user_id)
+            if (len(position) >= 12):
+                investment_amount = min(user.user.current_assets / 12, user.user.balance / 3) #rebalance rule
+                investment_amount = round(investment_amount, 2)
+            else:
+                investment_amount = 250
+        else:
+            investment_amount = min(user.user.current_assets / 1, user.user.balance / 3)
 
         digits = max(min(5-len(str(int(price))), 2), -1)
         order = Order.objects.create(
@@ -227,17 +260,20 @@ def order_stock(user, market, queue, currency, pos_list):
             queue.status = "Ordered"
             queue.save()
             pos_list.append(str(order.order_uid))
-            report_to_slack(f"===  ORDER {queue.ticker} - {queue.service_type} - {queue.capital} IS CREATED ===")
+            if(client_name == "HANWHA"):
+                report_to_slack(f"=== {client_name} ORDER {queue.ticker} - {queue.service_type} - {queue.capital} IS CREATED ===")
+            else:
+                report_to_slack(f"=== {client_name} ORDER {queue.ticker} IS CREATED ===")
     else:
         queue.status = "Holiday"
         queue.save()
-        report_to_slack(f"===  MARKET {queue.ticker} IS CLOSE SKIPPING INITIAL ORDER ===")
+        report_to_slack(f"=== {client_name} MARKET {queue.ticker} IS CLOSE / HOLIDAY SKIPPING INITIAL ORDER ===")
 
     del market
     return pos_list
 
 @app.task
-def test_order_client_topstock(currency=None, client_name="HANWHA"):
+def test_order_client_topstock(currency=None, client_name="HANWHA", service_type=None):
     populate_intraday_latest_price(currency_code=[currency])
     update_index_price_from_dss(currency_code=[currency])
     if currency == "USD":
@@ -246,15 +282,15 @@ def test_order_client_topstock(currency=None, client_name="HANWHA"):
     today = datetime.now().date()
     # Monday
     if (today.weekday() == 0):
-        topstock = client.client_top_stock.filter(has_position=False, status="Available", service_type="bot_advisor", currency_code=currency)
+        topstock = client.client_top_stock.filter(has_position=False, status="Available", service_type=service_type, currency_code=currency)
         status = True
     #Tuesday - Friday
     elif (today.weekday() >= 1 or today.weekday() <= 4):
-        topstock = client.client_top_stock.filter(has_position=False, status="Holiday", service_type="bot_advisor", currency_code=currency)
+        topstock = client.client_top_stock.filter(has_position=False, status="Holiday", service_type=service_type, currency_code=currency)
         status = True
     #Saturday & Sunday
     else:
-        topstock = client.client_top_stock.filter(has_position=False, status="Holiday", service_type="bot_advisor", currency_code=currency)
+        topstock = client.client_top_stock.filter(has_position=False, status="Holiday", service_type=service_type, currency_code=currency)
         status = False
         if(topstock.count() > 0):
             for queue in topstock:
@@ -272,10 +308,12 @@ def test_order_client_topstock(currency=None, client_name="HANWHA"):
                 extra_data__type=queue.bot
             )
             market = TradingHours(mic=queue.ticker.mic)
-            pos_list = order_stock(user, market, queue, currency, pos_list)
+            if(client_name == "HANWHA"):
+                pos_list = order_stock(client_name, user, market, queue, currency, pos_list)
 
         if pos_list:
-            send_csv_hanwha.delay(currency=currency, new={"pos_list": pos_list})
+            if(client_name == "HANWHA"):
+                send_csv_hanwha.delay(currency=currency, new={"pos_list": pos_list})
             report_to_slack(f"===  NEW PICK CSV {client_name} EMAIL SENT ===")
 
 

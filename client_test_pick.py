@@ -426,8 +426,8 @@ def populate_fels_bot(currency_code=None, client_name="FELS", time_to_exp=[0.076
             count+=1
             fels_pick = fels_pick.append(temp)
     print(fels_pick)
-    # fels_pick.to_csv("fels_pick.csv")
-    # upsert_data_to_database(tester_pick, get_client_top_stock_table_name(), "uid", how="ignore", cpu_count=True, Text=True)
+    fels_pick.to_csv("fels_pick.csv")
+    upsert_data_to_database(fels_pick, get_client_top_stock_table_name(), "uid", how="ignore", cpu_count=True, Text=True)
 
 def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7, threshold=300):
     print("{} : === CLIENT WEEKLY PICK STARTED ===".format(dateNow()))
