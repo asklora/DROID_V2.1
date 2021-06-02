@@ -154,20 +154,23 @@ def get_isin_populate_universe(ticker, user_id):
 
 @app.task
 def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
-    report_to_slack(f"===  POPULATING {client_name} TOP PICK {currency} ===")
-    try:
-        test_pick(currency_code=[currency])
-        populate_bot_advisor(
-            currency_code=[currency], client_name=client_name, capital="small")
-        populate_bot_advisor(
-            currency_code=[currency], client_name=client_name, capital="large")
-        populate_bot_advisor(
-            currency_code=[currency], client_name=client_name, capital="large_margin")
-    except Exception as e:
-        report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
-        report_to_slack(str(e))
-        return {"err": str(e)}
-    report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
+    today = datetime.now().date()
+    # Monday
+    if (today.weekday() == 0):
+        report_to_slack(f"===  POPULATING {client_name} TOP PICK {currency} ===")
+        try:
+            test_pick(currency_code=[currency])
+            populate_bot_advisor(
+                currency_code=[currency], client_name=client_name, capital="small")
+            populate_bot_advisor(
+                currency_code=[currency], client_name=client_name, capital="large")
+            populate_bot_advisor(
+                currency_code=[currency], client_name=client_name, capital="large_margin")
+        except Exception as e:
+            report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
+            report_to_slack(str(e))
+            return {"err": str(e)}
+        report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
     try:
         order_client_topstock(currency=currency)
     except Exception as e:
