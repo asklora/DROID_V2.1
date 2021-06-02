@@ -352,6 +352,12 @@ def daily_ingestion(region_id=None):
 
 # Main Process
 if __name__ == "__main__":
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    today = datetime.now().date()
+    today = today - relativedelta(days=2)
+    print(today)
+    print(today.weekday())
     # update_mic_from_dss()
     from migrate import weekly_migrations, daily_migrations
     # update_ibes_data_monthly_from_dsws(ticker=[".HSI"])
