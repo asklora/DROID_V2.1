@@ -16,12 +16,12 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         client_name="HANWHA"
-        currency = "KRW"
-        send_csv_hanwha(currency=currency, client_name=client_name)
-        currency = "HKD"
-        send_csv_hanwha(currency=currency, client_name=client_name)
-        currency = "CNY"
-        send_csv_hanwha(currency=currency, client_name=client_name)
+        # currency = "KRW"
+        # send_csv_hanwha(currency=currency, client_name=client_name)
+        # currency = "HKD"
+        # send_csv_hanwha(currency=currency, client_name=client_name)
+        # currency = "CNY"
+        # send_csv_hanwha(currency=currency, client_name=client_name)
         # migrate_droid1("na")
         # print(func(25,45,11))
         # user = User.objects.get(email='krw_s_adv@hanwha.asklora.ai')
