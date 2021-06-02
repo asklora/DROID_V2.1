@@ -153,7 +153,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def total_amount(self):
-        return self.balance + self.total_invested_amount
+        return round(self.balance + self.total_invested_amount,2)
     
     @property
     def total_profit_amount(self):
