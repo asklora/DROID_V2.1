@@ -15,7 +15,7 @@ def func(*args):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        migrate_droid1("na")
+        # migrate_droid1("na")
         # print(func(25,45,11))
         # user = User.objects.get(email='krw_s_adv@hanwha.asklora.ai')
         # print('current_assets: ',user.current_assets)
@@ -51,3 +51,6 @@ class Command(BaseCommand):
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
+        send_csv_hanwha(currency="USD")
+        # send_csv_hanwha(currency="CNY")
+        # send_csv_hanwha(currency="HKD")
