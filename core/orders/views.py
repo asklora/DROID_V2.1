@@ -47,10 +47,10 @@ class PositionUserViews(viewsets.ReadOnlyModelViewSet):
 
     
     def get_queryset(self):
-        if self.request.user.email == 'asklora@loratechai.com':
-            return self.queryset
         if self.kwargs:
             return OrderPosition.objects.filter(user_id=self.kwargs['user_id'])
+        else:
+            return OrderPosition.objects.filter(user_id=None)
         
 class BotPerformanceViews(views.APIView):
     """

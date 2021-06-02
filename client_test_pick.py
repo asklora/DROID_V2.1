@@ -273,7 +273,7 @@ def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stoc
     current_assets = get_current_assets(user_id)
     advisor_pick = pd.DataFrame({"created":[], "updated":[], "uid":[],"spot_date":[], "expiry_date":[], "has_position":[], 
         "position_uid":[],"execution_date":[], "completed_date":[], "event":[], "rank":[], "client_uid":[], "ticker":[], 
-        "bot_id":[], "currency_code":[], "service_type":[], "bot":[]}, index=[])
+        "bot_id":[], "currency_code":[], "service_type":[], "bot":[], "status":[]}, index=[])
     count = 1
     last_ticker = [""]
     for index, row in bot_advisor_pick.iterrows():
@@ -295,7 +295,8 @@ def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stoc
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
             temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], "bot":[None], 
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
-            "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id], "currency_code":[currency_code[0]], "service_type":[service_type], "capital":[capital]}, index=[0])
+            "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id], "currency_code":[currency_code[0]], "service_type":[service_type], 
+            "capital":[capital], "status":["Available"]}, index=[0])
             last_ticker.append(ticker)
             count+=1
             advisor_pick = advisor_pick.append(temp)
@@ -347,7 +348,7 @@ def populate_bot_tester(currency_code=None, client_name="HANWHA", top_pick_stock
     current_assets = get_current_assets(user_id)
     tester_pick = pd.DataFrame({"created":[], "updated":[], "uid":[],"spot_date":[], "expiry_date":[], "has_position":[], 
         "position_uid":[],"execution_date":[], "completed_date":[], "event":[], "rank":[], "client_uid":[], "ticker":[], 
-        "bot_id":[], "currency_code":[], "service_type":[], "bot":[]}, index=[])
+        "bot_id":[], "currency_code":[], "service_type":[], "bot":[], "status":[]}, index=[])
     count = 1
     last_ticker = [""]
     last_industry_code = [""]
@@ -374,7 +375,8 @@ def populate_bot_tester(currency_code=None, client_name="HANWHA", top_pick_stock
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
             temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], 
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
-            "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id],"bot":[bot], "currency_code":[currency_code[0]], "service_type":[service_type], "capital":[capital]}, index=[0])
+            "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id],"bot":[bot], "currency_code":[currency_code[0]], "service_type":[service_type], 
+            "capital":[capital], "status":["Available"]}, index=[0])
             last_ticker.append(ticker)
             last_industry_code.append(industry_code)
             count+=1
@@ -404,7 +406,7 @@ def populate_fels_bot(currency_code=None, client_name="FELS", time_to_exp=[0.076
     count = 1
     fels_pick = pd.DataFrame({"created":[], "updated":[], "uid":[],"spot_date":[], "expiry_date":[], "has_position":[], 
         "position_uid":[],"execution_date":[], "completed_date":[], "event":[], "rank":[], "client_uid":[], "ticker":[], 
-        "bot_id":[], "currency_code":[], "service_type":[], "bot":[]}, index=[])
+        "bot_id":[], "currency_code":[], "service_type":[], "bot":[], "status":[]}, index=[])
     for index, row in available_pick.iterrows():
         ticker = row["ticker"]
         spot_date = row["spot_date"]
@@ -418,13 +420,14 @@ def populate_fels_bot(currency_code=None, client_name="FELS", time_to_exp=[0.076
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
             temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], 
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
-            "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id],"bot":[bot], "currency_code":[currency_code[0]], "service_type":[None], "capital":[None]}, index=[0])
+            "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id],"bot":[bot], "currency_code":[currency_code[0]], "service_type":[None], 
+            "capital":[None], "status":["Available"]}, index=[0])
             last_ticker.append(ticker)
             count+=1
             fels_pick = fels_pick.append(temp)
     print(fels_pick)
-    # fels_pick.to_csv("fels_pick.csv")
-    # upsert_data_to_database(tester_pick, get_client_top_stock_table_name(), "uid", how="ignore", cpu_count=True, Text=True)
+    fels_pick.to_csv("fels_pick.csv")
+    upsert_data_to_database(fels_pick, get_client_top_stock_table_name(), "uid", how="ignore", cpu_count=True, Text=True)
 
 def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7, threshold=300):
     print("{} : === CLIENT WEEKLY PICK STARTED ===".format(dateNow()))
@@ -712,8 +715,8 @@ if __name__ == '__main__':
     # test_pick(currency_code=["HKD"], client_name="HANWHA")
     # test_pick(currency_code=["CNY"], client_name="HANWHA")
 
-    # populate_fels_bot(currency_code=["USD"], client_name="FELS", top_pick_stock=7, top_pick = 5)
-    # populate_fels_bot(currency_code=["EUR"], client_name="FELS", top_pick_stock=7, top_pick = 5)
+    populate_fels_bot(currency_code=["USD"], client_name="FELS", top_pick = 5)
+    populate_fels_bot(currency_code=["EUR"], client_name="FELS", top_pick = 5)
 
     # populate_bot_advisor(currency_code=["USD"], client_name="HANWHA", capital="small")
     # populate_bot_advisor(currency_code=["USD"], client_name="HANWHA", capital="large")

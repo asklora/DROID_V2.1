@@ -14,7 +14,7 @@ class Command(BaseCommand):
         parser.add_argument("-q", "--queue", type=str, help="queue")
 
     def handle(self, *args, **options):
-        positions = OrderPosition.objects.filter(is_live=True)
+        positions = OrderPosition.objects.filter(is_live=True,ticker__currency_code='USD')
         for position in positions:
             position_uid = position.position_uid
             if (position.bot.is_uno()):
