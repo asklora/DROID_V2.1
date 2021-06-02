@@ -388,7 +388,7 @@ def order_client_topstock(currency=None, client_name="HANWHA"):
 
     if pos_list:
         send_csv_hanwha.delay(currency=currency, new={"pos_list": pos_list})
-        report_to_slack(f"===  NEW PICK CSV {client_name} EMAIL SENT ===")
+        # report_to_slack(f"===  NEW PICK CSV {client_name} EMAIL SENT ===")
 
 @app.task
 def daily_hedge(currency=None):
@@ -420,7 +420,7 @@ def daily_hedge(currency=None):
         report_to_slack(str(e))
         return {"err": str(e)}
     send_csv_hanwha.delay(currency=currency)
-    report_to_slack(f"===  EMAIL HEDGE SENT FOR {currency} ===")
+    # report_to_slack(f"===  EMAIL HEDGE SENT FOR {currency} ===")
     return {"result": f"hedge {currency} done"}
 
 
@@ -469,6 +469,16 @@ def send_csv_hanwha(currency=None, client_name=None, new=None):
                             hanwha_csv, mimetype="text/csv")
         draft_email.attach(f"{currency}_{now}_asklora.csv",
                            csv, mimetype="text/csv")
-        # draft_email.send()
-        # hanwha_email.send()
+        status = draft_email.send()
+        hanwha_status = hanwha_email.send()
+        if new:
+            if(status):
+                report_to_slack(f"===  NEW PICK CSV {client_name} EMAIL SENT TO LORA ===")
+            if(hanwha_status):
+                report_to_slack(f"===  NEW PICK CSV {client_name} EMAIL SENT TO HANWHA ===")
+        else:
+            if(status):
+                report_to_slack(f"===  EMAIL HEDGE SENT FOR {currency} TO LORA ===")
+            if(hanwha_status):
+                report_to_slack(f"===  EMAIL HEDGE SENT FOR {currency} TO HANWHA ===")
     return {"result": f"send email {currency} done"}
