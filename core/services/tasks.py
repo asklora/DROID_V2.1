@@ -198,7 +198,8 @@ def order_client_topstock(currency=None, client_name="HANWHA"):
     year = day.isocalendar()[0]
     interval = f'{year}{week}'
     topstock = client.client_top_stock.filter(
-        has_position=False, service_type='bot_advisor', 
+        has_position=False, # HERE ARE SAME WITH STATUS, DO WE STILL NEED STATUS??
+        service_type='bot_advisor', 
         currency_code=currency,
         week_of_year=int(interval) # WITH THIS WILL AUTO DETECT WEEKLY UNPICK
         ).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
