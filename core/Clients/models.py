@@ -119,7 +119,6 @@ class ClientTopStock(BaseTimeStampModel):
     service_type = models.CharField(max_length=80, null=True, blank=True)
     capital = models.CharField(max_length=80, null=True, blank=True)
     bot = models.CharField(max_length=80, null=True, blank=True)
-    status = models.TextField(null=True, blank=True)
     week_of_year = models.IntegerField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
