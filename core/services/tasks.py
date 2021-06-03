@@ -274,7 +274,7 @@ def order_client_topstock(currency=None, client_name="HANWHA"):
             del market
 
         if pos_list:
-            send_csv_hanwha.delay(currency=currency, new={'pos_list': pos_list})
+            send_csv_hanwha.delay(currency=currency, client_name="HANWHA", new={'pos_list': pos_list})
     else:
         report_to_slack(f"=== {client_name} NO TOPSTOCK IN PENDING ===")
 
@@ -310,7 +310,7 @@ def daily_hedge(currency=None):
         report_to_slack(f"===  ERROR IN HEDGE FOR {currency} ===")
         report_to_slack(str(e))
         return {'err': str(e)}
-    send_csv_hanwha.delay(currency=currency)
+    send_csv_hanwha.delay(currency=currency, client_name="HANWHA")
     return {'result': f'hedge {currency} done'}
 
 
