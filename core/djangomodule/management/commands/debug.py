@@ -4,6 +4,7 @@ from core.user.models import User
 from core.djangomodule.yahooFin import get_quote_index,scrap_csi
 from core.djangomodule.calendar import TradingHours
 from core.orders.models import PositionPerformance, Order
+from core.Clients.models import ClientTopStock
 from core.services.ingestiontask import migrate_droid1
 from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
 from main import populate_intraday_latest_price,update_index_price_from_dss
@@ -15,6 +16,15 @@ def func(*args):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
+        for item in ClientTopStock.objects.all():
+            day = item.spot_date
+            year = day.isocalendar()[0]
+            week = day.isocalendar()[1]
+            interval = f'{year}{week}'
+            item.week_of_year = int(interval)
+            item.save()
+            print(interval)
+        # print(year,week, day.weekday())
         # migrate_droid1("na")
         # print(func(25,45,11))
         # user = User.objects.get(email='krw_s_adv@hanwha.asklora.ai')
@@ -51,6 +61,6 @@ class Command(BaseCommand):
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
-        send_csv_hanwha(currency="USD")
+        # send_csv_hanwha(currency="USD")
         # send_csv_hanwha(currency="CNY")
         # send_csv_hanwha(currency="HKD")

@@ -49,22 +49,22 @@ app.conf.beat_schedule = {
     },
     'USD-POPULATE-PICK': {
         'task': 'core.services.tasks.populate_client_top_stock_weekly',
-        'schedule': crontab(minute=USD_CUR.top_stock_schedule.minute, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1"),
+        'schedule': crontab(minute=USD_CUR.top_stock_schedule.minute, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         'kwargs': {"currency": "USD"},
     },
     'HKD-POPULATE-PICK': {
         'task': 'core.services.tasks.populate_client_top_stock_weekly',
-        'schedule': crontab(minute=HKD_CUR.top_stock_schedule.minute, hour=HKD_CUR.top_stock_schedule.hour, day_of_week="1"),
+        'schedule': crontab(minute=HKD_CUR.top_stock_schedule.minute, hour=HKD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         'kwargs': {"currency": "HKD"},
     },
     'KRW-POPULATE-PICK': {
         'task': 'core.services.tasks.populate_client_top_stock_weekly',
-        'schedule': crontab(minute=KRW_CUR.top_stock_schedule.minute, hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1"),
+        'schedule': crontab(minute=KRW_CUR.top_stock_schedule.minute, hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         'kwargs': {"currency": "KRW"},
     },
     'CNY-POPULATE-PICK': {
         'task': 'core.services.tasks.populate_client_top_stock_weekly',
-        'schedule': crontab(minute=CNY_CUR.top_stock_schedule.minute, hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1"),
+        'schedule': crontab(minute=CNY_CUR.top_stock_schedule.minute, hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         'kwargs': {"currency": "CNY"},
     },
 
@@ -153,27 +153,31 @@ def get_isin_populate_universe(ticker, user_id):
 
 @app.task
 def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
-    report_to_slack(f"===  POPULATING {client_name} TOP PICK {currency} ===")
+    day = datetime.now()
+    ## POPULATED ONLY/EVERY MONDAY OF THE WEEK
+    if day.weekday() == 0:
+        report_to_slack(f"===  POPULATING {client_name} TOP PICK {currency} ===")
+        try:
+            test_pick(currency_code=[currency])
+            populate_bot_advisor(
+                currency_code=[currency], client_name=client_name, capital="small")
+            populate_bot_advisor(
+                currency_code=[currency], client_name=client_name, capital="large")
+            populate_bot_advisor(
+                currency_code=[currency], client_name=client_name, capital="large_margin")
+        except Exception as e:
+            report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
+            report_to_slack(str(e))
+            return {'err': str(e)}
+    
+    # report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
     try:
-        test_pick(currency_code=[currency])
-        populate_bot_advisor(
-            currency_code=[currency], client_name=client_name, capital="small")
-        populate_bot_advisor(
-            currency_code=[currency], client_name=client_name, capital="large")
-        populate_bot_advisor(
-            currency_code=[currency], client_name=client_name, capital="large_margin")
-    except Exception as e:
-        report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
-        report_to_slack(str(e))
-        return {'err': str(e)}
-    report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
-    try:
+        # WILL RUN EVERY BUSINESS DAY
         order_client_topstock(currency=currency)
     except Exception as e:
         report_to_slack(f"===  ERROR IN ORDER FOR {currency} ===")
         report_to_slack(str(e))
         return {'err': str(e)}
-    report_to_slack(f"===  {client_name} TOP PICK {currency} ORDER COMPLETED ===")
 
     return {'result': f'populate and order {currency} done'}
 
@@ -186,70 +190,90 @@ def order_client_topstock(currency=None, client_name="HANWHA"):
     if currency == "USD":
         get_quote_index(currency)
     client = Client.objects.get(client_name=client_name)
+
+
+    ## ONLY PICK RELATED WEEK OF YEAR, WEEK WITH FULL HOLIDAY WILL SKIPPED/IGNORED
+    day = datetime.now()
+    week = day.isocalendar()[1]
+    year = day.isocalendar()[0]
+    interval = f'{year}{week}'
     topstock = client.client_top_stock.filter(
-        has_position=False, service_type='bot_advisor', currency_code=currency).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
+        has_position=False, service_type='bot_advisor', 
+        currency_code=currency,
+        week_of_year=int(interval) # WITH THIS WILL AUTO DETECT WEEKLY UNPICK
+        ).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
     pos_list = []
-    for queue in topstock:
-        user = UserClient.objects.get(
-            currency_code=queue.currency_code,
-            extra_data__service_type=queue.service_type,
-            extra_data__capital=queue.capital,
-            extra_data__type=queue.bot
-        )
-        market = TradingHours(mic=queue.ticker.mic)
-        
-        if market.is_open:
-            report_to_slack(f"===  MARKET {queue.ticker} IS OPEN AND CREATING INITIAL ORDER ===")
-            # need to change live price, problem with nan
-            # yahoo finance price
-            if currency == "USD":
-                get_quote_yahoo(queue.ticker.ticker, use_symbol=True)
-            else:
-                get_quote_yahoo(queue.ticker.ticker, use_symbol=False)
-            price = queue.ticker.latest_price_ticker.close
-            spot_date = datetime.now()
-            if user.extra_data["service_type"] == "bot_advisor":
-                portnum = 8*1.04
-            elif user.extra_data["service_type"] == "bot_tester":
-                if user.extra_data["capital"] == "small":
-                    portnum = 4*1.04
-                else:
-                    portnum = 8*1.04
-            investment_amount = min(
-                user.user.current_assets / portnum, user.user.balance / 3)
-
-            digits = max(min(5-len(str(int(price))), 2), -1)
-            order = Order.objects.create(
-                ticker=queue.ticker,
-                created=spot_date,
-                price=price,
-                bot_id=queue.bot_id,
-                amount=round(investment_amount, digits),
-                user_id=user.user
+    ### ONLY EXECUTE IF EXIST / ANY UNPICKED OF THE WEEK
+    if topstock.exists():
+        report_to_slack(f"===  START ORDER FOR UNPICK {client_name} - {currency} ===")
+        for queue in topstock:
+            user = UserClient.objects.get(
+                currency_code=queue.currency_code,
+                extra_data__service_type=queue.service_type,
+                extra_data__capital=queue.capital,
+                extra_data__type=queue.bot
             )
-            if order:
-                order.placed = True
-                order.placed_at = spot_date
-                order.save()
-            if order.status == "pending":
-                order.status = "filled"
-                order.filled_at = spot_date
-                order.save()
-                position_uid = PositionPerformance.objects.get(
-                    performance_uid=order.performance_uid).position_uid.position_uid
-                queue.position_uid = position_uid
-                queue.has_position = True
-                queue.save()
-                pos_list.append(str(order.order_uid))
-                report_to_slack(f"===  ORDER {queue.ticker} - {queue.service_type} - {queue.capital} IS CREATED ===")
-        else:
-            report_to_slack(f"===  MARKET {queue.ticker} IS CLOSE SKIPPING INITIAL ORDER ===")
-        
-        del market
+            market = TradingHours(mic=queue.ticker.mic)
+            
+            if market.is_open:
+                report_to_slack(f"===  MARKET {queue.ticker} IS OPEN AND CREATING INITIAL ORDER ===")
+                # need to change live price, problem with nan
+                # yahoo finance price
+                if currency == "USD":
+                    get_quote_yahoo(queue.ticker.ticker, use_symbol=True)
+                else:
+                    get_quote_yahoo(queue.ticker.ticker, use_symbol=False)
+                price = queue.ticker.latest_price_ticker.close
+                spot_date = datetime.now()
+                if user.extra_data["service_type"] == "bot_advisor":
+                    portnum = 8*1.04
+                elif user.extra_data["service_type"] == "bot_tester":
+                    if user.extra_data["capital"] == "small":
+                        portnum = 4*1.04
+                    else:
+                        portnum = 8*1.04
+                investment_amount = min(
+                    user.user.current_assets / portnum, user.user.balance / 3)
 
-    if pos_list:
-        send_csv_hanwha.delay(currency=currency, new={'pos_list': pos_list})
-        report_to_slack(f"===  NEW PICK CSV {client_name} EMAIL SENT ===")
+                digits = max(min(5-len(str(int(price))), 2), -1)
+                order = Order.objects.create(
+                    ticker=queue.ticker,
+                    created=spot_date,
+                    price=price,
+                    bot_id=queue.bot_id,
+                    amount=round(investment_amount, digits),
+                    user_id=user.user
+                )
+                if order:
+                    order.placed = True
+                    order.placed_at = spot_date
+                    order.save()
+                if order.status == "pending":
+                    order.status = "filled"
+                    order.filled_at = spot_date
+                    order.save()
+                    position_uid = PositionPerformance.objects.get(
+                        performance_uid=order.performance_uid).position_uid.position_uid
+                    queue.position_uid = position_uid
+                    queue.has_position = True
+                    queue.execution_date = spot_date
+                    queue.status = "Ordered"
+                    queue.save()
+                    pos_list.append(str(order.order_uid))
+                    report_to_slack(f"===  ORDER {queue.ticker} - {queue.service_type} - {queue.capital} IS CREATED ===")
+            else:
+                queue.status = "Pending"
+                queue.save()
+                report_to_slack(f"===  MARKET {queue.ticker} IS CLOSE SKIPPING INITIAL ORDER ===")
+            
+            del market
+
+        if pos_list:
+            send_csv_hanwha.delay(currency=currency, new={'pos_list': pos_list})
+            report_to_slack(f"===  NEW PICK CSV {client_name} EMAIL SENT ===")
+    else:
+        report_to_slack(f"=== NO TOPSTOCK IN PENDING ===")
+
 
 
 

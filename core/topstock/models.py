@@ -189,3 +189,21 @@ class TopStockPerformance(models.Model):
         result = self.wts_tri
         result = round(result, 2)
         return result
+
+
+# class TopStockLog(BaseTimeStampModel):
+#     year = models.IntegerField()
+#     week = models.IntegerField()
+#     currency_code = models.CharField(max_length=5)
+#     is_ordered = models.BooleanField(default=False)
+#     order_date = models.DateTimeField(null=True, blank=True)
+#     client_id = models.CharField(max_length=50)
+
+
+#     def __str__(self):
+#         return self.client_id
+
+#     class Meta:
+#         db_table = "top_stock_log"
+#         ordering = ['year','week']
+
