@@ -191,7 +191,6 @@ def order_client_topstock(currency=None, client_name="HANWHA"):
         get_quote_index(currency)
     client = Client.objects.get(client_name=client_name)
 
-
     ## ONLY PICK RELATED WEEK OF YEAR, WEEK WITH FULL HOLIDAY WILL SKIPPED/IGNORED
     day = datetime.now()
     week = day.isocalendar()[1]
