@@ -60,7 +60,7 @@ def get_spot_date(spot_date, ticker):
 
 def get_holiday(non_working_day, currency_code):
     table_name = get_currency_calendar_table_name()
-    query = f"select * from {table_name} "
+    query = f"select distinct ON (non_working_day) non_working_day, currency_code from {table_name} "
     query += f" where non_working_day='{non_working_day}' and currency_code in {tuple_data(currency_code)}"
     data = read_query(query, table_name, cpu_counts=True, prints=False)
     return data
