@@ -125,7 +125,7 @@ def migrate_ws():
 def migrate_droid1(region):
     now = datetime.now()
     try:
-        original_stdout = sys.stdout  # Save a reference to the original standard output
+        original_stdout = sys.stdout  # Save a reference to the original standard outpu
         with open(f"files/migrate{now}.txt", "w") as f:
             # Change the standard output to the file we created.
             sys.stdout = f
