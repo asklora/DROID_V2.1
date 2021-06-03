@@ -715,8 +715,8 @@ if __name__ == '__main__':
     # test_pick(currency_code=["HKD"], client_name="HANWHA")
     # test_pick(currency_code=["CNY"], client_name="HANWHA")
 
-    populate_fels_bot(currency_code=["USD"], client_name="FELS", top_pick = 5)
-    populate_fels_bot(currency_code=["EUR"], client_name="FELS", top_pick = 5)
+    # populate_fels_bot(currency_code=["USD"], client_name="FELS", top_pick = 5)
+    # populate_fels_bot(currency_code=["EUR"], client_name="FELS", top_pick = 5)
 
     # populate_bot_advisor(currency_code=["USD"], client_name="HANWHA", capital="small")
     # populate_bot_advisor(currency_code=["USD"], client_name="HANWHA", capital="large")
