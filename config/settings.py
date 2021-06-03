@@ -131,9 +131,16 @@ ELASTICSEARCH_DSL = {
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 db_debug = env.bool("DROID_DEBUG")
 if db_debug:
+    print('using test db')
     read_endpoint, write_endpoint, port = db.test_url
+    CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
 else:
+    print('using prod db')
     read_endpoint, write_endpoint, port = db.prod_url
+    CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@18.167.118.164:5672'
+print(read_endpoint)
+
+
 
 # print(f'using read: {read_endpoint}')
 # print(f'using write: {write_endpoint}')
@@ -206,7 +213,6 @@ USE_TZ = False
 # REDIS AND CELERY
 CELERY_TIMEZONE = 'UTC'
 CELERY_RESULT_BACKEND = 'django-db'
-CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@18.167.118.164:5672'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
