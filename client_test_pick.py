@@ -303,7 +303,6 @@ def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stoc
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
             "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id], "currency_code":[currency_code[0]], "service_type":[service_type], 
             "capital":[capital], 
-            "status":["Pending"], # CHANGE TO PENDING DEFAULT
             "week_of_year":[int(interval)] # ADD INTERVAL TO DATAFRAME
             }, index=[0])
             last_ticker.append(ticker)
@@ -382,10 +381,16 @@ def populate_bot_tester(currency_code=None, client_name="HANWHA", top_pick_stock
             uid = f"{client_uid}_{currency_code[0]}_{ticker}_{spot_date}_{service_type}_{capital}"
             expiry_date = get_expiry_date(time_to_exp[0], str(spot_date), currency_code[0])
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
+            #### ADD INTERVAL WEEK OF YEAR ####
+            dates = pd.to_datetime(spot_date)
+            week = dates.isocalendar()[1]
+            year = dates.isocalendar()[0]
+            interval = f'{year}{week}'
+            ##### ================ #####
             temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], 
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
             "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id],"bot":[bot], "currency_code":[currency_code[0]], "service_type":[service_type], 
-            "capital":[capital], "status":["Available"]}, index=[0])
+            "capital":[capital], "week_of_year":[int(interval)]}, index=[0])
             last_ticker.append(ticker)
             last_industry_code.append(industry_code)
             count+=1
@@ -427,10 +432,16 @@ def populate_fels_bot(currency_code=None, client_name="FELS", time_to_exp=[0.076
             uid = f"{client_uid}_{currency_code[0]}_{ticker}_{spot_date}_null_null"
             expiry_date = get_expiry_date(time_to_exp[0], str(spot_date), currency_code[0])
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
+            #### ADD INTERVAL WEEK OF YEAR ####
+            dates = pd.to_datetime(spot_date)
+            week = dates.isocalendar()[1]
+            year = dates.isocalendar()[0]
+            interval = f'{year}{week}'
+            ##### ================ #####
             temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], 
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
             "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id],"bot":[bot], "currency_code":[currency_code[0]], "service_type":[None], 
-            "capital":[None], "status":["Available"]}, index=[0])
+            "capital":[None], "week_of_year":[int(interval)]}, index=[0])
             last_ticker.append(ticker)
             count+=1
             fels_pick = fels_pick.append(temp)
@@ -724,8 +735,8 @@ if __name__ == '__main__':
     # test_pick(currency_code=["HKD"], client_name="HANWHA")
     # test_pick(currency_code=["CNY"], client_name="HANWHA")
 
-    # populate_fels_bot(currency_code=["USD"], client_name="FELS", top_pick = 5)
-    # populate_fels_bot(currency_code=["EUR"], client_name="FELS", top_pick = 5)
+    populate_fels_bot(currency_code=["USD"], client_name="FELS", top_pick = 5)
+    populate_fels_bot(currency_code=["EUR"], client_name="FELS", top_pick = 5)
 
     # populate_bot_advisor(currency_code=["USD"], client_name="HANWHA", capital="small")
     # populate_bot_advisor(currency_code=["USD"], client_name="HANWHA", capital="large")

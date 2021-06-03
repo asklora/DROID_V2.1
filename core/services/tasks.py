@@ -257,20 +257,16 @@ def order_client_topstock(currency=None, client_name="HANWHA"):
                     queue.position_uid = position_uid
                     queue.has_position = True
                     queue.execution_date = spot_date
-                    queue.status = "Ordered"
                     queue.save()
                     pos_list.append(str(order.order_uid))
                     report_to_slack(f"===  ORDER {queue.ticker} - {queue.service_type} - {queue.capital} IS CREATED ===")
             else:
-                queue.status = "Pending"
-                queue.save()
                 report_to_slack(f"===  MARKET {queue.ticker} IS CLOSE SKIPPING INITIAL ORDER ===")
             
             del market
 
         if pos_list:
             send_csv_hanwha.delay(currency=currency, new={'pos_list': pos_list})
-            report_to_slack(f"===  NEW PICK CSV {client_name} EMAIL SENT ===")
     else:
         report_to_slack(f"=== NO TOPSTOCK IN PENDING ===")
 
@@ -307,7 +303,6 @@ def daily_hedge(currency=None):
         report_to_slack(str(e))
         return {'err': str(e)}
     send_csv_hanwha.delay(currency=currency)
-    report_to_slack(f"===  EMAIL HEDGE SENT FOR {currency} ===")
     return {'result': f'hedge {currency} done'}
 
 
@@ -356,6 +351,16 @@ def send_csv_hanwha(currency=None, client_name=None, new=None):
                             hanwha_csv, mimetype="text/csv")
         draft_email.attach(f"{currency}_{now}_asklora.csv",
                            csv, mimetype="text/csv")
-        draft_email.send()
-        hanwha_email.send()
+        status = draft_email.send()
+        hanwha_status = hanwha_email.send()
+        if(new):
+            if(status):
+                report_to_slack(f"===  NEW PICK CSV {client_name} EMAIL SENT TO LORA ===")
+            if(hanwha_status):
+                report_to_slack(f"===  NEW PICK CSV {client_name} EMAIL SENT TO HANWHA ===")
+        else:
+            if(status):
+                report_to_slack(f"===  EMAIL HEDGE SENT FOR {currency} TO LORA ===")
+            if(hanwha_status):
+                report_to_slack(f"===  EMAIL HEDGE SENT FOR {currency} TO HANWHA ===")
     return {'result': f'send email {currency} done'}
