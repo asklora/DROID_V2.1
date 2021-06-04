@@ -12,4 +12,5 @@
         repo: git@github.com:asklora/DROID_V2.1.git
         dest: /home/ubuntu/DROID_V2.1
         update: yes
+        force: yes
         version: master
