@@ -18,6 +18,11 @@ droid_db_read = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@
 dlp_db_read = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+os.getenv("DBHOSTDLP")+":"+str(port)+"/"+os.getenv("DBUSER")
 db_write = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+write_endpoint+":"+str(port)+"/"+os.getenv("DBUSER")
 
+def get_debug_url():
+    debug_read_endpoint, debug_write_endpoint, debug_port = db.test_url
+    db_debug_write = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+debug_write_endpoint+":"+str(debug_port)+"/"+os.getenv("DBUSER")
+    return db_debug_write
+    
 def do_function(func):
     engine = create_engine(db_write)
     print("create connections to db")

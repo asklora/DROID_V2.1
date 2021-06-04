@@ -1,8 +1,9 @@
+from general.slack import report_to_slack
 import sqlalchemy as db
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count as cpucount
 from sqlalchemy.types import DATE, BIGINT, TEXT, INTEGER, BOOLEAN, Integer
-from general.sql_process import db_read, db_write
+from general.sql_process import db_read, db_write, get_debug_url
 from pangres import upsert
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
@@ -40,7 +41,7 @@ def truncate_table(table_name):
 #     except Exception as ex:
 #         print(f"error: ", ex)
 
-def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=False, Text=False, Date=False, Int=False, Bigint=False, Bool=False):
+def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=False, Text=False, Date=False, Int=False, Bigint=False, Bool=False, debug=False):
     print(f"=== Upsert Data to Database on Table {table} ===")
     data = data.drop_duplicates(subset=[primary_key], keep="first", inplace=False)
     data = data.set_index(primary_key)
@@ -69,6 +70,21 @@ def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=Fa
            dtype=data_type)
     print(f"DATA UPSERT TO {table}")
     engine.dispose()
+    if(debug):
+        try:
+            engine = create_engine(get_debug_url(), pool_size=cpucount(), max_overflow=-1, isolation_level="AUTOCOMMIT")
+            upsert(engine=engine,
+                df=data,
+                table_name=table,
+                if_row_exists=how,
+                chunksize=20000,
+                dtype=data_type)
+            print(f"DATA UPSERT TO {table}")
+            engine.dispose()
+        except Exception as e:
+            report_to_slack(f"===  ERROR IN UPSERT TEST DB ===")
+            report_to_slack(str(e))
+        
 
 def update_universe_consolidated_data_to_database(data, table):
     for index, row in data.iterrows():
