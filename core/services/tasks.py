@@ -19,7 +19,7 @@ from core.djangomodule.yahooFin import get_quote_index,get_quote_yahoo
 from core.djangomodule.calendar import TradingHours
 from django.core.mail import send_mail, EmailMessage
 from celery.schedules import crontab
-
+from config.settings import db_debug
 import io
 
 USD_CUR = Currency.objects.get(currency_code="USD")
@@ -341,19 +341,24 @@ def send_csv_hanwha(currency=None, client_name=None, new=None):
             subject = 'new bot pick'
         else:
             subject = 'hedge'
+        if db_debug:
+            LORA_MEMBER=['rede.akbar@loratechai.com','agustian@loratechai.com']
+            HANWHA_MEMBER=LORA_MEMBER
+        else:
+            LORA_MEMBER=['rede.akbar@loratechai.com', 'stepchoi@loratechai.com', 'joseph.chang@loratechai.com',
+                    'john.kim@loratechai.com',  'kenson.lau@loratechai.com']
+            HANWHA_MEMBER=['200200648@hanwha.com', 'noblerain72@hanwha.com',
+                    'nick.choi@loratechai.com']
         draft_email = EmailMessage(
             subject,
             f'asklora csv {currency} - {datenow}',
-            'asklora@loratechai.com',
-            ['rede.akbar@loratechai.com', 'stepchoi@loratechai.com', 'joseph.chang@loratechai.com',
-                'john.kim@loratechai.com',  'kenson.lau@loratechai.com']
+            'asklora@loratechai.com',LORA_MEMBER
         )
         hanwha_email = EmailMessage(
             subject,
             f'asklora csv {currency} - {datenow}',
             'asklora@loratechai.com',
-            ['200200648@hanwha.com', 'noblerain72@hanwha.com',
-                'nick.choi@loratechai.com'],
+            HANWHA_MEMBER,
         )
         hanwha_email.attach(f"{currency}_{now}_asklora.csv",
                             hanwha_csv, mimetype="text/csv")

@@ -16,14 +16,14 @@ def func(*args):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        for item in ClientTopStock.objects.all():
-            day = item.spot_date
-            year = day.isocalendar()[0]
-            week = day.isocalendar()[1]
-            interval = f'{year}{week}'
-            item.week_of_year = int(interval)
-            item.save()
-            print(interval)
+        # for item in ClientTopStock.objects.all():
+        #     day = item.spot_date
+        #     year = day.isocalendar()[0]
+        #     week = day.isocalendar()[1]
+        #     interval = f'{year}{week}'
+        #     item.week_of_year = int(interval)
+        #     item.save()
+        #     print(interval)
         # print(year,week, day.weekday())
         # migrate_droid1("na")
         # print(func(25,45,11))
@@ -61,6 +61,6 @@ class Command(BaseCommand):
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
-        # send_csv_hanwha(currency="USD")
+        # send_csv_hanwha(currency="KRW")
         # send_csv_hanwha(currency="CNY")
         # send_csv_hanwha(currency="HKD")

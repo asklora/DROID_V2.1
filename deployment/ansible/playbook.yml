@@ -9,7 +9,7 @@
   # task is pulling from repo
     - name: pull from git
       git:
-        repo: https://redloratech:r3dpapermo0n@github.com/stepchoi/DROID_V2.1.git
+        repo: git@github.com:asklora/DROID_V2.1.git
         dest: /home/ubuntu/DROID_V2.1
         update: yes
         version: master
