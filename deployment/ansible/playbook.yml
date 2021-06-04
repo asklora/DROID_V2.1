@@ -14,7 +14,7 @@
         update: yes
         force: yes
         key_file: /home/ubuntu/red-git-key.pem
-        version: master
+        version: dev
     - name: Run Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
