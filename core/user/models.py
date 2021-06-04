@@ -144,7 +144,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         return 0
 
     @property
-    def current_total_invested_value(self):
+    def current_total_investment_value(self):
         order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum('current_values'))
         if order['total']:
             result = round(order['total'], 2)
@@ -153,7 +153,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def total_amount(self):
-        return round(self.balance + self.current_total_invested_value,2)
+        return round(self.balance + self.current_total_investment_value,2)
     
     @property
     def total_profit_amount(self):
