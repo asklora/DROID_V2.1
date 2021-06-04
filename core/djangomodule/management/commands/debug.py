@@ -16,14 +16,15 @@ def func(*args):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        # odrs=OrderPosition.objects.filter(is_live=True)
-        # for odr in odrs:
-        #     odr.save()
+        odrs=OrderPosition.objects.filter()
+        for odr in odrs:
+            odr.save()
         user = User.objects.get(id=108)
         print(user.total_amount)
-        print(user.current_total_invested_amount)
+        print(user.current_total_investment_value)
         print(user.total_invested_amount)
         print(user.total_profit_return)
+        print(user.total_fee_amount)
 
         # for item in ClientTopStock.objects.all():
         #     day = item.spot_date

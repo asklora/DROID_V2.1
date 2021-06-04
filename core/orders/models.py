@@ -115,11 +115,21 @@ class OrderPosition(BaseTimeStampModel):
         return 0
 
     def current_value(self):
+        # CURRENT ASSETS portfolio
         performance = self.order_position.filter(
             position_uid=self.position_uid)
         if performance.exists():
             perf = performance.latest("created")
             return formatdigit(perf.current_investment_amount + perf.current_bot_cash_balance, self.ticker.currency_code.is_decimal)
+        return 0
+    
+    
+    def stock_amount(self):
+        performance = self.order_position.filter(
+            position_uid=self.position_uid)
+        if performance.exists():
+            perf = performance.latest("created")
+            return formatdigit(perf.current_investment_amount, self.ticker.currency_code.is_decimal)
         return 0
     
     
@@ -131,6 +141,7 @@ class OrderPosition(BaseTimeStampModel):
     def save(self, *args, **kwargs):
         self.current_returns = self.current_return()
         self.current_values = self.current_value()
+        self.current_inv_amt = self.stock_amount()
         if not self.position_uid:
             self.position_uid = uuid.uuid4().hex
             # using your function as above or anything else

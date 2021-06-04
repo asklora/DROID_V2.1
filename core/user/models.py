@@ -134,10 +134,18 @@ class User(AbstractBaseUser, PermissionsMixin):
             return result
         return 0
     
+    @property
+    def total_stock_amount(self):
+        order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum('current_inv_amt'))
+        if order['total']:
+            result = round(order['total'], 2)
+            return result
+        return 0
 
     @property
     def starting_amount(self):
-        wallet = self.user_balance.account_trasaction.filter(
+        #USER STARTING AMOUNT
+        wallet = self.user_balance.account_transaction.filter(
             transaction_detail__event='first deposit').aggregate(total=Sum('amount'))
         if wallet['total']:
             return wallet['total']
@@ -145,6 +153,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def current_total_investment_value(self):
+        # USER BOT INVESTMENT
         order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum('current_values'))
         if order['total']:
             result = round(order['total'], 2)
@@ -155,6 +164,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     def total_amount(self):
         return round(self.balance + self.current_total_investment_value,2)
     
+    
     @property
     def total_profit_amount(self):
         return round(self.total_amount - self.starting_amount,2)
@@ -163,6 +173,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     def total_profit_return(self):
         return round((self.total_amount / self.starting_amount) - 1,4)
     
+    @property
+    def total_fee_amount(self):
+        transaction=self.user_balance.account_transaction.filter(
+            transaction_detail__event__in=['fee','stamp_duty']).aggregate(total=Sum('amount'))
+        if transaction['total']:
+            result = round(transaction['total'], 2)
+            return result
+        return 0
 
     class Meta:
         db_table = 'user_core'
@@ -216,7 +234,7 @@ class TransactionHistory(BaseTimeStampModel):
         (D, 'debit')
     )
     balance_uid = models.ForeignKey(Accountbalance, on_delete=models.CASCADE,
-                                    related_name='account_trasaction', db_column='balance_uid')
+                                    related_name='account_transaction', db_column='balance_uid')
     side = models.CharField(max_length=100, choices=type_choice)
     amount = models.FloatField(default=0)
     transaction_detail = models.JSONField(default=dict, null=True, blank=True)
