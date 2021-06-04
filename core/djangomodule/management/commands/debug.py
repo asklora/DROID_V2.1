@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 from core.user.models import User
 from core.djangomodule.yahooFin import get_quote_index,scrap_csi
 from core.djangomodule.calendar import TradingHours
-from core.orders.models import PositionPerformance, Order
+from core.orders.models import PositionPerformance, Order,OrderPosition
 from core.Clients.models import ClientTopStock
 from core.services.ingestiontask import migrate_droid1
 from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
@@ -16,6 +16,15 @@ def func(*args):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
+        # odrs=OrderPosition.objects.filter(is_live=True)
+        # for odr in odrs:
+        #     odr.save()
+        user = User.objects.get(id=108)
+        print(user.total_amount)
+        print(user.current_total_invested_amount)
+        print(user.total_invested_amount)
+        print(user.total_profit_return)
+
         # for item in ClientTopStock.objects.all():
         #     day = item.spot_date
         #     year = day.isocalendar()[0]
