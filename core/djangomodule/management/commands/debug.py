@@ -16,15 +16,15 @@ def func(*args):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        odrs=OrderPosition.objects.filter()
-        for odr in odrs:
-            odr.save()
-        user = User.objects.get(id=108)
-        print(user.total_amount)
-        print(user.current_total_investment_value)
-        print(user.total_invested_amount)
-        print(user.total_profit_return)
-        print(user.total_fee_amount)
+        # odrs=OrderPosition.objects.filter()
+        # for odr in odrs:
+        #     odr.save()
+        # user = User.objects.get(id=108)
+        # print(user.total_amount)
+        # print(user.current_total_investment_value)
+        # print(user.total_invested_amount)
+        # print(user.total_profit_return)
+        # print(user.total_fee_amount)
 
         # for item in ClientTopStock.objects.all():
         #     day = item.spot_date
@@ -67,7 +67,7 @@ class Command(BaseCommand):
         #             '5142bc48-dd46-41e6-8381-7b25860988c9',
         #             'd3521289-3d1f-48f0-85d3-67410afcc545'
         # ]})
-        # populate_intraday_latest_price(currency_code=["KRW"])
+        update_index_price_from_dss(currency_code=["USD"])
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
