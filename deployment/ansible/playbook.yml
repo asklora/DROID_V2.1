@@ -15,14 +15,22 @@
         force: yes
         key_file: /home/ubuntu/red-git-key.pem
         version: dev
+    - name: Stop Container
+      ansible.builtin.command:
+        chdir: /home/ubuntu/DROID_V2.1
+        cmd: docker-compose -f deployment/compose/dev.yaml down
+    - name: Clean docker image
+      ansible.builtin.command:
+        chdir: /home/ubuntu/DROID_V2.1
+        cmd: docker system prune -a -f
     - name: Run Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
         cmd: docker-compose -f deployment/compose/dev.yaml up --build --force-recreate -d
-    - name: Create Notification slack
-      uri:
-        url: https://hooks.slack.com/services/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
-        method: POST
-        body:
-          text : "dev deployed"
-        body_format: json
+    # - name: Create Notification slack
+    #   uri:
+    #     url: https://hooks.slack.com/services/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
+    #     method: POST
+    #     body:
+    #       text : "dev deployed"
+    #     body_format: json

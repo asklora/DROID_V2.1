@@ -22,3 +22,9 @@ jobs:
           inventory: |
             [instance]
             16.162.110.123
+      - name: Create Notification slack
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: https://hooks.slack.com/services/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
+          method: POST
+          text: dev just deployed by ${{ github.actor }}
