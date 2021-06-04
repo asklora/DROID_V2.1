@@ -19,7 +19,7 @@ SECRET_KEY = '!5fyj@#07=!rc9^)k0tgsl%dp@rmfe$*8t3*+m&mkwk-w^l!_a'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['18.167.118.164', '127.0.0.1','192.168.100.18', 'services.asklora.ai']
+ALLOWED_HOSTS = ['18.167.118.164', '127.0.0.1', 'services.asklora.ai','16.162.110.123','0.0.0.0']
 CORS_ALLOW_ALL_ORIGINS= True
 
 # Application definition
@@ -131,9 +131,9 @@ ELASTICSEARCH_DSL = {
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 db_debug = env.bool("DROID_DEBUG")
 if db_debug:
-    print('using test db')
+    print('using test db changes')
     read_endpoint, write_endpoint, port = db.test_url
-    CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+    CELERY_BROKER_URL = 'redis://redis:6379/0'
 else:
     print('using prod db')
     read_endpoint, write_endpoint, port = db.prod_url

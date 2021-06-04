@@ -126,12 +126,12 @@ def create_performance(price_data, position, latest_price=False):
             return False, order.order_uid
     # remove position_uid from dict and swap with instance
     performance.pop("position_uid")
-    position.save()
     # create the record
     PositionPerformance.objects.create(
         position_uid=position,  # swapped with instance
         **performance  # the dict value
     )
+    position.save()
     if(status_expiry):
         return True, None
     else:

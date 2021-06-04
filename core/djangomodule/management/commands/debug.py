@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 from core.user.models import User
 from core.djangomodule.yahooFin import get_quote_index,scrap_csi
 from core.djangomodule.calendar import TradingHours
-from core.orders.models import PositionPerformance, Order
+from core.orders.models import PositionPerformance, Order,OrderPosition
 from core.Clients.models import ClientTopStock
 from core.services.ingestiontask import migrate_droid1
 from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
@@ -16,14 +16,23 @@ def func(*args):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        for item in ClientTopStock.objects.all():
-            day = item.spot_date
-            year = day.isocalendar()[0]
-            week = day.isocalendar()[1]
-            interval = f'{year}{week}'
-            item.week_of_year = int(interval)
-            item.save()
-            print(interval)
+        # odrs=OrderPosition.objects.filter(is_live=True)
+        # for odr in odrs:
+        #     odr.save()
+        user = User.objects.get(id=108)
+        print(user.total_amount)
+        print(user.current_total_invested_amount)
+        print(user.total_invested_amount)
+        print(user.total_profit_return)
+
+        # for item in ClientTopStock.objects.all():
+        #     day = item.spot_date
+        #     year = day.isocalendar()[0]
+        #     week = day.isocalendar()[1]
+        #     interval = f'{year}{week}'
+        #     item.week_of_year = int(interval)
+        #     item.save()
+        #     print(interval)
         # print(year,week, day.weekday())
         # migrate_droid1("na")
         # print(func(25,45,11))
@@ -61,6 +70,6 @@ class Command(BaseCommand):
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
-        # send_csv_hanwha(currency="USD")
+        # send_csv_hanwha(currency="KRW")
         # send_csv_hanwha(currency="CNY")
         # send_csv_hanwha(currency="HKD")

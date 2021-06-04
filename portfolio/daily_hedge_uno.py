@@ -186,11 +186,11 @@ def create_performance(price_data, position, latest_price=False):
 
     # otherwise just create a record
     performance.pop("position_uid")
-    position.save()
     PositionPerformance.objects.create(
         position_uid=position,
         **performance
     )
+    position.save()
     if(status_expiry):
         return True, None
     else:
