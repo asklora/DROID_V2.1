@@ -285,8 +285,8 @@ def order_client_topstock(currency=None, client_name="HANWHA"):
 def daily_hedge(currency=None):
     report_to_slack(f"===  START HEDGE FOR {currency} ===")
     try:
-        update_index_price_from_dss(currency_code=[currency])
-        populate_intraday_latest_price(currency_code=[currency])
+        # update_index_price_from_dss(currency_code=[currency])
+        # populate_intraday_latest_price(currency_code=[currency])
         get_quote_index(currency)
         positions = OrderPosition.objects.filter(
             is_live=True, ticker__currency_code=currency)
