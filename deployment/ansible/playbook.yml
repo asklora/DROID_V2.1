@@ -18,4 +18,4 @@
     - name: Run Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
-        cmd: docker-compose -f deployment/compose/dev.yaml up --build -d
+        cmd: docker-compose -f deployment/compose/dev.yaml up --build --force-recreate -d

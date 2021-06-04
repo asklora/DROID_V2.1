@@ -131,7 +131,7 @@ ELASTICSEARCH_DSL = {
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 db_debug = env.bool("DROID_DEBUG")
 if db_debug:
-    print('using test db')
+    print('using test db changes')
     read_endpoint, write_endpoint, port = db.test_url
     CELERY_BROKER_URL = 'redis://redis:6379/0'
 else:
