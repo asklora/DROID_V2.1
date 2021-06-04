@@ -15,6 +15,6 @@
         force: yes
         key_file: /home/ubuntu/red-git-key.pem
         version: master
-    - name: Run command
+    - name: Run Container
       ansible.builtin.command:
-        cmd: cat /home/ubuntu/red-git-key.pem
+        cmd: cd /home/ubuntu/DROID_V2.1 && docker-compose -f deployment/compose/dev.yaml up --build -d

@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Run instance update repo
+      - name: Run instance update
         uses: dawidd6/action-ansible-playbook@v2
         with:
           # template task
