@@ -479,7 +479,7 @@ def bot_ranking_check_new_ticker(ticker=None, currency_code=None, mod=False, tim
         populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, currency_code=currency_code, mod=mod)
 
         report = "BOT RANKING CHECK NEW TICKER COMPLETED"
-        report_check(report, ticker=ticker, currency_code=currency_code)
+        report_check(report)
 
 def bot_ranking_daily(ticker=None, currency_code=None, mod=False, time_to_exp=time_to_expiry):
     folder_check()
@@ -493,4 +493,4 @@ def bot_ranking_daily(ticker=None, currency_code=None, mod=False, time_to_exp=ti
     populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, currency_code=currency_code, mod=mod)
 
     report = "BOT RANKING DAILY COMPLETED"
-    report_check(report, ticker=ticker, currency_code=currency_code)
+    report_check(report)
