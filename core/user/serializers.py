@@ -25,7 +25,8 @@ class UserSummarySerializer(serializers.ModelSerializer):
     total_amount=serializers.FloatField(read_only=True)
     total_profit_amount=serializers.FloatField(read_only=True)
     total_profit_return=serializers.FloatField(read_only=True)
-    
+    total_fee_amount=serializers.FloatField(read_only=True)
+    total_stock_amount=serializers.FloatField(read_only=True)
     
     class Meta:
         model= User
@@ -42,6 +43,8 @@ class UserSummarySerializer(serializers.ModelSerializer):
             'total_amount',
             'total_profit_amount',
             'total_profit_return',
+            'total_stock_amount',
             'currency',
+            'total_fee_amount'
 )
     
