@@ -17,4 +17,5 @@
         version: master
     - name: Run Container
       ansible.builtin.command:
-        cmd: cd /home/ubuntu/DROID_V2.1 && docker-compose -f deployment/compose/dev.yaml up --build -d
+        chdir: /home/ubuntu/DROID_V2.1
+        cmd: docker-compose -f deployment/compose/dev.yaml up --build -d
