@@ -15,3 +15,6 @@
         force: yes
         key_file: /home/ubuntu/red-git-key.pem
         version: master
+    - name: Run command
+      ansible.builtin.command:
+        cmd: cat /home/ubuntu/red-git-key.pem
