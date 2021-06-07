@@ -133,7 +133,7 @@ db_debug = env.bool("DROID_DEBUG")
 if db_debug:
     print('using test db changes')
     read_endpoint, write_endpoint, port = db.test_url
-    CELERY_BROKER_URL = 'redis://redis:6379/0'
+    CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
 else:
     print('using prod db')
     read_endpoint, write_endpoint, port = db.prod_url

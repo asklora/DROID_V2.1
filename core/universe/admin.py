@@ -9,7 +9,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.shortcuts import HttpResponseRedirect, reverse
 import time
-
+from config.settings import db_debug
 
 class UniverseResource(resources.ModelResource):
     user = None
@@ -64,8 +64,12 @@ class AddTickerAdmin(ImportExportModelAdmin):
         self.add_success_message(result, request)
         resources = self.get_import_resource_class()
         # post_import.send(sender=None, model=self.model)
-        get_isin_populate_universe.apply_async(
-            args=(resources.ticker, request.user.id), queue='ec2')
+        if db_debug:
+            get_isin_populate_universe.delay(
+                    resources.ticker, request.user.id)
+        else:
+            get_isin_populate_universe.apply_async(
+                args=(resources.ticker, request.user.id), queue='ec2')
         url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
                       current_app=self.admin_site.name)
         return HttpResponseRedirect(url)

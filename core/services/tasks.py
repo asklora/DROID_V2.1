@@ -89,6 +89,7 @@ def get_isin_populate_universe(ticker, user_id):
         if isinstance(ticker, list):
             for tick in ticker:
                 triger_sql_populate_once += 1
+                print(tick)
                 ticker_cons = UniverseConsolidated.objects.filter(
                     origin_ticker=tick).distinct('origin_ticker').get()
                 if ticker_cons.use_manual:
