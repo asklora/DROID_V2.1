@@ -27,7 +27,7 @@ universe_rating_table = get_universe_rating_table_name()
 def read_query(query, table=universe_table, cpu_counts=False, dlp=False, prints=True):
     if(prints):
         print(f"Get Data From Database on {table} table")
-    elif dlp:
+    if dlp:
         dbcon = dlp_db_read
     else:
         dbcon = db_read
