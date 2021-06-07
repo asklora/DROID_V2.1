@@ -102,7 +102,7 @@ def create_performance(price_data, position, latest_price=False):
     log_time = pd.Timestamp(trading_day)
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()
-    # not creating performance first, value stored at dict and placed in setup order we can use it later after the order filled
+    # not creating performance first, value stored at dict and placed in setup order we can use it later after the order filled's
     # see below
     performance = dict(
         position_uid=str(position.position_uid),
