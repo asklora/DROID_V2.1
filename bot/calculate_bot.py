@@ -497,12 +497,14 @@ def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
     return delta, hedge
 
 
-def get_hedge_detail(ask_price, bid_price, last_share_num, bot_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False, margin=False):
+def get_hedge_detail(live_price, bot_cash_balance, ask_price, bid_price, last_share_num, bot_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False, margin=False):
     if(margin):
         bot_share_num = bot_share_num * 1.5
     #err
     if(hedge):
         hedge_shares = round((delta - last_hedge_delta) * bot_share_num, 0)
+        if(hedge_shares > 0):
+            hedge_shares = min(hedge_shares, math.floor(bot_cash_balance/live_price))
         share_num = last_share_num + hedge_shares
     else:
         hedge_shares = 0
