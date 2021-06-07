@@ -453,12 +453,12 @@ def get_classic_vol_by_date(ticker, trading_day):
     query = f"select * "
     query += f"from {latest_price_table} vol "
     query += f"where vol.ticker = '{ticker}';"
-    data = read_query(query, latest_price_table, cpu_counts=True, prints=False)
+    data = read_query(query, latest_price_table,
+                        cpu_counts=True, prints=False)
     if(len(data) != 1):
         classic_vol = default_vol
     else:
         classic_vol = data.loc[0, "classic_vol"]
-
     if classic_vol == None:
         classic_vol = default_vol
     if classic_vol == np.NaN:
