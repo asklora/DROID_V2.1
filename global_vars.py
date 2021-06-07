@@ -38,13 +38,9 @@ DSS_PASSWORD="AskLORAv2" #CHANGED Password!
 SLACK_API="xoxb-305855338628-1139022048576-2KsNu5mJCbgRGh8z8S8NOdGI"
 SLACK_CHANNEL="#droid_v2_report"
 
-URL_Extrations="https://hosted.datascopeapi.reuters.com/RestApi/v1/Extractions/Extract"
-URL_Extrations_with_note="https://hosted.datascopeapi.reuters.com/RestApi/v1/Extractions/ExtractWithNotes"
-URL_AuthToken="https://hosted.datascopeapi.reuters.com/RestApi/v1/Authentication/RequestToken"
-
-# URL_Extrations="https://selectapi.datascope.refinitiv.com/RestApi/v1/Extractions/Extract"
-# URL_Extrations_with_note="https://selectapi.datascope.refinitiv.com/RestApi/v1/Extractions/ExtractWithNotes"
-# URL_AuthToken="https://selectapi.datascope.refinitiv.com/RestApi/v1/Authentication/RequestToken"
+URL_Extrations="https://selectapi.datascope.refinitiv.com/RestApi/v1/Extractions/Extract"
+URL_Extrations_with_note="https://selectapi.datascope.refinitiv.com/RestApi/v1/Extractions/ExtractWithNotes"
+URL_AuthToken="https://selectapi.datascope.refinitiv.com/RestApi/v1/Authentication/RequestToken"
 
 URL_APIAsklora="https://api.asklora.ai"
 URL_ServiceAsklora="https://services.asklora.ai"

@@ -441,15 +441,6 @@ def get_classic_vol_by_date(ticker, trading_day):
     trading_day = check_date(trading_day)
     vol_table = "classic_vol_history"
     latest_price_table = get_latest_price_table_name()
-
-    # query = f"select * "
-    # query += f"from {vol_table} vol "
-    # query += f"where vol.ticker = '{ticker}' and "
-    # query += f"vol.spot_date <= '{trading_day}' "
-    # query += f"order by spot_date DESC limit 1;"
-    # data = read_query(query, vol_table, cpu_counts=True,
-    #                   droid1=True, prints=False)
-    # if(len(data) != 1):
     query = f"select * "
     query += f"from {latest_price_table} vol "
     query += f"where vol.ticker = '{ticker}';"

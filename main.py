@@ -357,7 +357,7 @@ if __name__ == "__main__":
     # update_ibes_data_monthly_from_dsws(ticker=[".HSI"])
     # weekly_migrations()
     # daily_ingestion()
-    # update_ticker_name_from_dsws()
+    update_ticker_name_from_dsws()
     # update_ticker_symbol_from_dss(ticker=None)
     # do_function("universe_populate")
     # populate_intraday_latest_price(currency_code=["KRW"])

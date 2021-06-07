@@ -1,6 +1,6 @@
 {
     "ExtractionRequest": {
-        "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.PriceHistoryExtractionRequest",
+        "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.PriceHistoryExtractionRequest",
         "ContentFieldNames": [
             "RIC",
             "Trade Date",
@@ -11,7 +11,7 @@
             "Adjustment Value - Capital Change"
         ],
         "IdentifierList": {
-            "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+            "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
             "InstrumentIdentifiers": [
             ],
             "ValidationOptions":{"AllowHistoricalInstruments":true,"AllowOpenAccessInstruments":true},
