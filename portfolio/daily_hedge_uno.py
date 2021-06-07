@@ -70,12 +70,8 @@ def create_performance(price_data, position, latest_price=False):
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, last_performance.current_bot_cash_balance,
                 ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta,
                 hedge=hedge, uno=True)
-        bot_cash_balance = formatdigit(
-            last_performance.current_bot_cash_balance-(share_num-last_performance.share_num)*live_price)
-        hedge_shares = min(hedge_shares,math.floor(bot_cash_balance/live_price))
-        current_pnl_amt = last_performance.current_pnl_amt + \
-            (live_price - last_performance.last_live_price) * \
-            last_performance.share_num
+        bot_cash_balance = formatdigit(last_performance.current_bot_cash_balance -(share_num - last_performance.share_num) * live_price)
+        current_pnl_amt = last_performance.current_pnl_amt + (live_price - last_performance.last_live_price) * last_performance.share_num
     else:
         current_pnl_amt = 0  # initial value
         share_num = round((position.investment_amount / live_price), 1)
