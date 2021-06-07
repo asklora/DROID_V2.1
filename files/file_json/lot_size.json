@@ -1,12 +1,12 @@
 {
     "ExtractionRequest": {
-        "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
+        "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
         "ContentFieldNames": [
             "RIC",
             "Lot Size"
         ],
         "IdentifierList": {
-            "@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+            "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
             "InstrumentIdentifiers": [
             ],
             "ValidationOptions":{"AllowHistoricalInstruments":true,"AllowOpenAccessInstruments":true},
