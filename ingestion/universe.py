@@ -167,6 +167,7 @@ def update_currency_code_from_dss(ticker=None):
         result["ticker"]=result["ticker"].str.strip()
         result = remove_null(result, "currency_code")
         result = universe.merge(result, how="left", on=["ticker"])
+        result["currency_code"] = map(lambda x: x.upper(), result["currency_code"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
