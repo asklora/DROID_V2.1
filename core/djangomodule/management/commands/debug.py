@@ -50,7 +50,7 @@ class Command(BaseCommand):
         # print('total_profit_return: ',user.total_profit_return)
         # populate_intraday_latest_price(ticker=[".CSI300"])
         # get_quote_yahoo("TCOM", use_symbol=True)
-        # daily_hedge(currency="KRW")
+        # daily_hedge(currency="CNY")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
         #     position_uid__user_id__in=[108,
@@ -67,10 +67,10 @@ class Command(BaseCommand):
         #             '5142bc48-dd46-41e6-8381-7b25860988c9',
         #             'd3521289-3d1f-48f0-85d3-67410afcc545'
         # ]})
-        update_index_price_from_dss(currency_code=["USD"])
+        # update_index_price_from_dss(currency_code=["USD"])
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
         # send_csv_hanwha(currency="KRW")
-        # send_csv_hanwha(currency="CNY")
+        send_csv_hanwha(currency="CNY")
         # send_csv_hanwha(currency="HKD")
