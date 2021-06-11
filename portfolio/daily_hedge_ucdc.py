@@ -61,6 +61,7 @@ def create_performance(price_data, position, latest_price=False):
             share_num = 0
             hedge_shares = last_performance.share_num * -1
             status = "sell"
+            bot_cash_balance = last_performance.current_bot_cash_balance + (last_performance.share_num * live_price)
         else:
             delta = uno.deltaRC(live_price, strike,
                                 strike_2, t/365, r, q, v1, v2)
