@@ -17,7 +17,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         rkd = Rkd()
-        rkd.get_quote(['000063.SZ','000066.SZ'])
+        quotes = rkd.get_quote(['003000.KS','000066.SZ'],df=True)
+        quotes.save('master','LatestPrice')
         # order_client_topstock(currency="KRW", client_name="HANWHA")
         # odrs=OrderPosition.objects.filter()
         # for odr in odrs:

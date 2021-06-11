@@ -3,7 +3,11 @@ import json
 import pandas as pd
 from requests.api import head
 from core.services.models import ThirdpartyCredentials
+from core.djangomodule.models import DataFrameModels
 import sys
+import logging
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S',level=logging.INFO)
+
 
 
 class Rkd:
@@ -13,8 +17,8 @@ class Rkd:
         self.credentials = ThirdpartyCredentials.objects.get(services='RKD')
         self.headers = {'content-type': 'application/json;charset=utf-8'}
         if self.is_valid_token:
-            print('valid token')
-            print('using existing token')
+            logging.info('valid token')
+            logging.info('using existing token')
             self.token = self.credentials.token
         else:
             self.token = self.get_token()
@@ -26,6 +30,7 @@ class Rkd:
         try:
             result = requests.post(url,data=json.dumps(payload),headers=headers)
             if result.status_code != 200:
+                
                 print('Request fail')
                 print(f'request url :  {url}')
                 print(f'request header :  {headers}')
@@ -80,7 +85,7 @@ class Rkd:
                 headers['X-Trkd-Auth-Token'] = self.credentials.token
                 response = self.send_request(validate_url,payload,headers)
             if retry >=3:
-                raise ValueError('failed')
+                raise ConnectionError(f'failed after, retry {retry} times')
 
 
         return response['ValidateToken_Response_1']['Valid']
@@ -91,7 +96,7 @@ class Rkd:
         headers['X-Trkd-Auth-Token'] = self.credentials.token
         return headers
 
-    def get_quote(self,ticker):
+    def get_quote(self,ticker,df=False):
         quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
         payload ={
                     "RetrieveItem_Request_3": {
@@ -128,8 +133,23 @@ class Rkd:
         
         response = self.send_request(quote_url,payload,self.auth_headers())
         json_data = response['RetrieveItem_Response_3']['ItemResponse'][0]['Item']
-        for item in json_data:
-            print(item['RequestKey']['Name'])
+        formated_json_data=[]
+        for index,item in enumerate(json_data):
+            ticker = item['RequestKey']['Name']
+            formated_json_data.append({'ticker':ticker})
+            for f in item['Fields']['F']:
+                field =f['n']
+                val =f['Value']
+                formated_json_data[index].update({field:val})
+        if df:
+            df_data = pd.DataFrame(formated_json_data).rename(columns={'CF_ASK':'intraday_ask','CF_CLOSE':'close','CF_BID':'intraday_bid'})
+            df_django = DataFrameModels(df_data)
+            import gc
+            del df_data
+            gc.collect()
+            # rename column match in table
+            return df_django
+        return formated_json_data
         
 
     
