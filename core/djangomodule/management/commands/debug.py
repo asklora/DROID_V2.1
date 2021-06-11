@@ -16,9 +16,9 @@ def func(*args):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        rkd = Rkd()
-        quotes = rkd.get_quote(['003000.KS','000066.SZ'],df=True)
-        quotes.save('master','LatestPrice')
+        # rkd = Rkd()
+        # quotes = rkd.get_quote(['003000.KS','000066.SZ'],df=True)
+        # quotes.save('master','LatestPrice')
         # order_client_topstock(currency="KRW", client_name="HANWHA")
         # odrs=OrderPosition.objects.filter()
         # for odr in odrs:
@@ -54,7 +54,7 @@ class Command(BaseCommand):
         # print('total_profit_return: ',user.total_profit_return)
         # populate_intraday_latest_price(ticker=[".CSI300"])
         # get_quote_yahoo("TCOM", use_symbol=True)
-        # daily_hedge(currency="KRW")
+        daily_hedge(currency="CNY")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
         #     position_uid__user_id__in=[108,
