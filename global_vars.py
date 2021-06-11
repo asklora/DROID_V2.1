@@ -99,10 +99,10 @@ bot_slippage = 0.0025 # comms + fees + slippage each way for bots
 bots_list = ["uno", "ucdc", "classic"]
 labeler_model_type = "rf"
 
-model_path = "models/"
-saved_model_path = "saved_models/"
-plot_path = "plots/"
-model_path_clustering = "clustering/"
+model_path = "/home/loratech/external/PycharmProjects/DROID_V2.1/models/"
+saved_model_path = "/home/loratech/external/PycharmProjects/DROID_V2.1/saved_models/"
+plot_path = "/home/loratech/external/PycharmProjects/DROID_V2.1/plots/"
+model_path_clustering = "/home/loratech/external/PycharmProjects/DROID_V2.1/clustering/"
 
 # else:
 #     model_path = "C:/dlpa_master/model/"
