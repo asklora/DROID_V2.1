@@ -1,4 +1,4 @@
-from .models import TransactionHistory, Accountbalance
+from .models import TransactionHistory, Accountbalance,User
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from core.djangomodule.general import formatdigit

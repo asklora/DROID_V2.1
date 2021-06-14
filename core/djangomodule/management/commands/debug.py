@@ -10,12 +10,13 @@ from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekl
 from main import populate_intraday_latest_price,update_index_price_from_dss
 from datetime import datetime
 from datasource.rkd import Rkd
-def func(*args):
-    print(args)
+
 
 class Command(BaseCommand):
-
     def handle(self, *args, **options):
+        user = User.objects.get(id=1)
+        # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
+        print(is_hashed('pbkdf2_sha25SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
         # rkd = Rkd()
         # quotes = rkd.get_quote(['003000.KS','000066.SZ'],df=True)
         # quotes.save('master','LatestPrice')
@@ -54,7 +55,7 @@ class Command(BaseCommand):
         # print('total_profit_return: ',user.total_profit_return)
         # populate_intraday_latest_price(ticker=[".CSI300"])
         # get_quote_yahoo("TCOM", use_symbol=True)
-        daily_hedge(currency="CNY")
+        # daily_hedge(currency="CNY")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
         #     position_uid__user_id__in=[108,

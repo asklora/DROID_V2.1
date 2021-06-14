@@ -5,7 +5,10 @@ import boto3
 import time
 from config.celery import app
 
-
+def is_hashed(pwd):
+    if 'pbkdf2_sha256$216000$' in pwd:
+        return True
+    return False
 @deconstructible
 class UploadTo:
     def __init__(self, name):

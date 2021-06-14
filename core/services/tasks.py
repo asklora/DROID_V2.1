@@ -9,7 +9,7 @@ from general.slack import report_to_slack
 from core.orders.models import Order, PositionPerformance, OrderPosition
 from core.Clients.models import UserClient, Client
 from datetime import datetime
-from client_test_pick import populate_fels_bot, test_pick, populate_bot_advisor
+from client_test_pick import populate_fels_bot, test_pick, populate_bot_advisor,populate_bot_tester
 from portfolio.daily_hedge_classic import classic_position_check
 from portfolio.daily_hedge_ucdc import ucdc_position_check
 from portfolio.daily_hedge_uno import uno_position_check
@@ -166,6 +166,12 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
                 currency_code=[currency], client_name=client_name, capital="large")
             populate_bot_advisor(
                 currency_code=[currency], client_name=client_name, capital="large_margin")
+            populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="UNO", top_pick=1)
+            populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="UCDC", top_pick=1)
+            populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="CLASSIC", top_pick=1)
+            populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="UNO", top_pick=2)
+            populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="UCDC", top_pick=2)
+            populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="CLASSIC", top_pick=2)
         except Exception as e:
             report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
             report_to_slack(str(e))
@@ -201,7 +207,7 @@ def order_client_topstock(currency=None, client_name="HANWHA"):
     interval = f'{year}{week}'
     topstock = client.client_top_stock.filter(
         has_position=False, # HERE ARE SAME WITH STATUS, DO WE STILL NEED STATUS??
-        service_type='bot_advisor', 
+        # service_type='bot_advisor', bot advisor and bot tester
         currency_code=currency,
         week_of_year=int(interval) # WITH THIS WILL AUTO DETECT WEEKLY UNPICK
         ).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
