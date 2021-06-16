@@ -9,16 +9,15 @@ from core.services.ingestiontask import migrate_droid1
 from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
 from main import populate_intraday_latest_price,update_index_price_from_dss
 from datetime import datetime
-from datasource.rkd import Rkd
+from datasource.rkd import RkdData
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        user = User.objects.get(id=1)
+        # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
-        print(is_hashed('pbkdf2_sha25SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
-        # rkd = Rkd()
-        # quotes = rkd.get_quote(['003000.KS','000066.SZ'],df=True)
+        rkd = RkdData()
+        quotes = rkd.get_quote(['003000.KS','000066.SZ'],save=True)
         # quotes.save('master','LatestPrice')
         # order_client_topstock(currency="KRW", client_name="HANWHA")
         # odrs=OrderPosition.objects.filter()
@@ -77,5 +76,5 @@ class Command(BaseCommand):
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
         # send_csv_hanwha(currency="KRW")
-        send_csv_hanwha(currency="CNY")
+        # send_csv_hanwha(currency="CNY")
         # send_csv_hanwha(currency="HKD")
