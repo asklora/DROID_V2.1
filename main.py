@@ -357,7 +357,23 @@ if __name__ == "__main__":
     # update_ibes_data_monthly_from_dsws(ticker=[".HSI"])
     # weekly_migrations()
     # daily_ingestion()
-    update_ticker_name_from_dsws()
+    # update_ticker_name_from_dsws()
+
+    # daily_migrations()  # triger ingestion function
+    # daily_ingestion(region_id="na") # one region
+    ticker = get_universe_by_region(region_id="na")
+    populate_latest_price(ticker=ticker["ticker"])
+
+    # populate_macro_table()
+    # populate_ibes_table()
+    # do_function("master_ohlcvtr_update")
+    # master_ohlctr_update()
+    # master_tac_update()
+    # update_currency_price_from_dss()
+    # interest_update()
+    # dividend_daily_update()
+    # interest_daily_update()
+
     # update_ticker_symbol_from_dss(ticker=None)
     # do_function("universe_populate")
     # populate_intraday_latest_price(currency_code=["KRW"])

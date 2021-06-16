@@ -430,7 +430,9 @@ def populate_latest_price(ticker=None, currency_code=None):
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     ticker_list =  universe["ticker"]
     data = get_data_from_dss(start_date, end_date, ticker_list, jsonFileName, report=REPORT_HISTORY)
+    print(data)
     percentage_change =  get_yesterday_close_price(ticker=ticker_list, currency_code=currency_code)
+    print(percentage_change)
     data  =data.drop(columns=["IdentifierType", "Identifier"])
     null_ticker = []
     if(len(data) > 0):
@@ -484,6 +486,7 @@ def populate_latest_price(ticker=None, currency_code=None):
     print(latest_price)
     if(len(latest_price) > 0):
         print(latest_price)
+        latest_price  =latest_price.drop(columns=["trading_day", "yesterday_close"])
         latest_price = latest_price.merge(percentage_change, how="left", on="ticker")
         latest_price["close"] = latest_price["yesterday_close"]
         latest_price["high"] = latest_price["yesterday_close"]
@@ -492,6 +495,7 @@ def populate_latest_price(ticker=None, currency_code=None):
         latest_price["intraday_bid"] = latest_price["yesterday_close"]
         latest_price["intraday_ask"] = latest_price["yesterday_close"]
         latest_price["last_date"] = str_to_date(dateNow())
+        latest_price  =latest_price.drop(columns=["trading_day", "yesterday_close"])
         print(latest_price)
         upsert_data_to_database(latest_price, get_latest_price_table_name(), "ticker", how="update", Text=True)
 
