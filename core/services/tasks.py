@@ -166,12 +166,12 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
                 currency_code=[currency], client_name=client_name, capital="large")
             populate_bot_advisor(
                 currency_code=[currency], client_name=client_name, capital="large_margin")
-            populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="UNO", top_pick=1)
-            populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="UCDC", top_pick=1)
-            populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="CLASSIC", top_pick=1)
-            populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="UNO", top_pick=2)
-            populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="UCDC", top_pick=2)
-            populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="CLASSIC", top_pick=2)
+            # populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="UNO", top_pick=1)
+            # populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="UCDC", top_pick=1)
+            # populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="CLASSIC", top_pick=1)
+            # populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="UNO", top_pick=2)
+            # populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="UCDC", top_pick=2)
+            # populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="CLASSIC", top_pick=2)
         except Exception as e:
             report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
             report_to_slack(str(e))
