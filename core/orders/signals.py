@@ -179,7 +179,7 @@ def order_signal(sender, instance, created, **kwargs):
 
                 OrderFee.objects.create(
                     order_uid=instance,
-                    fee_type=f"{instance.side} fee",
+                    fee_type=f"{instance.side} commissions fee",
                     amount=commissions_fee
                 )
 
@@ -344,7 +344,7 @@ def order_signal(sender, instance, created, **kwargs):
 
                         OrderFee.objects.create(
                             order_uid=instance,
-                            fee_type=f"{instance.side} fee",
+                            fee_type=f"{instance.side} commissions fee",
                             amount=commissions_fee
                         )
 

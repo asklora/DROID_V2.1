@@ -199,6 +199,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             result = round(transaction['total'], 2)
             return result
         return 0
+
     
     
 

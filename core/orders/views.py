@@ -1,9 +1,12 @@
 from .serializers import PositionSerializer,PerformanceSerializer
-from rest_framework import viewsets,views,permissions,response,status
+from rest_framework import viewsets,views,permissions,response,status,serializers
 from .models import OrderPosition,PositionPerformance
 from core.Clients.models import UserClient
-from drf_spectacular.utils import extend_schema_view,extend_schema
+from drf_spectacular.utils import extend_schema_view,extend_schema,OpenApiResponse,OpenApiExample
 
+
+class errserializer(serializers.Serializer):
+    detail = serializers.CharField()
 
 @extend_schema_view(
     list=extend_schema(
@@ -60,8 +63,15 @@ class BotPerformanceViews(views.APIView):
     permission_classes =(permissions.IsAdminUser,)
 
     @extend_schema(
-        operation_id='Get bot Performance by positions'
+        operation_id='Get bot Performance by positions',
+        responses={
+            200: OpenApiResponse(response=PerformanceSerializer,),
+            404: OpenApiResponse(description='Bad request (position not found)',response=errserializer),
+            401: OpenApiResponse(description='Unauthorized request',response=errserializer),
+        }
     )
     def get(self,request,position_uid):
         perf = PositionPerformance.objects.filter(position_uid=position_uid).order_by('created')
+        if not perf.exists():
+            return response.Response({'message':f'{position_uid} doesnt exist'},status=status.HTTP_404_NOT_FOUND)
         return response.Response(PerformanceSerializer(perf,many=True).data,status=status.HTTP_200_OK)

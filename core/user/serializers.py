@@ -49,6 +49,6 @@ class UserSummarySerializer(serializers.ModelSerializer):
             'currency',
             'total_fee_amount',
             'total_stamp_amount',
-            'total_commission_amount'
+            'total_commission_amount',
 )
     
