@@ -1,0 +1,32 @@
+[
+  {
+    "RequestKey": { "Name": "003000.KS", "Service": "IDN", "NameType": "RIC" },
+    "QoS": {
+      "TimelinessInfo": { "Timeliness": "DELAYED", "TimeInfo": 1200 },
+      "RateInfo": { "Rate": "TIME_CONFLATED", "TimeInfo": 3000 }
+    },
+    "Status": { "StatusMsg": "OK", "StatusCode": 0 },
+    "Fields": {
+      "F": [
+        { "n": "CF_ASK", "Value": "21450.0" },
+        { "n": "CF_BID", "Value": "21400.0" },
+        { "n": "CF_CLOSE", "Value": "21450.0" }
+      ]
+    }
+  },
+  {
+    "RequestKey": { "Name": "000066.SZ", "Service": "IDN", "NameType": "RIC" },
+    "QoS": {
+      "TimelinessInfo": { "Timeliness": "DELAYED", "TimeInfo": 900 },
+      "RateInfo": { "Rate": "TIME_CONFLATED", "TimeInfo": 3000 }
+    },
+    "Status": { "StatusMsg": "OK", "StatusCode": 0 },
+    "Fields": {
+      "F": [
+        { "n": "CF_ASK", "Value": "15.14" },
+        { "n": "CF_BID", "Value": "15.13" },
+        { "n": "CF_CLOSE", "Value": "15.44" }
+      ]
+    }
+  }
+]
