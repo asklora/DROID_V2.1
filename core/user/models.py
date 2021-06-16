@@ -31,15 +31,17 @@ def usermanagerprofile(instance, filename):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    WAIT, APPROVED = 'in waiting list', 'approved'
+    WAIT, APPROVED ,UNVERIFIED,VERIFIED= 'in waiting list', 'approved','unverified','verified'
     status_choices = (
+        (UNVERIFIED, 'in waiting list'),
+        (VERIFIED, 'in waiting list'),
         (WAIT, 'in waiting list'),
         (APPROVED, 'approved'),
     )
 
-    email = models.EmailField(('email address'), unique=True)
+    email = models.EmailField(('email address'),null=True, blank=True)
     username = models.CharField(
-        max_length=255, unique=True, blank=True, null=True)
+        max_length=255, unique=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
     address = models.TextField(blank=True, null=True)
     first_name = models.CharField(max_length=255, null=True, blank=True)
@@ -51,10 +53,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     current_status = models.CharField(
-        max_length=255, null=True, blank=True, choices=status_choices, default=WAIT)
+        max_length=255, null=True, blank=True, choices=status_choices, default=UNVERIFIED)
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
+    USERNAME_FIELD = 'username'
+    AUTH_FIELD_NAME = 'email'
+    # REQUIRED_FIELDS = ['username']
 
     objects = AppUserManager()
 
