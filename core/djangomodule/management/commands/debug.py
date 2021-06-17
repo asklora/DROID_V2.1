@@ -1,10 +1,11 @@
 from migrate import currency
 from django.core.management.base import BaseCommand, CommandError
 from core.user.models import User
+from core.djangomodule.general import run_batch
 from core.djangomodule.yahooFin import get_quote_index,scrap_csi
 from core.djangomodule.calendar import TradingHours
 from core.orders.models import PositionPerformance, Order,OrderPosition
-from core.Clients.models import ClientTopStock
+from core.Clients.models import ClientTopStock, UserClient
 from core.services.ingestiontask import migrate_droid1
 from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
 from main import populate_intraday_latest_price,update_index_price_from_dss
@@ -14,11 +15,7 @@ import traceback as trace
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        try:
-            var = 3/0
-        except Exception:
-            line_error = trace.format_exc()
-            print(f'error di {line_error}')
+        run_batch()
 
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
