@@ -202,7 +202,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+AUTHENTICATION_BACKENDS =['config.Auth.AuthBackend']
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 

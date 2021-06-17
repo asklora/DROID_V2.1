@@ -11,15 +11,16 @@ class AppUserManager(BaseUserManager):
         unique_usr = "%s%s" % (uuid.uuid4().hex[:8], strip)
         return unique_usr
 
-    def create_user(self, email, username=None, password=None, **extra_fields):
-        if not email:
-            raise ValueError(_('Users must have an email address'))
-        if username == '':
+    def create_user(self, email=None, username=None, password=None, **extra_fields):
+        if not username:
+            raise ValueError(_('Users must have an username'))
+        if username == '' or not username:
             user = self.model(username=self.create_unique_username(
                 email), email=email, **extra_fields)
         else:
             user = self.model(username=username, email=email, **extra_fields)
-        email = self.normalize_email(email)
+        if email:
+            email = self.normalize_email(email)
         user = self.model(username=username, email=email, **extra_fields)
         user.set_password(password)
         user.save()

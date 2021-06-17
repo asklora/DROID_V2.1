@@ -3,11 +3,10 @@ import json
 import pandas as pd
 from requests.api import head
 from core.services.models import ThirdpartyCredentials
-from core.djangomodule.models import DataFrameModels
 import sys
 import logging
-logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S',level=logging.INFO)
-
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+logging.getLogger().setLevel(logging.INFO)
 
 
 class Rkd:
@@ -31,17 +30,17 @@ class Rkd:
             result = requests.post(url,data=json.dumps(payload),headers=headers)
             if result.status_code != 200:
                 
-                print('Request fail')
-                print(f'request url :  {url}')
-                print(f'request header :  {headers}')
-                print(f'request payload :  {payload}')
-                print(f'response status {result.status_code}')
+                logging.warning('Request fail')
+                logging.warning(f'request url :  {url}')
+                logging.warning(f'request header :  {headers}')
+                logging.warning(f'request payload :  {payload}')
+                logging.warning(f'response status {result.status_code}')
                 if result.status_code == 500: ## if username or password or appid is wrong
-                    print('Error: %s'%(result.json()))
+                    logging.warning('Error: %s'%(result.json()))
                     return None
         except requests.exceptions.RequestException as e:
-            print(e)
-            sys.exit()
+            logging.warning('error : {str(e)}')
+            raise Exception('request error')
         return result.json()
     
     def get_token(self):
@@ -53,12 +52,12 @@ class Rkd:
                                             }
                     }
         authenURL = f'{self.credentials.base_url}TokenManagement/TokenManagement.svc/REST/Anonymous/TokenManagement_1/CreateServiceToken_1'
-        print('logged you in')
-        print('requesting new token')
+        logging.info('logged you in')
+        logging.info('requesting new token')
         response = self.send_request(authenURL, authenMsg,self.headers)
         self.credentials.token = response['CreateServiceToken_Response_1']['Token']
         self.credentials.save()
-        print('new token saved')
+        logging.info('new token saved')
         return self.credentials.token
 
     
@@ -96,7 +95,18 @@ class Rkd:
         headers['X-Trkd-Auth-Token'] = self.credentials.token
         return headers
 
-    def get_quote(self,ticker,df=False):
+
+
+class RkdData(Rkd):
+    
+    def __init__(self):
+        super().__init__()
+    
+    
+        
+        
+        
+    def get_quote(self,ticker,df=False,save=False):
         quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
         payload ={
                     "RetrieveItem_Request_3": {
@@ -141,15 +151,47 @@ class Rkd:
                 field =f['n']
                 val =f['Value']
                 formated_json_data[index].update({field:val})
+        df_data = pd.DataFrame(formated_json_data).rename(columns={'CF_ASK':'intraday_ask','CF_CLOSE':'close','CF_BID':'intraday_bid'})
+        if save:
+            self.save('master','LatestPrice',df_data.to_dict('records'))
         if df:
-            df_data = pd.DataFrame(formated_json_data).rename(columns={'CF_ASK':'intraday_ask','CF_CLOSE':'close','CF_BID':'intraday_bid'})
-            df_django = DataFrameModels(df_data)
-            import gc
-            del df_data
-            gc.collect()
             # rename column match in table
-            return df_django
+            return df_data
         return formated_json_data
+    
+    
+    def save(self,app,model,data):
+        from django.apps import apps
+        Model = apps.get_model(app, model)
+        pk =Model._meta.pk.name
+        if isinstance(data,list):
+            if isinstance(data[0],dict):
+                pass
+            else:
+                raise Exception('data should be dataframe or list of dict')
+        elif isinstance(data,pd.DataFrame):
+            data = data.to_dict("records")
+        else:
+            raise Exception('data should be dataframe or dict')
+        key_set = [key for key in data[0].keys()]
+        list_obj =[]
+        for item in data:
+            if pk in key_set:
+                key_set.remove(pk)
+            try:
+                key = {pk:item[pk]}
+                obj = Model.objects.get(**key)
+            except Model.DoesNotExist:
+                raise Exception(f'models {item[pk]} does not exist')
+            except KeyError:
+                raise Exception('no primary key in dict')
+            for attr ,val in item.items():
+                field= obj._meta.get_field(attr)
+                if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
+                    attr = f'{attr}_id'
+                setattr(obj,attr,val) 
+            list_obj.append(obj)
+        Model.objects.bulk_update(list_obj, key_set, batch_size=500)
         
 
     
