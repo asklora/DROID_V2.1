@@ -71,9 +71,6 @@ class PerformanceSerializer(serializers.ModelSerializer):
         if prev:
             return int(prev.share_num)
         return 0
-    
-    def get_turnover(self,obj)-> float:
-        obj
 
 class PositionSerializer(serializers.ModelSerializer):
     option_type = serializers.SerializerMethodField()
