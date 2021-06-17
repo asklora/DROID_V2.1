@@ -17,9 +17,16 @@ db = DroidDb()
 SECRET_KEY = '!5fyj@#07=!rc9^)k0tgsl%dp@rmfe$*8t3*+m&mkwk-w^l!_a'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+django_debug = env.bool("DEBUG")
 
-ALLOWED_HOSTS = ['18.167.118.164', '127.0.0.1', 'services.asklora.ai','16.162.110.123','0.0.0.0']
+DEBUG = django_debug
+
+ALLOWED_HOSTS = ['18.167.118.164', 
+'127.0.0.1', 'services.asklora.ai',
+'16.162.110.123',
+'0.0.0.0',
+'balancer-bastion-735909209.ap-east-1.elb.amazonaws.com',
+'118.0.34.231']
 CORS_ALLOW_ALL_ORIGINS= True
 
 # Application definition
@@ -195,7 +202,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+AUTHENTICATION_BACKENDS =['config.Auth.AuthBackend']
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 

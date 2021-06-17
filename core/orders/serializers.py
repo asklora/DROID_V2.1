@@ -71,6 +71,9 @@ class PerformanceSerializer(serializers.ModelSerializer):
         if prev:
             return int(prev.share_num)
         return 0
+    
+    def get_turnover(self,obj)-> float:
+        obj
 
 class PositionSerializer(serializers.ModelSerializer):
     option_type = serializers.SerializerMethodField()
@@ -79,9 +82,23 @@ class PositionSerializer(serializers.ModelSerializer):
     stamp = serializers.SerializerMethodField()
     commission= serializers.SerializerMethodField()
     total_fee= serializers.SerializerMethodField()
+    turnover= serializers.SerializerMethodField()
     class Meta:
         model = OrderPosition
         exclude =("commision_fee","commision_fee_sell")
+
+    def get_turnover(self,obj)-> float:
+        total =0
+        perf = obj.order_position.all().order_by('created').values('last_live_price','share_num')
+        for index,item in enumerate(perf):
+            if index == 0:
+                prev_share = 0
+            else:
+                prev_share =perf[index-1]['share_num']
+            turn_over = item['last_live_price']*abs(item['share_num']- prev_share)
+            total += turn_over
+        return total
+
 
     def get_stamp(self,obj)-> float:
         transaction=TransactionHistory.objects.filter(

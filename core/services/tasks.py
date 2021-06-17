@@ -177,7 +177,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
             report_to_slack(str(e))
             return {'err': str(e)}
     
-    # report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
+    report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
     try:
         # WILL RUN EVERY BUSINESS DAY
         order_client_topstock(currency=currency)

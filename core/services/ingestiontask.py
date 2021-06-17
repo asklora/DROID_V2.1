@@ -19,6 +19,7 @@ import sys
 from core.djangomodule.general import aws_batch
 from migrate import daily_migrations
 from general.slack import report_to_slack
+import traceback as trace
 
 @aws_batch
 @app.task
@@ -85,9 +86,11 @@ def migrate_na():
             sys.stdout = original_stdout
         return {"result": f"migrate NA daily done"}
     except Exception as e:
+        line_error = trace.format_exc()
         report_to_slack("===  migrate daily NA error ===")
         report_to_slack(str(e))
-        return {"err": str(e)}
+        report_to_slack(line_error)
+        return {"err": line_error}
 
 @aws_batch
 @app.task
@@ -115,9 +118,11 @@ def migrate_ws():
             sys.stdout = original_stdout
         return {"result": f"migrate daily done"}
     except Exception as e:
-        report_to_slack("===  migrate daily error ===")
+        line_error = trace.format_exc()
+        report_to_slack("===  migrate daily WS error ===")
         report_to_slack(str(e))
-        return {"err": str(e)}
+        report_to_slack(line_error)
+        return {"err": line_error}
 
 
 
