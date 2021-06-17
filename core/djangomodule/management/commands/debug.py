@@ -4,7 +4,7 @@ from core.user.models import User
 from core.djangomodule.yahooFin import get_quote_index,scrap_csi
 from core.djangomodule.calendar import TradingHours
 from core.orders.models import PositionPerformance, Order,OrderPosition
-from core.Clients.models import ClientTopStock
+from core.Clients.models import ClientTopStock, UserClient
 from core.services.ingestiontask import migrate_droid1
 from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
 from main import populate_intraday_latest_price,update_index_price_from_dss
@@ -14,9 +14,9 @@ from datasource.rkd import Rkd
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
-        print(is_hashed('pbkdf2_sha25SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
+        user = UserClient.objects.get(user_id=117)
+        print(user.user.current_assets)
         # rkd = Rkd()
         # quotes = rkd.get_quote(['003000.KS','000066.SZ'],df=True)
         # quotes.save('master','LatestPrice')
@@ -77,5 +77,5 @@ class Command(BaseCommand):
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
         # send_csv_hanwha(currency="KRW")
-        send_csv_hanwha(currency="CNY")
+        # send_csv_hanwha(currency="CNY")
         # send_csv_hanwha(currency="HKD")

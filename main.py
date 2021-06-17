@@ -356,13 +356,13 @@ if __name__ == "__main__":
     from migrate import weekly_migrations, daily_migrations
     # update_ibes_data_monthly_from_dsws(ticker=[".HSI"])
     # weekly_migrations()
-    # daily_ingestion()
+    daily_ingestion()
     # update_ticker_name_from_dsws()
 
     # daily_migrations()  # triger ingestion function
     # daily_ingestion(region_id="na") # one region
-    ticker = get_universe_by_region(region_id="na")
-    populate_latest_price(ticker=ticker["ticker"])
+    # ticker = get_universe_by_region(region_id="na")
+    # populate_latest_price(ticker=ticker["ticker"])
 
     # populate_macro_table()
     # populate_ibes_table()
