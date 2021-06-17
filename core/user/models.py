@@ -33,8 +33,8 @@ def usermanagerprofile(instance, filename):
 class User(AbstractBaseUser, PermissionsMixin):
     WAIT, APPROVED ,UNVERIFIED,VERIFIED= 'in waiting list', 'approved','unverified','verified'
     status_choices = (
-        (UNVERIFIED, 'in waiting list'),
-        (VERIFIED, 'in waiting list'),
+        (UNVERIFIED, 'unverified'),
+        (VERIFIED, 'verified'),
         (WAIT, 'in waiting list'),
         (APPROVED, 'approved'),
     )

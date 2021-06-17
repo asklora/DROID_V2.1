@@ -10,14 +10,20 @@ from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekl
 from main import populate_intraday_latest_price,update_index_price_from_dss
 from datetime import datetime
 from datasource.rkd import RkdData
-
+import traceback as trace
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        try:
+            var = 3/0
+        except Exception:
+            line_error = trace.format_exc()
+            print(f'error di {line_error}')
+
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
-        rkd = RkdData()
-        quotes = rkd.get_quote(['003000.KS','000066.SZ'],save=True)
+        # rkd = RkdData()
+        # quotes = rkd.get_quote(['003000.KS','000066.SZ'],save=True)
         # quotes.save('master','LatestPrice')
         # order_client_topstock(currency="KRW", client_name="HANWHA")
         # odrs=OrderPosition.objects.filter()
