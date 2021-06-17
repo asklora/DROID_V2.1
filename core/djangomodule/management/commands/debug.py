@@ -80,4 +80,3 @@ class Command(BaseCommand):
         # print(daily_hedge(currency="KRW"))
         # send_csv_hanwha(currency="KRW")
         # send_csv_hanwha(currency="CNY")
-        # send_csv_hanwha(currency="HKD")
