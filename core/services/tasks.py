@@ -423,8 +423,8 @@ def send_csv_hanwha(currency=None, client_name=None, new=None, bot_tester=False)
                 extra_data__service_type="bot_tester", 
                 extra_data__capital=capital, 
                 extra_data__type=bot.upper()).values("user")]
-                sending_csv(currency=None, client_name=None, new=None, bot_tester=False, bot=bot.upper(), capital=capital)
+                sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=bot.upper(), capital=capital)
     else:
         hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
-        sending_csv(currency=None, client_name=None, new=None, bot_tester=False)
+        sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False)
     return {'result': f'send email {currency} done'}
