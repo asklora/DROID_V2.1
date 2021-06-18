@@ -130,10 +130,9 @@ def get_quote_index(currency):
 	}
     curr = Currency.objects.get(currency_code=currency) # IF CNY
     if currency == "CNY":
-        # price = scrap_csi()
-        # curr.index_price = price
-        # curr.save()
-        pass
+        price = scrap_csi()
+        curr.index_price = price
+        curr.save()
     else:
         identifier = curr.index_ticker.replace('.','^')
         symbol = {
