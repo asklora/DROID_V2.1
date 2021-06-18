@@ -16,14 +16,14 @@ import traceback as trace
 class Command(BaseCommand):
     def handle(self, *args, **options):
         # run_batch()
-        from global_vars import bots_list
-        for bot in bots_list:
-            for capital in ["small", "large"]:
-                hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
-                extra_data__service_type="bot_tester", 
-                extra_data__capital=capital, 
-                extra_data__type=bot.upper()).values("user")]
-                print(hanwha)
+        # from global_vars import bots_list
+        # for bot in bots_list:
+        #     for capital in ["small", "large"]:
+        #         hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
+        #         extra_data__service_type="bot_tester", 
+        #         extra_data__capital=capital, 
+        #         extra_data__type=bot.upper()).values("user")]
+        #         print(hanwha)
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
         # rkd = RkdData()
@@ -64,7 +64,7 @@ class Command(BaseCommand):
         # print('total_profit_return: ',user.total_profit_return)
         # populate_intraday_latest_price(ticker=[".CSI300"])
         # get_quote_yahoo("TCOM", use_symbol=True)
-        # daily_hedge(currency="CNY")
+        daily_hedge(currency="CNY")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
         #     position_uid__user_id__in=[108,
