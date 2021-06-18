@@ -15,6 +15,7 @@ import traceback as trace
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        get_quote_index(currency="CNY")
         # run_batch()
         # from global_vars import bots_list
         # for bot in bots_list:
@@ -64,7 +65,7 @@ class Command(BaseCommand):
         # print('total_profit_return: ',user.total_profit_return)
         # populate_intraday_latest_price(ticker=[".CSI300"])
         # get_quote_yahoo("TCOM", use_symbol=True)
-        daily_hedge(currency="CNY")
+        # daily_hedge(currency="CNY")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
         #     position_uid__user_id__in=[108,

@@ -342,10 +342,10 @@ def daily_hedge(currency=None):
         update_index_price_from_dss(currency_code=[currency])
     except Exception as e:
         report_to_slack(f"=== DSS ERROR : {str(e)} SKIPPING GET INTRADAY ===")
-    # get_quote_index(currency)
+    get_quote_index(currency)
 
-    hedge(currency=None) #bot_advisor
-    hedge(currency=None, bot_tester=True) #bot_tester
+    hedge(currency=currency) #bot_advisor
+    hedge(currency=currency, bot_tester=True) #bot_tester
     return {'result': f'hedge {currency} done bot tester'}
 
 def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=None, capital=None):
