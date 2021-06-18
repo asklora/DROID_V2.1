@@ -15,8 +15,13 @@ import traceback as trace
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        run_batch()
-
+        # run_batch()
+        hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
+        print(hanwha)
+        positions = OrderPosition.objects.filter(is_live=True, ticker__currency_code="USD", user_id__in=hanwha)
+        for position in positions:
+            position_uid = position.position_uid
+            print(position_uid)
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
         # rkd = RkdData()
