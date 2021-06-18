@@ -21,6 +21,7 @@ from django.core.mail import send_mail, EmailMessage
 from celery.schedules import crontab
 from config.settings import db_debug
 import io
+from global_vars import bots_list
 
 USD_CUR = Currency.objects.get(currency_code="USD")
 HKD_CUR = Currency.objects.get(currency_code="HKD")
@@ -160,18 +161,23 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
         report_to_slack(f"===  POPULATING {client_name} TOP PICK {currency} ===")
         try:
             test_pick(currency_code=[currency])
-            populate_bot_advisor(
-                currency_code=[currency], client_name=client_name, capital="small")
-            populate_bot_advisor(
-                currency_code=[currency], client_name=client_name, capital="large")
-            populate_bot_advisor(
-                currency_code=[currency], client_name=client_name, capital="large_margin")
-            # populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="UNO", top_pick=1)
-            # populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="UCDC", top_pick=1)
-            # populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="CLASSIC", top_pick=1)
-            # populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="UNO", top_pick=2)
-            # populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="UCDC", top_pick=2)
-            # populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="CLASSIC", top_pick=2)
+            populate_bot_advisor(currency_code=[currency], client_name=client_name, capital="small")
+            populate_bot_advisor(currency_code=[currency], client_name=client_name, capital="large")
+            populate_bot_advisor(currency_code=[currency], client_name=client_name, capital="large_margin")
+
+            populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
+            populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
+            populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
+            populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
+            populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
+            populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
+
+            populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
+            populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
+            populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
+            populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
+            populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
+            populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
         except Exception as e:
             report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
             report_to_slack(str(e))
@@ -180,7 +186,8 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
     report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
     try:
         # WILL RUN EVERY BUSINESS DAY
-        order_client_topstock(currency=currency)
+        order_client_topstock(currency=currency, client_name="HANWHA") #bot advisor
+        order_client_topstock(currency=currency, client_name="HANWHA", bot_tester=True) #bot tester
     except Exception as e:
         report_to_slack(f"===  ERROR IN ORDER FOR {currency} ===")
         report_to_slack(str(e))
@@ -189,7 +196,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
     return {'result': f'populate and order {currency} done'}
 
 @app.task
-def order_client_topstock(currency=None, client_name="HANWHA"):
+def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False):
     # need to change to client prices
     try:
         populate_intraday_latest_price(currency_code=[currency])
@@ -205,9 +212,16 @@ def order_client_topstock(currency=None, client_name="HANWHA"):
     week = day.isocalendar()[1]
     year = day.isocalendar()[0]
     interval = f'{year}{week}'
+
+
+    if bot_tester:
+        service_type ='bot_tester'
+    else:
+        service_type ='bot_advisor'
+
     topstock = client.client_top_stock.filter(
         has_position=False, # HERE ARE SAME WITH STATUS, DO WE STILL NEED STATUS??
-        # service_type='bot_advisor', bot advisor and bot tester
+        service_type=service_type, # bot advisor and bot tester
         currency_code=currency,
         week_of_year=int(interval) # WITH THIS WILL AUTO DETECT WEEKLY UNPICK
         ).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
@@ -288,21 +302,16 @@ def order_client_topstock(currency=None, client_name="HANWHA"):
     else:
         report_to_slack(f"=== {client_name} NO TOPSTOCK IN PENDING ===")
 
-
-
-
-@app.task
-def daily_hedge(currency=None):
+def hedge(currency=None, bot_tester=False):
     report_to_slack(f"===  START HEDGE FOR {currency} ===")
     try:
-        try:
-            populate_intraday_latest_price(currency_code=[currency])
-            update_index_price_from_dss(currency_code=[currency])
-        except Exception as e:
-            report_to_slack(f"=== DSS ERROR : {str(e)} SKIPPING GET INTRADAY ===")
-        get_quote_index(currency)
-        positions = OrderPosition.objects.filter(
-            is_live=True, ticker__currency_code=currency)
+        if(bot_tester):
+            status = "BOT TESTER"
+            hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_tester").values("user")]
+        else:
+            status = "BOT ADVISOR"
+            hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
+        positions = OrderPosition.objects.filter(is_live=True, ticker__currency_code=currency, user_id__in=hanwha)
         for position in positions:
             position_uid = position.position_uid
             market = TradingHours(mic=position.ticker.mic)
@@ -318,26 +327,32 @@ def daily_hedge(currency=None):
                 elif (position.bot.is_classic()):
                     classic_position_check(position_uid)
             else:
-                report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE ===")
+                report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
     except Exception as e:
-        report_to_slack(f"===  ERROR IN HEDGE FOR {currency} ===")
+        report_to_slack(f"===  ERROR IN HEDGE FOR {currency} {status} ===")
         report_to_slack(str(e))
         return {'err': str(e)}
-    send_csv_hanwha.delay(currency=currency, client_name="HANWHA")
-    return {'result': f'hedge {currency} done'}
-
+    send_csv_hanwha.delay(currency=currency, client_name="HANWHA", bot_tester=bot_tester)
 
 @app.task
-def send_csv_hanwha(currency=None, client_name=None, new=None):
-    hanwha = [user["user"] for user in UserClient.objects.filter(
-        client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
+def daily_hedge(currency=None):
+    try:
+        populate_intraday_latest_price(currency_code=[currency])
+        update_index_price_from_dss(currency_code=[currency])
+    except Exception as e:
+        report_to_slack(f"=== DSS ERROR : {str(e)} SKIPPING GET INTRADAY ===")
+    get_quote_index(currency)
+
+    hedge(currency=currency) #bot_advisor
+    hedge(currency=currency, bot_tester=True) #bot_tester
+    return {'result': f'hedge {currency} done bot tester'}
+
+def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=None, capital=None):
     if new:
         perf = PositionPerformance.objects.filter(
             order_uid__in=new['pos_list']).order_by("created")
     else:
-        perf = PositionPerformance.objects.filter(
-            position_uid__user_id__in=hanwha, created__gte=datetime.now().date(), position_uid__ticker__currency_code=currency).order_by("created")
-        # not include new
+        perf = PositionPerformance.objects.filter(position_uid__user_id__in=hanwha, created__gte=datetime.now().date(), position_uid__ticker__currency_code=currency).order_by("created")
         orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         perf = perf.exclude(order_uid__in=orders)
 
@@ -346,8 +361,7 @@ def send_csv_hanwha(currency=None, client_name=None, new=None):
         datenow = now.date()
         df = pd.DataFrame(CsvSerializer(perf, many=True).data)
         df = df.fillna(0)
-        hanwha_df = df.drop(
-            columns=['prev_delta', 'delta', 'v1', 'v2', 'uuid'])
+        hanwha_df = df.drop(columns=['prev_delta', 'delta', 'v1', 'v2', 'uuid'])
         csv = export_csv(df)
         hanwha_csv = export_csv(hanwha_df)
         if new:
@@ -355,7 +369,12 @@ def send_csv_hanwha(currency=None, client_name=None, new=None):
         else:
             subject = 'hedge'
         if db_debug:
-            LORA_MEMBER=['rede.akbar@loratechai.com','agustian@loratechai.com']
+            if(bot_tester):
+                LORA_MEMBER=['rede.akbar@loratechai.com','agustian@loratechai.com', 
+                'stepchoi@loratechai.com', 
+                'kenson.lau@loratechai.com', 'nick.choi@loratechai.com']
+            else:
+                LORA_MEMBER=['rede.akbar@loratechai.com','agustian@loratechai.com']
             HANWHA_MEMBER=LORA_MEMBER
         else:
             LORA_MEMBER=['rede.akbar@loratechai.com', 'stepchoi@loratechai.com', 'joseph.chang@loratechai.com',
@@ -373,20 +392,38 @@ def send_csv_hanwha(currency=None, client_name=None, new=None):
             'asklora@loratechai.com',
             HANWHA_MEMBER,
         )
-        hanwha_email.attach(f"{currency}_{now}_asklora.csv",
-                            hanwha_csv, mimetype="text/csv")
-        draft_email.attach(f"{currency}_{now}_asklora.csv",
-                           csv, mimetype="text/csv")
+        if(bot_tester):
+            hanwha_email.attach(f"{currency}_{bot}_{capital}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
+            draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
+            stats = f"BOT TESTER {bot} {capital}"
+        else:
+            hanwha_email.attach(f"{currency}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
+            draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
+            stats = f"BOT ADVISOR"
         status = draft_email.send()
         hanwha_status = hanwha_email.send()
         if(new):
             if(status):
-                report_to_slack(f"=== NEW PICK CSV {client_name} EMAIL SENT TO LORA ===")
+                report_to_slack(f"=== NEW PICK {stats} CSV {client_name} EMAIL SENT TO LORA ===")
             if(hanwha_status):
-                report_to_slack(f"=== NEW PICK CSV {client_name} EMAIL SENT TO HANWHA ===")
+                report_to_slack(f"=== NEW PICK {stats} CSV {client_name} EMAIL SENT TO HANWHA ===")
         else:
             if(status):
-                report_to_slack(f"=== {client_name} EMAIL HEDGE SENT FOR {currency} TO LORA ===")
+                report_to_slack(f"=== {client_name} {stats} EMAIL HEDGE SENT FOR {currency} TO LORA ===")
             if(hanwha_status):
-                report_to_slack(f"=== {client_name} EMAIL HEDGE SENT FOR {currency} TO HANWHA ===")
+                report_to_slack(f"=== {client_name} {stats} EMAIL HEDGE SENT FOR {currency} TO HANWHA ===")
+
+@app.task
+def send_csv_hanwha(currency=None, client_name=None, new=None, bot_tester=False):
+    if(bot_tester):
+        for bot in bots_list:
+            for capital in ["small", "large"]:
+                hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
+                extra_data__service_type="bot_tester", 
+                extra_data__capital=capital, 
+                extra_data__type=bot.upper()).values("user")]
+                sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=bot.upper(), capital=capital)
+    else:
+        hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
+        sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False)
     return {'result': f'send email {currency} done'}

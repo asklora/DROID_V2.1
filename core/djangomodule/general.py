@@ -106,3 +106,40 @@ def formatdigit(value, currency_decimal=True):
         return round(value, 2)
     else:
         return round(value, 0)
+
+
+def run_batch():
+    print('===== CREATING BATCH =====')
+    batch_job_definition = 'dlp-db'
+    batch_queue = 'dlp-queue'
+    client = boto3.client('batch', region_name='ap-northeast-2')
+    submit_job = client.submit_job(
+        jobName='run_master',
+        jobQueue=batch_queue,
+        jobDefinition=batch_job_definition,
+        containerOverrides={
+            'vcpus': 4,
+            'memory': 64000,
+            'command': [
+                "python", "master.py"
+            ]
+        },
+        timeout={
+            'attemptDurationSeconds': 5000
+        })
+    print('===== JOB SUBMITTED =====')
+    print(f'JOB ID : {submit_job["jobId"]}')
+    status = ''
+    while True:
+        response = client.describe_jobs(
+            jobs=[
+                submit_job['jobId'],
+            ]
+        )
+        if response['jobs'][0]['status'] in ['FAILED', 'SUCCEEDED']:
+            print(response['jobs'][0]['status'])
+            break
+        if status != response['jobs'][0]['status']:
+            print('state is ' + response['jobs'][0]['status'])
+            status = response['jobs'][0]['status']
+        time.sleep(10)
