@@ -212,20 +212,19 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
     week = day.isocalendar()[1]
     year = day.isocalendar()[0]
     interval = f'{year}{week}'
+
+
     if bot_tester:
-        topstock = client.client_top_stock.filter(
-            has_position=False, # HERE ARE SAME WITH STATUS, DO WE STILL NEED STATUS??
-            service_type='bot_tester', # bot advisor and bot tester
-            currency_code=currency,
-            week_of_year=int(interval) # WITH THIS WILL AUTO DETECT WEEKLY UNPICK
-            ).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
+        service_type ='bot_tester'
     else:
-        topstock = client.client_top_stock.filter(
-            has_position=False, # HERE ARE SAME WITH STATUS, DO WE STILL NEED STATUS??
-            service_type='bot_advisor', # bot advisor and bot tester
-            currency_code=currency,
-            week_of_year=int(interval) # WITH THIS WILL AUTO DETECT WEEKLY UNPICK
-            ).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
+        service_type ='bot_advisor'
+
+    topstock = client.client_top_stock.filter(
+        has_position=False, # HERE ARE SAME WITH STATUS, DO WE STILL NEED STATUS??
+        service_type=service_type, # bot advisor and bot tester
+        currency_code=currency,
+        week_of_year=int(interval) # WITH THIS WILL AUTO DETECT WEEKLY UNPICK
+        ).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
     pos_list = []
     ### ONLY EXECUTE IF EXIST / ANY UNPICKED OF THE WEEK
     if topstock.exists():
@@ -344,8 +343,8 @@ def daily_hedge(currency=None):
         report_to_slack(f"=== DSS ERROR : {str(e)} SKIPPING GET INTRADAY ===")
     get_quote_index(currency)
 
-    hedge(currency=None) #bot_advisor
-    hedge(currency=None, bot_tester=True) #bot_tester
+    hedge(currency=currency) #bot_advisor
+    hedge(currency=currency, bot_tester=True) #bot_tester
     return {'result': f'hedge {currency} done bot tester'}
 
 def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=None, capital=None):
