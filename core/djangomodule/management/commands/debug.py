@@ -16,12 +16,14 @@ import traceback as trace
 class Command(BaseCommand):
     def handle(self, *args, **options):
         # run_batch()
-        hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
-        print(hanwha)
-        positions = OrderPosition.objects.filter(is_live=True, ticker__currency_code="USD", user_id__in=hanwha)
-        for position in positions:
-            position_uid = position.position_uid
-            print(position_uid)
+        from global_vars import bots_list
+        for bot in bots_list:
+            for capital in ["small", "large"]:
+                hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
+                extra_data__service_type="bot_tester", 
+                extra_data__capital=capital, 
+                extra_data__type=bot.upper()).values("user")]
+                print(hanwha)
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
         # rkd = RkdData()

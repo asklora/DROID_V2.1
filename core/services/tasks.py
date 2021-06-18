@@ -21,6 +21,7 @@ from django.core.mail import send_mail, EmailMessage
 from celery.schedules import crontab
 from config.settings import db_debug
 import io
+from global_vars import bots_list
 
 USD_CUR = Currency.objects.get(currency_code="USD")
 HKD_CUR = Currency.objects.get(currency_code="HKD")
@@ -347,14 +348,7 @@ def daily_hedge(currency=None):
     hedge(currency=None, bot_tester=True) #bot_tester
     return {'result': f'hedge {currency} done bot tester'}
 
-
-@app.task
-def send_csv_hanwha(currency=None, client_name=None, new=None, bot_tester=False):
-    if(bot_tester):
-        hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_tester").values("user")]
-    else:
-        hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
-
+def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=None, capital=None):
     if new:
         perf = PositionPerformance.objects.filter(
             order_uid__in=new['pos_list']).order_by("created")
@@ -368,8 +362,7 @@ def send_csv_hanwha(currency=None, client_name=None, new=None, bot_tester=False)
         datenow = now.date()
         df = pd.DataFrame(CsvSerializer(perf, many=True).data)
         df = df.fillna(0)
-        hanwha_df = df.drop(
-            columns=['prev_delta', 'delta', 'v1', 'v2', 'uuid'])
+        hanwha_df = df.drop(columns=['prev_delta', 'delta', 'v1', 'v2', 'uuid'])
         csv = export_csv(df)
         hanwha_csv = export_csv(hanwha_df)
         if new:
@@ -395,20 +388,38 @@ def send_csv_hanwha(currency=None, client_name=None, new=None, bot_tester=False)
             'asklora@loratechai.com',
             HANWHA_MEMBER,
         )
-        hanwha_email.attach(f"{currency}_{now}_asklora.csv",
-                            hanwha_csv, mimetype="text/csv")
-        draft_email.attach(f"{currency}_{now}_asklora.csv",
-                           csv, mimetype="text/csv")
+        if(bot_tester):
+            hanwha_email.attach(f"{currency}_{bot}_{capital}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
+            draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
+            stats = f"BOT TESTER {bot} {capital}"
+        else:
+            hanwha_email.attach(f"{currency}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
+            draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
+            stats = f"BOT ADVISOR"
         status = draft_email.send()
         hanwha_status = hanwha_email.send()
         if(new):
             if(status):
-                report_to_slack(f"=== NEW PICK CSV {client_name} EMAIL SENT TO LORA ===")
+                report_to_slack(f"=== NEW PICK {stats} CSV {client_name} EMAIL SENT TO LORA ===")
             if(hanwha_status):
-                report_to_slack(f"=== NEW PICK CSV {client_name} EMAIL SENT TO HANWHA ===")
+                report_to_slack(f"=== NEW PICK {stats} CSV {client_name} EMAIL SENT TO HANWHA ===")
         else:
             if(status):
-                report_to_slack(f"=== {client_name} EMAIL HEDGE SENT FOR {currency} TO LORA ===")
+                report_to_slack(f"=== {client_name} {stats} EMAIL HEDGE SENT FOR {currency} TO LORA ===")
             if(hanwha_status):
-                report_to_slack(f"=== {client_name} EMAIL HEDGE SENT FOR {currency} TO HANWHA ===")
+                report_to_slack(f"=== {client_name} {stats} EMAIL HEDGE SENT FOR {currency} TO HANWHA ===")
+
+@app.task
+def send_csv_hanwha(currency=None, client_name=None, new=None, bot_tester=False):
+    if(bot_tester):
+        for bot in bots_list:
+            for capital in ["small", "large"]:
+                hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
+                extra_data__service_type="bot_tester", 
+                extra_data__capital=capital, 
+                extra_data__type=bot.upper()).values("user")]
+                sending_csv(currency=None, client_name=None, new=None, bot_tester=False, bot=bot.upper(), capital=capital)
+    else:
+        hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
+        sending_csv(currency=None, client_name=None, new=None, bot_tester=False)
     return {'result': f'send email {currency} done'}
