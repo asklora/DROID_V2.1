@@ -1,6 +1,7 @@
 from migrate import currency
 from django.core.management.base import BaseCommand, CommandError
 from core.user.models import User
+from core.djangomodule.general import run_batch
 from core.djangomodule.yahooFin import get_quote_index,scrap_csi
 from core.djangomodule.calendar import TradingHours
 from core.orders.models import PositionPerformance, Order,OrderPosition
@@ -14,16 +15,7 @@ import traceback as trace
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
-        user = UserClient.objects.get(user_id=117)
-        print(user.user.current_assets)
-        # rkd = Rkd()
-        # quotes = rkd.get_quote(['003000.KS','000066.SZ'],df=True)
-        try:
-            var = 3/0
-        except Exception:
-            line_error = trace.format_exc()
-            print(f'error di {line_error}')
+        run_batch()
 
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
