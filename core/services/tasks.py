@@ -319,6 +319,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
             del market
 
         if pos_list:
+            print(pos_list)
             send_csv_hanwha.delay(currency=currency, client_name="HANWHA", new={'pos_list': pos_list})
     else:
         report_to_slack(f"=== {client_name} NO TOPSTOCK IN PENDING ===")
@@ -391,8 +392,7 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
             subject = 'hedge'
         if db_debug:
             if(bot_tester):
-                LORA_MEMBER=['rede.akbar@loratechai.com','agustian@loratechai.com', 
-                'stepchoi@loratechai.com', 
+                LORA_MEMBER=['rede.akbar@loratechai.com','agustian@loratechai.com', 'stepchoi@loratechai.com', 
                 'kenson.lau@loratechai.com', 'nick.choi@loratechai.com']
             else:
                 LORA_MEMBER=['rede.akbar@loratechai.com','agustian@loratechai.com']
@@ -439,12 +439,12 @@ def send_csv_hanwha(currency=None, client_name=None, new=None, bot_tester=False)
     if(bot_tester):
         for bot in bots_list:
             for capital in ["small", "large"]:
-                hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
+                hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, 
                 extra_data__service_type="bot_tester", 
                 extra_data__capital=capital, 
                 extra_data__type=bot.upper()).values("user")]
-                sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=bot.upper(), capital=capital)
+                sending_csv(hanwha, currency=None, client_name=None, new=new, bot_tester=False, bot=bot.upper(), capital=capital)
     else:
         hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
-        sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False)
+        sending_csv(hanwha, currency=None, client_name=None, new=new, bot_tester=False)
     return {'result': f'send email {currency} done'}

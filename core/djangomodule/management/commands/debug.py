@@ -8,7 +8,7 @@ from core.djangomodule.calendar import TradingHours
 from core.orders.models import PositionPerformance, Order,OrderPosition
 from core.Clients.models import ClientTopStock, UserClient
 from core.services.ingestiontask import migrate_droid1
-from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
+from core.services.tasks import populate_client_top_stock_bot_tester_weekly, send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
 from main import populate_intraday_latest_price,update_index_price_from_dss
 from datetime import datetime
 from datasource.rkd import RkdData
@@ -17,11 +17,10 @@ import traceback as trace
 class Command(BaseCommand):
     def handle(self, *args, **options):
         # print(scrap_csi())
-        USD_CUR = Currency.objects.get(currency_code="USD")
-        minute=USD_CUR.top_stock_schedule.minute + 1
-        hour=USD_CUR.top_stock_schedule.hour
-        print(minute)
-        print(hour)
+        # populate_client_top_stock_bot_tester_weekly(currency="KRW", client_name="HANWHA")
+        # order_client_topstock(currency="KRW", client_name="HANWHA", bot_tester=True)
+        pos_list = ['870bf55ced6a48328c6f771c423fde7d', '997512d997574960b6f91d45196f7147', 'b0736584eb8c4f62a413ebdcc58b73cd', 'f2c05da6eead451a911a3e8275188f5d', '13691bc26f4347a488254a76c295328a', '1b37b3bf90554d0aae4fb2a206fb58e5', '221c0e44bb8a433e83e29e557d220409', '7d866a42960e492fa99768251bd6e722', '6f48b266c9de442d8bb40240442c4173']
+        send_csv_hanwha(currency="KRW", client_name="HANWHA", new={'pos_list': pos_list})
         # run_batch()
         # from global_vars import bots_list
         # for bot in bots_list:

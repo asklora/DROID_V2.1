@@ -378,7 +378,7 @@ def populate_bot_tester(currency_code=None, client_name="HANWHA", top_pick_stock
         if(status and ticker not in last_ticker and industry_code not in last_industry_code):
             service_type = "bot_tester"
             spot_date = top_stock.loc[0, "spot_date"]
-            uid = f"{client_uid}_{currency_code[0]}_{ticker}_{spot_date}_{service_type}_{capital}"
+            uid = f"{client_uid}_{currency_code[0]}_{ticker}_{spot_date}_{bot}_{service_type}_{capital}"
             expiry_date = get_expiry_date(time_to_exp[0], str(spot_date), currency_code[0])
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
             #### ADD INTERVAL WEEK OF YEAR ####
@@ -751,18 +751,18 @@ if __name__ == '__main__':
     # populate_bot_advisor(currency_code=["CNY"], client_name="HANWHA", capital="large")
     # populate_bot_advisor(currency_code=["CNY"], client_name="HANWHA", capital="large_margin")
 
-    # populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
-    # populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
-    # populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
+    populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
+    populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
+    populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
 
-    # populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
-    # populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
-    # populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
+    populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
+    populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
+    populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
 
-    # populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
-    # populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
-    # populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
+    populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
+    populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
+    populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
     
-    # populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
-    # populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
+    populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
+    populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
     populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
