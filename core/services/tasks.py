@@ -22,6 +22,9 @@ from celery.schedules import crontab
 from config.settings import db_debug
 import io
 from global_vars import bots_list
+import traceback as trace
+
+
 
 USD_CUR = Currency.objects.get(currency_code="USD")
 HKD_CUR = Currency.objects.get(currency_code="HKD")
@@ -175,6 +178,8 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
             populate_bot_advisor(currency_code=[currency], client_name=client_name, capital="large_margin")
         except Exception as e:
             report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
+            line_error = trace.format_exc()
+            report_to_slack(f"ERROR LINE : {line_error}")
             report_to_slack(str(e))
             return {"err": str(e)}
     
@@ -184,6 +189,8 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
         order_client_topstock(currency=currency, client_name="HANWHA") #bot advisor
     except Exception as e:
         report_to_slack(f"===  ERROR IN ORDER FOR {currency} ===")
+        line_error = trace.format_exc()
+        report_to_slack(f"ERROR LINE : {line_error}")
         report_to_slack(str(e))
         return {"err": str(e)}
 
@@ -203,7 +210,9 @@ def populate_client_top_stock_bot_tester_weekly(currency=None, client_name="HANW
             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
         except Exception as e:
-            report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
+            report_to_slack(f"===  ERROR IN POPULATE BOT TESTER FOR {currency} ===")
+            line_error = trace.format_exc()
+            report_to_slack(f"ERROR LINE : {line_error}")
             report_to_slack(str(e))
             return {"err": str(e)}
     report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
@@ -212,6 +221,8 @@ def populate_client_top_stock_bot_tester_weekly(currency=None, client_name="HANW
         order_client_topstock(currency=currency, client_name="HANWHA", bot_tester=True) #bot tester
     except Exception as e:
         report_to_slack(f"===  ERROR IN ORDER FOR {currency} ===")
+        line_error = trace.format_exc()
+        report_to_slack(f"ERROR LINE : {line_error}")
         report_to_slack(str(e))
         return {"err": str(e)}
     return {"result": f"populate and order {currency} done"}
@@ -224,6 +235,8 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
         update_index_price_from_dss(currency_code=[currency])
     except Exception as e:
         report_to_slack(f"=== DSS {str(e)} SKIPPING GET INTRADAY ===")
+        line_error = trace.format_exc()
+        report_to_slack(f"ERROR LINE : {line_error}")
     if currency == "USD":
         get_quote_index(currency)
     client = Client.objects.get(client_name=client_name)
@@ -319,7 +332,6 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
             del market
 
         if pos_list:
-            print(pos_list)
             send_csv_hanwha.delay(currency=currency, client_name="HANWHA", new={"pos_list": pos_list})
     else:
         report_to_slack(f"=== {client_name} NO TOPSTOCK IN PENDING ===")
@@ -338,10 +350,10 @@ def hedge(currency=None, bot_tester=False):
             position_uid = position.position_uid
             market = TradingHours(mic=position.ticker.mic)
             if market.is_open:
-                # if currency == "USD":
-                #     get_quote_yahoo(position.ticker.ticker, use_symbol=True)
-                # else:
-                #     get_quote_yahoo(position.ticker.ticker, use_symbol=False)
+                if currency == "USD":
+                    get_quote_yahoo(position.ticker.ticker, use_symbol=True)
+                else:
+                    get_quote_yahoo(position.ticker.ticker, use_symbol=False)
                 if (position.bot.is_uno()):
                     uno_position_check(position_uid)
                 elif (position.bot.is_ucdc()):
@@ -352,6 +364,8 @@ def hedge(currency=None, bot_tester=False):
                 report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
     except Exception as e:
         report_to_slack(f"===  ERROR IN HEDGE FOR {currency} {status} ===")
+        line_error = trace.format_exc()
+        report_to_slack(f"ERROR LINE : {line_error}")
         report_to_slack(str(e))
         return {"err": str(e)}
     send_csv_hanwha(currency=currency, client_name="HANWHA", bot_tester=bot_tester)
