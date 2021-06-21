@@ -1,5 +1,6 @@
 import pandas as pd 
 import requests
+import cfscrape
 import json
 import ast
 from core.djangomodule.network.cloud import DroidDb
@@ -103,9 +104,13 @@ def get_quote_yahoo(ticker, use_symbol=False):
 def scrap_csi():
     price_float = None
     url = "http://www.csindex.com.cn/en/homeApply"
-    client = uReq(url)
-    html_page = client.read()
-    close_client = client.close()
+    # client = uReq(url)
+    # html_page = client.read()
+    # print(f"html == {html_page}")
+    # close_client = client.close()
+    scraper = cfscrape.create_scraper()
+    scrap = scraper.get(url)
+    html_page = scrap.content.decode('utf-8')
     page_soup = soup(html_page, "html.parser")
     owls = page_soup.find_all("div", {"class":"item"})
     for owl in owls:
