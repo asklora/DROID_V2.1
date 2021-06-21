@@ -385,8 +385,7 @@ def daily_hedge(currency=None):
 
 def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=None, capital=None):
     if new:
-        perf = PositionPerformance.objects.filter(
-            order_uid__in=new["pos_list"]).order_by("created")
+        perf = PositionPerformance.objects.filter(order_uid__in=new["pos_list"], position_uid__user_id__in=hanwha).order_by("created")
     else:
         perf = PositionPerformance.objects.filter(position_uid__user_id__in=hanwha, created__gte=datetime.now().date(), position_uid__ticker__currency_code=currency).order_by("created")
         orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
