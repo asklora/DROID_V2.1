@@ -415,7 +415,7 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
         )
         if(bot_tester):
             hanwha_email.attach(f"{currency}_{bot}_{capital}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
-            draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
+            draft_email.attach(f"{currency}_{bot}_{capital}_{now}_asklora.csv", csv, mimetype="text/csv")
             stats = f"BOT TESTER {bot} {capital}"
         else:
             hanwha_email.attach(f"{currency}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
