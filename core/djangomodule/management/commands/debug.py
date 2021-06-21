@@ -16,11 +16,13 @@ import traceback as trace
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        hedge_shares = max(-55, 53 * -1)
+        print(hedge_shares)
         # print(scrap_csi())
         # populate_client_top_stock_bot_tester_weekly(currency="KRW", client_name="HANWHA")
         # order_client_topstock(currency="KRW", client_name="HANWHA", bot_tester=True)
-        pos_list = ['870bf55ced6a48328c6f771c423fde7d', '997512d997574960b6f91d45196f7147', 'b0736584eb8c4f62a413ebdcc58b73cd', 'f2c05da6eead451a911a3e8275188f5d', '13691bc26f4347a488254a76c295328a', '1b37b3bf90554d0aae4fb2a206fb58e5', '221c0e44bb8a433e83e29e557d220409', '7d866a42960e492fa99768251bd6e722', '6f48b266c9de442d8bb40240442c4173']
-        send_csv_hanwha(currency="KRW", client_name="HANWHA", new={'pos_list': pos_list}, bot_tester=True)
+        # pos_list = ['870bf55ced6a48328c6f771c423fde7d', '997512d997574960b6f91d45196f7147', 'b0736584eb8c4f62a413ebdcc58b73cd', 'f2c05da6eead451a911a3e8275188f5d', '13691bc26f4347a488254a76c295328a', '1b37b3bf90554d0aae4fb2a206fb58e5', '221c0e44bb8a433e83e29e557d220409', '7d866a42960e492fa99768251bd6e722', '6f48b266c9de442d8bb40240442c4173']
+        # send_csv_hanwha(currency="KRW", client_name="HANWHA", new={'pos_list': pos_list}, bot_tester=True)
         # run_batch()
         # from global_vars import bots_list
         # for bot in bots_list:
