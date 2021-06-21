@@ -1,4 +1,5 @@
 from core.services.tasks import send_csv_hanwha
+from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
