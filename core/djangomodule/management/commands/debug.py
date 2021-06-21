@@ -16,7 +16,6 @@ import traceback as trace
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        # print(scrap_csi())
         USD_CUR = Currency.objects.get(currency_code="USD")
         minute=USD_CUR.top_stock_schedule.minute + 1
         hour=USD_CUR.top_stock_schedule.hour
