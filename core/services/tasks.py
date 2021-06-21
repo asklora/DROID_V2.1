@@ -327,21 +327,22 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
 def hedge(currency=None, bot_tester=False):
     report_to_slack(f"===  START HEDGE FOR {currency} ===")
     try:
-        if(bot_tester):
-            status = "BOT TESTER"
-            hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_tester").values("user")]
-        else:
-            status = "BOT ADVISOR"
-            hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
+        # if(bot_tester):
+        #     status = "BOT TESTER"
+        #     hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_tester").values("user")]
+        # else:
+        #     status = "BOT ADVISOR"
+        #     hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
+        hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA").values("user")]
         positions = OrderPosition.objects.filter(is_live=True, ticker__currency_code=currency, user_id__in=hanwha)
         for position in positions:
             position_uid = position.position_uid
             market = TradingHours(mic=position.ticker.mic)
             if market.is_open:
-                # if currency == "USD":
-                #     get_quote_yahoo(position.ticker.ticker, use_symbol=True)
-                # else:
-                #     get_quote_yahoo(position.ticker.ticker, use_symbol=False)
+                if currency == "USD":
+                    get_quote_yahoo(position.ticker.ticker, use_symbol=True)
+                else:
+                    get_quote_yahoo(position.ticker.ticker, use_symbol=False)
                 if (position.bot.is_uno()):
                     uno_position_check(position_uid)
                 elif (position.bot.is_ucdc()):
@@ -349,9 +350,9 @@ def hedge(currency=None, bot_tester=False):
                 elif (position.bot.is_classic()):
                     classic_position_check(position_uid)
             else:
-                report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
+                report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE  ===")
     except Exception as e:
-        report_to_slack(f"===  ERROR IN HEDGE FOR {currency} {status} ===")
+        report_to_slack(f"===  ERROR IN HEDGE FOR {currency} ===")
         report_to_slack(str(e))
         return {"err": str(e)}
     send_csv_hanwha(currency=currency, client_name="HANWHA", bot_tester=bot_tester)
@@ -365,8 +366,8 @@ def daily_hedge(currency=None):
         report_to_slack(f"=== DSS ERROR : {str(e)} SKIPPING GET INTRADAY ===")
     get_quote_index(currency)
 
-    hedge(currency=currency) #bot_advisor
-    hedge(currency=currency, bot_tester=True) #bot_tester
+    # hedge(currency=currency) #bot_advisor
+    hedge(currency=currency, bot_tester=True) # both bot tester and bot advisor
     return {"result": f"hedge {currency} done bot tester"}
 
 def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=None, capital=None):
@@ -403,10 +404,10 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
             HANWHA_MEMBER=["200200648@hanwha.com", "noblerain72@hanwha.com",
                     "nick.choi@loratechai.com"]
         
-        if(bot_tester):
-            stats = f"BOT TESTER {bot} " + capital.upper()
-        else:
-            stats = f"BOT ADVISOR"
+        # if(bot_tester):
+        #     stats = f"BOT TESTER"
+        # else:
+        stats = f"BOT ADVISOR AND BOT TESTER"
 
         draft_email = EmailMessage(
             subject,
@@ -420,12 +421,12 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
             HANWHA_MEMBER,
         )
 
-        if(bot_tester):
-            hanwha_email.attach(f"{currency}_{bot}_{capital}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
-            draft_email.attach(f"{currency}_{bot}_{capital}_{now}_asklora.csv", csv, mimetype="text/csv")
-        else:
-            hanwha_email.attach(f"{currency}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
-            draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
+        # if(bot_tester):
+        #     hanwha_email.attach(f"{currency}_{bot}_{capital}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
+        #     draft_email.attach(f"{currency}_{bot}_{capital}_{now}_asklora.csv", csv, mimetype="text/csv")
+        # else:
+        hanwha_email.attach(f"{currency}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
+        draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
             
         status = draft_email.send()
         hanwha_status = hanwha_email.send()
@@ -442,15 +443,15 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
 
 @app.task
 def send_csv_hanwha(currency=None, client_name=None, new=None, bot_tester=False):
-    if(bot_tester):
-        for bot in bots_list:
-            for capital in ["small", "large"]:
-                hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, 
-                extra_data__service_type="bot_tester", 
-                extra_data__capital=capital, 
-                extra_data__type=bot.upper()).values("user")]
-                sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=True, bot=bot.upper(), capital=capital)
-    else:
-        hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, extra_data__service_type="bot_advisor").values("user")]
-        sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=False)
+    # if(bot_tester):
+    #     for bot in bots_list:
+    #         for capital in ["small", "large"]:
+    #             hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, 
+    #             extra_data__service_type="bot_tester", 
+    #             extra_data__capital=capital, 
+    #             extra_data__type=bot.upper()).values("user")]
+    #             sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=True, bot=bot.upper(), capital=capital)
+    # else:
+    hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name).values("user")]
+    sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=True)
     return {"result": f"send email {currency} done"}
