@@ -12,9 +12,14 @@ class Command(BaseCommand):
         parser.add_argument(
             "-c", "--celery", action="store_true", help="for celery")
         parser.add_argument("-q", "--queue", type=str, help="queue")
+        parser.add_argument("-currency", "--currency", type=str, help="currency")
 
     def handle(self, *args, **options):
-        positions = OrderPosition.objects.filter(is_live=True,ticker__currency_code='USD')
+        if options['currency']:
+            cur = options['currency']
+        else:
+            cur = 'USD'
+        positions = OrderPosition.objects.filter(is_live=True,ticker__currency_code=cur)
         for position in positions:
             position_uid = position.position_uid
             if (position.bot.is_uno()):
