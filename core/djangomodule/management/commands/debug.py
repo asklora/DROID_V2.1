@@ -1,3 +1,4 @@
+from core.universe.models import Currency
 from migrate import currency
 from django.core.management.base import BaseCommand, CommandError
 from core.user.models import User
@@ -15,7 +16,12 @@ import traceback as trace
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        get_quote_index(currency="CNY")
+        # print(scrap_csi())
+        USD_CUR = Currency.objects.get(currency_code="USD")
+        minute=USD_CUR.top_stock_schedule.minute + 1
+        hour=USD_CUR.top_stock_schedule.hour
+        print(minute)
+        print(hour)
         # run_batch()
         # from global_vars import bots_list
         # for bot in bots_list:
