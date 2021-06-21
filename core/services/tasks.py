@@ -338,10 +338,10 @@ def hedge(currency=None, bot_tester=False):
             position_uid = position.position_uid
             market = TradingHours(mic=position.ticker.mic)
             if market.is_open:
-                if currency == "USD":
-                    get_quote_yahoo(position.ticker.ticker, use_symbol=True)
-                else:
-                    get_quote_yahoo(position.ticker.ticker, use_symbol=False)
+                # if currency == "USD":
+                #     get_quote_yahoo(position.ticker.ticker, use_symbol=True)
+                # else:
+                #     get_quote_yahoo(position.ticker.ticker, use_symbol=False)
                 if (position.bot.is_uno()):
                     uno_position_check(position_uid)
                 elif (position.bot.is_ucdc()):
@@ -354,7 +354,7 @@ def hedge(currency=None, bot_tester=False):
         report_to_slack(f"===  ERROR IN HEDGE FOR {currency} {status} ===")
         report_to_slack(str(e))
         return {'err': str(e)}
-    send_csv_hanwha.delay(currency=currency, client_name="HANWHA", bot_tester=bot_tester)
+    send_csv_hanwha(currency=currency, client_name="HANWHA", bot_tester=bot_tester)
 
 @app.task
 def daily_hedge(currency=None):
