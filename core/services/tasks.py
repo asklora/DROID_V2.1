@@ -324,7 +324,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
             del market
 
         if pos_list:
-            send_csv_hanwha.delay(currency=currency, client_name="HANWHA", new={"pos_list": pos_list})
+            send_csv_hanwha.delay(currency=currency, client_name="HANWHA", new={"pos_list": pos_list},bot_tester=bot_tester)
     else:
         report_to_slack(f"=== {client_name} NO TOPSTOCK IN PENDING ===")
 
