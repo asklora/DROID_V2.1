@@ -417,7 +417,7 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
                     "nick.choi@loratechai.com"]
         
         if(bot_tester):
-            stats = f"BOT TESTER {bot} " + capital.upper()
+            stats = f"BOT TESTER"
         else:
             stats = f"BOT ADVISOR"
 
@@ -434,8 +434,8 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
         )
 
         if(bot_tester):
-            hanwha_email.attach(f"{currency}_{bot}_{capital}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
-            draft_email.attach(f"{currency}_{bot}_{capital}_{now}_asklora.csv", csv, mimetype="text/csv")
+            hanwha_email.attach(f"{currency}_bot_tester_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
+            draft_email.attach(f"{currency}_bot_tester_{now}_asklora.csv", csv, mimetype="text/csv")
         else:
             hanwha_email.attach(f"{currency}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
             draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
@@ -456,13 +456,9 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
 @app.task
 def send_csv_hanwha(currency=None, client_name=None, new=None, bot_tester=False):
     if(bot_tester):
-        for bot in bots_list:
-            for capital in ["small", "large"]:
-                hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, 
-                extra_data__service_type="bot_tester", 
-                extra_data__capital=capital, 
-                extra_data__type=bot.upper()).values("user")]
-                sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=True, bot=bot.upper(), capital=capital)
+        hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, 
+        extra_data__service_type="bot_tester").values("user")]
+        sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=True)
     else:
         hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, extra_data__service_type="bot_advisor").values("user")]
         sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=False)
