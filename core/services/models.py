@@ -62,8 +62,9 @@ class ErrorLog(BaseTimeStampModel):
 
     def send_report_error(self):
         
-        report_to_slack(f'\n*Found Error*\nError desc: {self.error_description}\nError message: {self.error_message}\nError function: {self.error_function}\nErorr Logs: https://services.asklora.ai/{self.get_admin_url()}')
-        report_to_slack(f'*Error Traceback:*\n {self.error_traceback}')
+        report_to_slack(f'\n*Found Error*\nError desc: {self.error_description}\nError message: {self.error_message}\nError function: {self.error_function}\nErorr Logs: https://services.asklora.ai{self.get_admin_url()}',
+        channel='#error-log')
+        report_to_slack(f'*Error Traceback:*\n {self.error_traceback}',channel='#error-log')
 
     
 
