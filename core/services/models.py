@@ -36,7 +36,7 @@ class LogManager(models.Manager):
         kwargs['error_function'] = self.identify_error_function()
         kwargs['error_traceback'] = trace.format_exc()
         log = self.create(**kwargs)
-        # do something with the book
+        # save the error log
         return log
 
 
