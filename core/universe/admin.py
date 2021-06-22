@@ -68,6 +68,7 @@ class AddTickerAdmin(ImportExportModelAdmin):
             get_isin_populate_universe.delay(
                     resources.ticker, request.user.id)
         else:
+            # change to the instance
             get_isin_populate_universe.delay(
                     resources.ticker, request.user.id)
         url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
