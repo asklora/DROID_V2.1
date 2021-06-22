@@ -208,6 +208,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = 'user_core'
+        indexes = [models.Index(fields=['email','username',])]
+        
 
     def __str__(self):
         return self.email
