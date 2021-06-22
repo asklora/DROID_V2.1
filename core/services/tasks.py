@@ -23,6 +23,7 @@ from config.settings import db_debug
 import io
 from global_vars import bots_list
 import traceback as trace
+from core.services.models import ErrorLog
 
 
 
@@ -177,10 +178,8 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
             populate_bot_advisor(currency_code=[currency], client_name=client_name, capital="large")
             populate_bot_advisor(currency_code=[currency], client_name=client_name, capital="large_margin")
         except Exception as e:
-            report_to_slack(f"===  ERROR IN POPULATE FOR {currency} ===")
-            line_error = trace.format_exc()
-            report_to_slack(f"ERROR LINE : {line_error}")
-            report_to_slack(str(e))
+            err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN POPULATE FOR {currency} ===",error_message=str(e))
+            err.send_report_error()
             return {"err": str(e)}
     
     report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
@@ -188,10 +187,8 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
         # WILL RUN EVERY BUSINESS DAY
         order_client_topstock(currency=currency, client_name="HANWHA") #bot advisor
     except Exception as e:
-        report_to_slack(f"===  ERROR IN ORDER FOR {currency} ===")
-        line_error = trace.format_exc()
-        report_to_slack(f"ERROR LINE : {line_error}")
-        report_to_slack(str(e))
+        err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN ORDER FOR {currency} ===",error_message=str(e))
+        err.send_report_error()
         return {"err": str(e)}
 
     return {"result": f"populate and order {currency} done"}
@@ -210,20 +207,16 @@ def populate_client_top_stock_bot_tester_weekly(currency=None, client_name="HANW
             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
         except Exception as e:
-            report_to_slack(f"===  ERROR IN POPULATE BOT TESTER FOR {currency} ===")
-            line_error = trace.format_exc()
-            report_to_slack(f"ERROR LINE : {line_error}")
-            report_to_slack(str(e))
+            err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN POPULATE BOT TESTER FOR {currency} ===",error_message=str(e))
+            err.send_report_error()
             return {"err": str(e)}
     report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
     try:
         # WILL RUN EVERY BUSINESS DAY
         order_client_topstock(currency=currency, client_name="HANWHA", bot_tester=True) #bot tester
     except Exception as e:
-        report_to_slack(f"===  ERROR IN ORDER FOR {currency} ===")
-        line_error = trace.format_exc()
-        report_to_slack(f"ERROR LINE : {line_error}")
-        report_to_slack(str(e))
+        err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN ORDER FOR {currency} ===",error_message=str(e))
+        err.send_report_error()
         return {"err": str(e)}
     return {"result": f"populate and order {currency} done"}
 
@@ -234,9 +227,8 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
         populate_intraday_latest_price(currency_code=[currency])
         update_index_price_from_dss(currency_code=[currency])
     except Exception as e:
-        report_to_slack(f"=== DSS {str(e)} SKIPPING GET INTRADAY ===")
-        line_error = trace.format_exc()
-        report_to_slack(f"ERROR LINE : {line_error}")
+        err = ErrorLog.objects.create_log(error_description=f"=== DSS {str(e)} SKIPPING GET INTRADAY ===",error_message=str(e))
+        err.send_report_error()
     if currency == "USD":
         get_quote_index(currency)
     client = Client.objects.get(client_name=client_name)
@@ -363,10 +355,8 @@ def hedge(currency=None, bot_tester=False):
             else:
                 report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
     except Exception as e:
-        report_to_slack(f"===  ERROR IN HEDGE FOR {currency} {status} ===")
-        line_error = trace.format_exc()
-        report_to_slack(f"ERROR LINE : {line_error}")
-        report_to_slack(str(e))
+        err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN HEDGE Function {currency} {status} ===",error_message=str(e))
+        err.send_report_error()
         return {"err": str(e)}
     send_csv_hanwha(currency=currency, client_name="HANWHA", bot_tester=bot_tester)
 
@@ -376,7 +366,8 @@ def daily_hedge(currency=None):
         populate_intraday_latest_price(currency_code=[currency])
         update_index_price_from_dss(currency_code=[currency])
     except Exception as e:
-        report_to_slack(f"=== DSS ERROR : {str(e)} SKIPPING GET INTRADAY ===")
+        err = ErrorLog.objects.create_log(error_description=f"=== DSS ERROR : {str(e)} SKIPPING GET INTRADAY ===",error_message=str(e))
+        err.send_report_error()
     get_quote_index(currency)
 
     hedge(currency=currency) #bot_advisor

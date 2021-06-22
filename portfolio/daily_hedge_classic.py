@@ -5,6 +5,7 @@ from config.celery import app
 import pandas as pd
 from core.djangomodule.serializers import OrderPositionSerializer
 from core.djangomodule.general import formatdigit
+from core.services.models import ErrorLog
 
 
 def create_performance(price_data, position, latest_price=False):
@@ -218,5 +219,11 @@ def classic_position_check(position_uid, to_date=None, lookback=False):
                 if status:
                     print(f"position end")
         return True
-    except OrderPosition.DoesNotExist:
+    except OrderPosition.DoesNotExist as e:
+        err = ErrorLog.objects.create_log(error_description=f'{position_uid} not exist',error_message=str(e))
+        err.send_report_error()
+        return False
+    except Exception as e:
+        err = ErrorLog.objects.create_log(error_description=f'error in Position {position_uid}',error_message=str(e))
+        err.send_report_error()
         return False

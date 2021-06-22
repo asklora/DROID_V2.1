@@ -13,11 +13,22 @@ from main import populate_intraday_latest_price,update_index_price_from_dss
 from datetime import datetime
 from datasource.rkd import RkdData
 import traceback as trace
+from core.services.models import ErrorLog
+
+
+def div_zero(num):
+    num / 0
+
+
+
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        hedge_shares = max(-55, 53 * -1)
-        print(hedge_shares)
+        try:
+            div_zero(2)
+        except Exception as e:
+            err = ErrorLog.objects.create_log(error_description='error in manage.py debug',error_message=str(e))
+            err.send_report_error()
         # print(scrap_csi())
         # populate_client_top_stock_bot_tester_weekly(currency="KRW", client_name="HANWHA")
         # order_client_topstock(currency="KRW", client_name="HANWHA", bot_tester=True)

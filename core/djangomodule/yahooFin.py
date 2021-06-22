@@ -9,6 +9,8 @@ from core.master.models import Currency,LatestPrice
 from bs4 import BeautifulSoup as soup
 from urllib.request import urlopen as uReq
 from datetime import datetime
+from core.services.models import ErrorLog
+
 
 def get_quote_yahoo(ticker, use_symbol=False):
     api_key = "48c15ceb22mshe6bb12d6f379d74p146379jsnffadab4cee19"
@@ -17,46 +19,57 @@ def get_quote_yahoo(ticker, use_symbol=False):
 		'x-rapidapi-key': api_key,
 		'x-rapidapi-host': "yahoo-finance-low-latency.p.rapidapi.com"
 	}
-    if use_symbol:
+
+    try:
         ric = Universe.objects.get(ticker=ticker)
+    except Universe.DoesNotExist as e:
+        err = ErrorLog.objects.create_log(error_description=f'{ticker} not exist',error_message=str(e))
+        err.send_report_error()
+        return
+    except Universe.MultipleObjectsReturned as e:
+        err = ErrorLog.objects.create_log(error_description=f'error {ticker} return multiple',error_message=str(e))
+        err.send_report_error()
+        return
+    if use_symbol:
         identifier = ric.ticker_symbol
     else:
-        ric= Universe.objects.get(ticker=ticker)
         identifier = ric.ticker
     symbol = {
 		"symbols" : identifier
 	}
 	# print(symbol)
     req = requests.get(url, headers=header, params=symbol)
-    res = req.json()
-    res = res['quoteResponse']['result']
-    # last = []
-    data = {
-                "ticker":[],
-                "ask":[],
-                "bid":[]
-                }
-    for resp in res:
-        ### CARA SAVE DJANGO ONE BY ONE ###
-        if use_symbol:
-            ticker = Universe.objects.get(ticker=ric.ticker)
-            ric = LatestPrice.objects.get(ticker=ticker)
-        else:
-            ric = LatestPrice.objects.get(ticker=resp['symbol'])
+    if req.status_code == 200:
+        res = req.json()
+        res = res['quoteResponse']['result']
+        # last = []
+        data = {
+                    "ticker":[],
+                    "ask":[],
+                    "bid":[]
+                    }
+        for resp in res:
+            ### CARA SAVE DJANGO ONE BY ONE ###
+            if use_symbol:
+                ticker = Universe.objects.get(ticker=ric.ticker)
+                ric = LatestPrice.objects.get(ticker=ticker)
+            else:
+                ric = LatestPrice.objects.get(ticker=resp['symbol'])
 
-        print(ric.ticker)
-        ric.intraday_ask =resp['ask']
-        ric.intraday_bid =resp['bid']
-        ric.close =resp['regularMarketPrice']
-        ric.last_date = datetime.now().date()
-        ric.save()
-        ### END SAVE DJANGO ONE BY ONE ###
-        data['ticker'].append(resp['symbol'])
-        data['bid'].append(resp['bid'])
-        data['ask'].append(resp['ask'])
-    df = pd.DataFrame(data)
-    print(df)
-    return df
+            print(ric.ticker)
+            ric.intraday_ask =resp['ask']
+            ric.intraday_bid =resp['bid']
+            ric.close =resp['regularMarketPrice']
+            ric.last_date = datetime.now().date()
+            ric.save()
+            ### END SAVE DJANGO ONE BY ONE ###
+            data['ticker'].append(resp['symbol'])
+            data['bid'].append(resp['bid'])
+            data['ask'].append(resp['ask'])
+        df = pd.DataFrame(data)
+        print(df)
+        return df
+
 
 def scrap_csi():
     price_float = None
@@ -87,7 +100,12 @@ def get_quote_index(currency):
 	}
     curr = Currency.objects.get(currency_code=currency) # IF CNY
     if currency == "CNY":
-        price = scrap_csi()
+        try:
+            price = scrap_csi()
+        except Exception as e:
+            err = ErrorLog.objects.create_log(error_description=f'scraping error',error_message=str(e))
+            err.send_report_error()
+            return None
         curr.index_price = price
         curr.save()
     else:
@@ -97,17 +115,18 @@ def get_quote_index(currency):
     	}
     	# print(symbol)
         req = requests.get(url, headers=header, params=symbol)
-        res = req.json()
-        res = res['quoteResponse']['result']
-    	# last = []
-        data = {
-    		"ticker":[],
-    		"ask":[],
-    		"bid":[]
-    	}
-        for resp in res:
-            curr.index_price =resp['regularMarketPrice'] # USE FROM THE SCRAPPING ONE
-            curr.save()
+        if req.status_code == 200:
+            res = req.json()
+            res = res['quoteResponse']['result']
+            # last = []
+            data = {
+                "ticker":[],
+                "ask":[],
+                "bid":[]
+            }
+            for resp in res:
+                curr.index_price =resp['regularMarketPrice'] # USE FROM THE SCRAPPING ONE
+                curr.save()
 
 
 
