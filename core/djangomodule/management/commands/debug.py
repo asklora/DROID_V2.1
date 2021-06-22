@@ -16,8 +16,8 @@ import traceback as trace
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        hedge_shares = max(-55, 53 * -1)
-        print(hedge_shares)
+        # hedge_shares = max(-55, 53 * -1)
+        # print(hedge_shares)
         # print(scrap_csi())
         # populate_client_top_stock_bot_tester_weekly(currency="KRW", client_name="HANWHA")
         # order_client_topstock(currency="KRW", client_name="HANWHA", bot_tester=True)
