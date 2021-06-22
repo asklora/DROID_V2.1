@@ -15,7 +15,7 @@ class AppUserAdmin(UserAdmin):
     list_filter = ('email', 'is_staff', 'is_active','date_joined')
     fieldsets = (
         (None, {'fields': ('email', 'username',
-                           'password', 'address', 'phone', 'first_name', 'last_name', 'country',
+                           'password', 'address', 'phone', 'first_name', 'last_name',
                             'birth_date', 'avatar','current_status')}),
         ('Permissions', {'fields': ('is_staff',
                                     'is_active', 'is_superuser', 'groups')}),

@@ -32,6 +32,7 @@ CORS_ALLOW_ALL_ORIGINS= True
 # Application definition
 
 DJANGO_DEFAULT_APPS = [
+    'grappelli',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -310,3 +311,5 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
+GRAPPELLI_ADMIN_HEADLINE ="ASKLORA"
+GRAPPELLI_ADMIN_TITLE="ASKLORA"
