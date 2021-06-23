@@ -117,7 +117,6 @@ if __name__ == "__main__":
     tm_res = requests.post(tm_url, data=tm_req, headers = {'Content-type': 'application/json'})
     token = tm_res.json()['CreateServiceToken_Response_1']['Token']
  
-    # Start websocket handshake
     ws_address = "wss://streaming.trkd.thomsonreuters.com/WebSocket"
     print("Connecting to WebSocket " + ws_address + " ...")
     web_socket_app = websocket.WebSocketApp(ws_address, header=['User-Agent: Python'],
