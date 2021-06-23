@@ -25,5 +25,5 @@
 ### install step
 1. Run talib and aws dependency
     - ``` sudo ./installer/requirement.sh ```
-2. Run install python requirements in activated envs
+2. Run install python requirements in activated env
     - ``` pip install -r installer/requirements_no_AI_36.txt ```
