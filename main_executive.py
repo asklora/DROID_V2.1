@@ -223,7 +223,7 @@ def infer_check_new_ticker(ticker=None, currency_code=None):
         report = "VOLATILITY INFER CHECK NEW TICKER COMPLETED"
         report_check(report, ticker=ticker, currency_code=currency_code)
 
-def infer_history():
+def infer_history(currency_code=None):
     folder_check()
     print("{} : === VOLATILITY INFER HISTORY STARTED ===".format(dateNow()))
     start_date = str_to_date(droid_start_date_buffer())
@@ -231,7 +231,7 @@ def infer_history():
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
 
-    ticker = get_active_universe()["ticker"].tolist()
+    ticker = get_active_universe(currency_code=currency_code)["ticker"].tolist()
     # main_df = get_executive_data_download(start_date, end_date, ticker=ticker)
     # print(main_df)
 
