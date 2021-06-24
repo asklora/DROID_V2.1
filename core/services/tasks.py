@@ -31,6 +31,7 @@ USD_CUR = Currency.objects.get(currency_code="USD")
 HKD_CUR = Currency.objects.get(currency_code="HKD")
 KRW_CUR = Currency.objects.get(currency_code="KRW")
 CNY_CUR = Currency.objects.get(currency_code="CNY")
+EUR_CUR = Currency.objects.get(currency_code="EUR")
 app.conf.beat_schedule = {
     "USD-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
@@ -52,6 +53,11 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=CNY_CUR.hedge_schedule.minute, hour=CNY_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "CNY"},
     },
+    "EUR-HEDGE": {
+        "task": "core.services.tasks.daily_hedge",
+        "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        "kwargs": {"currency": "EUR"},
+    },
     "USD-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=USD_CUR.top_stock_schedule.minute, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
@@ -72,16 +78,31 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=CNY_CUR.top_stock_schedule.minute, hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "CNY"},
     },
-    "KRW-POPULATE-PICK-TESTER": {
-        "task": "core.services.tasks.populate_client_top_stock_bot_tester_weekly",
-        "schedule": crontab(minute=KRW_CUR.top_stock_schedule.minute + 2, hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "KRW"},
+    "EUR-POPULATE-PICK": {
+        "task": "core.services.tasks.populate_client_top_stock_weekly",
+        "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        "kwargs": {"currency": "EUR"},
     },
-    "USD-POPULATE-PICK-TESTER": {
-        "task": "core.services.tasks.populate_client_top_stock_bot_tester_weekly",
-        "schedule": crontab(minute=USD_CUR.top_stock_schedule.minute + 2, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "USD"},
+    "EUR-POPULATE-PICK-FELS": {
+        "task": "core.services.tasks.populate_client_top_stock_weekly",
+        "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        "kwargs": {"currency": "EUR","client_name":"FELS"},
     },
+    "USD-POPULATE-PICK-FELS": {
+        "task": "core.services.tasks.populate_client_top_stock_weekly",
+        "schedule": crontab(minute=USD_CUR.top_stock_schedule.minute, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        "kwargs": {"currency": "USD","client_name":"FELS"},
+    },
+    # "KRW-POPULATE-PICK-TESTER": {
+    #     "task": "core.services.tasks.populate_client_top_stock_bot_tester_weekly",
+    #     "schedule": crontab(minute=KRW_CUR.top_stock_schedule.minute + 2, hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+    #     "kwargs": {"currency": "KRW"},
+    # },
+    # "USD-POPULATE-PICK-TESTER": {
+    #     "task": "core.services.tasks.populate_client_top_stock_bot_tester_weekly",
+    #     "schedule": crontab(minute=USD_CUR.top_stock_schedule.minute + 2, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+    #     "kwargs": {"currency": "USD"},
+    # },
 
 }
 
@@ -173,10 +194,26 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
     if day.weekday() == 0:
         report_to_slack(f"===  POPULATING {client_name} TOP PICK {currency} ===")
         try:
-            test_pick(currency_code=[currency])
-            populate_bot_advisor(currency_code=[currency], client_name=client_name, capital="small")
-            populate_bot_advisor(currency_code=[currency], client_name=client_name, capital="large")
-            populate_bot_advisor(currency_code=[currency], client_name=client_name, capital="large_margin")
+            # skip euro and client hanwha only
+            if currency not in ['EUR'] and client_name == "HANWHA":
+                test_pick(currency_code=[currency])
+                populate_bot_advisor(currency_code=[currency], client_name=client_name, capital="small")
+                populate_bot_advisor(currency_code=[currency], client_name=client_name, capital="large")
+                populate_bot_advisor(currency_code=[currency], client_name=client_name, capital="large_margin")
+            # skip any currency except bot tester currency and client hanwha only
+            if currency in ['USD', 'KRW',] and client_name == "HANWHA":
+                populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
+                populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
+                populate_bot_tester(currency_code=[currency], client_name=client_name, capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
+                populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
+                populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
+                populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
+            # skip any currency except  currency and client fels only
+            # has own populate schedule ctrl+G line 86 and 91
+            if currency in ['USD', 'EUR',] and client_name == "FELS":
+                test_pick(currency_code=[currency],client_name=client_name)
+                populate_fels_bot(currency_code=[currency], client_name=client_name, top_pick = 5)
+            
         except Exception as e:
             err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN POPULATE FOR {currency} ===",error_message=str(e))
             err.send_report_error()
@@ -185,7 +222,10 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
     report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
     try:
         # WILL RUN EVERY BUSINESS DAY
-        order_client_topstock(currency=currency, client_name="HANWHA") #bot advisor
+        # SKIP FELS FOR AUTO ORDERING
+        if not client_name == "FELS":
+            order_client_topstock(currency=currency, client_name=client_name) #bot advisor
+            order_client_topstock(currency=currency, client_name=client_name, bot_tester=True) #bot tester
     except Exception as e:
         err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN ORDER FOR {currency} ===",error_message=str(e))
         err.send_report_error()
@@ -193,32 +233,35 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
 
     return {"result": f"populate and order {currency} done"}
 
-@app.task
-def populate_client_top_stock_bot_tester_weekly(currency=None, client_name="HANWHA"):
-    day = datetime.now()
-    ## POPULATED ONLY/EVERY MONDAY OF THE WEEK
-    if day.weekday() == 0:
-        report_to_slack(f"===  POPULATING {client_name} TOP PICK {currency} ===")
-        try:
-            populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
-            populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
-            populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
-            populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
-            populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
-            populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
-        except Exception as e:
-            err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN POPULATE BOT TESTER FOR {currency} ===",error_message=str(e))
-            err.send_report_error()
-            return {"err": str(e)}
-    report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
-    try:
-        # WILL RUN EVERY BUSINESS DAY
-        order_client_topstock(currency=currency, client_name="HANWHA", bot_tester=True) #bot tester
-    except Exception as e:
-        err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN ORDER FOR {currency} ===",error_message=str(e))
-        err.send_report_error()
-        return {"err": str(e)}
-    return {"result": f"populate and order {currency} done"}
+# ERASED SCHEDULE
+
+
+# @app.task
+# def populate_client_top_stock_bot_tester_weekly(currency=None, client_name="HANWHA"):
+#     day = datetime.now()
+#     ## POPULATED ONLY/EVERY MONDAY OF THE WEEK
+#     if day.weekday() == 0:
+#         report_to_slack(f"===  POPULATING {client_name} TOP PICK {currency} ===")
+#         try:
+#             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
+#             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
+#             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
+#             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
+#             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
+#             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
+#         except Exception as e:
+#             err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN POPULATE BOT TESTER FOR {currency} ===",error_message=str(e))
+#             err.send_report_error()
+#             return {"err": str(e)}
+#     report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
+#     try:
+#         # WILL RUN EVERY BUSINESS DAY
+#         order_client_topstock(currency=currency, client_name="HANWHA", bot_tester=True) #bot tester
+#     except Exception as e:
+#         err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN ORDER FOR {currency} ===",error_message=str(e))
+#         err.send_report_error()
+#         return {"err": str(e)}
+#     return {"result": f"populate and order {currency} done"}
 
 @app.task
 def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False):
@@ -247,7 +290,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
 
     topstock = client.client_top_stock.filter(
         has_position=False, # HERE ARE SAME WITH STATUS, DO WE STILL NEED STATUS??
-        service_type=service_type, # bot advisor and bot tester
+        service_type=service_type, # bot advisor / bot tester
         currency_code=currency,
         week_of_year=int(interval) # WITH THIS WILL AUTO DETECT WEEKLY UNPICK
         ).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
@@ -336,7 +379,8 @@ def hedge(currency=None, bot_tester=False):
             hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_tester").values("user")]
         else:
             status = "BOT ADVISOR"
-            hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_advisor").values("user")]
+            # updated hanwha and fels since email for bot tester and bot_tester variable has role send different email in function
+            hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name__in=["HANWHA","FELS"], extra_data__service_type__in=["bot_advisor",None]).values("user")]
         positions = OrderPosition.objects.filter(is_live=True, ticker__currency_code=currency, user_id__in=hanwha)
         for position in positions:
             position_uid = position.position_uid
@@ -370,9 +414,9 @@ def daily_hedge(currency=None):
         err.send_report_error()
     get_quote_index(currency)
 
-    hedge(currency=currency) #bot_advisor
+    hedge(currency=currency) #bot_advisor hanwha and fels
     hedge(currency=currency, bot_tester=True) #bot_tester
-    return {"result": f"hedge {currency} done bot tester"}
+    return {"result": f"hedge {currency} done"}
 
 def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=None, capital=None):
     if new:
@@ -446,11 +490,12 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
 
 @app.task
 def send_csv_hanwha(currency=None, client_name=None, new=None, bot_tester=False):
-    if(bot_tester):
-        hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, 
-        extra_data__service_type="bot_tester").values("user")]
-        sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=True)
-    else:
-        hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, extra_data__service_type="bot_advisor").values("user")]
-        sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=False)
-    return {"result": f"send email {currency} done"}
+    if client_name == "HANWHA":
+        if(bot_tester):
+            hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, 
+            extra_data__service_type="bot_tester").values("user")]
+            sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=True)
+        else:
+            hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, extra_data__service_type="bot_advisor").values("user")]
+            sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=False)
+        return {"result": f"send email {currency} done"}
