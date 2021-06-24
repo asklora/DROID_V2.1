@@ -158,17 +158,23 @@ def worldscope(universe, start_date, end_date, filter_field, identifier):
 
 if __name__ == '__main__':
     currency_code = ["SGD"]
+    # currency_code = ["KRW"]
+    # currency_code = ["CNY"]
+    # currency_code = ["JPY"]
+    # currency_code = ["USD"]
+    # currency_code = ["GBP"]
+    # currency_code = ["EUR"]
+    # currency_code = ["HKD"]
+    # currency_code = ["TWD"]
     universe = get_active_universe_by_entity_type(currency_code=currency_code)
     end_date = dateNow()
     start_date = "2000-01-01"
-    filter_field = [
-        "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
-        "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
-        "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
-        "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
-        "WC02001A"]
-    identifier = "ticker"
-    # filter_field = ["WC05905A"]
+    filter_field = ["WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
+        "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A"]
+    # filter_field = ["WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
+    #     "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A"]
+    # filter_field = ["WC02001A", "WC05905A"]
+    identifier="ticker"
     for field in filter_field:
         worldscope(universe, start_date, end_date, [field], identifier)
         gc.collect()
