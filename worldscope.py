@@ -5,7 +5,7 @@ from datetime import datetime
 from datasource.dsws import setDataStream
 from general.sql_query import get_active_universe_by_entity_type
 from general.date_process import dateNow
-from migrate import upsert_data_to_database
+from general.sql_output import upsert_data_to_database
 from general.data_process import uid_maker
 
 def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40):
@@ -152,6 +152,7 @@ def worldscope(universe, start_date, end_date, filter_field, identifier):
         result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
         print(result)
         upsert_data_to_database(result, "data_worldscope_summary_test", "uid", how="update", Text=True)
+
 if __name__ == '__main__':
     currency_code = ["KRW"]
     universe = get_active_universe_by_entity_type(currency_code=currency_code)
