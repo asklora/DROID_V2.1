@@ -298,19 +298,19 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
         result["day"] = pd.DatetimeIndex(result["period_end"]).day
 
         for index, row in result.iterrows():
-            if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] < 31) :
-                result.loc[index, "month"] = 12
-                result.loc[index, "frequency_number"] = int(4)
-                result.loc[index, "year"] = int(result.loc[index, "year"]) - 1
-            elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] < 30) :
+            if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
                 result.loc[index, "month"] = 3
                 result.loc[index, "frequency_number"] = int(1)
-            elif (result.loc[index, "month"] <= 9) and (result.loc[index, "day"] < 30) :
+                result.loc[index, "year"] = int(result.loc[index, "year"]) - 1
+            elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31) :
                 result.loc[index, "month"] = 6
                 result.loc[index, "frequency_number"] = int(2)
-            else:
+            elif (result.loc[index, "month"] <= 9) and (result.loc[index, "day"] <= 31) :
                 result.loc[index, "month"] = 9
                 result.loc[index, "frequency_number"] = int(3)
+            else:
+                result.loc[index, "month"] = 12
+                result.loc[index, "frequency_number"] = int(4)
 
             result.loc[index, "period_end"] = datetime(result.loc[index, "year"], result.loc[index, "month"], 1)
         result["period_end"] = result["period_end"].dt.to_period("M").dt.to_timestamp("M")
