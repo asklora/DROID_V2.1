@@ -1,11 +1,12 @@
-from migrate import upsert_data_to_database
-from general.data_process import uid_maker
+import gc
 import pandas as pd
 import numpy as np
 from datetime import datetime
 from datasource.dsws import setDataStream
 from general.sql_query import get_active_universe_by_entity_type
 from general.date_process import dateNow
+from migrate import upsert_data_to_database
+from general.data_process import uid_maker
 
 def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40):
     DS = setDataStream()
@@ -49,20 +50,9 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
         data = pd.concat(data)
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
+
+def worldscope(universe, start_date, end_date, filter_field, identifier):
     
-if __name__ == '__main__':
-    currency_code = ["KRW"]
-    universe = get_active_universe_by_entity_type(currency_code=currency_code)
-    end_date = dateNow()
-    start_date = "2000-01-01"
-    filter_field = [
-        "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
-        "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
-        "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
-        "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
-        "WC02001A", "WC05905A"]
-    filter_field = ["WC05192A", "WC05905A"]
-    identifier="ticker"
     ticker = universe[["ticker"]]
     result, error_universe = get_data_history_from_dsws(start_date, end_date, ticker, identifier, filter_field, use_ticker=True, split_number=1)
     print(result)
@@ -70,23 +60,24 @@ if __name__ == '__main__':
     print(result)
     print(error_universe)
     if(len(result)) > 0 :
-        result["WC05905A"] = result["WC05905A"].astype(str)
-        result["WC05905A"] = result["WC05905A"].str.slice(6, 16)
-        result["WC05905A"] = np.where(result["WC05905A"] == "nan", np.nan, result["WC05905A"])
-        result["WC05905A"] = np.where(result["WC05905A"] == "NA", np.nan, result["WC05905A"])
-        result["WC05905A"] = np.where(result["WC05905A"] == "None", np.nan, result["WC05905A"])
-        result["WC05905A"] = np.where(result["WC05905A"] == "", np.nan, result["WC05905A"])
-        result["WC05905A"] = np.where(result["WC05905A"] == "NaN", np.nan, result["WC05905A"])
-        result["WC05905A"] = np.where(result["WC05905A"] == "NaT", np.nan, result["WC05905A"])
-        result["WC05905A"] = result["WC05905A"].astype(float)
-        result = result.dropna(subset=["WC05905A"], inplace=False)
-        result["WC05905A"] = result["WC05905A"].astype(int)
-        result["report_date"] = datetime.strptime(dateNow(), "%Y-%m-%d")
-        for index, row in result.iterrows():
-            WC05905A = row["WC05905A"]
-            report_date = datetime.fromtimestamp(WC05905A)
-            result.loc[index, "report_date"] = report_date
-        result["report_date"] = pd.to_datetime(result["report_date"])
+        if(filter_field == ["WC05905A"]):
+            result["WC05905A"] = result["WC05905A"].astype(str)
+            result["WC05905A"] = result["WC05905A"].str.slice(6, 16)
+            result["WC05905A"] = np.where(result["WC05905A"] == "nan", np.nan, result["WC05905A"])
+            result["WC05905A"] = np.where(result["WC05905A"] == "NA", np.nan, result["WC05905A"])
+            result["WC05905A"] = np.where(result["WC05905A"] == "None", np.nan, result["WC05905A"])
+            result["WC05905A"] = np.where(result["WC05905A"] == "", np.nan, result["WC05905A"])
+            result["WC05905A"] = np.where(result["WC05905A"] == "NaN", np.nan, result["WC05905A"])
+            result["WC05905A"] = np.where(result["WC05905A"] == "NaT", np.nan, result["WC05905A"])
+            result["WC05905A"] = result["WC05905A"].astype(float)
+            result = result.dropna(subset=["WC05905A"], inplace=False)
+            result["WC05905A"] = result["WC05905A"].astype(int)
+            result["report_date"] = datetime.strptime(dateNow(), "%Y-%m-%d")
+            for index, row in result.iterrows():
+                WC05905A = row["WC05905A"]
+                report_date = datetime.fromtimestamp(WC05905A)
+                result.loc[index, "report_date"] = report_date
+            result["report_date"] = pd.to_datetime(result["report_date"])
         result = result.reset_index()
         result = result.rename(columns={
             #"WC06035": "identifier",
@@ -161,3 +152,18 @@ if __name__ == '__main__':
         result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
         print(result)
         upsert_data_to_database(result, "data_worldscope_summary_test", "uid", how="update", Text=True)
+if __name__ == '__main__':
+    currency_code = ["KRW"]
+    universe = get_active_universe_by_entity_type(currency_code=currency_code)
+    end_date = dateNow()
+    start_date = "2000-01-01"
+    filter_field = [
+        "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
+        "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
+        "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
+        "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
+        "WC02001A", "WC05905A"]
+    identifier="ticker"
+    for field in filter_field:
+        worldscope(universe, start_date, end_date, [field], identifier)
+        gc.collect()
