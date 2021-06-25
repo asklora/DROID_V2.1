@@ -151,7 +151,7 @@ print(read_endpoint)
 
 # print(f'using read: {read_endpoint}')
 # print(f'using write: {write_endpoint}')
-
+APPEND_SLASH=False
 DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
 DB_ENGINE = 'psqlextra.backend'
 DATABASES = {
