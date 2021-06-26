@@ -25,7 +25,7 @@ def div_zero(num):
 class Command(BaseCommand):
     def handle(self, *args, **options):
         scrap_csi()
-        
+
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
         # rkd = RkdData()
