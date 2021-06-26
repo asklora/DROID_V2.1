@@ -170,7 +170,7 @@ if __name__ == '__main__':
         "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A"]
     # filter_field = ["WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
     #     "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A"]
-    # filter_field = ["WC02001A", "WC05905A"]
+    filter_field = ["WC02001A"]
     identifier="ticker"
     for field in filter_field:
         worldscope(universe, start_date, end_date, [field], identifier)
