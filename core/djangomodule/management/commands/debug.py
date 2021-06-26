@@ -1,3 +1,4 @@
+from core.universe.models import Currency
 from migrate import currency
 from django.core.management.base import BaseCommand, CommandError
 from core.user.models import User
@@ -7,11 +8,19 @@ from core.djangomodule.calendar import TradingHours
 from core.orders.models import PositionPerformance, Order,OrderPosition
 from core.Clients.models import ClientTopStock, UserClient
 from core.services.ingestiontask import migrate_droid1
-from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
+from core.services.tasks import populate_client_top_stock_bot_tester_weekly, send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
 from main import populate_intraday_latest_price,update_index_price_from_dss
 from datetime import datetime
 from datasource.rkd import RkdData
 import traceback as trace
+from core.services.models import ErrorLog
+
+
+def div_zero(num):
+    num / 0
+
+
+
 
 class Command(BaseCommand):
     def handle(self, *args, **options):

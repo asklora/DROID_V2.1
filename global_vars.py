@@ -37,6 +37,7 @@ DSS_PASSWORD="AskLORAv2" #CHANGED Password
 
 SLACK_API="xoxb-305855338628-1139022048576-2KsNu5mJCbgRGh8z8S8NOdGI"
 SLACK_CHANNEL="#droid_v2_report"
+SLACK_TEST_CHANNEL="#droid_v2_test_report"
 
 URL_Extrations="https://selectapi.datascope.refinitiv.com/RestApi/v1/Extractions/Extract"
 URL_Extrations_with_note="https://selectapi.datascope.refinitiv.com/RestApi/v1/Extractions/ExtractWithNotes"

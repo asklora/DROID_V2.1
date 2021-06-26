@@ -76,12 +76,13 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
         ticker = ticker_list
     split = len(ticker)/split_number
     splitting_df = np.array_split(ticker, split)
-    for universe in splitting_df:
-        universelist = ",".join([str(elem) for elem in universe])
+    for univ in splitting_df:
+        universelist = ",".join([str(elem) for elem in univ])
+        print(universelist)
         try:
             result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date)
             if(split_number == 1):
-                result[identifier] = universelist
+                result[identifier] = str(universelist)
             print(result)
             chunk_data.append(result)
         except Exception as e:

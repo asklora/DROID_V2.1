@@ -8,7 +8,6 @@ from general.date_process import dateNow
 from general.sql_output import upsert_data_to_database
 from general.data_process import uid_maker
 
-
 def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40):
     DS = setDataStream(DSWS=False)
     print("== Getting Data From DSWS ==")
@@ -19,14 +18,14 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
         ticker = ["<" + tick + ">" for tick in ticker_list]
     else:
         ticker = ticker_list
-    split = len(ticker) / split_number
+    split = len(ticker)/split_number
     splitting_df = np.array_split(ticker, split)
     for universe in splitting_df:
         universelist = ",".join([str(elem) for elem in universe])
         try:
             result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date)
             print(result)
-            if (split_number == 1):
+            if(split_number == 1):
                 result[identifier] = universelist
             print(universelist)
             print(result)
@@ -47,16 +46,15 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
             df[identifier] = df[identifier].str.strip()
         print(df)
         data.append(df)
-    if (len(data)) > 0:
+    if(len(data)) > 0 :
         data = pd.concat(data)
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
-
-
+  
 def worldscope(universe, start_date, end_date, filter_field, identifier):
+
     ticker = universe[["ticker"]]
-    result, error_universe = get_data_history_from_dsws(start_date, end_date, ticker, identifier, filter_field,
-                                                        use_ticker=True, split_number=1)
+    result, error_universe = get_data_history_from_dsws(start_date, end_date, ticker, identifier, filter_field, use_ticker=True, split_number=1)
     print(result)
     result = result.dropna()
     print(result)
@@ -82,7 +80,7 @@ def worldscope(universe, start_date, end_date, filter_field, identifier):
             result["report_date"] = pd.to_datetime(result["report_date"])
         result = result.reset_index()
         result = result.rename(columns={
-            # "WC06035": "identifier",
+            #"WC06035": "identifier",
             #     "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
             "WC05192A": "fn_5192",
             "WC18271A": "fn_18271",
@@ -125,14 +123,13 @@ def worldscope(universe, start_date, end_date, filter_field, identifier):
         result["day"] = pd.DatetimeIndex(result["period_end"]).day
         print(result)
         for index, row in result.iterrows():
-            if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31):
+            if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
                 result.loc[index, "month"] = 3
                 result.loc[index, "frequency_number"] = int(1)
-                result.loc[index, "year"] = int(result.loc[index, "year"]) - 1
-            elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31):
+            elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31) :
                 result.loc[index, "month"] = 6
                 result.loc[index, "frequency_number"] = int(2)
-            elif (result.loc[index, "month"] <= 9) and (result.loc[index, "day"] <= 31):
+            elif (result.loc[index, "month"] <= 9) and (result.loc[index, "day"] <= 31) :
                 result.loc[index, "month"] = 9
                 result.loc[index, "frequency_number"] = int(3)
             else:
@@ -154,7 +151,6 @@ def worldscope(universe, start_date, end_date, filter_field, identifier):
         result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
         print(result)
         upsert_data_to_database(result, "data_worldscope_summary_test", "uid", how="update", Text=True)
-
 
 if __name__ == '__main__':
     currency_code = ["SGD"]

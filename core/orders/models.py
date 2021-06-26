@@ -100,6 +100,8 @@ class OrderPosition(BaseTimeStampModel):
     class Meta:
         managed = True
         db_table = "orders_position"
+        indexes = [models.Index(fields=['user_id','ticker'])]
+
 
     def current_return(self):
         performance = self.order_position.filter(
@@ -212,6 +214,7 @@ class PositionPerformance(BaseTimeStampModel):
     class Meta:
         managed = True
         db_table = "orders_position_performance"
+        indexes = [models.Index(fields=['created','position_uid','order_uid'])]
 
     def __str__(self):
         return str(self.created)

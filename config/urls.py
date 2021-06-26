@@ -15,8 +15,8 @@ from core.user.views import RevokeToken,PairTokenView
 urlpatterns = [
     path('admin/', admin.site.urls,name='adminlogin'),
     path('login/', admin.site.login, name='default-admin-login'),
-      path('swagger/', SpectacularAPIView.as_view(), name='schema'),
-    # Optional UI:
+    path('swagger/', SpectacularAPIView.as_view(), name='schema'),
+    # Optional UI cahnge
     path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('api/auth/', PairTokenView.as_view(), name='token_obtain_pair'),

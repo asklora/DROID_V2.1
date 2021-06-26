@@ -356,7 +356,7 @@ if __name__ == "__main__":
     from migrate import weekly_migrations, daily_migrations
     # update_ibes_data_monthly_from_dsws(ticker=[".HSI"])
     # weekly_migrations()
-    daily_ingestion()
+    # daily_ingestion()
     # update_ticker_name_from_dsws()
 
     # daily_migrations()  # triger ingestion function
@@ -401,3 +401,4 @@ if __name__ == "__main__":
     # update_utc_offset_from_timezone()
     # update_index_price_from_dss(currency_code=["USD"])
     # print("Done")
+    report_to_slack("TEST")

@@ -1,6 +1,7 @@
 appdirs==1.4.3
 CacheControl==0.12.6
 certifi==2019.11.28
+cfscrape==2.1.1
 chardet==3.0.4
 cfscrape==2.1.1
 colorama==0.4.3

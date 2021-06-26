@@ -65,7 +65,7 @@ class UserClient(BaseTimeStampModel):
     def save(self, *args, **kwargs):
         if not self.uid:
             self.uid = generate_id(12)
-            # using your function as above or anything else
+        # using your function as above or anything else
         success = False
         failures = 0
         while not success:

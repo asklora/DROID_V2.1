@@ -100,6 +100,8 @@ class MasterOhlcvtr(models.Model):  # OHLCVTR DATA Change to master_ohlcvtr
     class Meta:
         managed = True
         db_table = "master_ohlcvtr"
+        indexes = [models.Index(fields=['ticker','currency_code',])]
+
 
     def __str__(self):
         return self.ticker.ticker

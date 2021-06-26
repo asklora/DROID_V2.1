@@ -111,14 +111,14 @@ def formatdigit(value, currency_decimal=True):
 def run_batch():
     print('===== CREATING BATCH =====')
     batch_job_definition = 'dlp-db'
-    batch_queue = 'getting-started-job-queue'
+    batch_queue = 'dlp-queue'
     client = boto3.client('batch', region_name='ap-northeast-2')
     submit_job = client.submit_job(
         jobName='run_master',
         jobQueue=batch_queue,
         jobDefinition=batch_job_definition,
         containerOverrides={
-            'vcpus': 128,
+            'vcpus': 4,
             'memory': 64000,
             'command': [
                 "python", "master.py"
