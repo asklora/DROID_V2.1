@@ -506,7 +506,6 @@ def get_hedge_detail(live_price, bot_cash_balance, ask_price, bid_price, last_sh
         
         if(hedge_shares > 0):
             hedge_shares = min(hedge_shares, math.floor(bot_cash_balance/live_price))
-
         if(hedge_shares < 0):
             hedge_shares = max(hedge_shares, last_share_num * -1)
 
