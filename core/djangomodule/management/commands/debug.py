@@ -24,11 +24,6 @@ def div_zero(num):
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        try:
-            div_zero(2)
-        except Exception as e:
-            err = ErrorLog.objects.create_log(error_description='error in manage.py debug',error_message=str(e))
-            err.send_report_error()
         # print(scrap_csi())
         # populate_client_top_stock_bot_tester_weekly(currency="KRW", client_name="HANWHA")
         # order_client_topstock(currency="KRW", client_name="HANWHA", bot_tester=True)
@@ -43,6 +38,8 @@ class Command(BaseCommand):
         #         extra_data__capital=capital, 
         #         extra_data__type=bot.upper()).values("user")]
         #         print(hanwha)
+        scrap_csi()
+        
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
         # rkd = RkdData()
