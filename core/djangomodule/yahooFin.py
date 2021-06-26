@@ -1,5 +1,6 @@
 import pandas as pd 
 import requests
+import cfscrape
 import json
 import ast
 import cfscrape

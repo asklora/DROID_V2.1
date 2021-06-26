@@ -301,7 +301,6 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
             if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
                 result.loc[index, "month"] = 3
                 result.loc[index, "frequency_number"] = int(1)
-                result.loc[index, "year"] = int(result.loc[index, "year"]) - 1
             elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31) :
                 result.loc[index, "month"] = 6
                 result.loc[index, "frequency_number"] = int(2)

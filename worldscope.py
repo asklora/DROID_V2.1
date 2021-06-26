@@ -9,7 +9,7 @@ from general.sql_output import upsert_data_to_database
 from general.data_process import uid_maker
 
 def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40):
-    DS = setDataStream()
+    DS = setDataStream(DSWS=False)
     print("== Getting Data From DSWS ==")
     chunk_data = []
     error_universe = []
@@ -50,17 +50,17 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
         data = pd.concat(data)
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
-
+  
 def worldscope(universe, start_date, end_date, filter_field, identifier):
-    
+
     ticker = universe[["ticker"]]
     result, error_universe = get_data_history_from_dsws(start_date, end_date, ticker, identifier, filter_field, use_ticker=True, split_number=1)
     print(result)
     result = result.dropna()
     print(result)
     print(error_universe)
-    if(len(result)) > 0 :
-        if(filter_field == ["WC05905A"]):
+    if (len(result)) > 0:
+        if "WC05905A" in filter_field:
             result["WC05905A"] = result["WC05905A"].astype(str)
             result["WC05905A"] = result["WC05905A"].str.slice(6, 16)
             result["WC05905A"] = np.where(result["WC05905A"] == "nan", np.nan, result["WC05905A"])
@@ -86,36 +86,36 @@ def worldscope(universe, start_date, end_date, filter_field, identifier):
             "WC18271A": "fn_18271",
             "WC02999A": "fn_2999",
             "WC03255A": "fn_3255",
-            "WC03501A" : "fn_3501",
-            "WC18313A" : "fn_18313",
+            "WC03501A": "fn_3501",
+            "WC18313A": "fn_18313",
             "WC18312A": "fn_18312",
             #     "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
             "WC18310A": "fn_18310",
-            "WC18311A" : "fn_18311",
-            "WC18309A" : "fn_18309",
+            "WC18311A": "fn_18311",
+            "WC18309A": "fn_18309",
             "WC18308A": "fn_18308",
             "WC18269A": "fn_18269",
-            "WC18304A" : "fn_18304",
-            "WC18266A" : "fn_18266",
+            "WC18304A": "fn_18304",
+            "WC18266A": "fn_18266",
             #     "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
             "WC18267A": "fn_18267",
             "WC18265A": "fn_18265",
-            "WC18264A" : "fn_18264",
-            "WC18263A" : "fn_18263",
+            "WC18264A": "fn_18264",
+            "WC18263A": "fn_18263",
             "WC18262A": "fn_18262",
             "WC18199A": "fn_18199",
-            "WC18158A" : "fn_18158",
+            "WC18158A": "fn_18158",
             #     "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
             "WC18100A": "fn_18100",
             "WC08001A": "fn_8001",
-            "WC05085A" : "fn_5085",
-            "WC03101A" : "fn_3101",
+            "WC05085A": "fn_5085",
+            "WC03101A": "fn_3101",
             "WC02501A": "fn_2501",
             "WC02201A": "fn_2201",
-            "WC02101A" : "fn_2101",
+            "WC02101A": "fn_2101",
             #     "WC02001A"]
-            "WC02001A" : "fn_2001",
-            "index" : "period_end"
+            "WC02001A": "fn_2001",
+            "index": "period_end"
         })
         print(result)
         result["year"] = pd.DatetimeIndex(result["period_end"]).year
@@ -126,7 +126,6 @@ def worldscope(universe, start_date, end_date, filter_field, identifier):
             if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
                 result.loc[index, "month"] = 3
                 result.loc[index, "frequency_number"] = int(1)
-                result.loc[index, "year"] = int(result.loc[index, "year"]) - 1
             elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31) :
                 result.loc[index, "month"] = 6
                 result.loc[index, "frequency_number"] = int(2)
@@ -146,7 +145,7 @@ def worldscope(universe, start_date, end_date, filter_field, identifier):
         print(result)
         result["fiscal_quarter_end"] = result["period_end"].astype(str)
         result["fiscal_quarter_end"] = result["fiscal_quarter_end"].str.replace("-", "", regex=True)
-        result = result.drop(columns=["month", "day"])
+        result = result.drop(columns=["month", "day", "level_0"])
         identifier = universe[["ticker", "worldscope_identifier"]]
         result = result.merge(identifier, how="left", on="ticker")
         result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
@@ -170,7 +169,7 @@ if __name__ == '__main__':
         "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A"]
     # filter_field = ["WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
     #     "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A"]
-    filter_field = ["WC02001A"]
+    # filter_field = ["WC02001A", "WC05905A"]
     identifier="ticker"
     for field in filter_field:
         worldscope(universe, start_date, end_date, [field], identifier)
