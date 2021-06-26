@@ -24,25 +24,8 @@ def div_zero(num):
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        try:
-            div_zero(2)
-        except Exception as e:
-            err = ErrorLog.objects.create_log(error_description='error in manage.py debug',error_message=str(e))
-            err.send_report_error()
-        # print(scrap_csi())
-        # populate_client_top_stock_bot_tester_weekly(currency="KRW", client_name="HANWHA")
-        # order_client_topstock(currency="KRW", client_name="HANWHA", bot_tester=True)
-        # pos_list = ['870bf55ced6a48328c6f771c423fde7d', '997512d997574960b6f91d45196f7147', 'b0736584eb8c4f62a413ebdcc58b73cd', 'f2c05da6eead451a911a3e8275188f5d', '13691bc26f4347a488254a76c295328a', '1b37b3bf90554d0aae4fb2a206fb58e5', '221c0e44bb8a433e83e29e557d220409', '7d866a42960e492fa99768251bd6e722', '6f48b266c9de442d8bb40240442c4173']
-        # send_csv_hanwha(currency="KRW", client_name="HANWHA", new={'pos_list': pos_list}, bot_tester=True)
-        # run_batch()
-        # from global_vars import bots_list
-        # for bot in bots_list:
-        #     for capital in ["small", "large"]:
-        #         hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
-        #         extra_data__service_type="bot_tester", 
-        #         extra_data__capital=capital, 
-        #         extra_data__type=bot.upper()).values("user")]
-        #         print(hanwha)
+        scrap_csi()
+
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
         # rkd = RkdData()
