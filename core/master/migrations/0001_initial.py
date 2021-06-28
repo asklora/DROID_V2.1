@@ -147,7 +147,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'data_vol_surface_inferred',
-                'managed': True,
+                'managed': False,
             },
         ),
         migrations.CreateModel(
@@ -168,7 +168,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'data_vol_surface',
-                'managed': True,
+                'managed': False,
             },
         ),
         migrations.CreateModel(

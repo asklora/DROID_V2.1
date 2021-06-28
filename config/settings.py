@@ -47,7 +47,7 @@ ADDITIONAL_APPS = [
     'django_celery_beat',
     'drf_spectacular',
     'corsheaders',
-    'rest_framework_simplejwt.token_blacklist',
+    # 'rest_framework_simplejwt.token_blacklist',
     
 ]
 CORE_APPS = [
@@ -159,6 +159,8 @@ DATABASES = {
         'PASSWORD': os.getenv('DBPASSWORD'),
         'HOST': read_endpoint,
         'PORT': port,
+        'TEST':{'NAME':'test_postgres'}
+        
     },
     'aurora_read': {
         'ENGINE': DB_ENGINE,
@@ -167,6 +169,9 @@ DATABASES = {
         'PASSWORD': os.getenv('DBPASSWORD'),
         'HOST': read_endpoint,
         'PORT': port,
+        'TEST':{
+            'NAME':'test_postgres_read'
+            }
 
     },
     'aurora_write': {
@@ -176,6 +181,9 @@ DATABASES = {
         'PASSWORD': os.getenv('DBPASSWORD'),
         'HOST': write_endpoint,
         'PORT': port,
+        'TEST':{
+            'NAME':'test_postgres_write'
+            }
 
     },
 
