@@ -30,10 +30,11 @@ class AppUserManager(BaseUserManager):
         """
         Create and save a SuperUser with the given email and password.
         """
-        strip = email.replace('@', '_').replace(
-            '.com', '').replace('.', '_')
-        unique_usr = "%s%s" % (uuid.uuid4().hex[:8], strip)
-        username = unique_usr
+        if not username:
+            strip = email.replace('@', '_').replace(
+                '.com', '').replace('.', '_')
+            unique_usr = "%s%s" % (uuid.uuid4().hex[:8], strip)
+            username = unique_usr
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
