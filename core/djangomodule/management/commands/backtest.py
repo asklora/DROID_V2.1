@@ -26,8 +26,9 @@ class Command(BaseCommand):
             train_model()
             gc.collect()
             for time_to_exp in time_to_expiry:
-                train_lebeler_model(time_to_exp=[time_to_exp])
-                gc.collect()
+                for bot in bots_list:
+                    train_lebeler_model(time_to_exp=[time_to_exp], bots_list=[bot])
+                    gc.collect()
 
         if(options["classic"]):
             daily_classic()
