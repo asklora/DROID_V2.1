@@ -439,11 +439,11 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
         else:
             subject = "HEDGE"
         if db_debug:
-            if(bot_tester):
-                LORA_MEMBER=["rede.akbar@loratechai.com","agustian@loratechai.com", "stepchoi@loratechai.com", 
-                "kenson.lau@loratechai.com", "nick.choi@loratechai.com"]
-            else:
-                LORA_MEMBER=["rede.akbar@loratechai.com","agustian@loratechai.com"]
+            # if(bot_tester):
+            #     LORA_MEMBER=["rede.akbar@loratechai.com","agustian@loratechai.com", "stepchoi@loratechai.com", 
+            #     "kenson.lau@loratechai.com", "nick.choi@loratechai.com"]
+            # else:
+            LORA_MEMBER=["rede.akbar@loratechai.com","agustian@loratechai.com"]
             HANWHA_MEMBER=LORA_MEMBER
         else:
             LORA_MEMBER=["rede.akbar@loratechai.com", "stepchoi@loratechai.com", "joseph.chang@loratechai.com",
