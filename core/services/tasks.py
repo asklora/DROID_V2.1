@@ -233,7 +233,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
 
     return {"result": f"populate and order {currency} done"}
 
-# ERASED SCHEDULE
+
 
 
 # @app.task
@@ -435,15 +435,21 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
         csv = export_csv(df)
         hanwha_csv = export_csv(hanwha_df)
         if new:
-            subject = "NEW PICK"
-        else:
-            subject = "HEDGE"
-        if db_debug:
-            if(bot_tester):
-                LORA_MEMBER=["rede.akbar@loratechai.com","agustian@loratechai.com", "stepchoi@loratechai.com", 
-                "kenson.lau@loratechai.com", "nick.choi@loratechai.com"]
+            if db_debug:
+                subject = "TEST NEW PICK"
             else:
-                LORA_MEMBER=["rede.akbar@loratechai.com","agustian@loratechai.com"]
+                subject = "NEW PICK"
+        else:
+            if db_debug:
+                subject = "TEST HEDGE"
+            else:
+                subject = "HEDGE"
+        if db_debug:
+            # if(bot_tester):
+            #     LORA_MEMBER=["rede.akbar@loratechai.com","agustian@loratechai.com", "stepchoi@loratechai.com", 
+            #     "kenson.lau@loratechai.com", "nick.choi@loratechai.com"]
+            # else:
+            LORA_MEMBER=["rede.akbar@loratechai.com","agustian@loratechai.com"]
             HANWHA_MEMBER=LORA_MEMBER
         else:
             LORA_MEMBER=["rede.akbar@loratechai.com", "stepchoi@loratechai.com", "joseph.chang@loratechai.com",
