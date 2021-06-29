@@ -129,10 +129,6 @@ class Command(BaseCommand):
                 status = "Ticker Name Ingestion"
                 update_ticker_name_from_dsws()
                 do_function("universe_populate")
-                status = "IBES Ingestion"
-                update_ibes_data_monthly_from_dsws()
-                status = "Macro Ingestion"
-                update_macro_data_monthly_from_dsws()
 
             if(options["monthly"]):
                 status = "Entity Type Ingestion"
@@ -154,7 +150,12 @@ class Command(BaseCommand):
                 status = "Dividend Ingestion"
                 dividend_updated()
                 status = "Dividend Daily Update"
-                interest_daily_update()
+                dividend_daily_update()
+                status = "IBES Ingestion"
+                update_ibes_data_monthly_from_dsws()
+                status = "Macro Ingestion"
+                update_macro_data_monthly_from_dsws()
+
 
         except Exception as e:
             print("{} : === {} ERROR === : {}".format(dateNow(), status, e))
