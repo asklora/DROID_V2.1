@@ -17,8 +17,7 @@ usd_prep:
 
 usd_uno:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code USD --uno True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --currency_code USD
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --statistic True
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --statistic True --currency_code USD
 
 usd_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code USD --ucdc True
@@ -28,7 +27,7 @@ krw_prep:
 
 krw_uno:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code KRW --uno True --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --currency_code KRW
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --statistic True --currency_code KRW
 
 krw_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code KRW --ucdc True --infer True
@@ -38,6 +37,7 @@ hkd_prep:
 
 hkd_uno:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code HKD --uno True --infer True
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --statistic True --currency_code HKD
 
 hkd_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code HKD --ucdc True --infer True
@@ -47,7 +47,7 @@ eur_prep:
 
 eur_uno:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code EUR --uno True --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --currency_code EUR
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --statistic True --currency_code EUR
 
 eur_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code EUR --ucdc True --infer True
@@ -57,7 +57,7 @@ cny_prep:
 
 cny_uno:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code CNY --uno True --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --currency_code CNY
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --statistic True --currency_code CNY
 
 cny_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code CNY --ucdc True --infer True
@@ -67,7 +67,7 @@ sgd_prep:
 
 sgd_uno:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code SGD --uno True --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --currency_code SGD
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --statistic True --currency_code SGD
 
 sgd_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code SGD --ucdc True --infer True
@@ -77,7 +77,7 @@ twd_prep:
 
 twd_uno:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code TWD --uno True --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --currency_code TWD
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --statistic True --currency_code TWD
 
 twd_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code TWD --ucdc True --infer True
@@ -87,7 +87,7 @@ jpy_prep:
 
 jpy_uno:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code JPY --uno True --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --currency_code JPY
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --statistic True --currency_code JPY
 
 jpy_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code JPY --ucdc True --infer True
@@ -97,7 +97,7 @@ gbp_prep:
 
 gbp_uno:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code GBP --uno True --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --currency_code GBP
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --backtest True --ranking True --statistic True --currency_code GBP
 
 gbp_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --option_maker True --null_filler True --currency_code GBP --ucdc True --infer True
