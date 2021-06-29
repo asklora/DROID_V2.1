@@ -430,7 +430,7 @@ def bot_statistic_classic(ticker=None, currency_code=None, time_to_exp=None):
     time_to_exp = check_time_to_exp(time_to_exp)
     populate_classic_statistic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
     report = "BOT STATISTIC CLASSIC COMPLETED"
-    report_check(report)
+    report_check(report, ticker=ticker, currency_code=currency_code)
 
 
 def bot_statistic_ucdc(ticker=None, currency_code=None, time_to_exp=None):
@@ -438,7 +438,7 @@ def bot_statistic_ucdc(ticker=None, currency_code=None, time_to_exp=None):
     time_to_exp = check_time_to_exp(time_to_exp)
     populate_ucdc_statistic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
     report = "BOT STATISTIC UCDC COMPLETED"
-    report_check(report)
+    report_check(report, ticker=ticker, currency_code=currency_code)
 
 
 def bot_statistic_uno(ticker=None, currency_code=None, time_to_exp=None):
@@ -446,7 +446,7 @@ def bot_statistic_uno(ticker=None, currency_code=None, time_to_exp=None):
     time_to_exp = check_time_to_exp(time_to_exp)
     populate_uno_statistic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
     report = "BOT STATISTIC UNO COMPLETED"
-    report_check(report)
+    report_check(report, ticker=ticker, currency_code=currency_code)
 
 
 # ************************************************************************************************************************************************************************************
