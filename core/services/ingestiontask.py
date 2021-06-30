@@ -63,27 +63,22 @@ def get_latest_price(currency):
 @aws_batch
 @app.task
 def migrate_na():
-    now = datetime.now()
     try:
-        original_stdout = sys.stdout  # Save a reference to the original standards
-        with open(f"files/migrate{now}.txt", "w") as f:
-            # Change the standard output to the file we created.
-            sys.stdout = f
-            daily_migrations()  # triger ingestion function
-            daily_ingestion(region_id="na") # one region
-            ticker = get_universe_by_region(region_id="na")
-            populate_latest_price(ticker=ticker["ticker"])
+        
+        daily_migrations()  # triger ingestion function
+        daily_ingestion(region_id="na") # one region
+        ticker = get_universe_by_region(region_id="na")
+        populate_latest_price(ticker=ticker["ticker"])
 
-            populate_macro_table()
-            populate_ibes_table()
-            do_function("master_ohlcvtr_update")
-            master_ohlctr_update()
-            master_tac_update()
-            update_currency_price_from_dss()
-            interest_update()
-            dividend_daily_update()
-            interest_daily_update()
-            sys.stdout = original_stdout
+        populate_macro_table()
+        populate_ibes_table()
+        do_function("master_ohlcvtr_update")
+        master_ohlctr_update()
+        master_tac_update()
+        update_currency_price_from_dss()
+        interest_update()
+        dividend_daily_update()
+        interest_daily_update()
         return {"result": f"migrate NA daily done"}
     except Exception as e:
         line_error = trace.format_exc()
@@ -95,27 +90,23 @@ def migrate_na():
 @aws_batch
 @app.task
 def migrate_ws():
-    now = datetime.now()
     try:
-        original_stdout = sys.stdout  # Save a reference to the original standard output
-        with open(f"files/migrate{now}.txt", "w") as f:
-            # Change the standard output to the file we created.
-            sys.stdout = f
-            daily_migrations()  # triger ingestion function
-            daily_ingestion(region_id="ws")
-            ticker = get_universe_by_region(region_id="ws")
-            populate_latest_price(ticker=ticker["ticker"])
 
-            populate_macro_table()
-            populate_ibes_table()
-            do_function("master_ohlcvtr_update")
-            master_ohlctr_update()
-            master_tac_update()
-            update_currency_price_from_dss()
-            interest_update()
-            dividend_daily_update()
-            interest_daily_update()
-            sys.stdout = original_stdout
+        daily_migrations()  # triger ingestion function
+        daily_ingestion(region_id="ws")
+        ticker = get_universe_by_region(region_id="ws")
+        populate_latest_price(ticker=ticker["ticker"])
+
+        populate_macro_table()
+        populate_ibes_table()
+        do_function("master_ohlcvtr_update")
+        master_ohlctr_update()
+        master_tac_update()
+        update_currency_price_from_dss()
+        interest_update()
+        dividend_daily_update()
+        interest_daily_update()
+            
         return {"result": f"migrate daily done"}
     except Exception as e:
         line_error = trace.format_exc()
@@ -128,21 +119,16 @@ def migrate_ws():
 
 @app.task
 def migrate_droid1(region):
-    now = datetime.now()
     try:
-        original_stdout = sys.stdout  # Save a reference to the original standard outpu
-        with open(f"files/migrate{now}.txt", "w") as f:
-            # Change the standard output to the file we created.
-            sys.stdout = f
-            report_to_slack("===  CREATE AWS BATCH FOR DAILY MIGRATIONS ===")
-            if region == 'na':
-                migrate_na()  # triger ingestion function
-            elif region == 'ws':
-                migrate_ws()  # triger ingestion function
 
-            report_to_slack("===  CLOSING AWS BATCH FOR DAILY MIGRATIONS JOB DONE ===")
+        report_to_slack("===  CREATE AWS BATCH FOR DAILY MIGRATIONS ===")
+        if region == 'na':
+            migrate_na()  # triger ingestion function
+        elif region == 'ws':
+            migrate_ws()  # triger ingestion function
+
+        report_to_slack("===  CLOSING AWS BATCH FOR DAILY MIGRATIONS JOB DONE ===")
             
-            sys.stdout = original_stdout
         return {"result": f"migrate daily done"}
     except Exception as e:
         return {"err": str(e)}

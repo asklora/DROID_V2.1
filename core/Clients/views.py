@@ -15,7 +15,7 @@ class ClientView(APIView):
     )
     def get(self, request, format=None):
         """
-        Return a list of client.
+        Return a list of client
         """
         user = request.user
         if user.email == 'asklora@loratechai.com':
