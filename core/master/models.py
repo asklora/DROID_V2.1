@@ -237,6 +237,9 @@ class DataFundamentalScore(models.Model):
     eps1fd12 = models.FloatField(blank=True, null=True)
     sal1fd12 = models.FloatField(blank=True, null=True)
     cap1fd12 = models.FloatField(blank=True, null=True)
+    environment = models.FloatField(blank=True, null=True)
+    social = models.FloatField(blank=True, null=True)
+    goverment = models.FloatField(blank=True, null=True)
 
     class Meta:
         managed = True

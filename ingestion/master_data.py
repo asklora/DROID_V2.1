@@ -187,14 +187,18 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
     print(universe)
     filter_field = ["EPS1TR12","WC05480","WC18100A","WC18262A","WC08005",
         "WC18309A","WC18311A","WC18199A","WC08372","WC05510","WC08636A",
-        "BPS1FD12","EBD1FD12","EVT1FD12","EPS1FD12","SAL1FD12","CAP1FD12"]
+        "BPS1FD12","EBD1FD12","EVT1FD12","EPS1FD12","SAL1FD12","CAP1FD12",
+        "ENSCORE","SOSCORE","CGSCORE"]
     
     column_name = {"EPS1TR12": "eps", "WC05480": "bps", "WC18100A": "ev",
         "WC18262A": "ttm_rev","WC08005": "mkt_cap","WC18309A": "ttm_ebitda",
         "WC18311A": "ttm_capex","WC18199A": "net_debt","WC08372": "roe",
         "WC05510": "cfps","WC08636A": "peg","BPS1FD12" : "bps1fd12",
         "EBD1FD12" : "ebd1fd12","EVT1FD12" : "evt1fd12","EPS1FD12" : "eps1fd12",
-        "SAL1FD12" : "sal1fd12","CAP1FD12" : "cap1fd12"}
+        "SAL1FD12" : "sal1fd12","CAP1FD12" : "cap1fd12",
+        "ENSCORE" : "environment","SOSCORE" : "social",
+        "CGSCORE" : "goverment"}
+        
     result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
     print("Error Ticker = " + str(except_field))
     if len(except_field) == 0 :
@@ -270,13 +274,12 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         column_robust_score = column + "_robust_score"
         fundamentals[column_robust_score] = robust_scale(fundamentals[column_score])
         calculate_column_robust_score.append(column_robust_score)
-    # fundamentals_robust_score_calc = fundamentals[calculate_column_robust_score]
-    # scaler = MinMaxScaler().fit(fundamentals_robust_score_calc)
+        
+    minmax_column = ["ticker", "currency_code", "industry_code"]
     for column in calculate_column:
-        column_score = column + "_score"
         column_robust_score = column + "_robust_score"
-        column_minmax_currency_code = column + "_minmax_currency_code"
-        column_minmax_industry = column + "_minmax_industry"
+        column_minmax_currency_code = column + "_currency_code"
+        column_minmax_industry = column + "_industry"
         df_currency_code = fundamentals[["currency_code", column_robust_score]]
         df_currency_code = df_currency_code.rename(columns = {column_robust_score : "score"})
         print(df_currency_code)
@@ -291,41 +294,73 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         else:
             fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0.4, fundamentals[column_minmax_currency_code])
             fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
-
+        minmax_column.append(column_minmax_currency_code)
+        minmax_column.append(column_minmax_industry)
+    
     #TWELVE points - everthing average yields 0.5 X 12 = 6.0 score
+    # fundamentals["fundamentals_value"] = ((fundamentals["earnings_yield_minmax_currency_code"]) + 
+    #     fundamentals["earnings_yield_minmax_industry"] + 
+    #     fundamentals["book_to_price_minmax_currency_code"] + 
+    #     fundamentals["book_to_price_minmax_industry"] + 
+    #     fundamentals["ebitda_to_ev_minmax_currency_code"] + 
+    #     fundamentals["ebitda_to_ev_minmax_industry"] +
+    #     fundamentals["fwd_bps_minmax_industry"] + 
+    #     fundamentals["fwd_ebitda_to_ev_minmax_currency_code"] + 
+    #     fundamentals["fwd_ebitda_to_ev_minmax_industry"] + 
+    #     fundamentals["fwd_ey_minmax_currency_code"]+ 
+    #     fundamentals["roe_minmax_industry"]+ 
+    #     fundamentals["cf_to_price_minmax_currency_code"]).round(1)
+    
+    # fundamentals["fundamentals_quality"] = ((fundamentals["roic_minmax_currency_code"]) + 
+    #     fundamentals["roic_minmax_industry"]+
+    #     fundamentals["cf_to_price_minmax_industry"]+
+    #     fundamentals["eps_growth_minmax_currency_code"] + 
+    #     fundamentals["eps_growth_minmax_industry"] + 
+    #     (fundamentals["fwd_ey_minmax_industry"]) + 
+    #     fundamentals["fwd_sales_to_price_minmax_industry"]+ 
+    #     (fundamentals["fwd_roic_minmax_industry"]) +
+    #     fundamentals["earnings_yield_minmax_industry"] +
+    #     fundamentals["earnings_pred_minmax_industry"] +
+    #     fundamentals["earnings_pred_minmax_currency_code"]).round(1)
+
     fundamentals["fundamentals_value"] = ((fundamentals["earnings_yield_minmax_currency_code"]) + 
         fundamentals["earnings_yield_minmax_industry"] + 
         fundamentals["book_to_price_minmax_currency_code"] + 
         fundamentals["book_to_price_minmax_industry"] + 
         fundamentals["ebitda_to_ev_minmax_currency_code"] + 
         fundamentals["ebitda_to_ev_minmax_industry"] +
-        fundamentals["fwd_bps_minmax_industry"] + 
-        fundamentals["fwd_ebitda_to_ev_minmax_currency_code"] + 
+        fundamentals["fwd_bps_minmax_currency_code"] +
+        fundamentals["fwd_bps_minmax_industry"] +
+        fundamentals["fwd_ebitda_to_ev_minmax_currency_code"] +
         fundamentals["fwd_ebitda_to_ev_minmax_industry"] + 
-        fundamentals["fwd_ey_minmax_currency_code"]+ 
-        fundamentals["roe_minmax_industry"]+ 
-        fundamentals["cf_to_price_minmax_currency_code"]).round(1)
-    
+        fundamentals["roe_minmax_currency_code"]+
+        fundamentals["roe_minmax_industry"]).round(1)
+
     fundamentals["fundamentals_quality"] = ((fundamentals["roic_minmax_currency_code"]) + 
-        fundamentals["roic_minmax_industry"]+
-        fundamentals["cf_to_price_minmax_industry"]+
+        fundamentals["roic_minmax_industry"] +
+        fundamentals["cf_to_price_minmax_currency_code"] +
+        fundamentals["cf_to_price_minmax_industry"] +
         fundamentals["eps_growth_minmax_currency_code"] + 
         fundamentals["eps_growth_minmax_industry"] + 
-        (fundamentals["fwd_ey_minmax_industry"]) + 
+        fundamentals["fwd_ey_minmax_industry"] +
+        fundamentals["fwd_ey_minmax_currency_code"] +
         fundamentals["fwd_sales_to_price_minmax_industry"]+ 
         (fundamentals["fwd_roic_minmax_industry"]) +
-        fundamentals["earnings_yield_minmax_industry"] +
         fundamentals["earnings_pred_minmax_industry"] +
-        fundamentals["earnings_pred_minmax_currency_code"] ).round(1)
-
+        fundamentals["earnings_pred_minmax_currency_code"]).round(1)
+    print(fundamentals)
+    print(fundamentals.columns)
+    minmax_column.append("fundamentals_value")
+    minmax_column.append("fundamentals_quality")
+    print(minmax_column)
     print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
     if(len(fundamentals)) > 0 :
         print(fundamentals)
         result = universe_rating.merge(fundamentals[["ticker", "fundamentals_value", "fundamentals_quality"]], how="left", on="ticker")
         result["updated"] = dateNow()
         print(result)
-        upsert_data_to_database(result, get_universe_rating_table_name(), "ticker", how="update", Text=True)
-        report_to_slack("{} : === Universe Fundamentals Quality & Value Updated ===".format(datetimeNow()))
+        # upsert_data_to_database(result, get_universe_rating_table_name(), "ticker", how="update", Text=True)
+        # report_to_slack("{} : === Universe Fundamentals Quality & Value Updated ===".format(datetimeNow()))
 
 def dividend_updated(ticker=None, currency_code=None):
     print("{} : === Dividens Update ===".format(datetimeNow()))

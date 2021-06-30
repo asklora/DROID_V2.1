@@ -352,6 +352,7 @@ def daily_ingestion(region_id=None):
 
 # Main Process
 if __name__ == "__main__":
+    update_fundamentals_quality_value(ticker=None, currency_code=None)
     # update_mic_from_dss()
     from migrate import weekly_migrations, daily_migrations
     # update_ibes_data_monthly_from_dsws(ticker=[".HSI"])
@@ -401,4 +402,4 @@ if __name__ == "__main__":
     # update_utc_offset_from_timezone()
     # update_index_price_from_dss(currency_code=["USD"])
     # print("Done")
-    report_to_slack("TEST")
+    # report_to_slack("TEST")

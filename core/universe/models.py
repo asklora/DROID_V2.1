@@ -260,8 +260,7 @@ class Universe(models.Model):
 
 
 class UniverseRating(models.Model):
-    ticker = models.OneToOneField(Universe, on_delete=models.CASCADE,
-                                  db_column="ticker", related_name="ticker_rating_ticker", primary_key=True)
+    ticker = models.OneToOneField(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="ticker_rating_ticker", primary_key=True)
     fundamentals_quality = models.FloatField(blank=True, null=True)
     fundamentals_value = models.FloatField(blank=True, null=True)
     dlp_1m = models.FloatField(blank=True, null=True)
@@ -276,7 +275,79 @@ class UniverseRating(models.Model):
     class Meta:
         db_table = "universe_rating"
         managed = True
-    
+
+class UniverseRatingHistory(models.Model):
+    uid = models.TextField(primary_key=True)
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,db_column="ticker", related_name="universe_rating_history_ticker")
+    trading_day = models.DateField(blank=True, null=True)
+    ai_score = models.FloatField(blank=True, null=True)
+    ai_score2 = models.FloatField(blank=True, null=True)
+    fundamentals_quality = models.FloatField(blank=True, null=True)
+    fundamentals_value = models.FloatField(blank=True, null=True)
+    technical = models.FloatField(blank=True, null=True)
+    momentum = models.FloatField(blank=True, null=True)
+    esg = models.FloatField(blank=True, null=True)
+    dlp_1m = models.FloatField(blank=True, null=True)
+    dlp_3m = models.FloatField(blank=True, null=True)
+    wts_rating = models.FloatField(blank=True, null=True)
+    wts_rating2 = models.FloatField(blank=True, null=True)
+    classic_vol = models.FloatField(blank=True, null=True)
+
+    def __str__(self):
+        return str(self.ticker.ticker)
+
+    class Meta:
+        db_table = "universe_rating_history"
+        managed = True
+
+class UniverseRatingDetailHistory(models.Model):
+    uid = models.TextField(primary_key=True)
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,db_column="ticker", related_name="universe_rating_detail_history_ticker")
+    trading_day = models.DateField(blank=True, null=True)
+    earnings_yield_minmax_currency_code = models.FloatField(blank=True, null=True)
+    earnings_yield_minmax_industry = models.FloatField(blank=True, null=True)
+    book_to_price_minmax_currency_code = models.FloatField(blank=True, null=True)
+    book_to_price_minmax_industry = models.FloatField(blank=True, null=True)
+    ebitda_to_ev_minmax_currency_code = models.FloatField(blank=True, null=True)
+    ebitda_to_ev_minmax_industry = models.FloatField(blank=True, null=True)
+    sales_to_price_minmax_currency_code = models.FloatField(blank=True, null=True)
+    sales_to_price_minmax_industry = models.FloatField(blank=True, null=True)
+    roic_minmax_currency_code = models.FloatField(blank=True, null=True)
+    roic_minmax_industry = models.FloatField(blank=True, null=True)
+    roe_minmax_currency_code = models.FloatField(blank=True, null=True)
+    roe_minmax_industry = models.FloatField(blank=True, null=True)
+    cf_to_price_minmax_currency_code = models.FloatField(blank=True, null=True)
+    cf_to_price_minmax_industry = models.FloatField(blank=True, null=True)
+    eps_growth_minmax_currency_code = models.FloatField(blank=True, null=True)
+    eps_growth_minmax_industry = models.FloatField(blank=True, null=True)
+    fwd_bps_minmax_currency_code = models.FloatField(blank=True, null=True)
+    fwd_bps_minmax_industry = models.FloatField(blank=True, null=True)
+    fwd_ebitda_to_ev_minmax_currency_code = models.FloatField(blank=True, null=True)
+    fwd_ebitda_to_ev_minmax_industry = models.FloatField(blank=True, null=True)
+    fwd_ey_minmax_currency_code = models.FloatField(blank=True, null=True)
+    fwd_ey_minmax_industry = models.FloatField(blank=True, null=True)
+    fwd_sales_to_price_minmax_currency_code = models.FloatField(blank=True, null=True)
+    fwd_sales_to_price_minmax_industry = models.FloatField(blank=True, null=True)
+    fwd_roic_minmax_currency_code = models.FloatField(blank=True, null=True)
+    fwd_roic_minmax_industry = models.FloatField(blank=True, null=True)
+    earnings_pred_minmax_currency_code = models.FloatField(blank=True, null=True)
+    earnings_pred_minmax_industry = models.FloatField(blank=True, null=True)
+    tri_minmax_currency_code = models.FloatField(blank=True, null=True)
+    tri_minmax_industry = models.FloatField(blank=True, null=True)
+    environment_minmax_currency_code = models.FloatField(blank=True, null=True)
+    social_minmax_currency_code = models.FloatField(blank=True, null=True)
+    goverment_minmax_currency_code = models.FloatField(blank=True, null=True)
+    environment_minmax_industry_code = models.FloatField(blank=True, null=True)
+    social_minmax_industry_code = models.FloatField(blank=True, null=True)
+    goverment_minmax_industry_code = models.FloatField(blank=True, null=True)
+
+    def __str__(self):
+        return str(self.ticker.ticker)
+
+    class Meta:
+        db_table = "universe_rating_detail_history"
+        managed = True
+
 class UniverseRatingHistory(models.Model):
     uid = models.TextField(primary_key=True)
     ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="universe_rating_ticker")

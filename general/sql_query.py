@@ -260,7 +260,7 @@ def get_max_last_ingestion_from_universe(ticker=None, currency_code=None):
     return str(data.loc[0, "max_date"])
     
 def get_last_close_industry_code(ticker=None, currency_code=None):
-    query = f"select mo.ticker, mo.close, mo.currency_code, substring(univ.industry_code from 0 for 3) as industry_code from "
+    query = f"select mo.ticker, mo.close, mo.currency_code, substring(univ.industry_code from 0 for 7) as industry_code from "
     query += f"{master_ohlcvtr_table} mo inner join {universe_table} univ on univ.ticker=mo.ticker where univ.is_active=True "
     if type(ticker) != type(None):
         query += f"and univ.ticker in {tuple_data(ticker)} "
