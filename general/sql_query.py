@@ -279,6 +279,14 @@ def get_pred_mean():
     data = read_query(query, table=master_ohlcvtr_table, dlp=False)
     return data
 
+def get_specific_tri(trading_day, tri_name = "tri"):
+    query = f"select price.ticker, price.total_return_index as {tri_name} from {get_master_ohlcvtr_table_name()} price "
+    query += f"inner join (select ohlcvtr.ticker, max(ohlcvtr.trading_day) as max_date from {get_master_ohlcvtr_table_name()} ohlcvtr "
+    query += f"where ohlcvtr.total_return_index is not null and ohlcvtr.trading_day <= '{trading_day}' group by ohlcvtr.ticker) result "
+    query += f"on price.ticker=result.ticker and price.trading_day=result.max_date "
+    data = read_query(query, table=master_ohlcvtr_table)
+    return data
+
 def get_yesterday_close_price(ticker=None, currency_code=None):
     query = f"select tac.ticker, tac.trading_day, tac.tri_adj_close as yesterday_close from {get_master_tac_table_name()} tac "
     query += f"inner join (select mo.ticker, max(mo.trading_day) as max_date from {get_master_tac_table_name()} mo where mo.tri_adj_close is not null group by mo.ticker) result "

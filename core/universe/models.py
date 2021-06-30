@@ -337,9 +337,9 @@ class UniverseRatingDetailHistory(models.Model):
     environment_minmax_currency_code = models.FloatField(blank=True, null=True)
     social_minmax_currency_code = models.FloatField(blank=True, null=True)
     goverment_minmax_currency_code = models.FloatField(blank=True, null=True)
-    environment_minmax_industry_code = models.FloatField(blank=True, null=True)
-    social_minmax_industry_code = models.FloatField(blank=True, null=True)
-    goverment_minmax_industry_code = models.FloatField(blank=True, null=True)
+    environment_minmax_industry = models.FloatField(blank=True, null=True)
+    social_minmax_industry = models.FloatField(blank=True, null=True)
+    goverment_minmax_industry = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return str(self.ticker.ticker)
