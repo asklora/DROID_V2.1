@@ -9,7 +9,7 @@ from general.sql_output import upsert_data_to_database
 from general.data_process import uid_maker
 
 def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40):
-    DS = setDataStream(DSWS=False)
+    DS = setDataStream()
     print("== Getting Data From DSWS ==")
     chunk_data = []
     error_universe = []
