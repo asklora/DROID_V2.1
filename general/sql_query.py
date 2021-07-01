@@ -260,7 +260,7 @@ def get_max_last_ingestion_from_universe(ticker=None, currency_code=None):
     return str(data.loc[0, "max_date"])
     
 def get_last_close_industry_code(ticker=None, currency_code=None):
-    query = f"select mo.ticker, mo.close, mo.currency_code, substring(univ.industry_code from 0 for 3) as industry_code from "
+    query = f"select mo.ticker, mo.close, mo.currency_code, substring(univ.industry_code from 0 for 7) as industry_code from "
     query += f"{master_ohlcvtr_table} mo inner join {universe_table} univ on univ.ticker=mo.ticker where univ.is_active=True "
     if type(ticker) != type(None):
         query += f"and univ.ticker in {tuple_data(ticker)} "
@@ -277,6 +277,14 @@ def get_pred_mean():
     query += f"(select ticker, max(testing_period::date) as max_date from ai_value_lgbm_pred_final group by ticker) filter "
     query += f"where filter.ticker=avlpf.ticker and filter.max_date=avlpf.testing_period;"
     data = read_query(query, table=master_ohlcvtr_table, dlp=False)
+    return data
+
+def get_specific_tri(trading_day, tri_name = "tri"):
+    query = f"select price.ticker, price.total_return_index as {tri_name} from {get_master_ohlcvtr_table_name()} price "
+    query += f"inner join (select ohlcvtr.ticker, max(ohlcvtr.trading_day) as max_date from {get_master_ohlcvtr_table_name()} ohlcvtr "
+    query += f"where ohlcvtr.total_return_index is not null and ohlcvtr.trading_day <= '{trading_day}' group by ohlcvtr.ticker) result "
+    query += f"on price.ticker=result.ticker and price.trading_day=result.max_date "
+    data = read_query(query, table=master_ohlcvtr_table)
     return data
 
 def get_yesterday_close_price(ticker=None, currency_code=None):
