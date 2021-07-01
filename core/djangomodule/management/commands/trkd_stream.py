@@ -9,7 +9,7 @@ import websocket
 from datasource.rkd import Rkd
 from core.universe.models import Universe
 from django.core.management.base import BaseCommand, CommandError
-
+from datasource.rkd import Rkd
 """
 Global Variables 
 position : remote address / your IP
@@ -56,6 +56,7 @@ position : remote address / your IP
 
 class Command(BaseCommand):
     def __init__(self):
+        rkd = Rkd()
         # user = None
         # app_id = None
         # password = None
@@ -70,7 +71,7 @@ class Command(BaseCommand):
         # except Exception as e:
         #     print(f"error == {e}")
             # self.token = None
-        self.token = "7B6C286DC556776332E1DE138D3F1DE981A6353DDE51F53628408840778EF754403189EC31AAC4133136D97FAE5A66AAEB11ABB1DADF321DCA63A1F7E1A2D66AB4FD2729B488818571986D47587F1DAE780CA0AAB7D2B9102C4E25594BFB8119"
+        self.token = rkd.credentials.token
         super().__init__()
 
     def handle(self, *args, **options):
