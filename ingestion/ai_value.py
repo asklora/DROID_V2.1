@@ -339,7 +339,7 @@ def worldscope_manual_ingestion(ticker = None, currency_code=None):
         "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
         "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
         "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
-        "WC02001A"]
+        "WC02001A", "WC05575A"]
     identifier="ticker"
     ticker = universe[["ticker"]]
     ticker = ticker["ticker"].tolist()
@@ -384,6 +384,7 @@ def worldscope_manual_ingestion(ticker = None, currency_code=None):
             "WC02101A" : "fn_2101",
             #     "WC02001A"]
             "WC02001A" : "fn_2001",
+            "WC05575A" : "fn_5575",
             "index" : "period_end"
         })
         result = result.reset_index(inplace=False)
