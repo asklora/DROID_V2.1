@@ -154,19 +154,18 @@ class RkdData(Rkd):
         return payload
 
     def get_snapshot(self, ticker):
-        snapshot_url = f'{self.credentials.base_url}Fundamentals/Fundamentals.svc/REST/Fundamentals_1/GetSnapshotReports_1'
+        snapshot_url = f'{self.credentials.base_url}Fundamentals/Fundamentals.svc/REST/Fundamentals_1/GetRatiosReports_1'
         payload = {
-            "GetSnapshotReports_Request_1": {
+            "GetRatiosReports_Request_1": {
                 "companyId": ticker,
                 "companyIdType": "RIC"
             }
         }
         response = self.send_request(
             snapshot_url, payload, self.auth_headers())
-        base_response = response['GetSnapshotReports_Response_1']['FundamentalReports']['ReportSnapshot']
+        base_response = response['GetRatiosReports_Response_1']['FundamentalReports']['ReportRatios']
         formated_json = {}
         formated_json['ticker'] = base_response['Issues']['Issue'][0]['IssueID'][2]['Value']
-        formated_json['business_summary'] = base_response['TextInfo']['Text'][0]['Value']
         fields = ['AREVPS',
                   'MKTCAP',
                   'APEEXCLXOR',
@@ -181,6 +180,9 @@ class RkdData(Rkd):
             for item in group_item['Ratio']:
                 if item['FieldName'] in fields:
                     formated_json[item['FieldName']] = item['Value']
+        for group_item in base_response['ForecastData']['Ratio']:
+            if group_item['FieldName'] in fields:
+                formated_json[group_item['FieldName']] = group_item['Value'][0]['Value']
 
         return formated_json
 

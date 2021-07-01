@@ -29,7 +29,6 @@ class Command(BaseCommand):
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
         rkd = RkdData()
-        # print(rkd.retrive_template("AAB.HL",fields=['CF_A','CF_CLOSE']))
         quotes = rkd.get_snapshot('MSFT.O')
         print(quotes)
         # print(quotes)
