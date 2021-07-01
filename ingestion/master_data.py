@@ -30,7 +30,8 @@ from general.sql_query import (
 from general.sql_output import clean_latest_price, delete_data_on_database, delete_old_dividends_on_database, update_all_data_by_capital_change, update_capital_change, upsert_data_to_database
 from datasource.dsws import (
     get_data_history_from_dsws, 
-    get_data_history_frequently_from_dsws, 
+    get_data_history_frequently_from_dsws,
+    get_data_static_from_dsws, 
     get_data_static_with_string_from_dsws,
     get_data_history_frequently_by_field_from_dsws)
 from datasource.dss import get_data_from_dss
@@ -184,13 +185,14 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
     print("{} : === Fundamentals Score Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
     start_date = backdate_by_month(12)
+    start_date2 = backdate_by_month(24)
     identifier = "ticker"
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
     print(universe)
     filter_field = ["EPS1TR12","WC05480","WC18100A","WC18262A","WC08005",
         "WC18309A","WC18311A","WC18199A","WC08372","WC05510","WC08636A",
-        "BPS1FD12","EBD1FD12","EVT1FD12","EPS1FD12","SAL1FD12","CAP1FD12",
-        "ENSCORE","SOSCORE","CGSCORE"]
+        "BPS1FD12","EBD1FD12","EVT1FD12","EPS1FD12","SAL1FD12","CAP1FD12"]
+    static_field = ["ENSCORE","SOSCORE","CGSCORE"]
     column_name = {"EPS1TR12": "eps", "WC05480": "bps", "WC18100A": "ev",
         "WC18262A": "ttm_rev","WC08005": "mkt_cap","WC18309A": "ttm_ebitda",
         "WC18311A": "ttm_capex","WC18199A": "net_debt","WC08372": "roe",
@@ -199,7 +201,9 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
         "SAL1FD12" : "sal1fd12","CAP1FD12" : "cap1fd12",
         "ENSCORE" : "environment","SOSCORE" : "social",
         "CGSCORE" : "goverment"}
+    
     result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
+    result2, except_field2 = get_data_history_frequently_from_dsws(start_date2, end_date, universe, identifier, static_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
     print("Error Ticker = " + str(except_field))
     if len(except_field) == 0 :
         second_result = []
@@ -218,6 +222,8 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
     result = result.rename(columns=column_name)
     result.reset_index(inplace = True)
     result = result.drop(columns={"index", "level_0"})
+    result2 = result2.drop(columns=["index"])
+    result = result.merge(result2, how="left", on="ticker")
     print(result)
     if(len(universe)) > 0 :
         upsert_data_to_database(result, get_fundamental_score_table_name(), "ticker", how="update", Text=True)
