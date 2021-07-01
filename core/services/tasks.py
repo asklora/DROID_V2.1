@@ -233,7 +233,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
 
     return {"result": f"populate and order {currency} done"}
 
-# ERASED SCHEDULE
+
 
 
 # @app.task
