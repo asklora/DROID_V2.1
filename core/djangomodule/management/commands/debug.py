@@ -8,7 +8,7 @@ from core.djangomodule.calendar import TradingHours
 from core.orders.models import PositionPerformance, Order,OrderPosition
 from core.Clients.models import ClientTopStock, UserClient
 from core.services.ingestiontask import migrate_droid1
-from core.services.tasks import populate_client_top_stock_bot_tester_weekly, send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
+from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
 from main import populate_intraday_latest_price,update_index_price_from_dss
 from datetime import datetime
 from datasource.rkd import RkdData
@@ -24,13 +24,15 @@ def div_zero(num):
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        scrap_csi()
+        # scrap_csi()
 
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
-        # rkd = RkdData()
-        # quotes = rkd.get_quote(['003000.KS','000066.SZ'],save=True)
-        # quotes.save('master','LatestPrice')
+        rkd = RkdData()
+        # print(rkd.retrive_template("AAB.HL",fields=['CF_A','CF_CLOSE']))
+        quotes = rkd.get_snapshot('MSFT.O')
+        print(quotes)
+        # print(quotes)
         # order_client_topstock(currency="KRW", client_name="HANWHA")
         # odrs=OrderPosition.objects.filter()
         # for odr in odrs:
@@ -87,5 +89,5 @@ class Command(BaseCommand):
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
-        send_csv_hanwha(currency="KRW")
-        send_csv_hanwha(currency="CNY")
+        # send_csv_hanwha(currency="KRW")
+        # send_csv_hanwha(currency="CNY")

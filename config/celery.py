@@ -15,6 +15,12 @@ app.autodiscover_tasks()
 
 
 @app.task(bind=True)
+def app_publish(self):
+    return {'message':'hallo'}
+
+
+
+@app.task(bind=True)
 def debug_task(self):
     a = 0
     while True:
