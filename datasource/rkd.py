@@ -96,6 +96,20 @@ class Rkd:
         return headers
 
 
+    def parse_response(self,response):
+        json_data = response['RetrieveItem_Response_3']['ItemResponse'][0]['Item']
+        formated_json_data=[]
+        for index,item in enumerate(json_data):
+            ticker = item['RequestKey']['Name']
+            formated_json_data.append({'ticker':ticker})
+            for f in item['Fields']['F']:
+                field =f['n']
+                val =f['Value']
+                formated_json_data[index].update({field:val})
+        return formated_json_data
+    
+    
+    
 
 class RkdData(Rkd):
     
@@ -103,20 +117,25 @@ class RkdData(Rkd):
         super().__init__()
     
     
+    def retrive_template(self,ticker,scope="List",fields=''):
         
         
-        
-    def get_quote(self,ticker,df=False,save=False):
-        quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
+        if scope == 'List':
+            if not fields or fields == '':
+                raise ValueError('field must set if scope is list')
+            field = (',').join(fields)
+            fields = field.replace(',',':')
+    
+            
         payload ={
                     "RetrieveItem_Request_3": {
                         "ItemRequest": [
                             {
-                                "Fields": "CF_ASK: CF_BID: CF_CLOSE",
+                                "Fields": fields,
                                 "RequestKey": [
                                 
                                 ],
-                                "Scope": "List"
+                                "Scope": scope
                             }
                         ],
                         "TrimResponse": True,
@@ -138,19 +157,18 @@ class RkdData(Rkd):
                     "NameType": "RIC"
                     } 
                 )
+        
+        return payload
+    
+        
+    def get_quote(self,ticker,df=False,save=False):
+        quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
+        
 
         
         
         response = self.send_request(quote_url,payload,self.auth_headers())
-        json_data = response['RetrieveItem_Response_3']['ItemResponse'][0]['Item']
-        formated_json_data=[]
-        for index,item in enumerate(json_data):
-            ticker = item['RequestKey']['Name']
-            formated_json_data.append({'ticker':ticker})
-            for f in item['Fields']['F']:
-                field =f['n']
-                val =f['Value']
-                formated_json_data[index].update({field:val})
+        formated_json_data = self.parse_response(response)
         df_data = pd.DataFrame(formated_json_data).rename(columns={'CF_ASK':'intraday_ask','CF_CLOSE':'close','CF_BID':'intraday_bid'})
         if save:
             self.save('master','LatestPrice',df_data.to_dict('records'))
