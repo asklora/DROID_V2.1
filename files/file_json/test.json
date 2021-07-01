@@ -1,23 +1,713 @@
 {
-    "ExtractionRequest": {
-        "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.PriceHistoryExtractionRequest",
-        "ContentFieldNames": [
-            "RIC",
-            "Trade Date",
-            "Total Return",
-            "Universal Close Price"
-
-        ],
-        "IdentifierList": {
-            "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
-            "InstrumentIdentifiers": [
-            ],
-            "ValidationOptions": null,
-            "UseUserPreferencesForValidationOptions": false
-        },
-        "Condition":
-        {
-            
-      }
+    "GetSnapshotReports_Response_1": {
+        "FundamentalReports": {
+            "ReportSnapshot": {
+                "Major": 1,
+                "Minor": 0,
+                "Revision": 1,
+                "CoIDs": {
+                    "CoID": [
+                        {
+                            "Type": "RepNo",
+                            "Value": "A5ECF"
+                        },
+                        {
+                            "Type": "CompanyName",
+                            "Value": "Bukwang Pharm Co Ltd"
+                        }
+                    ]
+                },
+                "Issues": {
+                    "Issue": [
+                        {
+                            "ID": 1,
+                            "Type": "C",
+                            "Desc": "Common Stock",
+                            "Order": 1,
+                            "IssueID": [
+                                {
+                                    "Type": "Name",
+                                    "Value": "Ordinary Shares"
+                                },
+                                {
+                                    "Type": "Ticker",
+                                    "Value": "003000"
+                                },
+                                {
+                                    "Type": "RIC",
+                                    "Value": "003000.KS"
+                                },
+                                {
+                                    "Type": "DisplayRIC",
+                                    "Value": "003000.KS"
+                                },
+                                {
+                                    "Type": "InstrumentPI",
+                                    "Value": "333154"
+                                },
+                                {
+                                    "Type": "QuotePI",
+                                    "Value": "1140318"
+                                }
+                            ],
+                            "Exchange": {
+                                "Code": "SEO",
+                                "Country": "KOR",
+                                "Value": "Korea Stock Exchange"
+                            },
+                            "MostRecentSplit": {
+                                "Date": "2020-12-29",
+                                "Value": "1.1"
+                            }
+                        }
+                    ]
+                },
+                "CoGeneralInfo": {
+                    "CoStatus": {
+                        "Code": 1,
+                        "Value": "Active"
+                    },
+                    "CoType": {
+                        "Code": "EQU",
+                        "Value": "Equity Issue"
+                    },
+                    "LastModified": "2021-05-16",
+                    "LatestAvailableAnnual": "2020-12-31",
+                    "LatestAvailableInterim": "2021-03-31",
+                    "Employees": {
+                        "LastUpdated": "2015-12-31",
+                        "Value": "617"
+                    },
+                    "SharesOut": {
+                        "Date": "2021-04-09",
+                        "TotalFloat": 46935983.0,
+                        "Value": "68217053.554"
+                    },
+                    "ReportingCurrency": {
+                        "Code": "KRW",
+                        "Value": "Won"
+                    },
+                    "MostRecentExchange": {
+                        "Date": "2021-06-29",
+                        "Value": "1131.61996"
+                    }
+                },
+                "TextInfo": {
+                    "Text": [
+                        {
+                            "Type": "Business Summary",
+                            "lastModified": "2020-08-11T23:37:45",
+                            "Value": "Bukwang Pharm Co Ltd is a Korea-based company principally engaged in the manufacture and sale of pharmaceutical products. The Company operates its business through two segments. The Medicines and Quasi-drugs segment mainly produces and distributes pharmaceutical products including antidiabetic agents, anemic medicines, thyroid parathyroid hormone drugs, antihistamines, epileptic drugs, bronchodilators, stomatitis drugs, anti-malignant tumors, gum nutrition, hepatitis treatments, targeted anticancer agents, and others. The Research and Development segment mainly researches and develops pharmaceutical products."
+                        },
+                        {
+                            "Type": "Financial Summary",
+                            "lastModified": "2021-05-16T01:51:20",
+                            "Value": "BRIEF: For the three months ended 31 March 2021, BukwangPharm Co Ltd revenues decreased 3% to W36.86B. Net lossincreased from W944.4M to W3.22B. Revenues reflect OtherMerchandises segment decrease of 44% to W3.96B, Afrobelsegment decrease of 41% to W2.3B. Higher net loss reflectsR & D Expense increase of 63% to W6.8B (expense), Gain/Losson Invmt in Affiliates increase from W294.4M to W1.07B(expense)."
+                        }
+                    ]
+                },
+                "contactInfo": {
+                    "lastUpdated": "2021-05-16T01:51:21",
+                    "streetAddress": [
+                        {
+                            "line": 1,
+                            "Value": "7, Sangdo-ro, Dongjak-gu"
+                        },
+                        {
+                            "line": 2
+                        },
+                        {
+                            "line": 3
+                        }
+                    ],
+                    "city": "SEOUL",
+                    "state-region": None,
+                    "postalCode": "06955",
+                    "country": {
+                        "code": "KOR",
+                        "Value": "South Korea"
+                    },
+                    "contactName": "Nam Guk Park",
+                    "contactTitle": "Assistant Managing Director",
+                    "phone": {
+                        "phone": [
+                            {
+                                "type": "mainphone",
+                                "countryPhoneCode": "82",
+                                "city-areacode": "2",
+                                "number": "8288114"
+                            },
+                            {
+                                "type": "mainfax",
+                                "countryPhoneCode": "82",
+                                "city-areacode": "2",
+                                "number": "8288029"
+                            },
+                            {
+                                "type": "contactphone",
+                                "countryPhoneCode": "82",
+                                "city-areacode": "2",
+                                "number": "8288114"
+                            }
+                        ]
+                    }
+                },
+                "webLinks": {
+                    "lastUpdated": "2013-06-26T04:25:11",
+                    "webSite": [
+                        {
+                            "mainCategory": "Home Page",
+                            "Value": "http://www.bukwang.co.kr"
+                        }
+                    ],
+                    "eMail": {
+                        "mainCategory": "Company Contact/E-mail"
+                    }
+                },
+                "peerInfo": {
+                    "lastUpdated": "2021-05-16T01:51:21",
+                    "IndustryInfo": {
+                        "Industry": [
+                            {
+                                "type": "TRBC2012",
+                                "order": 1,
+                                "reported": False,
+                                "code": 5620104015,
+                                "mnem": "",
+                                "Value": "Generic Pharmaceuticals"
+                            },
+                            {
+                                "type": "RBSS2004",
+                                "order": 1,
+                                "reported": False,
+                                "code": 56213,
+                                "mnem": "56213",
+                                "Value": "Pharmaceuticals - Generic & Specialty"
+                            },
+                            {
+                                "type": "MGINDUSTRY",
+                                "order": 1,
+                                "reported": False,
+                                "code": 803,
+                                "mnem": "BIOTRX",
+                                "Value": "Biotechnology & Drugs"
+                            },
+                            {
+                                "type": "MGSECTOR",
+                                "order": 1,
+                                "reported": False,
+                                "code": 8,
+                                "mnem": "HEALTH",
+                                "Value": "Healthcare"
+                            },
+                            {
+                                "type": "NAICS2007",
+                                "order": 1,
+                                "reported": False,
+                                "code": 325412,
+                                "mnem": "",
+                                "Value": "Pharmaceutical Preparation Mfg"
+                            },
+                            {
+                                "type": "NAICS2007",
+                                "order": 2,
+                                "reported": False,
+                                "code": 325411,
+                                "mnem": "",
+                                "Value": "Medicinal & Botanical Mfg"
+                            },
+                            {
+                                "type": "NAICS2007",
+                                "order": 3,
+                                "reported": False,
+                                "code": 541712,
+                                "mnem": "",
+                                "Value": "Research and Development in the Physical, Engineering, and Life Sciences (except Biotechnology)"
+                            },
+                            {
+                                "type": "NAICS1997",
+                                "order": 1,
+                                "reported": False,
+                                "code": 325412,
+                                "mnem": "",
+                                "Value": "Pharmaceutical Preparation  Manufacturing"
+                            },
+                            {
+                                "type": "NAICS1997",
+                                "order": 2,
+                                "reported": False,
+                                "code": 325411,
+                                "mnem": "",
+                                "Value": "Medicinal and Botanical Manufacturing"
+                            },
+                            {
+                                "type": "NAICS1997",
+                                "order": 3,
+                                "reported": False,
+                                "code": 54171,
+                                "mnem": "",
+                                "Value": "Research and Development in the Physical, Engineering, and Life Sciences"
+                            },
+                            {
+                                "type": "SIC",
+                                "order": 1,
+                                "reported": False,
+                                "code": 2834,
+                                "mnem": "",
+                                "Value": "Pharmaceutical Preparations"
+                            },
+                            {
+                                "type": "SIC",
+                                "order": 2,
+                                "reported": False,
+                                "code": 2833,
+                                "mnem": "",
+                                "Value": "Medicinals And Botanicals"
+                            },
+                            {
+                                "type": "SIC",
+                                "order": 3,
+                                "reported": False,
+                                "code": 8731,
+                                "mnem": "",
+                                "Value": "Commercial Physical Research"
+                            }
+                        ]
+                    }
+                },
+                "officers": {
+                    "officer": [
+                        {
+                            "rank": 1,
+                            "since": "NA",
+                            "firstName": "Dong Yeon",
+                            "mI": None,
+                            "lastName": "Kim",
+                            "age": "75 ",
+                            "title": {
+                                "startYear": "NA",
+                                "startMonth": "",
+                                "startDay": "",
+                                "iD1": "CHM",
+                                "abbr1": "Chmn.",
+                                "iD2": "DRC",
+                                "abbr2": "Dir.",
+                                "Value": "Chairman of the Board"
+                            }
+                        },
+                        {
+                            "rank": 2,
+                            "since": "NA",
+                            "firstName": "Sang Hun",
+                            "mI": None,
+                            "lastName": "Kim",
+                            "age": "45 ",
+                            "title": {
+                                "startYear": "2013",
+                                "startMonth": "03",
+                                "startDay": "15",
+                                "iD1": "PRE",
+                                "abbr1": "Pres.",
+                                "iD2": "CEO",
+                                "abbr2": "CEO",
+                                "Value": "President, Chief Executive Officer, Director"
+                            }
+                        },
+                        {
+                            "rank": 3,
+                            "since": "NA",
+                            "firstName": "Chang Su",
+                            "mI": None,
+                            "lastName": "Jung",
+                            "age": "76 ",
+                            "title": {
+                                "startYear": "NA",
+                                "startMonth": "",
+                                "startDay": "",
+                                "iD1": "VCH",
+                                "abbr1": "Vice Chmn.",
+                                "iD2": "DRC",
+                                "abbr2": "Dir.",
+                                "Value": "Vice Chairman of the Board"
+                            }
+                        },
+                        {
+                            "rank": 4,
+                            "since": "NA",
+                            "firstName": "Hui Won",
+                            "mI": None,
+                            "lastName": "Yoo",
+                            "age": "48 ",
+                            "title": {
+                                "startYear": "2012",
+                                "startMonth": "12",
+                                "startDay": "31",
+                                "iD1": "VPR",
+                                "abbr1": "VP",
+                                "iD2": "DRC",
+                                "abbr2": "Dir.",
+                                "Value": "Vice President, Director"
+                            }
+                        },
+                        {
+                            "rank": 5,
+                            "since": "NA",
+                            "firstName": "Geum Seo",
+                            "mI": None,
+                            "lastName": "Gu",
+                            "age": "54 ",
+                            "title": {
+                                "startYear": "2012",
+                                "startMonth": "",
+                                "startDay": "",
+                                "iD1": "MDR",
+                                "abbr1": "Mgng.Dir.",
+                                "iD2": "",
+                                "abbr2": "",
+                                "Value": "Managing Director"
+                            }
+                        },
+                        {
+                            "rank": 6,
+                            "since": "NA",
+                            "firstName": "Yil Tae",
+                            "mI": None,
+                            "lastName": "Kim",
+                            "age": "50 ",
+                            "title": {
+                                "startYear": "2012",
+                                "startMonth": "",
+                                "startDay": "",
+                                "iD1": "OTH",
+                                "abbr1": "Other",
+                                "iD2": "DRC",
+                                "abbr2": "Dir.",
+                                "Value": "Assistant Managing Director"
+                            }
+                        },
+                        {
+                            "rank": 7,
+                            "since": "03/31/2008",
+                            "firstName": "Won Tae",
+                            "mI": None,
+                            "lastName": "Park",
+                            "age": "61 ",
+                            "title": {
+                                "startYear": "2008",
+                                "startMonth": "03",
+                                "startDay": "31",
+                                "iD1": "OTH",
+                                "abbr1": "Other",
+                                "iD2": "DRC",
+                                "abbr2": "Dir.",
+                                "Value": "Assistant Managing Director"
+                            }
+                        },
+                        {
+                            "rank": 8,
+                            "since": "NA",
+                            "firstName": "Nam Guk",
+                            "mI": None,
+                            "lastName": "Park",
+                            "age": "54 ",
+                            "title": {
+                                "startYear": "NA",
+                                "startMonth": "",
+                                "startDay": "",
+                                "iD1": "OTH",
+                                "abbr1": "Other",
+                                "iD2": "IRC",
+                                "abbr2": "IR-Contact",
+                                "Value": "Assistant Managing Director"
+                            }
+                        },
+                        {
+                            "rank": 9,
+                            "since": "NA",
+                            "firstName": "Jong Mun",
+                            "mI": None,
+                            "lastName": "Kim",
+                            "age": "49 ",
+                            "title": {
+                                "startYear": "NA",
+                                "startMonth": "",
+                                "startDay": "",
+                                "iD1": "OTH",
+                                "abbr1": "Other",
+                                "iD2": "",
+                                "abbr2": "",
+                                "Value": "Assistant Managing Director"
+                            }
+                        },
+                        {
+                            "rank": 10,
+                            "since": "NA",
+                            "firstName": "Yeon Jin",
+                            "mI": None,
+                            "lastName": "Kim",
+                            "age": "54 ",
+                            "title": {
+                                "startYear": "NA",
+                                "startMonth": "",
+                                "startDay": "",
+                                "iD1": "OTH",
+                                "abbr1": "Other",
+                                "iD2": "",
+                                "abbr2": "",
+                                "Value": "Assistant Managing Director"
+                            }
+                        }
+                    ]
+                },
+                "Ratios": {
+                    "PriceCurrency": "KRW",
+                    "ReportingCurrency": "KRW",
+                    "ExchangeRate": 1.0,
+                    "LatestAvailableDate": "2020-12-31",
+                    "Group": [
+                        {
+                            "ID": "Price and Volume",
+                            "Ratio": [
+                                {
+                                    "FieldName": "NPRICE",
+                                    "Type": "N",
+                                    "Value": "20250.00000"
+                                },
+                                {
+                                    "FieldName": "NHIG",
+                                    "Type": "N",
+                                    "Value": "42318.18605"
+                                },
+                                {
+                                    "FieldName": "NLOW",
+                                    "Type": "N",
+                                    "Value": "20100.00000"
+                                },
+                                {
+                                    "FieldName": "PDATE",
+                                    "Type": "D",
+                                    "Value": "2021-06-30T00:00:00"
+                                },
+                                {
+                                    "FieldName": "VOL10DAVG",
+                                    "Type": "N",
+                                    "Value": "0.55503"
+                                },
+                                {
+                                    "FieldName": "EV",
+                                    "Type": "N",
+                                    "Value": "1370983.14000"
+                                }
+                            ]
+                        },
+                        {
+                            "ID": "Income Statement",
+                            "Ratio": [
+                                {
+                                    "FieldName": "MKTCAP",
+                                    "Type": "N",
+                                    "Value": "1439027.00000"
+                                },
+                                {
+                                    "FieldName": "AREV",
+                                    "Type": "N",
+                                    "Value": "169659.80000"
+                                },
+                                {
+                                    "FieldName": "AEBITD",
+                                    "Type": "N",
+                                    "Value": "10185.95000"
+                                },
+                                {
+                                    "FieldName": "ANIAC",
+                                    "Type": "N",
+                                    "Value": "-7203.00500"
+                                }
+                            ]
+                        },
+                        {
+                            "ID": "Per share data",
+                            "Ratio": [
+                                {
+                                    "FieldName": "AEPSXCLXOR",
+                                    "Type": "N",
+                                    "Value": "-104.95450"
+                                },
+                                {
+                                    "FieldName": "AREVPS",
+                                    "Type": "N",
+                                    "Value": "2472.10000"
+                                },
+                                {
+                                    "FieldName": "ABVPS",
+                                    "Type": "N",
+                                    "Value": "3775.04000"
+                                },
+                                {
+                                    "FieldName": "ACSHPS",
+                                    "Type": "N",
+                                    "Value": "1308.35600"
+                                },
+                                {
+                                    "FieldName": "ACFSHR",
+                                    "Type": "N",
+                                    "Value": "-57.50947"
+                                },
+                                {
+                                    "FieldName": "ADIVSHR",
+                                    "Type": "N",
+                                    "Value": "100.00000"
+                                }
+                            ]
+                        },
+                        {
+                            "ID": "Other Ratios",
+                            "Ratio": [
+                                {
+                                    "FieldName": "AGROSMGN",
+                                    "Type": "N",
+                                    "Value": "42.22641"
+                                },
+                                {
+                                    "FieldName": "AROEPCT",
+                                    "Type": "N",
+                                    "Value": "-2.46364"
+                                },
+                                {
+                                    "FieldName": "APR2REV",
+                                    "Type": "N",
+                                    "Value": "8.48184"
+                                },
+                                {
+                                    "FieldName": "APEEXCLXOR",
+                                    "Type": "N",
+                                    "Value": "-99999.99000"
+                                },
+                                {
+                                    "FieldName": "APRICE2BK",
+                                    "Type": "N",
+                                    "Value": "5.36418"
+                                },
+                                {
+                                    "FieldName": "Employees",
+                                    "Type": "N",
+                                    "Value": "617"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "ForecastData": {
+                    "ConsensusType": "Mean",
+                    "CurFiscalYear": "2019",
+                    "CurFiscalYearEndMonth": "12",
+                    "CurInterimEndCalYear": "2019",
+                    "CurInterimEndMonth": "9",
+                    "EarningsBasis": "PRX",
+                    "Ratio": [
+                        {
+                            "FieldName": "ConsRecom",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "1"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "TargetPrice",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "-99999.99000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjLTGrowthRate",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "-99999.99000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjPE",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "-200.67546"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjSales",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "168000.00000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjSalesQ",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "-99999.99000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjEPS",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "-100.90920"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjEPSQ",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "-99999.99000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjProfit",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "-99999.99000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjDPS",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "-99999.99000"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
     }
 }
