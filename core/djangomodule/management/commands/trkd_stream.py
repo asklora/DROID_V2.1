@@ -1,5 +1,6 @@
 from datetime import datetime
 import boto3
+import time
 import sys
 import getopt
 import socket
@@ -9,7 +10,7 @@ import websocket
 from datasource.rkd import Rkd
 from core.universe.models import Universe
 from django.core.management.base import BaseCommand, CommandError
-from datasource.rkd import Rkd
+from datasource.rkd import RkdData
 """
 Global Variables 
 position : remote address / your IP
@@ -56,10 +57,11 @@ position : remote address / your IP
 
 class Command(BaseCommand):
     def __init__(self):
-        rkd = Rkd()
+        self.rkd = RkdData()
         # user = None
         # app_id = None
         # password = None
+        # print(f"credentials == {rkd.credentials}")
         self.user = 'rkd-demo-wm@refinitiv.com'
         self.app_id = 'rkddemoappwm'
         self.password = 'n7m6v54gb'
@@ -71,7 +73,7 @@ class Command(BaseCommand):
         # except Exception as e:
         #     print(f"error == {e}")
             # self.token = None
-        self.token = rkd.credentials.token
+        self.token = self.rkd.credentials.token
         super().__init__()
 
     def handle(self, *args, **options):
@@ -135,17 +137,27 @@ class Command(BaseCommand):
         elif message_type == "Ping":
             self.answer_ping(ws)
         elif message_type == "Update":
-            if message_json['UpdateType'] == 'Quote':
-                print(f"====== Quote - {message_json['Key']['Name']} ======")
-                self.beautify_print(message_json)
-            elif message_json['UpdateType'] == 'Trade':
-                print(f"====== Trade - {message_json['Key']['Name']} ======")
-                self.beautify_print(message_json)
-            elif message_json['UpdateType'] == 'Unspecified':
-                print(f"====== Unspecified - {message_json['Key']['Name']} ======")
-                self.beautify_print(message_json)
-            else:
-                None
+            if message_json['Type'] == 'Update':
+                if message_json['UpdateType'] == 'Quote':
+
+                    # change = {'CF_ASK': 'intraday_ask', 'CF_CLOSE': 'close', 'CF_BID': 'intraday_bid', 'CF_HIGH': 'high', 'CF_LOW': 'low', 'PCTCHNG': 'latest_price_change', 'TRADE_DATE': 'last_date'}
+                    # data = [
+                    #         {
+                    #             "ticker":message_json['Key']['Name'],
+                    #         }
+                    #     ]
+
+                    # self.rkd.save('master', 'LatestPrice', data)
+                    print(f"====== Quote - {message_json['Key']['Name']} ======")
+                    self.beautify_print(message_json)
+                elif message_json['UpdateType'] == 'Trade':
+                    print(f"====== Trade - {message_json['Key']['Name']} ======")
+                    self.beautify_print(message_json)
+                elif message_json['UpdateType'] == 'Unspecified':
+                    print(f"====== Unspecified - {message_json['Key']['Name']} ======")
+                    self.beautify_print(message_json)
+                else:
+                    None
             # write_on_s3(message_json)
      
         """ Else it's market price response, so now exit this simple example """
@@ -156,19 +168,36 @@ class Command(BaseCommand):
         self.send_market_price_request(ws)
 
     def beautify_print(self, message, *args, **options):
+        change = {'CF_ASK': 'intraday_ask', 'CF_CLOSE': 'close', 'CF_BID': 'intraday_bid', 'CF_HIGH': 'high', 'CF_LOW': 'low', 'PCTCHNG': 'latest_price_change', 'TRADE_DATE': 'last_date'}
         for key, val in message['Fields'].items():
-            print(f"{key} : {val}")
+            # print(f"{change[key]} : {val}")
+            data = [
+                    {
+                        "ticker":message['Key']['Name'],
+                        change[key]:val
+                    }
+                ]
+            print(data)
+            try:
+                self.rkd.save('master', 'LatestPrice', data)
+            except Exception as e:
+                print(e)
        
     def send_market_price_request(self, ws, *args, **options):
         """ Create and send simple Market Price request """
 
-        all_universe = Universe.objects.filter(currency_code__currency_code='KRW')
+        all_universe = Universe.objects.filter(currency_code__currency_code='EUR')
         all_tickers = []
+        # x = 0
         for tick in all_universe:
             all_tickers.append(tick.ticker)
+            # if x == 4:
+            #     break
+            # else:
+            #     x+=1
 
         mp_req_json = {
-        'ID': 2, 
+        'ID': int(time.time()), 
         'Key': {
             'Name': all_tickers
             },
@@ -203,9 +232,9 @@ class Command(BaseCommand):
         """ Called when message received, parse message into JSON for processing """
         print("")
         print("======== RECEIVED: ========")
-        print(f"ws == {ws}, msg == {message}, args == {args}, option == {options}")
+        # print(f"ws == {ws}, msg == {message}, args == {args}, option == {options}")
         message_json = json.loads(message)
-        print(json.dumps(message_json, sort_keys=True, indent=2, separators=(',', ':')))
+        # print(json.dumps(message_json, sort_keys=True, indent=2, separators=(',', ':')))
 
      
         for singleMsg in message_json:
