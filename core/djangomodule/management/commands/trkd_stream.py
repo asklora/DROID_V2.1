@@ -58,7 +58,10 @@ class Command(BaseCommand):
         try:
             ticker = message['Key']['Name']
             type_name = message['Type']
-            act = message['UpdateType']
+            if type_name == 'Update':
+                act = message['UpdateType']
+            else:
+                act = ""
             note = json.dumps(message)
             s3 = boto3.client('s3', aws_access_key_id='AKIA2XEOTUNGWEQ43TB6' ,aws_secret_access_key='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', region_name='ap-east-1')
             # epoch = str(int(datetime.now().timestamp()))
@@ -71,8 +74,7 @@ class Command(BaseCommand):
     def process_message(self, ws, message_json, *args, **options):
         """ Parse at high level and output JSON of message """
         message_type = message_json['Type']
-        # print(f"Message json ====== {message_json}")
-     
+       
         """ check for login response """
         if message_type == "Refresh":
             if 'Domain' in message_json:
@@ -85,27 +87,17 @@ class Command(BaseCommand):
         elif message_type == "Ping":
             self.answer_ping(ws)
         elif message_type == "Update":
-            if message_json['Type'] == 'Update':
-                if message_json['UpdateType'] == 'Quote':
-
-                    # change = {'CF_ASK': 'intraday_ask', 'CF_CLOSE': 'close', 'CF_BID': 'intraday_bid', 'CF_HIGH': 'high', 'CF_LOW': 'low', 'PCTCHNG': 'latest_price_change', 'TRADE_DATE': 'last_date'}
-                    # data = [
-                    #         {
-                    #             "ticker":message_json['Key']['Name'],
-                    #         }
-                    #     ]
-
-                    # self.rkd.save('master', 'LatestPrice', data)
-                    print(f"====== Quote - {message_json['Key']['Name']} ======")
-                    self.beautify_print(message_json)
-                elif message_json['UpdateType'] == 'Trade':
-                    print(f"====== Trade - {message_json['Key']['Name']} ======")
-                    self.beautify_print(message_json)
-                elif message_json['UpdateType'] == 'Unspecified':
-                    print(f"====== Unspecified - {message_json['Key']['Name']} ======")
-                    self.beautify_print(message_json)
-                else:
-                    None
+            if message_json['UpdateType'] == 'Quote':
+                print(f"====== Quote - {message_json['Key']['Name']} ======")
+                self.beautify_print(message_json)
+            elif message_json['UpdateType'] == 'Trade':
+                print(f"====== Trade - {message_json['Key']['Name']} ======")
+                self.beautify_print(message_json)
+            elif message_json['UpdateType'] == 'Unspecified':
+                print(f"====== Unspecified - {message_json['Key']['Name']} ======")
+                self.beautify_print(message_json)
+            else:
+                None
             # write_on_s3(message_json)
      
         """ Else it's market price response, so now exit this simple example """
