@@ -16,74 +16,22 @@ Global Variables
 position : remote address / your IP
 
 """
-
-# user = ''
-# app_id = ''
-# position = socket.gethostbyname(socket.gethostname())
-# password = ''
-# web_socket_app = None
-
-# try:
-#     token=Rkd.token
-# except Exception as e:
-#     print(f"error == {e}")
-#     token = None
-
- 
-# if __name__ == "__main__":
-    # Get command line parameters
-    # try:
-    #     opts, args = getopt.getopt(sys.argv[1:], "", ["app_id=", "user=", "password="])
-    # except getopt.GetoptError:
-    #     print('Usage: trkd_websocketexample.py [--app_id app_id] [--user user] [--password password] ')
-    #     ys.exit(2)
-    # for opt, arg in opts:
-    #     if opt in ("--app_id"):
-    #         app_id = arg
-    #     elif opt in ("--user"):
-    #         user = arg
-    #     elif opt in ("--password"):
-    #         password = arg
- 
-    # """get trkd token: if used RKD.token in DROID service, this part can be passed"""
-    # tm_url ='https://api.rkd.refinitiv.com/api/TokenManagement/TokenManagement.svc/REST/Anonymous/TokenManagement_1/CreateServiceToken_1'
-    # tm_req = '{{ "CreateServiceToken_Request_1": {{ "ApplicationID": "{0}", "Username": "{1}", "Password": "{2}" }} }} '
-    # tm_req = tm_req.format(app_id, user, password)
-    # tm_res = requests.post(tm_url, data=tm_req, headers = {'Content-type': 'application/json'})
-    # token = tm_res.json()['CreateServiceToken_Response_1']['Token']
- 
-    # Start websocket handshake
+# Start websocket handshake
 
 
 class Command(BaseCommand):
     def __init__(self):
         self.rkd = RkdData()
-        # user = None
-        # app_id = None
-        # password = None
-        # print(f"credentials == {rkd.credentials}")
-        self.user = 'rkd-demo-wm@refinitiv.com'
-        self.app_id = 'rkddemoappwm'
-        self.password = 'n7m6v54gb'
-        # self.token = None
+        self.user = self.rkd.credentials.username
+        self.app_id = self.rkd.credentials.extra_data['key']
+        self.password = self.rkd.credentials.password
         self.position = socket.gethostbyname(socket.gethostname())
         self.web_socket_app = None
-        # try:
-        #     self.token=Rkd.token
-        # except Exception as e:
-        #     print(f"error == {e}")
-            # self.token = None
         self.token = self.rkd.credentials.token
         super().__init__()
 
     def handle(self, *args, **options):
 
-        # if token == None:
-            # user = 'rkd-demo-wm@refinitiv.com'
-            # app_id = 'rkddemoappwm'
-            # password = 'n7m6v54gb'
-            # print(f"Token is None, return to exit")
-            # exit()
         ws_address = "wss://streaming.trkd.thomsonreuters.com/WebSocket"
         print("Connecting to WebSocket " + ws_address + " ...")
         web_socket_app = websocket.WebSocketApp(ws_address, header=['User-Agent: Python'],
@@ -132,8 +80,8 @@ class Command(BaseCommand):
                 if message_domain == "Login":
                     self.process_login_response(ws, message_json)
                     return
-            # else:
-                # write_on_s3(message_json)
+            else:
+                self.write_on_s3(message_json)
         elif message_type == "Ping":
             self.answer_ping(ws)
         elif message_type == "Update":
@@ -196,21 +144,12 @@ class Command(BaseCommand):
     def send_market_price_request(self, ws, *args, **options):
         """ Create and send simple Market Price request """
 
-        all_universe = Universe.objects.filter(currency_code__currency_code='HKD')
-        all_tickers = []
-        x = 0
-        for tick in all_universe:
-            if x != 3:
-                all_tickers.append(tick.ticker)
-                x += 1
-            else:
-                break
-        
+        HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code='HKD',is_active=True).exclude(ticker__in=['.HSI','.HSLI']).values('ticker')]
 
         mp_req_json = {
         'ID': int(time.time()), 
         'Key': {
-            'Name': all_tickers
+            'Name': HKD_universe
             },
         'View':[
             'PCTCHNG',

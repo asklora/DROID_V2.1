@@ -356,3 +356,4 @@ class RkdData(Rkd):
                 setattr(obj, attr, val)
             list_obj.append(obj)
         Model.objects.bulk_update(list_obj, key_set, batch_size=500)
+        print(model, 'updated')
