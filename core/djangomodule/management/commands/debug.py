@@ -1,4 +1,4 @@
-from core.universe.models import Currency
+from core.universe.models import Currency,Universe
 from migrate import currency
 from django.core.management.base import BaseCommand, CommandError
 from core.user.models import User
@@ -28,8 +28,9 @@ class Command(BaseCommand):
 
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
+        hkd_list  = [ item['ticker'] for item in Universe.objects.filter(is_active=True,currency_code='HKD').values('ticker')]
         rkd = RkdData()
-        quotes = rkd.get_snapshot('MSFT.O')
+        quotes = rkd.get_snapshot(hkd_list,df=True,save=True)
         print(quotes)
         # print(quotes)
         # order_client_topstock(currency="KRW", client_name="HANWHA")
