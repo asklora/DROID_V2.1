@@ -9,6 +9,15 @@ logging.basicConfig(format='%(asctime)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logging.getLogger().setLevel(logging.INFO)
 
+import aiohttp
+import asyncio
+
+
+
+
+    
+
+
 class Rkd:
     token = None
 
@@ -21,7 +30,45 @@ class Rkd:
             self.token = self.credentials.token
         else:
             self.token = self.get_token()
+    
+    async def gather_request(self,url, payload, headers):
+        async with aiohttp.ClientSession(headers=headers) as session:
 
+            responses =[]
+            for data in payload:
+                responses.append(asyncio.ensure_future(self.async_send_request(session,url, data, headers)))
+
+            original_responses = await asyncio.gather(*responses)
+            return original_responses
+     
+        
+    
+    async def async_send_request(self, session,url, payload, headers):
+         async with session.post(url,data=json.dumps(payload)) as resp:
+            response = await resp.json()
+            status = resp.status
+            
+            if status == 200:
+                return response
+            else:
+                response = {
+                    "ticker":payload["GetRatiosReports_Request_1"]["companyId"],
+                    "Error":response,
+                    "AREVPS":None,
+                    "MKTCAP":None,
+                    "APEEXCLXOR":None,
+                    "ProjPE":None,
+                    "APRICE2BK":None,
+                    "EV":None,
+                    "AEBITD":None,
+                    "NHIG":None,
+                    "NLOW":None,
+                    "ACFSHR":None,
+                }
+                return response
+            
+                    
+                    
     def send_request(self, url, payload, headers):
         result = None
 
@@ -111,15 +158,20 @@ class RkdData(Rkd):
     def __init__(self):
         super().__init__()
 
+    
+    
+        
+    
+    
+    
+    
     def retrive_template(self, ticker, scope="List", fields=''):
 
         if scope == 'List':
             if not fields or fields == '':
-                raise ValueError('field must set if scope is list')
+                raise ValueError('fields keyword argument must set if scope is list')
             field = (',').join(fields)
             fields = field.replace(',', ':')
-        print(fields)
-
         payload = {
             "RetrieveItem_Request_3": {
                 "ItemRequest": [
@@ -153,37 +205,100 @@ class RkdData(Rkd):
 
         return payload
 
-    def get_snapshot(self, ticker):
+    def get_snapshot(self, ticker,save=False,df=False):
         snapshot_url = f'{self.credentials.base_url}Fundamentals/Fundamentals.svc/REST/Fundamentals_1/GetRatiosReports_1'
-        payload = {
+        list_formated_json =[]
+        if isinstance(ticker,list):
+            list_payload = []
+            for tic in ticker:
+                payload = {
             "GetRatiosReports_Request_1": {
-                "companyId": ticker,
+                "companyId": tic,
                 "companyIdType": "RIC"
+                        }
+                        }
+                list_payload.append(payload)
+            responses = asyncio.run(self.gather_request(snapshot_url,list_payload,self.auth_headers()))
+            # print(responses)
+            # with open('data.json', 'w') as fp:
+            #     json.dump(responses, fp,  indent=4)
+            # sys.exit()
+            for response in responses:
+                if not "Error" in response:
+                    base_response = response['GetRatiosReports_Response_1']['FundamentalReports']['ReportRatios']
+                    
+                    formated_json = {}
+                    formated_json['ticker'] = base_response['Issues']['Issue'][0]['IssueID'][2]['Value']
+                    fields = ['AREVPS',
+                            'MKTCAP',
+                            'APEEXCLXOR',
+                            'ProjPE',
+                            'APRICE2BK',
+                            'EV',
+                            'AEBITD',
+                            'NHIG',
+                            'NLOW',
+                            'ACFSHR']
+                    for group_item in base_response['Ratios']['Group']:
+                        for item in group_item['Ratio']:
+                            if item['FieldName'] in fields:
+                                formated_json[item['FieldName']] = item['Value']
+                    for group_item in base_response['ForecastData']['Ratio']:
+                        if group_item['FieldName'] in fields:
+                            formated_json[group_item['FieldName']] = group_item['Value'][0]['Value']
+                    list_formated_json.append(formated_json)
+                elif "Error" in response:
+                    list_formated_json.append(response)
+                else:
+                    print(response)
+        else:
+            payload = {
+                "GetRatiosReports_Request_1": {
+                    "companyId": ticker,
+                    "companyIdType": "RIC"
+                }
             }
-        }
-        response = self.send_request(
-            snapshot_url, payload, self.auth_headers())
-        base_response = response['GetRatiosReports_Response_1']['FundamentalReports']['ReportRatios']
-        formated_json = {}
-        formated_json['ticker'] = base_response['Issues']['Issue'][0]['IssueID'][2]['Value']
-        fields = ['AREVPS',
-                  'MKTCAP',
-                  'APEEXCLXOR',
-                  'ProjPE',
-                  'APRICE2BK',
-                  'EV',
-                  'AEBITD',
-                  'NHIG',
-                  'NLOW',
-                  'ACFSHR']
-        for group_item in base_response['Ratios']['Group']:
-            for item in group_item['Ratio']:
-                if item['FieldName'] in fields:
-                    formated_json[item['FieldName']] = item['Value']
-        for group_item in base_response['ForecastData']['Ratio']:
-            if group_item['FieldName'] in fields:
-                formated_json[group_item['FieldName']] = group_item['Value'][0]['Value']
-
+            response = self.send_request(
+                snapshot_url, payload, self.auth_headers())
+            base_response = response['GetRatiosReports_Response_1']['FundamentalReports']['ReportRatios']
+            
+            formated_json = {}
+            formated_json['ticker'] = base_response['Issues']['Issue'][0]['IssueID'][2]['Value']
+            fields = ['AREVPS',
+                    'MKTCAP',
+                    'APEEXCLXOR',
+                    'ProjPE',
+                    'APRICE2BK',
+                    'EV',
+                    'AEBITD',
+                    'NHIG',
+                    'NLOW',
+                    'ACFSHR']
+            for group_item in base_response['Ratios']['Group']:
+                for item in group_item['Ratio']:
+                    if item['FieldName'] in fields:
+                        formated_json[item['FieldName']] = item['Value']
+            for group_item in base_response['ForecastData']['Ratio']:
+                if group_item['FieldName'] in fields:
+                    formated_json[group_item['FieldName']] = group_item['Value'][0]['Value']
+            list_formated_json.append(formated_json)
+        df_data = pd.DataFrame(list_formated_json).rename(columns={
+            'AREVPS':'revenue_per_share',
+            'MKTCAP':'market_cap',
+            'APEEXCLXOR':'pe_ratio',
+            'ProjPE':'pe_forecast',
+            'APRICE2BK':'pb',
+            'EV':'ev',
+            'AEBITD':'ebitda',
+            'NHIG':'wk52_high',
+            'NLOW':'wk52_low',
+            'ACFSHR':'free_cash_flow',
+            })
+        if save:
+            self.save('universe', 'Universe', df_data.to_dict('records'))
+        if df:
+            # rename column match in table
+            return df_data
         return formated_json
 
     def get_quote(self, ticker, df=False, save=False):
@@ -193,7 +308,15 @@ class RkdData(Rkd):
         response = self.send_request(quote_url, payload, self.auth_headers())
         formated_json_data = self.parse_response(response)
         df_data = pd.DataFrame(formated_json_data).rename(columns={
-            'CF_ASK': 'intraday_ask', 'CF_CLOSE': 'close', 'CF_BID': 'intraday_bid', 'CF_HIGH': 'high', 'CF_LOW': 'low', 'PCTCHNG': 'latest_price_change', 'TRADE_DATE': 'last_date'})
+            'CF_ASK': 'intraday_ask', 
+            'CF_CLOSE': 'close', 
+            'CF_BID': 'intraday_bid', 
+            'CF_HIGH': 'high', 'CF_LOW': 'low',
+            'PCTCHNG': 'latest_price_change', 
+            'TRADE_DATE': 'last_date',
+            'CF_VOLUME':'volume',
+            'CF_LAST':'latest_price'
+            })
         if save:
             self.save('master', 'LatestPrice', df_data.to_dict('records'))
         if df:
@@ -233,3 +356,4 @@ class RkdData(Rkd):
                 setattr(obj, attr, val)
             list_obj.append(obj)
         Model.objects.bulk_update(list_obj, key_set, batch_size=500)
+        print(model, 'updated')
