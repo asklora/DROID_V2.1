@@ -248,6 +248,16 @@ class Universe(models.Model):
     entity_type = models.TextField(blank=True, null=True)
     ticker_symbol = models.TextField(blank=True, null=True)
     mic = models.TextField(blank=True, null=True)
+    revenue_per_share=models.FloatField(null=True,blank=True)
+    market_cap=models.FloatField(null=True,blank=True)
+    pe_ratio=models.FloatField(null=True,blank=True)
+    pe_forecast=models.FloatField(null=True,blank=True)
+    pb=models.FloatField(null=True,blank=True)
+    ev=models.FloatField(null=True,blank=True)
+    ebitda=models.FloatField(null=True,blank=True)
+    wk52_high =models.FloatField(null=True,blank=True)
+    wk52_low =models.FloatField(null=True,blank=True)
+    free_cash_flow =models.FloatField(null=True,blank=True)
 
     def __str__(self):
         return self.ticker

@@ -276,7 +276,7 @@ def get_pred_mean():
     query = f"select distinct avlpf.ticker, avlpf.pred_mean, avlpf.testing_period::date from ai_value_lgbm_pred_final avlpf, "
     query += f"(select ticker, max(testing_period::date) as max_date from ai_value_lgbm_pred_final group by ticker) filter "
     query += f"where filter.ticker=avlpf.ticker and filter.max_date=avlpf.testing_period;"
-    data = read_query(query, table=master_ohlcvtr_table, dlp=False)
+    data = read_query(query, table="ai_value_lgbm_pred_final", dlp=True)
     return data
 
 def get_specific_tri(trading_day, tri_name = "tri"):
