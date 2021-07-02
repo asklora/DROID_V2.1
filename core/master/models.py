@@ -444,6 +444,8 @@ class LatestPrice(models.Model):
     intraday_time = models.TextField(blank=True, null=True)
     last_date = models.DateField(blank=True, null=True)
     capital_change = models.FloatField(blank=True, null=True)
+    volume = models.FloatField(blank=True, null=True)
+    latest_price = models.FloatField(blank=True, null=True)
     
     class Meta:
         managed = True

@@ -115,11 +115,9 @@ class RkdData(Rkd):
 
         if scope == 'List':
             if not fields or fields == '':
-                raise ValueError('field must set if scope is list')
+                raise ValueError('fields keyword argument must set if scope is list')
             field = (',').join(fields)
             fields = field.replace(',', ':')
-        print(fields)
-
         payload = {
             "RetrieveItem_Request_3": {
                 "ItemRequest": [
@@ -153,7 +151,7 @@ class RkdData(Rkd):
 
         return payload
 
-    def get_snapshot(self, ticker):
+    def get_snapshot(self, ticker,save=False,df=False):
         snapshot_url = f'{self.credentials.base_url}Fundamentals/Fundamentals.svc/REST/Fundamentals_1/GetRatiosReports_1'
         payload = {
             "GetRatiosReports_Request_1": {
@@ -164,6 +162,7 @@ class RkdData(Rkd):
         response = self.send_request(
             snapshot_url, payload, self.auth_headers())
         base_response = response['GetRatiosReports_Response_1']['FundamentalReports']['ReportRatios']
+        list_formated_json =[]
         formated_json = {}
         formated_json['ticker'] = base_response['Issues']['Issue'][0]['IssueID'][2]['Value']
         fields = ['AREVPS',
@@ -183,7 +182,24 @@ class RkdData(Rkd):
         for group_item in base_response['ForecastData']['Ratio']:
             if group_item['FieldName'] in fields:
                 formated_json[group_item['FieldName']] = group_item['Value'][0]['Value']
-
+        list_formated_json.append(formated_json)
+        df_data = pd.DataFrame(list_formated_json).rename(columns={
+            'AREVPS':'revenue_per_share',
+            'MKTCAP':'market_cap',
+            'APEEXCLXOR':'pe_ratio',
+            'ProjPE':'pe_forecast',
+            'APRICE2BK':'pb',
+            'EV':'ev',
+            'AEBITD':'ebitda',
+            'NHIG':'wk52_high',
+            'NLOW':'wk52_low',
+            'ACFSHR':'free_cash_flow',
+            })
+        if save:
+            self.save('universe', 'Universe', df_data.to_dict('records'))
+        if df:
+            # rename column match in table
+            return df_data
         return formated_json
 
     def get_quote(self, ticker, df=False, save=False):
@@ -193,7 +209,15 @@ class RkdData(Rkd):
         response = self.send_request(quote_url, payload, self.auth_headers())
         formated_json_data = self.parse_response(response)
         df_data = pd.DataFrame(formated_json_data).rename(columns={
-            'CF_ASK': 'intraday_ask', 'CF_CLOSE': 'close', 'CF_BID': 'intraday_bid', 'CF_HIGH': 'high', 'CF_LOW': 'low', 'PCTCHNG': 'latest_price_change', 'TRADE_DATE': 'last_date'})
+            'CF_ASK': 'intraday_ask', 
+            'CF_CLOSE': 'close', 
+            'CF_BID': 'intraday_bid', 
+            'CF_HIGH': 'high', 'CF_LOW': 'low',
+            'PCTCHNG': 'latest_price_change', 
+            'TRADE_DATE': 'last_date',
+            'CF_VOLUME':'volume',
+            'CF_LAST':'latest_price'
+            })
         if save:
             self.save('master', 'LatestPrice', df_data.to_dict('records'))
         if df:
