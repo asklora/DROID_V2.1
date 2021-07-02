@@ -168,9 +168,19 @@ class Command(BaseCommand):
         self.send_market_price_request(ws)
 
     def beautify_print(self, message, *args, **options):
-        change = {'CF_ASK': 'intraday_ask', 'CF_CLOSE': 'close', 'CF_BID': 'intraday_bid', 'CF_HIGH': 'high', 'CF_LOW': 'low', 'PCTCHNG': 'latest_price_change', 'TRADE_DATE': 'last_date'}
+        change = {
+                'CF_ASK': 'intraday_ask', 
+                'CF_CLOSE': 'close', 
+                'CF_BID': 'intraday_bid', 
+                'CF_HIGH': 'high', 'CF_LOW': 'low',
+                'PCTCHNG': 'latest_price_change', 
+                'TRADE_DATE': 'last_date',
+                'CF_VOLUME':'volume',
+                'CF_LAST':'latest_price'
+            }
+            
         for key, val in message['Fields'].items():
-            # print(f"{change[key]} : {val}")
+            # print(f"{key} : {val}")
             data = [
                     {
                         "ticker":message['Key']['Name'],
@@ -186,15 +196,16 @@ class Command(BaseCommand):
     def send_market_price_request(self, ws, *args, **options):
         """ Create and send simple Market Price request """
 
-        all_universe = Universe.objects.filter(currency_code__currency_code='EUR')
+        all_universe = Universe.objects.filter(currency_code__currency_code='HKD')
         all_tickers = []
-        # x = 0
+        x = 0
         for tick in all_universe:
-            all_tickers.append(tick.ticker)
-            # if x == 4:
-            #     break
-            # else:
-            #     x+=1
+            if x != 3:
+                all_tickers.append(tick.ticker)
+                x += 1
+            else:
+                break
+        
 
         mp_req_json = {
         'ID': int(time.time()), 
@@ -205,7 +216,12 @@ class Command(BaseCommand):
             'PCTCHNG',
             'CF_CLOSE',
             'CF_ASK',
-            'CF_BID'
+            'CF_BID',
+            'CF_HIGH',
+            'CF_LOW',
+            'CF_LAST',
+            'CF_VOLUME',
+            'TRADE_DATE'
             ]
         }
 
