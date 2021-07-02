@@ -327,25 +327,28 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
         report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
     
 
-def worldscope_manual_ingestion(ticker = None, currency_code=None):
-    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
-    if(len(universe) < 1):
-        return False
-    end_date = dateNow()
-    # start_date = "1999-06-30"
-    start_date = "2020-06-30"
+def worldscope(ticker = None, currency_code=None):
     filter_field = [
         "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
         "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
         "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
         "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
         "WC02001A", "WC05575A"]
+    for field in filter_field:
+        worldscope_manual_ingestion(ticker = ticker, currency_code=currency_code, filter_field = [field])
+
+def worldscope_manual_ingestion(ticker = None, currency_code=None, filter_field=None):
+    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+    if(len(universe) < 1):
+        return False
+    end_date = dateNow()
+    start_date = "1999-06-30"
     identifier="ticker"
     ticker = universe[["ticker"]]
     ticker = ticker["ticker"].tolist()
-    # ticker = ["<" + tick + ">" for tick in ticker]
-    # result = get_data_quarterly_from_dsws_by_field(args, start_date, end_date, ticker, identifier, filter_field, use_ticker=True, identifier = identifier)
-    result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, ticker, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, worldscope=True)
+    result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, ticker, identifier, filter_field, use_ticker=True, split_number=1, monthly=True, worldscope=True)
+    print(result)
+    result = result.dropna()
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={
