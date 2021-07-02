@@ -168,20 +168,30 @@ class Command(BaseCommand):
         self.send_market_price_request(ws)
 
     def beautify_print(self, message, *args, **options):
-        change = {'CF_ASK': 'intraday_ask', 'CF_CLOSE': 'close', 'CF_BID': 'intraday_bid', 'CF_HIGH': 'high', 'CF_LOW': 'low', 'PCTCHNG': 'latest_price_change', 'TRADE_DATE': 'last_date'}
+        change = {
+                'CF_ASK': 'intraday_ask', 
+                'CF_CLOSE': 'close', 
+                'CF_BID': 'intraday_bid', 
+                'CF_HIGH': 'high', 'CF_LOW': 'low',
+                'PCTCHNG': 'latest_price_change', 
+                'TRADE_DATE': 'last_date',
+                'CF_VOLUME':'volume',
+                'CF_LAST':'latest_price'
+            }
+            
         for key, val in message['Fields'].items():
-            print(f"{key} : {val}")
-            # data = [
-            #         {
-            #             "ticker":message['Key']['Name'],
-            #             change[key]:val
-            #         }
-            #     ]
-            # print(data)
-            # try:
-            #     self.rkd.save('master', 'LatestPrice', data)
-            # except Exception as e:
-            #     print(e)
+            # print(f"{key} : {val}")
+            data = [
+                    {
+                        "ticker":message['Key']['Name'],
+                        change[key]:val
+                    }
+                ]
+            print(data)
+            try:
+                self.rkd.save('master', 'LatestPrice', data)
+            except Exception as e:
+                print(e)
        
     def send_market_price_request(self, ws, *args, **options):
         """ Create and send simple Market Price request """
