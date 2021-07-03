@@ -48,6 +48,7 @@ ADDITIONAL_APPS = [
     'drf_spectacular',
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
+    'channels',
     
 ]
 CORE_APPS = [
@@ -62,6 +63,7 @@ CORE_APPS = [
     'core.survey',
     'core.orders',
     'core.ai_value',
+    'core.hot_data'
 ]
 
 INSTALLED_APPS = DJANGO_DEFAULT_APPS + ADDITIONAL_APPS + CORE_APPS
@@ -107,7 +109,9 @@ TEMPLATES = [
 
 # DJANGO CONFIGURATION
 
-WSGI_APPLICATION = 'config.wsgi.application'
+# WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
 ROOT_URLCONF = 'config.urls'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'files/staticfiles')
@@ -129,7 +133,27 @@ ELASTICSEARCH_DSL = {
         'hosts': 'localhost:9200'
     }
 }
+CHANNEL_LAYERS = {
+    'default': {
+        ### Method 1: Via redis lab
+        # 'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        # 'CONFIG': {
+        #     "hosts": [
+        #       'redis://h:<password>;@<redis Endpoint>:<port>' 
+        #     ],
+        # },
 
+        ### Method 2: Via local Redis
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+             "hosts": [('127.0.0.1', 6379)],
+        },
+
+        ### Method 3: Via In-memory channel layer
+        ## Using this method.
+        # "BACKEND": "channels.layers.InMemoryChannelLayer"
+    },
+}
 # =========================
 
 # Database
@@ -178,6 +202,14 @@ DATABASES = {
         'PORT': port,
 
     },
+    'mongo': {
+            'ENGINE': 'djongo',
+            'NAME': 'universe',
+            'CLIENT': {
+                'host': 'mongodb+srv://postgres:postgres@cluster0.b0com.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
+            },
+            'ENFORCE_SCHEMA': False,    
+        }
 
 }
 

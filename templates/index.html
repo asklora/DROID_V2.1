@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+    </style>
+</head>
+<body>
+<div class="all-data">
+</div>
+
+    <button onclick="myFunction()">click</button>
+<script>
+      var msg = {message: "subs"}
+      
+    const socket = new WebSocket("ws://localhost:8000/ws/JNJ/")
+    function myFunction() {
+        socket.close()
+      }
+            // Connection opened
+         socket.onopen = () => socket.send(JSON.stringify(msg));
+        
+        // Listen for messages
+        socket.addEventListener('message', function (event) {
+            message = JSON.parse(event.data)
+            console.log('Message from server ', message);
+        });
+</script>
+</body>
+</html>

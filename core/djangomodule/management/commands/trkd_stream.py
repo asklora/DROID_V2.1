@@ -81,20 +81,13 @@ class Command(BaseCommand):
                     self.process_login_response(ws, message_json)
                     return
             else:
-                self.write_on_s3(message_json)
+                # self.write_on_s3(message_json)
+                pass
         elif message_type == "Ping":
             self.answer_ping(ws)
         elif message_type == "Update":
             if message_json['Type'] == 'Update':
                 if message_json['UpdateType'] == 'Quote':
-
-                    # change = {'CF_ASK': 'intraday_ask', 'CF_CLOSE': 'close', 'CF_BID': 'intraday_bid', 'CF_HIGH': 'high', 'CF_LOW': 'low', 'PCTCHNG': 'latest_price_change', 'TRADE_DATE': 'last_date'}
-                    # data = [
-                    #         {
-                    #             "ticker":message_json['Key']['Name'],
-                    #         }
-                    #     ]
-
                     # self.rkd.save('master', 'LatestPrice', data)
                     print(f"====== Quote - {message_json['Key']['Name']} ======")
                     self.beautify_print(message_json)
@@ -136,15 +129,15 @@ class Command(BaseCommand):
                     }
                 ]
             print(data)
-            try:
-                self.rkd.save('master', 'LatestPrice', data)
-            except Exception as e:
-                print(e)
+            # try:
+            #     self.rkd.save('master', 'LatestPrice', data)
+            # except Exception as e:
+            #     print(e)
        
     def send_market_price_request(self, ws, *args, **options):
         """ Create and send simple Market Price request """
 
-        HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code='HKD',is_active=True).exclude(ticker__in=['.HSI','.HSLI']).values('ticker')]
+        HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(ticker__in=['TSLA.O','JNJ']).exclude(ticker__in=['.SPX']).values('ticker')]
 
         mp_req_json = {
         'ID': int(time.time()), 

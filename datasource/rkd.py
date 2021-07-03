@@ -5,12 +5,17 @@ from requests.api import head
 from core.services.models import ThirdpartyCredentials
 import sys
 import logging
+import websocket
+import aiohttp
+import asyncio
+import socket
+import time
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 logging.basicConfig(format='%(asctime)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logging.getLogger().setLevel(logging.INFO)
 
-import aiohttp
-import asyncio
 
 
 
@@ -21,7 +26,7 @@ import asyncio
 class Rkd:
     token = None
 
-    def __init__(self):
+    def __init__(self,*args, **kwargs):
         self.credentials = ThirdpartyCredentials.objects.get(services='RKD')
         self.headers = {'content-type': 'application/json;charset=utf-8'}
         if self.is_valid_token:
@@ -155,8 +160,8 @@ class Rkd:
 
 class RkdData(Rkd):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     
     
@@ -356,4 +361,202 @@ class RkdData(Rkd):
                 setattr(obj, attr, val)
             list_obj.append(obj)
         Model.objects.bulk_update(list_obj, key_set, batch_size=500)
-        print(model, 'updated')
+        
+        
+        
+class RkdStream(Rkd):
+    def __init__(self,*args, **kwargs):
+        self.kwargs = kwargs
+        super().__init__(*args, **kwargs)
+        self.user = self.credentials.username
+        self.app_id = self.credentials.extra_data['key']
+        self.password = self.credentials.password
+        self.position = socket.gethostbyname(socket.gethostname())
+        self.token = self.credentials.token
+        self.ticker_data = args[0]
+        self.ws_address = "wss://streaming.trkd.thomsonreuters.com/WebSocket"
+        
+        self.web_socket_app = websocket.WebSocketApp(self.ws_address, header=['User-Agent: Python'],
+                            on_message=self.on_message,
+                            on_error=self.on_error,
+                            on_close=self.on_close,
+                            subprotocols=['tr_json2'])
+        self.layer = get_channel_layer()
+        
+    
+    def stream(self):
+        print("Connecting to WebSocket " + self.ws_address + " ...")
+        self.web_socket_app.on_open = self.on_open
+        try:
+            self.web_socket_app.run_forever()
+        except Exception as e:
+            print(f"==========={e}=============")
+            self.web_socket_app.close()
+     
+    
+
+    def answer_ping(self, ws, *args, **options): 
+        ping_req = {"Type":"Pong"}
+        ws.send(json.dumps(ping_req))
+        print("SENT:")
+        print(json.dumps(ping_req, sort_keys=True, indent=2, separators=(',', ':')))
+
+    def write_on_s3(self, message, *args, **options):
+        try:
+            ticker = message['Key']['Name']
+            type_name = message['Type']
+            act = message['UpdateType']
+            note = json.dumps(message)
+            s3 = boto3.client('s3', aws_access_key_id='AKIA2XEOTUNGWEQ43TB6' ,aws_secret_access_key='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', region_name='ap-east-1')
+            # epoch = str(int(datetime.now().timestamp()))
+            # s3_file = 'test_dir/'+str(int(epoch)) + ".txt"
+            s3_file = "test_dir/"+type_name+"-"+ticker+"-"+act+".txt"
+            upload = s3.put_object(Body=note, Bucket='droid-v2-logs', Key=s3_file)
+        except Exception as e:
+            print(f"Error ===== {e}")
+
+    def process_message(self, ws, message_json, *args, **options):
+        """ Parse at high level and output JSON of message """
+        message_type = message_json['Type']
+        # print(f"Message json ====== {message_json}")
+     
+        """ check for login response """
+        if message_type == "Refresh":
+            if 'Domain' in message_json:
+                message_domain = message_json['Domain']
+                if message_domain == "Login":
+                    self.process_login_response(ws, message_json)
+                    return
+            else:
+                # self.write_on_s3(message_json)
+                pass
+        elif message_type == "Ping":
+            self.answer_ping(ws)
+        elif message_type == "Update":
+            if message_json['Type'] == 'Update':
+                if message_json['UpdateType'] == 'Quote':
+                    # self.rkd.save('master', 'LatestPrice', data)
+                    print(f"====== Quote - {message_json['Key']['Name']} ======")
+                    self.beautify_print(message_json,**options)
+                elif message_json['UpdateType'] == 'Trade':
+                    print(f"====== Trade - {message_json['Key']['Name']} ======")
+                    self.beautify_print(message_json,**options)
+                elif message_json['UpdateType'] == 'Unspecified':
+                    print(f"====== Unspecified - {message_json['Key']['Name']} ======")
+                    self.beautify_print(message_json,**options)
+                else:
+                    None
+            # write_on_s3(message_json)
+     
+        """ Else it's market price response, so now exit this simple example """
+        # web_socket_app.close()
+     
+    def process_login_response(self, ws, message_json, *args, **options):
+        print ("Logged in!")
+        self.send_market_price_request(ws)
+
+    def beautify_print(self, message, *args, **options):
+        # dict_data = {}
+        # dict_data["ticker"]=message['Key']['Name']
+        # for key, val in message['Fields'].items():
+        #     dict_data[change[key]]=val
+        #     data.append(dict_data)
+        change = {
+                'CF_ASK': 'intraday_ask', 
+                'CF_CLOSE': 'close', 
+                'CF_BID': 'intraday_bid', 
+                'CF_HIGH': 'high', 'CF_LOW': 'low',
+                'PCTCHNG': 'latest_price_change', 
+                'TRADE_DATE': 'last_date',
+                'CF_VOLUME':'volume',
+                'CF_LAST':'latest_price'
+            }
+        message['Fields']['ticker'] = message['Key']['Name']
+        data = [message['Fields']]
+        df  = pd.DataFrame(data).rename(columns=change)
+        ticker = df.loc[df['ticker'] == message['Fields']['ticker']]
+        asyncio.run(self.layer.group_send(message['Fields']['ticker'],
+            {
+                'type': 'broadcastmessage',
+                'message':  ticker.to_dict('records')
+            }))
+        asyncio.run(self.layer.group_send('topstock',
+            {
+                'type': 'broadcastmessage',
+                'message':  df.to_dict('records')
+            }))
+
+        del df
+        del ticker
+            # try:
+            #     self.rkd.save('master', 'LatestPrice', data)
+            # except Exception as e:
+            #     print(e)
+       
+    def send_market_price_request(self, ws, *args, **options):
+        """ Create and send simple Market Price request """
+
+        
+
+        mp_req_json = {
+        'ID': int(time.time()), 
+        'Key': {
+            'Name': self.ticker_data
+            },
+        'View':[
+            'PCTCHNG',
+            'CF_CLOSE',
+            'CF_ASK',
+            'CF_BID',
+            'CF_HIGH',
+            'CF_LOW',
+            'CF_LAST',
+            'CF_VOLUME',
+            'TRADE_DATE'
+            ]
+        }
+
+        ws.send(json.dumps(mp_req_json))
+        print("SENT:")
+        print(json.dumps(mp_req_json, sort_keys=True, indent=2, separators=(',', ':')))
+     
+    def send_login_request(self, ws, *args, **options):
+        """ Generate a login request from command line data (or defaults) and send """
+        login_json = { 'ID': 1, 'Domain': 'Login',
+            'Key': { 'NameType': 'AuthnToken', 'Name': '',
+                'Elements': { 'AuthenticationToken':'', 'ApplicationId': '', 'Position': '' }
+            }
+        }
+        login_json['Key']['Name'] = self.user
+        login_json['Key']['Elements']['AuthenticationToken'] = self.token
+        login_json['Key']['Elements']['ApplicationId'] = self.app_id
+        login_json['Key']['Elements']['Position'] = self.position
+        ws.send(json.dumps(login_json))
+        print("SENT LOGIN REQUEST:")
+        print(json.dumps(login_json, sort_keys=True, indent=2, separators=(',', ':')))
+     
+    def on_message(self, ws, message, *args, **options):
+        """ Called when message received, parse message into JSON for processing """
+        print("")
+        print("======== RECEIVED: ========")
+        # print(f"ws == {ws}, msg == {message}, args == {args}, option == {options}")
+        message_json = json.loads(message)
+        # print(json.dumps(message_json, sort_keys=True, indent=2, separators=(',', ':')))
+
+     
+        for singleMsg in message_json:
+            self.process_message(ws, singleMsg)
+
+    def on_error(self, ws, error, *args, **options):
+        """ Called when websocket error has occurred """
+        print(error)
+     
+    def on_close(self, ws, *args, **options):
+        # print(super(on_close, self))
+        """ Called when websocket is closed """
+        print("WebSocket Closed")
+     
+    def on_open(self, ws, *args, **options):
+        """ Called when handshake is complete and websocket is open, send login """
+        print("WebSocket open!")
+        self.send_login_request(ws)
