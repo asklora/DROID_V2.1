@@ -9,11 +9,11 @@ class AuroraRouters:
         'services',
         'universe',
         'user',
-        
-        }
-    mongo_app_labels = {
-        'hot_data',
+
     }
+    # mongo_app_labels = {
+    #     'hot_data',
+    # }
 
     def db_for_read(self, model, **hints):
         """
@@ -22,9 +22,9 @@ class AuroraRouters:
         if model._meta.app_label in self.route_app_labels:
             # print('aurora')
             return 'aurora_read'
-        if model._meta.app_label in self.mongo_app_labels:
-            print('mongo')
-            return 'mongo'
+        # if model._meta.app_label in self.mongo_app_labels:
+        #     print('mongo')
+        #     return 'mongo'
         return 'default'
 
     def db_for_write(self, model, **hints):
@@ -54,12 +54,12 @@ class AuroraRouters:
         """
         if app_label in self.route_app_labels:
             return db == 'aurora_write'
-        if app_label in self.mongo_app_labels:
-            return db == 'mongo'
+        # if app_label in self.mongo_app_labels:
+        #     return db == 'mongo'
         return db == 'default'
-    
+
     def allow_syncdb(self, db, model):
         "Explicitly put all models on all databases."
-        
+
         if model._meta.app_label in self.route_app_labels:
             return True

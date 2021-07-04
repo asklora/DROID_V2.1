@@ -17,16 +17,10 @@ logging.basicConfig(format='%(asctime)s - %(message)s',
 logging.getLogger().setLevel(logging.INFO)
 
 
-
-
-
-    
-
-
 class Rkd:
     token = None
 
-    def __init__(self,*args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.credentials = ThirdpartyCredentials.objects.get(services='RKD')
         self.headers = {'content-type': 'application/json;charset=utf-8'}
         if self.is_valid_token:
@@ -35,45 +29,42 @@ class Rkd:
             self.token = self.credentials.token
         else:
             self.token = self.get_token()
-    
-    async def gather_request(self,url, payload, headers):
+
+    async def gather_request(self, url, payload, headers):
         async with aiohttp.ClientSession(headers=headers) as session:
 
-            responses =[]
+            responses = []
             for data in payload:
-                responses.append(asyncio.ensure_future(self.async_send_request(session,url, data, headers)))
+                responses.append(asyncio.ensure_future(
+                    self.async_send_request(session, url, data, headers)))
 
             original_responses = await asyncio.gather(*responses)
             return original_responses
-     
-        
-    
-    async def async_send_request(self, session,url, payload, headers):
-         async with session.post(url,data=json.dumps(payload)) as resp:
+
+    async def async_send_request(self, session, url, payload, headers):
+        async with session.post(url, data=json.dumps(payload)) as resp:
             response = await resp.json()
             status = resp.status
-            
+
             if status == 200:
                 return response
             else:
                 response = {
-                    "ticker":payload["GetRatiosReports_Request_1"]["companyId"],
-                    "Error":response,
-                    "AREVPS":None,
-                    "MKTCAP":None,
-                    "APEEXCLXOR":None,
-                    "ProjPE":None,
-                    "APRICE2BK":None,
-                    "EV":None,
-                    "AEBITD":None,
-                    "NHIG":None,
-                    "NLOW":None,
-                    "ACFSHR":None,
+                    "ticker": payload["GetRatiosReports_Request_1"]["companyId"],
+                    "Error": response,
+                    "AREVPS": None,
+                    "MKTCAP": None,
+                    "APEEXCLXOR": None,
+                    "ProjPE": None,
+                    "APRICE2BK": None,
+                    "EV": None,
+                    "AEBITD": None,
+                    "NHIG": None,
+                    "NLOW": None,
+                    "ACFSHR": None,
                 }
                 return response
-            
-                    
-                    
+
     def send_request(self, url, payload, headers):
         result = None
 
@@ -160,21 +151,15 @@ class Rkd:
 
 class RkdData(Rkd):
 
-    def __init__(self,*args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    
-    
-        
-    
-    
-    
-    
     def retrive_template(self, ticker, scope="List", fields=''):
 
         if scope == 'List':
             if not fields or fields == '':
-                raise ValueError('fields keyword argument must set if scope is list')
+                raise ValueError(
+                    'fields keyword argument must set if scope is list')
             field = (',').join(fields)
             fields = field.replace(',', ':')
         payload = {
@@ -210,20 +195,21 @@ class RkdData(Rkd):
 
         return payload
 
-    def get_snapshot(self, ticker,save=False,df=False):
+    def get_snapshot(self, ticker, save=False, df=False):
         snapshot_url = f'{self.credentials.base_url}Fundamentals/Fundamentals.svc/REST/Fundamentals_1/GetRatiosReports_1'
-        list_formated_json =[]
-        if isinstance(ticker,list):
+        list_formated_json = []
+        if isinstance(ticker, list):
             list_payload = []
             for tic in ticker:
                 payload = {
-            "GetRatiosReports_Request_1": {
-                "companyId": tic,
-                "companyIdType": "RIC"
-                        }
-                        }
+                    "GetRatiosReports_Request_1": {
+                        "companyId": tic,
+                        "companyIdType": "RIC"
+                    }
+                }
                 list_payload.append(payload)
-            responses = asyncio.run(self.gather_request(snapshot_url,list_payload,self.auth_headers()))
+            responses = asyncio.run(self.gather_request(
+                snapshot_url, list_payload, self.auth_headers()))
             # print(responses)
             # with open('data.json', 'w') as fp:
             #     json.dump(responses, fp,  indent=4)
@@ -231,26 +217,28 @@ class RkdData(Rkd):
             for response in responses:
                 if not "Error" in response:
                     base_response = response['GetRatiosReports_Response_1']['FundamentalReports']['ReportRatios']
-                    
+
                     formated_json = {}
                     formated_json['ticker'] = base_response['Issues']['Issue'][0]['IssueID'][2]['Value']
                     fields = ['AREVPS',
-                            'MKTCAP',
-                            'APEEXCLXOR',
-                            'ProjPE',
-                            'APRICE2BK',
-                            'EV',
-                            'AEBITD',
-                            'NHIG',
-                            'NLOW',
-                            'ACFSHR']
+                              'MKTCAP',
+                              'APEEXCLXOR',
+                              'ProjPE',
+                              'APRICE2BK',
+                              'EV',
+                              'AEBITD',
+                              'NHIG',
+                              'NLOW',
+                              'ACFSHR']
                     for group_item in base_response['Ratios']['Group']:
                         for item in group_item['Ratio']:
                             if item['FieldName'] in fields:
-                                formated_json[item['FieldName']] = item['Value']
+                                formated_json[item['FieldName']
+                                              ] = item['Value']
                     for group_item in base_response['ForecastData']['Ratio']:
                         if group_item['FieldName'] in fields:
-                            formated_json[group_item['FieldName']] = group_item['Value'][0]['Value']
+                            formated_json[group_item['FieldName']
+                                          ] = group_item['Value'][0]['Value']
                     list_formated_json.append(formated_json)
                 elif "Error" in response:
                     list_formated_json.append(response)
@@ -266,39 +254,40 @@ class RkdData(Rkd):
             response = self.send_request(
                 snapshot_url, payload, self.auth_headers())
             base_response = response['GetRatiosReports_Response_1']['FundamentalReports']['ReportRatios']
-            
+
             formated_json = {}
             formated_json['ticker'] = base_response['Issues']['Issue'][0]['IssueID'][2]['Value']
             fields = ['AREVPS',
-                    'MKTCAP',
-                    'APEEXCLXOR',
-                    'ProjPE',
-                    'APRICE2BK',
-                    'EV',
-                    'AEBITD',
-                    'NHIG',
-                    'NLOW',
-                    'ACFSHR']
+                      'MKTCAP',
+                      'APEEXCLXOR',
+                      'ProjPE',
+                      'APRICE2BK',
+                      'EV',
+                      'AEBITD',
+                      'NHIG',
+                      'NLOW',
+                      'ACFSHR']
             for group_item in base_response['Ratios']['Group']:
                 for item in group_item['Ratio']:
                     if item['FieldName'] in fields:
                         formated_json[item['FieldName']] = item['Value']
             for group_item in base_response['ForecastData']['Ratio']:
                 if group_item['FieldName'] in fields:
-                    formated_json[group_item['FieldName']] = group_item['Value'][0]['Value']
+                    formated_json[group_item['FieldName']
+                                  ] = group_item['Value'][0]['Value']
             list_formated_json.append(formated_json)
         df_data = pd.DataFrame(list_formated_json).rename(columns={
-            'AREVPS':'revenue_per_share',
-            'MKTCAP':'market_cap',
-            'APEEXCLXOR':'pe_ratio',
-            'ProjPE':'pe_forecast',
-            'APRICE2BK':'pb',
-            'EV':'ev',
-            'AEBITD':'ebitda',
-            'NHIG':'wk52_high',
-            'NLOW':'wk52_low',
-            'ACFSHR':'free_cash_flow',
-            })
+            'AREVPS': 'revenue_per_share',
+            'MKTCAP': 'market_cap',
+            'APEEXCLXOR': 'pe_ratio',
+            'ProjPE': 'pe_forecast',
+            'APRICE2BK': 'pb',
+            'EV': 'ev',
+            'AEBITD': 'ebitda',
+            'NHIG': 'wk52_high',
+            'NLOW': 'wk52_low',
+            'ACFSHR': 'free_cash_flow',
+        })
         if save:
             self.save('universe', 'Universe', df_data.to_dict('records'))
         if df:
@@ -313,15 +302,15 @@ class RkdData(Rkd):
         response = self.send_request(quote_url, payload, self.auth_headers())
         formated_json_data = self.parse_response(response)
         df_data = pd.DataFrame(formated_json_data).rename(columns={
-            'CF_ASK': 'intraday_ask', 
-            'CF_CLOSE': 'close', 
-            'CF_BID': 'intraday_bid', 
+            'CF_ASK': 'intraday_ask',
+            'CF_CLOSE': 'close',
+            'CF_BID': 'intraday_bid',
             'CF_HIGH': 'high', 'CF_LOW': 'low',
-            'PCTCHNG': 'latest_price_change', 
+            'PCTCHNG': 'latest_price_change',
             'TRADE_DATE': 'last_date',
-            'CF_VOLUME':'volume',
-            'CF_LAST':'latest_price'
-            })
+            'CF_VOLUME': 'volume',
+            'CF_LAST': 'latest_price'
+        })
         if save:
             self.save('master', 'LatestPrice', df_data.to_dict('records'))
         if df:
@@ -361,11 +350,10 @@ class RkdData(Rkd):
                 setattr(obj, attr, val)
             list_obj.append(obj)
         Model.objects.bulk_update(list_obj, key_set, batch_size=500)
-        
-        
-        
+
+
 class RkdStream(Rkd):
-    def __init__(self,*args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.kwargs = kwargs
         super().__init__(*args, **kwargs)
         self.user = self.credentials.username
@@ -375,15 +363,14 @@ class RkdStream(Rkd):
         self.token = self.credentials.token
         self.ticker_data = args[0]
         self.ws_address = "wss://streaming.trkd.thomsonreuters.com/WebSocket"
-        
+
         self.web_socket_app = websocket.WebSocketApp(self.ws_address, header=['User-Agent: Python'],
-                            on_message=self.on_message,
-                            on_error=self.on_error,
-                            on_close=self.on_close,
-                            subprotocols=['tr_json2'])
+                                                     on_message=self.on_message,
+                                                     on_error=self.on_error,
+                                                     on_close=self.on_close,
+                                                     subprotocols=['tr_json2'])
         self.layer = get_channel_layer()
-        
-    
+
     def stream(self):
         print("Connecting to WebSocket " + self.ws_address + " ...")
         self.web_socket_app.on_open = self.on_open
@@ -392,14 +379,13 @@ class RkdStream(Rkd):
         except Exception as e:
             print(f"==========={e}=============")
             self.web_socket_app.close()
-     
-    
 
-    def answer_ping(self, ws, *args, **options): 
-        ping_req = {"Type":"Pong"}
+    def answer_ping(self, ws, *args, **options):
+        ping_req = {"Type": "Pong"}
         ws.send(json.dumps(ping_req))
         print("SENT:")
-        print(json.dumps(ping_req, sort_keys=True, indent=2, separators=(',', ':')))
+        print(json.dumps(ping_req, sort_keys=True,
+                         indent=2, separators=(',', ':')))
 
     def write_on_s3(self, message, *args, **options):
         try:
@@ -407,11 +393,13 @@ class RkdStream(Rkd):
             type_name = message['Type']
             act = message['UpdateType']
             note = json.dumps(message)
-            s3 = boto3.client('s3', aws_access_key_id='AKIA2XEOTUNGWEQ43TB6' ,aws_secret_access_key='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', region_name='ap-east-1')
+            s3 = boto3.client('s3', aws_access_key_id='AKIA2XEOTUNGWEQ43TB6',
+                              aws_secret_access_key='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', region_name='ap-east-1')
             # epoch = str(int(datetime.now().timestamp()))
             # s3_file = 'test_dir/'+str(int(epoch)) + ".txt"
             s3_file = "test_dir/"+type_name+"-"+ticker+"-"+act+".txt"
-            upload = s3.put_object(Body=note, Bucket='droid-v2-logs', Key=s3_file)
+            upload = s3.put_object(
+                Body=note, Bucket='droid-v2-logs', Key=s3_file)
         except Exception as e:
             print(f"Error ===== {e}")
 
@@ -419,7 +407,7 @@ class RkdStream(Rkd):
         """ Parse at high level and output JSON of message """
         message_type = message_json['Type']
         # print(f"Message json ====== {message_json}")
-     
+
         """ check for login response """
         if message_type == "Refresh":
             if 'Domain' in message_json:
@@ -436,23 +424,26 @@ class RkdStream(Rkd):
             if message_json['Type'] == 'Update':
                 if message_json['UpdateType'] == 'Quote':
                     # self.rkd.save('master', 'LatestPrice', data)
-                    print(f"====== Quote - {message_json['Key']['Name']} ======")
-                    self.beautify_print(message_json,**options)
+                    print(
+                        f"====== Quote - {message_json['Key']['Name']} ======")
+                    self.beautify_print(message_json, **options)
                 elif message_json['UpdateType'] == 'Trade':
-                    print(f"====== Trade - {message_json['Key']['Name']} ======")
-                    self.beautify_print(message_json,**options)
+                    print(
+                        f"====== Trade - {message_json['Key']['Name']} ======")
+                    self.beautify_print(message_json, **options)
                 elif message_json['UpdateType'] == 'Unspecified':
-                    print(f"====== Unspecified - {message_json['Key']['Name']} ======")
-                    self.beautify_print(message_json,**options)
+                    print(
+                        f"====== Unspecified - {message_json['Key']['Name']} ======")
+                    self.beautify_print(message_json, **options)
                 else:
                     None
             # write_on_s3(message_json)
-     
+
         """ Else it's market price response, so now exit this simple example """
         # web_socket_app.close()
-     
+
     def process_login_response(self, ws, message_json, *args, **options):
-        print ("Logged in!")
+        print("Logged in!")
         self.send_market_price_request(ws)
 
     def beautify_print(self, message, *args, **options):
@@ -462,79 +453,79 @@ class RkdStream(Rkd):
         #     dict_data[change[key]]=val
         #     data.append(dict_data)
         change = {
-                'CF_ASK': 'intraday_ask', 
-                'CF_CLOSE': 'close', 
-                'CF_BID': 'intraday_bid', 
-                'CF_HIGH': 'high', 'CF_LOW': 'low',
-                'PCTCHNG': 'latest_price_change', 
-                'TRADE_DATE': 'last_date',
-                'CF_VOLUME':'volume',
-                'CF_LAST':'latest_price'
-            }
+            'CF_ASK': 'intraday_ask',
+            'CF_CLOSE': 'close',
+            'CF_BID': 'intraday_bid',
+            'CF_HIGH': 'high', 'CF_LOW': 'low',
+            'PCTCHNG': 'latest_price_change',
+            'TRADE_DATE': 'last_date',
+            'CF_VOLUME': 'volume',
+            'CF_LAST': 'latest_price'
+        }
         message['Fields']['ticker'] = message['Key']['Name']
         data = [message['Fields']]
-        df  = pd.DataFrame(data).rename(columns=change)
+        df = pd.DataFrame(data).rename(columns=change)
         ticker = df.loc[df['ticker'] == message['Fields']['ticker']]
         asyncio.run(self.layer.group_send(message['Fields']['ticker'],
-            {
-                'type': 'broadcastmessage',
-                'message':  ticker.to_dict('records')
-            }))
+                                          {
+            'type': 'broadcastmessage',
+            'message':  ticker.to_dict('records')
+        }))
         asyncio.run(self.layer.group_send('topstock',
-            {
-                'type': 'broadcastmessage',
-                'message':  df.to_dict('records')
-            }))
+                                          {
+                                              'type': 'broadcastmessage',
+                                              'message':  df.to_dict('records')
+                                          }))
 
         del df
         del ticker
-            # try:
-            #     self.rkd.save('master', 'LatestPrice', data)
-            # except Exception as e:
-            #     print(e)
-       
+        # try:
+        #     self.rkd.save('master', 'LatestPrice', data)
+        # except Exception as e:
+        #     print(e)
+
     def send_market_price_request(self, ws, *args, **options):
         """ Create and send simple Market Price request """
 
-        
-
         mp_req_json = {
-        'ID': int(time.time()), 
-        'Key': {
-            'Name': self.ticker_data
+            'ID': int(time.time()),
+            'Key': {
+                'Name': self.ticker_data
             },
-        'View':[
-            'PCTCHNG',
-            'CF_CLOSE',
-            'CF_ASK',
-            'CF_BID',
-            'CF_HIGH',
-            'CF_LOW',
-            'CF_LAST',
-            'CF_VOLUME',
-            'TRADE_DATE'
+            'View': [
+                'PCTCHNG',
+                'CF_CLOSE',
+                'CF_ASK',
+                'CF_BID',
+                'CF_HIGH',
+                'CF_LOW',
+                'CF_LAST',
+                'CF_VOLUME',
+                'TRADE_DATE'
             ]
         }
 
         ws.send(json.dumps(mp_req_json))
         print("SENT:")
-        print(json.dumps(mp_req_json, sort_keys=True, indent=2, separators=(',', ':')))
-     
+        print(json.dumps(mp_req_json, sort_keys=True,
+                         indent=2, separators=(',', ':')))
+
     def send_login_request(self, ws, *args, **options):
         """ Generate a login request from command line data (or defaults) and send """
-        login_json = { 'ID': 1, 'Domain': 'Login',
-            'Key': { 'NameType': 'AuthnToken', 'Name': '',
-                'Elements': { 'AuthenticationToken':'', 'ApplicationId': '', 'Position': '' }
-            }
-        }
+        login_json = {'ID': 1, 'Domain': 'Login',
+                      'Key': {'NameType': 'AuthnToken', 'Name': '',
+                              'Elements': {'AuthenticationToken': '', 'ApplicationId': '', 'Position': ''}
+                              }
+                      }
         login_json['Key']['Name'] = self.user
         login_json['Key']['Elements']['AuthenticationToken'] = self.token
         login_json['Key']['Elements']['ApplicationId'] = self.app_id
         login_json['Key']['Elements']['Position'] = self.position
         ws.send(json.dumps(login_json))
         print("SENT LOGIN REQUEST:")
-        print(json.dumps(login_json, sort_keys=True, indent=2, separators=(',', ':')))
-     
+        print(json.dumps(login_json, sort_keys=True,
+                         indent=2, separators=(',', ':')))
+
     def on_message(self, ws, message, *args, **options):
         """ Called when message received, parse message into JSON for processing """
         print("")
@@ -543,19 +534,18 @@ class RkdStream(Rkd):
         message_json = json.loads(message)
         # print(json.dumps(message_json, sort_keys=True, indent=2, separators=(',', ':')))
 
-     
         for singleMsg in message_json:
             self.process_message(ws, singleMsg)
 
     def on_error(self, ws, error, *args, **options):
         """ Called when websocket error has occurred """
         print(error)
-     
+
     def on_close(self, ws, *args, **options):
         # print(super(on_close, self))
         """ Called when websocket is closed """
         print("WebSocket Closed")
-     
+
     def on_open(self, ws, *args, **options):
         """ Called when handshake is complete and websocket is open, send login """
         print("WebSocket open!")
