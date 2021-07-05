@@ -1,31 +1,7 @@
 from core.orders.models import Order,OrderPosition,PositionPerformance
 
-
-# def sync_order(payload):
-#     try:
-#         order = Order.objects.get(order_uid=payload['order_uid'])
-#         for attrib, val in payload.items():
-#             field= order._meta.get_field(attrib)
-#             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
-#                 setattr(order, f'{attrib}_id',val)
-#             else:
-#                 setattr(order, attrib,val)
-#         order.save()
-#     except Order.DoesNotExist:
-#         attribs_modifier = {}
-#         for attrib, val in payload.items():
-#             field= Order._meta.get_field(attrib)
-#             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
-#                 attribs_modifier[f'{attrib}_id'] = val
-#             else:
-#                 attribs_modifier[attrib]=val
-#         order = Order.objects.create(**attribs_modifier)
-    
-#     print(order)
-
-
 # master, LatestPrice, [{data}] --> df_data.to_dict('records')
-def save_latest_price(app, model, data):
+def save_latest_price(app='master', model='LatestPrice', data):
     from django.apps import apps
     Model = apps.get_model(app, model)
     pk = Model._meta.pk.name
@@ -57,3 +33,25 @@ def save_latest_price(app, model, data):
             setattr(obj, attr, val)
         list_obj.append(obj)
     Model.objects.bulk_update(list_obj, key_set, batch_size=500)
+
+# def sync_order(payload):
+#     try:
+#         order = Order.objects.get(order_uid=payload['order_uid'])
+#         for attrib, val in payload.items():
+#             field= order._meta.get_field(attrib)
+#             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
+#                 setattr(order, f'{attrib}_id',val)
+#             else:
+#                 setattr(order, attrib,val)
+#         order.save()
+#     except Order.DoesNotExist:
+#         attribs_modifier = {}
+#         for attrib, val in payload.items():
+#             field= Order._meta.get_field(attrib)
+#             if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
+#                 attribs_modifier[f'{attrib}_id'] = val
+#             else:
+#                 attribs_modifier[attrib]=val
+#         order = Order.objects.create(**attribs_modifier)
+    
+#     print(order)

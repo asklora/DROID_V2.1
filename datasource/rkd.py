@@ -480,6 +480,14 @@ class RkdStream(RkdData):
                                               }))
             self.save.apply_async(
                 args=('master', 'LatestPrice', df.to_dict('records')))
+
+            # req_payload ={
+            #   'type':'function',
+            #   'module':'core.djangomodule.crudlib.LatestPrice.save_latest_price',
+            #   'data':df.to_dict('records')
+            # }
+            # send = asyncio.run(celery_publish_msg('#save_latestPrice_channel',df.to_dict('records')))
+
             del df
             del ticker
         # try:
