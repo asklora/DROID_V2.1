@@ -471,7 +471,7 @@ class RkdStream(Rkd):
             'type': 'broadcastmessage',
             'message':  ticker.to_dict('records')
         }))
-        asyncio.run(self.layer.group_send('topstock',
+        asyncio.run(self.layer.group_send('topstock',  # channel name
                                           {
                                               'type': 'broadcastmessage',
                                               'message':  df.to_dict('records')
