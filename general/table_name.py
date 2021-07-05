@@ -16,6 +16,12 @@ def get_universe_client_table_name():
 def get_universe_rating_table_name():
     return "universe_rating"
 
+def get_universe_rating_history_table_name():
+    return "universe_rating_history"
+
+def get_universe_rating_detail_history_table_name():
+    return "universe_rating_detail_history"
+
 def get_country_table_name():
     return "country"
 

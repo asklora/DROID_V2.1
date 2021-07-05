@@ -1,23 +1,1492 @@
 {
-    "ExtractionRequest": {
-        "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.PriceHistoryExtractionRequest",
-        "ContentFieldNames": [
-            "RIC",
-            "Trade Date",
-            "Total Return",
-            "Universal Close Price"
-
-        ],
-        "IdentifierList": {
-            "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
-            "InstrumentIdentifiers": [
-            ],
-            "ValidationOptions": null,
-            "UseUserPreferencesForValidationOptions": false
-        },
-        "Condition":
-        {
-            
-      }
+    "GetRatiosReports_Response_1": {
+        "FundamentalReports": {
+            "ReportRatios": {
+                "Major": 1,
+                "Minor": 0,
+                "Revision": 2,
+                "CoIDs": {
+                    "CoID": [
+                        {
+                            "Type": "RepNo",
+                            "Value": "4741N"
+                        },
+                        {
+                            "Type": "CompanyName",
+                            "Value": "International Business Machines Corp."
+                        },
+                        {
+                            "Type": "IRSNo",
+                            "Value": "130871985"
+                        },
+                        {
+                            "Type": "CIKNo",
+                            "Value": "0000051143"
+                        }
+                    ]
+                },
+                "Issues": {
+                    "Issue": [
+                        {
+                            "ID": 1,
+                            "Type": "C",
+                            "Desc": "Common Stock",
+                            "Order": 1,
+                            "IssueID": [
+                                {
+                                    "Type": "Name",
+                                    "Value": "Ordinary Shares"
+                                },
+                                {
+                                    "Type": "Ticker",
+                                    "Value": "IBM"
+                                },
+                                {
+                                    "Type": "RIC",
+                                    "Value": "IBM"
+                                },
+                                {
+                                    "Type": "DisplayRIC",
+                                    "Value": "IBM.N"
+                                },
+                                {
+                                    "Type": "InstrumentPI",
+                                    "Value": "261483"
+                                },
+                                {
+                                    "Type": "QuotePI",
+                                    "Value": "1090370"
+                                }
+                            ],
+                            "Exchange": {
+                                "Code": "NYSE",
+                                "Country": "USA",
+                                "Value": "New York Stock Exchange"
+                            },
+                            "MostRecentSplit": {
+                                "Date": "1999-05-27",
+                                "Value": "2.0"
+                            }
+                        },
+                        {
+                            "ID": 2,
+                            "Type": "P",
+                            "Desc": "Preferred Stock",
+                            "Order": 1,
+                            "IssueID": [
+                                {
+                                    "Type": "Name",
+                                    "Value": "Preference Shares Series A"
+                                },
+                                {
+                                    "Type": "Ticker",
+                                    "Value": "IBMPP"
+                                },
+                                {
+                                    "Type": "RIC",
+                                    "Value": "IBMPP.PK^C06"
+                                },
+                                {
+                                    "Type": "InstrumentPI",
+                                    "Value": "1883112"
+                                },
+                                {
+                                    "Type": "QuotePI",
+                                    "Value": "25545447"
+                                }
+                            ],
+                            "Exchange": {
+                                "Code": "OTC",
+                                "Country": "USA",
+                                "Value": "Over The Counter"
+                            }
+                        }
+                    ]
+                },
+                "CoGeneralInfo": {
+                    "CoStatus": {
+                        "Code": 1,
+                        "Value": "Active"
+                    },
+                    "CoType": {
+                        "Code": "EQU",
+                        "Value": "Equity Issue"
+                    },
+                    "LastModified": "2021-06-25",
+                    "LatestAvailableAnnual": "2020-12-31",
+                    "LatestAvailableInterim": "2021-03-31",
+                    "Employees": {
+                        "LastUpdated": "2020-12-31",
+                        "Value": "375300"
+                    },
+                    "SharesOut": {
+                        "Date": "2021-03-31",
+                        "TotalFloat": 892330820.0,
+                        "Value": "893522828.0"
+                    },
+                    "ReportingCurrency": {
+                        "Code": "USD",
+                        "Value": "U.S. Dollars"
+                    },
+                    "MostRecentExchange": {
+                        "Date": "2021-06-29",
+                        "Value": "1.0"
+                    }
+                },
+                "Ratios": {
+                    "PriceCurrency": "USD",
+                    "ReportingCurrency": "USD",
+                    "ExchangeRate": 1.00000,
+                    "LatestAvailableDate": "2021-03-31",
+                    "Group": [
+                        {
+                            "ID": "Price and Volume",
+                            "Ratio": [
+                                {
+                                    "FieldName": "NPRICE",
+                                    "Type": "N",
+                                    "Value": "146.59000"
+                                },
+                                {
+                                    "FieldName": "NHIG",
+                                    "Type": "N",
+                                    "Value": "152.84000"
+                                },
+                                {
+                                    "FieldName": "NLOW",
+                                    "Type": "N",
+                                    "Value": "105.92000"
+                                },
+                                {
+                                    "FieldName": "PDATE",
+                                    "Type": "D",
+                                    "Value": "2021-06-30T00:00:00"
+                                },
+                                {
+                                    "FieldName": "VOL10DAVG",
+                                    "Type": "N",
+                                    "Value": "4.02159"
+                                },
+                                {
+                                    "FieldName": "MKTCAP",
+                                    "Type": "N",
+                                    "Value": "130981.50000"
+                                },
+                                {
+                                    "FieldName": "NHIGDATE",
+                                    "Type": "D",
+                                    "Value": "2021-06-10T00:00:00"
+                                },
+                                {
+                                    "FieldName": "NLOWDATE",
+                                    "Type": "D",
+                                    "Value": "2020-10-28T00:00:00"
+                                },
+                                {
+                                    "FieldName": "VOL3MAVG",
+                                    "Type": "N",
+                                    "Value": "101.77676"
+                                },
+                                {
+                                    "FieldName": "BETA",
+                                    "Type": "N",
+                                    "Value": "1.22556"
+                                },
+                                {
+                                    "FieldName": "PR1DAYPRC",
+                                    "Type": "N",
+                                    "Value": "0.71453"
+                                },
+                                {
+                                    "FieldName": "PR13WKPCT",
+                                    "Type": "N",
+                                    "Value": "10.00300"
+                                },
+                                {
+                                    "FieldName": "PR26WKPCT",
+                                    "Type": "N",
+                                    "Value": "17.89448"
+                                },
+                                {
+                                    "FieldName": "PR5DAYPRC",
+                                    "Type": "N",
+                                    "Value": "1.36920"
+                                },
+                                {
+                                    "FieldName": "PR52WKPCT",
+                                    "Type": "N",
+                                    "Value": "21.37948"
+                                },
+                                {
+                                    "FieldName": "PRYTDPCT",
+                                    "Type": "N",
+                                    "Value": "16.45218"
+                                },
+                                {
+                                    "FieldName": "ChPctPriceMTD",
+                                    "Type": "N",
+                                    "Value": "1.98275"
+                                },
+                                {
+                                    "FieldName": "PR04WKPCTR",
+                                    "Type": "N",
+                                    "Value": "-1.49520"
+                                },
+                                {
+                                    "FieldName": "PR13WKPCTR",
+                                    "Type": "N",
+                                    "Value": "1.69397"
+                                },
+                                {
+                                    "FieldName": "PR26WKPCTR",
+                                    "Type": "N",
+                                    "Value": "2.38207"
+                                },
+                                {
+                                    "FieldName": "PR52WKPCTR",
+                                    "Type": "N",
+                                    "Value": "-12.43477"
+                                },
+                                {
+                                    "FieldName": "PRYTDPCTR",
+                                    "Type": "N",
+                                    "Value": "1.78069"
+                                }
+                            ]
+                        },
+                        {
+                            "ID": "Per share data",
+                            "Ratio": [
+                                {
+                                    "FieldName": "AEPSXCLXOR",
+                                    "Type": "N",
+                                    "Value": "6.25834"
+                                },
+                                {
+                                    "FieldName": "TTMEPSXCLX",
+                                    "Type": "N",
+                                    "Value": "5.86032"
+                                },
+                                {
+                                    "FieldName": "AEPSNORM",
+                                    "Type": "N",
+                                    "Value": "12.07053"
+                                },
+                                {
+                                    "FieldName": "AREVPS",
+                                    "Type": "N",
+                                    "Value": "82.11349"
+                                },
+                                {
+                                    "FieldName": "TTMREVPS",
+                                    "Type": "N",
+                                    "Value": "82.13834"
+                                },
+                                {
+                                    "FieldName": "ABVPS",
+                                    "Type": "N",
+                                    "Value": "23.07503"
+                                },
+                                {
+                                    "FieldName": "QBVPS",
+                                    "Type": "N",
+                                    "Value": "23.93783"
+                                },
+                                {
+                                    "FieldName": "ATANBVPS",
+                                    "Type": "N",
+                                    "Value": "-59.16630"
+                                },
+                                {
+                                    "FieldName": "QTANBVPS",
+                                    "Type": "N",
+                                    "Value": "-58.34210"
+                                },
+                                {
+                                    "FieldName": "ACSHPS",
+                                    "Type": "N",
+                                    "Value": "15.47297"
+                                },
+                                {
+                                    "FieldName": "QCSHPS",
+                                    "Type": "N",
+                                    "Value": "12.45743"
+                                },
+                                {
+                                    "FieldName": "ACFSHR",
+                                    "Type": "N",
+                                    "Value": "13.72574"
+                                },
+                                {
+                                    "FieldName": "TTMCFSHR",
+                                    "Type": "N",
+                                    "Value": "13.35388"
+                                },
+                                {
+                                    "FieldName": "ADIVSHR",
+                                    "Type": "N",
+                                    "Value": "6.51000"
+                                },
+                                {
+                                    "FieldName": "TTMDIVSHR",
+                                    "Type": "N",
+                                    "Value": "6.52000"
+                                },
+                                {
+                                    "FieldName": "TTMEBITDPS",
+                                    "Type": "N",
+                                    "Value": "19.62058"
+                                },
+                                {
+                                    "FieldName": "ABEPSXCLXO",
+                                    "Type": "N",
+                                    "Value": "6.30203"
+                                },
+                                {
+                                    "FieldName": "TTMBEPSXCL",
+                                    "Type": "N",
+                                    "Value": "5.90186"
+                                },
+                                {
+                                    "FieldName": "AEPSINCLXO",
+                                    "Type": "N",
+                                    "Value": "6.23491"
+                                },
+                                {
+                                    "FieldName": "TTMEPSINCX",
+                                    "Type": "N",
+                                    "Value": "5.98056"
+                                },
+                                {
+                                    "FieldName": "TTMFCFSHR",
+                                    "Type": "N",
+                                    "Value": "10.80445"
+                                },
+                                {
+                                    "FieldName": "ADIV5YAVG",
+                                    "Type": "N",
+                                    "Value": "6.11000"
+                                }
+                            ]
+                        },
+                        {
+                            "ID": "Valuation",
+                            "Ratio": [
+                                {
+                                    "FieldName": "APEEXCLXOR",
+                                    "Type": "N",
+                                    "Value": "23.42314"
+                                },
+                                {
+                                    "FieldName": "PEEXCLXOR",
+                                    "Type": "N",
+                                    "Value": "25.01399"
+                                },
+                                {
+                                    "FieldName": "APENORM",
+                                    "Type": "N",
+                                    "Value": "12.14445"
+                                },
+                                {
+                                    "FieldName": "APR2REV",
+                                    "Type": "N",
+                                    "Value": "1.77916"
+                                },
+                                {
+                                    "FieldName": "TTMPR2REV",
+                                    "Type": "N",
+                                    "Value": "1.77530"
+                                },
+                                {
+                                    "FieldName": "APR2TANBK",
+                                    "Type": "N",
+                                    "Value": "-99999.99000"
+                                },
+                                {
+                                    "FieldName": "PR2TANBK",
+                                    "Type": "N",
+                                    "Value": "-99999.99000"
+                                },
+                                {
+                                    "FieldName": "APRFCFPS",
+                                    "Type": "N",
+                                    "Value": "14.28370"
+                                },
+                                {
+                                    "FieldName": "TTMPRCFPS",
+                                    "Type": "N",
+                                    "Value": "10.91968"
+                                },
+                                {
+                                    "FieldName": "TTMPRFCFPS",
+                                    "Type": "N",
+                                    "Value": "13.49629"
+                                },
+                                {
+                                    "FieldName": "APRICE2BK",
+                                    "Type": "N",
+                                    "Value": "6.35276"
+                                },
+                                {
+                                    "FieldName": "PRICE2BK",
+                                    "Type": "N",
+                                    "Value": "6.12378"
+                                },
+                                {
+                                    "FieldName": "PEBEXCLXOR",
+                                    "Type": "N",
+                                    "Value": "22.57932"
+                                },
+                                {
+                                    "FieldName": "TTMPEHIGH",
+                                    "Type": "N",
+                                    "Value": "22.73937"
+                                },
+                                {
+                                    "FieldName": "TTMPELOW",
+                                    "Type": "N",
+                                    "Value": "9.65728"
+                                },
+                                {
+                                    "FieldName": "PEINCLXOR",
+                                    "Type": "N",
+                                    "Value": "24.51108"
+                                },
+                                {
+                                    "FieldName": "NetDebt_I",
+                                    "Type": "N",
+                                    "Value": "45273.00000"
+                                },
+                                {
+                                    "FieldName": "NetDebt_A",
+                                    "Type": "N",
+                                    "Value": "47726.00000"
+                                },
+                                {
+                                    "FieldName": "YLD5YAVG",
+                                    "Type": "N",
+                                    "Value": "4.40837"
+                                },
+                                {
+                                    "FieldName": "YIELD",
+                                    "Type": "N",
+                                    "Value": "4.47507"
+                                },
+                                {
+                                    "FieldName": "DivYield_CurTTM",
+                                    "Type": "N",
+                                    "Value": "4.44778"
+                                }
+                            ]
+                        },
+                        {
+                            "ID": "Financial strength",
+                            "Ratio": [
+                                {
+                                    "FieldName": "ACURRATIO",
+                                    "Type": "N",
+                                    "Value": "0.98234"
+                                },
+                                {
+                                    "FieldName": "QCURRATIO",
+                                    "Type": "N",
+                                    "Value": "0.93148"
+                                },
+                                {
+                                    "FieldName": "AQUICKRATI",
+                                    "Type": "N",
+                                    "Value": "0.93622"
+                                },
+                                {
+                                    "FieldName": "QQUICKRATI",
+                                    "Type": "N",
+                                    "Value": "0.88145"
+                                },
+                                {
+                                    "FieldName": "ALTD2EQ",
+                                    "Type": "N",
+                                    "Value": "263.88480"
+                                },
+                                {
+                                    "FieldName": "QLTD2EQ",
+                                    "Type": "N",
+                                    "Value": "239.40340"
+                                },
+                                {
+                                    "FieldName": "ATOTD2EQ",
+                                    "Type": "N",
+                                    "Value": "298.75720"
+                                },
+                                {
+                                    "FieldName": "QTOTD2EQ",
+                                    "Type": "N",
+                                    "Value": "263.70560"
+                                },
+                                {
+                                    "FieldName": "APAYRATIO",
+                                    "Type": "N",
+                                    "Value": "103.31490"
+                                },
+                                {
+                                    "FieldName": "TTMPAYRAT",
+                                    "Type": "N",
+                                    "Value": "110.49030"
+                                },
+                                {
+                                    "FieldName": "EV2FCF_CurA",
+                                    "Type": "N",
+                                    "Value": "54.53995"
+                                },
+                                {
+                                    "FieldName": "EV2FCF_CurTTM",
+                                    "Type": "N",
+                                    "Value": "57.54601"
+                                },
+                                {
+                                    "FieldName": "AINTCOV",
+                                    "Type": "N",
+                                    "Value": "9.03322"
+                                },
+                                {
+                                    "FieldName": "TTMINTCOV",
+                                    "Type": "N",
+                                    "Value": "9.97344"
+                                },
+                                {
+                                    "FieldName": "A1FCF",
+                                    "Type": "N",
+                                    "Value": "9170.00000"
+                                },
+                                {
+                                    "FieldName": "TTMFCF",
+                                    "Type": "N",
+                                    "Value": "9705.00000"
+                                }
+                            ]
+                        },
+                        {
+                            "ID": "Income Statement",
+                            "Ratio": [
+                                {
+                                    "FieldName": "AREV",
+                                    "Type": "N",
+                                    "Value": "73620.00000"
+                                },
+                                {
+                                    "FieldName": "TTMREV",
+                                    "Type": "N",
+                                    "Value": "73780.00000"
+                                },
+                                {
+                                    "FieldName": "AEBITD",
+                                    "Type": "N",
+                                    "Value": "17300.00000"
+                                },
+                                {
+                                    "FieldName": "TTMEBITD",
+                                    "Type": "N",
+                                    "Value": "17624.00000"
+                                },
+                                {
+                                    "FieldName": "AEBT",
+                                    "Type": "N",
+                                    "Value": "4637.00000"
+                                },
+                                {
+                                    "FieldName": "TTMEBT",
+                                    "Type": "N",
+                                    "Value": "5592.00000"
+                                },
+                                {
+                                    "FieldName": "ANIAC",
+                                    "Type": "N",
+                                    "Value": "5611.00000"
+                                },
+                                {
+                                    "FieldName": "TTMNIAC",
+                                    "Type": "N",
+                                    "Value": "5262.00000"
+                                },
+                                {
+                                    "FieldName": "AEBTNORM",
+                                    "Type": "N",
+                                    "Value": "9430.00000"
+                                },
+                                {
+                                    "FieldName": "ANIACNORM",
+                                    "Type": "N",
+                                    "Value": "10822.00000"
+                                },
+                                {
+                                    "FieldName": "VDES_TTM",
+                                    "Type": "N",
+                                    "Value": "10.96998"
+                                }
+                            ]
+                        },
+                        {
+                            "ID": "Margins",
+                            "Ratio": [
+                                {
+                                    "FieldName": "AGROSMGN",
+                                    "Type": "N",
+                                    "Value": "48.32111"
+                                },
+                                {
+                                    "FieldName": "TTMGROSMGN",
+                                    "Type": "N",
+                                    "Value": "48.60125"
+                                },
+                                {
+                                    "FieldName": "ANPMGNPCT",
+                                    "Type": "N",
+                                    "Value": "7.62157"
+                                },
+                                {
+                                    "FieldName": "TTMNPMGN",
+                                    "Type": "N",
+                                    "Value": "7.13201"
+                                },
+                                {
+                                    "FieldName": "AOPMGNPCT",
+                                    "Type": "N",
+                                    "Value": "6.29992"
+                                },
+                                {
+                                    "FieldName": "TTMOPMGN",
+                                    "Type": "N",
+                                    "Value": "7.58065"
+                                },
+                                {
+                                    "FieldName": "TTMPTMGN",
+                                    "Type": "N",
+                                    "Value": "7.57929"
+                                },
+                                {
+                                    "FieldName": "APTMGNPCT",
+                                    "Type": "N",
+                                    "Value": "6.29856"
+                                },
+                                {
+                                    "FieldName": "OPMGN5YR",
+                                    "Type": "N",
+                                    "Value": "12.80790"
+                                },
+                                {
+                                    "FieldName": "PTMGN5YR",
+                                    "Type": "N",
+                                    "Value": "12.80764"
+                                },
+                                {
+                                    "FieldName": "Focf2Rev_AAvg5",
+                                    "Type": "N",
+                                    "Value": "9.26156"
+                                },
+                                {
+                                    "FieldName": "Focf2Rev_TTM",
+                                    "Type": "N",
+                                    "Value": "13.15397"
+                                },
+                                {
+                                    "FieldName": "GROSMGN5YR",
+                                    "Type": "N",
+                                    "Value": "47.36760"
+                                },
+                                {
+                                    "FieldName": "MARGIN5YR",
+                                    "Type": "N",
+                                    "Value": "12.59989"
+                                }
+                            ]
+                        },
+                        {
+                            "ID": "Mgmt Effectiveness",
+                            "Ratio": [
+                                {
+                                    "FieldName": "AROAPCT",
+                                    "Type": "N",
+                                    "Value": "3.64165"
+                                },
+                                {
+                                    "FieldName": "TTMROAPCT",
+                                    "Type": "N",
+                                    "Value": "3.48440"
+                                },
+                                {
+                                    "FieldName": "AROEPCT",
+                                    "Type": "N",
+                                    "Value": "27.08077"
+                                },
+                                {
+                                    "FieldName": "TTMROEPCT",
+                                    "Type": "N",
+                                    "Value": "25.42766"
+                                },
+                                {
+                                    "FieldName": "AROIPCT",
+                                    "Type": "N",
+                                    "Value": "4.87248"
+                                },
+                                {
+                                    "FieldName": "TTMROIPCT",
+                                    "Type": "N",
+                                    "Value": "4.68641"
+                                },
+                                {
+                                    "FieldName": "AROA5YAVG",
+                                    "Type": "N",
+                                    "Value": "7.52977"
+                                },
+                                {
+                                    "FieldName": "AROE5YAVG",
+                                    "Type": "N",
+                                    "Value": "53.97444"
+                                },
+                                {
+                                    "FieldName": "AROI5YRAVG",
+                                    "Type": "N",
+                                    "Value": "10.56793"
+                                },
+                                {
+                                    "FieldName": "AASTTURN",
+                                    "Type": "N",
+                                    "Value": "0.47781"
+                                },
+                                {
+                                    "FieldName": "TTMASTTURN",
+                                    "Type": "N",
+                                    "Value": "0.48856"
+                                },
+                                {
+                                    "FieldName": "AINVTURN",
+                                    "Type": "N",
+                                    "Value": "22.00463"
+                                },
+                                {
+                                    "FieldName": "TTMINVTURN",
+                                    "Type": "N",
+                                    "Value": "20.98616"
+                                },
+                                {
+                                    "FieldName": "ANIPEREMP",
+                                    "Type": "N",
+                                    "Value": "15416.95000"
+                                },
+                                {
+                                    "FieldName": "TTMNIPEREM",
+                                    "Type": "N",
+                                    "Value": "14020.78000"
+                                },
+                                {
+                                    "FieldName": "ARECTURN",
+                                    "Type": "N",
+                                    "Value": "9.27554"
+                                },
+                                {
+                                    "FieldName": "TTMRECTURN",
+                                    "Type": "N",
+                                    "Value": "10.61048"
+                                },
+                                {
+                                    "FieldName": "AREVPEREMP",
+                                    "Type": "N",
+                                    "Value": "202280.50000"
+                                },
+                                {
+                                    "FieldName": "TTMREVPERE",
+                                    "Type": "N",
+                                    "Value": "196589.40000"
+                                }
+                            ]
+                        },
+                        {
+                            "ID": "Growth",
+                            "Ratio": [
+                                {
+                                    "FieldName": "REVCHNGYR",
+                                    "Type": "N",
+                                    "Value": "0.90490"
+                                },
+                                {
+                                    "FieldName": "REVTRENDGR",
+                                    "Type": "N",
+                                    "Value": "-2.07103"
+                                },
+                                {
+                                    "FieldName": "EPSCHNGYR",
+                                    "Type": "N",
+                                    "Value": "-26.96200"
+                                },
+                                {
+                                    "FieldName": "TTMEPSCHG",
+                                    "Type": "N",
+                                    "Value": "-42.94088"
+                                },
+                                {
+                                    "FieldName": "EPSTRENDGR",
+                                    "Type": "N",
+                                    "Value": "-14.37733"
+                                },
+                                {
+                                    "FieldName": "DIVGRPCT",
+                                    "Type": "N",
+                                    "Value": "3.33394"
+                                },
+                                {
+                                    "FieldName": "TTMREVCHG",
+                                    "Type": "N",
+                                    "Value": "-3.60218"
+                                },
+                                {
+                                    "FieldName": "REVPS5YGR",
+                                    "Type": "N",
+                                    "Value": "-0.25776"
+                                },
+                                {
+                                    "FieldName": "REVGRPCT",
+                                    "Type": "N",
+                                    "Value": "-2.38083"
+                                },
+                                {
+                                    "FieldName": "EPSGRPCT",
+                                    "Type": "N",
+                                    "Value": "-19.46945"
+                                },
+                                {
+                                    "FieldName": "BVTRENDGR",
+                                    "Type": "N",
+                                    "Value": "9.33605"
+                                },
+                                {
+                                    "FieldName": "TanBV_AYr5CAGR",
+                                    "Type": "N",
+                                    "Value": "-99999.99000"
+                                },
+                                {
+                                    "FieldName": "CSPTRENDGR",
+                                    "Type": "N",
+                                    "Value": "-4.89355"
+                                },
+                                {
+                                    "FieldName": "Ebitda_AYr5CAGR",
+                                    "Type": "N",
+                                    "Value": "-3.91172"
+                                },
+                                {
+                                    "FieldName": "Ebitda_TTMY5CAGR",
+                                    "Type": "N",
+                                    "Value": "-2.28472"
+                                },
+                                {
+                                    "FieldName": "FOCF_AYr5CAGR",
+                                    "Type": "N",
+                                    "Value": "2.24380"
+                                },
+                                {
+                                    "FieldName": "STLD_AYr5CAGR",
+                                    "Type": "N",
+                                    "Value": "9.05813"
+                                },
+                                {
+                                    "FieldName": "NPMTRENDGR",
+                                    "Type": "N",
+                                    "Value": "-14.15607"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "ForecastData": {
+                    "ConsensusType": "Mean",
+                    "CurFiscalYear": "2021",
+                    "CurFiscalYearEndMonth": "12",
+                    "CurInterimEndCalYear": "2021",
+                    "CurInterimEndMonth": "6",
+                    "EarningsBasis": "PRX",
+                    "Ratio": [
+                        {
+                            "FieldName": "ProjSales",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "74260.34880"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjSalesH",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "75448.00000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjSalesL",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "73252.00000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjSalesNumOfEst",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "14"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjSalesPS",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "83.10963"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjSalesQ",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "18293.98140"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjSalesQH",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "18490.00000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjSalesQL",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "18210.00000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjSalesQNumOfEst",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "10"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "Price2ProjSales",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "1.76381"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjEPS",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "10.90320"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjEPSH",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "11.40000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjEPSL",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "9.97000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjEPSNumOfEst",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "17"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjEPSQ",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "2.28390"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjEPSQH",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "2.40000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjEPSQL",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "2.15000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjEPSQNumOfEst",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "12"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjPE",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "13.44468"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjLTGrowthRate",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "16.3150"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "TargetPrice",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "143.46880"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "EPSActual",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "8.67000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "EPSPrev",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "8.42390"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "EPSSurprise",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "0.24610"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "EPSSurprisePrc",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "2.92"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "EPSActualQ",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "1.77000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "EPSPrevQ",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "1.63180"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "EPSSurpriseQ",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "0.13820"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "EPSSurpriseQPrc",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "8.47"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjProfit",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "9784.30410"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjProfitH",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "10213.00000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjProfitL",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "8951.00000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjProfitNumOfEst",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "13"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjDPS",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "6.66330"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjDPSH",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "6.82000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjDPSL",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "6.52000"
+                                }
+                            ]
+                        },
+                        {
+                            "FieldName": "ProjDPSNumOfEst",
+                            "Type": "N",
+                            "Value": [
+                                {
+                                    "PeriodType": "CURR",
+                                    "Value": "8"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "ConsRecommendationTrend": {
+                    "STOpinion": {
+                        "Opinion": [
+                            {
+                                "Code": 1,
+                                "Desc": "BUY",
+                                "Value": [
+                                    {
+                                        "PeriodType": "CURR",
+                                        "Value": "4"
+                                    },
+                                    {
+                                        "PeriodType": "1WA",
+                                        "Value": "4"
+                                    },
+                                    {
+                                        "PeriodType": "1MA",
+                                        "Value": "4"
+                                    },
+                                    {
+                                        "PeriodType": "2MA",
+                                        "Value": "4"
+                                    },
+                                    {
+                                        "PeriodType": "3MA",
+                                        "Value": "4"
+                                    }
+                                ]
+                            },
+                            {
+                                "Code": 2,
+                                "Desc": "OUTPERFORM",
+                                "Value": [
+                                    {
+                                        "PeriodType": "CURR",
+                                        "Value": "1"
+                                    },
+                                    {
+                                        "PeriodType": "1WA",
+                                        "Value": "1"
+                                    },
+                                    {
+                                        "PeriodType": "1MA",
+                                        "Value": "1"
+                                    },
+                                    {
+                                        "PeriodType": "2MA",
+                                        "Value": "1"
+                                    },
+                                    {
+                                        "PeriodType": "3MA",
+                                        "Value": "1"
+                                    }
+                                ]
+                            },
+                            {
+                                "Code": 3,
+                                "Desc": "HOLD",
+                                "Value": [
+                                    {
+                                        "PeriodType": "CURR",
+                                        "Value": "10"
+                                    },
+                                    {
+                                        "PeriodType": "1WA",
+                                        "Value": "10"
+                                    },
+                                    {
+                                        "PeriodType": "1MA",
+                                        "Value": "10"
+                                    },
+                                    {
+                                        "PeriodType": "2MA",
+                                        "Value": "10"
+                                    },
+                                    {
+                                        "PeriodType": "3MA",
+                                        "Value": "10"
+                                    }
+                                ]
+                            },
+                            {
+                                "Code": 4,
+                                "Desc": "UNDERPERFORM",
+                                "Value": [
+                                    {
+                                        "PeriodType": "CURR",
+                                        "Value": "3"
+                                    },
+                                    {
+                                        "PeriodType": "1WA",
+                                        "Value": "3"
+                                    },
+                                    {
+                                        "PeriodType": "1MA",
+                                        "Value": "3"
+                                    },
+                                    {
+                                        "PeriodType": "2MA",
+                                        "Value": "2"
+                                    },
+                                    {
+                                        "PeriodType": "3MA",
+                                        "Value": "2"
+                                    }
+                                ]
+                            },
+                            {
+                                "Code": 5,
+                                "Desc": "SELL",
+                                "Value": [
+                                    {
+                                        "PeriodType": "CURR",
+                                        "Value": "0"
+                                    },
+                                    {
+                                        "PeriodType": "1WA",
+                                        "Value": "0"
+                                    },
+                                    {
+                                        "PeriodType": "1MA",
+                                        "Value": "0"
+                                    },
+                                    {
+                                        "PeriodType": "2MA",
+                                        "Value": "0"
+                                    },
+                                    {
+                                        "PeriodType": "3MA",
+                                        "Value": "0"
+                                    }
+                                ]
+                            },
+                            {
+                                "Code": 6,
+                                "Desc": "NA",
+                                "Value": [
+                                    {
+                                        "PeriodType": "CURR",
+                                        "Value": "0"
+                                    },
+                                    {
+                                        "PeriodType": "1WA",
+                                        "Value": "0"
+                                    },
+                                    {
+                                        "PeriodType": "1MA",
+                                        "Value": "0"
+                                    },
+                                    {
+                                        "PeriodType": "2MA",
+                                        "Value": "0"
+                                    },
+                                    {
+                                        "PeriodType": "3MA",
+                                        "Value": "0"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "MeanRating": {
+                        "Value": [
+                            {
+                                "PeriodType": "CURR",
+                                "Value": "2.6667"
+                            },
+                            {
+                                "PeriodType": "1WA",
+                                "Value": "2.6667"
+                            },
+                            {
+                                "PeriodType": "1MA",
+                                "Value": "2.6667"
+                            },
+                            {
+                                "PeriodType": "2MA",
+                                "Value": "2.5882"
+                            },
+                            {
+                                "PeriodType": "3MA",
+                                "Value": "2.5882"
+                            }
+                        ]
+                    },
+                    "NoOfAnalysts": {
+                        "Value": [
+                            {
+                                "PeriodType": "CURR",
+                                "Value": "18"
+                            },
+                            {
+                                "PeriodType": "1WA",
+                                "Value": "18"
+                            },
+                            {
+                                "PeriodType": "1MA",
+                                "Value": "18"
+                            },
+                            {
+                                "PeriodType": "2MA",
+                                "Value": "17"
+                            },
+                            {
+                                "PeriodType": "3MA",
+                                "Value": "17"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
     }
 }
