@@ -12,7 +12,7 @@ from core.universe.models import Universe
 from django.core.management.base import BaseCommand, CommandError
 from datasource.rkd import RkdStream
 """
-Global Variables 
+Global Variables
 position : remote address / your IP
 
 """
@@ -22,6 +22,6 @@ position : remote address / your IP
 class Command(BaseCommand):
 
     HKD_universe = [ticker['ticker'] for ticker in Universe.objects.filter(
-        currency_code__in=['HKD']).exclude(ticker__in=['.HSI', '.HSLI']).values('ticker')]
+        currency_code__in=['EUR'], is_active=True).values('ticker')]
     rkd = RkdStream(HKD_universe)
     quotes = rkd.stream()

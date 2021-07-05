@@ -146,6 +146,8 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
             "hosts": [('127.0.0.1', 6379)],
+            "capacity": 1500,  # default 100
+            "expiry": 2,
         },
 
         # Method 3: Via In-memory channel layer
@@ -161,7 +163,7 @@ db_debug = env.bool("DROID_DEBUG")
 if db_debug:
     print('using test db changes')
     read_endpoint, write_endpoint, port = db.test_url
-    CELERY_BROKER_URL = 'redis://redis:6379/0'
+    CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@16.162.110.123:5672'
 else:
     print('using prod db')
     read_endpoint, write_endpoint, port = db.prod_url
@@ -250,9 +252,10 @@ CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_IMPORTS = ['core.services.ingestiontask', 'portfolio_hedge']
+CELERY_IMPORTS = ['core.services.ingestiontask',
+                  'portfolio_hedge', 'datasource.rkd']
 CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-
+# CELERY_TASK_ALWAYS_EAGER = True
 email_debug = False
 if email_debug:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
