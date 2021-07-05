@@ -10,8 +10,8 @@ import aiohttp
 import asyncio
 import socket
 import time
-from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from config.celery import app
 logging.basicConfig(format='%(asctime)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logging.getLogger().setLevel(logging.INFO)
@@ -318,6 +318,7 @@ class RkdData(Rkd):
             return df_data
         return formated_json_data
 
+    @app.task(bind=True)
     def save(self, app, model, data):
         from django.apps import apps
         Model = apps.get_model(app, model)
@@ -352,7 +353,7 @@ class RkdData(Rkd):
         Model.objects.bulk_update(list_obj, key_set, batch_size=500)
 
 
-class RkdStream(Rkd):
+class RkdStream(RkdData):
     def __init__(self, *args, **kwargs):
         self.kwargs = kwargs
         super().__init__(*args, **kwargs)
@@ -462,23 +463,26 @@ class RkdStream(Rkd):
             'CF_VOLUME': 'volume',
             'CF_LAST': 'latest_price'
         }
-        message['Fields']['ticker'] = message['Key']['Name']
-        data = [message['Fields']]
-        df = pd.DataFrame(data).rename(columns=change)
-        ticker = df.loc[df['ticker'] == message['Fields']['ticker']]
-        asyncio.run(self.layer.group_send(message['Fields']['ticker'],
-                                          {
-            'type': 'broadcastmessage',
-            'message':  ticker.to_dict('records')
-        }))
-        asyncio.run(self.layer.group_send('topstock',  # channel name
-                                          {
-                                              'type': 'broadcastmessage',
-                                              'message':  df.to_dict('records')
-                                          }))
-
-        del df
-        del ticker
+        if 'PCTCHNG' in message['Fields']:
+            message['Fields']['ticker'] = message['Key']['Name']
+            data = [message['Fields']]
+            df = pd.DataFrame(data).rename(columns=change)
+            ticker = df.loc[df['ticker'] == message['Fields']['ticker']]
+            print(df)
+            asyncio.run(self.layer.group_send(message['Fields']['ticker'],
+                                              {
+                'type': 'broadcastmessage',
+                'message':  ticker.to_dict('records')
+            }))
+            asyncio.run(self.layer.group_send('topstock',
+                                              {
+                                                  'type': 'broadcastmessage',
+                                                  'message':  df.to_dict('records')
+                                              }))
+            self.save.apply_async(
+                args=('master', 'LatestPrice', df.to_dict('records')))
+            del df
+            del ticker
         # try:
         #     self.rkd.save('master', 'LatestPrice', data)
         # except Exception as e:

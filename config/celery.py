@@ -16,8 +16,7 @@ app.autodiscover_tasks()
 
 @app.task(bind=True)
 def app_publish(self):
-    return {'message':'hallo'}
-
+    return {'message': 'hallo'}
 
 
 @app.task(bind=True)
@@ -37,7 +36,7 @@ def listener(self, data):
     - Data format:
         {
             'type':'function',
-            'module':'core.djangomodule.crudlib.user.createuser',
+            'module':'core.datasource.rkd.RkdData.save',
             'payload': {
                 'email':'asklora@publisher.com',
                 'password':'r3ddpapapapa'

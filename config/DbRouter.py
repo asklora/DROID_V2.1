@@ -33,8 +33,8 @@ class AuroraRouters:
         """
         if model._meta.app_label in self.route_app_labels:
             return 'aurora_write'
-        if model._meta.app_label in self.mongo_app_labels:
-            return 'mongo'
+        # if model._meta.app_label in self.mongo_app_labels:
+        #     return 'mongo'
         return 'default'
 
     def allow_relation(self, obj1, obj2, **hints):
