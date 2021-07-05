@@ -421,22 +421,21 @@ class RkdStream(Rkd):
         elif message_type == "Ping":
             self.answer_ping(ws)
         elif message_type == "Update":
-            if message_json['Type'] == 'Update':
-                if message_json['UpdateType'] == 'Quote':
-                    # self.rkd.save('master', 'LatestPrice', data)
-                    print(
-                        f"====== Quote - {message_json['Key']['Name']} ======")
-                    self.beautify_print(message_json, **options)
-                elif message_json['UpdateType'] == 'Trade':
-                    print(
-                        f"====== Trade - {message_json['Key']['Name']} ======")
-                    self.beautify_print(message_json, **options)
-                elif message_json['UpdateType'] == 'Unspecified':
-                    print(
-                        f"====== Unspecified - {message_json['Key']['Name']} ======")
-                    self.beautify_print(message_json, **options)
-                else:
-                    None
+            if message_json['UpdateType'] == 'Quote':
+                # self.rkd.save('master', 'LatestPrice', data)
+                print(
+                    f"====== Quote - {message_json['Key']['Name']} ======")
+                self.beautify_print(message_json, **options)
+            elif message_json['UpdateType'] == 'Trade':
+                print(
+                    f"====== Trade - {message_json['Key']['Name']} ======")
+                self.beautify_print(message_json, **options)
+            elif message_json['UpdateType'] == 'Unspecified':
+                print(
+                    f"====== Unspecified - {message_json['Key']['Name']} ======")
+                self.beautify_print(message_json, **options)
+            else:
+                None
             # write_on_s3(message_json)
 
         """ Else it's market price response, so now exit this simple example """
