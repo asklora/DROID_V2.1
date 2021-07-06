@@ -1,4 +1,4 @@
-## Command don't delete
+## Commands don't delete
 
 ### docker login
 
