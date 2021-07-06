@@ -350,7 +350,7 @@ class RkdData(Rkd):
                     attr = f'{attr}_id'
                 setattr(obj, attr, val)
             list_obj.append(obj)
-        Model.objects.bulk_update(list_obj, key_set, batch_size=500)
+        Model.objects.bulk_update(list_obj, key_set)
 
 
 class RkdStream(RkdData):
@@ -377,6 +377,9 @@ class RkdStream(RkdData):
         print("Connecting to WebSocket " + self.ws_address + " ...")
         try:
             self.web_socket_app.run_forever()
+        except KeyboardInterrupt as e:
+            print(f"==========={e}=============")
+            self.web_socket_app.close()
         except Exception as e:
             print(f"==========={e}=============")
             self.web_socket_app.close()
