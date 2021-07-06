@@ -71,6 +71,7 @@ def delete_to_mongo():
 
 if __name__ == "__main__":
     print("Start Process")
+    mongo_universe_update(currency_code=["HKD"])
     # insert_to_mongo()
     # mongo_universe_update()
     # mongo_create_currency()

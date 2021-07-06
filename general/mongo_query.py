@@ -12,7 +12,7 @@ def change_date_to_str(data):
 
 def connects(table):
     client =  MongoClient(MONGO_URL)
-    db_connect = client["latest_data"][table]
+    db_connect = client["universe"][table]
     return db_connect
 
 def create_collection(collection_validator, table):

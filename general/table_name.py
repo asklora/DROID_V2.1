@@ -195,6 +195,11 @@ def get_orders_position_performance_table_name():
 def get_user_account_balance_table_name():
     return "user_account_balance"
 
+def get_universe_rating_detail_history_table_name():
+    return "universe_rating_detail_history"
+
+def get_universe_rating_history_table_name():
+    return "universe_rating_history"
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 
