@@ -421,6 +421,7 @@ class WorldscopeSummary(models.Model):
     fn_18271 = models.FloatField(blank=True, null=True)
     fn_2999 = models.FloatField(blank=True, null=True)
     fn_5192 = models.FloatField(blank=True, null=True)
+    fn_5575 = models.FloatField(blank=True, null=True)
     
 
     class Meta:
