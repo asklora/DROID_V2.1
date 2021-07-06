@@ -479,7 +479,7 @@ class RkdStream(RkdData):
                                                   'message':  df.to_dict('records')
                                               }))
             self.save.apply_async(
-                args=('master', 'LatestPrice', df.to_dict('records')))
+                args=('master', 'LatestPrice', df.to_dict('records')),queue='broadcaster')
 
             # req_payload ={
             #   'type':'function',

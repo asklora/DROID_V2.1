@@ -3,6 +3,7 @@ services:
   rabbit:
     image: "rabbitmq:3.6.6-management"
     hostname: "rabbit"
+    restart: always
     environment:
       RABBITMQ_DEFAULT_USER: "rabbitmq"
       RABBITMQ_DEFAULT_PASS: "rabbitmq"

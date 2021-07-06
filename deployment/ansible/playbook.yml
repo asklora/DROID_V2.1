@@ -18,7 +18,7 @@
     - name: Stop Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
-        cmd: docker-compose -f deployment/compose/dev.yaml down
+        cmd: docker-compose -p droid -f deployment/compose/dev.yaml down
     - name: Clean docker image
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
