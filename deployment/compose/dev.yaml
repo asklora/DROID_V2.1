@@ -59,6 +59,8 @@ services:
       - ~/DROID_V2.1:/code
     restart: always
     depends_on:
+      - Celery
+      - celery-broadcaster
       - backend
       - redis
   redis:
