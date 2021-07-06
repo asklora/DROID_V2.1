@@ -334,6 +334,11 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
         "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
         "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
         "WC02001A", "WC05575A"]
+    for field in filter_field:
+        worldscope_quarter_summary_from_dsws(ticker=ticker, currency_code=currency_code, filter_field=[field])
+    report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
+
+def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filter_field=None):
 
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
     if(len(universe) < 1):
@@ -344,7 +349,7 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
     ticker = universe[["ticker"]]
     ticker = ticker["ticker"].tolist()
     result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, ticker, identifier, filter_field, use_ticker=True, split_number=1, monthly=True, worldscope=True)
-    print(result)
+    # print(result)
     result = result.dropna()
     print(result)
     if(len(result)) > 0 :
@@ -388,12 +393,12 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
             "index" : "period_end"
         })
         result = result.reset_index(inplace=False)
-        print(result)
+        # print(result)
         result["period_end"] = pd.to_datetime(result["period_end"])
         result["year"] = pd.DatetimeIndex(result["period_end"]).year
         result["month"] = pd.DatetimeIndex(result["period_end"]).month
         result["day"] = pd.DatetimeIndex(result["period_end"]).day
-        print(result)
+        # print(result)
         for index, row in result.iterrows():
             if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
                 result.loc[index, "month"] = 3
@@ -421,4 +426,4 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
         result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
         print(result)
         upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
-        report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
+        
