@@ -3,6 +3,7 @@ import json
 import pandas as pd
 from requests.api import head
 from core.services.models import ThirdpartyCredentials
+from core.master.models import LatestPrice
 import sys
 import logging
 import websocket
@@ -354,6 +355,8 @@ class RkdData(Rkd):
 
 
 class RkdStream(RkdData):
+    ID =[]
+
     def __init__(self, *args, **kwargs):
         self.kwargs = kwargs
         super().__init__(*args, **kwargs)
@@ -424,6 +427,15 @@ class RkdStream(RkdData):
                 pass
         elif message_type == "Ping":
             self.answer_ping(ws)
+            """CREATING MARKET CHECK"""
+
+
+
+
+
+
+
+
         elif message_type == "Update":
             if message_json['UpdateType'] == 'Quote':
                 # self.rkd.save('master', 'LatestPrice', data)
@@ -442,7 +454,10 @@ class RkdStream(RkdData):
                 None
             # write_on_s3(message_json)
 
-        """ Else it's market price response, so now exit this simple example """
+        """ record ID """
+        if "ID" in message_json:
+            if message_json["ID"] not in self.ID:
+                self.ID.append(message_json["ID"])
         # web_socket_app.close()
 
     def process_login_response(self, ws, message_json, *args, **options):
