@@ -350,7 +350,7 @@ class RkdData(Rkd):
                     attr = f'{attr}_id'
                 setattr(obj, attr, val)
             list_obj.append(obj)
-        Model.objects.bulk_update(list_obj, key_set, batch_size=500)
+        Model.objects.bulk_update(list_obj, key_set)
 
 
 class RkdStream(RkdData):
