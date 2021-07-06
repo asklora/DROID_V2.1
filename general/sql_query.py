@@ -273,10 +273,13 @@ def get_last_close_industry_code(ticker=None, currency_code=None):
     return data
 
 def get_pred_mean():
-    query = f"select distinct avlpf.ticker, avlpf.pred_mean, avlpf.testing_period::date from ai_value_lgbm_pred_final avlpf, "
+    query = f"select distinct avlpf.ticker, avlpf.pred_mean, avlpf.testing_period::date, avlpf.update_time from ai_value_lgbm_pred_final avlpf, "
     query += f"(select ticker, max(testing_period::date) as max_date from ai_value_lgbm_pred_final group by ticker) filter "
     query += f"where filter.ticker=avlpf.ticker and filter.max_date=avlpf.testing_period;"
-    data = read_query(query, table=master_ohlcvtr_table, dlp=False)
+    data = read_query(query, table=master_ohlcvtr_table, dlp=True)
+    data = data.sort_values(by=["ticker", "update_time"], ascending=False)
+    data = data.drop_duplicates(subset=["ticker"], keep="first")
+    data = data.drop(columns=["update_time"])
     return data
 
 def get_specific_tri(trading_day, tri_name = "tri"):
