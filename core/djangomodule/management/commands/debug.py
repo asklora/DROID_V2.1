@@ -11,27 +11,33 @@ from core.services.ingestiontask import migrate_droid1
 from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
 from main import populate_intraday_latest_price,update_index_price_from_dss
 from datetime import datetime
-from datasource.rkd import RkdData
+from datasource.rkd import RkdData,RkdStream
 import traceback as trace
 from core.services.models import ErrorLog
+from core.hot_data.models import UniverseHot
 
-
-def div_zero(num):
-    num / 0
 
 
 
 
 class Command(BaseCommand):
+    def div_zero(self,df):
+        print(df)
     def handle(self, *args, **options):
+        # UniverseHot.objects.create(ticker='MSFT.O',name='my name')
+        data_all = UniverseHot.objects.all()
+        data = UniverseHot.objects.filter(ticker='WWWWSSS')
+        data.update(ticker='AAPL')
+        # data.save()
+        print(data,data_all)
+        
         # scrap_csi()
 
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
-        hkd_list  = [ item['ticker'] for item in Universe.objects.filter(is_active=True,currency_code='HKD').values('ticker')]
-        rkd = RkdData()
-        quotes = rkd.get_snapshot(hkd_list,df=True,save=True)
-        print(quotes)
+        # HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(ticker__in=['TSLA.O','JNJ']).exclude(ticker__in=['.SPX']).values('ticker')]
+        # rkd = RkdStream(HKD_universe)
+        # quotes = rkd.stream()
         # print(quotes)
         # order_client_topstock(currency="KRW", client_name="HANWHA")
         # odrs=OrderPosition.objects.filter()
