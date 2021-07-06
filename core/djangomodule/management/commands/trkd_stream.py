@@ -17,7 +17,6 @@ position : remote address / your IP
 
 """
 
-
 class Command(BaseCommand):
 
     HKD_universe = [ticker['ticker'] for ticker in Universe.objects.filter(
