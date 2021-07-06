@@ -6,6 +6,7 @@ from general.sql_query import get_active_currency, get_active_universe, get_cons
 from general.mongo_query import create_collection, update_to_mongo, change_date_to_str, update_specific_to_mongo
 from general.date_process import backdate_by_month
 import sys
+
 def mongo_create_currency():
     collection = json.load(open("files/file_json/validator_currency.json"))
     print(collection)
@@ -115,76 +116,3 @@ def mongo_bot_data_update():
         result = result.to_dict("records")
         result = pd.DataFrame({"ticker":[tick], "bot_data":[result]}, index=[0])
         update_to_mongo(data=result, index="ticker", table="bot_data", dict=False)
-    
-def mongo_statistic_backtest_update():
-    universe = get_active_universe()
-    bot_option_type = get_bot_option_type()
-    backtest_data = get_bot_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, bot_id=None)
-    backtest_data = backtest_data[["ticker", "bot_id", "spot_price", "spot_date", "potential_max_loss", "targeted_profit", "bot_return"]]
-    backtest_data.loc[backtest_data["bot_return"] >= 0, "event"] = "TP"
-    backtest_data.loc[backtest_data["bot_return"] < 0, "event"] = "SL"
-    backtest_data.loc[backtest_data["bot_return"].isnull(), "event"] = "RUN"
-
-    bot_statistic = get_bot_statistic_data(ticker=None, currency_code=None)
-    
-#     bot_data = change_date_to_str(bot_data)
-#     for tick in universe["ticker"].unique():
-#         result = bot_data.loc[bot_data["ticker"] == tick]
-#         result = result.sort_values(by="ranking", ascending=False)
-#         result = result[["potential_max_loss", "targeted_profit", "bot_type", "bot_option_type", "bot_option_name", "expiry_date", "ranking"]]
-#         result = result.to_dict("records")
-#         result = pd.DataFrame({"ticker":[tick], "bot_data":[result]}, index=[0])
-#         update_to_mongo(data=result, index="ticker", table="bot_data", dict=False)
-#     bot_backtest
-# uid
-# spot_date
-# bot_type
-# bot_id
-# option_type
-# time_to_exp
-# spot_price
-# potential_max_loss
-# targeted_profit
-# bot_return
-# event
-# ticker
-
-#     bot_statistic
-# uid
-# option_type
-# bot_type
-# lookback
-# time_to_exp
-# avg_days
-# pct_profit
-# pct_losses
-# avg_profit
-# avg_loss
-# avg_return
-# pct_max_profit
-# pct_max_loss
-# ann_avg_return
-# ann_avg_return_bm
-# avg_return_bm
-# max_loss_bot
-# max_loss_bm
-# avg_days_max_profit
-# avg_days_max_loss
-# ticker
-
-
-# start_date = backdate_by_month(1)
-#     price = get_master_tac_data(start_date=start_date)
-#     price = price[["ticker", "trading_day", "tri_adj_close", "day_status"]]
-#     price = price.rename(columns={"tri_adj_close" : "price"})
-#     price = change_date_to_str(price)
-#     print(price)
-#     price_df = pd.DataFrame({"ticker":[], "price_data":[]}, index=[])
-#     for tick in result["ticker"].unique():
-#         price_data = price.loc[price["ticker"] == tick]
-#         price_data = price_data.sort_values(by="trading_day", ascending=False)
-#         price_data = price_data[["trading_day", "price"]].to_dict("records")
-#         price_data = pd.DataFrame({"ticker":[tick], "price_data":[price_data]}, index=[0])
-#         price_df = price_df.append(price_data)
-#     result = result.merge(price_df, on="ticker", how="left")
-#     print(result)

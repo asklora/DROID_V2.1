@@ -219,7 +219,7 @@ def get_data_history_frequently_by_field_from_dsws(start_date, end_date, univers
                     chunck_field = result
                 else:
                     chunck_field = pd.merge(chunck_field, result, how="inner",on=[identifier, "index"])
-        print(chunck_field)
+        # print(chunck_field)
         chunk_data.append(chunck_field)
     data = []
     for frame in chunk_data:
@@ -231,7 +231,7 @@ def get_data_history_frequently_by_field_from_dsws(start_date, end_date, univers
         data = pd.concat(data)
         data = data.drop(columns="level_0")
     print("== Getting Data From DSWS Done ==")
-    print(data)
+    # print(data)
     return data
 
 # def get_fundamentals_quarterly_from_dsws_by_field(args, start_date, end_date, universe, name, field, use_ticker=False, **kwargs):
