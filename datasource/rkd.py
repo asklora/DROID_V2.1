@@ -369,12 +369,12 @@ class RkdStream(RkdData):
                                                      on_message=self.on_message,
                                                      on_error=self.on_error,
                                                      on_close=self.on_close,
+                                                     on_open = self.on_open,
                                                      subprotocols=['tr_json2'])
         self.layer = get_channel_layer()
 
     def stream(self):
         print("Connecting to WebSocket " + self.ws_address + " ...")
-        self.web_socket_app.on_open = self.on_open
         try:
             self.web_socket_app.run_forever()
         except Exception as e:

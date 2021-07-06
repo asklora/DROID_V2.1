@@ -19,7 +19,7 @@
         socket.close();
       }
       // Connection opened
-      socket.onopen = () => socket.send(JSON.stringify(msg));
+      {% comment %} socket.onopen = () => socket.send(JSON.stringify(msg)); {% endcomment %}
 
       // Listen for messages
       socket.addEventListener("message", function (event) {
