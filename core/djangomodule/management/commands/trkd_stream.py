@@ -16,7 +16,6 @@ Global Variables
 position : remote address / your IP
 
 """
-# Start websocket handshake
 
 
 class Command(BaseCommand):
