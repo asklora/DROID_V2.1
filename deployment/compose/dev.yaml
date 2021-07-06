@@ -1,4 +1,4 @@
-version: '2.1'
+version: "2.1"
 services:
   backend:
     container_name: django
@@ -32,6 +32,17 @@ services:
     container_name: Celery
     image: django/backend
     command: sh deployment/jenkins/bastion/celery.sh
+    env_file: ~/DROID_V2.1/.env
+    volumes:
+      - ~/DROID_V2.1:/code
+    restart: always
+    depends_on:
+      - backend
+      - redis
+  celery-broadcaster:
+    container_name: celery-broadcaster
+    image: django/backend
+    command: sh deployment/script/broadcaster.sh
     env_file: ~/DROID_V2.1/.env
     volumes:
       - ~/DROID_V2.1:/code
