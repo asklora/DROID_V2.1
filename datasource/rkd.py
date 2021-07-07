@@ -333,7 +333,7 @@ class RkdData(Rkd):
             return collected_data
         return collected_data.to_dict('records')
 
-    @app.task(bind=True)
+    @app.task(bind=True,ignore_result=True)
     def save(self, app, model, data):
         from django.apps import apps
         Model = apps.get_model(app, model)
