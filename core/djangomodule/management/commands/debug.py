@@ -14,7 +14,6 @@ from datetime import datetime
 from datasource.rkd import RkdData,RkdStream
 import traceback as trace
 from core.services.models import ErrorLog
-from core.hot_data.models import UniverseHot
 
 
 
@@ -24,13 +23,9 @@ class Command(BaseCommand):
     def div_zero(self,df):
         print(df)
     def handle(self, *args, **options):
-        # UniverseHot.objects.create(ticker='MSFT.O',name='my name')
-        data_all = UniverseHot.objects.all()
-        data = UniverseHot.objects.filter(ticker='WWWWSSS')
-        data.update(ticker='AAPL')
-        # data.save()
-        print(data,data_all)
-        
+        HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code__in=['HKD','CNY'],is_active=True).values('ticker')]
+        rkd = RkdData()
+        rkd.get_quote(HKD_universe,save=True,df=True)
         # scrap_csi()
 
         # user = User.objects.get(id=1)

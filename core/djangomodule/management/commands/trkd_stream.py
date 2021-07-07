@@ -16,10 +16,11 @@ Global Variables
 position : remote address / your IP
 
 """
+rkd = RkdStream()
 
 class Command(BaseCommand):
 
     HKD_universe = [ticker['ticker'] for ticker in Universe.objects.filter(
-        currency_code__in=['HKD'], is_active=True).values('ticker')]
-    rkd = RkdStream(HKD_universe)
+        currency_code__in=['HKD','CNY'], is_active=True).values('ticker')]
+    rkd.ticker_data = HKD_universe
     quotes = rkd.stream()

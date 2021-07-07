@@ -13,6 +13,8 @@ import socket
 import time
 from channels.layers import get_channel_layer
 from config.celery import app
+import numpy as np
+
 logging.basicConfig(format='%(asctime)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logging.getLogger().setLevel(logging.INFO)
@@ -297,27 +299,39 @@ class RkdData(Rkd):
         return formated_json
 
     def get_quote(self, ticker, df=False, save=False):
+        import math
         quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
-        payload = self.retrive_template(ticker, fields=[
-                                        'CF_ASK', 'CF_CLOSE', 'CF_BID', 'PCTCHNG', 'CF_HIGH', 'CF_LOW', 'CF_LAST', 'CF_VOLUME', 'TRADE_DATE'])
-        response = self.send_request(quote_url, payload, self.auth_headers())
-        formated_json_data = self.parse_response(response)
-        df_data = pd.DataFrame(formated_json_data).rename(columns={
-            'CF_ASK': 'intraday_ask',
-            'CF_CLOSE': 'close',
-            'CF_BID': 'intraday_bid',
-            'CF_HIGH': 'high', 'CF_LOW': 'low',
-            'PCTCHNG': 'latest_price_change',
-            'TRADE_DATE': 'last_date',
-            'CF_VOLUME': 'volume',
-            'CF_LAST': 'latest_price'
-        })
+        split = len(ticker)/75
+        collected_data =[]
+        if split < 1:
+            split = math.ceil(split)
+        splitting_df = np.array_split(ticker, split)
+        for universe in splitting_df:
+            ticker = universe.tolist()
+            payload = self.retrive_template(ticker, fields=[
+                                            'CF_ASK', 'CF_CLOSE', 'CF_BID', 'PCTCHNG', 'CF_HIGH', 'CF_LOW', 'CF_LAST', 'CF_VOLUME', 'TRADE_DATE'])
+            response = self.send_request(quote_url, payload, self.auth_headers())
+
+            formated_json_data = self.parse_response(response)
+            df_data = pd.DataFrame(formated_json_data).rename(columns={
+                'CF_ASK': 'intraday_ask',
+                'CF_CLOSE': 'close',
+                'CF_BID': 'intraday_bid',
+                'CF_HIGH': 'high', 'CF_LOW': 'low',
+                'PCTCHNG': 'latest_price_change',
+                'TRADE_DATE': 'last_date',
+                'CF_VOLUME': 'volume',
+                'CF_LAST': 'latest_price'
+            })
+            df_data['last_date'] = pd.to_datetime(df_data['last_date'])
+            collected_data.append(df_data)
+        collected_data = pd.concat(collected_data)
         if save:
-            self.save('master', 'LatestPrice', df_data.to_dict('records'))
+            self.save('master', 'LatestPrice', collected_data.to_dict('records'))
         if df:
             # rename column match in table
-            return df_data
-        return formated_json_data
+            return collected_data
+        return collected_data.to_dict('records')
 
     @app.task(bind=True)
     def save(self, app, model, data):
@@ -365,7 +379,10 @@ class RkdStream(RkdData):
         self.password = self.credentials.password
         self.position = socket.gethostbyname(socket.gethostname())
         self.token = self.credentials.token
-        self.ticker_data = args[0]
+        if not args:
+            self.ticker_data=[]
+        else:
+            self.ticker_data = args[0]
         self.ws_address = "wss://streaming.trkd.thomsonreuters.com/WebSocket"
 
         self.web_socket_app = websocket.WebSocketApp(self.ws_address, header=['User-Agent: Python'],
@@ -569,6 +586,8 @@ class RkdStream(RkdData):
     def on_error(self, ws, error, *args, **options):
         """ Called when websocket error has occurred """
         print(error)
+        ws.close()
+
 
     def on_close(self, ws, *args, **options):
         # print(super(on_close, self))
