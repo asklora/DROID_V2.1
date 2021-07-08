@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from environs import Env
 from core.djangomodule.network.cloud import DroidDb
 from datetime import timedelta
+import firebase_admin
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
@@ -339,3 +341,9 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
+
+
+credentials =  firebase_admin.credentials.Certificate('files/file_json/asklora-firebase.json')
+firebase_admin.initialize_app(credentials, {
+                    'databaseURL':'https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/'
+                                        })

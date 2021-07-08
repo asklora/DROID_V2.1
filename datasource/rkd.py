@@ -14,12 +14,15 @@ import time
 from channels.layers import get_channel_layer
 from config.celery import app
 import numpy as np
+from firebase_admin import firestore
+
+
 
 logging.basicConfig(format='%(asctime)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logging.getLogger().setLevel(logging.INFO)
 
-
+db = firestore.client()
 class Rkd:
     token = None
 
@@ -60,7 +63,6 @@ class Rkd:
                     "APEEXCLXOR": None,
                     "ProjPE": None,
                     "APRICE2BK": None,
-                    "EV": None,
                     "AEBITD": None,
                     "NHIG": None,
                     "NLOW": None,
@@ -213,10 +215,7 @@ class RkdData(Rkd):
                 list_payload.append(payload)
             responses = asyncio.run(self.gather_request(
                 snapshot_url, list_payload, self.auth_headers()))
-            # print(responses)
-            # with open('data.json', 'w') as fp:
-            #     json.dump(responses, fp,  indent=4)
-            # sys.exit()
+            
             for response in responses:
                 if not "Error" in response:
                     base_response = response['GetRatiosReports_Response_1']['FundamentalReports']['ReportRatios']
@@ -228,7 +227,6 @@ class RkdData(Rkd):
                               'APEEXCLXOR',
                               'ProjPE',
                               'APRICE2BK',
-                              'EV',
                               'AEBITD',
                               'NHIG',
                               'NLOW',
@@ -265,7 +263,6 @@ class RkdData(Rkd):
                       'APEEXCLXOR',
                       'ProjPE',
                       'APRICE2BK',
-                      'EV',
                       'AEBITD',
                       'NHIG',
                       'NLOW',
@@ -285,7 +282,6 @@ class RkdData(Rkd):
             'APEEXCLXOR': 'pe_ratio',
             'ProjPE': 'pe_forecast',
             'APRICE2BK': 'pb',
-            'EV': 'ev',
             'AEBITD': 'ebitda',
             'NHIG': 'wk52_high',
             'NLOW': 'wk52_low',
@@ -396,6 +392,7 @@ class RkdStream(RkdData):
     def stream(self):
         print("Connecting to WebSocket " + self.ws_address + " ...")
         try:
+
             self.web_socket_app.run_forever()
         except KeyboardInterrupt as e:
             print(f"==========={e}=============")
@@ -503,18 +500,18 @@ class RkdStream(RkdData):
             df = pd.DataFrame(data).rename(columns=change)
             ticker = df.loc[df['ticker'] == message['Fields']['ticker']]
             print(df)
-            asyncio.run(self.layer.group_send(message['Fields']['ticker'],
-                                              {
-                'type': 'broadcastmessage',
-                'message':  ticker.to_dict('records')
-            }))
-            asyncio.run(self.layer.group_send('topstock',
-                                              {
-                                                  'type': 'broadcastmessage',
-                                                  'message':  df.to_dict('records')
-                                              }))
-            self.save.apply_async(
-                args=('master', 'LatestPrice', df.to_dict('records')),queue='broadcaster')
+            # asyncio.run(self.layer.group_send(message['Fields']['ticker'],
+            #                                   {
+            #     'type': 'broadcastmessage',
+            #     'message':  ticker.to_dict('records')
+            # }))
+            # asyncio.run(self.layer.group_send('topstock',
+            #                                   {
+            #                                       'type': 'broadcastmessage',
+            #                                       'message':  df.to_dict('records')
+            #                                   }))
+            # self.save.apply_async(
+            #     args=('master', 'LatestPrice', df.to_dict('records')),queue='broadcaster')
 
             # req_payload ={
             #   'type':'function',
@@ -522,6 +519,7 @@ class RkdStream(RkdData):
             #   'data':df.to_dict('records')
             # }
             # send = asyncio.run(celery_publish_msg('#save_latestPrice_channel',df.to_dict('records')))
+            self.update_rtdb.apply_async(args=(df.to_dict('records'),),queue='broadcaster')
 
             del df
             del ticker
@@ -598,3 +596,11 @@ class RkdStream(RkdData):
         """ Called when handshake is complete and websocket is open, send login """
         print("WebSocket open!")
         self.send_login_request(ws)
+
+    @app.task(bind=True,ignore_result=True)
+    def update_rtdb(self,data):
+        data = data[0]
+        ticker = data.pop('ticker')
+        ref = db.collection('universe').document(ticker)
+        ref.set({'price':data},merge=True)
+        return ticker

@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from global_vars import MONGO_URL
+from firebase_admin import firestore
 
 def change_date_to_str(data):
     for col in data.columns:
@@ -31,15 +32,23 @@ def insert_to_mongo(data, index, table, dict=False):
     db_connect.insert_many(data_dict)
 
 def update_to_mongo(data, index, table, dict=False):
-    db_connect = connects(table)
-    if(dict):
-        data_dict = data
-    else:
-        data = change_date_to_str(data)
-        data_dict = data.to_dict("records")
-    for new_data in data_dict:
-        db_connect.delete_one({index: new_data[index]})
-        db_connect.insert_one(new_data)
+    data['indexes'] = data['ticker']
+    data = data.set_index('indexes')
+    df = data.to_dict('index')
+    del data
+    db = firestore.client()
+    for key,val in df.items():
+        doc_ref = db.collection(u'universe').document(f'{key}')
+        doc_ref.set(val)
+    # db_connect = connects(table)
+    # if(dict):
+    #     data_dict = data
+    # else:
+    #     data = change_date_to_str(data)
+    #     data_dict = data.to_dict("records")
+    # for new_data in data_dict:
+    #     db_connect.delete_one({index: new_data[index]})
+    #     db_connect.insert_one(new_data)
 
 def update_specific_to_mongo(data, index, table, column, dict=False):
     db_connect = connects(table)

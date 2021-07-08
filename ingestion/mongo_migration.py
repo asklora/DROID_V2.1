@@ -88,14 +88,14 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(detail_df, how="left", on=["ticker"])
     print(universe)
 
-    price = result[["ticker", "ebitda", "ev", "free_cash_flow", "market_cap", "pb", "pe_forecast", "pe_ratio", "revenue_per_share", "wk52_high", "wk52_low"]]
+    price = result[["ticker", "ebitda", "free_cash_flow", "market_cap", "pb", "pe_forecast", "pe_ratio", "revenue_per_share", "wk52_high", "wk52_low"]]
     latest_price = get_latest_price_data(ticker=ticker, currency_code=currency_code)
     latest_price = price.merge(latest_price, how="left", on=["ticker"])
     latest_price = change_date_to_str(latest_price)
     price_df = pd.DataFrame({"ticker":[], "price":[]}, index=[])
     for tick in latest_price["ticker"].unique():
         price_data = latest_price.loc[latest_price["ticker"] == tick]
-        price_data = price_data[["ebitda", "ev", "free_cash_flow", "market_cap", 
+        price_data = price_data[["ebitda", "free_cash_flow", "market_cap", 
         "pb", "pe_forecast", "pe_ratio", "revenue_per_share", "wk52_high", "wk52_low", 
         "open", "high", "low", "close", "intraday_date", "intraday_ask", "intraday_bid", 
         "latest_price_change", "intraday_time", "last_date", "capital_change", 

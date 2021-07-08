@@ -499,7 +499,6 @@ def data_fundamental_score():
     column = ["ticker",
         "eps",
         "bps",
-        "ev",
         "ttm_rev",
         "mkt_cap",
         "ttm_ebitda",

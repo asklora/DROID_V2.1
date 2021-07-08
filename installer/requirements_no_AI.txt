@@ -46,6 +46,7 @@ drf-spectacular==0.16.0
 enforce==0.3.4
 environs==9.2.0
 et-xmlfile==1.0.1
+firebase-admin==5.0.1
 future==0.18.2
 gast==0.3.3
 google-pasta==0.2.0
