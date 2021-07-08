@@ -6,7 +6,8 @@ from firebase_admin import firestore
 def change_null_to_zero(data):
     for col in data.columns:
         if(type(data.loc[0, col]) == str):
-            data[col] = np.where(data[col].isnull(), "", data[col])
+            data[col] = np.where(data[col].isnull(), "None", data[col])
+            data[col] = np.where(data[col] == "NA", "None", data[col])
         else:
             data[col] = np.where(data[col].isnull(), 0, data[col])
             data[col] = np.where(data[col] == np.NAN, 0, data[col])
