@@ -364,6 +364,9 @@ class RkdData(Rkd):
         Model.objects.bulk_update(list_obj, key_set)
 
 
+
+
+
 class RkdStream(RkdData):
     ID =[]
 
@@ -591,6 +594,7 @@ class RkdStream(RkdData):
         # print(super(on_close, self))
         """ Called when websocket is closed """
         print("WebSocket Closed")
+        ws.close()
 
     def on_open(self, ws, *args, **options):
         """ Called when handshake is complete and websocket is open, send login """
