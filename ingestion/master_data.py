@@ -397,6 +397,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         "goverment_minmax_currency_code", "goverment_minmax_industry"]]
     esg = esg.set_index(keys=["ticker"])
     esg["esg"] = esg.mean(axis=1)
+    esg["esg"] = esg["esg"] * 10
     esg = esg.reset_index(inplace=False)
     fundamentals = fundamentals.merge(esg[["ticker", "esg"]], how="left", on="ticker")
     
