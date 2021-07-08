@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from bot.data_download import get_bot_backtest, get_bot_option_type, get_bot_statistic_data, get_latest_bot_update_data, get_latest_price
 from general.sql_query import get_active_currency, get_active_universe, get_consolidated_data, get_industry, get_industry_group, get_latest_price_data, get_master_tac_data, get_region, get_universe_rating, get_universe_rating_history
-from general.mongo_query import create_collection, update_to_mongo, change_date_to_str, update_specific_to_mongo
+from general.mongo_query import change_null_to_zero, create_collection, update_to_mongo, change_date_to_str, update_specific_to_mongo
 from general.date_process import backdate_by_month
 import sys
 def mongo_create_currency():
@@ -76,6 +76,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     print(result.columns)
     universe = result[["ticker"]]
     print(result)
+    result = change_null_to_zero(result)
     detail_df = pd.DataFrame({"ticker":[], "detail":[]}, index=[])
     for tick in universe["ticker"].unique():
         detail_data = result.loc[result["ticker"] == tick]
@@ -92,6 +93,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     latest_price = get_latest_price_data(ticker=ticker, currency_code=currency_code)
     latest_price = price.merge(latest_price, how="left", on=["ticker"])
     latest_price = change_date_to_str(latest_price)
+    latest_price = change_null_to_zero(latest_price)
     price_df = pd.DataFrame({"ticker":[], "price":[]}, index=[])
     for tick in latest_price["ticker"].unique():
         price_data = latest_price.loc[latest_price["ticker"] == tick]
@@ -110,6 +112,8 @@ def mongo_universe_update(ticker=None, currency_code=None):
     rating = result[["ticker"]]
     universe_rating = get_universe_rating_history(ticker=ticker, currency_code=currency_code)
     universe_rating = rating.merge(universe_rating, how="left", on=["ticker"])
+    universe_rating = change_date_to_str(universe_rating)
+    universe_rating = change_null_to_zero(universe_rating)
     rating_df = pd.DataFrame({"ticker":[], "rating":[]}, index=[])
     for tick in universe_rating["ticker"].unique():
         rating_data = universe_rating.loc[universe_rating["ticker"] == tick]
