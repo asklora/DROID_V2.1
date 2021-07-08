@@ -3,6 +3,15 @@ from pymongo import MongoClient
 from global_vars import MONGO_URL
 from firebase_admin import firestore
 
+def change_null_to_zero(data):
+    for col in data.columns:
+        if(type(data.loc[0, col]) == str):
+            data[col] = np.where(data[col].isnull(), "", data[col])
+        else:
+            data[col] = np.where(data[col].isnull(), 0, data[col])
+            data[col] = np.where(data[col] == np.NAN, 0, data[col])
+    return data
+
 def change_date_to_str(data):
     for col in data.columns:
         if (str(type(data.loc[0, col])) == "<class 'datetime.date'>" or 
