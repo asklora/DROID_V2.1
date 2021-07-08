@@ -1,3 +1,4 @@
+import numpy as np
 from pymongo import MongoClient
 from global_vars import MONGO_URL
 from firebase_admin import firestore
@@ -9,6 +10,10 @@ def change_date_to_str(data):
             str(type(data.loc[0, col])) == "<class 'datetime.time'>") :
             print(f"Change columns {col} to string")
             data[col] = data[col].astype(str)
+        elif(type(data.loc[0, col]) == str):
+            data[col] = np.where(data[col].isnull(), "", data[col])
+        else:
+            data[col] = np.where(data[col].isnull(), 0, data[col])
     return data
 
 def connects(table):
@@ -32,6 +37,7 @@ def insert_to_mongo(data, index, table, dict=False):
     db_connect.insert_many(data_dict)
 
 def update_to_mongo(data, index, table, dict=False):
+    data = change_date_to_str(data)
     data['indexes'] = data['ticker']
     data = data.set_index('indexes')
     df = data.to_dict('index')
