@@ -364,9 +364,12 @@ class RkdData(Rkd):
         Model.objects.bulk_update(list_obj, key_set)
 
 
+
+
+
 class RkdStream(RkdData):
     ID =[]
-
+    chanels = None
     def __init__(self, *args, **kwargs):
         self.kwargs = kwargs
         super().__init__(*args, **kwargs)
@@ -500,9 +503,9 @@ class RkdStream(RkdData):
             df = pd.DataFrame(data).rename(columns=change)
             ticker = df.loc[df['ticker'] == message['Fields']['ticker']]
             print(df)
-            # asyncio.run(self.layer.group_send(message['Fields']['ticker'],
+            # asyncio.run(self.layer.group_send(self.chanels,
             #                                   {
-            #     'type': 'broadcastmessage',
+            #     'type': 'chat_message',
             #     'message':  ticker.to_dict('records')
             # }))
             # asyncio.run(self.layer.group_send('topstock',
@@ -591,6 +594,7 @@ class RkdStream(RkdData):
         # print(super(on_close, self))
         """ Called when websocket is closed """
         print("WebSocket Closed")
+        ws.close()
 
     def on_open(self, ws, *args, **options):
         """ Called when handshake is complete and websocket is open, send login """
