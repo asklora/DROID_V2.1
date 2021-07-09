@@ -1,6 +1,6 @@
 {
     "ExtractionRequest": {
-        "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
+        "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.PriceHistoryExtractionRequest",
         "ContentFieldNames": [
             "RIC",
             "Dividend Ex Date",
