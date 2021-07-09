@@ -92,11 +92,12 @@ class DurableConsumer(AsyncWebsocketConsumer):
     
     def tell(self):
         return sync_to_async(RkdStream)()
+
+
     async def streaming(self,event):
-        print('sss',event)
         rkd =  await self.tell()
         rkd.ticker_data = event['message']
-        result = await sync_to_async(rkd.stream())
+        result = await sync_to_async(rkd.stream)()
         print(result)
          # Send message to room group
         await self.channel_layer.group_send(

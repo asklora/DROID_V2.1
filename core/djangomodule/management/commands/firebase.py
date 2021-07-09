@@ -6,6 +6,7 @@ import json
 import pandas as pd
 import threading
 import time
+from firebase_admin import firestore
 # # Create an Event for notifying main thread.
 # callback_done = threading.Event()
 
