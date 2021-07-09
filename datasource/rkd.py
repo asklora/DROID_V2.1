@@ -3,7 +3,6 @@ import json
 import pandas as pd
 from requests.api import head
 from core.services.models import ThirdpartyCredentials
-from core.master.models import LatestPrice
 import sys
 import logging
 import websocket
@@ -15,8 +14,8 @@ from channels.layers import get_channel_layer
 from config.celery import app
 import numpy as np
 from firebase_admin import firestore
-
-
+import multiprocessing as mp
+import gc
 
 logging.basicConfig(format='%(asctime)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
@@ -297,13 +296,14 @@ class RkdData(Rkd):
     def get_quote(self, ticker, df=False, save=False):
         import math
         quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
-        split = len(ticker)/75
+        split = len(ticker)/70
         collected_data =[]
         if split < 1:
             split = math.ceil(split)
         splitting_df = np.array_split(ticker, split)
         for universe in splitting_df:
             ticker = universe.tolist()
+            print(len(ticker))
             payload = self.retrive_template(ticker, fields=[
                                             'CF_ASK', 'CF_CLOSE', 'CF_BID', 'PCTCHNG', 'CF_HIGH', 'CF_LOW', 'CF_LAST', 'CF_VOLUME', 'TRADE_DATE'])
             response = self.send_request(quote_url, payload, self.auth_headers())
@@ -329,6 +329,13 @@ class RkdData(Rkd):
             return collected_data
         return collected_data.to_dict('records')
 
+    def get_rkd_data(self,ticker,save=False):
+        """getting all data from RKD and save,function has no return"""
+
+        # self.get_snapshot(ticker,save=save)
+        self.get_quote(ticker,save=save)
+
+
     @app.task(bind=True,ignore_result=True)
     def save(self, app, model, data):
         from django.apps import apps
@@ -352,7 +359,7 @@ class RkdData(Rkd):
                 key = {pk: item[pk]}
                 obj = Model.objects.get(**key)
             except Model.DoesNotExist:
-                raise Exception(f'models {item[pk]} does not exist')
+                print(f'models {item[pk]} does not exist')
             except KeyError:
                 raise Exception('no primary key in dict')
             for attr, val in item.items():
@@ -363,6 +370,8 @@ class RkdData(Rkd):
             list_obj.append(obj)
         Model.objects.bulk_update(list_obj, key_set)
 
+    
+
 
 
 
@@ -370,6 +379,7 @@ class RkdData(Rkd):
 class RkdStream(RkdData):
     ID =[]
     chanels = None
+    is_thread =False
     def __init__(self, *args, **kwargs):
         self.kwargs = kwargs
         super().__init__(*args, **kwargs)
@@ -391,11 +401,14 @@ class RkdStream(RkdData):
                                                      on_open = self.on_open,
                                                      subprotocols=['tr_json2'])
         self.layer = get_channel_layer()
-
+    def thread_stream(self):
+        threads = mp.Process(target=self.web_socket_app.run_forever)
+        threads.name = self.chanels
+        self.is_thread =True
+        return threads
     def stream(self):
         print("Connecting to WebSocket " + self.ws_address + " ...")
         try:
-
             self.web_socket_app.run_forever()
         except KeyboardInterrupt as e:
             print(f"==========={e}=============")
@@ -482,16 +495,12 @@ class RkdStream(RkdData):
         self.send_market_price_request(ws)
 
     def beautify_print(self, message, *args, **options):
-        # dict_data = {}
-        # dict_data["ticker"]=message['Key']['Name']
-        # for key, val in message['Fields'].items():
-        #     dict_data[change[key]]=val
-        #     data.append(dict_data)
         change = {
             'CF_ASK': 'intraday_ask',
             'CF_CLOSE': 'close',
             'CF_BID': 'intraday_bid',
-            'CF_HIGH': 'high', 'CF_LOW': 'low',
+            'CF_HIGH': 'high', 
+            'CF_LOW': 'low',
             'PCTCHNG': 'latest_price_change',
             'TRADE_DATE': 'last_date',
             'CF_VOLUME': 'volume',
@@ -503,33 +512,27 @@ class RkdStream(RkdData):
             df = pd.DataFrame(data).rename(columns=change)
             ticker = df.loc[df['ticker'] == message['Fields']['ticker']]
             print(df)
-            # asyncio.run(self.layer.group_send(self.chanels,
-            #                                   {
-            #     'type': 'chat_message',
-            #     'message':  ticker.to_dict('records')
-            # }))
-            # asyncio.run(self.layer.group_send('topstock',
-            #                                   {
-            #                                       'type': 'broadcastmessage',
-            #                                       'message':  df.to_dict('records')
-            #                                   }))
-            # self.save.apply_async(
-            #     args=('master', 'LatestPrice', df.to_dict('records')),queue='broadcaster')
-
-            # req_payload ={
-            #   'type':'function',
-            #   'module':'core.djangomodule.crudlib.LatestPrice.save_latest_price',
-            #   'data':df.to_dict('records')
-            # }
-            # send = asyncio.run(celery_publish_msg('#save_latestPrice_channel',df.to_dict('records')))
-            self.update_rtdb.apply_async(args=(df.to_dict('records'),),queue='broadcaster')
+            if self.is_thread:
+                asyncio.run(self.layer.group_send(self.chanels,
+                                                    {
+                    'type': 'broadcastmessage',
+                    'message':  ticker.to_dict('records')
+                }))
+            else:
+                # asyncio.run(self.layer.group_send('topstock',
+                #                                   {
+                #                                       'type': 'broadcastmessage',
+                #                                       'message':  df.to_dict('records')
+                #                                   }))
+                # self.save.apply_async(
+                #     args=('master', 'LatestPrice', df.to_dict('records')),queue='broadcaster')
+                self.update_rtdb.apply_async(args=(df.to_dict('records'),),queue='broadcaster')
 
             del df
             del ticker
-        # try:
-        #     self.rkd.save('master', 'LatestPrice', data)
-        # except Exception as e:
-        #     print(e)
+            gc.collect()
+
+  
 
     def send_market_price_request(self, ws, *args, **options):
         """ Create and send simple Market Price request """
@@ -606,5 +609,12 @@ class RkdStream(RkdData):
         data = data[0]
         ticker = data.pop('ticker')
         ref = db.collection('universe').document(ticker)
-        ref.set({'price':data},merge=True)
+        try:
+            ref.set({'price':data},merge=True)
+        except Exception as e:
+            err = str(e)
+            print(err)
+            return f'{ticker} error : \n {err}'
+        del ref
+        gc.collect()
         return ticker

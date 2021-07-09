@@ -25,7 +25,7 @@ from firebase_admin import firestore
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        mongo_universe_update(currency_code=["HKD","CNY"])
+        mongo_universe_update(currency_code=["HKD","CNY","USD"])
 
         # data = HotUniverse(Universe.objects.filter(currency_code__in=['HKD','CNY'],is_active=True),many=True).data
         # data = json.loads(json.dumps(data,indent=2))

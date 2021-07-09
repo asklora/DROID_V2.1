@@ -7,11 +7,20 @@ Global Variables
 position : remote address / your IP
 
 """
-rkd = RkdStream()
+in_list =['A',
+'AA',
+'AAL.O',
+'AAP',
+'AAPL.O',
+'ABBV.K',
+'ABT',
+'ACN',
+'ADBE.O',]
 
 class Command(BaseCommand):
-
-    HKD_universe = [ticker['ticker'] for ticker in Universe.objects.filter(
-        currency_code__in=['HKD'], is_active=True)[:3].values('ticker')]
-    rkd.ticker_data = HKD_universe
-    quotes = rkd.stream()
+    def handle(self, *args, **options):
+        rkd = RkdStream()
+        # HKD_universe = [ticker['ticker'] for ticker in Universe.objects.filter(
+        #     currency_code__in=['USD'], is_active=True).values('ticker')]
+        rkd.ticker_data = in_list
+        quotes = rkd.stream()
