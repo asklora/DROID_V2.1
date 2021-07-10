@@ -7,7 +7,6 @@ import multiprocessing
 from channels.layers import get_channel_layer
 
 class UniverseConsumer(WebsocketConsumer):
-    thread = []
     streaming_counter ={}
 
 
@@ -28,16 +27,19 @@ class UniverseConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         ))
-        for t in self.thread:
+        for t in multiprocessing.active_children():
             if t.name == self.room_group_name:
-                print(t.name)
-                t.terminate()
-
+                if self.room_group_name in self.streaming_counter:
+                    if self.channel_name in self.streaming_counter[self.room_group_name]['channel']:  self.streaming_counter[self.room_group_name]['channel'].remove(self.channel_name)
+                    self.streaming_counter[self.room_group_name]['connection'] = len(self.streaming_counter[self.room_group_name]['channel'])
+                    if self.streaming_counter[self.room_group_name]['connection'] < 1:
+                        print(t.name,'terminated')
+                        t.terminate()
         
     # Receive message from WebSocket
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        print(text_data_json)
+        # print(text_data_json)
         message = text_data_json['message']
         asyncio.run(self.channel_layer.group_send(
             self.room_group_name,
@@ -51,40 +53,36 @@ class UniverseConsumer(WebsocketConsumer):
     def broadcastmessage(self, event):
         # Send message to WebSocket
         self.send(text_data=json.dumps({
-            'message': event
+            'message': event['message']
         }))
     
     def streaming(self,event):
-        rkd =  RkdStream()
-        rkd.ticker_data = event['message']
-        rkd.chanels = self.room_group_name
-        if multiprocessing.active_children():
-            for p in multiprocessing.active_children():
-                if p.name == self.room_group_name:
-                    self.send(text_data=json.dumps({
-                    'message': f'stream {event["message"]}'
-                    }))
-                # else:
-                #     proc = rkd.thread_stream()
-                #     proc.daemon=True
-                #     proc.start()
-                #     self.thread.append(proc)
+        proc_list = [p.name for p in multiprocessing.active_children()]
+        if self.room_group_name in proc_list:
+            pass
         else:
+            rkd =  RkdStream()
+            rkd.ticker_data = event['message']
+            rkd.chanels = self.room_group_name
             proc = rkd.thread_stream()
-            # thread = threading.Thread(target=rkd.stream)
-            # threading_object = {'name':self.room_group_name,'threads':thread}
             proc.daemon=True
             proc.start()
-            self.thread.append(proc)
-            
-            self.send(text_data=json.dumps({
-                    'message': f'stream {event["message"]}'
-                    }))
+        
         if self.room_group_name in self.streaming_counter:
-                self.streaming_counter[self.room_group_name]+=1
+            pass
         else:
-            self.streaming_counter[self.room_group_name] = 1
-        print(self.streaming_counter)
+            self.streaming_counter[self.room_group_name] ={'connection':0,'channel':[]}
+        if not self.channel_name  in self.streaming_counter[self.room_group_name]['channel']:
+            self.streaming_counter[self.room_group_name]['channel'].append(self.channel_name)
+            asyncio.run(self.channel_layer.send(
+            self.channel_name,
+            {
+                'type':'broadcastmessage',
+                'message': f'streaming {event["message"]}'
+            }
+            ))
+        self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
+        
 
 
 
