@@ -506,31 +506,33 @@ class RkdStream(RkdData):
             'CF_VOLUME': 'volume',
             'CF_LAST': 'latest_price'
         }
-        if 'PCTCHNG' in message['Fields']:
-            message['Fields']['ticker'] = message['Key']['Name']
-            data = [message['Fields']]
-            df = pd.DataFrame(data).rename(columns=change)
-            ticker = df.loc[df['ticker'] == message['Fields']['ticker']]
-            print(df)
-            if self.is_thread:
-                asyncio.run(self.layer.group_send(self.chanels,
-                                                    {
-                    'type': 'broadcastmessage',
-                    'message':  ticker.to_dict('records')
-                }))
-            else:
-                # asyncio.run(self.layer.group_send('topstock',
-                #                                   {
-                #                                       'type': 'broadcastmessage',
-                #                                       'message':  df.to_dict('records')
-                #                                   }))
-                # self.save.apply_async(
-                #     args=('master', 'LatestPrice', df.to_dict('records')),queue='broadcaster')
-                self.update_rtdb.apply_async(args=(df.to_dict('records'),),queue='broadcaster')
+        print(self.is_thread)
+        # if 'PCTCHNG' in message['Fields']:
+        message['Fields']['ticker'] = message['Key']['Name']
+        data = [message['Fields']]
+        df = pd.DataFrame(data).rename(columns=change)
+        ticker = df.loc[df['ticker'] == message['Fields']['ticker']]
+        print(df)
+        
+        if self.is_thread:
+            asyncio.run(self.layer.group_send(self.chanels,
+                                                {
+                'type': 'broadcastmessage',
+                'message':  ticker.to_dict('records')
+            }))
+        else:
+            # asyncio.run(self.layer.group_send('topstock',
+            #                                   {
+            #                                       'type': 'broadcastmessage',
+            #                                       'message':  df.to_dict('records')
+            #                                   }))
+            # self.save.apply_async(
+            #     args=('master', 'LatestPrice', df.to_dict('records')),queue='broadcaster')
+            self.update_rtdb.apply_async(args=(df.to_dict('records'),),queue='broadcaster')
 
-            del df
-            del ticker
-            gc.collect()
+        del df
+        del ticker
+        gc.collect()
 
   
 

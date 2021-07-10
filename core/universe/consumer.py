@@ -3,9 +3,12 @@ from asgiref.sync import async_to_sync,sync_to_async
 from channels.generic.websocket import WebsocketConsumer,AsyncWebsocketConsumer
 from datasource.rkd import RkdStream
 import asyncio
-import threading
+import multiprocessing
+from channels.layers import get_channel_layer
+
 class UniverseConsumer(WebsocketConsumer):
     thread = []
+    streaming_counter ={}
 
 
     def connect(self):
@@ -55,12 +58,33 @@ class UniverseConsumer(WebsocketConsumer):
         rkd =  RkdStream()
         rkd.ticker_data = event['message']
         rkd.chanels = self.room_group_name
-        proc = rkd.stream()
-        # thread = threading.Thread(target=rkd.stream)
-        # threading_object = {'name':self.room_group_name,'threads':thread}
-        proc.daemon=True
-        proc.start()
-        self.thread.append(proc)
+        if multiprocessing.active_children():
+            for p in multiprocessing.active_children():
+                if p.name == self.room_group_name:
+                    self.send(text_data=json.dumps({
+                    'message': f'stream {event["message"]}'
+                    }))
+                # else:
+                #     proc = rkd.thread_stream()
+                #     proc.daemon=True
+                #     proc.start()
+                #     self.thread.append(proc)
+        else:
+            proc = rkd.thread_stream()
+            # thread = threading.Thread(target=rkd.stream)
+            # threading_object = {'name':self.room_group_name,'threads':thread}
+            proc.daemon=True
+            proc.start()
+            self.thread.append(proc)
+            
+            self.send(text_data=json.dumps({
+                    'message': f'stream {event["message"]}'
+                    }))
+        if self.room_group_name in self.streaming_counter:
+                self.streaming_counter[self.room_group_name]+=1
+        else:
+            self.streaming_counter[self.room_group_name] = 1
+        print(self.streaming_counter)
 
 
 
