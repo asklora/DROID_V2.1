@@ -409,7 +409,7 @@ class RkdStream(RkdData):
     
     
     def thread_stream(self):
-        threads = mp.Process(target=self.web_socket_app.run_forever)
+        threads = mp.Process(target=self.stream)
         threads.name = self.chanels
         self.is_thread =True
         return threads
@@ -422,7 +422,9 @@ class RkdStream(RkdData):
             self.web_socket_app.run_forever()
         except KeyboardInterrupt as e:
             print(f"==========={e}=============")
+            print('interupted')
             self.web_socket_app.close()
+            sys.exit()
         except Exception as e:
             print(f"==========={e}=============")
             self.web_socket_app.close()

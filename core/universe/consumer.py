@@ -4,6 +4,8 @@ from requests.api import patch
 from datasource.rkd import RkdStream
 import asyncio
 import multiprocessing
+import os
+import signal
 
 class UniverseConsumer(WebsocketConsumer):
     streaming_counter ={}
@@ -35,6 +37,8 @@ class UniverseConsumer(WebsocketConsumer):
                     if self.streaming_counter[self.room_group_name]['connection'] < 1:
                         print(t.name,'terminated')
                         t.terminate()
+                        if t.is_alive():
+                            os.kill(t.pid, signal.SIGINT)
                         
         process = [{proc.name:proc}  for proc in multiprocessing.active_children()]
         print('process >>>',process)
