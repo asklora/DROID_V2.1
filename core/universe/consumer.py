@@ -1,5 +1,6 @@
 import json
 from channels.generic.websocket import WebsocketConsumer,AsyncWebsocketConsumer
+from requests.api import patch
 from datasource.rkd import RkdStream
 import asyncio
 import multiprocessing
@@ -34,6 +35,10 @@ class UniverseConsumer(WebsocketConsumer):
                     if self.streaming_counter[self.room_group_name]['connection'] < 1:
                         print(t.name,'terminated')
                         t.terminate()
+                        if t.is_alive():
+                            t.join()
+        process = [proc.name  for proc in multiprocessing.active_children()]
+        print('process >>>',process)
         print('disconnect >>> ',self.streaming_counter)
         
     # Receive message from WebSocket
