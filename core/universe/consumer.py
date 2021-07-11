@@ -38,7 +38,8 @@ class UniverseConsumer(WebsocketConsumer):
                         print(t.name,'terminated')
                         t.terminate()
                         if t.is_alive():
-                            os.kill(t.pid, signal.SIGINT)
+                            print(t.pid,'<<<pid')
+                            os.kill(t.pid, signal.SIGKILL)
                         
         process = [{proc.name:proc}  for proc in multiprocessing.active_children()]
         print('process >>>',process)
