@@ -11,12 +11,17 @@
     <div class="all-data"></div>
 
     <button onclick="myFunction()">click</button>
+    <button onclick="send_data()">Send data</button>
+
     <script>
-      var msg = { message: "subs" };
+      var msg = { type:"streaming",  message: ["AAPL.O","MSFT.O"] };
 
       const socket = new WebSocket("ws://16.162.110.123/ws/topstock/");
       function myFunction() {
         socket.close();
+      }
+      function send_data(){
+        socket.send(JSON.stringify(msg))
       }
       // Connection opened
       {% comment %} socket.onopen = () => socket.send(JSON.stringify(msg)); {% endcomment %}

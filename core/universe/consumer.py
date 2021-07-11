@@ -1,10 +1,8 @@
 import json
-from asgiref.sync import async_to_sync,sync_to_async
 from channels.generic.websocket import WebsocketConsumer,AsyncWebsocketConsumer
 from datasource.rkd import RkdStream
 import asyncio
 import multiprocessing
-from channels.layers import get_channel_layer
 
 class UniverseConsumer(WebsocketConsumer):
     streaming_counter ={}
@@ -28,6 +26,7 @@ class UniverseConsumer(WebsocketConsumer):
             self.channel_name
         ))
         for t in multiprocessing.active_children():
+            
             if t.name == self.room_group_name:
                 if self.room_group_name in self.streaming_counter:
                     if self.channel_name in self.streaming_counter[self.room_group_name]['channel']:  self.streaming_counter[self.room_group_name]['channel'].remove(self.channel_name)
