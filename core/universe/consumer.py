@@ -35,6 +35,7 @@ class UniverseConsumer(WebsocketConsumer):
                     if self.streaming_counter[self.room_group_name]['connection'] < 1:
                         print(t.name,'terminated')
                         t.terminate()
+        print('disconnect >>> ',self.streaming_counter)
         
     # Receive message from WebSocket
     def receive(self, text_data):
@@ -49,6 +50,7 @@ class UniverseConsumer(WebsocketConsumer):
             }
         ))
 
+    
     # Receive message from room group
     def broadcastmessage(self, event):
         # Send message to WebSocket
@@ -61,8 +63,7 @@ class UniverseConsumer(WebsocketConsumer):
         if self.room_group_name in proc_list:
             pass
         else:
-            rkd =  RkdStream()
-            rkd.ticker_data = event['message']
+            rkd =  RkdStream.trkd_stream_initiate(event['message'])
             rkd.chanels = self.room_group_name
             proc = rkd.thread_stream()
             proc.daemon=True
@@ -78,11 +79,11 @@ class UniverseConsumer(WebsocketConsumer):
             self.channel_name,
             {
                 'type':'broadcastmessage',
-                'message': f'streaming {event["message"]}'
+                'message': f'streaming {event["message"]} from firebase'
             }
             ))
         self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
-        
+        print("connected >>>> ",self.streaming_counter)
 
 
 
@@ -144,8 +145,6 @@ class DurableConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': message
         }))
-    
-    
     # @sync_to_async
     # def rkd_init(self):
     #     return RkdStream()

@@ -50,19 +50,6 @@ services:
     depends_on:
       - backend
       - redis
-  rkd:
-    container_name: RKDStream
-    image: django/backend
-    command: sh deployment/jenkins/bastion/rkd.sh
-    env_file: ~/DROID_V2.1/.env
-    volumes:
-      - ~/DROID_V2.1:/code
-    restart: always
-    depends_on:
-      - celery
-      - celery-broadcaster
-      - backend
-      - redis
   redis:
     container_name: redis
     restart: always
