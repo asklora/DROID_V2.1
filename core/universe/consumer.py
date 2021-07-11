@@ -35,9 +35,8 @@ class UniverseConsumer(WebsocketConsumer):
                     if self.streaming_counter[self.room_group_name]['connection'] < 1:
                         print(t.name,'terminated')
                         t.terminate()
-                        if t.is_alive():
-                            t.join()
-        process = [proc.name  for proc in multiprocessing.active_children()]
+                        
+        process = [{proc.name:proc}  for proc in multiprocessing.active_children()]
         print('process >>>',process)
         print('disconnect >>> ',self.streaming_counter)
         
