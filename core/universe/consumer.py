@@ -98,19 +98,20 @@ class UniverseConsumer(WebsocketConsumer):
                     'status':200
                 }
                 ))
-            self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
-            print("connected >>>> ",self.streaming_counter)
-            print("payload >>>> ",event['message'])
         else:
             asyncio.run(self.channel_layer.send(
                 self.channel_name,
                 {
                     'type':'broadcastmessage',
-                    'message': f'message cant be empty'
+                    'message': f'message streaming cannot be empty, your payload was {event["message"]}',
+                    'status':400
                 }
                 ))
             self.disconnect(400)
 
+        self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
+        print("connected >>>> ",self.streaming_counter)
+        print("payload >>>> ",event['message'])
 
 
 class DurableConsumer(AsyncWebsocketConsumer):
