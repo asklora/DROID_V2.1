@@ -233,7 +233,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
     calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth", 
                         "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred", 
-                        "environment", "social", "goverment", "tri"]
+                        "environment", "social", "goverment"]
     fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
     print(fundamentals_score)
 
@@ -344,8 +344,9 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         fundamentals["earnings_pred_minmax_currency_code"]).round(1)
 
     print("Calculate Momentum Value")
-    fundamentals["momentum"] = fundamentals["tri_minmax_currency_code"] * 10
-    fundamentals["momentum"] = robust_scale(fundamentals["momentum"])
+    fundamentals["tri_robust_scale"] = robust_scale(fundamentals["tri"])
+    minmax_column.append("tri_robust_scale")
+    fundamentals["momentum"] = fundamentals["tri_robust_scale"] * 10
     
     print("Calculate ESG Value")
     esg = fundamentals[["ticker", "environment_minmax_currency_code", "environment_minmax_industry", 
