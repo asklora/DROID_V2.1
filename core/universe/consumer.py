@@ -67,32 +67,42 @@ class UniverseConsumer(WebsocketConsumer):
         }))
     
     def streaming(self,event):
-        proc_list = [p.name for p in multiprocessing.active_children()]
-        if self.room_group_name in proc_list:
-            pass
+        if event['message']:
+            proc_list = [p.name for p in multiprocessing.active_children()]
+            if self.room_group_name in proc_list:
+                pass
+            else:
+                rkd =  RkdStream.trkd_stream_initiate(event['message'])
+                rkd.chanels = self.room_group_name
+                proc = rkd.thread_stream()
+                proc.daemon=True
+                proc.start()
+            
+            if self.room_group_name in self.streaming_counter:
+                pass
+            else:
+                self.streaming_counter[self.room_group_name] ={'connection':0,'channel':[]}
+            if not self.channel_name  in self.streaming_counter[self.room_group_name]['channel']:
+                self.streaming_counter[self.room_group_name]['channel'].append(self.channel_name)
+                asyncio.run(self.channel_layer.send(
+                self.channel_name,
+                {
+                    'type':'broadcastmessage',
+                    'message': f'streaming {event["message"]} from firebase'
+                }
+                ))
+            self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
+            print("connected >>>> ",self.streaming_counter)
+            print("payload >>>> ",event['message'])
         else:
-            rkd =  RkdStream.trkd_stream_initiate(event['message'])
-            rkd.chanels = self.room_group_name
-            proc = rkd.thread_stream()
-            proc.daemon=True
-            proc.start()
-        
-        if self.room_group_name in self.streaming_counter:
-            pass
-        else:
-            self.streaming_counter[self.room_group_name] ={'connection':0,'channel':[]}
-        if not self.channel_name  in self.streaming_counter[self.room_group_name]['channel']:
-            self.streaming_counter[self.room_group_name]['channel'].append(self.channel_name)
             asyncio.run(self.channel_layer.send(
-            self.channel_name,
-            {
-                'type':'broadcastmessage',
-                'message': f'streaming {event["message"]} from firebase'
-            }
-            ))
-        self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
-        print("connected >>>> ",self.streaming_counter)
-        print("payload >>>> ",event['message'])
+                self.channel_name,
+                {
+                    'type':'broadcastmessage',
+                    'message': f'message cant be empty'
+                }
+                ))
+            self.disconnect(400)
 
 
 

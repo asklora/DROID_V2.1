@@ -16,7 +16,8 @@
     <script>
       var msg = { type:"streaming",  message: ["AAPL.O"] };
 
-      const socket = new WebSocket("ws://16.162.110.123/ws/aapl/");
+      const socket =  WebSocket;
+      socket("ws://127.0.0.1:8000/ws/aapl/")
       function myFunction() {
         socket.close();
       }
