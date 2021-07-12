@@ -224,17 +224,18 @@ def update_company_desc_from_dsws(ticker=None):
     print("{} : === Company Description Ingestion ===".format(datetimeNow()))
     universe = get_active_universe_company_description_null(ticker=ticker)
     universe = universe.drop(columns=["company_description"])
-    identifier = "ticker"
-    filter_field = ["WC06092"]
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=1)
-    if(len(result) > 0):
-        result = result.rename(columns={"WC06092": "company_description", "index" : "ticker"})
-        result = remove_null(result, "company_description")
-        result = universe.merge(result, how="left", on=["ticker"])
-        print(result)
-        upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
-        fill_null_company_desc_with_ticker_name()
-        report_to_slack("{} : === Company Description Updated ===".format(datetimeNow()))
+    if(len(universe) > 0):
+        identifier = "ticker"
+        filter_field = ["WC06092"]
+        result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=1)
+        if(len(result) > 0):
+            result = result.rename(columns={"WC06092": "company_description", "index" : "ticker"})
+            result = remove_null(result, "company_description")
+            result = universe.merge(result, how="left", on=["ticker"])
+            print(result)
+            upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+            fill_null_company_desc_with_ticker_name()
+            report_to_slack("{} : === Company Description Updated ===".format(datetimeNow()))
 
 def update_industry_from_dsws(ticker=None):
     print("{} : === Country & Industry Ingestion ===".format(datetimeNow()))
