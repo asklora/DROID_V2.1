@@ -29,7 +29,6 @@ class UniverseConsumer(WebsocketConsumer):
                 }
                 ))
 
-
     def disconnect(self, close_code):
         # Leave room group
         asyncio.run(self.channel_layer.group_discard(
