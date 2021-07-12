@@ -92,6 +92,7 @@ class UniverseConsumer(WebsocketConsumer):
             ))
         self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
         print("connected >>>> ",self.streaming_counter)
+        print("payload >>>> ",event['message'])
 
 
 
