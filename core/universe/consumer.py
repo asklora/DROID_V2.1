@@ -20,6 +20,14 @@ class UniverseConsumer(WebsocketConsumer):
             self.channel_name
         ))
         self.accept()
+        asyncio.run(self.channel_layer.send(
+                self.channel_name,
+                {
+                    'type':'broadcastmessage',
+                    'message': f'connection accepted to {self.room_group_name} channel',
+                    'status':200
+                }
+                ))
 
 
     def disconnect(self, close_code):
@@ -62,9 +70,8 @@ class UniverseConsumer(WebsocketConsumer):
     # Receive message from room group
     def broadcastmessage(self, event):
         # Send message to WebSocket
-        self.send(text_data=json.dumps({
-            'message': event['message']
-        }))
+        event.pop('type')
+        self.send(text_data=json.dumps(event))
     
     def streaming(self,event):
         if event['message']:
@@ -88,7 +95,8 @@ class UniverseConsumer(WebsocketConsumer):
                 self.channel_name,
                 {
                     'type':'broadcastmessage',
-                    'message': f'streaming {event["message"]} from firebase'
+                    'message': f'streaming {event["message"]} from firebase',
+                    'status':200
                 }
                 ))
             self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
