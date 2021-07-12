@@ -12,7 +12,7 @@ from general.date_process import (
 import pandas as pd
 from pandas.tseries.offsets import BDay
 import numpy as np
-from sklearn.preprocessing import robust_scale, minmax_scale
+from sklearn.preprocessing import robust_scale, minmax_scale, quantile_transform
 from general.slack import report_to_slack
 from general.sql_process import do_function
 from general.data_process import uid_maker, remove_null
@@ -344,7 +344,15 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         fundamentals["earnings_pred_minmax_currency_code"]).round(1)
 
     print("Calculate Momentum Value")
-    fundamentals["tri_robust_scale"] = robust_scale(fundamentals["tri"])
+    df_currency_code = fundamentals[["currency_code", "tri"]]
+    fundamentals["tri_robust_scale"] = df_currency_code.groupby("currency_code").tri.transform(lambda x: print(x.to_list())
+    print(fundamentals)
+    import sys
+    sys.exit(1)
+    pd.Series(map(lambda y: y[0], quantile_transform(x.to_list())))
+    
+    fundamentals["tri_robust_scale"] = 0
+    print(fundamentals)
     minmax_column.append("tri_robust_scale")
     fundamentals["momentum"] = fundamentals["tri_robust_scale"] * 10
     
