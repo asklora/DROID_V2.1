@@ -3,13 +3,24 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from general.slack import report_to_slack
-from general.date_process import backdate_by_year, dateNow, backdate_by_month, datetimeNow
+from general.date_process import backdate_by_year, dateNow, backdate_by_month, datetimeNow, droid_start_date
 from general.data_process import uid_maker
 from datasource.dsws import get_data_history_frequently_by_field_from_dsws, get_data_history_frequently_from_dsws
-from general.table_name import get_data_ibes_monthly_table_name, get_data_ibes_table_name, get_data_macro_monthly_table_name, get_data_macro_table_name, get_data_worldscope_summary_table_name
+from general.table_name import get_data_fred_table_name, get_data_ibes_monthly_table_name, get_data_ibes_table_name, get_data_macro_monthly_table_name, get_data_macro_table_name, get_data_worldscope_summary_table_name
 from general.sql_output import upsert_data_to_database
 from general.sql_query import get_active_universe_by_entity_type, get_data_ibes_monthly, get_data_macro_monthly, get_ibes_new_ticker
 
+def update_fred_data_from_fred():
+    print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
+    end_date = dateNow()
+    start_date = droid_start_date()
+    result = read_fred_csv(start_date, end_date)
+    result["data"] = np.where(result["data"]== ".", 0, result["data"])
+    result["data"] = result["data"].astype(float)
+    if(len(result)) > 0 :
+        upsert_data_to_database(result, get_data_fred_table_name(), "uid", how="update", Text=True)
+        report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
+        
 def populate_ibes_table():
     table_name = get_data_ibes_table_name()
     start_date = backdate_by_month(30)
