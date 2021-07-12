@@ -14,9 +14,9 @@
     <button onclick="send_data()">Send data</button>
 
     <script>
-      var msg = { type:"streaming",  message: ["AAPL.O","MSFT.O"] };
+      var msg = { type:"streaming",  message: ["AAPL.O"] };
 
-      const socket = new WebSocket("ws://16.162.110.123/ws/topstock/");
+      const socket = new WebSocket("ws://16.162.110.123/ws/aapl/");
       function myFunction() {
         socket.close();
       }

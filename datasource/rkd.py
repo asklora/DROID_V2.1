@@ -527,9 +527,9 @@ class RkdStream(RkdData):
             # else:
             self.update_rtdb.apply_async(args=(df.to_dict('records'),),queue='broadcaster')
 
-        del df
-        del ticker
-        gc.collect()
+            del df
+            del ticker
+            gc.collect()
 
   
 
