@@ -102,7 +102,7 @@ class UniverseConsumer(WebsocketConsumer):
                     'message': f'message cant be empty'
                 }
                 ))
-            self.disconnect()
+            self.disconnect(400)
 
 
 
