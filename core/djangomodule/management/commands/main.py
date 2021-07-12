@@ -5,8 +5,8 @@ from general.sql_output import fill_null_quandl_symbol
 from ingestion.master_multiple import master_multiple_update
 from ingestion.master_tac import master_tac_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
-from main import daily_process_ohlcvtr
-from migrate import daily_migrations
+from main import daily_ingestion, daily_process_ohlcvtr
+from migrate import daily_migrations, weekly_migrations
 from ingestion.currency import (
     update_currency_price_from_dss,
     update_utc_offset_from_timezone
@@ -16,6 +16,9 @@ from bot.preprocess import (
     interest_daily_update
 )
 from ingestion.ai_value import (
+    populate_ibes_table,
+    populate_macro_table,
+    update_fred_data_from_fred,
     update_ibes_data_monthly_from_dsws,
     update_macro_data_monthly_from_dsws,
     update_worldscope_quarter_summary_from_dsws
@@ -60,32 +63,50 @@ class Command(BaseCommand):
         try:
             status = ""
             if (options["na"]):
+                status = "Currency Price Update"
+                update_currency_price_from_dss()
+                status = "Daily Ingestion Update"
                 daily_migrations()
-                daily_process_ohlcvtr(region_id = "na")
+                daily_ingestion(region_id="na")
+                # daily_process_ohlcvtr(region_id = "na")
                 do_function("special_cases_1")
                 do_function("master_ohlcvtr_update")
                 status = "Master OHLCVTR Update"
                 master_ohlctr_update()
                 status = "Master TAC Update"
                 master_tac_update()
-                status = "Currency Price Update"
-                update_currency_price_from_dss()
                 status = "Master Multiple Update"
                 master_multiple_update()
+                interest_update()
+                dividend_daily_update()
+                interest_daily_update()
+                status = "Macro Ibes Update"
+                populate_macro_table()
+                populate_ibes_table()
             
             if (options["ws"]):
+                status = "Currency Price Update"
+                update_currency_price_from_dss()
+                status = "Daily Ingestion Update"
                 daily_migrations()
-                daily_process_ohlcvtr(region_id = "ws")
+                # daily_process_ohlcvtr(region_id = "ws")
+                daily_ingestion(region_id="ws")
                 do_function("special_cases_1")
                 do_function("master_ohlcvtr_update")
                 status = "Master OHLCVTR Update"
                 master_ohlctr_update()
                 status = "Master TAC Update"
                 master_tac_update()
-                status = "Currency Price Update"
-                update_currency_price_from_dss()
                 status = "Master Multiple Update"
                 master_multiple_update()
+                status = "Interest Update"
+                interest_update()
+                dividend_daily_update()
+                interest_daily_update()
+                status = "Macro Ibes Update"
+                populate_macro_table()
+                populate_ibes_table()
+                
         
             if(options["worldscope"]):
                 status = "Worldscope Ingestion"
@@ -129,6 +150,8 @@ class Command(BaseCommand):
                 status = "Ticker Name Ingestion"
                 update_ticker_name_from_dsws()
                 do_function("universe_populate")
+                status = "Weekly Macro & Ibes Migration"
+                weekly_migrations()
 
             if(options["monthly"]):
                 status = "Entity Type Ingestion"
@@ -151,11 +174,12 @@ class Command(BaseCommand):
                 dividend_updated()
                 status = "Dividend Daily Update"
                 dividend_daily_update()
+                status = "Fred Ingestion"
+                update_fred_data_from_fred()
                 status = "IBES Ingestion"
                 update_ibes_data_monthly_from_dsws()
                 status = "Macro Ingestion"
                 update_macro_data_monthly_from_dsws()
-
 
         except Exception as e:
             print("{} : === {} ERROR === : {}".format(dateNow(), status, e))
