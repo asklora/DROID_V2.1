@@ -312,31 +312,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         minmax_column.append(column_minmax_currency_code)
         minmax_column.append(column_minmax_industry)
     
-    #TWELVE points - everthing average yields 0.5 X 12 = 6.0 score
-    # fundamentals["fundamentals_value"] = ((fundamentals["earnings_yield_minmax_currency_code"]) + 
-    #     fundamentals["earnings_yield_minmax_industry"] + 
-    #     fundamentals["book_to_price_minmax_currency_code"] + 
-    #     fundamentals["book_to_price_minmax_industry"] + 
-    #     fundamentals["ebitda_to_ev_minmax_currency_code"] + 
-    #     fundamentals["ebitda_to_ev_minmax_industry"] +
-    #     fundamentals["fwd_bps_minmax_industry"] + 
-    #     fundamentals["fwd_ebitda_to_ev_minmax_currency_code"] + 
-    #     fundamentals["fwd_ebitda_to_ev_minmax_industry"] + 
-    #     fundamentals["fwd_ey_minmax_currency_code"]+ 
-    #     fundamentals["roe_minmax_industry"]+ 
-    #     fundamentals["cf_to_price_minmax_currency_code"]).round(1)
-    
-    # fundamentals["fundamentals_quality"] = ((fundamentals["roic_minmax_currency_code"]) + 
-    #     fundamentals["roic_minmax_industry"]+
-    #     fundamentals["cf_to_price_minmax_industry"]+
-    #     fundamentals["eps_growth_minmax_currency_code"] + 
-    #     fundamentals["eps_growth_minmax_industry"] + 
-    #     (fundamentals["fwd_ey_minmax_industry"]) + 
-    #     fundamentals["fwd_sales_to_price_minmax_industry"]+ 
-    #     (fundamentals["fwd_roic_minmax_industry"]) +
-    #     fundamentals["earnings_yield_minmax_industry"] +
-    #     fundamentals["earnings_pred_minmax_industry"] +
-    #     fundamentals["earnings_pred_minmax_currency_code"]).round(1)
     fundamentals["trading_day"] = check_trading_day(days=6)
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
 
@@ -370,7 +345,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     print("Calculate Momentum Value")
     fundamentals["momentum"] = fundamentals["tri_minmax_currency_code"] * 10
-
+    fundamentals["momentum"] = robust_scale(fundamentals["momentum"])
+    
     print("Calculate ESG Value")
     esg = fundamentals[["ticker", "environment_minmax_currency_code", "environment_minmax_industry", 
         "social_minmax_currency_code", "social_minmax_industry", 
@@ -527,7 +503,9 @@ def split_order_and_performance(ticker=None, currency_code=None):
             print(ticker)
             last_date = row["last_date"]
             capital_change = row["capital_change"]
-            update_all_data_by_capital_change(ticker, last_date, capital_change)
+            price = row["close"]
+            percent_change = row["latest_price_change"]
+            update_all_data_by_capital_change(ticker, last_date, capital_change, price, percent_change)
             update_capital_change(ticker)
             report_to_slack("{} : === PRICE SPLIT ON TICKER {} with CAPITAL CHANGE {} ===".format(str(dateNow()), ticker, capital_change))
             
@@ -590,7 +568,7 @@ def populate_latest_price(ticker=None, currency_code=None):
                 report_to_slack("{} : === Latest Price Updated ===".format(dateNow()))
             null_ticker = result["ticker"].tolist()
             
-            # split_order_and_performance(ticker=ticker, currency_code=currency_code)
+            split_order_and_performance(ticker=ticker, currency_code=currency_code)
 
     latest_price = latest_price.loc[~latest_price["ticker"].isin(null_ticker)]
     print(latest_price)

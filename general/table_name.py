@@ -52,8 +52,8 @@ def get_master_multiple_table_name():
 def get_report_datapoint_table_name():
     return "report_datapoint"
 
-def get_data_report_split_table_name():
-    return "data_report_split"
+def get_data_split_table_name():
+    return "data_split"
 
 def get_vix_table_name():
     return "vix"
