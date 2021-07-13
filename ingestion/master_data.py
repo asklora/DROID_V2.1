@@ -345,7 +345,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     print("Calculate Momentum Value")
     df_currency_code = fundamentals[["currency_code", "tri"]]
-    fundamentals["tri_robust_scale"] = df_currency_code.groupby("currency_code").tri.transform(lambda x: print(x.to_list())
+    fundamentals["tri_robust_scale"] = df_currency_code.groupby("currency_code").tri.transform(lambda x: print(x.to_list()))
     print(fundamentals)
     import sys
     sys.exit(1)
