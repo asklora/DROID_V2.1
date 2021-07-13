@@ -32,6 +32,11 @@ HKD_CUR = Currency.objects.get(currency_code="HKD")
 KRW_CUR = Currency.objects.get(currency_code="KRW")
 CNY_CUR = Currency.objects.get(currency_code="CNY")
 EUR_CUR = Currency.objects.get(currency_code="EUR")
+
+
+
+
+
 app.conf.beat_schedule = {
     "USD-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
