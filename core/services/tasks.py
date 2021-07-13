@@ -35,7 +35,7 @@ EUR_CUR = Currency.objects.get(currency_code="EUR")
 
 
 
-
+## SCHEDULER
 
 app.conf.beat_schedule = {
     "USD-HEDGE": {
@@ -98,17 +98,6 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=USD_CUR.top_stock_schedule.minute, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "USD","client_name":"FELS"},
     },
-    # "KRW-POPULATE-PICK-TESTER": {
-    #     "task": "core.services.tasks.populate_client_top_stock_bot_tester_weekly",
-    #     "schedule": crontab(minute=KRW_CUR.top_stock_schedule.minute + 2, hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-    #     "kwargs": {"currency": "KRW"},
-    # },
-    # "USD-POPULATE-PICK-TESTER": {
-    #     "task": "core.services.tasks.populate_client_top_stock_bot_tester_weekly",
-    #     "schedule": crontab(minute=USD_CUR.top_stock_schedule.minute + 2, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-    #     "kwargs": {"currency": "USD"},
-    # },
-
 }
 
 
@@ -241,32 +230,6 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
 
 
 
-# @app.task
-# def populate_client_top_stock_bot_tester_weekly(currency=None, client_name="HANWHA"):
-#     day = datetime.now()
-#     ## POPULATED ONLY/EVERY MONDAY OF THE WEEK
-#     if day.weekday() == 0:
-#         report_to_slack(f"===  POPULATING {client_name} TOP PICK {currency} ===")
-#         try:
-#             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
-#             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
-#             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
-#             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
-#             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
-#             populate_bot_tester(currency_code=[currency], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
-#         except Exception as e:
-#             err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN POPULATE BOT TESTER FOR {currency} ===",error_message=str(e))
-#             err.send_report_error()
-#             return {"err": str(e)}
-#     report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
-#     try:
-#         # WILL RUN EVERY BUSINESS DAY
-#         order_client_topstock(currency=currency, client_name="HANWHA", bot_tester=True) #bot tester
-#     except Exception as e:
-#         err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN ORDER FOR {currency} ===",error_message=str(e))
-#         err.send_report_error()
-#         return {"err": str(e)}
-#     return {"result": f"populate and order {currency} done"}
 
 @app.task
 def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False):
@@ -310,6 +273,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
                 extra_data__capital=queue.capital,
                 extra_data__type=queue.bot
             )
+            # TRADING HOURS CHECK
             market = TradingHours(mic=queue.ticker.mic)
             
             if market.is_open:
@@ -417,6 +381,8 @@ def daily_hedge(currency=None):
     except Exception as e:
         err = ErrorLog.objects.create_log(error_description=f"=== DSS ERROR : {str(e)} SKIPPING GET INTRADAY ===",error_message=str(e))
         err.send_report_error()
+    
+    # GET INDEX PRICE
     get_quote_index(currency)
 
     hedge(currency=currency) #bot_advisor hanwha and fels
@@ -425,8 +391,10 @@ def daily_hedge(currency=None):
 
 def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=None, capital=None):
     if new:
+        # NEW SUNDAY MORNING TICKER CSV
         perf = PositionPerformance.objects.filter(order_uid__in=new["pos_list"], position_uid__user_id__in=hanwha).order_by("created")
     else:
+        # HEDGE TICKER ONLY CSV
         perf = PositionPerformance.objects.filter(position_uid__user_id__in=hanwha, created__gte=datetime.now().date(), position_uid__ticker__currency_code=currency).order_by("created")
         orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         perf = perf.exclude(order_uid__in=orders)
