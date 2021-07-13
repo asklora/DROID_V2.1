@@ -96,6 +96,7 @@ class OrderPosition(BaseTimeStampModel):
     commision_fee_sell = models.FloatField(null=True, blank=True, default=0)
     vol = models.FloatField(null=True, blank=True)
     margin = models.FloatField(default=1)
+    bot_cash_dividend = models.FloatField(null=True, blank=True, default=0)
 
     class Meta:
         managed = True
