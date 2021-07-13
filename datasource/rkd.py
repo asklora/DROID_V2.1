@@ -509,7 +509,8 @@ class RkdStream(RkdData):
             'PCTCHNG': 'latest_price_change',
             'TRADE_DATE': 'last_date',
             'CF_VOLUME': 'volume',
-            'CF_LAST': 'latest_price'
+            'CF_LAST': 'latest_price',
+            'CF_NETCHNG': 'latest_net_change'
         }
         if 'PCTCHNG' in message['Fields']:
             message['Fields']['ticker'] = message['Key']['Name']
@@ -550,6 +551,7 @@ class RkdStream(RkdData):
                 'CF_LOW',
                 'CF_LAST',
                 'CF_VOLUME',
+                'CF_NETCHNG',
                 'TRADE_DATE'
             ]
         }

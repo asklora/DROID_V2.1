@@ -98,6 +98,8 @@ class UniverseConsumer(WebsocketConsumer):
                     'status':200
                 }
                 ))
+            self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
+            
         else:
             asyncio.run(self.channel_layer.send(
                 self.channel_name,
@@ -109,7 +111,6 @@ class UniverseConsumer(WebsocketConsumer):
                 ))
             self.disconnect(400)
 
-        self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
         print("connected >>>> ",self.streaming_counter)
         print("payload >>>> ",event['message'])
 
@@ -172,26 +173,3 @@ class DurableConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': message
         }))
-    # @sync_to_async
-    # def rkd_init(self):
-    #     return RkdStream()
-    
-    
-    # @sync_to_async
-    # def rkd_stream(self,rkd):
-    #     return rkd.stream()
-
-
-    # async def streaming(self,event):
-    #     rkd =  await self.rkd_init()
-    #     rkd.ticker_data = event['message']
-    #     rkd.chanels = self.room_group_name
-    #     self.run_task = asyncio.create_task(self.rkd_stream(rkd))
-    #      # Send message to room group
-    #     await self.channel_layer.group_send(
-    #         self.room_group_name,
-    #         {
-    #             'type': 'chat_message',
-    #             'message': 'stopped'
-    #         }
-    #     )

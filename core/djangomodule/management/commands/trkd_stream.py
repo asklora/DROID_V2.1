@@ -20,7 +20,7 @@ in_list =['A',
 class Command(BaseCommand):
     def handle(self, *args, **options):
         rkd = RkdStream()
-        # HKD_universe = [ticker['ticker'] for ticker in Universe.objects.filter(
-        #     currency_code__in=['USD'], is_active=True).values('ticker')]
+        HKD_universe = [ticker['ticker'] for ticker in Universe.objects.filter(
+            currency_code__in=['HKD','CNY'], is_active=True).values('ticker')]
         rkd.ticker_data = in_list
         quotes = rkd.stream()

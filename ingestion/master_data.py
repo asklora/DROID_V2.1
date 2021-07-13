@@ -344,6 +344,12 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         fundamentals["earnings_pred_minmax_currency_code"]).round(1)
 
     print("Calculate Momentum Value")
+    df_currency_code = fundamentals[["currency_code", "tri"]]
+    fundamentals["tri_robust_scale"] = df_currency_code.groupby("currency_code").tri.transform(lambda x: print(x.to_list()))
+    print(fundamentals)
+    import sys
+    sys.exit(1)
+
     # df_currency_code = fundamentals[["currency_code", "tri"]]
     # fundamentals["tri_robust_scale"] = df_currency_code.groupby("currency_code").tri.transform(lambda x: quantile_transform(x.to_list())))
     # print(fundamentals)
@@ -355,8 +361,13 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
      0.9748502347671218, 1.392939771624748]]
     result = quantile_transform(data, n_quantiles=1)
     print(result)
+    df_currency_code = fundamentals[["currency_code", "tri"]]
+    fundamentals["tri_robust_scale"] = df_currency_code.groupby("currency_code").tri.transform(lambda x: print(x.to_list()))
+    print(fundamentals)
     import sys
     sys.exit(1)
+
+    
     pd.Series(map(lambda y: y[0], quantile_transform(x.to_list())))
     
     fundamentals["tri_robust_scale"] = 0
