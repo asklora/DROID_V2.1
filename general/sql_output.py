@@ -1,4 +1,5 @@
 from general.slack import report_to_slack
+import pandas as pd
 import sqlalchemy as db
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count as cpucount
@@ -9,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
 from general.date_process import dateNow
 from general.sql_query import read_query
-from general.table_name import get_data_dividend_table_name, get_data_report_split_table_name, get_latest_price_table_name, get_universe_table_name
+from general.table_name import get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_table_name
 
 def execute_query(query, table=None):
     print(f"Execute Query to Table {table}")
@@ -172,35 +173,31 @@ def update_universe_where_currency_code_null():
     data = execute_query(query, table=table_name)
     return data
 
-def update_all_data_by_capital_change(ticker, trading_day, capital_change):
-    table_name = get_data_report_split_table_name()
-    query = f"update {table_name} set "
-    query += f"data_type = 'DSS', capital_change={capital_change} where ticker = '{ticker}';"
-    data = execute_query(query, table=table_name)
+def update_all_data_by_capital_change(ticker, trading_day, capital_change, price, percent_change):
+    table_name = get_data_split_table_name()
+    data = pd.DataFrame({"ticker":[ticker], "data_type":["DSS"], "intraday_date":[trading_day], 
+    "capital_change":[capital_change], "price":[price], "percent_change":[percent_change]}, index=[0])
+    upsert_data_to_database(data, table_name, "ticker", how="update", cpu_count=True, Text=True)
 
-    table_name = get_data_report_split_table_name()
-    query = f"update user_portfolio set "
+    table_name = get_orders_position_table_name()
+    query = f"update {table_name} set "
     query += f"entry_price = entry_price * {capital_change}, "
     query += f"max_loss_price = max_loss_price * {capital_change}, "
     query += f"target_profit_price = target_profit_price * {capital_change}, "
-    query += f"share_num = share_num / {capital_change} "
-    query += f"where stock_selected = '{ticker}' and spot_date < '{trading_day}' and status = False;"
+    query += f"share_num = round(share_num / {capital_change}) "
+    query += f"where ticker = '{ticker}' and spot_date < '{trading_day}' and is_live = True;"
     data = execute_query(query, table=table_name)
 
-    table_name = get_data_report_split_table_name()
-    query = f"update user_portfolio_performance_history set "
+    table_name = get_orders_position_performance_table_name()
+    query = f"update {table_name} set "
     query += f"last_spot_price = last_spot_price * {capital_change}, "
     query += f"last_live_price = last_live_price * {capital_change}, "
-    query += f"share_num = share_num / {capital_change} "
-    query += f"from (select order_id from user_portfolio where stock_selected='{ticker}' and status = False) result "
-    query += f"where user_portfolio_performance_history.created < '{trading_day}' and "
-    query += f"user_portfolio_performance_history.order_id=result.order_id;"
-    data = execute_query(query, table=table_name)
-
-    table_name = get_data_report_split_table_name()
-    query = f"update executive_uno_option_price set "
+    query += f"share_num = round(share_num / {capital_change}), "
+    query += f"option_price = option_price * {capital_change}, "
     query += f"strike = strike * {capital_change}, "
-    query += f"barrier = barrier * {capital_change} "
-    query += f"from (select order_id from user_portfolio where stock_selected='{ticker}' and status = False) result "
-    query += f"where executive_uno_option_price.portfolio_id=result.order_id;"
+    query += f"barrier = barrier * {capital_change}, "
+    query += f"strike_2 = strike_2 * {capital_change} "
+    query += f"from (select position_uid from {get_orders_position_table_name()} where ticker='{ticker}' and is_live = True) result "
+    query += f"where {table_name}.created < '{trading_day}' and "
+    query += f"{table_name}.order_id=result.order_id;"
     data = execute_query(query, table=table_name)
