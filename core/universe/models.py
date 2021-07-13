@@ -342,13 +342,13 @@ class UniverseRatingDetailHistory(models.Model):
     fwd_roic_minmax_industry = models.FloatField(blank=True, null=True)
     earnings_pred_minmax_currency_code = models.FloatField(blank=True, null=True)
     earnings_pred_minmax_industry = models.FloatField(blank=True, null=True)
-    tri_robust_scale = models.FloatField(blank=True, null=True)
     environment_minmax_currency_code = models.FloatField(blank=True, null=True)
     social_minmax_currency_code = models.FloatField(blank=True, null=True)
     goverment_minmax_currency_code = models.FloatField(blank=True, null=True)
     environment_minmax_industry = models.FloatField(blank=True, null=True)
     social_minmax_industry = models.FloatField(blank=True, null=True)
     goverment_minmax_industry = models.FloatField(blank=True, null=True)
+    tri_robust_scale = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return str(self.ticker.ticker)

@@ -1,3 +1,4 @@
+from general.sql_process import do_function
 import numpy as np
 from general.date_process import (
     backdate_by_day, datetimeNow,
@@ -91,9 +92,9 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
     report_to_slack("{} : === Ticker ISIN Updated ===".format(datetimeNow()))
     #Should remove FGBSM2^1 this ticker
 
-def update_ticker_name_from_dsws(ticker=None):
+def update_ticker_name_from_dsws(ticker=None, currency_code=None):
     print("{} : === Ticker Name Start Ingestion ===".format(datetimeNow()))
-    universe = get_all_universe(ticker=ticker)
+    universe = get_all_universe(ticker=ticker, currency_code=currency_code)
     universe = universe.drop(columns=["ticker_name", "ticker_fullname"])
     print(universe)
     filter_field = ["WC06003", "NAME"]
@@ -107,11 +108,12 @@ def update_ticker_name_from_dsws(ticker=None):
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+        do_function("universe_populate")
         report_to_slack("{} : === Ticker Name Updated ===".format(datetimeNow()))
 
-def update_entity_type_from_dsws(ticker=None):
+def update_entity_type_from_dsws(ticker=None, currency_code=None):
     print("{} : === Entity Type Start Ingestion ===".format(datetimeNow()))
-    universe = get_active_universe(ticker=ticker)
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe.drop(columns=["entity_type"])
     filter_field = ["WC06100"]
     identifier="ticker"
@@ -125,10 +127,10 @@ def update_entity_type_from_dsws(ticker=None):
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Entity Type Updated ===".format(datetimeNow()))
 
-def update_lot_size_from_dss(ticker=None):
+def update_lot_size_from_dss(ticker=None, currency_code=None):
     print("{} : === Lot Size Start Ingestion ===".format(datetimeNow()))
     identifier="ticker"
-    universe = get_active_universe(ticker=ticker)
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe.drop(columns=["lot_size"])
     ticker = "/" + universe["ticker"]
     jsonFileName = "files/file_json/lot_size.json"
@@ -148,10 +150,10 @@ def update_lot_size_from_dss(ticker=None):
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Lot Size Updated ===".format(datetimeNow()))
 
-def update_currency_code_from_dss(ticker=None):
+def update_currency_code_from_dss(ticker=None, currency_code=None):
     print("{} : === Currency Code Start Ingestion ===".format(datetimeNow()))
     identifier="ticker"
-    universe = get_active_universe(ticker=ticker)
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe.drop(columns=["currency_code"])
     ticker = "/" + universe["ticker"]
     jsonFileName = "files/file_json/currency.json"

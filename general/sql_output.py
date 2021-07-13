@@ -9,7 +9,7 @@ from pangres import upsert
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
 from general.date_process import dateNow
-from general.sql_query import read_query
+from general.sql_query import get_order_performance_by_ticker, read_query
 from general.table_name import get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_table_name
 
 def execute_query(query, table=None):
@@ -192,7 +192,7 @@ def update_all_data_by_capital_change(ticker, trading_day, capital_change, price
     query = f"update {table_name} set "
     query += f"last_spot_price = last_spot_price * {capital_change}, "
     query += f"last_live_price = last_live_price * {capital_change}, "
-    query += f"share_num = round(share_num / {capital_change}), "
+    query += f"share_num = round(share_num * {capital_change}), "
     query += f"option_price = option_price * {capital_change}, "
     query += f"strike = strike * {capital_change}, "
     query += f"barrier = barrier * {capital_change}, "
@@ -201,3 +201,10 @@ def update_all_data_by_capital_change(ticker, trading_day, capital_change, price
     query += f"where {table_name}.created < '{trading_day}' and "
     query += f"{table_name}.order_id=result.order_id;"
     data = execute_query(query, table=table_name)
+
+    table_name = get_orders_position_performance_table_name()
+    performance = get_order_performance_by_ticker(ticker=ticker, trading_day=trading_day)
+    performance = performance[["performance_uid", "order_summary", "position_uid", "order_uid"]]
+    for index, row in performance.iterrows():
+        row["order_summary"]["hedge_shares"] = round(row["order_summary"]["hedge_shares"] / capital_change)
+    upsert_data_to_database(performance, table_name, "performance_uid", how="update", cpu_count=True, Text=True)
