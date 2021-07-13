@@ -98,6 +98,8 @@ class UniverseConsumer(WebsocketConsumer):
                     'status':200
                 }
                 ))
+            self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
+            
         else:
             asyncio.run(self.channel_layer.send(
                 self.channel_name,
@@ -109,7 +111,6 @@ class UniverseConsumer(WebsocketConsumer):
                 ))
             self.disconnect(400)
 
-        self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
         print("connected >>>> ",self.streaming_counter)
         print("payload >>>> ",event['message'])
 
