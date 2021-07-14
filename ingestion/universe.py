@@ -200,16 +200,15 @@ def update_mic_from_dss(ticker=None, currency_code=None):
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === MIC Updated ===".format(datetimeNow()))
 
-def update_ticker_symbol_from_dss(ticker=None):
+def update_ticker_symbol_from_dss(ticker=None, currency_code=None):
     print("{} : === Ticker Symbol Start Ingestion ===".format(datetimeNow()))
     identifier="ticker"
-    universe = get_active_universe(ticker=ticker)
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code).head(5)
     universe = universe.drop(columns=["ticker_symbol"])
     start_date = backdate_by_day(1)
     end_date = dateNow()
     jsonFileName = "files/file_json/ticker_symbol.json"
     result = get_data_from_dss(start_date, end_date, universe["ticker"], jsonFileName, report=REPORT_HISTORY)
-    print(result)
     result = result.drop(columns=["IdentifierType", "Identifier"])
     print(result)
     if (len(result) > 0 ):
@@ -218,11 +217,20 @@ def update_ticker_symbol_from_dss(ticker=None):
             "Ticker": "ticker_symbol"
         })
         result = universe.merge(result, how="left", on=["ticker"])
-        print(result)
-        upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+        result1 = result.loc[result["currency_code"] == "HKD"]
+        if(len(result1) > 0):
+            for index, row in result1.iterrows():
+                result1.loc[index, "ticker_symbol"] = str(("0" * (4 - len(str(row["ticker_symbol"])))) + str(row["ticker_symbol"]))
+        result2 = result.loc[result["currency_code"] != "HKD"]
+        if(len(result1) > 0):
+            print(result1)
+            upsert_data_to_database(result1, get_universe_table_name(), identifier, how="update", Text=True)
+        if(len(result2) > 0):
+            print(result2)
+            upsert_data_to_database(result2, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Ticker Symbol Updated ===".format(datetimeNow()))
 
-def update_company_desc_from_dsws(ticker=None):
+def update_company_desc_from_dsws(ticker=None, currency_code=None):
     print("{} : === Company Description Ingestion ===".format(datetimeNow()))
     universe = get_active_universe_company_description_null(ticker=ticker)
     universe = universe.drop(columns=["company_description"])
@@ -239,9 +247,9 @@ def update_company_desc_from_dsws(ticker=None):
             fill_null_company_desc_with_ticker_name()
             report_to_slack("{} : === Company Description Updated ===".format(datetimeNow()))
 
-def update_industry_from_dsws(ticker=None):
+def update_industry_from_dsws(ticker=None, currency_code=None):
     print("{} : === Country & Industry Ingestion ===".format(datetimeNow()))
-    universe = get_active_universe(ticker=ticker)
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     #universe = universe.drop(columns=["country_code", "industry_code", "wc_industry_code"])
     universe = universe.drop(columns=["industry_code", "wc_industry_code"])
     identifier="ticker"
@@ -275,9 +283,9 @@ def update_industry_from_dsws(ticker=None):
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Country & Industry Updated ===".format(datetimeNow()))
     
-def update_worldscope_identifier_from_dsws(ticker=None):
+def update_worldscope_identifier_from_dsws(ticker=None, currency_code=None):
     print("{} : === Worldscope Identifier Ingestion ===".format(datetimeNow()))
-    universe = get_active_universe(ticker=ticker)
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe.drop(columns=["worldscope_identifier", "icb_code", "fiscal_year_end"])
     identifier="ticker"
     filter_field = ["WC06035", "WC07040", "WC05352"]
