@@ -10,7 +10,7 @@ https://docs.djangoproject.com/en/3.1/howto/deployment/asgi/
 import os
 from django.core.asgi import get_asgi_application
 import django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.production')
 django.setup()
 from django.contrib.staticfiles.handlers import ASGIStaticFilesHandler
 from config.routing import websocket_urlpatterns

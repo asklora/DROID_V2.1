@@ -12,6 +12,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
 env = Env()
 db = DroidDb()
+db_debug = env.bool("DROID_DEBUG")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
@@ -134,86 +136,9 @@ ELASTICSEARCH_DSL = {
         'hosts': 'localhost:9200'
     }
 }
-CHANNEL_LAYERS = {
-    'default': {
-        # Method 1: Via redis lab
-        # 'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        # 'CONFIG': {
-        #     "hosts": [
-        #       'redis://h:<password>;@<redis Endpoint>:<port>'
-        #     ],
-        # },
 
-        # Method 2: Via local Redis
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('redis', 6379)],
-            "capacity": 1500,  # default 100
-            "expiry": 2,
-        },
-
-        # Method 3: Via In-memory channel layer
-        # Using this method.
-        # "BACKEND": "channels.layers.InMemoryChannelLayer"
-    },
-}
 # =========================
 
-# Database
-# https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-db_debug = env.bool("DROID_DEBUG")
-if db_debug:
-    print('using test db changes')
-    read_endpoint, write_endpoint, port = db.test_url
-    CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@16.162.110.123:5672'
-else:
-    print('using prod db')
-    read_endpoint, write_endpoint, port = db.prod_url
-    CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@18.167.118.164:5672'
-print(read_endpoint)
-
-
-# print(f'using read: {read_endpoint}')
-# print(f'using write: {write_endpoint}')
-DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
-DB_ENGINE = 'psqlextra.backend'
-DATABASES = {
-    'default': {
-        'ENGINE': DB_ENGINE,
-        'NAME': os.getenv('DBNAME'),  # dbname
-        'USER': os.getenv('DBUSER'),
-        'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': read_endpoint,
-        'PORT': port,
-    },
-    'aurora_read': {
-        'ENGINE': DB_ENGINE,
-        'NAME': os.getenv('DBNAME'),  # dbname
-        'USER': os.getenv('DBUSER'),
-        'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': read_endpoint,
-        'PORT': port,
-
-    },
-    'aurora_write': {
-        'ENGINE': DB_ENGINE,
-        'NAME': os.getenv('DBNAME'),  # dbname
-        'USER': os.getenv('DBUSER'),
-        'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': write_endpoint,
-        'PORT': port,
-
-    },
-    # 'mongo': {
-    #         'ENGINE': 'djongo',
-    #         'NAME': 'universe',
-    #         'CLIENT': {
-    #             'host': 'mongodb+srv://postgres:postgres@cluster0.b0com.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
-    #         },
-    #         'ENFORCE_SCHEMA': False,
-    #     }
-
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators

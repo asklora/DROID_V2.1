@@ -31,7 +31,7 @@ services:
   celery:
     container_name: Celery
     image: django/backend
-    command: sh deployment/jenkins/bastion/celery.sh
+    command: sh deployment/jenkins/bastion/devcelery.sh
     env_file: ~/DROID_V2.1/.env
     volumes:
       - ~/DROID_V2.1:/code
