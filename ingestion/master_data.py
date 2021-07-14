@@ -34,12 +34,10 @@ from datasource.dsws import (
     get_data_static_with_string_from_dsws,
     get_data_history_frequently_by_field_from_dsws)
 from datasource.dss import get_data_from_dss
-from datasource.fred import read_fred_csv
 from datasource.quandl import read_quandl_csv
 from general.table_name import (
     get_data_vix_table_name, get_latest_price_table_name, get_universe_rating_detail_history_table_name, get_universe_rating_history_table_name, get_universe_rating_table_name,
     get_quandl_table_name,
-    get_data_fred_table_name,
     get_fundamental_score_table_name, 
     get_data_dss_table_name, 
     get_data_dsws_table_name,
@@ -133,17 +131,6 @@ def update_vix_from_dsws(vix_id=None, history=False):
         result["vix_id"] = result["vix_id"] 
         print(result)
         upsert_data_to_database(result, get_data_vix_table_name(), "uid", how="update", Text=True)
-        report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
-
-def update_fred_data_from_fred():
-    print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
-    end_date = dateNow()
-    start_date = droid_start_date()
-    result = read_fred_csv(start_date, end_date)
-    result["data"] = np.where(result["data"]== ".", 0, result["data"])
-    result["data"] = result["data"].astype(float)
-    if(len(result)) > 0 :
-        upsert_data_to_database(result, get_data_fred_table_name(), "uid", how="update", Text=True)
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
 def update_quandl_orats_from_quandl(ticker=None, quandl_symbol=None):
