@@ -23,11 +23,9 @@ class Command(BaseCommand):
     def div_zero(self,df):
         print(df)
     def handle(self, *args, **options):
-        universe = get_universe_by_region('ws')['ticker'].tolist()
-        print(universe)
-        # HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code__in=['HKD','CNY','USD'],is_active=True).values('ticker')]
-        # rkd = RkdData()
-        # rkd.get_rkd_data(HKD_universe,save=True)
+        HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code__in=['HKD','CNY','USD'],is_active=True).values('ticker')]
+        rkd = RkdData()
+        rkd.get_rkd_data(HKD_universe,save=True)
         # scrap_csi()
 
         # user = User.objects.get(id=1)

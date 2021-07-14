@@ -48,9 +48,8 @@ class Command(BaseCommand):
         #     except KeyboardInterrupt:
         #         break
 
-        # ref = db.collection('universe').document('000002.SZ')
-        # ref.update({'price':{'close':15}})
-        # query = ref.where('ticker','in',['000002.SZ','000066.SZ'])
+        # ref = db.collection('universe')
+        # query = ref.where('detail.currency_code','==','CNY').where('ticker','not-in',['.CSI300''.HSI','.HSLI','.SPX'])
         # for data  in query.get():
         #     print(data.id)
         # for key,val in df.items():
