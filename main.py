@@ -355,7 +355,7 @@ if __name__ == "__main__":
     # update_fundamentals_score_from_dsws(currency_code=["SGD"])
     # update_fundamentals_quality_value(currency_code=["SGD"])
     # update_mic_from_dss()
-    update_ticker_symbol_from_dss(currency_code=["HKD"])
+    # update_ticker_symbol_from_dss(currency_code=["HKD"])
     from migrate import weekly_migrations, daily_migrations
     # update_ibes_data_monthly_from_dsws(ticker=[".HSI"])
     # weekly_migrations()
