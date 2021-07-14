@@ -83,7 +83,7 @@ if __name__ == "__main__":
     # option_maker_daily_classic(currency_code=["CNY"], option_maker=True, null_filler=True)
     # option_maker_daily_classic(currency_code=["USD"], option_maker=True, null_filler=True)
     # option_maker_daily_classic(currency_code=["EUR"], option_maker=True, null_filler=True)
-
+    
     # train_model()
     # do_function("bot_backtest_updates")
     # train_lebeler_model(time_to_exp=time_to_expiry, bots_list=bots_list)

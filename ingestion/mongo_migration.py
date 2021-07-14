@@ -114,18 +114,27 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe_rating = rating.merge(universe_rating, how="left", on=["ticker"])
     universe_rating = change_date_to_str(universe_rating)
     universe_rating = change_null_to_zero(universe_rating)
-    rating_df = pd.DataFrame({"ticker":[], "rating":[]}, index=[])
+    print(universe_rating)
+    rating_df = pd.DataFrame({"ticker":[], "rating":[], "ai_score":[], "ai_score2":[]}, index=[])
     for tick in universe_rating["ticker"].unique():
         rating_data = universe_rating.loc[universe_rating["ticker"] == tick]
+        ai_score = rating_data["ai_score"].to_list()[0]
+        ai_score2 = rating_data["ai_score2"].to_list()[0]
         rating_data = rating_data[["ai_score", "ai_score2", "fundamentals_quality", "fundamentals_value", 
         "dlp_1m", "dlp_3m", "wts_rating", "wts_rating2", "esg", "momentum", "technical"]].to_dict("records")
-        rating = pd.DataFrame({"ticker":[tick], "rating":[rating_data[0]]}, index=[0])
+        rating = pd.DataFrame({"ticker":[tick], "rating":[rating_data[0]], 
+            "ai_score":[ai_score], "ai_score2":[ai_score2]}, index=[0])
         rating_df = rating_df.append(rating)
     rating_df = rating_df.reset_index(inplace=False)
     rating_df = rating_df.drop(columns=["index"])
     universe = universe.merge(rating_df, how="left", on=["ticker"])
+    universe = universe.sort_values(by=["ai_score", "ticker"], ascending=[False, True])
+    universe = universe.reset_index(inplace=False)
+    universe = universe.drop(columns=["index", "ai_score", "ai_score2"])
+    universe = universe.reset_index(inplace=False)
+    universe = universe.rename(columns={"index" : "rank"})
     print(universe)
-    update_to_mongo(data=universe, index="ticker", table="universe", dict=False)
+    # update_to_mongo(data=universe, index="ticker", table="universe", dict=False)
 
     rank = result[["ticker"]]
 

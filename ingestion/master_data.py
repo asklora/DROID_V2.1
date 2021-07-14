@@ -229,7 +229,7 @@ def check_trading_day(days = 0):
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
     universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
-    universe_rating = universe_rating.drop(columns=["fundamentals_value", "fundamentals_quality", "updated"])
+    universe_rating = universe_rating[["ticker", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
     print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
     calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth", 
                         "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred", 
@@ -355,49 +355,67 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     minmax_column.append("tri_quantile")
     fundamentals["momentum"] = fundamentals["tri_quantile"] * 10
     
+    # print("Calculate ESG Value")
+    # esg = fundamentals[["ticker", "environment_minmax_currency_code", "environment_minmax_industry", 
+    #     "social_minmax_currency_code", "social_minmax_industry", 
+    #     "goverment_minmax_currency_code", "goverment_minmax_industry"]]
+    # esg = esg.set_index(keys=["ticker"])
+    # esg["esg"] = esg.mean(axis=1)
+    # esg["esg"] = esg["esg"] * 10
+    # esg = esg.reset_index(inplace=False)
+    # fundamentals = fundamentals.merge(esg[["ticker", "esg"]], how="left", on="ticker")
+
     print("Calculate ESG Value")
-    esg = fundamentals[["ticker", "environment_minmax_currency_code", "environment_minmax_industry", 
-        "social_minmax_currency_code", "social_minmax_industry", 
-        "goverment_minmax_currency_code", "goverment_minmax_industry"]]
-    esg = esg.set_index(keys=["ticker"])
-    esg["esg"] = esg.mean(axis=1)
-    esg["esg"] = esg["esg"] * 10
-    esg = esg.reset_index(inplace=False)
-    fundamentals = fundamentals.merge(esg[["ticker", "esg"]], how="left", on="ticker")
+    fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
+        fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
+        fundamentals["goverment_minmax_currency_code"] + fundamentals["goverment_minmax_industry"]) / 6
     
+
     print("Calculate Technical Value")
-    technical = fundamentals[["ticker", "momentum"]]
-    technical = technical.merge(universe_rating[["ticker", "wts_rating", "dlp_1m"]], how="left", on="ticker")
-    print(technical)
-    technical = technical.set_index(keys=["ticker"])
-    # technical["wts_rating"] = np.where(technical["wts_rating"].isnull(), 0, technical["wts_rating"])
-    # technical["dlp_1m"] = np.where(technical["dlp_1m"].isnull(), 0, technical["dlp_1m"])
-    technical["technical"] = technical.mean(axis=1)
-    technical = technical.reset_index(inplace=False)
-    print(technical)
-    fundamentals = fundamentals.merge(technical[["ticker", "technical"]], how="left", on="ticker")
-    print(fundamentals)
+    fundamentals = fundamentals.merge(universe_rating, how="left", on="ticker")
+    fundamentals["technical"] = (fundamentals["wts_rating"] + fundamentals["dlp_1m"]+ fundamentals["momentum"]) / 3
+    
+    # print("Calculate Technical Value")
+    # technical = fundamentals[["ticker", "momentum"]]
+    # technical = technical.merge(universe_rating[["ticker", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2"]], how="left", on="ticker")
+    # print(technical)
+    # technical = technical.set_index(keys=["ticker"])
+    # # technical["wts_rating"] = np.where(technical["wts_rating"].isnull(), 0, technical["wts_rating"])
+    # # technical["dlp_1m"] = np.where(technical["dlp_1m"].isnull(), 0, technical["dlp_1m"])
+    # technical["technical"] = technical.mean(axis=1)
+    # technical = technical.reset_index(inplace=False)
+    # print(technical)
+    # fundamentals = fundamentals.merge(technical[["ticker", "technical"]], how="left", on="ticker")
+    # print(fundamentals)
 
     print("Calculate AI Score")
-    ai_score = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "technical"]]
-    ai_score["technical"] = ai_score["technical"] * 2
-    ai_score = ai_score.set_index(keys=["ticker"])
-    ai_score["ai_score"] = ai_score.mean(axis=1)
-    ai_score = ai_score.reset_index(inplace=False)
-    print(ai_score)
-    fundamentals = fundamentals.merge(ai_score[["ticker", "ai_score"]], how="left", on="ticker")
-    print(fundamentals)
+    fundamentals["ai_score"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] + \
+        fundamentals["technical"] + fundamentals["technical"]) / 4
+    
+    # ai_score = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "technical"]]
+    # ai_score["technical"] = ai_score["technical"] * 2
+    # ai_score = ai_score.set_index(keys=["ticker"])
+    # ai_score["ai_score"] = ai_score.mean(axis=1)
+    # ai_score = ai_score.reset_index(inplace=False)
+    # print(ai_score)
+    # fundamentals = fundamentals.merge(ai_score[["ticker", "ai_score"]], how="left", on="ticker")
+    # print(fundamentals)
 
     print("Calculate AI Score 2")
-    ai_score2 = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "technical", "esg"]]
-    ai_score2 = ai_score2.set_index(keys=["ticker"])
-    ai_score2["ai_score2"] = ai_score2.mean(axis=1)
-    ai_score2 = ai_score2.reset_index(inplace=False)
-    print(ai_score2)
-    fundamentals = fundamentals.merge(ai_score2[["ticker", "ai_score2"]], how="left", on="ticker")
-    print(fundamentals)
+    fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] + fundamentals["technical"] + fundamentals["esg"]) / 4
     
-    universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality", "ai_score", "ai_score2", "esg", "momentum", "technical"]]
+    # print("Calculate AI Score 2")
+    # ai_score2 = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "technical", "esg"]]
+    # ai_score2 = ai_score2.set_index(keys=["ticker"])
+    # ai_score2["ai_score2"] = ai_score2.mean(axis=1)
+    # ai_score2 = ai_score2.reset_index(inplace=False)
+    # print(ai_score2)
+    # fundamentals = fundamentals.merge(ai_score2[["ticker", "ai_score2"]], how="left", on="ticker")
+    # print(fundamentals)
+    
+    universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", 
+    "fundamentals_quality", "ai_score", "ai_score2", "esg", 
+    "momentum", "technical", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
 
     universe_rating_detail_history = fundamentals[minmax_column]
     

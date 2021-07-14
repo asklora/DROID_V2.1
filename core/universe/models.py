@@ -277,6 +277,7 @@ class UniverseRating(models.Model):
     dlp_3m = models.FloatField(blank=True, null=True)
     wts_rating = models.FloatField(blank=True, null=True)
     wts_rating2 = models.FloatField(blank=True, null=True)
+    classic_vol = models.FloatField(blank=True, null=True)
     updated = models.DateField(blank=True, null=True)
 
     def __str__(self):
