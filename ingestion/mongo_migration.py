@@ -118,6 +118,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     rating_df = pd.DataFrame({"ticker":[], "rating":[], "ai_score":[], "ai_score2":[]}, index=[])
     for tick in universe_rating["ticker"].unique():
         rating_data = universe_rating.loc[universe_rating["ticker"] == tick]
+        rating_data["final_score"] = rating_data["ai_score"]
         ai_score = rating_data["ai_score"].to_list()[0]
         ai_score2 = rating_data["ai_score2"].to_list()[0]
         rating_data = rating_data[["final_score", "ai_score", "ai_score2", "fundamentals_quality", "fundamentals_value", 
