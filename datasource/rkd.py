@@ -1,3 +1,4 @@
+from datetime import datetime
 import requests
 import json
 import pandas as pd
@@ -146,10 +147,11 @@ class Rkd:
         for index, item in enumerate(json_data):
             ticker = item['RequestKey']['Name']
             formated_json_data.append({'ticker': ticker})
-            for f in item['Fields']['F']:
-                field = f['n']
-                val = f['Value']
-                formated_json_data[index].update({field: val})
+            if item['Status']['StatusMsg'] == 'OK':
+                for f in item['Fields']['F']:
+                    field = f['n']
+                    val = f['Value']
+                    formated_json_data[index].update({field: val})
         return formated_json_data
 
 
@@ -336,7 +338,8 @@ class RkdData(Rkd):
                 'CF_VOLUME': 'volume',
                 'CF_LAST': 'latest_price'
             })
-            df_data['last_date'] = pd.to_datetime(df_data['last_date'])
+            df_data['last_date'] = datetime.now().date()
+            df_data['intraday_time'] = str(datetime.now())
             collected_data.append(df_data)
         collected_data = pd.concat(collected_data)
         if save:

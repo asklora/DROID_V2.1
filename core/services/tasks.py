@@ -344,6 +344,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
 
 def hedge(currency=None, bot_tester=False):
     report_to_slack(f"===  START HEDGE FOR {currency} ===")
+    rkd = RkdData()
     try:
         if(bot_tester):
             status = "BOT TESTER"
@@ -358,7 +359,7 @@ def hedge(currency=None, bot_tester=False):
             market = TradingHours(mic=position.ticker.mic)
             if market.is_open:
                 # if currency == "USD":
-                rkd = RkdData()
+                
                 rkd.get_quote([position.ticker.ticker],save=True)
                     # get_quote_yahoo(position.ticker.ticker, use_symbol=True)
                 # else:
