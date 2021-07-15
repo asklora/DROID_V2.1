@@ -5,11 +5,15 @@ from dotenv import load_dotenv
 from environs import Env
 from core.djangomodule.network.cloud import DroidDb
 from datetime import timedelta
+import firebase_admin
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
 env = Env()
 db = DroidDb()
+db_debug = env.bool("DROID_DEBUG")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
@@ -21,11 +25,11 @@ django_debug = env.bool("DEBUG")
 
 DEBUG = django_debug
 
-ALLOWED_HOSTS = ['18.167.118.164', 
-'127.0.0.1', 'services.asklora.ai',
-'16.162.110.123',
-'0.0.0.0']
-CORS_ALLOW_ALL_ORIGINS= True
+ALLOWED_HOSTS = ['18.167.118.164',
+                 '127.0.0.1', 'services.asklora.ai',
+                 '16.162.110.123',
+                 '0.0.0.0']
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
 
@@ -48,7 +52,8 @@ ADDITIONAL_APPS = [
     'drf_spectacular',
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
-    
+    'channels',
+
 ]
 CORE_APPS = [
     'core.bot',
@@ -107,7 +112,9 @@ TEMPLATES = [
 
 # DJANGO CONFIGURATION
 
-WSGI_APPLICATION = 'config.wsgi.application'
+# WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
 ROOT_URLCONF = 'config.urls'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'files/staticfiles')
@@ -132,54 +139,6 @@ ELASTICSEARCH_DSL = {
 
 # =========================
 
-# Database
-# https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-db_debug = env.bool("DROID_DEBUG")
-if db_debug:
-    print('using test db changes')
-    read_endpoint, write_endpoint, port = db.test_url
-    CELERY_BROKER_URL = 'redis://redis:6379/0'
-else:
-    print('using prod db')
-    read_endpoint, write_endpoint, port = db.prod_url
-    CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@18.167.118.164:5672'
-print(read_endpoint)
-
-
-
-# print(f'using read: {read_endpoint}')
-# print(f'using write: {write_endpoint}')
-DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
-DB_ENGINE = 'psqlextra.backend'
-DATABASES = {
-    'default': {
-        'ENGINE': DB_ENGINE,
-        'NAME': os.getenv('DBNAME'),  # dbname
-        'USER': os.getenv('DBUSER'),
-        'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': read_endpoint,
-        'PORT': port,
-    },
-    'aurora_read': {
-        'ENGINE': DB_ENGINE,
-        'NAME': os.getenv('DBNAME'),  # dbname
-        'USER': os.getenv('DBUSER'),
-        'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': read_endpoint,
-        'PORT': port,
-
-    },
-    'aurora_write': {
-        'ENGINE': DB_ENGINE,
-        'NAME': os.getenv('DBNAME'),  # dbname
-        'USER': os.getenv('DBUSER'),
-        'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': write_endpoint,
-        'PORT': port,
-
-    },
-
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -199,7 +158,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTHENTICATION_BACKENDS =['config.Auth.AuthBackend']
+AUTHENTICATION_BACKENDS = ['config.Auth.AuthBackend']
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
@@ -220,9 +179,10 @@ CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_IMPORTS = ['core.services.ingestiontask', 'portfolio_hedge']
+CELERY_IMPORTS = ['core.services.ingestiontask',
+                  'portfolio_hedge', 'datasource.rkd']
 CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-
+# CELERY_TASK_ALWAYS_EAGER = True
 email_debug = False
 if email_debug:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -307,3 +267,8 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
+
+credentials =  firebase_admin.credentials.Certificate('files/file_json/asklora-firebase.json')
+firebase_admin.initialize_app(credentials, {
+                    'databaseURL':'https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/'
+                                        })

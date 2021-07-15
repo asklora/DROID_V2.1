@@ -20,7 +20,42 @@ from core.djangomodule.general import aws_batch
 from migrate import daily_migrations
 from general.slack import report_to_slack
 import traceback as trace
+from datasource.rkd import RkdData
+from core.services.models import ErrorLog
+from celery.schedules import crontab
 
+app.conf.beat_schedule={
+    
+    
+    "WS-TRKD-DATA": {
+        "task": "core.services.tasks.daily_hedge",
+        "schedule": crontab(minute=30, hour=00, day_of_week="1-5"),
+        "kwargs": {"region": "ws"},
+    },
+    "NA-TRKD-DATA": {
+        "task": "core.services.tasks.daily_hedge",
+        "schedule": crontab(minute=30, hour=16, day_of_week="1-5"),
+        "kwargs": {"region": "na"},
+    },
+
+}
+
+
+@app.task
+def get_trkd_data_by_region(region=None):
+    try:
+        rkd = RkdData()
+        universe = get_universe_by_region(region)['ticker'].tolist()
+        rkd.get_rkd_data(universe,save=True)
+        return {'region':f'{region}','message':'success'}
+    except Exception as e:
+        err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN POPULATE TRKD DATA FOR REGION {region} ===",error_message=str(e))
+        err.send_report_error()
+        return {"err": str(e)}
+
+
+
+## DEPRECATED
 @aws_batch
 @app.task
 def batch_weekly():
@@ -39,6 +74,7 @@ def batch_weekly():
     except Exception as e:
         return {"err": str(e)}
 
+## DEPRECATED
 @app.task
 def get_latest_price(currency):
     """
@@ -60,6 +96,10 @@ def get_latest_price(currency):
         return {"err": str(e)}
     return {"result": f"latest_price is updated"}
 
+
+
+
+## DEPRECATED
 @aws_batch
 @app.task
 def migrate_na():
@@ -86,6 +126,10 @@ def migrate_na():
         report_to_slack(str(e))
         report_to_slack(line_error)
         return {"err": line_error}
+
+
+
+## DEPRECATED
 
 @aws_batch
 @app.task
@@ -116,7 +160,7 @@ def migrate_ws():
         return {"err": line_error}
 
 
-
+## DEPRECATED
 @app.task
 def migrate_droid1(region):
     try:

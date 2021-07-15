@@ -1,0 +1,21 @@
+{
+    "ExtractionRequest": {
+        "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.PriceHistoryExtractionRequest",
+        "ContentFieldNames": [
+            "RIC",
+            "Dividend Ex Date",
+            "Dividend Paid"
+        ],
+        "IdentifierList": {
+            "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+            "InstrumentIdentifiers": [
+            ],
+            "ValidationOptions":{"AllowHistoricalInstruments":true,"AllowOpenAccessInstruments":true},
+            "UseUserPreferencesForValidationOptions": false
+        },
+        "Condition":
+        {
+            
+      }
+    }
+}

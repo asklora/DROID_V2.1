@@ -6,7 +6,7 @@ from general.sql_process import db_read, db_write, dlp_db_read
 from general.date_process import backdate_by_day, dateNow, droid_start_date, str_to_date
 from general.data_process import tuple_data
 from general.table_name import (
-    get_data_ibes_monthly_table_name, get_data_macro_monthly_table_name, get_industry_group_table_name, get_industry_table_name, get_latest_price_table_name, get_master_tac_table_name, get_region_table_name, get_vix_table_name,
+    get_data_ibes_monthly_table_name, get_data_macro_monthly_table_name, get_industry_group_table_name, get_industry_table_name, get_latest_price_table_name, get_master_tac_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_region_table_name, get_universe_rating_detail_history_table_name, get_universe_rating_history_table_name, get_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
     get_universe_rating_table_name,
@@ -127,7 +127,7 @@ def get_all_universe(ticker=None, currency_code=None):
     query = f"select * from {universe_table} "
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
-        query += f"and " + check
+        query += f"where " + check
     query += f" order by ticker"
     data = read_query(query, table=universe_table)
     return data
@@ -375,5 +375,28 @@ def get_consolidated_data(column, condition, group_field=None):
         query += f"where {condition} "
     if(type(group_field) != type(None)):
         query += f"group by {group_field} "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_universe_rating_history(ticker=None, currency_code=None):
+    table_name = get_universe_rating_history_table_name()
+    query = f"select * from {table_name} where trading_day=(select max(urh.trading_day) from {table_name} urh) "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += "and " + check
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_order_performance_by_ticker(ticker=None, trading_day=None):
+    table_name = get_orders_position_performance_table_name()
+    query = f"select * from {table_name} "
+    if(type(trading_day) != type(None)):
+        query += f"where created < '{trading_day}' and position_uid in  "
+    else:
+        query += f"where position_uid in "
+    query += f"(select position_uid from {get_orders_position_table_name()} "
+    if(type(ticker) != type(None)):
+        query += f"where ticker='{ticker}' "
+    query += f") and order_summary is not null;"
     data = read_query(query, table_name, cpu_counts=True)
     return data

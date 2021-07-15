@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style></style>
+  </head>
+  <body>
+    <div class="all-data"></div>
+
+    <button onclick="myFunction()">click</button>
+    <button onclick="send_data()">Send data</button>
+
+    <script>
+      var msg = { type:"streaming",  message: ["AAPL.O"] };
+
+      const socket =  WebSocket;
+      socket("ws://127.0.0.1:8000/ws/aapl/")
+      function myFunction() {
+        socket.close();
+      }
+      function send_data(){
+        socket.send(JSON.stringify(msg))
+      }
+      // Connection opened
+      {% comment %} socket.onopen = () => socket.send(JSON.stringify(msg)); {% endcomment %}
+
+      // Listen for messages
+      socket.addEventListener("message", function (event) {
+        message = JSON.parse(event.data);
+        console.log("Message from server ", message);
+      });
+    </script>
+  </body>
+</html>

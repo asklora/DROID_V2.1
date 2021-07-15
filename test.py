@@ -1,11 +1,18 @@
 from datetime import datetime
-from ingestion.mongo_migration import mongo_bot_data_update, mongo_create_currency, mongo_statistic_backtest_update, mongo_universe_rating_update, mongo_universe_update, mongo_currency_update, mongo_latest_price_update, mongo_price_update
+from ingestion.mongo_migration import (
+    mongo_bot_data_update, 
+    mongo_create_currency, 
+    mongo_universe_rating_update, 
+    mongo_universe_update, 
+    mongo_currency_update, 
+    mongo_latest_price_update, 
+    mongo_price_update)
 from general.sql_query import read_query
 from bot.data_download import get_latest_price
 import json
 import pandas as pd
 from pymongo import MongoClient
-#commen
+#comment
 def change_date_to_str(data):
     for col in data.columns:
         print(col + " " + str(data.loc[0, col]) + " " + str(type(data.loc[0, col])))
@@ -64,6 +71,7 @@ def delete_to_mongo():
 
 if __name__ == "__main__":
     print("Start Process")
+    mongo_universe_update(currency_code=["HKD","CNY"])
     # insert_to_mongo()
     # mongo_universe_update()
     # mongo_create_currency()
@@ -72,26 +80,3 @@ if __name__ == "__main__":
     # mongo_statistic_backtest_update()
     # mongo_latest_price_update()
     # mongo_price_update()
-    
-    for i in range(1, 10):
-        result = f"{i} = "
-        for j in range(10, i+1, -1):
-            result += "-"
-        for j in range(1, i+1):
-            result += "*"
-        for j in range(1, i):
-            result += "*"
-        for j in range(10, i+1, -1):
-            result += "-"
-        print(result)
-    for i in range(1, 9):
-        result = f"{i} = "
-        for j in range(1, i+1):
-            result += "-"
-        for j in range(10, i+1, -1):
-            result += "*"
-        for j in range(10, i+2, -1):
-            result += "*"
-        for j in range(1, i+1):
-            result += "-"
-        print(result)

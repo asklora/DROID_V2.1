@@ -143,3 +143,12 @@ def run_batch():
             print('state is ' + response['jobs'][0]['status'])
             status = response['jobs'][0]['status']
         time.sleep(10)
+
+
+def symbol_hkd_fix(symbol):
+    fix_lenght = 4
+    if len(symbol) != 4:
+        add = fix_lenght - len(symbol)
+        additional_zero = "0" * add
+        return f'{additional_zero}{symbol}'
+    return symbol

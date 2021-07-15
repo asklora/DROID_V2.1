@@ -2,7 +2,95 @@ from rest_framework import serializers
 from core.orders.models import Order,OrderPosition,PositionPerformance
 from core.Clients.models import ClientTopStock
 from datetime import datetime
-from core.master.models import MasterOhlcvtr
+from core.master.models import MasterOhlcvtr,LatestPrice
+from core.universe.models import Universe
+
+
+class DetailUniverse(serializers.ModelSerializer):
+
+    industry_name=serializers.CharField(source='industry_code.industry_name',read_only=True)
+    industry_group_code=serializers.CharField(source='industry_code.industry_group_code.industry_group_code',read_only=True)
+    industry_group_name=serializers.CharField(source='industry_code.industry_group_code.industry_group_name',read_only=True)
+
+
+    class Meta:
+        model = Universe
+        fields = [
+            'currency_code',
+            'industry_name',
+            'industry_group_code',
+            'industry_group_name',
+            'industry_code',
+            'wc_industry_code',
+            'quandl_symbol',
+            'ticker_name',
+            'ticker_fullname',
+            'company_description',
+            'ticker_symbol',
+            'mic'
+        ]
+
+
+class PriceUniverse(serializers.ModelSerializer):
+    revenue_per_share=serializers.FloatField(source='ticker.revenue_per_share',read_only=True)
+    market_cap=serializers.FloatField(source='ticker.market_cap',read_only=True)
+    pe_ratio=serializers.FloatField(source='ticker.pe_ratio',read_only=True)
+    pe_forecast=serializers.FloatField(source='ticker.pe_forecast',read_only=True)
+    pb=serializers.FloatField(source='ticker.pb',read_only=True)
+    ebitda=serializers.FloatField(source='ticker.ebitda',read_only=True)
+    wk52_high=serializers.FloatField(source='ticker.wk52_high',read_only=True)
+    wk52_low=serializers.FloatField(source='ticker.wk52_low',read_only=True)
+    free_cash_flow=serializers.FloatField(source='ticker.free_cash_flow',read_only=True)
+
+    class Meta:
+        model = LatestPrice
+        fields = [
+            'revenue_per_share',
+            'market_cap',
+            'pe_ratio',
+            'pe_forecast',
+            'pb',
+            'ebitda',
+            'wk52_high',
+            'wk52_low',
+            'free_cash_flow',
+            'open',
+            'high',
+            'low',
+            'close',
+            'intraday_date',
+            'intraday_ask',
+            'intraday_bid',
+            'latest_price_change',
+            'intraday_time',
+            'last_date',
+            'capital_change',
+            'volume',
+            'latest_price'
+        ]
+
+
+class HotUniverse(serializers.ModelSerializer):
+    detail = serializers.SerializerMethodField()
+    price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Universe
+        fields = ['ticker','detail','price']
+
+    def get_detail(self,obj):
+        return DetailUniverse(obj).data
+    
+    
+    def get_price(self,obj):
+        return PriceUniverse(LatestPrice.objects.get(ticker=obj)).data
+
+
+
+
+
+
+
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:

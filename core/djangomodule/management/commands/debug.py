@@ -1,4 +1,4 @@
-from core.universe.models import Currency
+from core.universe.models import Currency,Universe
 from migrate import currency
 from django.core.management.base import BaseCommand, CommandError
 from core.user.models import User
@@ -11,26 +11,28 @@ from core.services.ingestiontask import migrate_droid1
 from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge, populate_latest_price,get_quote_yahoo,update_index_price_from_dss
 from main import populate_intraday_latest_price,update_index_price_from_dss
 from datetime import datetime
-from datasource.rkd import RkdData
+from datasource.rkd import RkdData,RkdStream
 import traceback as trace
 from core.services.models import ErrorLog
 
-
-def div_zero(num):
-    num / 0
-
+from general.sql_query import get_universe_by_region
 
 
 
 class Command(BaseCommand):
+    def div_zero(self,df):
+        print(df)
     def handle(self, *args, **options):
+        HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code__in=['HKD','CNY','USD'],is_active=True).values('ticker')]
+        rkd = RkdData()
+        rkd.get_rkd_data(HKD_universe,save=True)
         # scrap_csi()
 
         # user = User.objects.get(id=1)
         # print(user.check_password('pbkdf2_sha256$216000$SOyf9SnnXmzC$tpeNQM5F/AFhMMJNFnkZz='))
-        rkd = RkdData()
-        quotes = rkd.get_snapshot('MSFT.O')
-        print(quotes)
+        # HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(ticker__in=['TSLA.O','JNJ']).exclude(ticker__in=['.SPX']).values('ticker')]
+        # rkd = RkdStream(HKD_universe)
+        # quotes = rkd.stream()
         # print(quotes)
         # order_client_topstock(currency="KRW", client_name="HANWHA")
         # odrs=OrderPosition.objects.filter()
