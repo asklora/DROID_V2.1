@@ -33,12 +33,12 @@ if not db_debug:
         
         
         "WS-TRKD-DATA": {
-            "task": "core.services.ingestions_task.get_trkd_data_by_region",
+            "task": "core.services.ingestionstask.get_trkd_data_by_region",
             "schedule": crontab(minute=30, hour=00, day_of_week="1-5"),
             "kwargs": {"region": "ws"},
         },
         "NA-TRKD-DATA": {
-            "task": "core.services.ingestions_task.get_trkd_data_by_region",
+            "task": "core.services.ingestionstask.get_trkd_data_by_region",
             "schedule": crontab(minute=30, hour=16, day_of_week="1-5"),
             "kwargs": {"region": "na"},
         },
