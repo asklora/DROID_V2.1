@@ -6,7 +6,7 @@ services:
       context: ~/DROID_V2.1
       dockerfile: deployment/jenkins/bastion/Dockerfile
     env_file: ~/DROID_V2.1/.env
-    command: sh deployment/jenkins/bastion/entrypointdjango.sh
+    command: sh deployment/jenkins/bastion/deventrypointdjango.sh
     image: django/backend
     volumes:
       - ~/DROID_V2.1:/code
