@@ -179,7 +179,7 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_IMPORTS = ['core.services.ingestiontask',
-                  'portfolio_hedge', 'datasource.rkd',"core.services.ingestions_task.get_trkd_data_by_region"]
+                  'portfolio_hedge', 'datasource.rkd']
 CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 # CELERY_TASK_ALWAYS_EAGER = True
 email_debug = False
