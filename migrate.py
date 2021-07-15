@@ -499,7 +499,6 @@ def data_fundamental_score():
     column = ["ticker",
         "eps",
         "bps",
-        "ev",
         "ttm_rev",
         "mkt_cap",
         "ttm_ebitda",
@@ -718,23 +717,23 @@ def daily_migrations():
     data_dsws()
 
 def weekly_migrations():
-    currency()
-    universe_rating()
-    data_universe_detail()
-    vix_data()
-    data_dss()
-    data_dsws()
-    data_quandl()
-    latest_price()
+    # currency()
+    # universe_rating()
+    # data_universe_detail()
+    # vix_data()
+    # data_dss()
+    # data_dsws()
+    # data_quandl()
+    # latest_price()
     # data_interest()
-    data_ibes()
+    # data_ibes()
     data_ibes_monthly()
-    data_fred()
-    data_macro()
+    # data_fred()
+    # data_macro()
     data_macro_monthly()
-    data_dividend()
-    data_fundamental_score()
-    data_worldscope_summary()
+    # data_dividend()
+    # data_fundamental_score()
+    # data_worldscope_summary()
 
 def new_ticker_migration():
     data_vol_surface_inferred()

@@ -111,6 +111,8 @@ def get_quote_index(currency):
         curr.save()
     else:
         identifier = curr.index_ticker.replace('.','^')
+        if currency == 'USD':
+            identifier = '^GSPC'
         symbol = {
     		"symbols" : identifier
     	}

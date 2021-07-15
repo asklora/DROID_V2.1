@@ -248,7 +248,17 @@ class Universe(models.Model):
     entity_type = models.TextField(blank=True, null=True)
     ticker_symbol = models.TextField(blank=True, null=True)
     mic = models.TextField(blank=True, null=True)
-
+    revenue_per_share=models.FloatField(null=True,blank=True)
+    market_cap=models.FloatField(null=True,blank=True)
+    pe_ratio=models.FloatField(null=True,blank=True)
+    pe_forecast=models.FloatField(null=True,blank=True)
+    pb=models.FloatField(null=True,blank=True)
+    ev=models.FloatField(null=True,blank=True)
+    ebitda=models.FloatField(null=True,blank=True)
+    wk52_high =models.FloatField(null=True,blank=True)
+    wk52_low =models.FloatField(null=True,blank=True)
+    free_cash_flow =models.FloatField(null=True,blank=True)
+    Error = models.TextField(null=True,blank=True)
     def __str__(self):
         return self.ticker
 
@@ -267,6 +277,7 @@ class UniverseRating(models.Model):
     dlp_3m = models.FloatField(blank=True, null=True)
     wts_rating = models.FloatField(blank=True, null=True)
     wts_rating2 = models.FloatField(blank=True, null=True)
+    classic_vol = models.FloatField(blank=True, null=True)
     updated = models.DateField(blank=True, null=True)
 
     def __str__(self):
@@ -332,14 +343,13 @@ class UniverseRatingDetailHistory(models.Model):
     fwd_roic_minmax_industry = models.FloatField(blank=True, null=True)
     earnings_pred_minmax_currency_code = models.FloatField(blank=True, null=True)
     earnings_pred_minmax_industry = models.FloatField(blank=True, null=True)
-    tri_minmax_currency_code = models.FloatField(blank=True, null=True)
-    tri_minmax_industry = models.FloatField(blank=True, null=True)
     environment_minmax_currency_code = models.FloatField(blank=True, null=True)
     social_minmax_currency_code = models.FloatField(blank=True, null=True)
     goverment_minmax_currency_code = models.FloatField(blank=True, null=True)
     environment_minmax_industry = models.FloatField(blank=True, null=True)
     social_minmax_industry = models.FloatField(blank=True, null=True)
     goverment_minmax_industry = models.FloatField(blank=True, null=True)
+    tri_quantile = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return str(self.ticker.ticker)

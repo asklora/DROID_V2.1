@@ -12,7 +12,7 @@ from general.date_process import (
 import pandas as pd
 from pandas.tseries.offsets import BDay
 import numpy as np
-from sklearn.preprocessing import robust_scale, minmax_scale
+from sklearn.preprocessing import robust_scale, minmax_scale, quantile_transform, QuantileTransformer
 from general.slack import report_to_slack
 from general.sql_process import do_function
 from general.data_process import uid_maker, remove_null
@@ -30,7 +30,7 @@ from general.sql_query import (
 from general.sql_output import clean_latest_price, delete_data_on_database, delete_old_dividends_on_database, update_all_data_by_capital_change, update_capital_change, upsert_data_to_database
 from datasource.dsws import (
     get_data_history_from_dsws, 
-    get_data_history_frequently_from_dsws, 
+    get_data_history_frequently_from_dsws,
     get_data_static_with_string_from_dsws,
     get_data_history_frequently_by_field_from_dsws)
 from datasource.dss import get_data_from_dss
@@ -44,13 +44,7 @@ from general.table_name import (
     get_data_dividend_table_name,
     get_data_interest_table_name)
 from global_vars import REPORT_HISTORY, REPORT_INTRADAY
-# data_dividend
-# data_dividend_daily_rates
-# data_fundamental_score
-# data_interest
-# data_interest_daily_rates
-# data_split
-# data_vol_surface_inferred
+
 def update_data_dss_from_dss(ticker=None, currency_code=None, history=False, manual=False):
     print("{} : === DSS Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
@@ -235,11 +229,11 @@ def check_trading_day(days = 0):
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
     universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
-    universe_rating = universe_rating.drop(columns=["fundamentals_value", "fundamentals_quality", "updated"])
+    universe_rating = universe_rating[["ticker", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
     print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
     calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth", 
                         "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred", 
-                        "environment", "social", "goverment", "tri"]
+                        "environment", "social", "goverment"]
     fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
     print(fundamentals_score)
 
@@ -318,31 +312,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         minmax_column.append(column_minmax_currency_code)
         minmax_column.append(column_minmax_industry)
     
-    #TWELVE points - everthing average yields 0.5 X 12 = 6.0 score
-    # fundamentals["fundamentals_value"] = ((fundamentals["earnings_yield_minmax_currency_code"]) + 
-    #     fundamentals["earnings_yield_minmax_industry"] + 
-    #     fundamentals["book_to_price_minmax_currency_code"] + 
-    #     fundamentals["book_to_price_minmax_industry"] + 
-    #     fundamentals["ebitda_to_ev_minmax_currency_code"] + 
-    #     fundamentals["ebitda_to_ev_minmax_industry"] +
-    #     fundamentals["fwd_bps_minmax_industry"] + 
-    #     fundamentals["fwd_ebitda_to_ev_minmax_currency_code"] + 
-    #     fundamentals["fwd_ebitda_to_ev_minmax_industry"] + 
-    #     fundamentals["fwd_ey_minmax_currency_code"]+ 
-    #     fundamentals["roe_minmax_industry"]+ 
-    #     fundamentals["cf_to_price_minmax_currency_code"]).round(1)
-    
-    # fundamentals["fundamentals_quality"] = ((fundamentals["roic_minmax_currency_code"]) + 
-    #     fundamentals["roic_minmax_industry"]+
-    #     fundamentals["cf_to_price_minmax_industry"]+
-    #     fundamentals["eps_growth_minmax_currency_code"] + 
-    #     fundamentals["eps_growth_minmax_industry"] + 
-    #     (fundamentals["fwd_ey_minmax_industry"]) + 
-    #     fundamentals["fwd_sales_to_price_minmax_industry"]+ 
-    #     (fundamentals["fwd_roic_minmax_industry"]) +
-    #     fundamentals["earnings_yield_minmax_industry"] +
-    #     fundamentals["earnings_pred_minmax_industry"] +
-    #     fundamentals["earnings_pred_minmax_currency_code"]).round(1)
     fundamentals["trading_day"] = check_trading_day(days=6)
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
 
@@ -375,51 +344,77 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         fundamentals["earnings_pred_minmax_currency_code"]).round(1)
 
     print("Calculate Momentum Value")
-    fundamentals["momentum"] = fundamentals["tri_minmax_currency_code"] * 10
+    quantile = pd.DataFrame({"ticker" : [], "tri" : [], "tri_quantile":[]}, index=[])
+    for currency in fundamentals["currency_code"].unique():
+        data = fundamentals.loc[fundamentals["currency_code"] == currency]
+        data = data[["ticker", "tri"]]
+        quantile_data = data["tri"].to_numpy().reshape((len(data),1))
+        data["tri_quantile"] = quantile_transform(quantile_data, n_quantiles=4)
+        quantile = quantile.append(data)
+    fundamentals = fundamentals.merge(quantile[["ticker", "tri_quantile"]], how="left", on="ticker")
+    minmax_column.append("tri_quantile")
+    fundamentals["momentum"] = fundamentals["tri_quantile"] * 10
+    
+    # print("Calculate ESG Value")
+    # esg = fundamentals[["ticker", "environment_minmax_currency_code", "environment_minmax_industry", 
+    #     "social_minmax_currency_code", "social_minmax_industry", 
+    #     "goverment_minmax_currency_code", "goverment_minmax_industry"]]
+    # esg = esg.set_index(keys=["ticker"])
+    # esg["esg"] = esg.mean(axis=1)
+    # esg["esg"] = esg["esg"] * 10
+    # esg = esg.reset_index(inplace=False)
+    # fundamentals = fundamentals.merge(esg[["ticker", "esg"]], how="left", on="ticker")
 
     print("Calculate ESG Value")
-    esg = fundamentals[["ticker", "environment_minmax_currency_code", "environment_minmax_industry", 
-        "social_minmax_currency_code", "social_minmax_industry", 
-        "goverment_minmax_currency_code", "goverment_minmax_industry"]]
-    esg = esg.set_index(keys=["ticker"])
-    esg["esg"] = esg.mean(axis=1)
-    esg["esg"] = esg["esg"] * 10
-    esg = esg.reset_index(inplace=False)
-    fundamentals = fundamentals.merge(esg[["ticker", "esg"]], how="left", on="ticker")
-    
+    fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
+        fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
+        fundamentals["goverment_minmax_currency_code"] + fundamentals["goverment_minmax_industry"]) / 6
+
     print("Calculate Technical Value")
-    technical = fundamentals[["ticker", "momentum"]]
-    technical = technical.merge(universe_rating[["ticker", "wts_rating", "dlp_1m"]], how="left", on="ticker")
-    print(technical)
-    technical = technical.set_index(keys=["ticker"])
-    # technical["wts_rating"] = np.where(technical["wts_rating"].isnull(), 0, technical["wts_rating"])
-    # technical["dlp_1m"] = np.where(technical["dlp_1m"].isnull(), 0, technical["dlp_1m"])
-    technical["technical"] = technical.mean(axis=1)
-    technical = technical.reset_index(inplace=False)
-    print(technical)
-    fundamentals = fundamentals.merge(technical[["ticker", "technical"]], how="left", on="ticker")
-    print(fundamentals)
+    fundamentals = fundamentals.merge(universe_rating, how="left", on="ticker")
+    fundamentals["technical"] = (fundamentals["wts_rating"] + fundamentals["dlp_1m"]+ fundamentals["momentum"]) / 3
+    
+    # print("Calculate Technical Value")
+    # technical = fundamentals[["ticker", "momentum"]]
+    # technical = technical.merge(universe_rating[["ticker", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2"]], how="left", on="ticker")
+    # print(technical)
+    # technical = technical.set_index(keys=["ticker"])
+    # # technical["wts_rating"] = np.where(technical["wts_rating"].isnull(), 0, technical["wts_rating"])
+    # # technical["dlp_1m"] = np.where(technical["dlp_1m"].isnull(), 0, technical["dlp_1m"])
+    # technical["technical"] = technical.mean(axis=1)
+    # technical = technical.reset_index(inplace=False)
+    # print(technical)
+    # fundamentals = fundamentals.merge(technical[["ticker", "technical"]], how="left", on="ticker")
+    # print(fundamentals)
 
     print("Calculate AI Score")
-    ai_score = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "technical"]]
-    ai_score["technical"] = ai_score["technical"] * 2
-    ai_score = ai_score.set_index(keys=["ticker"])
-    ai_score["ai_score"] = ai_score.mean(axis=1)
-    ai_score = ai_score.reset_index(inplace=False)
-    print(ai_score)
-    fundamentals = fundamentals.merge(ai_score[["ticker", "ai_score"]], how="left", on="ticker")
-    print(fundamentals)
+    fundamentals["ai_score"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] + \
+        fundamentals["technical"] + fundamentals["technical"]) / 4
+    
+    # ai_score = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "technical"]]
+    # ai_score["technical"] = ai_score["technical"] * 2
+    # ai_score = ai_score.set_index(keys=["ticker"])
+    # ai_score["ai_score"] = ai_score.mean(axis=1)
+    # ai_score = ai_score.reset_index(inplace=False)
+    # print(ai_score)
+    # fundamentals = fundamentals.merge(ai_score[["ticker", "ai_score"]], how="left", on="ticker")
+    # print(fundamentals)
 
     print("Calculate AI Score 2")
-    ai_score2 = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "technical", "esg"]]
-    ai_score2 = ai_score2.set_index(keys=["ticker"])
-    ai_score2["ai_score2"] = ai_score2.mean(axis=1)
-    ai_score2 = ai_score2.reset_index(inplace=False)
-    print(ai_score2)
-    fundamentals = fundamentals.merge(ai_score2[["ticker", "ai_score2"]], how="left", on="ticker")
-    print(fundamentals)
+    fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] + fundamentals["technical"] + fundamentals["esg"]) / 4
     
-    universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality", "ai_score", "ai_score2", "esg", "momentum", "technical"]]
+    # print("Calculate AI Score 2")
+    # ai_score2 = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "technical", "esg"]]
+    # ai_score2 = ai_score2.set_index(keys=["ticker"])
+    # ai_score2["ai_score2"] = ai_score2.mean(axis=1)
+    # ai_score2 = ai_score2.reset_index(inplace=False)
+    # print(ai_score2)
+    # fundamentals = fundamentals.merge(ai_score2[["ticker", "ai_score2"]], how="left", on="ticker")
+    # print(fundamentals)
+    
+    universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", 
+    "fundamentals_quality", "ai_score", "ai_score2", "esg", 
+    "momentum", "technical", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
 
     universe_rating_detail_history = fundamentals[minmax_column]
     
@@ -533,7 +528,9 @@ def split_order_and_performance(ticker=None, currency_code=None):
             print(ticker)
             last_date = row["last_date"]
             capital_change = row["capital_change"]
-            update_all_data_by_capital_change(ticker, last_date, capital_change)
+            price = row["close"]
+            percent_change = row["latest_price_change"]
+            update_all_data_by_capital_change(ticker, last_date, capital_change, price, percent_change)
             update_capital_change(ticker)
             report_to_slack("{} : === PRICE SPLIT ON TICKER {} with CAPITAL CHANGE {} ===".format(str(dateNow()), ticker, capital_change))
             
@@ -596,7 +593,7 @@ def populate_latest_price(ticker=None, currency_code=None):
                 report_to_slack("{} : === Latest Price Updated ===".format(dateNow()))
             null_ticker = result["ticker"].tolist()
             
-            # split_order_and_performance(ticker=ticker, currency_code=currency_code)
+            split_order_and_performance(ticker=ticker, currency_code=currency_code)
 
     latest_price = latest_price.loc[~latest_price["ticker"].isin(null_ticker)]
     print(latest_price)

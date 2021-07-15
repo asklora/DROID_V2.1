@@ -3,8 +3,12 @@ import os
 from celery import Celery
 from importlib import import_module
 import time
+
 # set the default Django settings module for the 'celery' program.
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+debug = os.environ.get('DJANGO_SETTINGS_MODULE',True)
+if debug:
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.local')
+
 
 app = Celery('core.services')
 
@@ -16,8 +20,7 @@ app.autodiscover_tasks()
 
 @app.task(bind=True)
 def app_publish(self):
-    return {'message':'hallo'}
-
+    return {'message': 'hallo'}
 
 
 @app.task(bind=True)
@@ -37,7 +40,7 @@ def listener(self, data):
     - Data format:
         {
             'type':'function',
-            'module':'core.djangomodule.crudlib.user.createuser',
+            'module':'core.datasource.rkd.RkdData.save',
             'payload': {
                 'email':'asklora@publisher.com',
                 'password':'r3ddpapapapa'
