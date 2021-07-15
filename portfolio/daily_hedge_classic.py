@@ -18,7 +18,7 @@ def create_performance(price_data, position, latest_price=False):
         low = price_data.low
     else:
         live_price = price_data.close
-        trading_day = price_data.trading_day
+        trading_day = price_data.last_date
         high = price_data.close
         low = price_data.close
 

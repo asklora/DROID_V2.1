@@ -31,7 +31,7 @@ def create_performance(price_data, position, latest_price=False):
         ask_price = price_data.intraday_ask
     else:
         live_price = price_data.close
-        trading_day = price_data.trading_day
+        trading_day = price_data.last_date
         bid_price = price_data.close
         ask_price = price_data.close
 

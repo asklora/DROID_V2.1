@@ -332,7 +332,7 @@ class RkdData(Rkd):
     def get_rkd_data(self,ticker,save=False):
         """getting all data from RKD and save,function has no return"""
 
-        # self.get_snapshot(ticker,save=save)
+        self.get_snapshot(ticker,save=save)
         self.get_quote(ticker,save=save)
 
 
@@ -406,7 +406,8 @@ class RkdStream(RkdData):
     def trkd_stream_initiate(cls,ticker):
         return cls(ticker)
 
-    
+
+
     
     def thread_stream(self):
         threads = mp.Process(target=self.stream)

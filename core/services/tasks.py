@@ -355,9 +355,9 @@ def hedge(currency=None, bot_tester=False):
             market = TradingHours(mic=position.ticker.mic)
             if market.is_open:
                 if currency == "USD":
-                    # rkd = RkdData()
-                    # rkd.get_quote([position.ticker.ticker],save=True)
-                    get_quote_yahoo(position.ticker.ticker, use_symbol=True)
+                    rkd = RkdData()
+                    rkd.get_quote([position.ticker.ticker],save=True)
+                    # get_quote_yahoo(position.ticker.ticker, use_symbol=True)
                 else:
                     get_quote_yahoo(position.ticker.ticker, use_symbol=False)
                 if (position.bot.is_uno()):
