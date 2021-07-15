@@ -369,7 +369,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
         fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
         fundamentals["goverment_minmax_currency_code"] + fundamentals["goverment_minmax_industry"]) / 6
-    
 
     print("Calculate Technical Value")
     fundamentals = fundamentals.merge(universe_rating, how="left", on="ticker")
