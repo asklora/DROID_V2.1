@@ -20,8 +20,6 @@ from general.sql_query import get_universe_by_region
 
 
 class Command(BaseCommand):
-    def div_zero(self,df):
-        print(df)
     def handle(self, *args, **options):
         HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code__in=['HKD','CNY','USD'],is_active=True).values('ticker')]
         print(HKD_universe)
