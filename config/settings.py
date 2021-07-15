@@ -64,7 +64,6 @@ CORE_APPS = [
     'core.master',
     'core.topstock',
     'core.Clients',
-    'core.survey',
     'core.orders',
     'core.ai_value',
 ]
