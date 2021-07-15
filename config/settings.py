@@ -181,7 +181,6 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_IMPORTS = ['core.services.ingestiontask',
                   'portfolio_hedge', 'datasource.rkd']
 CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-# CELERY_TASK_ALWAYS_EAGER = True
 email_debug = False
 if email_debug:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
