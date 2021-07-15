@@ -27,7 +27,7 @@ class Command(BaseCommand):
         # HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code__in=['HKD','CNY','USD'],is_active=True).values('ticker')]
         # print(HKD_universe)
         rkd = RkdData()
-        rkd.get_quote(['.KS200'],save=True)
+        rkd.get_index_price('USD')
         # scrap_csi()
 
         # user = User.objects.get(id=1)
