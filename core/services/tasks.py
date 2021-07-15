@@ -3,7 +3,7 @@ from core.universe.models import Universe, UniverseConsolidated
 from core.Clients.models import UniverseClient
 from core.user.models import User
 from core.master.models import Currency
-from main import new_ticker_ingestion, populate_latest_price, update_index_price_from_dss, populate_intraday_latest_price
+from main import new_ticker_ingestion, update_index_price_from_dss, populate_intraday_latest_price
 from general.sql_process import do_function
 from general.slack import report_to_slack
 from core.orders.models import Order, PositionPerformance, OrderPosition
@@ -21,9 +21,8 @@ from django.core.mail import send_mail, EmailMessage
 from celery.schedules import crontab
 from config.settings import db_debug
 import io
-from global_vars import bots_list
-import traceback as trace
 from core.services.models import ErrorLog
+from datasource.rkd import RkdData
 
 
 
@@ -356,6 +355,8 @@ def hedge(currency=None, bot_tester=False):
             market = TradingHours(mic=position.ticker.mic)
             if market.is_open:
                 if currency == "USD":
+                    # rkd = RkdData()
+                    # rkd.get_quote([position.ticker.ticker],save=True)
                     get_quote_yahoo(position.ticker.ticker, use_symbol=True)
                 else:
                     get_quote_yahoo(position.ticker.ticker, use_symbol=False)
@@ -382,8 +383,13 @@ def daily_hedge(currency=None):
         err = ErrorLog.objects.create_log(error_description=f"=== DSS ERROR : {str(e)} SKIPPING GET INTRADAY ===",error_message=str(e))
         err.send_report_error()
     
-    # GET INDEX PRICE
-    get_quote_index(currency)
+    
+    if currency == 'USD':
+        rkd = RkdData()
+        rkd.get_quote(['.SPX'],save=True)
+    else:
+        # GET INDEX PRICE
+        get_quote_index(currency)
 
     hedge(currency=currency) #bot_advisor hanwha and fels
     hedge(currency=currency, bot_tester=True) #bot_tester
