@@ -26,14 +26,19 @@ def create_performance(price_data, position, latest_price=False):
     # ============ prepare to be replaced with third party latest price ========
     if(latest_price):
         live_price = price_data.close
+        if price_data.latest_price:
+            live_price = price_data.latest_price
         trading_day = price_data.last_date
         bid_price = price_data.intraday_bid
         ask_price = price_data.intraday_ask
+        high = price_data.high
     else:
         live_price = price_data.close
+        if price_data.latest_price:
+            live_price = price_data.latest_price
         trading_day = price_data.last_date
-        bid_price = price_data.close
-        ask_price = price_data.close
+        bid_price = price_data.intraday_bid
+        ask_price = price_data.intraday_ask
 
     status_expiry = trading_day >= position.expiry
 

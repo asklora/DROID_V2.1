@@ -61,6 +61,7 @@ def get_quote_yahoo(ticker, use_symbol=False):
             ric.intraday_ask =resp['ask']
             ric.intraday_bid =resp['bid']
             ric.close =resp['regularMarketPrice']
+            ric.latest_price =resp['regularMarketPrice']
             ric.last_date = datetime.now().date()
             ric.save()
             ### END SAVE DJANGO ONE BY ONE ###

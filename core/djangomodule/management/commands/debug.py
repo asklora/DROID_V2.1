@@ -21,13 +21,13 @@ from general.sql_query import get_universe_by_region
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        tikers = OrderPosition.objects.filter(ticker__currency_code='KRW',is_live=True)
-        for pos in tikers:
-            pos.save()
+        # tikers = OrderPosition.objects.filter(ticker__currency_code='KRW',is_live=True)
+        # for pos in tikers:
+        #     pos.save()
         # HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code__in=['HKD','CNY','USD'],is_active=True).values('ticker')]
         # print(HKD_universe)
-        # rkd = RkdData()
-        # rkd.get_rkd_data(HKD_universe,save=True)
+        rkd = RkdData()
+        rkd.get_quote(['.KS200'],save=True)
         # scrap_csi()
 
         # user = User.objects.get(id=1)
