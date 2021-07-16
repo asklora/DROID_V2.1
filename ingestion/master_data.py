@@ -446,7 +446,7 @@ def dividend_updated(ticker=None, currency_code=None):
     filter_field = ["UDDE"]
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe[["ticker"]]
-    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1)
+    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, dividend=True, split_number=1)
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"UDDE": "amount", "level_1":"ex_dividend_date"})
