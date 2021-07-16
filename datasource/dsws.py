@@ -64,7 +64,7 @@ def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, spl
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
 
-def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40):
+def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, dividend=False, split_number=40):
     DS = setDataStream()
     print("== Getting Data From DSWS ==")
     chunk_data = []
@@ -93,19 +93,22 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
             print(e)
     data = []
     for frame in chunk_data:
-        print(frame)
         df = frame.reset_index()
         print(df)
         if use_ticker:
-            if(len(universe) == 1):
-                df["level_1"] = df["index"]
-                df[identifier] = universe[0].replace("<", "").replace(">", "")
-            else:
-                df = df.reset_index()
-                df[identifier] = df["level_0"]
+            if(dividend):
                 df[identifier] = df[identifier].str.replace("<", "").str.replace(">", "")
                 df[identifier] = df[identifier].str.strip()
-            df = df.drop(columns="index")
+            else:
+                if(len(universe) == 1):
+                    df["level_1"] = df["index"]
+                    df[identifier] = universe[0].replace("<", "").replace(">", "")
+                else:
+                    df = df.reset_index()
+                    df[identifier] = df["level_0"]
+                    df[identifier] = df[identifier].str.replace("<", "").str.replace(">", "")
+                    df[identifier] = df[identifier].str.strip()
+                df = df.drop(columns="index")
         else:
             if(len(universe) == 1):
                 df["level_1"] = df["index"]
@@ -177,7 +180,7 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
     return data, error_universe
 
 def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False, worldscope=False):
-    DS = setDataStream()
+    DS = setDataStream(DSWS=False)
     print("== Getting Data From DSWS ==")
     chunk_data = []
     if(monthly):
