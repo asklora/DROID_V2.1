@@ -1,3 +1,4 @@
+from datetime import datetime
 import requests
 import json
 import pandas as pd
@@ -146,10 +147,11 @@ class Rkd:
         for index, item in enumerate(json_data):
             ticker = item['RequestKey']['Name']
             formated_json_data.append({'ticker': ticker})
-            for f in item['Fields']['F']:
-                field = f['n']
-                val = f['Value']
-                formated_json_data[index].update({field: val})
+            if item['Status']['StatusMsg'] == 'OK':
+                for f in item['Fields']['F']:
+                    field = f['n']
+                    val = f['Value']
+                    formated_json_data[index].update({field: val})
         return formated_json_data
 
 
@@ -292,6 +294,23 @@ class RkdData(Rkd):
             # rename column match in table
             return df_data
         return formated_json
+    
+    
+    
+    def get_index_price(self,currency):
+        from django.apps import apps
+        Model = apps.get_model('universe', 'Currency')
+        currency = Model.objects.get(currency_code=currency)
+        quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
+        payload = self.retrive_template(currency.index_ticker, fields=['CF_LAST'])
+        response = self.send_request(quote_url, payload, self.auth_headers())
+
+        formated_json_data = self.parse_response(response)
+        df_data = pd.DataFrame(formated_json_data).rename(columns={
+            'CF_LAST': 'index_price',
+        })
+        currency.index_price = formated_json_data[0]['CF_LAST']
+        currency.save()
 
     def get_quote(self, ticker, df=False, save=False):
         import math
@@ -319,7 +338,8 @@ class RkdData(Rkd):
                 'CF_VOLUME': 'volume',
                 'CF_LAST': 'latest_price'
             })
-            df_data['last_date'] = pd.to_datetime(df_data['last_date'])
+            df_data['last_date'] = datetime.now().date()
+            df_data['intraday_time'] = str(datetime.now())
             collected_data.append(df_data)
         collected_data = pd.concat(collected_data)
         if save:
@@ -332,7 +352,7 @@ class RkdData(Rkd):
     def get_rkd_data(self,ticker,save=False):
         """getting all data from RKD and save,function has no return"""
 
-        # self.get_snapshot(ticker,save=save)
+        self.get_snapshot(ticker,save=save)
         self.get_quote(ticker,save=save)
 
 
@@ -406,7 +426,8 @@ class RkdStream(RkdData):
     def trkd_stream_initiate(cls,ticker):
         return cls(ticker)
 
-    
+
+
     
     def thread_stream(self):
         threads = mp.Process(target=self.stream)

@@ -233,14 +233,15 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
 @app.task
 def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False):
     # need to change to client prices
-    try:
-        populate_intraday_latest_price(currency_code=[currency])
-        update_index_price_from_dss(currency_code=[currency])
-    except Exception as e:
-        err = ErrorLog.objects.create_log(error_description=f"=== DSS {str(e)} SKIPPING GET INTRADAY ===",error_message=str(e))
-        err.send_report_error()
-    if currency == "USD":
-        get_quote_index(currency)
+    # try:
+    #     populate_intraday_latest_price(currency_code=[currency])
+    #     update_index_price_from_dss(currency_code=[currency])
+    # except Exception as e:
+    #     err = ErrorLog.objects.create_log(error_description=f"=== DSS {str(e)} SKIPPING GET INTRADAY ===",error_message=str(e))
+    #     err.send_report_error()
+    # if currency == "USD":
+    rkd =RkdData()
+    rkd.get_index_price(currency)
     client = Client.objects.get(client_name=client_name)
 
     ## ONLY PICK RELATED WEEK OF YEAR, WEEK WITH FULL HOLIDAY WILL SKIPPED/IGNORED
@@ -279,11 +280,13 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
                 report_to_slack(f"=== {client_name} MARKET {queue.ticker} IS OPEN AND CREATING INITIAL ORDER ===")
                 # need to change live price, problem with nan
                 # yahoo finance price
-                if currency == "USD":
-                    get_quote_yahoo(queue.ticker.ticker, use_symbol=True)
-                else:
-                    get_quote_yahoo(queue.ticker.ticker, use_symbol=False)
+                # if currency == "USD":
+                rkd.get_quote([queue.ticker.ticker], save=True)
+                # else:
+                #     get_quote_yahoo(queue.ticker.ticker, save=False)
                 price = queue.ticker.latest_price_ticker.close
+                if queue.ticker.latest_price_ticker.latest_price:
+                    price = queue.ticker.latest_price_ticker.latest_price
                 spot_date = datetime.now()
                 if(client_name == "HANWHA"):
                     if user.extra_data["service_type"] == "bot_advisor":
@@ -341,6 +344,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
 
 def hedge(currency=None, bot_tester=False):
     report_to_slack(f"===  START HEDGE FOR {currency} ===")
+    rkd = RkdData()
     try:
         if(bot_tester):
             status = "BOT TESTER"
@@ -354,12 +358,12 @@ def hedge(currency=None, bot_tester=False):
             position_uid = position.position_uid
             market = TradingHours(mic=position.ticker.mic)
             if market.is_open:
-                if currency == "USD":
-                    # rkd = RkdData()
-                    # rkd.get_quote([position.ticker.ticker],save=True)
-                    get_quote_yahoo(position.ticker.ticker, use_symbol=True)
-                else:
-                    get_quote_yahoo(position.ticker.ticker, use_symbol=False)
+                # if currency == "USD":
+                
+                rkd.get_quote([position.ticker.ticker],save=True)
+                    # get_quote_yahoo(position.ticker.ticker, use_symbol=True)
+                # else:
+                #     get_quote_yahoo(position.ticker.ticker, use_symbol=False)
                 if (position.bot.is_uno()):
                     uno_position_check(position_uid)
                 elif (position.bot.is_ucdc()):
@@ -376,20 +380,20 @@ def hedge(currency=None, bot_tester=False):
 
 @app.task
 def daily_hedge(currency=None):
-    try:
-        populate_intraday_latest_price(currency_code=[currency])
-        update_index_price_from_dss(currency_code=[currency])
-    except Exception as e:
-        err = ErrorLog.objects.create_log(error_description=f"=== DSS ERROR : {str(e)} SKIPPING GET INTRADAY ===",error_message=str(e))
-        err.send_report_error()
+    # try:
+    #     populate_intraday_latest_price(currency_code=[currency])
+    #     update_index_price_from_dss(currency_code=[currency])
+    # except Exception as e:
+    #     err = ErrorLog.objects.create_log(error_description=f"=== DSS ERROR : {str(e)} SKIPPING GET INTRADAY ===",error_message=str(e))
+    #     err.send_report_error()
     
     
-    if currency == 'USD':
-        rkd = RkdData()
-        rkd.get_quote(['.SPX'],save=True)
-    else:
+    # if currency == 'USD':
+    rkd = RkdData()
+    rkd.get_index_price(currency)
+    # else:
         # GET INDEX PRICE
-        get_quote_index(currency)
+        # get_quote_index(currency)
 
     hedge(currency=currency) #bot_advisor hanwha and fels
     hedge(currency=currency, bot_tester=True) #bot_tester
