@@ -8,7 +8,7 @@ from general.sql_process import do_function
 from general.slack import report_to_slack
 from core.orders.models import Order, PositionPerformance, OrderPosition
 from core.Clients.models import UserClient, Client
-from datetime import datetime
+from datetime import datetime,timedelta
 from client_test_pick import populate_fels_bot, test_pick, populate_bot_advisor,populate_bot_tester
 from portfolio.daily_hedge_classic import classic_position_check
 from portfolio.daily_hedge_ucdc import ucdc_position_check
@@ -23,9 +23,7 @@ from config.settings import db_debug
 import io
 from core.services.models import ErrorLog
 from datasource.rkd import RkdData
-
-
-
+from .models import ChannelPresence
 USD_CUR = Currency.objects.get(currency_code="USD")
 HKD_CUR = Currency.objects.get(currency_code="HKD")
 KRW_CUR = Currency.objects.get(currency_code="KRW")
@@ -37,6 +35,13 @@ EUR_CUR = Currency.objects.get(currency_code="EUR")
 ## SCHEDULER
 
 app.conf.beat_schedule = {
+    'prune-presence': {
+        'task': 'core.services.tasks.channel_prune',
+        'schedule': timedelta(seconds=60),
+        'options':{
+            'queue':'local'
+        }
+    },
     "USD-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=USD_CUR.hedge_schedule.minute, hour=USD_CUR.hedge_schedule.hour, day_of_week="1-5"),
@@ -105,6 +110,10 @@ def export_csv(df):
         df.to_csv(buffer, index=False)
         return buffer.getvalue()
 
+
+@app.task
+def channel_prune():
+    ChannelPresence.objects.prune_presences()
 
 @app.task
 def get_isin_populate_universe(ticker, user_id):

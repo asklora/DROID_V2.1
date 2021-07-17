@@ -53,6 +53,7 @@ ADDITIONAL_APPS = [
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
     'channels',
+    "channels_presence",
 
 ]
 CORE_APPS = [
@@ -179,7 +180,7 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_IMPORTS = ['core.services.ingestiontask',
-                  'portfolio_hedge', 'datasource.rkd']
+                  'core.services.tasks', 'channels_presence.tasks', 'datasource.rkd']
 CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 email_debug = False
 if email_debug:
