@@ -5,7 +5,8 @@ import asyncio
 import multiprocessing
 import os
 import signal
-from channels_presence.models import Room,Presence, RoomManager
+from channels_presence.models import Room,Presence
+from channels_presence.decorators import touch_presence
 
 class UniverseConsumer(WebsocketConsumer):
     room_id =None
@@ -73,6 +74,14 @@ class UniverseConsumer(WebsocketConsumer):
         ))
 
     
+    @touch_presence
+    def ping(self,event):
+        print("ping event",event)
+        
+
+    
+
+
     # Receive message from room group
     def broadcastmessage(self, event):
         # Send message to WebSocket

@@ -17,24 +17,36 @@ import pandas as pd
 from core.djangomodule.serializers import CsvSerializer
 from core.djangomodule.yahooFin import get_quote_index,get_quote_yahoo
 from core.djangomodule.calendar import TradingHours
-from django.core.mail import send_mail, EmailMessage
+from django.core.mail import EmailMessage
 from celery.schedules import crontab
 from config.settings import db_debug
 import io
 from core.services.models import ErrorLog
 from datasource.rkd import RkdData
 from .models import ChannelPresence
+from channels_presence.models import Presence
+import asyncio
+from asgiref.sync import sync_to_async
+from channels.layers import get_channel_layer
+
 USD_CUR = Currency.objects.get(currency_code="USD")
 HKD_CUR = Currency.objects.get(currency_code="HKD")
 KRW_CUR = Currency.objects.get(currency_code="KRW")
 CNY_CUR = Currency.objects.get(currency_code="CNY")
 EUR_CUR = Currency.objects.get(currency_code="EUR")
 
-
+channel_layer = get_channel_layer()
 
 ## SCHEDULER
 
 app.conf.beat_schedule = {
+    'ping-presence': {
+        'task': 'core.services.tasks.ping_available_presence',
+        'schedule': timedelta(seconds=50),
+        'options':{
+            'queue':'local'
+        }
+    },
     'prune-presence': {
         'task': 'core.services.tasks.channel_prune',
         'schedule': timedelta(seconds=60),
@@ -111,7 +123,35 @@ def export_csv(df):
         return buffer.getvalue()
 
 
-@app.task
+def get_presence():
+    channels = [c['channel_name'] for c in Presence.objects.all().values('channel_name')]
+    return channels
+
+async def gather_ping_presence():
+    channels = await sync_to_async(get_presence)()
+    tasks =[]
+    if channels:
+        for channel in channels:
+            tasks.append(asyncio.ensure_future(
+                channel_layer.send(
+                    channel,
+                    {
+                        'type':'broadcastmessage',
+                        'message':'PING'
+                    }
+                )
+            ))
+        await asyncio.gather(*tasks)
+
+
+
+@app.task(ignore_result=True)
+def ping_available_presence():
+    asyncio.run(gather_ping_presence())
+
+
+
+@app.task(ignore_result=True)
 def channel_prune():
     ChannelPresence.objects.prune_presences()
 
