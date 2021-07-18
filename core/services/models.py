@@ -56,7 +56,6 @@ class ChannelPresence(Room):
 
 
     def custom_prune_presences(self, age_in_seconds=None):
-        print('task')
         if age_in_seconds is None:
             age_in_seconds = getattr(settings, "CHANNELS_PRESENCE_MAX_AGE", 60)
         presence = Presence.objects.filter(
