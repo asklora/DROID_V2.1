@@ -1,3 +1,4 @@
+from ingestion.special_case import ticker_changes
 from bot.data_download import get_new_ticker_from_classic_bot_backtest, get_new_ticker_from_uno_ucdc_bot_backtest
 from bot.calculate_bot import get_ucdc, get_uno
 from main_executive import daily_classic, daily_uno_ucdc
@@ -352,6 +353,7 @@ def daily_ingestion(region_id=None):
 
 # Main Process
 if __name__ == "__main__":
+    status = ticker_changes("SLA.L", "ABDN.L")
     # update_fundamentals_score_from_dsws(currency_code=["SGD"])
     # update_fundamentals_quality_value()
     # update_mic_from_dss()
@@ -394,7 +396,6 @@ if __name__ == "__main__":
     # do_function("master_ohlcvtr_update")
     # master_ohlctr_update()
     # master_tac_update()
-    # update_quandl_orats_from_quandl()
     # master_multiple_update()
 
     # interest_update()
