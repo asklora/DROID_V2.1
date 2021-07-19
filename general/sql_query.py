@@ -6,7 +6,7 @@ from general.sql_process import db_read, db_write, dlp_db_read
 from general.date_process import backdate_by_day, dateNow, droid_start_date, str_to_date
 from general.data_process import tuple_data
 from general.table_name import (
-    get_data_ibes_monthly_table_name, get_data_macro_monthly_table_name, get_industry_group_table_name, get_industry_table_name, get_latest_price_table_name, get_master_tac_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_region_table_name, get_universe_rating_detail_history_table_name, get_universe_rating_history_table_name, get_vix_table_name,
+    get_data_dss_table_name, get_data_dsws_table_name, get_data_ibes_monthly_table_name, get_data_macro_monthly_table_name, get_industry_group_table_name, get_industry_table_name, get_latest_price_table_name, get_master_tac_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_region_table_name, get_universe_client_table_name, get_universe_rating_detail_history_table_name, get_universe_rating_history_table_name, get_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
     get_universe_rating_table_name,
@@ -43,9 +43,9 @@ def read_query(query, table=universe_table, cpu_counts=False, dlp=False, prints=
         print("Total Data = " + str(len(data)))
     return data
 
-def get_active_universe_droid1(ticker=None, currency_code=None):
+def get_active_universe_droid1(ticker=None, currency_code=None, active=True):
     query = f"select * from {universe_table} where is_active=True "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if(check != ""):
         query += f"and " + check
     query += f"order by ticker"
@@ -59,12 +59,18 @@ def check_start_end_date(start_date, end_date):
         end_date = str_to_date(dateNow())
     return start_date, end_date
     
-def check_ticker_currency_code_query(ticker=None, currency_code=None):
+def check_ticker_currency_code_query(ticker=None, currency_code=None, active=True):
     query = ""
-    if type(ticker) != type(None):
-        query += f"ticker in (select ticker from {get_universe_table_name()} where is_active=True and ticker in {tuple_data(ticker)}) "
-    elif type(currency_code) != type(None):
-        query += f"ticker in (select ticker from {get_universe_table_name()} where is_active=True and currency_code in {tuple_data(currency_code)}) "
+    if(active):
+        if type(ticker) != type(None):
+            query += f"ticker in (select ticker from {get_universe_table_name()} where is_active=True and ticker in {tuple_data(ticker)}) "
+        elif type(currency_code) != type(None):
+            query += f"ticker in (select ticker from {get_universe_table_name()} where is_active=True and currency_code in {tuple_data(currency_code)}) "
+    else:
+        if type(ticker) != type(None):
+            query += f"ticker in (select ticker from {get_universe_table_name()} where ticker in {tuple_data(ticker)}) "
+        elif type(currency_code) != type(None):
+            query += f"ticker in (select ticker from {get_universe_table_name()} where currency_code in {tuple_data(currency_code)}) "
     return query
 
 def get_region():
@@ -96,7 +102,6 @@ def get_active_currency(currency_code=None):
     query = f"select * from {currency_table} where is_active=True"
     if type(currency_code) != type(None):
         query += f" and currency_code in {tuple_data(currency_code)}"
-    #query = f"select currency_code, ric, utc_timezone_location from {currency_table} where is_active=True"
     data = read_query(query, table=currency_table)
     return data
 
@@ -117,47 +122,47 @@ def get_active_universe_consolidated_by_field(isin=False, cusip=False, sedol=Fal
         query += f"and use_manual=True and consolidated_ticker is null "
 
     if type(ticker) != type(None):
-        query += f" and origin_ticker in {tuple_data(ticker)} "
+        query += f" and (origin_ticker in {tuple_data(ticker)} or consolidated_ticker in {tuple_data(ticker)}) "
 
     query += " order by origin_ticker "
     data = read_query(query, table=universe_consolidated_table)
     return data
 
-def get_all_universe(ticker=None, currency_code=None):
+def get_all_universe(ticker=None, currency_code=None, active=True):
     query = f"select * from {universe_table} "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if(check != ""):
         query += f"where " + check
     query += f" order by ticker"
     data = read_query(query, table=universe_table)
     return data
 
-def get_active_universe(ticker=None, currency_code=None):
+def get_active_universe(ticker=None, currency_code=None, active=True):
     query = f"select * from {universe_table} where is_active=True "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if(check != ""):
         query += f"and " + check
     query += f"order by ticker"
     data = read_query(query, table=universe_table)
     return data
 
-def get_universe_rating(ticker=None, currency_code=None):
+def get_universe_rating(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_table_name()
     query = f"select * from {table_name} "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if(check != ""):
         query += f"where " + check
     query += f" order by ticker"
     data = read_query(query, table=table_name)
     return data
 
-def get_active_universe_by_entity_type(ticker=None, currency_code=None, null_entity_type=False):
+def get_active_universe_by_entity_type(ticker=None, currency_code=None, null_entity_type=False, active=True):
     query = f"select * from {universe_table} where is_active=True "
     if null_entity_type:
         query += f"and entity_type is null "
     else:
         query += f"and entity_type is not null "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if(check != ""):
         query += f"and " + check
     query += f"order by ticker"
@@ -290,29 +295,29 @@ def get_specific_tri(trading_day, tri_name = "tri"):
     data = read_query(query, table=master_ohlcvtr_table)
     return data
 
-def get_yesterday_close_price(ticker=None, currency_code=None):
+def get_yesterday_close_price(ticker=None, currency_code=None, active=True):
     query = f"select tac.ticker, tac.trading_day, tac.tri_adj_close as yesterday_close from {get_master_tac_table_name()} tac "
     query += f"inner join (select mo.ticker, max(mo.trading_day) as max_date from {get_master_tac_table_name()} mo where mo.tri_adj_close is not null group by mo.ticker) result "
     query += f"on tac.ticker=result.ticker and tac.trading_day=result.max_date "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if(check != ""):
         query += f"where tac." + check
     data = read_query(query, table=master_ohlcvtr_table)
     return data
 
-def get_latest_price_data(ticker=None, currency_code=None):
+def get_latest_price_data(ticker=None, currency_code=None, active=True):
     table_name = get_latest_price_table_name()
     query = f"select * from {table_name} "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if(check != ""):
         query += f"where " + check
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
-def get_latest_price_capital_change(ticker=None, currency_code=None):
+def get_latest_price_capital_change(ticker=None, currency_code=None, active=True):
     table_name = get_latest_price_table_name()
     query = f"select * from {table_name} where capital_change is not null "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if(check != ""):
         query += f"and " + check
     data = read_query(query, table_name, cpu_counts=True)
@@ -357,12 +362,12 @@ def get_industry_group():
     data = read_query(query, table=table_name)
     return data
 
-def get_master_tac_data(start_date=None, end_date=None, ticker=None, currency_code=None):
+def get_master_tac_data(start_date=None, end_date=None, ticker=None, currency_code=None, active=True):
     start_date, end_date = check_start_end_date(start_date, end_date)
     table_name = get_master_tac_table_name()
     query = f"select * from {table_name} where trading_day >= '{start_date}' "
     query += f"and trading_day <= '{end_date}' "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if(check != ""):
         query += "and " + check
     data = read_query(query, table_name, cpu_counts=True)
@@ -378,10 +383,10 @@ def get_consolidated_data(column, condition, group_field=None):
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
-def get_universe_rating_history(ticker=None, currency_code=None):
+def get_universe_rating_history(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_history_table_name()
     query = f"select * from {table_name} where trading_day=(select max(urh.trading_day) from {table_name} urh) "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if(check != ""):
         query += "and " + check
     data = read_query(query, table_name, cpu_counts=True)
@@ -398,5 +403,13 @@ def get_order_performance_by_ticker(ticker=None, trading_day=None):
     if(type(ticker) != type(None)):
         query += f"where ticker='{ticker}' "
     query += f") and order_summary is not null;"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_data_from_table_name(table_name, ticker=None, currency_code=None, active=True):
+    query = f"select * from {table_name} "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
+    if(check != ""):
+        query += "where " + check
     data = read_query(query, table_name, cpu_counts=True)
     return data

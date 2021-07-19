@@ -12,9 +12,9 @@ from general.sql_query import (
      get_data_by_table_name_with_condition, 
      get_latest_price)
 from general.table_name import (
-    get_data_dividend_daily_table_name, 
-    get_data_dividend_table_name, 
-    get_data_interest_daily_table_name, 
+    get_data_dividend_daily_rates_table_name,
+    get_data_dividend_table_name,
+    get_data_interest_daily_rates_table_name, 
     get_data_interest_table_name)
 
 from global_vars import null_per, r_days, q_days
@@ -306,7 +306,7 @@ def dividend_daily_update():
     result = uid_maker(result, uid="uid", ticker="ticker", trading_day="t", date=False)
     print(result)
     #insert_data_to_database(result, get_data_dividend_daily_table_name, how="replace")
-    upsert_data_to_database(result, get_data_dividend_daily_table_name(), "uid", how="update", Text=True)
+    upsert_data_to_database(result, get_data_dividend_daily_rates_table_name(), "uid", how="update", Text=True)
     report_to_slack("{} : === Dividens Daily Updated ===".format(datetimeNow()))
     
 def interest_daily_update(currency_code=None):
@@ -363,5 +363,5 @@ def interest_daily_update(currency_code=None):
     result = uid_maker(result, uid="uid", ticker="currency_code", trading_day="t", date=False)
     print(result)
     # insert_data_to_database(result, get_data_interest_daily_table_name(), how="replace")
-    upsert_data_to_database(result, get_data_interest_daily_table_name(), "uid", how="update", Text=True)
+    upsert_data_to_database(result, get_data_interest_daily_rates_table_name(), "uid", how="update", Text=True)
     report_to_slack("{} : === Interest Daily Updated ===".format(datetimeNow()))

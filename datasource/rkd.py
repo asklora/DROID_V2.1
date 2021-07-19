@@ -343,7 +343,10 @@ class RkdData(Rkd):
             collected_data.append(df_data)
         collected_data = pd.concat(collected_data)
         if save:
+            print('saving....')
             self.save('master', 'LatestPrice', collected_data.to_dict('records'))
+            print('saving done')
+
         if df:
             # rename column match in table
             return collected_data

@@ -19,6 +19,7 @@ from general.sql_query import get_universe_by_region
 
 
 
+
 class Command(BaseCommand):
     def handle(self, *args, **options):
         # tikers = OrderPosition.objects.filter(ticker__currency_code='KRW',is_live=True)
@@ -26,8 +27,8 @@ class Command(BaseCommand):
         #     pos.save()
         # HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code__in=['HKD','CNY','USD'],is_active=True).values('ticker')]
         # print(HKD_universe)
-        rkd = RkdData()
-        rkd.get_index_price('USD')
+        # rkd = RkdData()
+        # rkd.get_index_price('USD')
         # scrap_csi()
         # get_trkd_data_by_region('na')
         # user = User.objects.get(id=1)
@@ -71,7 +72,7 @@ class Command(BaseCommand):
         # print('total_profit_return: ',user.total_profit_return)
         # populate_intraday_latest_price(ticker=[".CSI300"])
         # get_quote_yahoo("TCOM", use_symbol=True)
-        # daily_hedge(currency="USD")
+        daily_hedge(currency="HKD")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
         #     position_uid__user_id__in=[108,

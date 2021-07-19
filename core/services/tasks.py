@@ -1,33 +1,42 @@
+# CELERY APP
 from config.celery import app
+from celery.schedules import crontab
+from celery import group as celery_groups
+# MODELS AND UTILS
 from core.universe.models import Universe, UniverseConsolidated
 from core.Clients.models import UniverseClient
 from core.user.models import User
-from core.master.models import Currency
-from main import new_ticker_ingestion, update_index_price_from_dss, populate_intraday_latest_price
-from general.sql_process import do_function
-from general.slack import report_to_slack
-from core.orders.models import Order, PositionPerformance, OrderPosition
-from core.Clients.models import UserClient, Client
-from datetime import datetime,timedelta
-from client_test_pick import populate_fels_bot, test_pick, populate_bot_advisor,populate_bot_tester
-from portfolio.daily_hedge_classic import classic_position_check
-from portfolio.daily_hedge_ucdc import ucdc_position_check
-from portfolio.daily_hedge_uno import uno_position_check
-import pandas as pd
 from core.djangomodule.serializers import CsvSerializer
 from core.djangomodule.yahooFin import get_quote_index,get_quote_yahoo
 from core.djangomodule.calendar import TradingHours
-from django.core.mail import EmailMessage
-from celery.schedules import crontab
-from config.settings import db_debug
-import io
+from core.master.models import Currency
+from core.orders.models import Order, PositionPerformance, OrderPosition
+from core.Clients.models import UserClient, Client
 from core.services.models import ErrorLog
-from datasource.rkd import RkdData
 from .models import ChannelPresence
 from channels_presence.models import Presence
+from django.core.mail import EmailMessage
+from config.settings import db_debug
+from datasource.rkd import RkdData
+# RAW SQL QUERY MODULE
+from main import new_ticker_ingestion, update_index_price_from_dss, populate_intraday_latest_price
+from general.sql_process import do_function
+# SLACK REPORT
+from general.slack import report_to_slack
+# POPULATE TOPSTOCK MODULE
+from client_test_pick import populate_fels_bot, test_pick, populate_bot_advisor,populate_bot_tester
+# HEDGE MODULE
+from portfolio.daily_hedge_classic import classic_position_check
+from portfolio.daily_hedge_ucdc import ucdc_position_check
+from portfolio.daily_hedge_uno import uno_position_check
+# PYTHON TOOLS
+import time as tm
+import pandas as pd
+import io
 import asyncio
 from asgiref.sync import sync_to_async
 from channels.layers import get_channel_layer
+from datetime import datetime,timedelta
 
 USD_CUR = Currency.objects.get(currency_code="USD")
 HKD_CUR = Currency.objects.get(currency_code="HKD")
@@ -37,22 +46,22 @@ EUR_CUR = Currency.objects.get(currency_code="EUR")
 
 channel_layer = get_channel_layer()
 
-## SCHEDULER
+# TASK SCHEDULE
 
 app.conf.beat_schedule = {
     'ping-presence': {
         'task': 'core.services.tasks.ping_available_presence',
         'schedule': timedelta(seconds=50),
-        'options':{
-            'queue':'local'
-        }
+        # 'options':{
+        #     'queue':'local'
+        # }
     },
     'prune-presence': {
         'task': 'core.services.tasks.channel_prune',
         'schedule': timedelta(seconds=60),
-        'options':{
-            'queue':'local'
-        }
+        # 'options':{
+        #     'queue':'local'
+        # }
     },
     "USD-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
@@ -115,14 +124,19 @@ app.conf.beat_schedule = {
         "kwargs": {"currency": "USD","client_name":"FELS"},
     },
 }
+# END TASK SCHEDULE
 
+
+# FILE BUFFER FUNCtION
 
 def export_csv(df):
     with io.StringIO() as buffer:
         df.to_csv(buffer, index=False)
         return buffer.getvalue()
+# END FILE BUFFER
 
 
+# TASK TO PING EXISTING CONNECTION THAT CONNECTED TO WEBSOCKET
 def get_presence():
     channels = [c['channel_name'] for c in Presence.objects.all().values('channel_name')]
     return channels
@@ -149,11 +163,15 @@ async def gather_ping_presence():
 def ping_available_presence():
     asyncio.run(gather_ping_presence())
 
+# END PING
 
+# MAINTAIN EXISTING CONNECTION
 
 @app.task(ignore_result=True)
 def channel_prune():
     ChannelPresence.objects.prune_presences()
+
+# END MAINTAIN
 
 @app.task
 def get_isin_populate_universe(ticker, user_id):
@@ -251,7 +269,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
                 populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
                 populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
             # skip any currency except  currency and client fels only
-            # has own populate schedule ctrl+G line 86 and 91
+            # has own populate schedule ctrl+f search for EUR-POPULATE-PICK-FELS and USD-POPULATE-PICK-FELS
             if currency in ['USD', 'EUR',] and client_name == "FELS":
                 test_pick(currency_code=[currency],client_name=client_name)
                 populate_fels_bot(currency_code=[currency], client_name=client_name, top_pick = 5)
@@ -264,7 +282,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
     report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
     try:
         # WILL RUN EVERY BUSINESS DAY
-        # SKIP FELS FOR AUTO ORDERING
+        # SKIP FELS FOR AUTO ORDER, SINCE FELS USING MANUAL TRIGER ORDER
         if not client_name == "FELS":
             order_client_topstock(currency=currency, client_name=client_name) #bot advisor
             order_client_topstock(currency=currency, client_name=client_name, bot_tester=True) #bot tester
@@ -281,7 +299,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
 
 @app.task
 def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False):
-    # need to change to client prices
+    # NOT USING DSSS
     # try:
     #     populate_intraday_latest_price(currency_code=[currency])
     #     update_index_price_from_dss(currency_code=[currency])
@@ -289,7 +307,12 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
     #     err = ErrorLog.objects.create_log(error_description=f"=== DSS {str(e)} SKIPPING GET INTRADAY ===",error_message=str(e))
     #     err.send_report_error()
     # if currency == "USD":
+    
+    # NOT USING DSSS
+
+    # LOGIN TO TRKD API
     rkd =RkdData()
+    # GET INDEX PRICE AND SAVE/UPDATE TO CURRENCY TABLE
     rkd.get_index_price(currency)
     client = Client.objects.get(client_name=client_name)
 
@@ -315,6 +338,9 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
     ### ONLY EXECUTE IF EXIST / ANY UNPICKED OF THE WEEK
     if topstock.exists():
         report_to_slack(f"===  START ORDER FOR UNPICK {client_name} - {currency} ===")
+        tickers = []
+        [tickers.append(obj.ticker.ticker) for obj in topstock if not obj.ticker.ticker  in tickers]
+        rkd.get_quote(tickers, save=True)
         for queue in topstock:
             user = UserClient.objects.get(
                 currency_code=queue.currency_code,
@@ -327,10 +353,9 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
             
             if market.is_open:
                 report_to_slack(f"=== {client_name} MARKET {queue.ticker} IS OPEN AND CREATING INITIAL ORDER ===")
-                # need to change live price, problem with nan
                 # yahoo finance price
                 # if currency == "USD":
-                rkd.get_quote([queue.ticker.ticker], save=True)
+                
                 # else:
                 #     get_quote_yahoo(queue.ticker.ticker, save=False)
                 price = queue.ticker.latest_price_ticker.close
@@ -392,40 +417,82 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
         report_to_slack(f"=== {client_name} NO TOPSTOCK IN PENDING ===")
 
 def hedge(currency=None, bot_tester=False):
-    report_to_slack(f"===  START HEDGE FOR {currency} ===")
-    rkd = RkdData()
+    if bot_tester:
+        report_to_slack(f"===  START HEDGE FOR {currency} Bot Tester ===")
+    else:
+        report_to_slack(f"===  START HEDGE FOR {currency} Bot Advisor ===")
+
     try:
+        # LOGIN TO TRKD API
+        rkd = RkdData()
         if(bot_tester):
             status = "BOT TESTER"
             hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_tester").values("user")]
         else:
             status = "BOT ADVISOR"
-            # updated hanwha and fels since email for bot tester and bot_tester variable has role send different email in function
+            # updated hanwha and fels since email for bot advisor and bot_tester variable has role send different email in function
             hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name__in=["HANWHA","FELS"], extra_data__service_type__in=["bot_advisor",None]).values("user")]
+        # GETTING LIVE POSITION
         positions = OrderPosition.objects.filter(is_live=True, ticker__currency_code=currency, user_id__in=hanwha)
-        for position in positions:
-            position_uid = position.position_uid
-            market = TradingHours(mic=position.ticker.mic)
-            if market.is_open:
-                # if currency == "USD":
-                
-                rkd.get_quote([position.ticker.ticker],save=True)
-                    # get_quote_yahoo(position.ticker.ticker, use_symbol=True)
-                # else:
-                #     get_quote_yahoo(position.ticker.ticker, use_symbol=False)
-                if (position.bot.is_uno()):
-                    uno_position_check(position_uid)
-                elif (position.bot.is_ucdc()):
-                    ucdc_position_check(position_uid)
-                elif (position.bot.is_classic()):
-                    classic_position_check(position_uid)
-            else:
-                report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
+        if positions.exists():
+            #DISTINCT TICKER TO BE USED IN TRKD
+            ticker_list = [obj.ticker.ticker for obj in positions.distinct('ticker')]
+            # GET NEWEST PRICE FROM TRKD AND SAVE TO LATESTPRICE TABLE
+            rkd.get_quote(ticker_list,save=True)
+            
+            # PREPARE USING MULTIPROCESSING HEDGE GROUPS
+            group_celery_jobs = []
+            celery_jobs = celery_groups(group_celery_jobs)
+
+
+            # DO HEDGE
+            for position in positions:
+                position_uid = position.position_uid
+                market = TradingHours(mic=position.ticker.mic)
+                if market.is_open: # MARKET OPEN CHECK TRADINGHOURS
+
+
+                    # NOT USING YAHOO
+                    # if currency == "USD":
+                        # get_quote_yahoo(position.ticker.ticker, use_symbol=True)
+                    # else:
+                    #     get_quote_yahoo(position.ticker.ticker, use_symbol=False)
+                    # END NOT USING YAHOO
+
+
+                    # ENCHANCE CODE HERE, MAKE MULTIPROCESSING INSTEAD OF WAITING ONE BY ONE HEDGE POSITION
+
+                    # WARNING!!!!!!!!!!!
+                    # BELOW THIS CODE USE CELERY TO RUN
+                    # TO RUN NORMAL PLEASE UNCOMMENT LINE 460,463,466 and COMMENT LINE 461,464,465
+                    # will add function to check run in production machine and local for debuging
+                    if (position.bot.is_uno()):
+                        # uno_position_check(position_uid)
+                        group_celery_jobs.append(uno_position_check.s(position_uid))
+                    elif (position.bot.is_ucdc()):
+                        # ucdc_position_check(position_uid)
+                        group_celery_jobs.append(ucdc_position_check.s(position_uid))
+                    elif (position.bot.is_classic()):
+                        # classic_position_check(position_uid)
+                        group_celery_jobs.append(classic_position_check.s(position_uid))
+                else:
+                    report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
+            
+            if group_celery_jobs:
+                result = celery_jobs.apply_async()
+                while not result.successful():
+                    if result.failed():
+                        report_to_slack(f"=== THERE IS FAIL IN HEDGE TASK ===",channel='#error-log')
+                        return {'err':'task group failed'}
+                    tm.sleep(2)
+
+                if result.successful():         
+                    send_csv_hanwha(currency=currency, client_name="HANWHA", bot_tester=bot_tester)
+    
     except Exception as e:
         err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN HEDGE Function {currency} {status} ===",error_message=str(e))
         err.send_report_error()
         return {"err": str(e)}
-    send_csv_hanwha(currency=currency, client_name="HANWHA", bot_tester=bot_tester)
 
 @app.task
 def daily_hedge(currency=None):
@@ -438,11 +505,13 @@ def daily_hedge(currency=None):
     
     
     # if currency == 'USD':
-    rkd = RkdData()
-    rkd.get_index_price(currency)
     # else:
         # GET INDEX PRICE
         # get_quote_index(currency)
+
+    
+    rkd = RkdData() # LOGIN
+    rkd.get_index_price(currency) # GET INDEX PRICE
 
     hedge(currency=currency) #bot_advisor hanwha and fels
     hedge(currency=currency, bot_tester=True) #bot_tester

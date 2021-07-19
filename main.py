@@ -1,7 +1,8 @@
+from ingestion.special_case import ticker_changes
 from bot.data_download import get_new_ticker_from_classic_bot_backtest, get_new_ticker_from_uno_ucdc_bot_backtest
 from bot.calculate_bot import get_ucdc, get_uno
 from main_executive import daily_classic, daily_uno_ucdc
-from general.date_process import dateNow
+from general.date_process import dateNow, str_to_date
 from general.sql_query import get_active_universe, get_active_universe_droid1, get_universe_by_region
 from general.sql_output import fill_null_quandl_symbol
 from bot.preprocess import dividend_daily_update, interest_daily_update
@@ -352,6 +353,7 @@ def daily_ingestion(region_id=None):
 
 # Main Process
 if __name__ == "__main__":
+    # status = ticker_changes("SLA.L", "ABDN.L")
     # update_fundamentals_score_from_dsws(currency_code=["SGD"])
     # update_fundamentals_quality_value()
     # update_mic_from_dss()
@@ -379,7 +381,7 @@ if __name__ == "__main__":
     # update_ticker_symbol_from_dss(ticker=None)
     # do_function("universe_populate")
     # populate_intraday_latest_price(currency_code=["KRW"])
-    # populate_intraday_latest_price(ticker=["TCOM.O"])
+    # populate_intraday_latest_price(ticker=["ABDN.L"])
     # populate_latest_price(currency_code=["CNY"])
     # ticker = get_universe_by_region(region_id="na")
     # populate_latest_price(ticker=ticker["ticker"])
@@ -394,7 +396,6 @@ if __name__ == "__main__":
     # do_function("master_ohlcvtr_update")
     # master_ohlctr_update()
     # master_tac_update()
-    # update_quandl_orats_from_quandl()
     # master_multiple_update()
 
     # interest_update()
