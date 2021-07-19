@@ -67,18 +67,6 @@ def get_data_dsws_table_name():
 def get_data_vix_table_name():
     return "data_vix"
 
-def get_data_dividend_table_name():
-    return "data_dividend"
-
-def get_data_dividend_daily_table_name():
-    return "data_dividend_daily_rates"
-
-def get_data_interest_table_name():
-    return "data_interest"
-
-def get_data_interest_daily_table_name():
-    return "data_interest_daily_rates"
-
 def get_latest_price_table_name():
     return "latest_price"
 
@@ -130,6 +118,9 @@ def get_bot_ranking_table_name():
 
 def get_bot_latest_ranking_table_name():
     return "latest_bot_ranking"
+
+def get_latest_bot_data_table_name():
+    return "latest_bot_data"
 
 def get_bot_data_table_name():
     return "bot_data"

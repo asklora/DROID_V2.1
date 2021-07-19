@@ -111,7 +111,7 @@ def FillDayStatus(data):
     data["day_status"] = np.select(conditions, choices, default="missing")
     return data
 
-def master_ohlctr_update():
+def master_ohlctr_update(history=False):
     # do_function("master_ohlcvtr_update")
     print("Get Start Date")
     start_date = dlp_start_date()
@@ -131,6 +131,8 @@ def master_ohlctr_update():
         master_ohlcvtr_data = get_master_ohlcvtr_data(start_date)
         master_ohlcvtr_data = FillMissingDay(master_ohlcvtr_data, start_date, dateNow())
         master_ohlcvtr_data, new_tickers = CountDatapoint(master_ohlcvtr_data)
+    elif(history):
+        upsert_date = dlp_start_date()
     else:
         upsert_date = backdate_by_day(15)
     print("Fill Day Status")
