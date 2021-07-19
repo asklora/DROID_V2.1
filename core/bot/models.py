@@ -5,7 +5,8 @@ from django.db import models
 class BotType(models.Model):
     bot_type = models.TextField(primary_key=True)
     bot_name = models.TextField(blank=True, null=True)
-
+    bot_apps_name = models.TextField(blank=True, null=True)
+    bot_apps_description= models.TextField(blank=True, null=True)
     class Meta:
         managed = True
         db_table = "bot_type"
@@ -20,6 +21,7 @@ class BotOptionType(models.Model):
     bot_option_name = models.TextField(blank=True, null=True)
     time_to_exp = models.FloatField(blank=True, null=True)
     time_to_exp_str = models.TextField(blank=True, null=True)
+    duration = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = True
@@ -50,7 +52,6 @@ class BotBacktest(models.Model):
     targeted_profit = models.FloatField(blank=True, null=True)
     bot_return = models.FloatField(blank=True, null=True)
     event = models.TextField(blank=True, null=True)
-
     class Meta:
         managed = True
         db_table = "bot_backtest"

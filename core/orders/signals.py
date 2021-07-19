@@ -328,14 +328,13 @@ def order_signal(sender, instance, created, **kwargs):
                     # end portfolio / bot
                     if not order_position.is_live:
                         # add bot_cash_dividend on return
-                        amt = order_position.investment_amount  + order_position.final_pnl_amount + order_position.bot_cash_dividend
-
-                        commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
-                            amt, "sell", order_position.user_id)
+                        amt = order_position.investment_amount  + order_position.final_pnl_amount 
+                        return_amt = amt + order_position.bot_cash_dividend
+                        commissions_fee, stamp_duty_fee, total_fee = calculate_fee(amt, "sell", order_position.user_id)
                         TransactionHistory.objects.create(
                             balance_uid=order_position.user_id.wallet,
                             side="credit",
-                            amount=amt,
+                            amount=return_amt,
                             transaction_detail={
                                 "description": "bot return",
                                 "position": f"{order_position.position_uid}",
