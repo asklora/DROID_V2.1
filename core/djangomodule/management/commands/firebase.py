@@ -7,6 +7,7 @@ import pandas as pd
 import threading
 import time
 from firebase_admin import firestore
+import random
 # # Create an Event for notifying main thread.
 # callback_done = threading.Event()
 
@@ -25,8 +26,15 @@ from firebase_admin import firestore
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        mongo_universe_update(currency_code=["HKD","CNY","USD"])
-
+        # mongo_universe_update(currency_code=["HKD","CNY","USD"])
+        db = firestore.client()
+        ticker = ['0998.HK','0267.HK','0883.HK']
+        while True:
+            index = random.randint(0,2)
+            ref = db.collection('universe').document(ticker[index])
+            p = round(random.uniform(8,12),2)
+            ref.set({'price':{'latest_price':p}},merge=True)
+            time.sleep(1)
         # data = HotUniverse(Universe.objects.filter(currency_code__in=['HKD','CNY'],is_active=True),many=True).data
         # data = json.loads(json.dumps(data,indent=2))
         # df = pd.DataFrame(data)
