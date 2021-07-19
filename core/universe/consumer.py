@@ -56,8 +56,7 @@ class UniverseConsumer(WebsocketConsumer):
         process = [{proc.name:proc}  for proc in multiprocessing.active_children()]
         print('process >>>',process)
         print("disconnected >>>> ",[con['channel_name'] for con in Presence.objects.filter(room=self.room_id).values('channel_name')])
-        if not process:
-            self.close()
+        
     
     def force_close_connection(self,event):
         self.close()
