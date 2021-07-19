@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from general.date_process import dateNow
+from general.date_process import dateNow, str_to_date
 from general.sql_process import do_function
 from general.sql_output import fill_null_quandl_symbol
 from ingestion.master_multiple import master_multiple_update
@@ -60,6 +60,8 @@ class Command(BaseCommand):
         parser.add_argument("-currency_code", "--currency_code", nargs="+", help="currency_code", default=None)
 
     def handle(self, *args, **options):
+        d = str_to_date(dateNow())
+        d = d.strftime("%d")
         try:
             status = ""
             if (options["na"]):
@@ -109,8 +111,13 @@ class Command(BaseCommand):
                 
         
             if(options["worldscope"]):
-                status = "Worldscope Ingestion"
-                update_worldscope_quarter_summary_from_dsws(currency_code=options["currency_code"])
+                if(d in ["1", "2", "3", "4", "5", "6", "7"]):
+                    status = "Worldscope Ingestion"
+                    update_worldscope_quarter_summary_from_dsws(currency_code=options["currency_code"])
+                else:
+                    print(dateNow())
+                    print(d)
+                    print("Not in First MOnth Days")
 
             if(options["fundamentals_score"]):
                 status = "Fundamentals Score Ingestion"
@@ -154,32 +161,37 @@ class Command(BaseCommand):
                 weekly_migrations()
 
             if(options["monthly"]):
-                status = "Entity Type Ingestion"
-                update_entity_type_from_dsws()
-                status = "Lot Size Ingestion"
-                update_lot_size_from_dss()
-                status = "Currency Code Ingestion"
-                update_currency_code_from_dss()
-                status = "Industry Ingestion"
-                update_industry_from_dsws()
-                status = "Company Name Ingestion"
-                update_company_desc_from_dsws()
-                status = "Worldscope Identifier Ingestion"
-                update_worldscope_identifier_from_dsws()
-                status = "Ticker Symbol Ingestion"
-                update_ticker_symbol_from_dss()
-                status = "MIC Ingestion"
-                update_mic_from_dss()
-                status = "Dividend Ingestion"
-                dividend_updated()
-                status = "Dividend Daily Update"
-                dividend_daily_update()
-                status = "Fred Ingestion"
-                update_fred_data_from_fred()
-                status = "IBES Ingestion"
-                update_ibes_data_monthly_from_dsws()
-                status = "Macro Ingestion"
-                update_macro_data_monthly_from_dsws()
+                if(d in ["1", "2", "3", "4", "5", "6", "7"]):
+                    status = "Entity Type Ingestion"
+                    update_entity_type_from_dsws()
+                    status = "Lot Size Ingestion"
+                    update_lot_size_from_dss()
+                    status = "Currency Code Ingestion"
+                    update_currency_code_from_dss()
+                    status = "Industry Ingestion"
+                    update_industry_from_dsws()
+                    status = "Company Name Ingestion"
+                    update_company_desc_from_dsws()
+                    status = "Worldscope Identifier Ingestion"
+                    update_worldscope_identifier_from_dsws()
+                    status = "Ticker Symbol Ingestion"
+                    update_ticker_symbol_from_dss()
+                    status = "MIC Ingestion"
+                    update_mic_from_dss()
+                    status = "Dividend Ingestion"
+                    dividend_updated()
+                    status = "Dividend Daily Update"
+                    dividend_daily_update()
+                    status = "Fred Ingestion"
+                    update_fred_data_from_fred()
+                    status = "IBES Ingestion"
+                    update_ibes_data_monthly_from_dsws()
+                    status = "Macro Ingestion"
+                    update_macro_data_monthly_from_dsws()
+                else:
+                    print(dateNow())
+                    print(d)
+                    print("Not in First MOnth Days")
 
         except Exception as e:
             print("{} : === {} ERROR === : {}".format(dateNow(), status, e))
