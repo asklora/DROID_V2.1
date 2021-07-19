@@ -1,7 +1,7 @@
 from bot.data_download import get_new_ticker_from_classic_bot_backtest, get_new_ticker_from_uno_ucdc_bot_backtest
 from bot.calculate_bot import get_ucdc, get_uno
 from main_executive import daily_classic, daily_uno_ucdc
-from general.date_process import dateNow
+from general.date_process import dateNow, str_to_date
 from general.sql_query import get_active_universe, get_active_universe_droid1, get_universe_by_region
 from general.sql_output import fill_null_quandl_symbol
 from bot.preprocess import dividend_daily_update, interest_daily_update
@@ -352,6 +352,11 @@ def daily_ingestion(region_id=None):
 
 # Main Process
 if __name__ == "__main__":
+    d = str_to_date(dateNow())
+    print(d)
+    d = d.strftime("%d")
+    print(d)
+    print(type(d))
     # update_fundamentals_score_from_dsws(currency_code=["SGD"])
     # update_fundamentals_quality_value()
     # update_mic_from_dss()
