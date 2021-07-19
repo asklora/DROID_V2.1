@@ -417,7 +417,11 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
         report_to_slack(f"=== {client_name} NO TOPSTOCK IN PENDING ===")
 
 def hedge(currency=None, bot_tester=False):
-    report_to_slack(f"===  START HEDGE FOR {currency} ===")
+    if bot_tester:
+        report_to_slack(f"===  START HEDGE FOR {currency} Bot Tester ===")
+    else:
+        report_to_slack(f"===  START HEDGE FOR {currency} Bot Advisor ===")
+
     try:
         # LOGIN TO TRKD API
         rkd = RkdData()
@@ -430,60 +434,60 @@ def hedge(currency=None, bot_tester=False):
             hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name__in=["HANWHA","FELS"], extra_data__service_type__in=["bot_advisor",None]).values("user")]
         # GETTING LIVE POSITION
         positions = OrderPosition.objects.filter(is_live=True, ticker__currency_code=currency, user_id__in=hanwha)
-        #DISTINCT TICKER TO BE USED IN TRKD
-        ticker_list = [obj.ticker.ticker for obj in positions.distinct('ticker')]
-        # GET NEWEST PRICE FROM TRKD AND SAVE TO LATESTPRICE TABLE
-        rkd.get_quote(ticker_list,save=True)
-        
-        # PREPARE USING MULTIPROCESSING HEDGE GROUPS
-        group_celery_jobs = []
-        celery_jobs = celery_groups(group_celery_jobs)
+        if positions.exists():
+            #DISTINCT TICKER TO BE USED IN TRKD
+            ticker_list = [obj.ticker.ticker for obj in positions.distinct('ticker')]
+            # GET NEWEST PRICE FROM TRKD AND SAVE TO LATESTPRICE TABLE
+            rkd.get_quote(ticker_list,save=True)
+            
+            # PREPARE USING MULTIPROCESSING HEDGE GROUPS
+            group_celery_jobs = []
+            celery_jobs = celery_groups(group_celery_jobs)
 
 
-        # DO HEDGE
-        for position in positions:
-            position_uid = position.position_uid
-            market = TradingHours(mic=position.ticker.mic)
-            if market.is_open: # MARKET OPEN CHECK TRADINGHOURS
+            # DO HEDGE
+            for position in positions:
+                position_uid = position.position_uid
+                market = TradingHours(mic=position.ticker.mic)
+                if market.is_open: # MARKET OPEN CHECK TRADINGHOURS
 
 
-                # NOT USING YAHOO
-                # if currency == "USD":
-                    # get_quote_yahoo(position.ticker.ticker, use_symbol=True)
-                # else:
-                #     get_quote_yahoo(position.ticker.ticker, use_symbol=False)
-                # END NOT USING YAHOO
+                    # NOT USING YAHOO
+                    # if currency == "USD":
+                        # get_quote_yahoo(position.ticker.ticker, use_symbol=True)
+                    # else:
+                    #     get_quote_yahoo(position.ticker.ticker, use_symbol=False)
+                    # END NOT USING YAHOO
 
 
-                # ENCHANCE CODE HERE, MAKE MULTIPROCESSING INSTEAD OF WAITING ONE BY ONE HEDGE POSITION
+                    # ENCHANCE CODE HERE, MAKE MULTIPROCESSING INSTEAD OF WAITING ONE BY ONE HEDGE POSITION
 
-                # WARNING!!!!!!!!!!!
-                # BELOW THIS CODE USE CELERY TO RUN
-                # TO RUN NORMAL PLEASE UNCOMMENT LINE 460,463,466 and COMMENT LINE 461,464,465
-                # will add function to check run in production machine and local for debuging
-                if (position.bot.is_uno()):
-                    # uno_position_check(position_uid)
-                    group_celery_jobs.append(uno_position_check.s(position_uid))
-                elif (position.bot.is_ucdc()):
-                    # ucdc_position_check(position_uid)
-                    group_celery_jobs.append(ucdc_position_check.s(position_uid))
-                elif (position.bot.is_classic()):
-                    # classic_position_check(position_uid)
-                    group_celery_jobs.append(classic_position_check.s(position_uid))
-            else:
-                report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
-        
-        if group_celery_jobs:
-            result = celery_jobs.apply_async()
-            while not result.successful():
-                
-                if result.failed():
-                    report_to_slack(f"=== THERE IS FAIL IN HEDGE TASK ===",channel='#error-log')
-                    return {'err':'task group failed'}
-                tm.sleep(2)
+                    # WARNING!!!!!!!!!!!
+                    # BELOW THIS CODE USE CELERY TO RUN
+                    # TO RUN NORMAL PLEASE UNCOMMENT LINE 460,463,466 and COMMENT LINE 461,464,465
+                    # will add function to check run in production machine and local for debuging
+                    if (position.bot.is_uno()):
+                        # uno_position_check(position_uid)
+                        group_celery_jobs.append(uno_position_check.s(position_uid))
+                    elif (position.bot.is_ucdc()):
+                        # ucdc_position_check(position_uid)
+                        group_celery_jobs.append(ucdc_position_check.s(position_uid))
+                    elif (position.bot.is_classic()):
+                        # classic_position_check(position_uid)
+                        group_celery_jobs.append(classic_position_check.s(position_uid))
+                else:
+                    report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
+            
+            if group_celery_jobs:
+                result = celery_jobs.apply_async()
+                while not result.successful():
+                    if result.failed():
+                        report_to_slack(f"=== THERE IS FAIL IN HEDGE TASK ===",channel='#error-log')
+                        return {'err':'task group failed'}
+                    tm.sleep(2)
 
-            if result.successful():         
-                send_csv_hanwha(currency=currency, client_name="HANWHA", bot_tester=bot_tester)
+                if result.successful():         
+                    send_csv_hanwha(currency=currency, client_name="HANWHA", bot_tester=bot_tester)
     
     except Exception as e:
         err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN HEDGE Function {currency} {status} ===",error_message=str(e))
