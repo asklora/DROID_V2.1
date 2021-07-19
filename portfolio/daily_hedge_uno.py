@@ -4,6 +4,7 @@ from bot import uno
 from core.master.models import LatestPrice, MasterTac, MasterOhlcvtr
 from core.orders.models import OrderPosition, PositionPerformance, Order
 from bot.calculate_bot import (
+    check_dividend_paid,
     get_hedge_detail,
     get_trq,
     get_strike_barrier,
@@ -101,9 +102,8 @@ def create_performance(price_data, position, latest_price=False):
     # current_pnl_ret = (bot_cash_balance + current_investment_amount -
     #                    position.investment_amount) / position.investment_amount
     current_pnl_ret = current_pnl_amt / position.investment_amount
-
+    position.bot_cash_dividend = check_dividend_paid(position.ticker, trading_day, share_num, position.bot_cash_dividend)
     position.bot_cash_balance = round(bot_cash_balance, 2)
-
     position.save()
     digits = max(min(5-len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)
