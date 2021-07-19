@@ -22,7 +22,8 @@ from general.table_name import (
     get_currency_table_name,
     get_master_ohlcvtr_table_name,
     get_master_tac_table_name,
-    get_orders_position_table_name, 
+    get_orders_position_table_name,
+    get_universe_rating_history_table_name, 
     get_universe_table_name, 
     get_universe_client_table_name, 
     get_universe_rating_table_name,
@@ -171,63 +172,103 @@ def get_current_assets(user_id):
     current_assets = round(total_current_value + user_balance, 2)
     return current_assets
 
-def another_top_stock(currency_code, client_uid, top_distinct_ticker_list, top_pick_distinct, threshold):
+def another_top_stock(currency_code, client_uid, top_distinct_ticker_list, top_pick_distinct, threshold, top_pick_stock):
     #top stocks without distince industries (excluding [top_distinct_ticker_list])
-    table_name = get_universe_rating_table_name()
-    query = f"select f3.ticker, f3.industry_code, f3.ribbon_score, f3.wts_rating, f3.wts_score, (now())::date as forward_date "
-    query += f"from (select f2.ticker, f2.industry_code, f2.wts_rating, f2.wts_score, (f2.st + f2.mt + f2.gq) as ribbon_score "
-    query += f"from (select f1.ticker, f1.industry_code, "
-    query += f"CASE WHEN (f1.wts_rating) >= 5 THEN 1 ELSE 0 END AS st, "
-    query += f"CASE WHEN (f1.dlp_1m) >= 5 THEN 1 ELSE 0 END AS mt, "
-    query += f"CASE WHEN (f1.fundamentals_quality) >= 5 THEN 1 ELSE 0 END AS gq, "
-    query += f"f1.wts_rating + f1.dlp_1m + f1.fundamentals_quality AS wts_score, f1.wts_rating "
-    query += f"from (select ur.ticker, ur.wts_rating, ur.dlp_1m, ur.fundamentals_quality, u.industry_code "
-    query += f"from {table_name} ur inner join {get_universe_table_name()} u on u.ticker = ur.ticker "
+    table_name = get_universe_rating_history_table_name()
+
+    query = f"select ticker, ai_score, trading_day, industry_code, (now())::date as forward_date, rn from ( "
+    query += f"select univ.ticker, urh.ai_score, urh.trading_day, univ.industry_code, "
+    query += f"row_number() OVER (PARTITION BY univ.industry_code ORDER BY urh.ai_score DESC) AS rn "
+    query += f"from {get_universe_table_name()} univ inner join {table_name} urh "
+    query += f"on urh.ticker=univ.ticker and urh.trading_day=(select max(urh2.trading_day) from {table_name} urh2) "
     if(type(threshold) != type(None)):
-        query += f"inner join (select ohlcv.ticker, ohlcv.trading_day,ohlcv.close from master_ohlcvtr ohlcv inner join  "
-        query += f"(select mo.ticker, max(mo.trading_day) as trading_day "
-        query += f"from master_ohlcvtr mo where mo.close is not null group by mo.ticker) mo on ohlcv.ticker = mo.ticker and  "
-        query += f"ohlcv.trading_day=mo.trading_day where ohlcv.close<{threshold}) filter "
-        query += f"on u.ticker = filter.ticker "
-    query += f"where ur.ticker not in {tuple_data(top_distinct_ticker_list)} "
+        query += f"inner join (select ohlcv.ticker, ohlcv.trading_day,ohlcv.close from {get_master_ohlcvtr_table_name()} ohlcv inner join "
+        query += f"(select mo.ticker, max(mo.trading_day) as trading_day from {get_master_ohlcvtr_table_name()} mo where mo.close is not null group by mo.ticker) mo "
+        query += f"on ohlcv.ticker = mo.ticker and ohlcv.trading_day=mo.trading_day where ohlcv.close<{threshold}) filter "
+        query += f"on univ.ticker = filter.ticker "
+    query += f"where urh.ticker not in {tuple_data(top_distinct_ticker_list)} "
     check = check_currency_code(currency_code, client_uid)
     if (check != ""):
-        query += f"and ur.{check}"
-    query += f") f1) f2) f3 "
-    #top total ribbons, then wts score, then combined score
-    query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit {25-top_pick_distinct} "
+        query += f"and urh.{check}"
+    query += f"order by ai_score DESC) result "
+    query += f"where result.rn = 1 "
+    query += f"order by ai_score DESC limit {top_pick_stock-top_pick_distinct}; "
+    # print(query)
+
+    # table_name = get_universe_rating_table_name()
+    # query = f"select f3.ticker, f3.industry_code, f3.ribbon_score, f3.wts_rating, f3.wts_score, (now())::date as forward_date "
+    # query += f"from (select f2.ticker, f2.industry_code, f2.wts_rating, f2.wts_score, (f2.st + f2.mt + f2.gq) as ribbon_score "
+    # query += f"from (select f1.ticker, f1.industry_code, "
+    # query += f"CASE WHEN (f1.wts_rating) >= 5 THEN 1 ELSE 0 END AS st, "
+    # query += f"CASE WHEN (f1.dlp_1m) >= 5 THEN 1 ELSE 0 END AS mt, "
+    # query += f"CASE WHEN (f1.fundamentals_quality) >= 5 THEN 1 ELSE 0 END AS gq, "
+    # query += f"f1.wts_rating + f1.dlp_1m + f1.fundamentals_quality AS wts_score, f1.wts_rating "
+    # query += f"from (select ur.ticker, ur.wts_rating, ur.dlp_1m, ur.fundamentals_quality, u.industry_code "
+    # query += f"from {table_name} ur inner join {get_universe_table_name()} u on u.ticker = ur.ticker "
+    # if(type(threshold) != type(None)):
+    #     query += f"inner join (select ohlcv.ticker, ohlcv.trading_day,ohlcv.close from {get_master_ohlcvtr_table_name()} ohlcv inner join  "
+    #     query += f"(select mo.ticker, max(mo.trading_day) as trading_day "
+    #     query += f"from {get_master_ohlcvtr_table_name()} mo where mo.close is not null group by mo.ticker) mo on ohlcv.ticker = mo.ticker and  "
+    #     query += f"ohlcv.trading_day=mo.trading_day where ohlcv.close<{threshold}) filter "
+    #     query += f"on u.ticker = filter.ticker "
+    # query += f"where ur.ticker not in {tuple_data(top_distinct_ticker_list)} "
+    # check = check_currency_code(currency_code, client_uid)
+    # if (check != ""):
+    #     query += f"and ur.{check}"
+    # query += f") f1) f2) f3 "
+    # #top total ribbons, then wts score, then combined score
+    # query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit {top_pick_stock-top_pick_distinct} "
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data
 
-def top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct, threshold):
+def top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct, threshold, top_pick_stock):
     # top (top_pick_distinct) stocks with distinct industries
-    table_name = get_universe_rating_table_name()
-    query = f"select f5.ticker, f5.industry_code, f5.ribbon_score, f5.wts_rating, f5.wts_score, (now())::date as forward_date "
-    query += f"from (select distinct on (f4.industry_code) f4.ticker, f4.industry_code, f4.ribbon_score, f4.wts_rating, f4.wts_score "
-    query += f"from (select f3.ticker, f3.industry_code, f3.ribbon_score, f3.wts_rating, f3.wts_score,  "
-    query += f"row_number() OVER (PARTITION BY f3.industry_code ORDER BY "
-    query += f"f3.ribbon_score DESC, f3.wts_rating DESC, f3.wts_score DESC, f3.ticker ASC) AS rn "
-    query += f"from (select f2.ticker, f2.industry_code, f2.wts_rating, f2.wts_score, (f2.st + f2.mt + f2.gq) as ribbon_score "
-    query += f"from (select f1.ticker, f1.industry_code, "
-    query += f"CASE WHEN (f1.wts_rating) >= 5 THEN 1 ELSE 0 END AS st, "
-    query += f"CASE WHEN (f1.dlp_1m) >= 5 THEN 1 ELSE 0 END AS mt, "
-    query += f"CASE WHEN (f1.fundamentals_quality) >= 5 THEN 1 ELSE 0 END AS gq, "
-    query += f"f1.wts_rating + f1.dlp_1m + f1.fundamentals_quality AS wts_score, f1.wts_rating "
-    query += f"from (select ur.ticker, ur.wts_rating, ur.dlp_1m, ur.fundamentals_quality, u.industry_code "
-    query += f"from {table_name} ur inner join {get_universe_table_name()} u on u.ticker = ur.ticker "
+    table_name = get_universe_rating_history_table_name()
+
+    query = f"select ticker, ai_score, trading_day, industry_code, (now())::date as forward_date, rn from ( "
+    query += f"select univ.ticker, urh.ai_score, urh.trading_day, univ.industry_code, "
+    query += f"row_number() OVER (PARTITION BY univ.industry_code ORDER BY urh.ai_score DESC) AS rn "
+    query += f"from {get_universe_table_name()} univ inner join {table_name} urh "
+    query += f"on urh.ticker=univ.ticker and urh.trading_day=(select max(urh2.trading_day) from {table_name} urh2) "
     if(type(threshold) != type(None)):
-        query += f"inner join (select ohlcv.ticker, ohlcv.trading_day,ohlcv.close from master_ohlcvtr ohlcv inner join  "
-        query += f"(select mo.ticker, max(mo.trading_day) as trading_day "
-        query += f"from master_ohlcvtr mo where mo.close is not null group by mo.ticker) mo on ohlcv.ticker = mo.ticker and  "
-        query += f"ohlcv.trading_day=mo.trading_day where ohlcv.close<{threshold}) filter "
-        query += f"on u.ticker = filter.ticker "
+        query += f"inner join (select ohlcv.ticker, ohlcv.trading_day,ohlcv.close from {get_master_ohlcvtr_table_name()} ohlcv inner join "
+        query += f"(select mo.ticker, max(mo.trading_day) as trading_day from {get_master_ohlcvtr_table_name()} mo where mo.close is not null group by mo.ticker) mo "
+        query += f"on ohlcv.ticker = mo.ticker and ohlcv.trading_day=mo.trading_day where ohlcv.close<{threshold}) filter "
+        query += f"on univ.ticker = filter.ticker "
     check = check_currency_code(currency_code, client_uid)
     if (check != ""):
-        query += f"where ur.{check}"
-    query += f") f1) f2) f3 "
-    query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC) f4 where rn=1) f5 "
-    #top total ribbons, then wts score, then combined score
-    query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit {top_pick_distinct}; "
+        query += f"where urh.{check}"
+    query += f"order by ai_score DESC) result "
+    query += f"where result.rn = 1 "
+    query += f"order by ai_score DESC limit {top_pick_distinct}; "
+    # print(query)
+    # table_name = get_universe_rating_table_name()
+    # query = f"select f5.ticker, f5.industry_code, f5.ribbon_score, f5.wts_rating, f5.wts_score, (now())::date as forward_date "
+    # query += f"from (select distinct on (f4.industry_code) f4.ticker, f4.industry_code, f4.ribbon_score, f4.wts_rating, f4.wts_score "
+    # query += f"from (select f3.ticker, f3.industry_code, f3.ribbon_score, f3.wts_rating, f3.wts_score,  "
+    # query += f"row_number() OVER (PARTITION BY f3.industry_code ORDER BY "
+    # query += f"f3.ribbon_score DESC, f3.wts_rating DESC, f3.wts_score DESC, f3.ticker ASC) AS rn "
+    # query += f"from (select f2.ticker, f2.industry_code, f2.wts_rating, f2.wts_score, (f2.st + f2.mt + f2.gq) as ribbon_score "
+    # query += f"from (select f1.ticker, f1.industry_code, "
+    # query += f"CASE WHEN (f1.wts_rating) >= 5 THEN 1 ELSE 0 END AS st, "
+    # query += f"CASE WHEN (f1.dlp_1m) >= 5 THEN 1 ELSE 0 END AS mt, "
+    # query += f"CASE WHEN (f1.fundamentals_quality) >= 5 THEN 1 ELSE 0 END AS gq, "
+    # query += f"f1.wts_rating + f1.dlp_1m + f1.fundamentals_quality AS wts_score, f1.wts_rating "
+    # query += f"from (select ur.ticker, ur.wts_rating, ur.dlp_1m, ur.fundamentals_quality, u.industry_code "
+    # query += f"from {table_name} ur inner join {get_universe_table_name()} u on u.ticker = ur.ticker "
+    # if(type(threshold) != type(None)):
+    #     query += f"inner join (select ohlcv.ticker, ohlcv.trading_day,ohlcv.close from {get_master_ohlcvtr_table_name()} ohlcv inner join  "
+    #     query += f"(select mo.ticker, max(mo.trading_day) as trading_day "
+    #     query += f"from {get_master_ohlcvtr_table_name()} mo where mo.close is not null group by mo.ticker) mo on ohlcv.ticker = mo.ticker and  "
+    #     query += f"ohlcv.trading_day=mo.trading_day where ohlcv.close<{threshold}) filter "
+    #     query += f"on u.ticker = filter.ticker "
+    # check = check_currency_code(currency_code, client_uid)
+    # if (check != ""):
+    #     query += f"where ur.{check}"
+    # query += f") f1) f2) f3 "
+    # query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC) f4 where rn=1) f5 "
+    # #top total ribbons, then wts score, then combined score
+    # query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit {top_pick_distinct}; "
     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
     return data
 
@@ -449,7 +490,7 @@ def populate_fels_bot(currency_code=None, client_name="FELS", time_to_exp=[0.076
     fels_pick.to_csv("fels_pick.csv")
     upsert_data_to_database(fels_pick, get_client_top_stock_table_name(), "uid", how="ignore", cpu_count=True, Text=True)
 
-def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7, threshold=300):
+def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7, threshold=300, top_pick_stock=25):
     print("{} : === CLIENT WEEKLY PICK STARTED ===".format(dateNow()))
     client_uid = get_client_uid(client_name=client_name)
     if(client_name == "FELS"):
@@ -458,10 +499,10 @@ def test_pick(currency_code=None, client_name="HANWHA", top_pick_distinct=7, thr
     else:
         threshold = None
     # get the top (top_pick_distinct=7) distinct industry stocks
-    top_stock_distinct = top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct, threshold)
+    top_stock_distinct = top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct, threshold, top_pick_stock)
     print(top_stock_distinct)
     # get the rest (indusries can overlap)
-    top_stock_not_distinct = another_top_stock(currency_code, client_uid, top_stock_distinct["ticker"], top_pick_distinct, threshold)
+    top_stock_not_distinct = another_top_stock(currency_code, client_uid, top_stock_distinct["ticker"], top_pick_distinct, threshold, top_pick_stock)
     print(top_stock_not_distinct)
     top_stock = top_stock_distinct.append(top_stock_not_distinct)
     top_stock = top_stock.reset_index(inplace=False, drop=True)
@@ -732,7 +773,7 @@ if __name__ == '__main__':
     # test_pick(currency_code=["EUR"], client_name="FELS")
     # test_pick(currency_code=["USD"], client_name="HANWHA")
     # test_pick(currency_code=["KRW"], client_name="HANWHA")
-    # test_pick(currency_code=["HKD"], client_name="HANWHA")
+    test_pick(currency_code=["HKD"], client_name="HANWHA")
     # test_pick(currency_code=["CNY"], client_name="HANWHA")
 
     # populate_fels_bot(currency_code=["USD"], client_name="FELS", top_pick = 5)
@@ -751,18 +792,18 @@ if __name__ == '__main__':
     # populate_bot_advisor(currency_code=["CNY"], client_name="HANWHA", capital="large")
     # populate_bot_advisor(currency_code=["CNY"], client_name="HANWHA", capital="large_margin")
 
-    populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
-    populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
-    populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
+    # populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
+    # populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
+    # populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
 
-    populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
-    populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
-    populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
+    # populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
+    # populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
+    # populate_bot_tester(currency_code=["USD"], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
 
-    populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
-    populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
-    populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
+    # populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="UNO", top_pick=1, top_pick_stock=25)
+    # populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="UCDC", top_pick=1, top_pick_stock=25)
+    # populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="small", bot="CLASSIC", top_pick=1, top_pick_stock=25)
     
-    populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
-    populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
-    populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
+    # populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="UNO", top_pick=2, top_pick_stock=25)
+    # populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="UCDC", top_pick=2, top_pick_stock=25)
+    # populate_bot_tester(currency_code=["KRW"], client_name="HANWHA", capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)

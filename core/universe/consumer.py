@@ -1,14 +1,15 @@
 import json
 from channels.generic.websocket import WebsocketConsumer,AsyncWebsocketConsumer
-from requests.api import patch
 from datasource.rkd import RkdStream
 import asyncio
 import multiprocessing
 import os
 import signal
+from channels_presence.models import Room,Presence
+from channels_presence.decorators import touch_presence
 
 class UniverseConsumer(WebsocketConsumer):
-    streaming_counter ={}
+    room_id =None
 
 
     def connect(self):
@@ -28,6 +29,8 @@ class UniverseConsumer(WebsocketConsumer):
                     'status':200
                 }
                 ))
+        Room.objects.add(self.room_group_name,self.channel_name)
+        self.room_id = Room.objects.get(channel_name=self.room_group_name)
 
     def disconnect(self, close_code):
         # Leave room group
@@ -35,23 +38,28 @@ class UniverseConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         ))
+        Room.objects.remove(self.room_group_name,self.channel_name)
+
         for t in multiprocessing.active_children():
-            
             if t.name == self.room_group_name:
-                if self.room_group_name in self.streaming_counter:
-                    if self.channel_name in self.streaming_counter[self.room_group_name]['channel']:  self.streaming_counter[self.room_group_name]['channel'].remove(self.channel_name)
-                    self.streaming_counter[self.room_group_name]['connection'] = len(self.streaming_counter[self.room_group_name]['channel'])
-                    if self.streaming_counter[self.room_group_name]['connection'] < 1:
+                try:
+                    connection_list = Presence.objects.filter(room=self.room_id)
+                    if not connection_list.exists():
                         print(t.name,'terminated')
                         t.terminate()
                         if t.is_alive():
                             print(t.pid,'<<<pid')
                             os.kill(t.pid, signal.SIGKILL)
+                except Room.DoesNotExist:
+                    pass
                         
         process = [{proc.name:proc}  for proc in multiprocessing.active_children()]
         print('process >>>',process)
-        print('disconnect >>> ',self.streaming_counter)
-        
+        print("disconnected >>>> ",[con['channel_name'] for con in Presence.objects.filter(room=self.room_id).values('channel_name')])
+    
+    def force_close_connection(self,event):
+        self.close()
+
     # Receive message from WebSocket
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -66,6 +74,14 @@ class UniverseConsumer(WebsocketConsumer):
         ))
 
     
+    @touch_presence
+    def ping(self,event):
+        print("ping event",event)
+        
+
+    
+
+
     # Receive message from room group
     def broadcastmessage(self, event):
         # Send message to WebSocket
@@ -83,23 +99,14 @@ class UniverseConsumer(WebsocketConsumer):
                 proc = rkd.thread_stream()
                 proc.daemon=True
                 proc.start()
-            
-            if self.room_group_name in self.streaming_counter:
-                pass
-            else:
-                self.streaming_counter[self.room_group_name] ={'connection':0,'channel':[]}
-            if not self.channel_name  in self.streaming_counter[self.room_group_name]['channel']:
-                self.streaming_counter[self.room_group_name]['channel'].append(self.channel_name)
-                asyncio.run(self.channel_layer.send(
-                self.channel_name,
-                {
-                    'type':'broadcastmessage',
-                    'message': f'streaming {event["message"]} from firebase',
-                    'status':200
-                }
-                ))
-            self.streaming_counter[self.room_group_name]['connection']=len(self.streaming_counter[self.room_group_name]['channel'])
-            
+            asyncio.run(self.channel_layer.send(
+            self.channel_name,
+            {
+                'type':'broadcastmessage',
+                'message': f'streaming {event["message"]} from firebase',
+                'status':200
+            }
+            ))
         else:
             asyncio.run(self.channel_layer.send(
                 self.channel_name,
@@ -110,8 +117,7 @@ class UniverseConsumer(WebsocketConsumer):
                 }
                 ))
             self.disconnect(400)
-
-        print("connected >>>> ",self.streaming_counter)
+        print("connected >>>> ",[con['channel_name'] for con in Presence.objects.filter(room=self.room_id).values('channel_name')])
         print("payload >>>> ",event['message'])
 
 

@@ -9,7 +9,7 @@ from getpass import GetPassWarning
 from collections import OrderedDict
 from general.date_process import datetimeNow
 from general.slack import report_to_slack
-from global_vars import DSS_PASSWORD, DSS_USERNAME, REPORT_INTRADAY, REPORT_HISTORY, URL_Extrations, URL_AuthToken,URL_Extrations_with_note
+from global_vars import DSS_PASSWORD, DSS_USERNAME, REPORT_INTRADAY, REPORT_HISTORY, REPORT_INDEXMEMBER, REPORT_EOD, URL_Extrations, URL_AuthToken,URL_Extrations_with_note
 # =============================================================================
 
 def getAuthToken():
@@ -40,13 +40,15 @@ def get_data_from_reuters(start_date, end_date, authToken, jsonFileName, stocks,
     print(datetimeNow()+ " " + "*** Step 4 Append each instrument to the InstrumentIdentifiers array")
     for _inst in stocks:
         if(report == REPORT_INTRADAY):
-            _jReqBody["ExtractionRequest"]["IdentifierList"]["InstrumentIdentifiers"].append(
-                {"IdentifierType": "Ric", "Identifier": _inst})
+            _jReqBody["ExtractionRequest"]["IdentifierList"]["InstrumentIdentifiers"].append({"IdentifierType": "Ric", "Identifier": _inst})
+        elif(report == REPORT_HISTORY):
+            _jReqBody["ExtractionRequest"]["IdentifierList"]["InstrumentIdentifiers"].append({"IdentifierType": "Ric", "Identifier": _inst})
+            _jReqBody["ExtractionRequest"]["Condition"] = {"QueryStartDate": start_date + "T00:00:00.000Z", "QueryEndDate": end_date + "T00:00:00.000Z"}
+        elif(report == REPORT_INDEXMEMBER):
+            _jReqBody["ExtractionRequest"]["IdentifierList"]["InstrumentIdentifiers"].append({"IdentifierType": "ChainRIC", "Identifier": _inst})
         else:
-            _jReqBody["ExtractionRequest"]["IdentifierList"]["InstrumentIdentifiers"].append(
-                {"IdentifierType": "Ric", "Identifier": _inst})
-            _jReqBody["ExtractionRequest"]["Condition"] = {"QueryStartDate": start_date + "T00:00:00.000Z",
-                                                    "QueryEndDate": end_date + "T00:00:00.000Z"}
+            _jReqBody["ExtractionRequest"]["IdentifierList"]["InstrumentIdentifiers"].append({"IdentifierType": "Ric", "Identifier": _inst})
+            _jReqBody["ExtractionRequest"]["Condition"] = {"QueryStartDate": start_date + "T00:00:00.000Z", "QueryEndDate": end_date + "T00:00:00.000Z"}
 
     _extractReqHeader = makeExtractHeader(_token)
     # Step 5

@@ -51,6 +51,8 @@ FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLH0A1HYBBEY"
 QUANDL_URL="https://www.quandl.com/api/v3/datasets/OPT"
 QUANDL_KEY="waqWZxLx2dx84mTcsn_w"
 
+REPORT_INDEXMEMBER="Index_Member"
+REPORT_EOD="End_Of_Day"
 REPORT_INTRADAY="Intraday_Pricing"
 REPORT_HISTORY="Price_History"
 

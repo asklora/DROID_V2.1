@@ -267,7 +267,7 @@ class Universe(models.Model):
         db_table = "universe"
         indexes = [models.Index(fields=['ticker_symbol','currency_code','mic'])]
         
-
+#test
 
 class UniverseRating(models.Model):
     ticker = models.OneToOneField(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="ticker_rating_ticker", primary_key=True)
