@@ -352,11 +352,6 @@ def daily_ingestion(region_id=None):
 
 # Main Process
 if __name__ == "__main__":
-    d = str_to_date(dateNow())
-    print(d)
-    d = d.strftime("%d")
-    print(d)
-    print(type(d))
     # update_fundamentals_score_from_dsws(currency_code=["SGD"])
     # update_fundamentals_quality_value()
     # update_mic_from_dss()
