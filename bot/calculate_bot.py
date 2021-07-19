@@ -547,6 +547,8 @@ def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
     result = result.drop(columns=["IdentifierType", "Identifier"])
     result = result.reset_index(inplace=False)
     if(len(result) > 0):
+        print(str(result.loc[0, "Dividend Ex Date"]))
+        print(str(trading_day))
         if(str(result.loc[0, "Dividend Ex Date"]) == str(trading_day)):
             return bot_cash_dividend + (result.loc[0, "Dividend Paid"] * share_num)
     return bot_cash_dividend
