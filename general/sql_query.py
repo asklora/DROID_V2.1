@@ -63,7 +63,7 @@ def check_ticker_currency_code_query(ticker=None, currency_code=None, active=Tru
     query = ""
     if(active):
         if type(ticker) != type(None):
-            query += f"ticker in (select ticker from {get_universe_table_name()} where and ticker in {tuple_data(ticker)}) "
+            query += f"ticker in (select ticker from {get_universe_table_name()} where is_active=True and ticker in {tuple_data(ticker)}) "
         elif type(currency_code) != type(None):
             query += f"ticker in (select ticker from {get_universe_table_name()} where is_active=True and currency_code in {tuple_data(currency_code)}) "
     else:

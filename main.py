@@ -353,7 +353,7 @@ def daily_ingestion(region_id=None):
 
 # Main Process
 if __name__ == "__main__":
-    status = ticker_changes("SLA.L", "ABDN.L")
+    # status = ticker_changes("SLA.L", "ABDN.L")
     # update_fundamentals_score_from_dsws(currency_code=["SGD"])
     # update_fundamentals_quality_value()
     # update_mic_from_dss()
@@ -381,7 +381,7 @@ if __name__ == "__main__":
     # update_ticker_symbol_from_dss(ticker=None)
     # do_function("universe_populate")
     # populate_intraday_latest_price(currency_code=["KRW"])
-    # populate_intraday_latest_price(ticker=["TCOM.O"])
+    # populate_intraday_latest_price(ticker=["ABDN.L"])
     # populate_latest_price(currency_code=["CNY"])
     # ticker = get_universe_by_region(region_id="na")
     # populate_latest_price(ticker=ticker["ticker"])

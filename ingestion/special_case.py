@@ -1,5 +1,5 @@
 import sys
-from ingestion.master_data import populate_latest_price
+from ingestion.master_data import populate_intraday_latest_price, populate_latest_price
 from ingestion.master_multiple import master_multiple_update
 from ingestion.master_tac import master_tac_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
@@ -41,7 +41,9 @@ from general.table_name import (
     get_fundamental_score_table_name,
     get_latest_bot_data_table_name,
     get_latest_bot_update_table_name,
-    get_latest_vol_table_name, 
+    get_latest_vol_table_name,
+    get_orders_position_table_name,
+    get_orders_table_name, 
     get_quandl_table_name, 
     get_universe_client_table_name, 
     get_universe_consolidated_table_name,
@@ -65,10 +67,11 @@ def ticker_changes(old_ticker, new_ticker):
     consolidated_universe = get_active_universe_consolidated_by_field(ticker=new_ticker)
     print(consolidated_universe)
     do_function("universe_populate")
+
+
     universe = get_active_universe(ticker=[new_ticker], active=False)
     if(len(universe) == 0):
         sys.exit("Please Make Sure Ticker in Universe Table")
-    
     ticker = universe["ticker"].to_list()
     update_ticker_name_from_dsws(ticker=ticker)
     update_ticker_symbol_from_dss(ticker=ticker)
@@ -79,6 +82,8 @@ def ticker_changes(old_ticker, new_ticker):
     update_company_desc_from_dsws(ticker=ticker)
     update_mic_from_dss(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
+
+
     universe = get_active_universe(ticker=[new_ticker], active=False)
     fill_null_company_desc_with_ticker_name()
     fill_null_quandl_symbol()
@@ -102,12 +107,6 @@ def ticker_changes(old_ticker, new_ticker):
     data["ticker"] = universe.loc[0, "ticker"]
     data[uid] = data[uid].str.replace(old_ticker_uid, new_ticker_uid, regex=True)
     upsert_data_to_database(data, table_name, uid, how="update", Text=True)
-
-    do_function("special_cases_1")
-    do_function("master_ohlcvtr_update")
-    master_ohlctr_update(history=True)
-    master_tac_update()
-    master_multiple_update()
 
     table_name = get_data_vol_surface_table_name()
     uid = "uid"
@@ -265,6 +264,24 @@ def ticker_changes(old_ticker, new_ticker):
     data["ticker"] = universe.loc[0, "ticker"]
     upsert_data_to_database(data, table_name, uid, how="update", Text=True)
 
-    populate_latest_price(ticker=[new_ticker])
+    table_name = get_orders_position_table_name()
+    uid = "position_uid"
+    data = get_data_from_table_name(table_name, ticker=[old_ticker], active=False)
+    data["ticker"] = universe.loc[0, "ticker"]
+    upsert_data_to_database(data, table_name, uid, how="update", Text=True)
+
+    table_name = get_orders_table_name()
+    uid = "order_uid"
+    data = get_data_from_table_name(table_name, ticker=[old_ticker], active=False)
+    data["ticker"] = universe.loc[0, "ticker"]
+    upsert_data_to_database(data, table_name, uid, how="update", Text=True)
+
+    do_function("special_cases_1")
+    do_function("master_ohlcvtr_update")
+    master_ohlctr_update(history=True)
+    master_tac_update()
+    master_multiple_update()
+    populate_intraday_latest_price(ticker=[new_ticker])
+    # populate_latest_price(ticker=[new_ticker])
     
     report_to_slack("{} : === {} CHANGES TO {} ===".format(datetimeNow(), old_ticker, new_ticker))
