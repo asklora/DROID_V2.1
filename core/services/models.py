@@ -3,10 +3,68 @@ from core.djangomodule.models import BaseTimeStampModel
 from general.slack import report_to_slack
 import traceback as trace
 import sys
-
+from django.utils.timezone import now
+from datetime import timedelta
 from django.urls import reverse
-from django.contrib.contenttypes.models import ContentType
+from channels_presence.models import Room,Presence,get_channel_layer
+from django.conf import settings
+import asyncio
 
+channel_layer = get_channel_layer()
+
+
+class CustomRoomManager(models.Manager):
+
+    def prune_presences(self, channel_layer=None, age=None):
+        for room in ChannelPresence.objects.all():
+            room.custom_prune_presences(age)
+class ChannelPresence(Room):
+    objects =CustomRoomManager()
+    class Meta:
+        proxy =True
+    
+    
+    
+    def remove_presence_inactive(self, channel_name=None, presence=None):
+        if presence is None:
+            try:
+                presence = Presence.objects.get(room=self, channel_name=channel_name)
+            except Presence.DoesNotExist:
+                return
+
+        asyncio.run(channel_layer.send(
+               presence.channel_name,
+                {
+                    'type':'broadcastmessage',
+                    'message': f'no active connection, connection closed',
+                    'status':400
+                }
+                ))
+        asyncio.run(channel_layer.send(
+               presence.channel_name,
+                {
+                    'type':'force_close_connection'
+                    
+                }
+                ))
+        asyncio.run(channel_layer.group_discard(
+            self.channel_name, presence.channel_name
+        ))
+        presence.delete()
+        self.broadcast_changed(removed=presence)
+
+
+
+    def custom_prune_presences(self, age_in_seconds=None):
+        if age_in_seconds is None:
+            age_in_seconds = getattr(settings, "CHANNELS_PRESENCE_MAX_AGE", 60)
+        presence = Presence.objects.filter(
+            room=self, last_seen__lt=now() - timedelta(seconds=age_in_seconds)
+        )
+        if presence.count() > 0:
+            for inactive in presence:
+                self.remove_presence_inactive(channel_name=inactive.channel_name)
+        presence.delete()
 
 
 class ThirdpartyCredentials(BaseTimeStampModel):

@@ -420,7 +420,9 @@ class RkdStream(RkdData):
                                                      on_close=self.on_close,
                                                      on_open = self.on_open,
                                                      subprotocols=['tr_json2'])
-        self.layer = get_channel_layer()
+        # self.layer = get_channel_layer()
+    
+    
     
     @classmethod
     def trkd_stream_initiate(cls,ticker):
@@ -537,7 +539,7 @@ class RkdStream(RkdData):
             message['Fields']['ticker'] = message['Key']['Name']
             data = [message['Fields']]
             df = pd.DataFrame(data).rename(columns=change)
-            ticker = df.loc[df['ticker'] == message['Fields']['ticker']]
+            # ticker = df.loc[df['ticker'] == message['Fields']['ticker']]
             print(df)
             
             # if self.is_thread:
@@ -550,7 +552,7 @@ class RkdStream(RkdData):
             self.update_rtdb.apply_async(args=(df.to_dict('records'),),queue='broadcaster')
 
             del df
-            del ticker
+            # del ticker
             gc.collect()
 
   
