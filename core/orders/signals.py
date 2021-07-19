@@ -327,7 +327,7 @@ def order_signal(sender, instance, created, **kwargs):
 
                     # end portfolio / bot
                     if not order_position.is_live:
-                        amt = order_position.investment_amount  + order_position.final_pnl_amount
+                        amt = order_position.investment_amount  + order_position.final_pnl_amount + order_position.bot_cash_dividend
 
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             amt, "sell", order_position.user_id)
