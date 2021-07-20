@@ -524,7 +524,7 @@ def get_hedge_detail(live_price, bot_cash_balance, ask_price, bid_price, last_sh
         buy_prem = buy_UNO_prem
         sell_prem = sell_UNO_prem
     else:
-        # buy above offer and sell below bid (chase LESS - long gamma)
+        # buy above ofer and sell below bid (chase LESS - long gamma)
         buy_prem = buy_UCDC_prem
         sell_prem = sell_UCDC_prem
     if(status == "buy"):
