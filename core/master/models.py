@@ -454,6 +454,30 @@ class LatestPrice(models.Model):
 
     def __str__(self):
         return f"{self.ticker.ticker}"
+
+
+class HedgeLatestPriceHistory(models.Model):
+    hedge_uid = models.CharField(max_length=255,primary_key=True)
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,db_column="ticker", related_name="hedge_latest_price_ticker_history")
+    high = models.FloatField(blank=True, null=True)
+    low = models.FloatField(blank=True, null=True)
+    close = models.FloatField(blank=True, null=True)
+    latest_price_change = models.FloatField(blank=True, null=True)
+    intraday_time = models.DateTimeField(blank=True, null=True)
+    last_date = models.DateField(blank=True, null=True)
+    volume = models.FloatField(blank=True, null=True)
+    latest_price = models.FloatField(blank=True, null=True)
+    types = models.CharField(max_length=20,null=True,blank=True)
+    
+    class Meta:
+        managed = True
+        db_table = "hedge_latest_price_history"
+
+    def __str__(self):
+        return f"{self.ticker.ticker}"
+
+
+
     
     # def uno_ask_price(self):
     # def uno_bid_price(self):

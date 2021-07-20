@@ -312,7 +312,7 @@ class RkdData(Rkd):
         currency.index_price = formated_json_data[0]['CF_LAST']
         currency.save()
 
-    def get_quote(self, ticker, df=False, save=False):
+    def get_quote(self, ticker, df=False, save=False,**options):
         import math
         quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
         split = len(ticker)/70
@@ -345,6 +345,12 @@ class RkdData(Rkd):
         if save:
             print('saving....')
             self.save('master', 'LatestPrice', collected_data.to_dict('records'))
+            if 'detail' in options:
+                types = options['detail'].split('-')[0]
+                collected_data['types'] = types
+                collected_data['hedge_uid']=collected_data['ticker'].astype(str)+options['detail']
+                collected_data['hedge_uid']=collected_data['hedge_uid'].str.replace("-", "", regex=True).str.replace(".", "", regex=True).str.strip()
+                self.save('master','HedgeLatestPriceHistory',collected_data.to_dict('records'))
             print('saving done')
 
         if df:
@@ -375,6 +381,7 @@ class RkdData(Rkd):
             raise Exception('data should be dataframe or dict')
         key_set = [key for key in data[0].keys()]
         list_obj = []
+        create =False
         for item in data:
             if pk in key_set:
                 key_set.remove(pk)
@@ -383,15 +390,37 @@ class RkdData(Rkd):
                 obj = Model.objects.get(**key)
             except Model.DoesNotExist:
                 print(f'models {item[pk]} does not exist')
+                if app != 'LatestPrice':
+                    create=True
+                    
             except KeyError:
                 raise Exception('no primary key in dict')
-            for attr, val in item.items():
-                field = obj._meta.get_field(attr)
-                if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
-                    attr = f'{attr}_id'
-                setattr(obj, attr, val)
+            if not create:
+                for attr, val in item.items():
+                    if hasattr(obj,attr):
+                        field = obj._meta.get_field(attr)
+                        if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
+                            attr = f'{attr}_id'
+                        setattr(obj, attr, val)
+            else:
+                attribs_modifier = {}
+                for attr, val in item.items():
+                    if hasattr(Model,attr):
+                        field = Model._meta.get_field(attr)
+                        if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
+                            attribs_modifier[f'{attr}_id'] = val
+                        else:
+                            attribs_modifier[attr]=val
+                    obj =Model(**attribs_modifier)
             list_obj.append(obj)
-        Model.objects.bulk_update(list_obj, key_set)
+        if create and app != 'LatestPrice':
+            try:
+                Model.objects.bulk_create(list_obj,ignore_conflicts=True)
+            except Exception:
+                pass
+        elif not create and app == 'LatestPrice':
+            Model.objects.bulk_update(list_obj, key_set)
+
 
     
 

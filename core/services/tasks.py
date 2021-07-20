@@ -318,6 +318,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
 
     ## ONLY PICK RELATED WEEK OF YEAR, WEEK WITH FULL HOLIDAY WILL SKIPPED/IGNORED
     day = datetime.now()
+    now = day.date()
     week = day.isocalendar()[1]
     year = day.isocalendar()[0]
     interval = f"{year}{week}"
@@ -340,7 +341,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
         report_to_slack(f"===  START ORDER FOR UNPICK {client_name} - {currency} ===")
         tickers = []
         [tickers.append(obj.ticker.ticker) for obj in topstock if not obj.ticker.ticker  in tickers]
-        rkd.get_quote(tickers, save=True)
+        rkd.get_quote(tickers, save=True,detail=f'populate-{now}')
         for queue in topstock:
             user = UserClient.objects.get(
                 currency_code=queue.currency_code,
@@ -416,7 +417,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
     else:
         report_to_slack(f"=== {client_name} NO TOPSTOCK IN PENDING ===")
 
-def hedge(currency=None, bot_tester=False):
+def hedge(currency=None, bot_tester=False,**options):
     if bot_tester:
         report_to_slack(f"===  START HEDGE FOR {currency} Bot Tester ===")
     else:
@@ -424,7 +425,8 @@ def hedge(currency=None, bot_tester=False):
 
     try:
         # LOGIN TO TRKD API
-        rkd = RkdData()
+        if not 'rehedge' in options:
+            rkd = RkdData()
         if(bot_tester):
             status = "BOT TESTER"
             hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", extra_data__service_type="bot_tester").values("user")]
@@ -438,7 +440,9 @@ def hedge(currency=None, bot_tester=False):
             #DISTINCT TICKER TO BE USED IN TRKD
             ticker_list = [obj.ticker.ticker for obj in positions.distinct('ticker')]
             # GET NEWEST PRICE FROM TRKD AND SAVE TO LATESTPRICE TABLE
-            rkd.get_quote(ticker_list,save=True)
+            if not 'rehedge' in options:
+                now = datetime.now().date()
+                rkd.get_quote(ticker_list,save=True,detail=f'hedge-{now}')
             
             # PREPARE USING MULTIPROCESSING HEDGE GROUPS
             group_celery_jobs = []
@@ -449,7 +453,8 @@ def hedge(currency=None, bot_tester=False):
             for position in positions:
                 position_uid = position.position_uid
                 market = TradingHours(mic=position.ticker.mic)
-                if market.is_open: # MARKET OPEN CHECK TRADINGHOURS
+                # MARKET OPEN CHECK TRADINGHOURS, ignore market time if rehedge
+                if market.is_open or 'rehedge' in options: 
 
 
                     # NOT USING YAHOO
@@ -468,26 +473,39 @@ def hedge(currency=None, bot_tester=False):
                     # will add function to check run in production machine and local for debuging
                     if (position.bot.is_uno()):
                         # uno_position_check(position_uid)
-                        group_celery_jobs.append(uno_position_check.s(position_uid))
+                        if not 'rehedge' in options:
+                            group_celery_jobs.append(uno_position_check.s(position_uid))
+                        else:
+                            print(f'rehedge {status} {position_uid}')
+                            group_celery_jobs.append(uno_position_check.s(position_uid,**options))
                     elif (position.bot.is_ucdc()):
                         # ucdc_position_check(position_uid)
-                        group_celery_jobs.append(ucdc_position_check.s(position_uid))
+                        if not 'rehedge' in options:
+                            group_celery_jobs.append(ucdc_position_check.s(position_uid))
+                        else:
+                            print(f'rehedge {status} {position_uid}')
+                            group_celery_jobs.append(ucdc_position_check.s(position_uid,**options))
                     elif (position.bot.is_classic()):
                         # classic_position_check(position_uid)
-                        group_celery_jobs.append(classic_position_check.s(position_uid))
+                        if not 'rehedge' in options:
+                            group_celery_jobs.append(classic_position_check.s(position_uid))
+                        else:
+                            print(f'rehedge {status} {position_uid}')
+                            group_celery_jobs.append(classic_position_check.s(position_uid,**options))
                 else:
                     report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
-            
             if group_celery_jobs:
                 result = celery_jobs.apply_async()
-                while not result.successful():
-                    if result.failed():
-                        report_to_slack(f"=== THERE IS FAIL IN HEDGE TASK ===",channel='#error-log')
-                        return {'err':'task group failed'}
+                retry =0
+                while result.waiting():
                     tm.sleep(2)
-
-                if result.successful():         
-                    send_csv_hanwha(currency=currency, client_name="HANWHA", bot_tester=bot_tester)
+                    retry +=1
+                    if retry == 10:
+                        break
+                if result.failed():
+                    report_to_slack(f"=== THERE IS FAIL IN HEDGE TASK ===",channel='#error-log')
+                if result.successful() or 'rehedge' in options or result.ready():         
+                    send_csv_hanwha(currency=currency, client_name="HANWHA", bot_tester=bot_tester,**options)
     
     except Exception as e:
         err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN HEDGE Function {currency} {status} ===",error_message=str(e))
@@ -495,7 +513,7 @@ def hedge(currency=None, bot_tester=False):
         return {"err": str(e)}
 
 @app.task
-def daily_hedge(currency=None):
+def daily_hedge(currency=None,**options):
     # try:
     #     populate_intraday_latest_price(currency_code=[currency])
     #     update_index_price_from_dss(currency_code=[currency])
@@ -509,27 +527,36 @@ def daily_hedge(currency=None):
         # GET INDEX PRICE
         # get_quote_index(currency)
 
-    
-    rkd = RkdData() # LOGIN
-    rkd.get_index_price(currency) # GET INDEX PRICE
+    if not 'rehedge' in options:
+        print('here')
+        rkd = RkdData() # LOGIN
+        rkd.get_index_price(currency) # GET INDEX PRICE
 
-    hedge(currency=currency) #bot_advisor hanwha and fels
-    hedge(currency=currency, bot_tester=True) #bot_tester
+    hedge(currency=currency,**options) #bot_advisor hanwha and fels
+    hedge(currency=currency, bot_tester=True,**options) #bot_tester
     return {"result": f"hedge {currency} done"}
 
-def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=None, capital=None):
+def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=None, capital=None,**options):
     if new:
         # NEW SUNDAY MORNING TICKER CSV
         perf = PositionPerformance.objects.filter(order_uid__in=new["pos_list"], position_uid__user_id__in=hanwha).order_by("created")
     else:
         # HEDGE TICKER ONLY CSV
-        perf = PositionPerformance.objects.filter(position_uid__user_id__in=hanwha, created__gte=datetime.now().date(), position_uid__ticker__currency_code=currency).order_by("created")
+        if 'rehedge' in options:
+            dates = options['rehedge']['date']
+        else:
+            dates = datetime.now().date()
+        perf = PositionPerformance.objects.filter(position_uid__user_id__in=hanwha, created__gte=dates, position_uid__ticker__currency_code=currency).order_by("created")
         orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         perf = perf.exclude(order_uid__in=orders)
 
     if perf.exists():
         now = datetime.now()
         datenow = now.date()
+        if 'rehedge' in options:
+            datenow = options['rehedge']['date']
+        else:
+            datenow = datetime.now().date()
         df = pd.DataFrame(CsvSerializer(perf, many=True).data)
         df = df.fillna(0)
         hanwha_df = df.drop(columns=["prev_delta", "delta", "v1", "v2", "uuid"])
@@ -576,11 +603,11 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
         )
 
         if(bot_tester):
-            hanwha_email.attach(f"{currency}_bot_tester_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
-            draft_email.attach(f"{currency}_bot_tester_{now}_asklora.csv", csv, mimetype="text/csv")
+            hanwha_email.attach(f"{currency}_bot_tester_{datenow}_asklora.csv", hanwha_csv, mimetype="text/csv")
+            draft_email.attach(f"{currency}_bot_tester_{datenow}_asklora.csv", csv, mimetype="text/csv")
         else:
-            hanwha_email.attach(f"{currency}_{now}_asklora.csv", hanwha_csv, mimetype="text/csv")
-            draft_email.attach(f"{currency}_{now}_asklora.csv", csv, mimetype="text/csv")
+            hanwha_email.attach(f"{currency}_{datenow}_asklora.csv", hanwha_csv, mimetype="text/csv")
+            draft_email.attach(f"{currency}_{datenow}_asklora.csv", csv, mimetype="text/csv")
             
         status = draft_email.send()
         hanwha_status = hanwha_email.send()
@@ -596,13 +623,13 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
                 report_to_slack(f"=== {client_name} {stats} EMAIL HEDGE SENT FOR {currency} TO HANWHA ===")
 
 @app.task
-def send_csv_hanwha(currency=None, client_name=None, new=None, bot_tester=False):
+def send_csv_hanwha(currency=None, client_name=None, new=None, bot_tester=False,**options):
     if client_name == "HANWHA":
         if(bot_tester):
             hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, 
             extra_data__service_type="bot_tester").values("user")]
-            sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=True)
+            sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=True,**options)
         else:
             hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name=client_name, extra_data__service_type="bot_advisor").values("user")]
-            sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=False)
+            sending_csv(hanwha, currency=currency, client_name=client_name, new=new, bot_tester=False,**options)
         return {"result": f"send email {currency} done"}
