@@ -10,7 +10,7 @@ from core.Clients.models import ClientTopStock, UserClient
 from core.services.ingestiontask import migrate_droid1,get_trkd_data_by_region
 from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge,get_quote_yahoo,update_index_price_from_dss
 from main import populate_intraday_latest_price,update_index_price_from_dss
-from datetime import datetime
+from datetime import datetime,timedelta
 from datasource.rkd import RkdData,RkdStream
 import traceback as trace
 from core.services.models import ErrorLog
@@ -22,12 +22,14 @@ from general.sql_query import get_universe_by_region
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        # tikers = OrderPosition.objects.filter(ticker__currency_code='KRW',is_live=True)
+        # tikers = [tick.ticker.ticker for tick in OrderPosition.objects.filter(ticker__currency_code='USD',is_live=True).distinct('ticker')]
         # for pos in tikers:
         #     pos.save()
         # HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code__in=['HKD','CNY','USD'],is_active=True).values('ticker')]
         # print(HKD_universe)
         # rkd = RkdData()
+        # now = datetime.now().date() - timedelta(days=1)
+        # rkd.get_quote(tikers,save=True,detail=f'hedge-{now}')
         # rkd.get_index_price('USD')
         # scrap_csi()
         # get_trkd_data_by_region('na')
@@ -72,7 +74,10 @@ class Command(BaseCommand):
         # print('total_profit_return: ',user.total_profit_return)
         # populate_intraday_latest_price(ticker=[".CSI300"])
         # get_quote_yahoo("TCOM", use_symbol=True)
-        daily_hedge(currency="HKD")
+        daily_hedge(currency="USD",rehedge={
+            'date':'2021-07-19',
+            'types':'hedge'
+        })
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
         #     position_uid__user_id__in=[108,

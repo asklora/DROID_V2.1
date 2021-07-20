@@ -1,10 +1,12 @@
 from datetime import datetime
+from main import latest_price
 import math
 from bot import uno
-from core.master.models import LatestPrice, MasterTac, MasterOhlcvtr
+from core.master.models import LatestPrice, MasterOhlcvtr
 from core.orders.models import OrderPosition, PositionPerformance, Order
 from bot.calculate_bot import (
     check_dividend_paid,
+    get_option_price_uno,
     get_hedge_detail,
     get_trq,
     get_strike_barrier,
@@ -18,7 +20,7 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 
 
-def create_performance(price_data, position, latest_price=False):
+def create_performance(price_data, position, latest_price=False,rehedge=False):
     # new access bot reference
     bot = position.bot
 
@@ -29,8 +31,12 @@ def create_performance(price_data, position, latest_price=False):
         if price_data.latest_price:
             live_price = price_data.latest_price
         trading_day = price_data.last_date
-        bid_price = price_data.intraday_bid
-        ask_price = price_data.intraday_ask
+        if rehedge:
+            bid_price = price_data.latest_price
+            ask_price = price_data.latest_price
+        else:
+            bid_price = price_data.intraday_bid
+            ask_price = price_data.intraday_ask
         high = price_data.high
     else:
         live_price = price_data.close
@@ -78,6 +84,7 @@ def create_performance(price_data, position, latest_price=False):
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, last_performance.current_bot_cash_balance,
                 ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta,
                 hedge=hedge, uno=True)
+            
         bot_cash_balance = formatdigit(last_performance.current_bot_cash_balance -(share_num - last_performance.share_num) * live_price)
         current_pnl_amt = last_performance.current_pnl_amt + (live_price - last_performance.last_live_price) * last_performance.share_num
     else:
@@ -85,30 +92,37 @@ def create_performance(price_data, position, latest_price=False):
         share_num = round((position.investment_amount / live_price), 1)
         bot_cash_balance = position.bot_cash_balance
         vol = get_vol(position.ticker.ticker, trading_day, t,
-                      r, q, bot.bot_type.bot_horizon_month)
+                      r, q, bot.time_to_exp)
         strike, barrier = get_strike_barrier(
-            live_price, vol, bot.option_type, bot.bot_type.bot_group)
+            live_price, vol, bot.bot_option_type, bot.bot_type.bot_type)
         rebate = barrier - strike
         v1, v2 = get_v1_v2(position.ticker.ticker, live_price,
                            trading_day, t, r, q, strike, barrier)
         delta = uno.deltaUnOC(live_price, strike, barrier,
                               rebate, t/365, r, q, v1, v2)
+        option_price =get_option_price_uno(live_price, strike, barrier,rebate, t, r, q, v1, v2)
 
         share_num = position.share_num
         bot_cash_balance = position.investment_amount - \
             (share_num * live_price)
+        hedge_shares = share_num
+        status ='buy'
+        
 
     current_investment_amount = live_price * share_num
     # current_pnl_ret = (bot_cash_balance + current_investment_amount -
     #                    position.investment_amount) / position.investment_amount
     current_pnl_ret = current_pnl_amt / position.investment_amount
-    position.bot_cash_dividend = check_dividend_paid(position.ticker.ticker, trading_day, share_num, position.bot_cash_dividend)
+    # position.bot_cash_dividend = check_dividend_paid(position.ticker.ticker, trading_day, share_num, position.bot_cash_dividend)
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.save()
     digits = max(min(5-len(str(int(position.entry_price))), 2), -1)
+ 
     log_time = pd.Timestamp(trading_day)
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()
+    if rehedge:
+        log_time= price_data.intraday_time
     # not creating performance first, value stored at dict and placed in setup order we can use it later after the order filled's
     # see below
     performance = dict(
@@ -202,7 +216,7 @@ def create_performance(price_data, position, latest_price=False):
 
 
 @app.task
-def uno_position_check(position_uid, to_date=None, lookback=False):
+def uno_position_check(position_uid, to_date=None, lookback=False,rehedge=None):
     try:
         position = OrderPosition.objects.get(
             position_uid=position_uid, is_live=True)
@@ -217,10 +231,44 @@ def uno_position_check(position_uid, to_date=None, lookback=False):
             exp_date = pd.to_datetime(to_date)
         else:
             exp_date = position.expiry
+        if isinstance(trading_day, datetime):
+            trading_day = trading_day.date()
         tac_data = MasterOhlcvtr.objects.filter(
             ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=exp_date, day_status='trading_day').order_by("trading_day")
         status = False
-        if(lookback):
+
+        if rehedge:
+            from core.master.models import HedgeLatestPriceHistory
+            try:
+                lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date=rehedge['date'],types=rehedge['types'],ticker=position.ticker)
+                if lastest_price_data.exists():
+                    lastest_price_data = lastest_price_data.get()
+                else:
+                    return {'err':f'{position.ticker.ticker}'}
+            except HedgeLatestPriceHistory.DoesNotExist:
+                print('not exist',position.ticker.ticker)
+                return None
+            except HedgeLatestPriceHistory.MultipleObjectsReturned:
+                print('nmulpile error',position.ticker.ticker)
+                return None
+            if(type(trading_day) == datetime):
+                trading_day = trading_day.date()
+            if(not status and trading_day <= lastest_price_data.last_date and exp_date >= lastest_price_data.last_date):
+                trading_day = lastest_price_data.last_date
+                print(f"rehedge latest price {trading_day} done")
+                status, order_id = create_performance(
+                    lastest_price_data, position, latest_price=True,rehedge=True)
+                # position.save()
+                if order_id:
+                    order = Order.objects.get(order_uid=order_id)
+                    log_time = lastest_price_data.intraday_time
+                    if order.status in ["pending", "review"]:
+                        order.status = "filled"
+                        order.filled_at = log_time
+                        order.save()
+                if status:
+                    print(f"rehedge position end")
+        elif(lookback):
             for tac in tac_data:
                 # trading_day = tac.trading_day
                 status, order_id = create_performance(tac, position)
@@ -283,8 +331,8 @@ def uno_position_check(position_uid, to_date=None, lookback=False):
     except OrderPosition.DoesNotExist as e:
         err = ErrorLog.objects.create_log(error_description=f'{position_uid} not exist',error_message=str(e))
         err.send_report_error()
-        return False
+        return {'err':f'{position.ticker.ticker}'}
     except Exception as e:
         err = ErrorLog.objects.create_log(error_description=f'error in Position {position_uid}',error_message=str(e))
         err.send_report_error()
-        return False
+        return {'err':f'{position.ticker.ticker}'}
