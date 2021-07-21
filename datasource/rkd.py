@@ -413,12 +413,12 @@ class RkdData(Rkd):
                             attribs_modifier[attr]=val
                     obj =Model(**attribs_modifier)
             list_obj.append(obj)
-        if create and app != 'LatestPrice':
+        if create and model != 'LatestPrice':
             try:
                 Model.objects.bulk_create(list_obj,ignore_conflicts=True)
             except Exception:
                 pass
-        elif not create and app == 'LatestPrice':
+        elif not create and model == 'LatestPrice':
             Model.objects.bulk_update(list_obj, key_set)
 
 
