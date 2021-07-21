@@ -22,14 +22,14 @@ from general.sql_query import get_universe_by_region
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        tikers = [tick.ticker.ticker for tick in OrderPosition.objects.filter(ticker__currency_code='USD',is_live=True).distinct('ticker')]
+        # tikers = [tick.ticker.ticker for tick in OrderPosition.objects.filter(ticker__currency_code='USD',is_live=True).distinct('ticker')]
         # for pos in tikers:
         #     pos.save()
         # HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code__in=['HKD','CNY','USD'],is_active=True).values('ticker')]
         # print(HKD_universe)
-        rkd = RkdData()
-        now = datetime.now().date() - timedelta(days=1)
-        rkd.get_quote(tikers,save=True)
+        # rkd = RkdData()
+        # now = datetime.now().date() - timedelta(days=1)
+        # rkd.get_quote(tikers,save=True)
         # rkd.get_index_price('USD')
         # scrap_csi()
         # get_trkd_data_by_region('na')
