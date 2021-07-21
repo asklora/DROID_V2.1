@@ -3,6 +3,8 @@ from general.sql_query import get_active_universe
 from general.date_process import backdate_by_day, backdate_by_year, dateNow, datetimeNow
 from global_vars import REPORT_INTRADAY, REPORT_HISTORY, REPORT_EOD, REPORT_INDEXMEMBER
 from datasource.dss import get_data_from_dss
+import firebase_admin
+from firebase_admin import firestore, credentials, db
 
 def get_intraday():
     print("Do Process")
@@ -49,5 +51,13 @@ def get_index_member():
     print(result)
     result.to_csv("index_member_HSLMI.csv")
 
-if __name__ == '__main__':
-    get_index_member()
+if __name__ == "__main__":
+    cred = credentials.Certificate("files/file_json/asklora-firebase.json")
+    firebase_admin.initialize_app(cred)
+    dbs = firestore.client()
+    snapshots = dbs.collection(u"universe").where("ticker", ">=", "001").where("ticker", "<=", "001" + "\uf8ff").get()
+    print(snapshots)
+    for snapshot in snapshots:
+        print(snapshot.to_dict()["ticker"])
+        print(snapshot.to_dict())
+        print()
