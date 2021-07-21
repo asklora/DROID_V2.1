@@ -1,10 +1,11 @@
+from datasource.dsws import get_data_static_from_dsws
 import math
 import numpy as np
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
 from general.data_process import tuple_data
-from general.sql_query import read_query
+from general.sql_query import get_active_universe, read_query
 from datasource.dss import get_data_from_dss
 from general.table_name import (
     get_currency_calendar_table_name,
@@ -539,16 +540,20 @@ def get_hedge_detail(live_price, bot_cash_balance, ask_price, bid_price, last_sh
         hedge_price = 0
     return share_num, hedge_shares, status, hedge_price
 
+def get_dividend_paid_date(ticker=None, currency_code=None):
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    universe = universe.drop(columns=["entity_type"])
+    filter_field = ["IDTDDXDDE", "DPS"]
+    identifier="ticker"
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    result = result.rename(columns={"IDTDDXDDE": "dividend_ex_date", "index":"ticker", "DPS" : "dividend_per_share"})
+    return result
+        
 def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
-    currencylist = pd.DataFrame({"ticker" : [ticker]}, index=[0])
-    jsonFileName = "files/file_json/dividend_paid.json"
-    currencylist["ticker"] = "/" + currencylist["ticker"]
-    result = get_data_from_dss("start_date", "end_date", currencylist["ticker"], jsonFileName, report=REPORT_INTRADAY)
-    result = result.drop(columns=["IdentifierType", "Identifier"])
-    result = result.reset_index(inplace=False)
+    result = get_dividend_paid_date(ticker=[ticker])
     if(len(result) > 0):
-        print(str(result.loc[0, "Dividend Ex Date"]))
+        print(str(result.loc[0, "dividend_ex_date"]))
         print(str(trading_day))
-        if(str(result.loc[0, "Dividend Ex Date"]) == str(trading_day)):
-            return bot_cash_dividend + (result.loc[0, "Dividend Paid"] * share_num)
+        if(str(result.loc[0, "dividend_ex_date"]) == str(trading_day)):
+            return bot_cash_dividend + (result.loc[0, "dividend_per_share"] * share_num)
     return bot_cash_dividend
