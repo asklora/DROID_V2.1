@@ -656,7 +656,6 @@ class RkdStream(RkdData):
         ws.close()
         if self.is_thread:
             sys.exit()
-            
 
     def on_open(self, ws, *args, **options):
         """ Called when handshake is complete and websocket is open, send login """
