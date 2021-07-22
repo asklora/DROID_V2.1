@@ -11,8 +11,8 @@ import aiohttp
 import asyncio
 import socket
 import time
-from channels.layers import get_channel_layer
-from config.celery import app
+# from channels.layers import get_channel_layer
+from config.celery import app, shared_task
 import numpy as np
 from firebase_admin import firestore
 import multiprocessing as mp
@@ -663,7 +663,7 @@ class RkdStream(RkdData):
         print("WebSocket open!")
         self.send_login_request(ws)
 
-    @app.task(bind=True,ignore_result=True)
+    @shared_task(bind=True,ignore_result=True)
     def update_rtdb(self,data):
         data = data[0]
         ticker = data.pop('ticker')

@@ -75,7 +75,7 @@ class Command(BaseCommand):
         # populate_intraday_latest_price(ticker=[".CSI300"])
         # get_quote_yahoo("TCOM", use_symbol=True)
         # daily_hedge(currency="USD",rehedge={
-        #     'date':'2021-07-19',
+        #     'date':'2021-07-20',
         #     'types':'hedge'
         # })
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
@@ -98,5 +98,12 @@ class Command(BaseCommand):
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
-        # send_csv_hanwha(currency="KRW")
+        send_csv_hanwha(currency="USD",client_name="HANWHA",bot_tester=False,rehedge={
+            'date':'2021-07-20',
+            'types':'hedge'
+        })
+        send_csv_hanwha(currency="USD",client_name="HANWHA",bot_tester=True,rehedge={
+            'date':'2021-07-20',
+            'types':'hedge'
+        })
         # send_csv_hanwha(currency="CNY")

@@ -224,7 +224,7 @@ class CsvSerializer(serializers.ModelSerializer):
     
     
     def get_index_price(self, obj):
-        if obj.created.date() == datetime.now().date():
-            return obj.position_uid.ticker.currency_code.index_price
-        price = MasterOhlcvtr.objects.get(trading_day=obj.created,ticker=obj.position_uid.ticker.currency_code.index_ticker)
-        return price.close
+        # if obj.created.date() == datetime.now().date():
+        return obj.position_uid.ticker.currency_code.index_price
+        # price = MasterOhlcvtr.objects.get(trading_day=obj.created,ticker=obj.position_uid.ticker.currency_code.index_ticker)
+        # return price.close

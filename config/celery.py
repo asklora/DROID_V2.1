@@ -1,13 +1,14 @@
 import os
 
-from celery import Celery
+from celery import Celery,shared_task
 from importlib import import_module
 import time
 
 # set the default Django settings module for the 'celery' program.
 debug = os.environ.get('DJANGO_SETTINGS_MODULE',True)
 if debug:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.local')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.production')
+    app2 = Celery('core.services',broker='amqp://rabbitmq:rabbitmq@16.162.110.123:5672')
 
 
 app = Celery('core.services')
@@ -23,8 +24,8 @@ def app_publish(self):
     return {'message': 'hallo'}
 
 
-@app.task(bind=True)
-def debug_task(self):
+@shared_task
+def debug_task():
     a = 0
     while True:
         print('running')
@@ -32,7 +33,6 @@ def debug_task(self):
             break
         a += 1
         time.sleep(2)
-
 
 @app.task(bind=True)
 def listener(self, data):
