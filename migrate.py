@@ -41,7 +41,7 @@ def PgFunctions(db_url, func):
         print("COMPLETE")
     engine.dispose()
 
-def upsert_data_to_database(index, index_type, data, table_name, method="update"):
+def upsert_data_to_db(index, index_type, data, table_name, method="update"):
     data = data.drop_duplicates(subset=[index], keep="first", inplace=False)
     print(f'=== Upsert data {table_name} to database ===')
     data = data.set_index(index)
@@ -146,7 +146,7 @@ def market_region():
     data = data[column]
     print(data)
     # insert_data_to_database(droid2, data, "region")
-    upsert_data_to_database("region_id", TEXT, data, "region", method="update")
+    upsert_data_to_db("region_id", TEXT, data, "region", method="update")
     
     print(f"Get {table} = True")
 
@@ -159,7 +159,7 @@ def country():
     data = data[~data['country_code'].isin(exclude)]
     print(data)
     # insert_data_to_database(droid2, data, table)
-    upsert_data_to_database("country_code", TEXT, data, table, method="update")
+    upsert_data_to_db("country_code", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def data_dividend():
@@ -174,7 +174,7 @@ def data_dividend():
     data["uid"]=data["uid"].str.strip()
     data["ex_dividend_date"] = pd.to_datetime(data["ex_dividend_date"])
     print(data)
-    upsert_data_to_database("uid", TEXT, data, "data_dividend", method="update")
+    upsert_data_to_db("uid", TEXT, data, "data_dividend", method="update")
     print(f"Get {table} = True")
 
 def data_universe_detail():
@@ -203,7 +203,7 @@ def data_universe_detail():
     initial_data = initial_data.merge(data2, how="left", on="ticker")
     initial_data = initial_data.merge(data3, how="left", on="ticker")
     print(initial_data)
-    upsert_data_to_database("ticker", TEXT, initial_data, table, method="update")
+    upsert_data_to_db("ticker", TEXT, initial_data, table, method="update")
     print(f"Get {table} = True")
 
 def country_calendar():
@@ -217,7 +217,7 @@ def country_calendar():
 
     table = "country_calendar"
     # insert_data_to_database(droid2, data, table)
-    upsert_data_to_database("uid", TEXT, data, table, method="update")
+    upsert_data_to_db("uid", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def currency_calendar():
@@ -240,7 +240,7 @@ def currency_calendar():
     data = uid_maker(data, trading_day="non_working_day", ticker="currency_code")
     print(data)
     table = "currency_calendar"
-    upsert_data_to_database("uid", TEXT, data, table, method="update")
+    upsert_data_to_db("uid", TEXT, data, table, method="update")
     # sys.exit(1)
     print(f"Get {table} = True")
 
@@ -253,7 +253,7 @@ def vix():
     print(data)
 
     # insert_data_to_database(droid2, data, table)
-    upsert_data_to_database("vix_id", TEXT, data, table, method="update")
+    upsert_data_to_db("vix_id", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def vix_data():
@@ -266,7 +266,7 @@ def vix_data():
 
     table = "data_vix"
     # insert_data_to_database(droid2, data, table)
-    upsert_data_to_database("uid", TEXT, data, table, method="update")
+    upsert_data_to_db("uid", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def industry_group():
@@ -279,7 +279,7 @@ def industry_group():
     data = data[column]
     print(data)
     # insert_data_to_database(droid2, data, table)
-    upsert_data_to_database("industry_group_code", TEXT, data, table, method="update")
+    upsert_data_to_db("industry_group_code", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def industry():
@@ -291,7 +291,7 @@ def industry():
     data = data[column]
     print(data)
     # insert_data_to_database(droid2, data, table)
-    upsert_data_to_database("industry_code", TEXT, data, table, method="update")
+    upsert_data_to_db("industry_code", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def industry_worldscope():
@@ -302,7 +302,7 @@ def industry_worldscope():
     data = data[column]
     print(data)
     # insert_data_to_database(droid2, data, table)
-    upsert_data_to_database("wc_industry_code", TEXT, data, table, method="update")
+    upsert_data_to_db("wc_industry_code", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def currency_member_type():
@@ -310,7 +310,7 @@ def currency_member_type():
     data = pd.DataFrame({"member_type_id":[1, 2, 3],"type_description":["Retrieve Member", "Custom Member", "User Defined Member"]}, index=[0, 1, 2])
     print(data)
     # insert_data_to_database(droid2, data, table)
-    upsert_data_to_database("member_type_id", TEXT, data, table, method="update")
+    upsert_data_to_db("member_type_id", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def currency():
@@ -343,7 +343,7 @@ def currency():
     data = data.dropna(subset=["vix_id"])
     print(data)
     # insert_data_to_database(droid2, data, table)
-    upsert_data_to_database("currency_code", TEXT, data, table, method="update")
+    upsert_data_to_db("currency_code", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def universe_consolidated():
@@ -387,7 +387,7 @@ def universe_consolidated():
     data = data.drop_duplicates(subset=["consolidated_ticker"], keep="first", inplace=False)
     print(data)
     # insert_data_to_database(droid2, data, table)
-    upsert_data_to_database("consolidated_ticker", TEXT, data, table, method="update")
+    upsert_data_to_db("consolidated_ticker", TEXT, data, table, method="update")
     print(f"Get {table} = True")
     sys.exit(1)
 
@@ -430,7 +430,7 @@ def universe_rating():
     print(data)
 
     # insert_data_to_database(droid2, data, table)
-    upsert_data_to_database("ticker", TEXT, data, table, method="update")
+    upsert_data_to_db("ticker", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def data_dss():
@@ -447,7 +447,7 @@ def data_dss():
     data = data.rename(columns={'uid': 'dss_id'})
     data = data[column]
     print(data)
-    upsert_data_to_database("dss_id", TEXT, data, table, method="update")
+    upsert_data_to_db("dss_id", TEXT, data, table, method="update")
     #insert_data_to_database(droid2, data, table)
     print(f"Get {table} = True")
 
@@ -462,7 +462,7 @@ def data_dsws():
     data = data[column]
     print(data)
 
-    upsert_data_to_database("dsws_id", TEXT, data, table, method="update")
+    upsert_data_to_db("dsws_id", TEXT, data, table, method="update")
     #insert_data_to_database(droid2, data, table)
     print(f"Get {table} = True")
 
@@ -492,7 +492,7 @@ def data_quandl():
     print(data)
 
     # insert_data_to_database(droid2, data, table)
-    upsert_data_to_database("uid", TEXT, data, table, method="update")
+    upsert_data_to_db("uid", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def data_fundamental_score():
@@ -517,7 +517,7 @@ def data_fundamental_score():
     data = get_data_from_database_condition(droid, "fundamentals_score", f"ticker in {get_ticker_from_new_droid()}")
     data = data[column]
     print(data)
-    upsert_data_to_database("ticker", TEXT, data, table, method="update")
+    upsert_data_to_db("ticker", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def data_ibes():
@@ -535,7 +535,7 @@ def data_ibes():
     data = uid_maker(data, uid="uid", ticker="ticker", trading_day="period_end", date=True)
     data = data[column]
     print(data)
-    upsert_data_to_database("uid", TEXT, data, table, method="update")
+    upsert_data_to_db("uid", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def data_ibes_monthly():
@@ -554,7 +554,7 @@ def data_ibes_monthly():
     data = uid_maker(data, uid="uid", ticker="ticker", trading_day="trading_day", date=True)
     data = data[column]
     print(data)
-    upsert_data_to_database("uid", TEXT, data, table, method="update")
+    upsert_data_to_db("uid", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def data_macro():
@@ -584,7 +584,7 @@ def data_macro():
         "EMGDP...D_ESA" : "emgdp"})
     data = data[column]
     print(data)
-    upsert_data_to_database("period_end", DATE, data, table, method="update")
+    upsert_data_to_db("period_end", DATE, data, table, method="update")
     print(f"Get {table} = True")
 
 def data_macro_monthly():
@@ -615,7 +615,7 @@ def data_macro_monthly():
         "EMGDP...D_ESA" : "emgdp"})
     data = data[column]
     print(data)
-    upsert_data_to_database("trading_day", DATE, data, table, method="update")
+    upsert_data_to_db("trading_day", DATE, data, table, method="update")
     print(f"Get {table} = True")
 
 def data_fred():
@@ -624,7 +624,7 @@ def data_fred():
     data = get_data_from_database(dlp, "fred_data")
     data = data[column]
     print(data)
-    upsert_data_to_database("trading_day", DATE, data, table, method="update")
+    upsert_data_to_db("trading_day", DATE, data, table, method="update")
     # insert_data_to_database(droid2, data, table)
     print(f"Get {table} = True")
 
@@ -645,7 +645,7 @@ def data_vol_surface_inferred():
     data = uid_maker(data, uid="uid", ticker="ticker", trading_day="trading_day", date=True)
     data = data[column]
     print(data)
-    upsert_data_to_database("uid", TEXT, data, table, method="update")
+    upsert_data_to_db("uid", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def latest_price():
@@ -656,7 +656,7 @@ def latest_price():
     data = get_data_from_database_condition(droid, "latest_price_updates", f" ticker in {get_ticker_from_new_droid()} ")
     data = data[column]
     print(data)
-    upsert_data_to_database("ticker", TEXT, data, table, method="update")
+    upsert_data_to_db("ticker", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def data_interest():
@@ -666,7 +666,7 @@ def data_interest():
     data = data.rename(columns={"ticker" : "ticker_interest", "currency" : "currency_code", "update_date" : "updated"})
     data = data[column]
     print(data)
-    upsert_data_to_database("ticker_interest", TEXT, data, table, method="update")
+    upsert_data_to_db("ticker_interest", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def data_worldscope_summary():
@@ -680,7 +680,7 @@ def data_worldscope_summary():
     data = uid_maker(data, uid="uid", ticker="ticker", trading_day="period_end", date=True)
     data = data[column]
     print(data)
-    upsert_data_to_database("uid", TEXT, data, table, method="update")
+    upsert_data_to_db("uid", TEXT, data, table, method="update")
     print(f"Get {table} = True")
 
 def ai_value_lgbm_pred():

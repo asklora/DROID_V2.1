@@ -1,4 +1,21 @@
 # CELERY APP
+from pandas.core.series import Series
+from ingestion.master_data import (
+    dividend_updated, 
+    populate_latest_price, 
+    update_data_dss_from_dss, 
+    update_data_dsws_from_dsws, 
+    update_quandl_orats_from_quandl)
+from ingestion.universe import (
+    update_company_desc_from_dsws, 
+    update_currency_code_from_dss, 
+    update_entity_type_from_dsws, 
+    update_lot_size_from_dss,
+    update_industry_from_dsws, 
+    update_mic_from_dss, 
+    update_ticker_name_from_dsws, 
+    update_ticker_symbol_from_dss, 
+    update_worldscope_identifier_from_dsws)
 from config.celery import app
 from celery.schedules import crontab
 from celery import group as celery_groups
@@ -19,7 +36,6 @@ from django.core.mail import EmailMessage
 from config.settings import db_debug
 from datasource.rkd import RkdData
 # RAW SQL QUERY MODULE
-from main import new_ticker_ingestion, update_index_price_from_dss, populate_intraday_latest_price
 from general.sql_process import do_function
 # SLACK REPORT
 from general.slack import report_to_slack
@@ -172,6 +188,27 @@ def channel_prune():
     ChannelPresence.objects.prune_presences()
 
 # END MAINTAIN
+def new_ticker_ingestion(ticker):
+    update_ticker_name_from_dsws(ticker=ticker)
+    update_ticker_symbol_from_dss(ticker=ticker)
+    update_entity_type_from_dsws(ticker=ticker)
+    update_lot_size_from_dss(ticker=ticker)
+    update_currency_code_from_dss(ticker=ticker)
+    update_industry_from_dsws(ticker=ticker)
+    update_company_desc_from_dsws(ticker=ticker)
+    update_mic_from_dss(ticker=ticker)
+    update_worldscope_identifier_from_dsws(ticker=ticker)
+    update_quandl_orats_from_quandl(ticker=ticker)
+    populate_latest_price(ticker=ticker)
+    if isinstance(ticker, Series) or isinstance(ticker, list):
+        for tick in ticker:
+            update_data_dss_from_dss(ticker=tick, history=True)
+            update_data_dsws_from_dsws(ticker=tick, history=True)
+            dividend_updated(ticker=tick)
+    else:
+        update_data_dss_from_dss(ticker=ticker, history=True)
+        update_data_dsws_from_dsws(ticker=ticker, history=True)
+        dividend_updated(ticker=ticker)
 
 @app.task
 def get_isin_populate_universe(ticker, user_id):
