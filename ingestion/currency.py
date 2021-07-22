@@ -1,3 +1,4 @@
+import pandas as pd
 from general.slack import report_to_slack
 from general.date_process import datetimeNow, get_time_by_timezone, string_to_time
 from general.table_name import get_currency_table_name
@@ -5,33 +6,41 @@ from general.sql_query import get_active_currency, get_active_currency_ric_not_n
 from datasource.dss import get_data_from_dss
 from general.sql_output import upsert_data_to_database
 from global_vars import REPORT_HISTORY, REPORT_INTRADAY
-
+import django
+import os
+debug = os.environ.get("DJANGO_SETTINGS_MODULE",True)
+if debug:
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.production") # buat Prod DB
+else:
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.development") # buat test DB
+django.setup()
+from datasource.rkd import RkdData
 
 def update_currency_price_from_dss():
     print("{} : === Currency Price Ingestion ===".format(datetimeNow()))
     currencylist = get_active_currency_ric_not_null()
     currencylist = currencylist.drop(columns=["last_date", "last_price"])
-    currency = currencylist["ric"]
-    jsonFileName = "files/file_json/currency_price.json"
-    result = get_data_from_dss(
-        "start_date", "end_date", currency, jsonFileName, report=REPORT_INTRADAY)
-    result = result.drop(columns=["IdentifierType", "Identifier"])
+    currency = currencylist["ric"].to_list()
+    field = ["CF_DATE", "CF_ASK", "CF_BID"]
+    rkd = RkdData()
+    result = rkd.get_data_from_rkd(currency, field)
     print(result)
     if(len(result) > 0):
         result = result.rename(columns={
-            "RIC": "ric",
-            "Universal Bid Ask Date": "last_date",
-            "Universal Ask Price": "ask_price",
-            "Universal Bid Price": "bid_price",
+            "ticker" : "ric",
+            "CF_DATE": "last_date",
+            "CF_ASK": "ask_price",
+            "CF_BID": "bid_price",
         })
+        result["last_date"] = pd.to_datetime(result["last_date"])
+        result["ask_price"] = result["ask_price"].astype(float)
+        result["bid_price"] = result["bid_price"].astype(float)
         result = result.merge(currencylist, how="left", on="ric")
         result["last_price"] = (result["ask_price"] + result["ask_price"]) / 2
         result = result.drop(columns=["ask_price", "bid_price"])
         print(result)
-        upsert_data_to_database(result, get_currency_table_name(
-        ), "currency_code", how="update", Text=True)
-        report_to_slack(
-            "{} : === Currency Price Updated ===".format(datetimeNow()))
+        upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
+        report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
 
 
 def update_index_price_from_dss(currency_code=None):

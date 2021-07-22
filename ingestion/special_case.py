@@ -14,9 +14,9 @@ from ingestion.universe import (
     update_currency_code_from_dss, 
     update_entity_type_from_dsws, 
     update_industry_from_dsws, 
-    update_lot_size_from_dss, 
     update_mic_from_dss, 
     update_ticker_name_from_dsws, 
+    update_lot_size_from_dss,
     update_ticker_symbol_from_dss, 
     update_worldscope_identifier_from_dsws
 )
