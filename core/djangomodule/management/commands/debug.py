@@ -2,7 +2,7 @@ from core.universe.models import Currency,Universe
 from migrate import currency
 from django.core.management.base import BaseCommand, CommandError
 from core.user.models import User
-from core.djangomodule.general import run_batch
+from core.djangomodule.general import run_batch,symbol_hkd_fix
 from core.djangomodule.yahooFin import get_quote_index,scrap_csi
 from core.djangomodule.calendar import TradingHours
 from core.orders.models import PositionPerformance, Order,OrderPosition
@@ -25,7 +25,11 @@ class Command(BaseCommand):
         # tikers = [tick.ticker.ticker for tick in OrderPosition.objects.filter(ticker__currency_code='USD',is_live=True).distinct('ticker')]
         # for pos in tikers:
         #     pos.save()
-        # HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code__in=['HKD','CNY','USD'],is_active=True).values('ticker')]
+        HKD_universe =  Universe.objects.filter(currency_code__in=['HKD'],is_active=True)
+        for ticker in HKD_universe:
+            ticker.ticker_symbol=symbol_hkd_fix(ticker.ticker_symbol)
+            ticker.save()
+
         # print(HKD_universe)
         # rkd = RkdData()
         # now = datetime.now().date() - timedelta(days=1)
@@ -98,12 +102,12 @@ class Command(BaseCommand):
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
-        send_csv_hanwha(currency="USD",client_name="HANWHA",bot_tester=False,rehedge={
-            'date':'2021-07-20',
-            'types':'hedge'
-        })
-        send_csv_hanwha(currency="USD",client_name="HANWHA",bot_tester=True,rehedge={
-            'date':'2021-07-20',
-            'types':'hedge'
-        })
+        # send_csv_hanwha(currency="USD",client_name="HANWHA",bot_tester=False,rehedge={
+        #     'date':'2021-07-20',
+        #     'types':'hedge'
+        # })
+        # send_csv_hanwha(currency="USD",client_name="HANWHA",bot_tester=True,rehedge={
+        #     'date':'2021-07-20',
+        #     'types':'hedge'
+        # })
         # send_csv_hanwha(currency="CNY")
