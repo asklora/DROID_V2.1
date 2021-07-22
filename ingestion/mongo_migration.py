@@ -2,7 +2,7 @@ import json
 import numpy as np
 import pandas as pd
 from bot.data_download import get_bot_backtest, get_bot_option_type, get_bot_statistic_data, get_latest_bot_update_data, get_latest_price
-from general.sql_query import get_active_currency, get_active_universe, get_consolidated_data, get_industry, get_industry_group, get_latest_price_data, get_master_tac_data, get_region, get_universe_rating, get_universe_rating_history
+from general.sql_query import get_active_currency, get_active_universe, get_consolidated_data, get_industry, get_industry_group, get_latest_price_data, get_master_tac_data, get_region, get_universe_rating, get_universe_rating_detail_history, get_universe_rating_history
 from general.mongo_query import change_null_to_zero, create_collection, update_to_mongo, change_date_to_str, update_specific_to_mongo
 from general.date_process import backdate_by_month
 import sys
@@ -65,6 +65,111 @@ def mongo_currency_update():
 #     print(result)
 #     update_to_mongo(data=result, index="ticker", table="universe", dict=False)
 
+def factor_column_name():
+    return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry", 
+        "book_to_price_minmax_currency_code", "book_to_price_minmax_industry",
+        "ebitda_to_ev_minmax_currency_code", "ebitda_to_ev_minmax_industry",
+        "fwd_bps_minmax_currency_code", "fwd_bps_minmax_industry",
+        "fwd_ebitda_to_ev_minmax_currency_code", "fwd_ebitda_to_ev_minmax_industry",
+        "roe_minmax_currency_code", "roe_minmax_industry",
+        "roic_minmax_currency_code", "roic_minmax_industry",
+        "cf_to_price_minmax_currency_code", "cf_to_price_minmax_industry",
+        "eps_growth_minmax_currency_code", "eps_growth_minmax_industry",
+        "fwd_ey_minmax_industry", "fwd_ey_minmax_currency_code",
+        "fwd_roic_minmax_industry", "fwd_sales_to_price_minmax_industry",
+        "earnings_pred_minmax_industry", "earnings_pred_minmax_currency_code",
+        "momentum_minmax_currency_code", 
+        "sales_to_price_minmax_currency_code", "sales_to_price_minmax_industry",
+        "fwd_sales_to_price_minmax_currency_code", "fwd_roic_minmax_currency_code",
+        "environment_minmax_currency_code", "social_minmax_currency_code",
+        "goverment_minmax_currency_code", "environment_minmax_industry",
+        "social_minmax_industry", "goverment_minmax_industry"]
+
+def fundamentals_value_factor_column_name():
+    return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry",
+        "book_to_price_minmax_currency_code", "book_to_price_minmax_industry",
+        "ebitda_to_ev_minmax_currency_code", "ebitda_to_ev_minmax_industry",
+        "fwd_bps_minmax_currency_code", "fwd_bps_minmax_industry",
+        "fwd_ebitda_to_ev_minmax_currency_code", "fwd_ebitda_to_ev_minmax_industry",
+        "roe_minmax_currency_code", "roe_minmax_industry"]
+
+def fundamentals_quality_factor_column_name():
+    return ["roic_minmax_currency_code", "roic_minmax_industry",
+        "cf_to_price_minmax_currency_code", "cf_to_price_minmax_industry",
+        "eps_growth_minmax_currency_code", "eps_growth_minmax_industry",
+        "fwd_ey_minmax_industry", "fwd_ey_minmax_currency_code",
+        "fwd_sales_to_price_minmax_industry", "fwd_roic_minmax_industry",
+        "earnings_pred_minmax_industry", "earnings_pred_minmax_currency_code"]
+
+def other_fundamentals_column_name():
+    return ["sales_to_price_minmax_currency_code", "sales_to_price_minmax_industry",
+        "fwd_sales_to_price_minmax_currency_code", "fwd_roic_minmax_currency_code",
+        "environment_minmax_currency_code", "social_minmax_currency_code",
+        "goverment_minmax_currency_code", "environment_minmax_industry",
+        "social_minmax_industry", "goverment_minmax_industry"]
+
+def fundamentals_value_factor_name():
+    return ["P/E", "P/E (ind.)", "Book Value", "Book Value (ind.)",
+        "EV/EBITDA", "EV/EBITDA (ind.)", "Forward Book Value", "Forward Book Value (ind.)",
+        "Forward EV/EBITDA", "Forward EV/EBITDA (ind.)", "ROE", "ROE (ind.)"]
+
+def fundamentals_quality_factor_name():
+    return ["ROIC", "ROIC (ind.)", "Free Cash Flow", "Free Cash Flow (ind.)",
+        "PEG ratio", "PEG ratio (ind.)", "Forward P/E","Forward P/E (ind.)", 
+        "Forward Sales (ind.)", "Forward ROIC (ind.)", "Earning Momentum", "Earnings Momentum (ind.)"]
+
+def momentum_factor_name():
+    return ["Price Momentum"]
+
+def other_fundamentals_name():
+    return ["Sales", "Sales (ind.)", "Forward Sales", "Forward ROIC",
+        "Environment", "Environment (ind.)", "Social", "Social (ind.)", 
+        "Goverment", "Goverment (ind.)"]
+
+def factor_column_name_changes():
+    return {"earnings_yield_minmax_currency_code" : "P/E",
+    "earnings_yield_minmax_industry" : "P/E (ind.)",
+    "book_to_price_minmax_currency_code" : "Book Value",
+    "book_to_price_minmax_industry" : "Book Value (ind.)",
+    "ebitda_to_ev_minmax_currency_code" : "EV/EBITDA",
+    "ebitda_to_ev_minmax_industry" : "EV/EBITDA (ind.)",
+    "fwd_bps_minmax_currency_code" : "Forward Book Value",
+    "fwd_bps_minmax_industry" : "Forward Book Value (ind.)",
+    "fwd_ebitda_to_ev_minmax_currency_code" : "Forward EV/EBITDA",
+    "fwd_ebitda_to_ev_minmax_industry" : "Forward EV/EBITDA (ind.)",
+    "roe_minmax_currency_code" : "ROE",
+    "roe_minmax_industry" : "ROE (ind.)",
+    "roic_minmax_currency_code" : "ROIC",
+    "roic_minmax_industry" : "ROIC (ind.)",
+    "cf_to_price_minmax_currency_code" : "Free Cash Flow",
+    "cf_to_price_minmax_industry" : "Free Cash Flow (ind.)",
+    "eps_growth_minmax_currency_code" : "PEG ratio",
+    "eps_growth_minmax_industry" : "PEG ratio (ind.)",
+    "fwd_ey_minmax_currency_code" : "Forward P/E",
+    "fwd_ey_minmax_industry" : "Forward P/E (ind.)",
+    "fwd_sales_to_price_minmax_currency_code" : "Forward Sales", 
+    "fwd_sales_to_price_minmax_industry": "Forward Sales (ind.)",
+    "fwd_roic_minmax_currency_code" : "Forward ROIC",
+    "fwd_roic_minmax_industry" : "Forward ROIC (ind.)",
+    "earnings_pred_minmax_currency_code" : "Earning Momentum",
+    "earnings_pred_minmax_industry" : "Earnings Momentum (ind.)",
+    "momentum_minmax_currency_code" : "Price Momentum",
+    "sales_to_price_minmax_currency_code" : "Sales", 
+    "sales_to_price_minmax_industry" : "Sales (ind.)",
+    "environment_minmax_currency_code" : "Environment", 
+    "environment_minmax_industry" : "Environment (ind.)",
+    "social_minmax_currency_code" : "Social",
+    "social_minmax_industry" : "Social (ind.)", 
+    "goverment_minmax_currency_code" : "Goverment", 
+    "goverment_minmax_industry" : "Goverment (ind.)"}
+
+def rolling_apply(group, field):
+    adjusted_price = [group[field].iloc[0]]
+    for x in group.tac[:-1]:
+        adjusted_price.append(adjusted_price[-1] *  x )
+    group[field] = adjusted_price
+    return group
+
 def mongo_universe_update(ticker=None, currency_code=None):
     #Populate Universe
     all_universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -111,7 +216,48 @@ def mongo_universe_update(ticker=None, currency_code=None):
 
     rating = result[["ticker"]]
     universe_rating = get_universe_rating_history(ticker=ticker, currency_code=currency_code)
+    universe_rating_detail = get_universe_rating_detail_history(ticker=ticker, currency_code=currency_code)
+    universe_rating_detail = universe_rating_detail.merge(universe_rating[["ticker", "momentum"]], how="left", on=["ticker"])
+    universe_rating_detail = universe_rating_detail.rename(columns={"momentum" : "momentum_minmax_currency_code"})
+    universe_rating_detail_df = pd.DataFrame({"ticker":[], "factor_name":[], "score":[]}, index=[])
+    for col in factor_column_name():
+        temp = universe_rating_detail[["ticker", col]]
+        temp = temp.rename(columns={col : "score"})
+        temp["factor_name"] = factor_column_name_changes()[col]
+        universe_rating_detail_df = universe_rating_detail_df.append(temp)
+    universe_rating_positive_negative = pd.DataFrame({"ticker":[], "positive_factor":[], "negative_factor":[]}, index=[])
+    for tick in universe_rating_detail_df["ticker"].unique():
+        positive_factor = []
+        negative_factor = []
+        temp = universe_rating_detail_df.loc[universe_rating_detail_df["ticker"] == tick]
+
+        positive = temp.loc[temp["score"] > 0.4]
+        positive = positive.sort_values(by=["score"], ascending=False)
+        rule1 = positive.loc[positive["factor_name"].isin(fundamentals_value_factor_name())].head(2)
+        rule2 = positive.loc[positive["factor_name"].isin(fundamentals_quality_factor_name())].head(2)
+        rule3 = positive.loc[positive["factor_name"].isin(momentum_factor_name())].head(1)
+        rule4 = positive.loc[positive["factor_name"].isin(other_fundamentals_name())].head(2)
+        rule1 = rule1.append(rule2)
+        rule1 = rule1.append(rule3)
+        rule1 = rule1.append(rule4)
+
+        negative = temp.loc[temp["score"] < 0.2]
+        negative = negative.sort_values(by=["score"])
+        rule1_min = negative.loc[negative["factor_name"].isin(fundamentals_value_factor_name())].head(2)
+        rule2_min = negative.loc[negative["factor_name"].isin(fundamentals_quality_factor_name())].head(2)
+        rule3_min = negative.loc[negative["factor_name"].isin(momentum_factor_name())].head(1)
+        rule4_min = negative.loc[negative["factor_name"].isin(other_fundamentals_name())].head(2)
+        rule1_min = rule1_min.append(rule2_min)
+        rule1_min = rule1_min.append(rule3_min)
+        rule1_min = rule1_min.append(rule4_min)
+        for index, row in rule1.head().iterrows():
+            positive_factor.append(row["factor_name"])
+        for index, row in rule1_min.head().iterrows():
+            negative_factor.append(row["factor_name"])
+        positive_negative_result = pd.DataFrame({"ticker":[tick], "positive_factor":[positive_factor], "negative_factor":[negative_factor]}, index=[0])
+        universe_rating_positive_negative = universe_rating_positive_negative.append(positive_negative_result)
     universe_rating = rating.merge(universe_rating, how="left", on=["ticker"])
+    universe_rating = universe_rating.merge(universe_rating_positive_negative, how="left", on=["ticker"])
     universe_rating = change_date_to_str(universe_rating)
     universe_rating = change_null_to_zero(universe_rating)
     print(universe_rating)
@@ -122,7 +268,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
         ai_score = rating_data["ai_score"].to_list()[0]
         ai_score2 = rating_data["ai_score2"].to_list()[0]
         rating_data = rating_data[["final_score", "ai_score", "ai_score2", "fundamentals_quality", "fundamentals_value", 
-        "dlp_1m", "dlp_3m", "wts_rating", "wts_rating2", "esg", "momentum", "technical"]].to_dict("records")
+        "dlp_1m", "dlp_3m", "wts_rating", "wts_rating2", "esg", "momentum", "technical", "positive_factor", "negative_factor"]].to_dict("records")
         rating = pd.DataFrame({"ticker":[tick], "rating":[rating_data[0]], "ai_score":[ai_score], "ai_score2":[ai_score2]}, index=[0])
         rating_df = rating_df.append(rating)
     rating_df = rating_df.reset_index(inplace=False)
@@ -133,11 +279,8 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.drop(columns=["index", "ai_score", "ai_score2"])
     universe = universe.reset_index(inplace=False)
     universe = universe.drop(columns=["index"])
-    # universe = universe.rename(columns={"index" : "rank"})
     print(universe)
     update_to_mongo(data=universe, index="ticker", table="universe", dict=False)
-
-    rank = result[["ticker"]]
 
 
 def mongo_universe_rating_update():

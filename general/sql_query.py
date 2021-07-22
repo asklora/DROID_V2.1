@@ -2,7 +2,7 @@ import pandas as pd
 import sqlalchemy as db
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
-from general.sql_process import db_read, db_write, dlp_db_read
+from general.sql_process import db_read, db_write, dlp_db_read, alibaba_db_url
 from general.date_process import backdate_by_day, dateNow, droid_start_date, str_to_date
 from general.data_process import tuple_data
 from general.table_name import (
@@ -24,11 +24,13 @@ currency_table = get_currency_table_name()
 fundamentals_score_table = get_fundamental_score_table_name()
 universe_rating_table = get_universe_rating_table_name()
 
-def read_query(query, table=universe_table, cpu_counts=False, dlp=False, prints=True):
+def read_query(query, table=universe_table, cpu_counts=False, dlp=False, alibaba=False, prints=True):
     if(prints):
         print(f"Get Data From Database on {table} table")
     if dlp:
         dbcon = dlp_db_read
+    elif alibaba:
+        dbcon = alibaba_db_url
     else:
         dbcon = db_read
     if(cpu_counts):
@@ -281,7 +283,7 @@ def get_pred_mean():
     query = f"select distinct avlpf.ticker, avlpf.pred_mean, avlpf.testing_period::date, avlpf.update_time from ai_value_lgbm_pred_final avlpf, "
     query += f"(select ticker, max(testing_period::date) as max_date from ai_value_lgbm_pred_final group by ticker) filter "
     query += f"where filter.ticker=avlpf.ticker and filter.max_date=avlpf.testing_period;"
-    data = read_query(query, table=master_ohlcvtr_table, dlp=True)
+    data = read_query(query, table=master_ohlcvtr_table, alibaba=True)
     data = data.sort_values(by=["ticker", "update_time"], ascending=False)
     data = data.drop_duplicates(subset=["ticker"], keep="first")
     data = data.drop(columns=["update_time"])
@@ -385,6 +387,15 @@ def get_consolidated_data(column, condition, group_field=None):
 
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_history_table_name()
+    query = f"select * from {table_name} where trading_day=(select max(urh.trading_day) from {table_name} urh) "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
+    if(check != ""):
+        query += "and " + check
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_universe_rating_detail_history(ticker=None, currency_code=None, active=True):
+    table_name = get_universe_rating_detail_history_table_name()
     query = f"select * from {table_name} where trading_day=(select max(urh.trading_day) from {table_name} urh) "
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if(check != ""):
