@@ -2,8 +2,7 @@ from rest_framework.views import APIView
 from rest_framework import permissions, response,status
 from .serializers import ClientSerializers, UserClientSerializers
 from .models import Client,UserClient
-from core.user.models import User
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.utils import extend_schema
 
 
 class ClientView(APIView):

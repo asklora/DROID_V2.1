@@ -1,4 +1,3 @@
-from core.Clients.models import UserClient
 from django.db import models
 from core.djangomodule.models import BaseTimeStampModel
 from core.universe.models import Universe
@@ -6,7 +5,7 @@ from core.user.models import User
 from core.bot.models import BotOptionType
 from django.db import IntegrityError
 import uuid
-from core.djangomodule.general import generate_id, nonetozero, formatdigit
+from core.djangomodule.general import generate_id, formatdigit
 
 # Create your models here.
 

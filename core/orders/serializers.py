@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import OrderPosition, PositionPerformance,OrderFee
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample,extend_schema_serializer
+from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from django.db.models import Sum,F
 from core.user.models import TransactionHistory
 

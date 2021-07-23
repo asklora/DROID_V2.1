@@ -15,14 +15,14 @@ from bot.data_download import (
      get_new_tickers_from_bot_data, 
      get_volatility_latest_date)
 from general.slack import report_to_slack
-from general.date_process import backdate_by_month, backdate_by_year, dateNow, droid_start_date_buffer, str_to_date, droid_start_date
+from general.date_process import backdate_by_month, dateNow, droid_start_date_buffer, str_to_date, droid_start_date
 from bot.option_file_classic import fill_bot_backtest_classic, populate_bot_classic_backtest
 from bot.option_file_ucdc import fill_bot_backtest_ucdc, populate_bot_ucdc_backtest
 from bot.option_file_uno import fill_bot_backtest_uno, populate_bot_uno_backtest
 from bot.statistic_classic import populate_classic_statistic
 from bot.statistic_ucdc import populate_ucdc_statistic
 from bot.statistic_uno import populate_uno_statistic
-from bot.data_process import check_bot_list, check_time_to_exp
+from bot.data_process import check_time_to_exp
 from global_vars import folder_check, time_to_expiry, bots_list
 
 def report_check(report, ticker=None, currency_code=None, time_to_exp=None):

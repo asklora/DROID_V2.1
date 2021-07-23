@@ -1,15 +1,14 @@
-from django.contrib import admin, messages
+import time
+from config.settings import db_debug
+from django.contrib import admin
 from .models import UniverseConsolidated, Universe
 from .forms import AddTicker
 from core.services.tasks import get_isin_populate_universe
 from import_export.admin import ImportExportModelAdmin
 from core.djangomodule.general import generate_id
 from import_export import resources
-from django.dispatch import receiver
 from django.utils import timezone
 from django.shortcuts import HttpResponseRedirect, reverse
-import time
-from config.settings import db_debug
 
 class UniverseResource(resources.ModelResource):
     user = None

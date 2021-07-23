@@ -1,5 +1,5 @@
+
 import sys
-from ingestion.master_data import populate_intraday_latest_price, populate_latest_price
 from ingestion.master_multiple import master_multiple_update
 from ingestion.master_tac import master_tac_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
@@ -8,18 +8,19 @@ from general.date_process import datetimeNow
 from general.sql_process import do_function
 from general.sql_output import fill_null_company_desc_with_ticker_name, fill_null_quandl_symbol, upsert_data_to_database
 from general.sql_query import get_active_universe, get_active_universe_consolidated_by_field, get_data_from_table_name
-from ingestion.universe import (
+from ingestion.data_from_dss import update_ticker_symbol_from_dss
+from ingestion.data_from_rkd import (
+    populate_intraday_latest_price_from_rkd, 
+    update_currency_code_from_rkd, 
+    update_lot_size_from_rkd, 
+    update_mic_from_rkd)
+from ingestion.data_from_dsws import (
     populate_universe_consolidated_by_isin_sedol_from_dsws, 
     update_company_desc_from_dsws, 
-    update_currency_code_from_dss, 
     update_entity_type_from_dsws, 
     update_industry_from_dsws, 
-    update_mic_from_dss, 
     update_ticker_name_from_dsws, 
-    update_lot_size_from_dss,
-    update_ticker_symbol_from_dss, 
-    update_worldscope_identifier_from_dsws
-)
+    update_worldscope_identifier_from_dsws)
 from general.table_name import (
     get_bot_backtest_table_name,
     get_bot_classic_backtest_table_name,
@@ -76,11 +77,11 @@ def ticker_changes(old_ticker, new_ticker):
     update_ticker_name_from_dsws(ticker=ticker)
     update_ticker_symbol_from_dss(ticker=ticker)
     update_entity_type_from_dsws(ticker=ticker)
-    update_lot_size_from_dss(ticker=ticker)
-    update_currency_code_from_dss(ticker=ticker)
+    update_lot_size_from_rkd(ticker=ticker)
+    update_currency_code_from_rkd(ticker=ticker)
     update_industry_from_dsws(ticker=ticker)
     update_company_desc_from_dsws(ticker=ticker)
-    update_mic_from_dss(ticker=ticker)
+    update_mic_from_rkd(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 
@@ -281,7 +282,7 @@ def ticker_changes(old_ticker, new_ticker):
     master_ohlctr_update(history=True)
     master_tac_update()
     master_multiple_update()
-    populate_intraday_latest_price(ticker=[new_ticker])
+    populate_intraday_latest_price_from_rkd(ticker=[new_ticker])
     # populate_latest_price(ticker=[new_ticker])
     
     report_to_slack("{} : === {} CHANGES TO {} ===".format(datetimeNow(), old_ticker, new_ticker))

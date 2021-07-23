@@ -1,14 +1,10 @@
-
-from bot.data_download import get_currency_data
 import sys
-from boto3 import client
-from botocore import hooks
 from numpy import append
 import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from general.data_process import tuple_data
-from general.sql_query import get_master_ohlcvtr_data, get_master_tac_data, read_query
+from general.sql_query import read_query
 from general.date_process import dateNow
 from general.slack import report_to_slack
 from general.data_process import uid_maker, NoneToZero
@@ -26,7 +22,6 @@ from general.table_name import (
     get_universe_rating_history_table_name, 
     get_universe_table_name, 
     get_universe_client_table_name, 
-    get_universe_rating_table_name,
     get_user_account_balance_table_name,
     get_user_clients_table_name)
 from bot.calculate_bot import get_expiry_date

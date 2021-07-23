@@ -1,13 +1,5 @@
-from datetime import datetime
 from django.core.management.base import BaseCommand
 from ingestion.mongo_migration import mongo_universe_update
-from core.djangomodule.serializers import HotUniverse, Universe
-import json
-import pandas as pd
-import threading
-import time
-from firebase_admin import firestore
-import random
 # # Create an Event for notifying main thread.
 # callback_done = threading.Event()
 
@@ -19,9 +11,6 @@ import random
 #     # for doc in doc_snapshot:
 #     #     print(f'Received document snapshot: {doc.id}')
 #     callback_done.set()
-
-
-
 
 class Command(BaseCommand):
 

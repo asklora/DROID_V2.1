@@ -1,22 +1,16 @@
 from general.data_process import uid_maker
-from general.date_process import dateNow, str_to_date
 from general.table_name import get_bot_latest_ranking_table_name, get_bot_ranking_table_name
 from general.sql_output import upsert_data_to_database
-import sys
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from joblib import dump, load
-from pandas.tseries.offsets import BDay
 from bot.data_download import (
     get_bot_backtest_data, 
     get_bot_ranking_data, 
-    get_data_vol_surface_ticker, 
     get_executive_data_download, 
     get_master_tac_price)
-from dateutil.relativedelta import relativedelta
 
-from bot.final_model import model_trainer, bot_infer, find_rank
+from bot.final_model import model_trainer, bot_infer
 from global_vars import X_columns, bots_list, labeler_model_type, bot_labeler_threshold, time_to_expiry, bot_slippage
 
 def populate_bot_labeler(start_date=None, end_date=None, model_type=labeler_model_type, ticker=None, currency_code=None, time_to_exp=time_to_expiry, mod=False, bots_list=bots_list, bot_labeler_train = False, history=False):

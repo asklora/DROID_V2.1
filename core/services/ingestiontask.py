@@ -1,20 +1,15 @@
+from ingestion.master_multiple import master_multiple_update
+from bot.preprocess import dividend_daily_update, interest_daily_update
+from ingestion.data_for_django import update_currency_price_from_rkd_to_django, update_lot_size_from_rkd_to_django
+from ingestion.master_tac import master_tac_update
+from ingestion.master_ohlcvtr import master_ohlctr_update
+from general.sql_process import do_function
+from ingestion.data_from_dsws import interest_update_from_dsws, populate_ibes_table, populate_macro_table, update_data_dsws_from_dsws, update_entity_type_from_dsws, update_ibes_data_monthly_from_dsws, update_macro_data_monthly_from_dsws, update_ticker_name_from_dsws
+from ingestion.data_from_dss import populate_latest_price_from_dss, update_data_dss_from_dss, update_ticker_symbol_from_dss
 from general.sql_query import get_universe_by_region
 from config.celery import app
 from datetime import datetime
-from main import (
-    daily_ingestion,
-    weekly, 
-    populate_latest_price,
-    populate_macro_table,
-    populate_ibes_table,
-    do_function,
-    master_ohlctr_update,
-    master_tac_update,
-    update_currency_price_from_dss,
-    interest_update,
-    dividend_daily_update,
-    interest_daily_update
-)
+from main import (daily_ingestion)
 import sys
 from core.djangomodule.general import aws_batch
 from migrate import daily_migrations
@@ -24,9 +19,6 @@ from datasource.rkd import RkdData
 from core.services.models import ErrorLog
 from celery.schedules import crontab
 from config.settings import db_debug
-
-
-
 
 if not db_debug:
     app.conf.beat_schedule={
@@ -62,7 +54,29 @@ def get_trkd_data_by_region(region=None):
         err.send_report_error()
         return {"err": str(e)}
 
+def weekly():
+    update_ticker_name_from_dsws()
+    do_function("universe_populate")
+    update_lot_size_from_rkd_to_django()
+    update_ticker_symbol_from_dss()
+    update_entity_type_from_dsws()
 
+    ticker = get_universe_by_region(region_id="na")
+    ticker = ticker["ticker"].to_list()
+    update_data_dss_from_dss(ticker=ticker)
+    update_data_dsws_from_dsws(ticker=ticker)
+    
+    ticker = get_universe_by_region(region_id="ws")
+    ticker = ticker["ticker"].to_list()
+    update_data_dss_from_dss(ticker=ticker)
+    update_data_dsws_from_dsws(ticker=ticker)
+    
+    do_function("master_ohlcvtr_update")
+    master_ohlctr_update()
+    master_tac_update()
+    master_multiple_update()
+    update_ibes_data_monthly_from_dsws()
+    update_macro_data_monthly_from_dsws()
 
 ## DEPRECATED
 @aws_batch
@@ -97,7 +111,7 @@ def get_latest_price(currency):
             # Change the standard output to the file we created.
             sys.stdout = f
             # triger ingestion function
-            populate_latest_price(currency_code=currency)
+            populate_latest_price_from_dss(currency_code=currency)
             sys.stdout = original_stdout      
     except Exception as e:
         report_to_slack("===  migrate daily error ===")
@@ -117,15 +131,15 @@ def migrate_na():
         daily_migrations()  # triger ingestion function
         daily_ingestion(region_id="na") # one region
         ticker = get_universe_by_region(region_id="na")
-        populate_latest_price(ticker=ticker["ticker"])
+        populate_latest_price_from_dss(ticker=ticker["ticker"])
 
         populate_macro_table()
         populate_ibes_table()
         do_function("master_ohlcvtr_update")
         master_ohlctr_update()
         master_tac_update()
-        update_currency_price_from_dss()
-        interest_update()
+        update_currency_price_from_rkd_to_django()
+        interest_update_from_dsws()
         dividend_daily_update()
         interest_daily_update()
         return {"result": f"migrate NA daily done"}
@@ -148,15 +162,15 @@ def migrate_ws():
         daily_migrations()  # triger ingestion function
         daily_ingestion(region_id="ws")
         ticker = get_universe_by_region(region_id="ws")
-        populate_latest_price(ticker=ticker["ticker"])
+        populate_latest_price_from_dss(ticker=ticker["ticker"])
 
         populate_macro_table()
         populate_ibes_table()
         do_function("master_ohlcvtr_update")
         master_ohlctr_update()
         master_tac_update()
-        update_currency_price_from_dss()
-        interest_update()
+        update_currency_price_from_rkd_to_django()
+        interest_update_from_dsws()
         dividend_daily_update()
         interest_daily_update()
             

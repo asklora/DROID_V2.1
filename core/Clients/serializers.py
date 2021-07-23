@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import Client,UserClient
-from core.user.models import User
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample,extend_schema_serializer
+from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 
 
 
