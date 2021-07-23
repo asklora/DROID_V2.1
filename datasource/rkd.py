@@ -649,7 +649,7 @@ class RkdStream(RkdData):
         print("WebSocket open!")
         self.send_login_request(ws)
 
-    @shared_task(bind=True,ignore_result=True)
+    @app.task(bind=True,ignore_result=True)
     def update_rtdb(self,data):
         data = data[0]
         ticker = data.pop("ticker")

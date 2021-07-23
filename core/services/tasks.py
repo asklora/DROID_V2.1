@@ -61,123 +61,84 @@ CNY_CUR = Currency.objects.get(currency_code="CNY")
 EUR_CUR = Currency.objects.get(currency_code="EUR")
 
 channel_layer = get_channel_layer()
-if db_debug:
-    queue_name = 'droid_dev'
-else:
-    queue_name = 'celery'
 
-# TASK SCHEDULEs
+# TASK SCHEDULE
 
 app.conf.beat_schedule = {
     'ping-presence': {
         'task': 'core.services.tasks.ping_available_presence',
         'schedule': timedelta(seconds=50),
-        'options':{
-            'queue':'celery'
-        }
+        # 'options':{
+        #     'queue':'local'
+        # }
     },
     'prune-presence': {
         'task': 'core.services.tasks.channel_prune',
         'schedule': timedelta(seconds=60),
-        'options':{
-            'queue':'celery'
-        }
+        # 'options':{
+        #     'queue':'local'
+        # }
     },
     "USD-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=USD_CUR.hedge_schedule.minute, hour=USD_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "USD"},
-        'options':{
-            'queue':queue_name
-        }
+        
     },
     "HKD-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=HKD_CUR.hedge_schedule.minute, hour=HKD_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "HKD"},
-        'options':{
-            'queue':queue_name
-        }
     },
     "KRW-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=KRW_CUR.hedge_schedule.minute, hour=KRW_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "KRW"},
-        'options':{
-            'queue':queue_name
-        }
     },
     "CNY-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=CNY_CUR.hedge_schedule.minute, hour=CNY_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "CNY"},
-        'options':{
-            'queue':queue_name
-        }
     },
     "EUR-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "EUR"},
-        'options':{
-            'queue':queue_name
-        }
     },
     "USD-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=USD_CUR.top_stock_schedule.minute, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "USD"},
-        'options':{
-            'queue':queue_name
-        }
     },
     "HKD-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=HKD_CUR.top_stock_schedule.minute, hour=HKD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "HKD"},
-        'options':{
-            'queue':queue_name
-        }
     },
     "KRW-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=KRW_CUR.top_stock_schedule.minute, hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "KRW"},
-        'options':{
-            'queue':queue_name
-        }
     },
     "CNY-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=CNY_CUR.top_stock_schedule.minute, hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "CNY"},
-        'options':{
-            'queue':queue_name
-        }
     },
     "EUR-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "EUR"},
-        'options':{
-            'queue':queue_name
-        }
     },
     "EUR-POPULATE-PICK-FELS": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "EUR","client_name":"FELS"},
-        'options':{
-            'queue':queue_name
-        }
     },
     "USD-POPULATE-PICK-FELS": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=USD_CUR.top_stock_schedule.minute, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "USD","client_name":"FELS"},
-        'options':{
-            'queue':queue_name
-        }
     },
 }
 # END TASK SCHEDULE
@@ -570,7 +531,7 @@ def hedge(currency=None, bot_tester=False,**options):
                 else:
                     report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
             if group_celery_jobs:
-                result = celery_jobs.apply_async(queue=queue_name)
+                result = celery_jobs.apply_async()
                 retry =0
                 while result.waiting():
                     tm.sleep(2)
