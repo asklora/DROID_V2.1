@@ -570,7 +570,7 @@ def hedge(currency=None, bot_tester=False,**options):
                 else:
                     report_to_slack(f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
             if group_celery_jobs:
-                result = celery_jobs.apply_async()
+                result = celery_jobs.apply_async(queue=queue_name)
                 retry =0
                 while result.waiting():
                     tm.sleep(2)
