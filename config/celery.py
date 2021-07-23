@@ -46,7 +46,6 @@ def listener(self, data):
                 'password':'r3ddpapapapa'
             }
         }
-
     """
     if data['type'] == 'function':
         module, function = data['module'].rsplit('.', 1)
