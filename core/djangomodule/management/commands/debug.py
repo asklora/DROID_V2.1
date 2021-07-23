@@ -103,4 +103,5 @@ class Command(BaseCommand):
         #     'date':'2021-07-20',
         #     'types':'hedge'
         # })
-        # send_csv_hanwha(currency="CNY")
+        send_csv_hanwha(currency="KRW",client_name="HANWHA",bot_tester=True)
+        send_csv_hanwha(currency="KRW",client_name="HANWHA",bot_tester=False)

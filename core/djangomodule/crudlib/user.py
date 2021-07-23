@@ -36,4 +36,3 @@ def sync_user(payload):
             user.set_password(payload['password'])
         user.save()
         return payload
-    
