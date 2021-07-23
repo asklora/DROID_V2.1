@@ -72,16 +72,16 @@ app.conf.beat_schedule = {
     'ping-presence': {
         'task': 'core.services.tasks.ping_available_presence',
         'schedule': timedelta(seconds=50),
-        # 'options':{
-        #     'queue':'local'
-        # }
+        'options':{
+            'queue':'celery'
+        }
     },
     'prune-presence': {
         'task': 'core.services.tasks.channel_prune',
         'schedule': timedelta(seconds=60),
-        # 'options':{
-        #     'queue':'local'
-        # }
+        'options':{
+            'queue':'celery'
+        }
     },
     "USD-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
