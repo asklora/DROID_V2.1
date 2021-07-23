@@ -66,7 +66,7 @@ if db_debug:
 else:
     queue_name = 'celery'
 
-# TASK SCHEDULE
+# TASK SCHEDULEs
 
 app.conf.beat_schedule = {
     'ping-presence': {
