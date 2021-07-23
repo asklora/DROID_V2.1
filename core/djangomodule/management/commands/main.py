@@ -14,11 +14,11 @@ from bot.preprocess import (
 from ingestion.data_from_timezone import update_utc_offset_from_timezone
 from ingestion.data_from_dss import update_ticker_symbol_from_dss
 from ingestion.data_from_quandl import update_quandl_orats_from_quandl
-from ingestion.data_for_django import (
-    update_currency_code_from_rkd_to_django, 
-    update_currency_price_from_rkd_to_django, 
-    update_lot_size_from_rkd_to_django, 
-    update_mic_from_rkd_to_django)
+from ingestion.data_from_rkd import (
+    update_currency_code_from_rkd, 
+    update_currency_price_from_rkd, 
+    update_lot_size_from_rkd, 
+    update_mic_from_rkd)
 from ingestion.data_from_dsws import (
     dividend_updated_from_dsws, 
     interest_update_from_dsws, 
@@ -59,7 +59,7 @@ class Command(BaseCommand):
             status = ""
             if (options["na"]):
                 status = "Currency Price Update"
-                update_currency_price_from_rkd_to_django()
+                update_currency_price_from_rkd()
                 status = "Daily Ingestion Update"
                 daily_migrations()
                 daily_ingestion(region_id="na")
@@ -81,7 +81,7 @@ class Command(BaseCommand):
             
             if (options["ws"]):
                 status = "Currency Price Update"
-                update_currency_price_from_rkd_to_django()
+                update_currency_price_from_rkd()
                 status = "Daily Ingestion Update"
                 daily_migrations()
                 # daily_process_ohlcvtr(region_id = "ws")
@@ -158,9 +158,9 @@ class Command(BaseCommand):
                     status = "Entity Type Ingestion"
                     update_entity_type_from_dsws()
                     status = "Lot Size Ingestion"
-                    update_lot_size_from_rkd_to_django()
+                    update_lot_size_from_rkd()
                     status = "Currency Code Ingestion"
-                    update_currency_code_from_rkd_to_django()
+                    update_currency_code_from_rkd()
                     status = "Industry Ingestion"
                     update_industry_from_dsws()
                     status = "Company Name Ingestion"
@@ -170,7 +170,7 @@ class Command(BaseCommand):
                     status = "Ticker Symbol Ingestion"
                     update_ticker_symbol_from_dss()
                     status = "MIC Ingestion"
-                    update_mic_from_rkd_to_django()
+                    update_mic_from_rkd()
                     status = "Dividend Ingestion"
                     dividend_updated_from_dsws()
                     status = "Dividend Daily Update"

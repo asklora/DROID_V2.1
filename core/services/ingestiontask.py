@@ -1,6 +1,6 @@
 from ingestion.master_multiple import master_multiple_update
 from bot.preprocess import dividend_daily_update, interest_daily_update
-from ingestion.data_for_django import update_currency_price_from_rkd_to_django, update_lot_size_from_rkd_to_django
+from ingestion.data_from_rkd import update_currency_price_from_rkd, update_lot_size_from_rkd
 from ingestion.master_tac import master_tac_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
 from general.sql_process import do_function
@@ -57,7 +57,7 @@ def get_trkd_data_by_region(region=None):
 def weekly():
     update_ticker_name_from_dsws()
     do_function("universe_populate")
-    update_lot_size_from_rkd_to_django()
+    update_lot_size_from_rkd()
     update_ticker_symbol_from_dss()
     update_entity_type_from_dsws()
 
@@ -138,7 +138,7 @@ def migrate_na():
         do_function("master_ohlcvtr_update")
         master_ohlctr_update()
         master_tac_update()
-        update_currency_price_from_rkd_to_django()
+        update_currency_price_from_rkd()
         interest_update_from_dsws()
         dividend_daily_update()
         interest_daily_update()
@@ -169,7 +169,7 @@ def migrate_ws():
         do_function("master_ohlcvtr_update")
         master_ohlctr_update()
         master_tac_update()
-        update_currency_price_from_rkd_to_django()
+        update_currency_price_from_rkd()
         interest_update_from_dsws()
         dividend_daily_update()
         interest_daily_update()

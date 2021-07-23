@@ -1,11 +1,11 @@
-from ingestion.data_for_django import update_currency_code_from_rkd_to_django
+from ingestion.data_from_rkd import update_currency_code_from_rkd
 from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Start Debug")
         ticker = ["MSFT.O", "AAPL.O"]
-        update_currency_code_from_rkd_to_django(ticker=ticker)
+        update_currency_code_from_rkd(ticker=ticker)
         # tikers = [tick.ticker.ticker for tick in OrderPosition.objects.filter(ticker__currency_code='USD',is_live=True).distinct('ticker')]
         # for pos in tikers:
         #     pos.save()

@@ -6,7 +6,6 @@ from general.table_name import get_currency_table_name, get_latest_price_table_n
 from general.sql_output import clean_latest_price, update_universe_where_currency_code_null, upsert_data_to_database
 from general.sql_query import get_active_currency, get_active_currency_ric_not_null, get_active_universe, get_latest_price_data, get_yesterday_close_price
 from general.date_process import dateNow, datetimeNow, str_to_date
-from global_vars import REPORT_INTRADAY
 import django
 import os
 debug = os.environ.get("DJANGO_SETTINGS_MODULE",True)

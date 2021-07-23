@@ -1,3 +1,4 @@
+from ingestion.data_from_rkd import update_currency_code_from_rkd
 from general.date_process import dateNow
 from ingestion.data_from_dsws import update_data_dsws_from_dsws
 from ingestion.data_from_dss import update_data_dss_from_dss
@@ -70,4 +71,5 @@ def daily_ingestion(region_id=None):
 if __name__ == "__main__":
     print("Start Process")
     from migrate import weekly_migrations, daily_migrations
-    
+    ticker = ["MSFT.O", "AAPL.O"]
+    update_currency_code_from_rkd(ticker=ticker)
