@@ -22,6 +22,7 @@ CHANNEL_LAYERS = {
 print('using prod db')
 read_endpoint, write_endpoint, port = db.prod_url
 CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@18.167.118.164:5672'
+
 print(read_endpoint)
 
 DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']

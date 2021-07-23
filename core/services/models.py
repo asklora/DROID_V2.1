@@ -9,7 +9,7 @@ from django.urls import reverse
 from channels_presence.models import Room,Presence,get_channel_layer
 from django.conf import settings
 import asyncio
-
+from django.contrib.postgres.fields import ArrayField
 channel_layer = get_channel_layer()
 
 
@@ -124,7 +124,7 @@ class ErrorLog(BaseTimeStampModel):
         channel='#error-log')
         report_to_slack(f'*Error Traceback:*\n {self.error_traceback}',channel='#error-log')
 
-    
+
 
     
 

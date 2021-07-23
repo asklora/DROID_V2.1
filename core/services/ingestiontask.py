@@ -3,7 +3,6 @@ from config.celery import app
 from datetime import datetime
 from main import (
     daily_ingestion,
-    weekly, 
     populate_latest_price,
     populate_macro_table,
     populate_ibes_table,
@@ -64,24 +63,7 @@ def get_trkd_data_by_region(region=None):
 
 
 
-## DEPRECATED
-@aws_batch
-@app.task
-def batch_weekly():
-    """
-    Sat at 03:15
-    """
-    now = datetime.now()
-    try:
-        original_stdout = sys.stdout  # Save a reference to the original standard output
-        with open(f"logger/weekly_{now}.txt", "w") as f:
-            # Change the standard output to the file we created.
-            sys.stdout = f
-            weekly()  # triger ingestion function
-            sys.stdout = original_stdout
-        return {"result": f"weekly is updated"}
-    except Exception as e:
-        return {"err": str(e)}
+
 
 ## DEPRECATED
 @app.task
