@@ -1,5 +1,5 @@
 from core.Clients.models import UserClient
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save,post_delete
 from django.dispatch import receiver
 from .models import Order, OrderFee, OrderPosition, PositionPerformance
 from core.bot.models import BotOptionType
@@ -148,12 +148,6 @@ def order_signal(sender, instance, created, **kwargs):
                 perf.order_id = instance
                 perf.save()
                 order.save()
-                perfserialize = PositionPerformanceSerializer(perf).data
-                perfdata = {
-                    "type": "function",
-                    "module": "core.djangomodule.crudlib.order.sync_performance",
-                    "payload": dict(perfserialize)
-                }
 
                 if instance.bot_id != "stock":
                     instance.performance_uid = perf.performance_uid
@@ -174,10 +168,11 @@ def order_signal(sender, instance, created, **kwargs):
                         "description": "bot order",
                         "position": f"{order.position_uid}",
                         "event": "create",
+                        "order_uid":str(instance.order_uid)
                     },
                 )
 
-                OrderFee.objects.create(
+                fee=OrderFee.objects.create(
                     order_uid=instance,
                     fee_type=f"{instance.side} commissions fee",
                     amount=commissions_fee
@@ -191,10 +186,11 @@ def order_signal(sender, instance, created, **kwargs):
                         "description": f"{instance.side} fee",
                         "position": f"{order.position_uid}",
                         "event": "fee",
+                        "fee_id":fee.id
                     },
                 )
                 if stamp_duty_fee > 0:
-                    OrderFee.objects.create(
+                    stamp=OrderFee.objects.create(
                         order_uid=instance,
                         fee_type=f"{instance.side} stamp_duty fee",
                         amount=stamp_duty_fee
@@ -208,6 +204,7 @@ def order_signal(sender, instance, created, **kwargs):
                             "description": f"{instance.side} fee",
                              "position": f"{order.position_uid}",
                              "event": "stamp_duty",
+                             "stamp_duty_id":stamp.id
                         },
                     )
 
@@ -255,7 +252,7 @@ def order_signal(sender, instance, created, **kwargs):
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             instance.amount, "sell", order_position.user_id)
 
-                        OrderFee.objects.create(
+                        fee=OrderFee.objects.create(
                             order_uid=instance,
                             fee_type=f"{instance.side} commissions fee",
                             amount=commissions_fee
@@ -269,10 +266,11 @@ def order_signal(sender, instance, created, **kwargs):
                                 "description": f"{instance.side} fee",
                                 "position": f"{order_position.position_uid}",
                                 "event": "fee",
+                                "fee_id":fee.id
                             },
                         )
                         if stamp_duty_fee > 0:
-                            OrderFee.objects.create(
+                            stamp=OrderFee.objects.create(
                                 order_uid=instance,
                                 fee_type=f"{instance.side} stamp_duty fee",
                                 amount=stamp_duty_fee
@@ -286,12 +284,13 @@ def order_signal(sender, instance, created, **kwargs):
                                     "description": f"{instance.side} fee",
                                     "position": f"{order_position.position_uid}",
                                     "event": "stamp_duty",
+                                    "stamp_duty_id":stamp.id
                                 },
                             )
                     elif instance.side == "buy" and order_position.is_live:
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             instance.amount, "buy", order_position.user_id)
-                        OrderFee.objects.create(
+                        fee =OrderFee.objects.create(
                             order_uid=instance,
                             fee_type=f"{instance.side} commissions fee",
                             amount=total_fee
@@ -305,10 +304,11 @@ def order_signal(sender, instance, created, **kwargs):
                                 "description": f"{instance.side} fee",
                                 "position": f"{order_position.position_uid}",
                                 "event": "fee",
+                                "fee_id":fee.id
                             },
                         )
                         if stamp_duty_fee > 0:
-                            OrderFee.objects.create(
+                            stamp=OrderFee.objects.create(
                                 order_uid=instance,
                                 fee_type=f"{instance.side} stamp_duty fee",
                                 amount=stamp_duty_fee
@@ -322,6 +322,7 @@ def order_signal(sender, instance, created, **kwargs):
                                     "description": f"{instance.side} fee",
                                     "position": f"{order_position.position_uid}",
                                     "event": "stamp_duty",
+                                    "stamp_duty_id":stamp.id
                                 },
                             )
 
@@ -339,10 +340,11 @@ def order_signal(sender, instance, created, **kwargs):
                                 "description": "bot return",
                                 "position": f"{order_position.position_uid}",
                                 "event": "return",
+                                "order_uid":str(instance.order_uid)
                             },
                         )
 
-                        OrderFee.objects.create(
+                        fee =OrderFee.objects.create(
                             order_uid=instance,
                             fee_type=f"{instance.side} commissions fee",
                             amount=commissions_fee
@@ -356,10 +358,11 @@ def order_signal(sender, instance, created, **kwargs):
                                 "description": f"{instance.side} fee",
                                 "position": f"{order_position.position_uid}",
                                 "event": "fee",
+                                "fee_id":fee.id
                             },
                         )
                         if stamp_duty_fee > 0:
-                            OrderFee.objects.create(
+                            stamp =OrderFee.objects.create(
                                 order_uid=instance,
                                 fee_type=f"{instance.side} stamp_duty fee",
                                 amount=stamp_duty_fee
@@ -373,6 +376,8 @@ def order_signal(sender, instance, created, **kwargs):
                                     "description": f"{instance.side} fee",
                                     "position": f"{order_position.position_uid}",
                                     "event": "stamp_duty",
+                                    "stamp_duty_id":stamp.id
+
                                 },
                             )
 
@@ -384,6 +389,46 @@ def order_signal(sender, instance, created, **kwargs):
         "payload": dict(instanceserialize)
     }
     # services.celery_app.send_task("config.celery.listener",args=(data,),queue="asklora")
+
+
+
+@receiver(post_delete,sender=PositionPerformance)
+def order_revert(sender, instance, **kwargs):
+    if instance.order_uid:
+        order =Order.objects.get(order_uid=instance.order_uid.order_uid)
+        in_wallet_transactions =TransactionHistory.objects.filter(transaction_detail__order_uid=str(order.order_uid))
+        if in_wallet_transactions.exists():
+            in_wallet_transactions.get().delete()
+        position = OrderPosition.objects.get(position_uid=instance.position_uid.position_uid)
+        print(position.bot_cash_balance,order.amount)
+
+        # return to bot cash balance
+        if order.side == 'sell':
+            print('sell')
+            position.bot_cash_balance = position.bot_cash_balance - order.amount
+        elif order.side == 'buy':
+            print('buy')
+            position.bot_cash_balance = position.bot_cash_balance + order.amount
+        order.delete()
+        print(position.bot_cash_balance)
+        position.save()
+        
+
+@receiver(post_delete,sender=OrderFee)
+def return_fee_to_wallet(sender, instance, **kwargs):
+    in_wallet_transactions_fee =TransactionHistory.objects.filter(transaction_detail__fee_id=instance.id)
+    in_wallet_transactions_stamp =TransactionHistory.objects.filter(transaction_detail__stamp_duty_id=instance.id)
+    if in_wallet_transactions_fee.exists():
+        print('fee')
+        in_wallet_transactions_fee.get().delete()
+    if in_wallet_transactions_stamp.exists():
+        print('stamp')
+        in_wallet_transactions_stamp.get().delete()
+
+
+        
+
+
 
 
 @receiver(post_save, sender=OrderPosition)

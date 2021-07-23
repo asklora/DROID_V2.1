@@ -4,5 +4,10 @@ from .models import Order,OrderPosition,PositionPerformance
 
 admin.site.register(Order)
 admin.site.register(OrderPosition)
-admin.site.register(PositionPerformance)
 
+class PerformanceAdmin(admin.ModelAdmin):
+    model = PositionPerformance
+    list_filter = ( 'position_uid__ticker','position_uid__ticker__currency_code')
+
+    search_fields = ('performance_uid',)
+admin.site.register(PositionPerformance,PerformanceAdmin)

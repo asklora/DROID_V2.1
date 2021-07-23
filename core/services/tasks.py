@@ -1,4 +1,21 @@
 # CELERY APP
+from pandas.core.series import Series
+from ingestion.master_data import (
+    dividend_updated, 
+    populate_latest_price, 
+    update_data_dss_from_dss, 
+    update_data_dsws_from_dsws, 
+    update_quandl_orats_from_quandl)
+from ingestion.universe import (
+    update_company_desc_from_dsws, 
+    update_currency_code_from_dss, 
+    update_entity_type_from_dsws, 
+    update_lot_size_from_dss,
+    update_industry_from_dsws, 
+    update_mic_from_dss, 
+    update_ticker_name_from_dsws, 
+    update_ticker_symbol_from_dss, 
+    update_worldscope_identifier_from_dsws)
 from config.celery import app
 from celery.schedules import crontab
 from celery import group as celery_groups
@@ -19,7 +36,6 @@ from django.core.mail import EmailMessage
 from config.settings import db_debug
 from datasource.rkd import RkdData
 # RAW SQL QUERY MODULE
-from main import new_ticker_ingestion, update_index_price_from_dss, populate_intraday_latest_price
 from general.sql_process import do_function
 # SLACK REPORT
 from general.slack import report_to_slack
@@ -45,6 +61,10 @@ CNY_CUR = Currency.objects.get(currency_code="CNY")
 EUR_CUR = Currency.objects.get(currency_code="EUR")
 
 channel_layer = get_channel_layer()
+if db_debug:
+    queue_name = 'droid_dev'
+else:
+    queue_name = 'celery'
 
 # TASK SCHEDULE
 
@@ -67,61 +87,97 @@ app.conf.beat_schedule = {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=USD_CUR.hedge_schedule.minute, hour=USD_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "USD"},
+        'options':{
+            'queue':queue_name
+        }
     },
     "HKD-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=HKD_CUR.hedge_schedule.minute, hour=HKD_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "HKD"},
+        'options':{
+            'queue':queue_name
+        }
     },
     "KRW-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=KRW_CUR.hedge_schedule.minute, hour=KRW_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "KRW"},
+        'options':{
+            'queue':queue_name
+        }
     },
     "CNY-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=CNY_CUR.hedge_schedule.minute, hour=CNY_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "CNY"},
+        'options':{
+            'queue':queue_name
+        }
     },
     "EUR-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "EUR"},
+        'options':{
+            'queue':queue_name
+        }
     },
     "USD-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=USD_CUR.top_stock_schedule.minute, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "USD"},
+        'options':{
+            'queue':queue_name
+        }
     },
     "HKD-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=HKD_CUR.top_stock_schedule.minute, hour=HKD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "HKD"},
+        'options':{
+            'queue':queue_name
+        }
     },
     "KRW-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=KRW_CUR.top_stock_schedule.minute, hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "KRW"},
+        'options':{
+            'queue':queue_name
+        }
     },
     "CNY-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=CNY_CUR.top_stock_schedule.minute, hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "CNY"},
+        'options':{
+            'queue':queue_name
+        }
     },
     "EUR-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "EUR"},
+        'options':{
+            'queue':queue_name
+        }
     },
     "EUR-POPULATE-PICK-FELS": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "EUR","client_name":"FELS"},
+        'options':{
+            'queue':queue_name
+        }
     },
     "USD-POPULATE-PICK-FELS": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=USD_CUR.top_stock_schedule.minute, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "USD","client_name":"FELS"},
+        'options':{
+            'queue':queue_name
+        }
     },
 }
 # END TASK SCHEDULE
@@ -172,6 +228,27 @@ def channel_prune():
     ChannelPresence.objects.prune_presences()
 
 # END MAINTAIN
+def new_ticker_ingestion(ticker):
+    update_ticker_name_from_dsws(ticker=ticker)
+    update_ticker_symbol_from_dss(ticker=ticker)
+    update_entity_type_from_dsws(ticker=ticker)
+    update_lot_size_from_dss(ticker=ticker)
+    update_currency_code_from_dss(ticker=ticker)
+    update_industry_from_dsws(ticker=ticker)
+    update_company_desc_from_dsws(ticker=ticker)
+    update_mic_from_dss(ticker=ticker)
+    update_worldscope_identifier_from_dsws(ticker=ticker)
+    update_quandl_orats_from_quandl(ticker=ticker)
+    populate_latest_price(ticker=ticker)
+    if isinstance(ticker, Series) or isinstance(ticker, list):
+        for tick in ticker:
+            update_data_dss_from_dss(ticker=tick, history=True)
+            update_data_dsws_from_dsws(ticker=tick, history=True)
+            dividend_updated(ticker=tick)
+    else:
+        update_data_dss_from_dss(ticker=ticker, history=True)
+        update_data_dsws_from_dsws(ticker=ticker, history=True)
+        dividend_updated(ticker=ticker)
 
 @app.task
 def get_isin_populate_universe(ticker, user_id):
@@ -454,9 +531,7 @@ def hedge(currency=None, bot_tester=False,**options):
                 position_uid = position.position_uid
                 market = TradingHours(mic=position.ticker.mic)
                 # MARKET OPEN CHECK TRADINGHOURS, ignore market time if rehedge
-                if market.is_open or 'rehedge' in options: 
-
-
+                if market.is_open or 'rehedge' in options:
                     # NOT USING YAHOO
                     # if currency == "USD":
                         # get_quote_yahoo(position.ticker.ticker, use_symbol=True)
@@ -528,7 +603,6 @@ def daily_hedge(currency=None,**options):
         # get_quote_index(currency)
 
     if not 'rehedge' in options:
-        print('here')
         rkd = RkdData() # LOGIN
         rkd.get_index_price(currency) # GET INDEX PRICE
 

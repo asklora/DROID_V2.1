@@ -203,7 +203,7 @@ def update_mic_from_dss(ticker=None, currency_code=None):
 def update_ticker_symbol_from_dss(ticker=None, currency_code=None):
     print("{} : === Ticker Symbol Start Ingestion ===".format(datetimeNow()))
     identifier="ticker"
-    universe = get_active_universe(ticker=ticker, currency_code=currency_code).head(5)
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe.drop(columns=["ticker_symbol"])
     start_date = backdate_by_day(1)
     end_date = dateNow()
