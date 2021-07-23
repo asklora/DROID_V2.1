@@ -1,8 +1,5 @@
-from ingestion.data_from_rkd import update_currency_code_from_rkd
+from ingestion.data_from_rkd import update_lot_size_from_rkd
 from general.date_process import dateNow
-from ingestion.data_from_dsws import update_data_dsws_from_dsws
-from ingestion.data_from_dss import update_data_dss_from_dss
-from general.sql_query import get_active_universe, get_active_universe_droid1, get_universe_by_region
 from general.sql_process import do_function
 from general.sql_query import read_query
 
@@ -50,26 +47,10 @@ def dlpa_weekly():
     # Post to Linkedin
     # Post to Facebook
 
-def daily_ingestion(region_id=None):
-    dlp_ticker = get_active_universe_droid1()
-    print(dlp_ticker)
-    if(region_id == None):
-        droid2_ticker = get_active_universe()
-    else:
-        droid2_ticker = get_universe_by_region(region_id=region_id)
-    print(droid2_ticker)
-    dlp_ticker = dlp_ticker.loc[dlp_ticker["ticker"].isin(droid2_ticker["ticker"].to_list())]
-    print(dlp_ticker)
-    ticker = droid2_ticker.loc[~droid2_ticker["ticker"].isin(dlp_ticker["ticker"].to_list())]
-    ticker = ticker["ticker"].to_list()
-    print(ticker)
-    print(len(ticker))
-    update_data_dss_from_dss(ticker=ticker)
-    update_data_dsws_from_dsws(ticker=ticker)
-
 # Main Process
 if __name__ == "__main__":
     print("Start Process")
     from migrate import weekly_migrations, daily_migrations
+    currency_code = ["SGD"]
     ticker = ["MSFT.O", "AAPL.O"]
-    update_currency_code_from_rkd(ticker=ticker)
+    update_lot_size_from_rkd(ticker=ticker)

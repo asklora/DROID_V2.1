@@ -1,3 +1,4 @@
+from general.sql_query import get_active_universe, get_active_universe_droid1, get_universe_by_region
 from django.core.management.base import BaseCommand
 from general.date_process import dateNow, str_to_date
 from general.sql_process import do_function
@@ -5,14 +6,13 @@ from general.sql_output import fill_null_quandl_symbol
 from ingestion.master_multiple import master_multiple_update
 from ingestion.master_tac import master_tac_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
-from main import daily_ingestion
 from migrate import daily_migrations, weekly_migrations
 from bot.preprocess import (
     dividend_daily_update, 
     interest_daily_update
 )
 from ingestion.data_from_timezone import update_utc_offset_from_timezone
-from ingestion.data_from_dss import update_ticker_symbol_from_dss
+from ingestion.data_from_dss import update_data_dss_from_dss, update_ticker_symbol_from_dss
 from ingestion.data_from_quandl import update_quandl_orats_from_quandl
 from ingestion.data_from_rkd import (
     update_currency_code_from_rkd, 
@@ -24,7 +24,8 @@ from ingestion.data_from_dsws import (
     interest_update_from_dsws, 
     populate_ibes_table, 
     populate_macro_table, 
-    update_company_desc_from_dsws, 
+    update_company_desc_from_dsws,
+    update_data_dsws_from_dsws, 
     update_entity_type_from_dsws, 
     update_fred_data_from_fred, 
     update_fundamentals_quality_value, 
@@ -36,6 +37,24 @@ from ingestion.data_from_dsws import (
     update_vix_from_dsws, 
     update_worldscope_identifier_from_dsws, 
     update_worldscope_quarter_summary_from_dsws)
+
+
+def daily_ingestion(region_id=None):
+    dlp_ticker = get_active_universe_droid1()
+    print(dlp_ticker)
+    if(region_id == None):
+        droid2_ticker = get_active_universe()
+    else:
+        droid2_ticker = get_universe_by_region(region_id=region_id)
+    print(droid2_ticker)
+    dlp_ticker = dlp_ticker.loc[dlp_ticker["ticker"].isin(droid2_ticker["ticker"].to_list())]
+    print(dlp_ticker)
+    ticker = droid2_ticker.loc[~droid2_ticker["ticker"].isin(dlp_ticker["ticker"].to_list())]
+    ticker = ticker["ticker"].to_list()
+    print(ticker)
+    print(len(ticker))
+    update_data_dss_from_dss(ticker=ticker)
+    update_data_dsws_from_dsws(ticker=ticker)
 
 class Command(BaseCommand):
     def add_arguments(self, parser):

@@ -108,8 +108,10 @@ def get_active_currency(currency_code=None):
     data = read_query(query, table=get_currency_table_name())
     return data
 
-def get_active_currency_ric_not_null():
-    query = f"select * from {get_currency_table_name()} where is_active=True and ric is not null"
+def get_active_currency_ric_not_null(currency_code=None, active=True):
+    query = f"select * from {get_currency_table_name()} where is_active=True and ric is not null "
+    if type(currency_code) != type(None):
+        query += f" and currency_code in {tuple_data(currency_code)}"
     data = read_query(query, table=get_currency_table_name())
     return data
 

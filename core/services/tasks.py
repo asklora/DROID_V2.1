@@ -38,7 +38,7 @@ from portfolio.daily_hedge_classic import classic_position_check
 from portfolio.daily_hedge_ucdc import ucdc_position_check
 from portfolio.daily_hedge_uno import uno_position_check
 from ingestion.data_from_quandl import update_quandl_orats_from_quandl
-from ingestion.data_from_rkd import update_currency_code_from_rkd, update_lot_size_from_rkd, update_mic_from_rkd
+# from ingestion.data_from_rkd import update_currency_code_from_rkd, update_lot_size_from_rkd, update_mic_from_rkd
 from ingestion.data_from_dss import update_data_dss_from_dss, update_ticker_symbol_from_dss
 from ingestion.data_from_dsws import (
     dividend_updated_from_dsws, 
@@ -188,11 +188,11 @@ def new_ticker_ingestion(ticker):
     update_ticker_name_from_dsws(ticker=ticker)
     update_ticker_symbol_from_dss(ticker=ticker)
     update_entity_type_from_dsws(ticker=ticker)
-    update_lot_size_from_rkd(ticker=ticker)
-    update_currency_code_from_rkd(ticker=ticker)
+    # update_lot_size_from_rkd(ticker=ticker)
+    # update_currency_code_from_rkd(ticker=ticker)
     update_industry_from_dsws(ticker=ticker)
     update_company_desc_from_dsws(ticker=ticker)
-    update_mic_from_rkd(ticker=ticker)
+    # update_mic_from_rkd(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
     update_quandl_orats_from_quandl(ticker=ticker)
     if isinstance(ticker, Series) or isinstance(ticker, list):
@@ -211,8 +211,7 @@ def get_isin_populate_universe(ticker, user_id):
     res_celery = []
     symbols = []
     try:
-        populate = UniverseConsolidated.ingestion_manager.get_isin_code(
-            ticker=ticker)
+        populate = UniverseConsolidated.ingestion_manager.get_isin_code(ticker=ticker)
         triger_sql_populate_once = 0
         if isinstance(ticker, list):
             for tick in ticker:
