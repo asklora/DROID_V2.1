@@ -16,6 +16,7 @@ class UniverseConsumer(WebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['subscribe']
         self.room_group_name = self.room_name
         if self.room_name != 'market':
+            self.accept()
             asyncio.run(self.channel_layer.send(
                 self.channel_name,
                 {
@@ -24,7 +25,7 @@ class UniverseConsumer(WebsocketConsumer):
                     'status':400
                 }
                 ))
-            self.close()
+            self.close(code=400)
         # Join room group
         asyncio.run(self.channel_layer.group_add(
             self.room_group_name,
