@@ -1,6 +1,5 @@
 from .settings import *
 
-
 CHANNEL_LAYERS = {
     'default': {
         # Method 1: Via redis lab

@@ -53,8 +53,8 @@ ADDITIONAL_APPS = [
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
     'channels',
-    "channels_presence",
-
+    'channels_presence',
+    'django_redis'
 ]
 CORE_APPS = [
     'core.bot',
@@ -114,7 +114,7 @@ TEMPLATES = [
 
 # WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
-
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 ROOT_URLCONF = 'config.urls'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'files/staticfiles')
@@ -182,6 +182,17 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_IMPORTS = ['core.services.ingestiontask',
                   'core.services.tasks', 'channels_presence.tasks', 'datasource.rkd']
 CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+}
+}
+
+
+
 email_debug = False
 if email_debug:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -252,7 +263,7 @@ SIMPLE_JWT = {
 
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'USER_ID_FIELD': 'id',
+    'USER_ID_FIELD': 'username',
     'USER_ID_CLAIM': 'user_id',
     'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
 

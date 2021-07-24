@@ -47,11 +47,15 @@ def listener(self, data):
             }
         }
     """
+    if not 'type' in data and not 'module' in data and not 'payload' in data:
+        return {'message': f'payload error, must have key type , module and payload','received_payload':data}
     if data['type'] == 'function':
         module, function = data['module'].rsplit('.', 1)
         mod = import_module(module)
         func = getattr(mod, function)
-        func(data['payload'])
+        res = func(data['payload'])
+        if res:
+            return res
     elif data['type'] == 'invoke':
         module, function = data['module'].rsplit('.', 1)
         mod = import_module(module)

@@ -1,3 +1,4 @@
+from abc import get_cache_token
 from rest_framework.views import APIView
 from rest_framework import permissions, response,status,serializers,exceptions
 from .serializers import UserSerializer,TokenRevokeSerializer,UserSummarySerializer
@@ -7,8 +8,7 @@ from core.user.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainSerializer,PasswordField,api_settings,update_last_login,RefreshToken
 from django.contrib.auth import get_user_model,authenticate
-
-
+from core.djangomodule.general import set_cache_data,get_cached_data
 class PairTokenSerializer(TokenObtainSerializer):
     username_field = get_user_model().AUTH_FIELD_NAME
 
@@ -64,8 +64,15 @@ class UserSummaryView(APIView):
         """
         Return a user profile.
         """
+
+        cache_key = f'usersummary{pk}'
+        cached_data = get_cached_data(cache_key)
+        if cached_data:
+            return response.Response(cached_data,status=status.HTTP_200_OK)
         user = User.objects.get(id=pk)
-        return response.Response(UserSummarySerializer(user).data,status=status.HTTP_200_OK)
+        res =UserSummarySerializer(user).data
+        set_cache_data(cache_key,data=res,interval=(60*60) *4)
+        return response.Response(res,status=status.HTTP_200_OK)
 
 
 class UserProfile(APIView):

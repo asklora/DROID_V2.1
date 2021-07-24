@@ -1,18 +1,12 @@
 from ingestion.data_from_rkd import update_currency_code_from_rkd
 from django.core.management.base import BaseCommand
+from core.universe.models import ExchangeMarket
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        print("Start Debug")
-        ticker = ["MSFT.O", "AAPL.O"]
-        update_currency_code_from_rkd(ticker=ticker)
-        # tikers = [tick.ticker.ticker for tick in OrderPosition.objects.filter(ticker__currency_code='USD',is_live=True).distinct('ticker')]
-        # for pos in tikers:
-        #     pos.save()
-        HKD_universe =  Universe.objects.filter(currency_code__in=['HKD'],is_active=True)
-        for ticker in HKD_universe:
-            ticker.ticker_symbol=symbol_hkd_fix(ticker.ticker_symbol)
-            ticker.save()
+        bbb =[]
+        bbb=[exc['mic'] for exc in ExchangeMarket.objects.filter(currency_code__in=['HKD']).values('mic')]
+        print(bbb)
 
         # print(HKD_universe)
         # rkd = RkdData()

@@ -95,7 +95,8 @@ class UniverseConsumer(WebsocketConsumer):
             if self.room_group_name in proc_list:
                 pass
             else:
-                rkd =  RkdStream.trkd_stream_initiate(event['message'])
+                
+                rkd =  RkdStream()
                 rkd.chanels = self.room_group_name
                 proc = rkd.thread_stream()
                 proc.daemon=True
@@ -104,7 +105,7 @@ class UniverseConsumer(WebsocketConsumer):
             self.channel_name,
             {
                 'type':'broadcastmessage',
-                'message': f'streaming {event["message"]} from firebase',
+                'message': f'streaming  from firebase',
                 'status':200
             }
             ))

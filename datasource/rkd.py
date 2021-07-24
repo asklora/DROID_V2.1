@@ -4,6 +4,8 @@ import json
 import pandas as pd
 from requests.api import head
 from core.services.models import ThirdpartyCredentials
+from core.universe.models import ExchangeMarket,Universe
+from core.djangomodule.calendar import TradingHours
 import sys
 import logging
 import websocket
@@ -153,6 +155,8 @@ class Rkd:
                     field = f["n"]
                     val = f["Value"]
                     formated_json_data[index].update({field: val})
+            else:
+                logging.warning(f"error status message {item['Status']['StatusMsg']} for {ticker}, no response data")
         return formated_json_data
 
 
@@ -297,7 +301,6 @@ class RkdData(Rkd):
         return formated_json
     
     def get_data_from_rkd(self, identifier, field):
-        from django.apps import apps
         quote_url = f"{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3"
         payload = self.retrive_template(identifier, fields=field)
         response = self.send_request(quote_url, payload, self.auth_headers())
@@ -436,6 +439,8 @@ class RkdStream(RkdData):
     ID =[]
     chanels = None
     is_thread =False
+    exchange_list = []
+    exchange = []
     def __init__(self, *args, **kwargs):
         self.kwargs = kwargs
         super().__init__(*args, **kwargs)
@@ -456,6 +461,9 @@ class RkdStream(RkdData):
                                                      on_close=self.on_close,
                                                      on_open = self.on_open,
                                                      subprotocols=["tr_json2"])
+        if not self.ticker_data:
+            exchange = self.get_list_exchange()
+            self.ticker_data = [data['ticker'] for data in Universe.objects.filter(mic__in=exchange, is_active=True).values('ticker')]
         # self.layer = get_channel_layer()
     
     @classmethod
@@ -463,6 +471,8 @@ class RkdStream(RkdData):
         return cls(ticker)
     
     def thread_stream(self):
+        from django import db
+        db.connections.close_all()
         threads = mp.Process(target=self.stream)
         threads.name = self.chanels
         self.is_thread =True
@@ -476,17 +486,49 @@ class RkdStream(RkdData):
             print(f"==========={e}=============")
             print("interupted")
             self.web_socket_app.close()
-            sys.exit()
+            if self.is_thread:
+                sys.exit()
         except Exception as e:
             print(f"==========={e}=============")
             self.web_socket_app.close()
+            
+            if self.is_thread:
+                sys.exit()
+    
+    
+    def get_list_exchange(self):
+        if not self.exchange_list:
+            self.exchange_list = [exc['mic'] for exc in ExchangeMarket.objects.filter(currency_code__in=['HKD']).values('mic')]
+            self.exchange =self.exchange_list
+        return self.exchange_list
+
 
     def answer_ping(self, ws, *args, **options):
         ping_req = {"Type": "Pong"}
-        ws.send(json.dumps(ping_req))
-        print("SENT:")
-        print(json.dumps(ping_req, sort_keys=True,
-                         indent=2, separators=(",", ":")))
+        current_live_exchange = len(self.exchange_list)
+        for exc in self.exchange:
+            market = TradingHours(mic=exc)
+            if market.is_open:
+                if not exc in self.exchange_list:
+                    self.exchange_list.append(exc)
+            else:
+                if exc in self.exchange_list:
+                    self.exchange_list.remove(exc)
+        
+        
+        
+        
+        if self.exchange_list:
+            ws.send(json.dumps(ping_req))
+            print("SENT:")
+            print(json.dumps(ping_req, sort_keys=True,
+                            indent=2, separators=(",", ":")))
+            if current_live_exchange != len(self.exchange_list):
+                self.unsubscibe_event(ws)
+                self.ticker_data = [data['ticker'] for data in Universe.objects.filter(mic__in=self.exchange_list, is_active=True).values('ticker')]
+                self.send_market_price_request(ws)
+        else:
+            self.on_close(ws)
 
     def write_on_s3(self, message, *args, **options):
         try:
@@ -549,6 +591,7 @@ class RkdStream(RkdData):
 
     def process_login_response(self, ws, message_json, *args, **options):
         print("Logged in!")
+        
         self.send_market_price_request(ws)
 
     def beautify_print(self, message, *args, **options):
@@ -621,20 +664,21 @@ class RkdStream(RkdData):
 
     def on_message(self, ws, message, *args, **options):
         """ Called when message received, parse message into JSON for processing """
-        print("")
-        print("======== RECEIVED: ========")
+        # print("")
+        # print("======== RECEIVED: ========")
         # print(f"ws == {ws}, msg == {message}, args == {args}, option == {options}")
         message_json = json.loads(message)
         # print(json.dumps(message_json, sort_keys=True, indent=2, separators=(",", ":")))
-
+        
         for singleMsg in message_json:
             self.process_message(ws, singleMsg)
 
     def on_error(self, ws, error, *args, **options):
         """ Called when websocket error has occurred """
-        print(error)
+        print("error",error)
         ws.close()
-
+        if self.is_thread:
+            sys.exit()
 
     def on_close(self, ws, *args, **options):
         # print(super(on_close, self))
@@ -647,7 +691,16 @@ class RkdStream(RkdData):
     def on_open(self, ws, *args, **options):
         """ Called when handshake is complete and websocket is open, send login """
         print("WebSocket open!")
+        
         self.send_login_request(ws)
+    
+    def unsubscibe_event(self,ws):
+        payload={
+                "Type": "Close",
+                "ID": self.ID
+                    }
+        print(payload)
+        ws.send(json.dumps(payload))
 
     @app.task(bind=True,ignore_result=True)
     def update_rtdb(self,data):

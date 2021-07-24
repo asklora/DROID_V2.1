@@ -4,8 +4,8 @@ from django.utils.deconstruct import deconstructible
 import boto3
 import time
 from config.celery import app
-
-
+from django.core.cache import cache
+import json
 @deconstructible
 class UploadTo:
     def __init__(self, name):
@@ -154,3 +154,14 @@ def symbol_hkd_fix(symbol:str) ->str:
         additional_zero = "0" * add
         return f'{additional_zero}{symbol}'
     return symbol
+
+
+def get_cached_data(key):
+    cached_data = cache.get(key)
+    if cached_data:
+        return json.loads(cached_data)
+    return False
+
+
+def set_cache_data(key,data=None,interval=60*60):
+    cache.set(key,json.dumps(data),interval)
