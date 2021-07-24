@@ -5,10 +5,7 @@ import boto3
 import time
 from config.celery import app
 
-def is_hashed(pwd):
-    if 'pbkdf2_sha256$216000$' in pwd:
-        return True
-    return False
+
 @deconstructible
 class UploadTo:
     def __init__(self, name):
@@ -99,6 +96,11 @@ def nonetozero(value):
         return value
     return 0
 
+def is_hashed(pwd):
+    if 'pbkdf2_sha256$216000$' in pwd:
+        return True
+    return False
+
 
 def formatdigit(value, currency_decimal=True):
     # digit = max(min(5 - len(str(int(value))), 2), -1)
@@ -145,10 +147,10 @@ def run_batch():
         time.sleep(10)
 
 
-def symbol_hkd_fix(symbol):
-    fix_lenght = 4
-    if len(symbol) != 4:
-        add = fix_lenght - len(symbol)
+def symbol_hkd_fix(symbol:str) ->str:
+    fix_length = 4
+    if len(symbol) != fix_length:
+        add = fix_length - len(symbol)
         additional_zero = "0" * add
         return f'{additional_zero}{symbol}'
     return symbol
