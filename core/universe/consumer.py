@@ -25,7 +25,7 @@ class UniverseConsumer(WebsocketConsumer):
                     'status':400
                 }
                 ))
-            self.close(code=400)
+            self.close()
         # Join room group
         asyncio.run(self.channel_layer.group_add(
             self.room_group_name,
