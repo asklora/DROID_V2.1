@@ -16,15 +16,6 @@ class UniverseConsumer(WebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['subscribe']
         self.room_group_name = self.room_name
         if self.room_name != 'market':
-            self.accept()
-            asyncio.run(self.channel_layer.send(
-                self.channel_name,
-                {
-                    'type':'broadcastmessage',
-                    'message': f'connection rejected to {self.room_group_name} channel, please connect to wss://services.asklora.ai/ws/market/',
-                    'status':400
-                }
-                ))
             self.close()
         # Join room group
         asyncio.run(self.channel_layer.group_add(
