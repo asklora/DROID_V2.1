@@ -1,7 +1,7 @@
 import pandas as pd
 from talib import RSI, STOCHF
 from general.data_process import uid_maker
-from general.date_process import backdate_by_month, datetimeNow, droid_start_date, backdate_by_day
+from general.date_process import datetimeNow, droid_start_date
 from general.slack import report_to_slack
 from general.table_name import get_master_tac_table_name
 from general.sql_query import get_master_ohlcvtr_data

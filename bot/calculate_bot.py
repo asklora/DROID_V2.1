@@ -1,4 +1,4 @@
-from datasource.dsws import get_data_static_from_dsws
+
 import math
 import numpy as np
 from datetime import datetime
@@ -6,7 +6,6 @@ from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
 from general.data_process import tuple_data
 from general.sql_query import get_active_universe, read_query
-from datasource.dss import get_data_from_dss
 from general.table_name import (
     get_currency_calendar_table_name,
     get_data_dividend_daily_rates_table_name,
@@ -16,11 +15,10 @@ from general.table_name import (
     get_latest_price_table_name,
     get_latest_vol_table_name,
     get_master_tac_table_name)
+from datasource.dsws import get_data_static_from_dsws
 from bot import uno
 from global_vars import large_hedge, small_hedge, buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem, max_vol, min_vol, default_vol, REPORT_INTRADAY
 import pandas as pd
-# comment22
-
 
 def check_date(dates):
     if(type(dates) == str and len(dates) > 10):

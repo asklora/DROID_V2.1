@@ -1,16 +1,21 @@
-from general.table_name import get_latest_bot_update_table_name
-from general.sql_query import get_active_universe
-from bot.data_download import get_bot_option_type, get_data_dividend_daily_rates, get_data_interest_daily, get_holiday_by_day_and_currency_code, get_latest_bot_ranking_data, get_latest_price, get_latest_vol
-from threading import Condition
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from general.date_process import dateNow, timeNow, datetimeNow
+from general.date_process import timeNow
 import numpy as np
 from dateutil.relativedelta import relativedelta
 import bot.black_scholes as  uno
 from general.sql_output import upsert_data_to_database
 from global_vars import time_to_expiry
+from general.table_name import get_latest_bot_update_table_name
+from general.sql_query import get_active_universe
+from bot.data_download import (
+    get_bot_option_type, 
+    get_data_dividend_daily_rates, 
+    get_data_interest_daily, 
+    get_holiday_by_day_and_currency_code, 
+    get_latest_bot_ranking_data, 
+    get_latest_price, get_latest_vol)
 
 
 def get_expiry_date(currency_code, time_to_exp):

@@ -1,6 +1,5 @@
 from django.db import models
-from core.universe.models import Universe,Currency,IntegrityError
-from core.djangomodule.models import BaseTimeStampModel
+from core.universe.models import Universe, Currency
 from core.djangomodule.general import generate_id
 from core.Clients.models import Client
 

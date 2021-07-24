@@ -1,20 +1,16 @@
 import time
 import numpy as np
 import pandas as pd
-# import xgboost as xgb
 import lightgbm as lgb
 from joblib import dump, load
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomForestClassifier
-
 from bot.preprocess import rounding_fun
-from bot.data_download import get_data_vol_surface_ticker, get_executive_data_download
-
+from bot.data_download import get_executive_data_download
 from general.date_process import dateNow, timeNow, timestampNow
 from general.data_process import uid_maker
-from general.sql_process import do_function
 from general.sql_query import get_active_universe
-from general.sql_output import truncate_table, upsert_data_to_database
+from general.sql_output import upsert_data_to_database
 from general.table_name import get_data_vol_surface_inferred_table_name
 
 from global_vars import random_state, saved_model_path, model_filename, X_columns, Y_columns, time_to_expiry, bots_list
@@ -27,10 +23,6 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
     cols_temp_2 = X_columns.copy()
 
     main_df = get_executive_data_download(start_date, end_date, ticker=ticker, currency_code=currency_code)
-    # output_tickers = get_data_vol_surface_ticker(ticker=ticker, currency_code=currency_code)
-    # # Just taking the rows that we have output for them.
-    # main_df = main_df[main_df.ticker.isin(output_tickers["ticker"])]
-
     temp_y_rf = []
     
     # *****************************************************************************************

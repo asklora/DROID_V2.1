@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
 from core.orders.models import Order
-from core.bot.models import BotOptionType
 from core.user.models import User
 import pandas as pd
 
