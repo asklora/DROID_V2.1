@@ -1,8 +1,7 @@
 from rest_framework import serializers
 from core.orders.models import Order,OrderPosition,PositionPerformance
 from core.Clients.models import ClientTopStock
-from datetime import datetime
-from core.master.models import MasterOhlcvtr,LatestPrice
+from core.master.models import LatestPrice
 from core.universe.models import Universe
 
 

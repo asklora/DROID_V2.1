@@ -4,8 +4,6 @@ from django.dispatch import receiver
 from .models import Order, OrderFee, OrderPosition, PositionPerformance
 from core.bot.models import BotOptionType
 from bot.calculate_bot import get_classic, get_expiry_date, get_uno, get_ucdc
-from datetime import datetime
-from core import services
 from core.djangomodule.serializers import (OrderSerializer,
                                            OrderPositionSerializer,
                                            PositionPerformanceSerializer)

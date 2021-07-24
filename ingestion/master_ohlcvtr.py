@@ -7,31 +7,9 @@ from general.date_process import backdate_by_day, dateNow, dlp_start_date, datet
 from general.sql_query import get_master_ohlcvtr_data
 from general.sql_output import delete_data_on_database, upsert_data_to_database
 from general.table_name import get_master_ohlcvtr_table_name
-from ingestion.master_tac import master_tac_update, ForwardBackwardFillNull
-from ingestion.universe import update_currency_code_from_dss
-from ingestion.master_data import (
-    update_data_dss_from_dss,
-    update_data_dsws_from_dsws)
-
-# def datapoint_lte_1000(fulldatapoint):
-#     exclude = list(module.datasource.models.ReportDatapoint.objects.filter(reingested=True).values_list("ticker",flat=True))
-#     if exclude:
-#         low_datapoint = fulldatapoint.loc[fulldatapoint["ticker"].isin(exclude)]
-#     else:
-#         low_datapoint = fulldatapoint
-#     if low_datapoint:
-#         for data in low_datapoint:
-#             try:
-#                 datapoint_table = module.datasource.models.ReportDatapoint.objects.get(ticker=data.ticker)
-#                 datapoint_table.datapoint = data.fulldatapoint
-#                 datapoint_table.updated = datetime.now().date()
-#                 datapoint_table.save()
-#             except module.datasource.models.ReportDatapoint.DoesNotExist:
-#                 datapoint_table = module.datasource.models.ReportDatapoint.objects.create(
-#                     ticker=data.ticker,
-#                     datapoint=data.fulldatapoint,
-#                     updated = datetime.now().date()
-#                     )
+from ingestion.data_from_dsws import update_data_dsws_from_dsws
+from ingestion.data_from_dss import update_data_dss_from_dss
+from ingestion.data_for_django import update_currency_code_from_rkd_to_django
 
 #New Ticker Categories is When Datapoint Less Than 1000 Datapoint
 def FindNewTicker(fulldatapoint):
@@ -41,7 +19,7 @@ def FindNewTicker(fulldatapoint):
     print(new_ticker)
     if(len(new_ticker) > 0):
         #report_to_slack("{} : === New Ticker Found {} Start Historical Ingestion ===".format(datetimeNow(), new_ticker))
-        update_currency_code_from_dss(ticker=new_ticker)
+        update_currency_code_from_rkd_to_django(ticker=new_ticker)
         update_data_dss_from_dss(ticker=new_ticker, history=True)
         update_data_dsws_from_dsws(ticker=new_ticker, history=True)
     print(new_ticker)

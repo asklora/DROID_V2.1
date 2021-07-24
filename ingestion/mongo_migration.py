@@ -1,11 +1,30 @@
 import json
 import numpy as np
 import pandas as pd
-from bot.data_download import get_bot_backtest, get_bot_option_type, get_bot_statistic_data, get_latest_bot_update_data, get_latest_price
-from general.sql_query import get_active_currency, get_active_universe, get_consolidated_data, get_industry, get_industry_group, get_latest_price_data, get_master_tac_data, get_region, get_universe_rating, get_universe_rating_detail_history, get_universe_rating_history
-from general.mongo_query import change_null_to_zero, create_collection, update_to_mongo, change_date_to_str, update_specific_to_mongo
 from general.date_process import backdate_by_month
-import sys
+from bot.data_download import (
+    get_bot_backtest, 
+    get_bot_option_type, 
+    get_bot_statistic_data, 
+    get_latest_bot_update_data)
+from general.mongo_query import (
+    change_null_to_zero, 
+    create_collection, 
+    update_to_mongo, 
+    change_date_to_str, 
+    update_specific_to_mongo)
+from general.sql_query import (
+    get_active_currency, 
+    get_active_universe, 
+    get_industry, 
+    get_industry_group, 
+    get_latest_price_data, 
+    get_master_tac_data, 
+    get_region, 
+    get_universe_rating, 
+    get_universe_rating_detail_history, 
+    get_universe_rating_history)
+
 def mongo_create_currency():
     collection = json.load(open("files/file_json/validator_currency.json"))
     print(collection)

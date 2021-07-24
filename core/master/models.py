@@ -1,8 +1,5 @@
 from django.db import models
 from core.universe.models import Universe, Currency, Vix
-from psqlextra.manager import PostgresManager
-# from .manager import MasterOhlcvtrManager, DataQuandlManager, DssDataManager, DswsDataManager, DataDividendManager
-from global_vars import buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem
 
 
 class DataDss(models.Model):

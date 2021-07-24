@@ -1,8 +1,9 @@
-from bot.data_process import check_start_end_date
+
 import pandas as pd
 from general.sql_query import read_query
 from general.data_process import tuple_data
-from general.date_process import dateNow, droid_start_date, str_to_date
+from general.date_process import droid_start_date, str_to_date
+from bot.data_process import check_start_end_date
 from general.table_name import (
     get_bot_backtest_table_name,
     get_bot_classic_backtest_table_name, 

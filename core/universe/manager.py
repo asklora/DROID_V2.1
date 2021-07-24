@@ -1,7 +1,6 @@
 from django.db import models
-from ingestion.universe import populate_universe_consolidated_by_isin_sedol_from_dsws
 from django.db import connection
-
+from ingestion.data_from_dsws import populate_universe_consolidated_by_isin_sedol_from_dsws
 
 class ConsolidatedManager(models.Manager):
 

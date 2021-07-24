@@ -1,4 +1,3 @@
-from datetime import datetime
 from django.core.management.base import BaseCommand
 from ingestion.mongo_migration import mongo_universe_update
 from core.djangomodule.serializers import HotUniverse, Universe
@@ -8,9 +7,6 @@ import threading
 import time
 from firebase_admin import firestore
 import random
-
-
-
 
 
 class Command(BaseCommand):

@@ -1,5 +1,5 @@
-from django.core.management.base import BaseCommand, CommandError
-from config.celery import app_publish, app,debug_task
+from django.core.management.base import BaseCommand
+from config.celery import debug_task
 
 
 class Command(BaseCommand):

@@ -1,8 +1,8 @@
-from .serializers import PositionSerializer,PerformanceSerializer
-from rest_framework import viewsets,views,permissions,response,status,serializers
-from .models import OrderPosition,PositionPerformance
+from .serializers import PositionSerializer, PerformanceSerializer
+from rest_framework import viewsets, views, permissions, response, status, serializers
+from .models import OrderPosition, PositionPerformance
 from core.Clients.models import UserClient
-from drf_spectacular.utils import extend_schema_view,extend_schema,OpenApiResponse,OpenApiExample
+from drf_spectacular.utils import extend_schema_view,extend_schema, OpenApiResponse
 
 
 class errserializer(serializers.Serializer):

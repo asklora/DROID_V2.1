@@ -1,27 +1,11 @@
-import json
-from core.universe.models import Currency,Universe
-from migrate import currency
-from django.core.management.base import BaseCommand, CommandError
-from core.user.models import User
-from core.djangomodule.general import run_batch,symbol_hkd_fix
-from core.djangomodule.yahooFin import get_quote_index,scrap_csi
-from core.djangomodule.calendar import TradingHours
-from core.orders.models import PositionPerformance, Order,OrderPosition
-from core.Clients.models import ClientTopStock, UserClient
-from core.services.ingestiontask import migrate_droid1,get_trkd_data_by_region
-from core.services.tasks import send_csv_hanwha, populate_client_top_stock_weekly, order_client_topstock, daily_hedge,get_quote_yahoo
-from main import populate_intraday_latest_price
-from datetime import datetime,timedelta
-from datasource.rkd import RkdData,RkdStream
-import traceback as trace
-from core.services.models import ErrorLog
-
-from general.sql_query import get_universe_by_region
-
-
+from ingestion.data_from_rkd import update_currency_code_from_rkd
+from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        print("Start Debug")
+        ticker = ["MSFT.O", "AAPL.O"]
+        update_currency_code_from_rkd(ticker=ticker)
         # tikers = [tick.ticker.ticker for tick in OrderPosition.objects.filter(ticker__currency_code='USD',is_live=True).distinct('ticker')]
         # for pos in tikers:
         #     pos.save()

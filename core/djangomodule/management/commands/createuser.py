@@ -1,5 +1,5 @@
-from django.core.management.base import BaseCommand, CommandError
-from core.user.models import User, Accountbalance, TransactionHistory
+from django.core.management.base import BaseCommand
+from core.user.models import User, Accountbalance
 from core.Clients.models import UserClient, Client
 
 

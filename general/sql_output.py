@@ -9,7 +9,7 @@ from pangres import upsert
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
 from general.date_process import dateNow
-from general.sql_query import get_order_performance_by_ticker, read_query
+from general.sql_query import get_order_performance_by_ticker
 from general.table_name import get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_table_name
 
 def execute_query(query, table=None):

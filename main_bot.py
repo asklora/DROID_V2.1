@@ -1,20 +1,3 @@
-from bot.preprocess import dividend_daily_update, interest_daily_update
-from ingestion.master_tac import master_tac_update
-from ingestion.master_multiple import master_multiple_update
-from ingestion.master_ohlcvtr import master_ohlctr_update
-from ingestion.master_data import update_quandl_orats_from_quandl
-from bot.calculate_latest_bot import populate_latest_bot_update
-from general.sql_query import get_active_universe
-from general.sql_process import do_function
-from main_executive import (
-    bot_ranking_daily, bot_ranking_history, bot_statistic_classic, bot_statistic_ucdc, bot_statistic_uno, daily_classic, daily_uno_ucdc, data_prep_daily,
-    data_prep_history,
-    infer_daily,
-    infer_history,
-    option_maker_daily_ucdc, option_maker_daily_uno,
-    option_maker_history_classic,
-    option_maker_history_ucdc,
-    option_maker_history_uno, option_maker_ucdc_check_new_ticker, option_maker_uno_check_new_ticker, train_lebeler_model, train_model)
 
 if __name__ == "__main__":
     print("Start Process")

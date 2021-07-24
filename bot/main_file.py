@@ -1,5 +1,3 @@
-from general.data_process import uid_maker
-from general.table_name import get_bot_data_table_name
 import numpy as np
 np.seterr(divide='ignore', invalid='ignore')
 import pandas as pd
@@ -8,15 +6,16 @@ from pandas.tseries.offsets import BDay
 from bot.data_download import (
     get_currency_data, 
     get_data_vix_price, 
-    get_data_vol_surface_ticker, 
     get_latest_price, 
     get_master_tac_price, get_vol_surface_data)
-from bot.preprocess import remove_holidays, lookback_creator, remove_holidays_forward
+from general.data_process import uid_maker
+from general.table_name import get_bot_data_table_name
+from bot.preprocess import remove_holidays, lookback_creator
 from bot.vol_calculations import get_close_vol, get_kurt, get_rogers_satchell, get_total_return
-from general.sql_output import truncate_table, upsert_data_to_database
+from general.sql_output import upsert_data_to_database
 from general.sql_query import get_active_universe
 from general.date_process import dateNow, droid_start_date, droid_start_date_buffer
-from global_vars import period, currency_code_to_etf_file, X_columns
+from global_vars import period, currency_code_to_etf_file
 
 def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code=None, daily=False, new_ticker=False, history=False):
     if type(start_date) == type(None):

@@ -1,13 +1,9 @@
-from core.master.models import MasterOhlcvtr
-from django.core.management.base import BaseCommand, CommandError
-
-from core.orders.models import Order, PositionPerformance, OrderPosition
-from core.Clients.models import UserClient, ClientTopStock
-import pandas as pd
-from core.djangomodule.serializers import CsvSerializer
-
 import io
-
+import pandas as pd
+from django.core.management.base import BaseCommand
+from core.orders.models import PositionPerformance
+from core.Clients.models import UserClient
+from core.djangomodule.serializers import CsvSerializer
 
 def export_csv(df):
   with io.StringIO() as buffer:
