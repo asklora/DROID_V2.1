@@ -8,7 +8,7 @@ import time
 debug = os.environ.get('DJANGO_SETTINGS_MODULE',True)
 if debug:
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.production')
-    app2 = Celery('core.services',broker='amqp://rabbitmq:rabbitmq@16.162.110.123:5672')
+    # app2 = Celery('core.services',broker='amqp://rabbitmq:rabbitmq@16.162.110.123:5672')
 
 
 app = Celery('core.services')
@@ -46,7 +46,6 @@ def listener(self, data):
                 'password':'r3ddpapapapa'
             }
         }
-
     """
     if data['type'] == 'function':
         module, function = data['module'].rsplit('.', 1)

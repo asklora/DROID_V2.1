@@ -1,16 +1,13 @@
 from django.core.management.base import BaseCommand
 from ingestion.mongo_migration import mongo_universe_update
-# # Create an Event for notifying main thread.
-# callback_done = threading.Event()
+from core.djangomodule.serializers import HotUniverse, Universe
+import json
+import pandas as pd
+import threading
+import time
+from firebase_admin import firestore
+import random
 
-# # Create a callback on_snapshot function to capture changes
-# def on_snapshot(doc_snapshot, changes, read_time):
-#     for c in changes:
-#         data = c.document.to_dict()
-#         print(data['price'])
-#     # for doc in doc_snapshot:
-#     #     print(f'Received document snapshot: {doc.id}')
-#     callback_done.set()
 
 class Command(BaseCommand):
 

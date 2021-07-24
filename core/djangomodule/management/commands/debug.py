@@ -9,7 +9,11 @@ class Command(BaseCommand):
         # tikers = [tick.ticker.ticker for tick in OrderPosition.objects.filter(ticker__currency_code='USD',is_live=True).distinct('ticker')]
         # for pos in tikers:
         #     pos.save()
-        # HKD_universe = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code__in=['HKD','CNY','USD'],is_active=True).values('ticker')]
+        HKD_universe =  Universe.objects.filter(currency_code__in=['HKD'],is_active=True)
+        for ticker in HKD_universe:
+            ticker.ticker_symbol=symbol_hkd_fix(ticker.ticker_symbol)
+            ticker.save()
+
         # print(HKD_universe)
         # rkd = RkdData()
         # now = datetime.now().date() - timedelta(days=1)
@@ -58,10 +62,7 @@ class Command(BaseCommand):
         # print('total_profit_return: ',user.total_profit_return)
         # populate_intraday_latest_price(ticker=[".CSI300"])
         # get_quote_yahoo("TCOM", use_symbol=True)
-        # daily_hedge(currency="USD",rehedge={
-        #     'date':'2021-07-20',
-        #     'types':'hedge'
-        # })
+        # daily_hedge(currency="HKD")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
         # perf = PositionPerformance.objects.filter(
         #     position_uid__user_id__in=[108,

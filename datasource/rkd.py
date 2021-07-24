@@ -43,12 +43,12 @@ class Rkd:
             responses = []
             for data in payload:
                 responses.append(asyncio.ensure_future(
-                    self.async_send_request(session, url, data, headers)))
+                    self.async_send_request(session, url, data)))
 
             original_responses = await asyncio.gather(*responses)
             return original_responses
 
-    async def async_send_request(self, session, url, payload, headers):
+    async def async_send_request(self, session, url, payload):
         async with session.post(url, data=json.dumps(payload)) as resp:
             response = await resp.json()
             status = resp.status
@@ -323,7 +323,9 @@ class RkdData(Rkd):
 
     def get_quote(self, ticker, df=False, save=False,**options):
         import math
-        quote_url = f"{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3"
+        if isinstance(ticker,str):
+            ticker = [ticker]
+        quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
         split = len(ticker)/70
         collected_data =[]
         if split < 1:
@@ -641,14 +643,13 @@ class RkdStream(RkdData):
         ws.close()
         if self.is_thread:
             sys.exit()
-            
 
     def on_open(self, ws, *args, **options):
         """ Called when handshake is complete and websocket is open, send login """
         print("WebSocket open!")
         self.send_login_request(ws)
 
-    @shared_task(bind=True,ignore_result=True)
+    @app.task(bind=True,ignore_result=True)
     def update_rtdb(self,data):
         data = data[0]
         ticker = data.pop("ticker")

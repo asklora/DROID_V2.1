@@ -28,7 +28,7 @@ DEBUG = django_debug
 ALLOWED_HOSTS = ['18.167.118.164',
                  '127.0.0.1', 'services.asklora.ai',
                  '16.162.110.123',
-                 '0.0.0.0']
+                 '0.0.0.0','118.0.34.231']
 CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
@@ -66,7 +66,7 @@ CORE_APPS = [
     'core.topstock',
     'core.Clients',
     'core.orders',
-    'core.ai_value',
+    # 'core.ai_value',
 ]
 
 INSTALLED_APPS = DJANGO_DEFAULT_APPS + ADDITIONAL_APPS + CORE_APPS

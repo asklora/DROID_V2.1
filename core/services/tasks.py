@@ -79,6 +79,7 @@ app.conf.beat_schedule = {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=USD_CUR.hedge_schedule.minute, hour=USD_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "USD"},
+        
     },
     "HKD-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
@@ -485,9 +486,7 @@ def hedge(currency=None, bot_tester=False,**options):
                 position_uid = position.position_uid
                 market = TradingHours(mic=position.ticker.mic)
                 # MARKET OPEN CHECK TRADINGHOURS, ignore market time if rehedge
-                if market.is_open or 'rehedge' in options: 
-
-
+                if market.is_open or 'rehedge' in options:
                     # NOT USING YAHOO
                     # if currency == "USD":
                         # get_quote_yahoo(position.ticker.ticker, use_symbol=True)
@@ -559,7 +558,6 @@ def daily_hedge(currency=None,**options):
         # get_quote_index(currency)
 
     if not 'rehedge' in options:
-        print('here')
         rkd = RkdData() # LOGIN
         rkd.get_index_price(currency) # GET INDEX PRICE
 
