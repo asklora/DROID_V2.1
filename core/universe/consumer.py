@@ -80,7 +80,13 @@ class UniverseConsumer(WebsocketConsumer):
     @touch_presence
     def ping(self,event):
         print("ping event",event)
-        
+        process = [{proc.name:proc}  for proc in multiprocessing.active_children()]
+        if not process:
+            rkd =  RkdStream()
+            rkd.chanels = self.room_group_name
+            proc = rkd.thread_stream()
+            proc.daemon=True
+            proc.start()
 
     
 

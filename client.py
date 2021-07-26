@@ -1,6 +1,6 @@
 from websocket import create_connection
 import json
-ws = create_connection('ws://16.162.110.123/ws/skskkls/')
+ws = create_connection('wss://services.asklora.ai/ws/market/')
 ws.send(json.dumps({'message':['MSFT.O'],'type':'streaming'}))
 while True:
     payload = json.loads(ws.recv())
