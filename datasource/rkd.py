@@ -1,10 +1,11 @@
 from datetime import datetime
+from general.slack import report_to_slack
 import requests
 import json
 import math
 import pandas as pd
 from requests.api import head
-from core.services.models import ThirdpartyCredentials
+from core.services.models import ThirdpartyCredentials,ErrorLog
 from core.universe.models import ExchangeMarket,Universe
 from core.djangomodule.calendar import TradingHours
 import sys
@@ -85,13 +86,21 @@ class Rkd:
                 logging.warning("Request fail")
                 logging.warning(f"request url :  {url}")
                 # logging.warning(f"request header :  {headers}")
-                # logging.warning(f"request payload :  {payload}")
                 logging.warning(f"response status {result.status_code}")
                 if result.status_code == 500:  # if username or password or appid is wrong
-                    logging.warning("Error: %s" % (result.json()))
+                    resp = result.json()
+                    logging.warning("Error: %s" % (json.dumps(result.json(),indent=2)))
+                    err = json.dumps(result.json(),indent=2)
+
+                    report =ErrorLog.objects.create(error_description=resp['Fault']['Reason']['Text']['Value'],error_traceback='err',
+                                                    error_message=err,
+                                                    error_function='RKD DATA')
+                    report.send_report_error()
                     return None
         except requests.exceptions.RequestException as e:
             logging.warning("error : {str(e)}")
+            error_log =ErrorLog.objects.create_log(error_description="TRKD REQUEST ERROR",error_message=str(e))
+            error_log.send_report()
             raise Exception("request error")
         return result.json()
 
@@ -107,10 +116,11 @@ class Rkd:
         logging.info("logged you in")
         logging.info("requesting new token")
         response = self.send_request(authenURL, authenMsg, self.headers)
-        self.credentials.token = response["CreateServiceToken_Response_1"]["Token"]
-        self.credentials.save()
-        logging.info("new token saved")
-        return self.credentials.token
+        if response:
+            self.credentials.token = response["CreateServiceToken_Response_1"]["Token"]
+            self.credentials.save()
+            logging.info("new token saved")
+            return self.credentials.token
 
     @property
     def is_valid_token(self):
@@ -337,7 +347,7 @@ class RkdData(Rkd):
         if isinstance(ticker,str):
             ticker = [ticker]
         quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
-        split = len(ticker)/70
+        split = len(ticker)/50
         collected_data =[]
         if split < 1:
             split = math.ceil(split)
