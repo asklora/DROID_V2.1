@@ -332,12 +332,12 @@ def mongo_universe_update(ticker=None, currency_code=None):
         ranking_df = pd.DataFrame({"ticker":[tick]}, index=[0])
         for dur in ranking_data["duration"].unique():
             rank_data = ranking_data.loc[ranking_data["duration"] == dur]
-            rank_data = rank_data[["bot_id", "bot_apps_name", "win_rate", "bot_return", "risk_moderation"]]
+            rank_data = rank_data[["bot_id", "bot_apps_name", "bot_apps_description", "duration", "win_rate", "bot_return", "risk_moderation"]]
             rank_data = rank_data.to_dict("records")
             rank_df = pd.DataFrame({"ticker":[tick], dur:[rank_data[0]]}, index=[0])
             ranking_df = ranking_df.merge(rank_df, how="left", on=["ticker"])
         ranking_df = ranking_df.drop(columns=["ticker"])
-        rank = pd.DataFrame({"ticker":[tick], "ranking":[ranking_df.to_dict("records")]}, index=[0])
+        rank = pd.DataFrame({"ticker":[tick], "ranking":[ranking_df.to_dict("records")[0]]}, index=[0])
         ranking = ranking.append(rank)
     ranking = ranking.reset_index(inplace=False, drop=True)
     print(ranking)
