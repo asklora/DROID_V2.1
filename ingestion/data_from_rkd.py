@@ -165,8 +165,8 @@ def update_lot_size_from_rkd(ticker=None, currency_code=None):
         result = remove_null(result, "lot_size")
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
-        upsert_data_to_database(result, get_universe_table_name(), "ticker", how="update", Text=True)
-        report_to_slack("{} : === Lot Size Updated ===".format(datetimeNow()))
+        # upsert_data_to_database(result, get_universe_table_name(), "ticker", how="update", Text=True)
+        # report_to_slack("{} : === Lot Size Updated ===".format(datetimeNow()))
 
 def update_mic_from_rkd(ticker=None, currency_code=None):
     print("{} : === MIC Start Ingestion ===".format(datetimeNow()))

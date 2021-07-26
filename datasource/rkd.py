@@ -1,6 +1,7 @@
 from datetime import datetime
 import requests
 import json
+import math
 import pandas as pd
 from requests.api import head
 from core.services.models import ThirdpartyCredentials
@@ -302,11 +303,18 @@ class RkdData(Rkd):
     
     def get_data_from_rkd(self, identifier, field):
         quote_url = f"{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3"
-        payload = self.retrive_template(identifier, fields=field)
-        response = self.send_request(quote_url, payload, self.auth_headers())
-
-        formated_json_data = self.parse_response(response)
-        result = pd.DataFrame(formated_json_data)
+        split = round(len(identifier) / min(50, len(identifier)))
+        collected_data =[]
+        splitting_df = np.array_split(identifier, max(split, 1))
+        for universe in splitting_df:
+            tick = universe.tolist()
+            print(tick)
+            payload = self.retrive_template(tick, fields=field)
+            response = self.send_request(quote_url, payload, self.auth_headers())
+            formated_json_data = self.parse_response(response)
+            result = pd.DataFrame(formated_json_data)
+            collected_data.append(result)
+        collected_data = pd.concat(collected_data)
         return result
 
     def get_index_price(self,currency):
