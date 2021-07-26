@@ -302,11 +302,11 @@ def mongo_universe_update(ticker=None, currency_code=None):
     ranking = result[["ticker"]]
     duration = ["2 Weeks", "4 Weeks"]
     bot_ranking = get_latest_ranking_rank_1(ticker=ticker, currency_code=currency_code)
-    bot_type = get_bot_type()[["bot_type", "bot_apps_name"]]
+    bot_type = get_bot_type()[["bot_type", "bot_apps_name", "bot_apps_description"]]
     bot_option_type = get_bot_option_type()[["bot_id", "duration"]]
     bot_ranking = bot_ranking.merge(bot_type, how="left", on=["bot_type"])
     bot_ranking = bot_ranking.merge(bot_option_type, how="left", on=["bot_id"])
-    bot_ranking = bot_ranking[["ticker", "bot_id", "bot_type", "bot_option_type", "bot_apps_name", "duration", "time_to_exp", "time_to_exp_str"]]
+    bot_ranking = bot_ranking[["ticker", "bot_id", "bot_type", "bot_option_type", "bot_apps_name", "bot_apps_description", "duration", "time_to_exp", "time_to_exp_str"]]
     bot_ranking = bot_ranking.loc[bot_ranking["duration"].isin(duration)]
     bot_ranking["duration"] = bot_ranking["duration"].str.replace(" ", "-", regex=True)
     bot_statistic = get_bot_statistic_data(ticker=ticker, currency_code=currency_code)
@@ -332,12 +332,12 @@ def mongo_universe_update(ticker=None, currency_code=None):
         ranking_df = pd.DataFrame({"ticker":[tick]}, index=[0])
         for dur in ranking_data["duration"].unique():
             rank_data = ranking_data.loc[ranking_data["duration"] == dur]
-            rank_data = rank_data[["bot_id", "bot_apps_name", "win_rate", "bot_return", "risk_moderation"]]
+            rank_data = rank_data[["bot_id", "bot_apps_name", "bot_apps_description", "duration", "win_rate", "bot_return", "risk_moderation"]]
             rank_data = rank_data.to_dict("records")
             rank_df = pd.DataFrame({"ticker":[tick], dur:[rank_data[0]]}, index=[0])
             ranking_df = ranking_df.merge(rank_df, how="left", on=["ticker"])
         ranking_df = ranking_df.drop(columns=["ticker"])
-        rank = pd.DataFrame({"ticker":[tick], "ranking":[ranking_df.to_dict("records")]}, index=[0])
+        rank = pd.DataFrame({"ticker":[tick], "ranking":[ranking_df.to_dict("records")[0]]}, index=[0])
         ranking = ranking.append(rank)
     ranking = ranking.reset_index(inplace=False, drop=True)
     print(ranking)
