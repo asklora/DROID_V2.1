@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import OrderPosition, PositionPerformance,OrderFee
+from .models import OrderPosition, PositionPerformance,OrderFee,Order
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from django.db.models import Sum,F
 from core.user.models import TransactionHistory
@@ -132,6 +132,42 @@ class PositionSerializer(serializers.ModelSerializer):
     
     def get_last_price(self,obj) -> float:
         return obj.ticker.latest_price_ticker.close
+
+    
+
+class OrderCreateSerializer(serializers.ModelSerializer):
+    user_id = serializers.CharField(required=False)
+    class Meta:
+        model = Order
+        fields = ['ticker','price','bot_id','amount','user_id']
+
+    
+    def create(self,obj):
+        pass
+
+
+
+
+class OrderDetails(serializers.ModelSerializer):
+
+
+    class Meta:
+        model = Order
+        fields = ['ticker','price','bot_id','amount','side',
+        'order_uid','status','setup','created','filled_at',
+        'placed','placed_at']
+
+
+
+class OrderList(serializers.ModelSerializer):
+
+
+    class Meta:
+        model=Order
+        fields=['ticker','side',
+        'order_uid','status','setup','created','filled_at',
+        'placed','placed_at']
+
 
 
 

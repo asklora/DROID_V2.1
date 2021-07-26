@@ -280,7 +280,7 @@ def get_isin_populate_universe(ticker, user_id):
         return {"err": str(e)}
 
 @app.task
-def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
+def populate_client_top_stock_weekly(currency=None, client_name="HANWHA",**options):
     day = datetime.now()
     ## POPULATED ONLY/EVERY MONDAY OF THE WEEK
     if day.weekday() == 0:
@@ -302,7 +302,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
                 populate_bot_tester(currency_code=[currency], client_name=client_name, capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
             # skip any currency except  currency and client fels only
             # has own populate schedule ctrl+f search for EUR-POPULATE-PICK-FELS and USD-POPULATE-PICK-FELS
-            if currency in ['USD', 'EUR',] and client_name == "FELS":
+            if currency in ['EUR',] and client_name == "FELS":
                 test_pick(currency_code=[currency],client_name=client_name)
                 populate_fels_bot(currency_code=[currency], client_name=client_name, top_pick = 5)
             
@@ -316,8 +316,8 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
         # WILL RUN EVERY BUSINESS DAY
         # SKIP FELS FOR AUTO ORDER, SINCE FELS USING MANUAL TRIGER ORDER
         if not client_name == "FELS":
-            order_client_topstock(currency=currency, client_name=client_name) #bot advisor
-            order_client_topstock(currency=currency, client_name=client_name, bot_tester=True) #bot tester
+            order_client_topstock(currency=currency, client_name=client_name,**options) #bot advisor
+            order_client_topstock(currency=currency, client_name=client_name, bot_tester=True,**options) #bot tester
     except Exception as e:
         err = ErrorLog.objects.create_log(error_description=f"===  ERROR IN ORDER FOR {currency} ===",error_message=str(e))
         err.send_report_error()
@@ -330,7 +330,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA"):
 
 
 @app.task
-def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False):
+def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False,**options):
     # NOT USING DSSS
     # try:
     #     populate_intraday_latest_price(currency_code=[currency])
@@ -343,9 +343,10 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
     # NOT USING DSSS
 
     # LOGIN TO TRKD API
-    rkd =RkdData()
-    # GET INDEX PRICE AND SAVE/UPDATE TO CURRENCY TABLE
-    rkd.get_index_price(currency)
+    if not 'repopulate' in options:
+        rkd =RkdData()
+        # GET INDEX PRICE AND SAVE/UPDATE TO CURRENCY TABLE
+        rkd.get_index_price(currency)
     client = Client.objects.get(client_name=client_name)
 
     ## ONLY PICK RELATED WEEK OF YEAR, WEEK WITH FULL HOLIDAY WILL SKIPPED/IGNORED
@@ -371,9 +372,10 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
     ### ONLY EXECUTE IF EXIST / ANY UNPICKED OF THE WEEK
     if topstock.exists():
         report_to_slack(f"===  START ORDER FOR UNPICK {client_name} - {currency} ===")
-        tickers = []
-        [tickers.append(obj.ticker.ticker) for obj in topstock if not obj.ticker.ticker  in tickers]
-        rkd.get_quote(tickers, save=True,detail=f'populate-{now}')
+        if not 'repopulate' in options:
+            tickers = []
+            [tickers.append(obj.ticker.ticker) for obj in topstock if not obj.ticker.ticker  in tickers]
+            rkd.get_quote(tickers, save=True,detail=f'populate-{now}')
         for queue in topstock:
             user = UserClient.objects.get(
                 currency_code=queue.currency_code,
@@ -384,17 +386,35 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
             # TRADING HOURS CHECK
             market = TradingHours(mic=queue.ticker.mic)
             
-            if market.is_open:
+            if market.is_open or 'repopulate' in options:
                 report_to_slack(f"=== {client_name} MARKET {queue.ticker} IS OPEN AND CREATING INITIAL ORDER ===")
                 # yahoo finance price
                 # if currency == "USD":
                 
                 # else:
                 #     get_quote_yahoo(queue.ticker.ticker, save=False)
-                price = queue.ticker.latest_price_ticker.close
-                if queue.ticker.latest_price_ticker.latest_price:
-                    price = queue.ticker.latest_price_ticker.latest_price
-                spot_date = datetime.now()
+                if 'repopulate' in options:
+                    from core.master.models import HedgeLatestPriceHistory
+                    repopulate = options['repopulate']
+                    backup_price = HedgeLatestPriceHistory.objects.filter(last_date=repopulate['date'],types=repopulate['types'],ticker=queue.ticker)
+                    if backup_price.exists():
+                        try:
+                            backup_price = backup_price.get()
+                            price = backup_price.latest_price
+                            spot_date = backup_price.intraday_time
+
+                            print('using backup price')
+                        except HedgeLatestPriceHistory.DoesNotExist:
+                            raise ValueError('no price exist')
+                        except HedgeLatestPriceHistory.MultipleObjectsReturned:
+                            raise ValueError('dulicate found')
+                else:
+                    price = queue.ticker.latest_price_ticker.close
+                    if queue.ticker.latest_price_ticker.latest_price:
+                        price = queue.ticker.latest_price_ticker.latest_price
+                    spot_date = datetime.now()
+
+                        
                 if(client_name == "HANWHA"):
                     if user.extra_data["service_type"] == "bot_advisor":
                         portnum = 8*1.04
@@ -445,7 +465,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False)
             del market
 
         if pos_list:
-            send_csv_hanwha.delay(currency=currency, client_name="HANWHA", new={"pos_list": pos_list},bot_tester=bot_tester)
+            send_csv_hanwha(currency=currency, client_name="HANWHA", new={"pos_list": pos_list},bot_tester=bot_tester)
     else:
         report_to_slack(f"=== {client_name} NO TOPSTOCK IN PENDING ===")
 
