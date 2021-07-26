@@ -165,6 +165,12 @@ def get_latest_vol_table_name():
 def get_latest_bot_update_table_name():
     return "latest_bot_update"
 
+def get_latest_bot_ranking_table_name():
+    return "latest_bot_ranking"
+
+def get_bot_type_table_name():
+    return "bot_type"
+
 def get_bot_option_type_table_name():
     return "bot_option_type"
 

@@ -20,7 +20,7 @@ def dlpa_weekly():
     client_portfolios_holiday = read_query(query, table="client_portfolios")
 
     # Select Data from dss_ohlcvtr and append.
-    for index, row in client_portfolios_missing.head().iterrows():
+    for index, row in client_portfolios_missing.iterrows():
         ticker = row["ticker"]
         spot_date = row["spot_date"]
         forward_date = row["forward_date"]
@@ -28,7 +28,7 @@ def dlpa_weekly():
             dateNow(), ticker, spot_date, forward_date))
 
     # Holiday report
-    for index, row in client_portfolios_holiday.head().iterrows():
+    for index, row in client_portfolios_holiday.iterrows():
         indices = row["index"]
         spot_date = row["spot_date"]
         forward_date = row["forward_date"]

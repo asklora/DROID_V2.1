@@ -5,11 +5,17 @@ from general.sql_process import db_read, dlp_db_read, alibaba_db_url
 from general.date_process import backdate_by_day, dateNow, droid_start_date, str_to_date
 from general.data_process import tuple_data
 from general.table_name import (
+    get_bot_backtest_table_name,
+    get_bot_option_type_table_name,
+    get_bot_statistic_table_name,
+    get_bot_type_table_name,
     get_data_ibes_monthly_table_name, 
     get_data_macro_monthly_table_name, 
     get_industry_group_table_name, 
-    get_industry_table_name, 
-    get_latest_price_table_name, 
+    get_industry_table_name,
+    get_latest_bot_update_table_name, 
+    get_latest_price_table_name,
+    get_latest_bot_ranking_table_name, 
     get_master_tac_table_name, 
     get_orders_position_performance_table_name, 
     get_orders_position_table_name, 
@@ -403,6 +409,66 @@ def get_universe_rating_detail_history(ticker=None, currency_code=None, active=T
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if(check != ""):
         query += "and " + check
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_bot_type(condition=None):
+    table_name = get_bot_type_table_name()
+    query = f"select * from {table_name} "
+    if(type(condition) != type(None)):
+        query+= f" where {condition}"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_latest_bot_update_data(ticker=None, currency_code=None):
+    table_name = get_latest_bot_update_table_name()
+    query = f"select * from {table_name} "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += "where " + check
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+    
+def get_bot_statistic_data(ticker=None, currency_code=None):
+    table_name = get_bot_statistic_table_name()
+    query = f"select * from {table_name} "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += "where " + check
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+    
+def get_bot_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, bot_id=None):
+    table_name = get_bot_backtest_table_name()
+    start_date, end_date = check_start_end_date(start_date, end_date)
+    table_name = get_master_tac_table_name()
+    query = f"select * from {table_name} where trading_day >= '{start_date}' "
+    query += f"and trading_day <= '{end_date}' "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += f"and " + check
+    if(type(bot_id) != type(None)):
+        query += f"and bot_id='{bot_id}'"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+    
+def get_bot_option_type(condition=None):
+    table_name = get_bot_option_type_table_name()
+    query = f"select * from {table_name} "
+    if(type(condition) != type(None)):
+        query+= f" where {condition}"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+    
+def get_latest_ranking_rank_1(ticker=None, currency_code=None, active=True):
+    table_name = get_latest_bot_ranking_table_name()
+    query = f"select * from {table_name} rank  "
+    query += f"where EXISTS (select 1 from {table_name} rank2  "
+    query += f"where rank2.ranking = 1 and rank.uid=rank2.uid  "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
+    if(check != ""):
+        query += "and " + check
+    query += f"group by rank2.ticker, rank2.time_to_exp); "
     data = read_query(query, table_name, cpu_counts=True)
     return data
 

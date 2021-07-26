@@ -2,11 +2,6 @@ import json
 import numpy as np
 import pandas as pd
 from general.date_process import backdate_by_month
-from bot.data_download import (
-    get_bot_backtest, 
-    get_bot_option_type, 
-    get_bot_statistic_data, 
-    get_latest_bot_update_data)
 from general.mongo_query import (
     change_null_to_zero, 
     create_collection, 
@@ -15,15 +10,21 @@ from general.mongo_query import (
     update_specific_to_mongo)
 from general.sql_query import (
     get_active_currency, 
-    get_active_universe, 
+    get_active_universe,
+    get_bot_type, 
     get_industry, 
     get_industry_group, 
-    get_latest_price_data, 
+    get_latest_price_data,
+    get_latest_ranking_rank_1, 
     get_master_tac_data, 
     get_region, 
     get_universe_rating, 
     get_universe_rating_detail_history, 
-    get_universe_rating_history)
+    get_universe_rating_history,
+    get_bot_backtest, 
+    get_bot_option_type, 
+    get_bot_statistic_data, 
+    get_latest_bot_update_data)
 
 def mongo_create_currency():
     collection = json.load(open("files/file_json/validator_currency.json"))
@@ -269,9 +270,9 @@ def mongo_universe_update(ticker=None, currency_code=None):
         rule1_min = rule1_min.append(rule2_min)
         rule1_min = rule1_min.append(rule3_min)
         rule1_min = rule1_min.append(rule4_min)
-        for index, row in rule1.head().iterrows():
+        for index, row in rule1.iterrows():
             positive_factor.append(row["factor_name"])
-        for index, row in rule1_min.head().iterrows():
+        for index, row in rule1_min.iterrows():
             negative_factor.append(row["factor_name"])
         positive_negative_result = pd.DataFrame({"ticker":[tick], "positive_factor":[positive_factor], "negative_factor":[negative_factor]}, index=[0])
         universe_rating_positive_negative = universe_rating_positive_negative.append(positive_negative_result)
@@ -290,14 +291,58 @@ def mongo_universe_update(ticker=None, currency_code=None):
         "dlp_1m", "dlp_3m", "wts_rating", "wts_rating2", "esg", "momentum", "technical", "positive_factor", "negative_factor"]].to_dict("records")
         rating = pd.DataFrame({"ticker":[tick], "rating":[rating_data[0]], "ai_score":[ai_score], "ai_score2":[ai_score2]}, index=[0])
         rating_df = rating_df.append(rating)
-    rating_df = rating_df.reset_index(inplace=False)
-    rating_df = rating_df.drop(columns=["index"])
+    rating_df = rating_df.reset_index(inplace=False, drop=True)
     universe = universe.merge(rating_df, how="left", on=["ticker"])
     universe = universe.sort_values(by=["ai_score", "ticker"], ascending=[False, True])
     universe = universe.reset_index(inplace=False)
     universe = universe.drop(columns=["index", "ai_score", "ai_score2"])
-    universe = universe.reset_index(inplace=False)
-    universe = universe.drop(columns=["index"])
+    universe = universe.reset_index(inplace=False, drop=True)
+    print(universe)
+
+    ranking = result[["ticker"]]
+    duration = ["2 Weeks", "4 Weeks"]
+    bot_ranking = get_latest_ranking_rank_1(ticker=ticker, currency_code=currency_code)
+    bot_type = get_bot_type()[["bot_type", "bot_apps_name"]]
+    bot_option_type = get_bot_option_type()[["bot_id", "duration"]]
+    bot_ranking = bot_ranking.merge(bot_type, how="left", on=["bot_type"])
+    bot_ranking = bot_ranking.merge(bot_option_type, how="left", on=["bot_id"])
+    bot_ranking = bot_ranking[["ticker", "bot_id", "bot_type", "bot_option_type", "bot_apps_name", "duration", "time_to_exp", "time_to_exp_str"]]
+    bot_ranking = bot_ranking.loc[bot_ranking["duration"].isin(duration)]
+    bot_ranking["duration"] = bot_ranking["duration"].str.replace(" ", "-", regex=True)
+    bot_statistic = get_bot_statistic_data(ticker=ticker, currency_code=currency_code)
+    bot_statistic = bot_statistic.rename(columns={"option_type" : "bot_option_type"})
+    bot_statistic = bot_statistic[["ticker", "time_to_exp", "lookback", "bot_type", "bot_option_type", "pct_profit", "avg_return", "avg_loss"]]
+    time_to_exp = bot_ranking["time_to_exp"].unique().tolist()
+    bot_statistic = bot_statistic.loc[bot_statistic["time_to_exp"].isin(time_to_exp)]
+    bot_statistic = bot_statistic.loc[bot_statistic["lookback"] == 6]
+    bot_statistic = bot_statistic.reset_index(inplace=False, drop=True)
+    bot_statistic["pct_profit"] = np.where(bot_statistic["pct_profit"].isnull(), 0, bot_statistic["pct_profit"])
+    bot_statistic["avg_return"] = np.where(bot_statistic["avg_return"].isnull(), 0, bot_statistic["avg_return"])
+    bot_statistic["avg_loss"] = np.where(bot_statistic["avg_loss"].isnull(), 0, bot_statistic["avg_loss"])
+    bot_statistic["win_rate"] = bot_statistic["pct_profit"]
+    for index, row in bot_statistic.iterrows():
+        bot_statistic.loc[index, "bot_return"] = max(min(row["avg_return"], 0.3), -0.2) / 0.5
+        bot_statistic.loc[index, "risk_moderation"] = max(0.3 + row["avg_loss"], 0) / 0.3
+    bot_ranking = bot_ranking.merge(bot_statistic[["ticker", "time_to_exp", "bot_type", 
+        "bot_option_type", "win_rate", "bot_return", "risk_moderation"]], 
+        how="left", on=["ticker", "bot_type", "bot_option_type", "time_to_exp"])
+    ranking = pd.DataFrame({"ticker":[], "ranking":[]}, index=[])
+    for tick in bot_ranking["ticker"].unique():
+        ranking_data = bot_ranking.loc[bot_ranking["ticker"] == tick]
+        ranking_df = pd.DataFrame({"ticker":[tick]}, index=[0])
+        for dur in ranking_data["duration"].unique():
+            rank_data = ranking_data.loc[ranking_data["duration"] == dur]
+            rank_data = rank_data[["bot_id", "bot_apps_name", "win_rate", "bot_return", "risk_moderation"]]
+            rank_data = rank_data.to_dict("records")
+            rank_df = pd.DataFrame({"ticker":[tick], dur:[rank_data[0]]}, index=[0])
+            ranking_df = ranking_df.merge(rank_df, how="left", on=["ticker"])
+        ranking_df = ranking_df.drop(columns=["ticker"])
+        rank = pd.DataFrame({"ticker":[tick], "ranking":[ranking_df.to_dict("records")]}, index=[0])
+        ranking = ranking.append(rank)
+    ranking = ranking.reset_index(inplace=False, drop=True)
+    print(ranking)
+    universe = universe.merge(ranking, how="left", on=["ticker"])
+    universe = universe.reset_index(inplace=False, drop=True)
     print(universe)
     update_to_mongo(data=universe, index="ticker", table="universe", dict=False)
 
@@ -361,7 +406,6 @@ def mongo_statistic_backtest_update():
     backtest_data.loc[backtest_data["bot_return"] >= 0, "event"] = "TP"
     backtest_data.loc[backtest_data["bot_return"] < 0, "event"] = "SL"
     backtest_data.loc[backtest_data["bot_return"].isnull(), "event"] = "RUN"
-
     bot_statistic = get_bot_statistic_data(ticker=None, currency_code=None)
     
 #     bot_data = change_date_to_str(bot_data)
