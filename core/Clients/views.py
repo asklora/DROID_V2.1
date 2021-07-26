@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework import permissions, response,status
-from .serializers import ClientSerializers, UserClientSerializers
-from .models import Client,UserClient
+from .serializers import ClientSerializers, UserClientSerializers,ClientTopStockSerializers
+from .models import Client,UserClient,ClientTopStock
 from drf_spectacular.utils import extend_schema
 from core.djangomodule.general import  set_cache_data,get_cached_data
 
@@ -44,5 +44,21 @@ class UserClientView(APIView):
         res = UserClientSerializers(users,many=True).data
         set_cache_data(cache_key,data=res,interval=(60*60)*4)
         return response.Response(res,status=status.HTTP_200_OK)
+
+
+class TopStockClientView(APIView):
+
+    serializer_class = ClientTopStockSerializers
+    permission_classes = [permissions.IsAdminUser]
+
+    @extend_schema(
+        operation_id='Retrive unexecuted top stock client'
+    )
+    def get(self, request,client_id):
         
+        
+        data = ClientTopStock.objects.filter(has_position=False,client=client_id)
+
+        return response.Response(ClientTopStockSerializers(data,many=True).data,status=status.HTTP_200_OK)
+    
         

@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
 from ingestion.mongo_migration import mongo_universe_update
-from core.djangomodule.serializers import HotUniverse, Universe
 import json
 import pandas as pd
 import threading
@@ -12,7 +11,7 @@ import random
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        mongo_universe_update(currency_code=["HKD","CNY"])
+        mongo_universe_update(currency_code=["HKD"])
         # db = firestore.client()
         # ticker = ['0998.HK','0267.HK','0883.HK']
         # while True:

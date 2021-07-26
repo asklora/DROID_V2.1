@@ -141,10 +141,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['ticker','price','bot_id','amount','user_id']
 
-    
-    def create(self,obj):
-        pass
-
 
 
 
