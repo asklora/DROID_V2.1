@@ -13,10 +13,7 @@ import pandas as pd
 
 
 def calculate_fee(amount, side, user_id):
-    try:
-        user_client = UserClient.objects.get(user_id=user_id)
-    except UserClient.DoesNotExist:
-        return 0
+    user_client = UserClient.objects.get(user_id=user_id)
     if(side == "sell"):
         commissions = user_client.client.commissions_sell
         stamp_duty = user_client.stamp_duty_sell
@@ -37,26 +34,6 @@ def calculate_fee(amount, side, user_id):
     return formatdigit(commissions_fee), formatdigit(stamp_duty_fee), formatdigit(total_fee)
 
 
-
-def hedge_setup(instance):
-    bot = BotOptionType.objects.get(bot_id=instance.bot_id)
-    margin = False
-    expiry = get_expiry_date(
-        bot.time_to_exp, instance.created, instance.ticker.currency_code.currency_code)
-    if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
-        margin = True
-    if bot.bot_type.bot_type == "CLASSIC":
-        setup = get_classic(instance.ticker.ticker, instance.created,
-                            bot.time_to_exp, instance.amount, instance.price, expiry)
-    elif bot.bot_type.bot_type == "UNO":
-        setup = get_uno(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
-                        instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
-    elif bot.bot_type.bot_type == "UCDC":
-        setup = get_ucdc(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
-                            instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
-    return setup
-
-
 @receiver(pre_save, sender=Order)
 def order_signal_check(sender, instance, **kwargs):
     if instance.placed:
@@ -69,8 +46,6 @@ def order_signal_check(sender, instance, **kwargs):
                 # instance.filled_at = datetime.now()
             else:
                 instance.status = "pending"
-    elif instance.status == 'review' and instance.bot_id != 'stock':
-        instance.setup = hedge_setup(instance)
 
 
 @receiver(post_save, sender=Order)
@@ -79,34 +54,38 @@ def order_signal(sender, instance, created, **kwargs):
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
         if instance.bot_id != "stock":
-            setup = hedge_setup(instance)
+            bot = BotOptionType.objects.get(bot_id=instance.bot_id)
+            margin = False
+            if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
+                margin = True
+            expiry = get_expiry_date(
+                bot.time_to_exp, instance.created, instance.ticker.currency_code.currency_code)
+            if bot.bot_type.bot_type == "CLASSIC":
+                setup = get_classic(instance.ticker.ticker, instance.created,
+                                    bot.time_to_exp, instance.amount, instance.price, expiry)
+            elif bot.bot_type.bot_type == "UNO":
+                setup = get_uno(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
+                                instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
+            elif bot.bot_type.bot_type == "UCDC":
+                setup = get_ucdc(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
+                                 instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
             instance.setup = setup
             instance.qty = setup["share_num"]
             instance.amount = formatdigit(setup["share_num"] * setup['price'])
             instance.save()
-        else:
-            import math
-            instance.qty = math.ceil(instance.amount / instance.price)
-            instance.amount = round(instance.qty * instance.price,2)
-            instance.save()
 
         # if not user can create the setup TP and SL
     elif created and not instance.is_init and instance.bot_id != "stock":
-        # import math
-        # instance.qty = math.ceil(instance.amount / instance.price)
-        # instance.amount = round(instance.amount * instance.price,2)
-        # instance.save()
         pass
 
     elif not created and instance.status in "filled" and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         # update the status and create new position
         if instance.is_init:
-            if instance.bot_id != 'stock':
-                bot = BotOptionType.objects.get(bot_id=instance.bot_id)
-                if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
-                    margin = 1.5
-                else:
-                    margin = 1
+            bot = BotOptionType.objects.get(bot_id=instance.bot_id)
+            if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
+                margin = 1.5
+            else:
+                margin = 1
 
             if instance.status == "filled":
                 spot_date = instance.filled_at
@@ -141,6 +120,20 @@ def order_signal(sender, instance, created, **kwargs):
                         if key == "total_bot_share_num":
                             setattr(order, "share_num", val)
                 digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
+
+                # multiplier bot cash balance
+                # margin_investment_amount = round(
+                #     order.investment_amount/order.margin, digits)
+                # order.margin_value = round(
+                #     order.investment_amount - margin_investment_amount, digits)
+                orderserialize = OrderPositionSerializer(order).data
+                orderdata = {
+                    "type": "function",
+                    "module": "core.djangomodule.crudlib.order.sync_position",
+                    "payload": dict(orderserialize)
+                }
+                # services.celery_app.send_task("config.celery.listener",args=(orderdata,),queue="asklora",)
+
                 perf.current_pnl_amt = 0  # need to calculate with fee
                 perf.current_bot_cash_balance = order.bot_cash_balance
 
@@ -148,75 +141,76 @@ def order_signal(sender, instance, created, **kwargs):
                     perf.last_live_price * perf.share_num, digits)
                 perf.current_pnl_ret = (perf.current_bot_cash_balance + perf.current_investment_amount -
                                         order.investment_amount) / order.investment_amount
+                # perf.margin_balance = formatdigit((order.investment_amount /
+                #                                    order.margin) - perf.current_investment_amount)
                 perf.order_id = instance
                 perf.save()
                 order.save()
 
-                # if instance.bot_id != "stock":
-                instance.performance_uid = perf.performance_uid
-                # else:
-                #     instance.performance_uid = "stock"
+                if instance.bot_id != "stock":
+                    instance.performance_uid = perf.performance_uid
+                else:
+                    instance.performance_uid = "stock"
                 instance.save()
 
-            commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
-                instance.amount, instance.side, instance.user_id)
+                commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
+                    instance.amount, instance.side, instance.user_id)
 
-            # first transaction, user put the money to bot cash balance
+                # first transaction, user put the money to bot cash balance
 
-            TransactionHistory.objects.create(
-                balance_uid=order.user_id.wallet,
-                side="debit",
-                amount=round(order.investment_amount, 2),
-                transaction_detail={
-                    "description": "bot order",
-                    "position": f"{order.position_uid}",
-                    "event": "create",
-                    "order_uid":str(instance.order_uid)
-                },
-            )
+                TransactionHistory.objects.create(
+                    balance_uid=order.user_id.wallet,
+                    side="debit",
+                    amount=round(order.investment_amount, digits),
+                    transaction_detail={
+                        "description": "bot order",
+                        "position": f"{order.position_uid}",
+                        "event": "create",
+                        "order_uid":str(instance.order_uid)
+                    },
+                )
 
-            fee=OrderFee.objects.create(
-                order_uid=instance,
-                fee_type=f"{instance.side} commissions fee",
-                amount=commissions_fee
-            )
-
-            TransactionHistory.objects.create(
-                balance_uid=order.user_id.wallet,
-                side="debit",
-                amount=total_fee,
-                transaction_detail={
-                    "description": f"{instance.side} fee",
-                    "position": f"{order.position_uid}",
-                    "event": "fee",
-                    "fee_id":fee.id
-                },
-            )
-            if stamp_duty_fee > 0:
-                stamp=OrderFee.objects.create(
+                fee=OrderFee.objects.create(
                     order_uid=instance,
-                    fee_type=f"{instance.side} stamp_duty fee",
-                    amount=stamp_duty_fee
+                    fee_type=f"{instance.side} commissions fee",
+                    amount=commissions_fee
                 )
 
                 TransactionHistory.objects.create(
                     balance_uid=order.user_id.wallet,
                     side="debit",
-                    amount=stamp_duty_fee,
+                    amount=total_fee,
                     transaction_detail={
                         "description": f"{instance.side} fee",
-                            "position": f"{order.position_uid}",
-                            "event": "stamp_duty",
-                            "stamp_duty_id":stamp.id
+                        "position": f"{order.position_uid}",
+                        "event": "fee",
+                        "fee_id":fee.id
                     },
                 )
-            
+                if stamp_duty_fee > 0:
+                    stamp=OrderFee.objects.create(
+                        order_uid=instance,
+                        fee_type=f"{instance.side} stamp_duty fee",
+                        amount=stamp_duty_fee
+                    )
 
-            
+                    TransactionHistory.objects.create(
+                        balance_uid=order.user_id.wallet,
+                        side="debit",
+                        amount=stamp_duty_fee,
+                        transaction_detail={
+                            "description": f"{instance.side} fee",
+                             "position": f"{order.position_uid}",
+                             "event": "stamp_duty",
+                             "stamp_duty_id":stamp.id
+                        },
+                    )
+
+                # services.celery_app.send_task("config.celery.listener",args=(perfdata,),queue="asklora")
 
         else:
             # hedging daily here
-            if instance.bot_id:
+            if instance.bot_id != "stock":
                 if instance.setup:
                     # getting existing position from setup
                     order_position = OrderPosition.objects.get(
@@ -255,24 +249,24 @@ def order_signal(sender, instance, created, **kwargs):
                     if instance.side == "sell" and order_position.is_live:
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             instance.amount, "sell", order_position.user_id)
-                        if commissions_fee > 0:
-                            fee=OrderFee.objects.create(
-                                order_uid=instance,
-                                fee_type=f"{instance.side} commissions fee",
-                                amount=commissions_fee
-                            )
 
-                            TransactionHistory.objects.create(
-                                balance_uid=order_position.user_id.wallet,
-                                side="debit",
-                                amount=total_fee,
-                                transaction_detail={
-                                    "description": f"{instance.side} fee",
-                                    "position": f"{order_position.position_uid}",
-                                    "event": "fee",
-                                    "fee_id":fee.id
-                                },
-                            )
+                        fee=OrderFee.objects.create(
+                            order_uid=instance,
+                            fee_type=f"{instance.side} commissions fee",
+                            amount=commissions_fee
+                        )
+
+                        TransactionHistory.objects.create(
+                            balance_uid=order_position.user_id.wallet,
+                            side="debit",
+                            amount=total_fee,
+                            transaction_detail={
+                                "description": f"{instance.side} fee",
+                                "position": f"{order_position.position_uid}",
+                                "event": "fee",
+                                "fee_id":fee.id
+                            },
+                        )
                         if stamp_duty_fee > 0:
                             stamp=OrderFee.objects.create(
                                 order_uid=instance,
@@ -294,24 +288,23 @@ def order_signal(sender, instance, created, **kwargs):
                     elif instance.side == "buy" and order_position.is_live:
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             instance.amount, "buy", order_position.user_id)
-                        if commissions_fee >0:
-                            fee =OrderFee.objects.create(
-                                order_uid=instance,
-                                fee_type=f"{instance.side} commissions fee",
-                                amount=total_fee
-                            )
+                        fee =OrderFee.objects.create(
+                            order_uid=instance,
+                            fee_type=f"{instance.side} commissions fee",
+                            amount=total_fee
+                        )
 
-                            TransactionHistory.objects.create(
-                                balance_uid=order_position.user_id.wallet,
-                                side="debit",
-                                amount=total_fee,
-                                transaction_detail={
-                                    "description": f"{instance.side} fee",
-                                    "position": f"{order_position.position_uid}",
-                                    "event": "fee",
-                                    "fee_id":fee.id
-                                },
-                            )
+                        TransactionHistory.objects.create(
+                            balance_uid=order_position.user_id.wallet,
+                            side="debit",
+                            amount=total_fee,
+                            transaction_detail={
+                                "description": f"{instance.side} fee",
+                                "position": f"{order_position.position_uid}",
+                                "event": "fee",
+                                "fee_id":fee.id
+                            },
+                        )
                         if stamp_duty_fee > 0:
                             stamp=OrderFee.objects.create(
                                 order_uid=instance,
@@ -348,24 +341,24 @@ def order_signal(sender, instance, created, **kwargs):
                                 "order_uid":str(instance.order_uid)
                             },
                         )
-                        if commissions_fee >0:
-                            fee =OrderFee.objects.create(
-                                order_uid=instance,
-                                fee_type=f"{instance.side} commissions fee",
-                                amount=commissions_fee
-                            )
 
-                            TransactionHistory.objects.create(
-                                balance_uid=order_position.user_id.wallet,
-                                side="debit",
-                                amount=total_fee,
-                                transaction_detail={
-                                    "description": f"{instance.side} fee",
-                                    "position": f"{order_position.position_uid}",
-                                    "event": "fee",
-                                    "fee_id":fee.id
-                                },
-                            )
+                        fee =OrderFee.objects.create(
+                            order_uid=instance,
+                            fee_type=f"{instance.side} commissions fee",
+                            amount=commissions_fee
+                        )
+
+                        TransactionHistory.objects.create(
+                            balance_uid=order_position.user_id.wallet,
+                            side="debit",
+                            amount=total_fee,
+                            transaction_detail={
+                                "description": f"{instance.side} fee",
+                                "position": f"{order_position.position_uid}",
+                                "event": "fee",
+                                "fee_id":fee.id
+                            },
+                        )
                         if stamp_duty_fee > 0:
                             stamp =OrderFee.objects.create(
                                 order_uid=instance,
@@ -386,7 +379,14 @@ def order_signal(sender, instance, created, **kwargs):
                                 },
                             )
 
-
+    # send payload to asklora
+    instanceserialize = OrderSerializer(instance).data
+    data = {
+        "type": "function",
+        "module": "core.djangomodule.crudlib.order.sync_order",
+        "payload": dict(instanceserialize)
+    }
+    # services.celery_app.send_task("config.celery.listener",args=(data,),queue="asklora")
 
 
 
@@ -429,23 +429,23 @@ def return_fee_to_wallet(sender, instance, **kwargs):
 
 
 
-# @receiver(post_save, sender=OrderPosition)
-# def order_position_signal(sender, instance, created, **kwargs):
-#     instanceserialize = OrderPositionSerializer(instance).data
-#     data = {
-#         "type": "function",
-#         "module": "core.djangomodule.crudlib.order.sync_position",
-#         "payload": dict(instanceserialize)
-#     }
-# #     services.celery_app.send_task("config.celery.listener",args=(data,),queue="asklora")
+@receiver(post_save, sender=OrderPosition)
+def order_position_signal(sender, instance, created, **kwargs):
+    instanceserialize = OrderPositionSerializer(instance).data
+    data = {
+        "type": "function",
+        "module": "core.djangomodule.crudlib.order.sync_position",
+        "payload": dict(instanceserialize)
+    }
+#     services.celery_app.send_task("config.celery.listener",args=(data,),queue="asklora")
 
 
-# @receiver(post_save, sender=PositionPerformance)
-# def order_perfromance_signal(sender, instance, created, **kwargs):
-#     instanceserialize = PositionPerformanceSerializer(instance).data
-#     data = {
-#         "type": "function",
-#         "module": "core.djangomodule.crudlib.order.sync_performance",
-#         "payload": dict(instanceserialize)
-#     }
+@receiver(post_save, sender=PositionPerformance)
+def order_perfromance_signal(sender, instance, created, **kwargs):
+    instanceserialize = PositionPerformanceSerializer(instance).data
+    data = {
+        "type": "function",
+        "module": "core.djangomodule.crudlib.order.sync_performance",
+        "payload": dict(instanceserialize)
+    }
 #     services.celery_app.send_task("config.celery.listener",args=(data,),queue="asklora",countdown=5)
