@@ -64,6 +64,9 @@ app.conf.beat_schedule = {
     'ping-presence': {
         'task': 'core.services.tasks.ping_available_presence',
         'schedule': timedelta(seconds=50),
+        'options': {
+                    'expires': 5*60,
+                    }
         # 'options':{
         #     'queue':'local'
         # }
@@ -71,6 +74,9 @@ app.conf.beat_schedule = {
     'prune-presence': {
         'task': 'core.services.tasks.channel_prune',
         'schedule': timedelta(seconds=60),
+        'options': {
+                    'expires': 5*60,
+                    }
         # 'options':{
         #     'queue':'local'
         # }
@@ -79,63 +85,91 @@ app.conf.beat_schedule = {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=USD_CUR.hedge_schedule.minute, hour=USD_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "USD"},
+        'options': {
+                    'expires': 5*60,
+                    }
         
     },
     "HKD-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=HKD_CUR.hedge_schedule.minute, hour=HKD_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "HKD"},
+        'options': {
+                    'expires': 5*60,
+                    }
     },
     "KRW-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=KRW_CUR.hedge_schedule.minute, hour=KRW_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "KRW"},
+        'options': {
+                    'expires': 5*60,
+                    }
     },
     "CNY-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=CNY_CUR.hedge_schedule.minute, hour=CNY_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "CNY"},
+        'options': {
+                    'expires': 5*60,
+                    }
     },
     "EUR-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
         "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "EUR"},
+        'options': {
+                    'expires': 5*60,
+                    }
     },
     "USD-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=USD_CUR.top_stock_schedule.minute, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "USD"},
+        'options': {
+                    'expires': 5*60,
+                    }
     },
     "HKD-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=HKD_CUR.top_stock_schedule.minute, hour=HKD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "HKD"},
+        'options': {
+                    'expires': 5*60,
+                    }
     },
     "KRW-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=KRW_CUR.top_stock_schedule.minute, hour=KRW_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "KRW"},
+        'options': {
+                    'expires': 5*60,
+                    }
     },
     "CNY-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=CNY_CUR.top_stock_schedule.minute, hour=CNY_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "CNY"},
+        'options': {
+                    'expires': 5*60,
+                    }
     },
     "EUR-POPULATE-PICK": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "EUR"},
+        'options': {
+                    'expires': 5*60,
+                    }
     },
     "EUR-POPULATE-PICK-FELS": {
         "task": "core.services.tasks.populate_client_top_stock_weekly",
         "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "EUR","client_name":"FELS"},
-    },
-    "USD-POPULATE-PICK-FELS": {
-        "task": "core.services.tasks.populate_client_top_stock_weekly",
-        "schedule": crontab(minute=USD_CUR.top_stock_schedule.minute, hour=USD_CUR.top_stock_schedule.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "USD","client_name":"FELS"},
-    },
+        'options': {
+                    'expires': 5*60,
+                    }
+    }
 }
 # END TASK SCHEDULE
 
