@@ -59,7 +59,6 @@ EUR_CUR = Currency.objects.get(currency_code="EUR")
 channel_layer = get_channel_layer()
 
 # TASK SCHEDULE
-
 app.conf.beat_schedule = {
     'ping-presence': {
         'task': 'core.services.tasks.ping_available_presence',

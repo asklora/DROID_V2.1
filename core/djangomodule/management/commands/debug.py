@@ -7,7 +7,6 @@ from core.services.tasks import populate_client_top_stock_weekly,order_client_to
 from datasource.rkd import RkdData
 from datetime import datetime
 
-
   
 
 class Command(BaseCommand):
