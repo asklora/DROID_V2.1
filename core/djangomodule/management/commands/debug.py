@@ -1,17 +1,31 @@
 from ingestion.data_from_rkd import update_currency_code_from_rkd
 from django.core.management.base import BaseCommand
 from core.universe.models import ExchangeMarket,Universe
-from core.orders.models import OrderPosition
+from core.Clients.models import UserClient
+from core.orders.models import OrderPosition,PositionPerformance
 from core.services.tasks import populate_client_top_stock_weekly,order_client_topstock,daily_hedge,send_csv_hanwha
 from datasource.rkd import RkdData
 from datetime import datetime
 
 
-
-
+  
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        serv =['bot_tester','bot_advisor']
+        for a in serv:
+            hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
+                extra_data__service_type=a).values("user")]
+            perf  = PositionPerformance.objects.filter(position_uid__ticker__currency_code='CNY',position_uid__user_id__in=hanwha,position_uid__is_live=True,order_uid__is_init=True,created__gte='2021-07-26 02:00:00.541000' ,created__lte='2021-07-26 02:00:29.541000')
+            list_email = [str(p.order_uid.order_uid) for p in perf]
+            print(list_email)
+            if a == 'bot_tester':
+                t = True
+            else:
+                t=False
+            if perf:
+                send_csv_hanwha(currency='CNY',client_name='HANWHA',new={'pos_list':list_email},bot_tester=t)
+
         # bbb =[]
         # bbb=[exc['mic'] for exc in ExchangeMarket.objects.filter(currency_code__in=['HKD']).values('mic')]
         # print(bbb)
@@ -93,16 +107,6 @@ class Command(BaseCommand):
         # perf = perf.exclude(order_uid__in=orders)
         # print(perf.count())
         # populate_latest_price(currency_code="KRW")
-        send_csv_hanwha(currency='HKD',client_name='HANWHA',new={'pos_list':[
-                    'b53a8a2c-3e80-4831-9591-7e81573c8b57',
-                    '843dba65-d8bb-4a63-8d80-cafe043c542d',
-                    'bf5aee7b-1b08-4c33-a626-85c4ef8e25d0',
-                    '1e72a8f3-6c27-4935-b58a-19f595a81b17',
-                    '56348ea4-165e-4dc4-8fd2-ed81b7653ad2',
-                    'ebaea083-fbfb-4e3d-8795-c07b4cfd6fe7',
-
-
-        ]})
         # update_index_price_from_dss(currency_code=["USD"])
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')

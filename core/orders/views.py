@@ -1,4 +1,9 @@
-from .serializers import PositionSerializer, PerformanceSerializer
+from .serializers import (
+    PositionSerializer, 
+    PerformanceSerializer,
+    OrderCreateSerializer,
+    OrderUpdateSerializer
+    )
 from rest_framework import viewsets, views, permissions, response, status, serializers
 from .models import OrderPosition, PositionPerformance
 from core.Clients.models import UserClient
@@ -75,3 +80,28 @@ class BotPerformanceViews(views.APIView):
         if not perf.exists():
             return response.Response({'message':f'{position_uid} doesnt exist'},status=status.HTTP_404_NOT_FOUND)
         return response.Response(PerformanceSerializer(perf,many=True).data,status=status.HTTP_200_OK)
+
+class OrderViews(views.APIView):
+    serializer_class =OrderCreateSerializer
+    # permission_classes =(permissions.IsAuthenticated,)
+
+
+    def post(self,request):
+        serializer = OrderCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(serializer.data,status=status.HTTP_201_CREATED)
+        return response.Response(serializer.errors)
+        
+
+class OrderUpdateViews(views.APIView):
+    serializer_class =OrderUpdateSerializer
+    permission_classes =(permissions.IsAuthenticated,)
+
+
+    def post(self,request):
+        serializer = OrderUpdateSerializer(request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(serializer.data,status=status.HTTP_200_OK)
+        return response.Response(serializer.errors)

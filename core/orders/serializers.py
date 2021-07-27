@@ -1,9 +1,10 @@
-from rest_framework import serializers
+from rest_framework import serializers, status,exceptions
 from .models import OrderPosition, PositionPerformance,OrderFee,Order
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from django.db.models import Sum,F
-from core.user.models import TransactionHistory
-
+from core.user.models import TransactionHistory, User
+from django.utils import timezone
+from django.apps import apps
 
 @extend_schema_serializer(
     examples = [
@@ -136,10 +137,52 @@ class PositionSerializer(serializers.ModelSerializer):
     
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    user_id = serializers.CharField(required=False)
+    user_id = serializers.IntegerField(required=False)
+    status = serializers.CharField(read_only=True)
+    qty = serializers.FloatField(read_only=True)
     class Meta:
         model = Order
-        fields = ['ticker','price','bot_id','amount','user_id']
+        fields = ['ticker','price','bot_id','amount','user_id','side','status','order_uid','qty']
+    
+    
+    
+    def validate_user_id(self,attr):
+        user =apps.get_model('user', 'User')
+        try:
+            user.objects.get(id=attr)
+        except user.DoesNotExist:
+            error = {'detail':'user not found with the given payload user_id'}
+            raise exceptions.NotFound(error)
+
+    
+    
+    
+    def create(self,validated_data):
+        if not 'user_id' in validated_data:
+            request = self.context.get('request', None)
+            if request:
+                validated_data['user_id'] = request.user
+            else:
+                error = {'detail':'missing user_id'}
+                raise serializers.ValidationError(error)
+        return Order.objects.create(**validated_data)
+
+
+class OrderUpdateSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(read_only=True)
+    setup = serializers.JSONField(read_only=True)
+    qty = serializers.FloatField(read_only=True)
+    order_uid = serializers.UUIDField()
+
+    class Meta:
+        model = Order
+        fields = ['price','bot_id','amount','order_uid','status','qty','setup']
+    
+    def update(self,instance,validated_data):
+        order = instance.objects.get(order_uid=validated_data.pop('order_uid'))
+        order(**validated_data)
+        order.save()
+        return order
 
 
 
@@ -161,7 +204,7 @@ class OrderList(serializers.ModelSerializer):
     class Meta:
         model=Order
         fields=['ticker','side',
-        'order_uid','status','setup','created','filled_at',
+        'order_uid','status','created','filled_at',
         'placed','placed_at']
 
 

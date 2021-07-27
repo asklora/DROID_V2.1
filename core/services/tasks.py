@@ -606,6 +606,7 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
             datenow = options['rehedge']['date']
         else:
             datenow = datetime.now().date()
+        datenow = '2021-07-26'
         df = pd.DataFrame(CsvSerializer(perf, many=True).data)
         df = df.fillna(0)
         hanwha_df = df.drop(columns=["prev_delta", "delta", "v1", "v2", "uuid"])
@@ -615,12 +616,12 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
             if db_debug:
                 subject = "TEST NEW PICK"
             else:
-                subject = "NEW PICK"
+                subject = "REFIXED NEW PICK"
         else:
             if db_debug:
                 subject = "TEST HEDGE"
             else:
-                subject = "HEDGE"
+                subject = "REFIXED HEDGE"
         if db_debug:
             # if(bot_tester):
             #     LORA_MEMBER=["rede.akbar@loratechai.com","agustian@loratechai.com", "stepchoi@loratechai.com", 
@@ -641,12 +642,12 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
 
         draft_email = EmailMessage(
             subject,
-            f"ASKLORA {currency} {stats} CSV  - {datenow}",
+            f"REFIXED ASKLORA {currency} {stats} CSV  - {datenow}",
             "asklora@loratechai.com",LORA_MEMBER
         )
         hanwha_email = EmailMessage(
             subject,
-            f"ASKLORA {currency} {stats} CSV - {datenow}",
+            f"REFIXED ASKLORA {currency} {stats} CSV - {datenow}",
             "asklora@loratechai.com",
             HANWHA_MEMBER,
         )
