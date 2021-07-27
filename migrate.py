@@ -11,7 +11,7 @@ from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 dlp = "postgres://postgres:ml2021#LORA@dlp-prod.cgqhw7rofrpo.ap-northeast-2.rds.amazonaws.com:5432/postgres"
-droid = "postgres://postgres:ml2021#LORA@droid-v1-cluster.cluster-ro-cgqhw7rofrpo.ap-northeast-2.rds.amazonaws.com:5432/postgres"
+droid = "postgres://postgres:ml2021#LORA@droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com:5432/postgres"
 droid2 = "postgres://postgres:ml2021#LORA@droid-v2-prod-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com:5432/postgres"
 datenow = datetime.now().date().strftime("%Y-%m-%d")
 start_date = datetime.now().date() - relativedelta(days=15)
