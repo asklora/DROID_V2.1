@@ -186,7 +186,7 @@ class DroidDb(Cloud):
         -> port
         """
         db = self.rds_client.describe_db_clusters(
-                    DBClusterIdentifier='droid-v2-prod-cluster',
+                    DBClusterIdentifier='droid-v2-production-cluster',
                 )
         return db['DBClusters'][0]['Endpoint'],db['DBClusters'][0]['ReaderEndpoint'], db['DBClusters'][0]['Port']
 

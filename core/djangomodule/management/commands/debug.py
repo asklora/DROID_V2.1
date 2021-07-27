@@ -12,19 +12,19 @@ from datetime import datetime
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        serv =['bot_tester','bot_advisor']
-        for a in serv:
-            hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
-                extra_data__service_type=a).values("user")]
-            perf  = PositionPerformance.objects.filter(position_uid__ticker__currency_code='CNY',position_uid__user_id__in=hanwha,position_uid__is_live=True,order_uid__is_init=True,created__gte='2021-07-26 02:00:00.541000' ,created__lte='2021-07-26 02:00:29.541000')
-            list_email = [str(p.order_uid.order_uid) for p in perf]
-            print(list_email)
-            if a == 'bot_tester':
-                t = True
-            else:
-                t=False
-            if perf:
-                send_csv_hanwha(currency='CNY',client_name='HANWHA',new={'pos_list':list_email},bot_tester=t)
+        # serv =['bot_tester','bot_advisor']
+        # for a in serv:
+        #     hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
+        #         extra_data__service_type=a).values("user")]
+        #     perf  = PositionPerformance.objects.filter(position_uid__ticker__currency_code='CNY',position_uid__user_id__in=hanwha,position_uid__is_live=True,order_uid__is_init=True,created__gte='2021-07-26 02:00:00.541000' ,created__lte='2021-07-26 02:00:29.541000')
+        #     list_email = [str(p.order_uid.order_uid) for p in perf]
+        #     print(list_email)
+        #     if a == 'bot_tester':
+        #         t = True
+        #     else:
+        #         t=False
+        #     if perf:
+        #         send_csv_hanwha(currency='CNY',client_name='HANWHA',new={'pos_list':list_email},bot_tester=t)
 
         # bbb =[]
         # bbb=[exc['mic'] for exc in ExchangeMarket.objects.filter(currency_code__in=['HKD']).values('mic')]
@@ -111,13 +111,14 @@ class Command(BaseCommand):
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
-        # daily_hedge(currency="HKD",rehedge={
-        #     'date':'2021-07-26',
-        #     'types':'hedge'
-        # })
+        daily_hedge(currency="KRW",rehedge={
+            'date':'2021-07-27',
+            'types':'hedge'
+        })
         # daily_hedge(currency="KRW",client_name="HANWHA",bot_tester=True,rehedge={
         #     'date':'2021-07-26',
         #     'types':'hedge'
         # })
         # send_csv_hanwha(currency="CNY")
+        
 
