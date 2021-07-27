@@ -318,7 +318,6 @@ class RkdData(Rkd):
         splitting_df = np.array_split(identifier, max(split, 1))
         for universe in splitting_df:
             tick = universe.tolist()
-            print(tick)
             payload = self.retrive_template(tick, fields=field)
             response = self.send_request(quote_url, payload, self.auth_headers())
             formated_json_data = self.parse_response(response)

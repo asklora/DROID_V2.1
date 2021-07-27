@@ -3,12 +3,17 @@ import os
 from celery import Celery,shared_task
 from importlib import import_module
 import time
+from environs import Env
+env = Env()
 
 # set the default Django settings module for the 'celery' program.
 debug = os.environ.get('DJANGO_SETTINGS_MODULE',True)
 if debug:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.production')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.development')
     # app2 = Celery('core.services',broker='amqp://rabbitmq:rabbitmq@16.162.110.123:5672')
+dbdebug=env.bool("DROID_DEBUG")
+
+    
 
 
 app = Celery('core.services')
@@ -17,7 +22,8 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
-
+if not dbdebug:
+    app.conf.task_default_queue = 'droid_dev'
 
 @app.task(bind=True)
 def app_publish(self):
