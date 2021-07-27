@@ -175,7 +175,6 @@ class DroidDb(Cloud):
         #     DBSnapshotIdentifier='droid-v2-snapshot',
         #     DBInstanceClass='db.t3.medium'
         # )
-        # print(res)
 
     @property
     def prod_url(self):
