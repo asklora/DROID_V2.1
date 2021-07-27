@@ -200,6 +200,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     result = result.merge(industry_group, on="industry_group_code", how="left")
     universe = result[["ticker"]]
     print(result)
+    
     result = change_null_to_zero(result)
     detail_df = pd.DataFrame({"ticker":[], "detail":[]}, index=[])
     for tick in universe["ticker"].unique():
@@ -332,22 +333,18 @@ def mongo_universe_update(ticker=None, currency_code=None):
     ranking = pd.DataFrame({"ticker":[], "ranking":[]}, index=[])
     for tick in bot_ranking["ticker"].unique():
         ranking_data = bot_ranking.loc[bot_ranking["ticker"] == tick]
-        ranking_data = ranking_data.sort_values(by=["ticker", "duration", "ranking"])
-        ranking_df = pd.DataFrame({"ticker":[tick]}, index=[0])
-        count = 0
+        ranking_data = ranking_data.sort_values(by=["ticker", "ranking", "duration"])
+        print(ranking_data)
+        ranking_df = []
         for index, row in ranking_data.iterrows():
             rank_data = ranking_data.loc[ranking_data["duration"] == row["duration"]]
             rank_data = rank_data.loc[rank_data["bot_id"] == row["bot_id"]]
             rank_data = rank_data[["bot_id", "bot_apps_name", "bot_apps_description", "duration", "win_rate", "bot_return", "risk_moderation"]]
-            rank_data = rank_data.to_dict("records")
-            rank_df = pd.DataFrame({"ticker":[tick], count:[rank_data[0]]}, index=[0])
-            ranking_df = ranking_df.merge(rank_df, how="left", on=["ticker"])
-            count += 1
-        ranking_df = ranking_df.drop(columns=["ticker"])
-        rank = pd.DataFrame({"ticker":[tick], "ranking":[ranking_df.to_dict("records")]}, index=[0])
+            rank_data = rank_data.to_dict("records")[0]
+            ranking_df.append(rank_data)
+        rank = pd.DataFrame({"ticker":[tick], "ranking":[ranking_df]}, index=[0])
         ranking = ranking.append(rank)
     ranking = ranking.reset_index(inplace=False, drop=True)
-    print(ranking)
     print(ranking)
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
