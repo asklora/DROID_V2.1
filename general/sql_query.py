@@ -459,7 +459,16 @@ def get_bot_option_type(condition=None):
         query+= f" where {condition}"
     data = read_query(query, table_name, cpu_counts=True)
     return data
-    
+
+def get_latest_ranking(ticker=None, currency_code=None, active=True):
+    table_name = get_latest_bot_ranking_table_name()
+    query = f"select * from {table_name} rank  "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
+    if(check != ""):
+        query += "where " + check
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
 def get_latest_ranking_rank_1(ticker=None, currency_code=None, active=True):
     table_name = get_latest_bot_ranking_table_name()
     query = f"select * from {table_name} rank  "

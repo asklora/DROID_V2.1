@@ -15,6 +15,7 @@ from general.sql_query import (
     get_industry, 
     get_industry_group, 
     get_latest_price_data,
+    get_latest_ranking,
     get_latest_ranking_rank_1, 
     get_master_tac_data, 
     get_region, 
@@ -197,8 +198,6 @@ def mongo_universe_update(ticker=None, currency_code=None):
     industry_group = get_industry_group()
     result = all_universe.merge(industry, on="industry_code", how="left")
     result = result.merge(industry_group, on="industry_group_code", how="left")
-    print(result)
-    print(result.columns)
     universe = result[["ticker"]]
     print(result)
     result = change_null_to_zero(result)
@@ -300,15 +299,18 @@ def mongo_universe_update(ticker=None, currency_code=None):
     print(universe)
 
     ranking = result[["ticker"]]
-    duration = ["2 Weeks", "4 Weeks"]
-    bot_ranking = get_latest_ranking_rank_1(ticker=ticker, currency_code=currency_code)
+    duration_list = ["2 Weeks", "4 Weeks"]
+    bot_ranking = get_latest_ranking(ticker=ticker, currency_code=currency_code)
     bot_type = get_bot_type()[["bot_type", "bot_apps_name", "bot_apps_description"]]
     bot_option_type = get_bot_option_type()[["bot_id", "duration"]]
     bot_ranking = bot_ranking.merge(bot_type, how="left", on=["bot_type"])
     bot_ranking = bot_ranking.merge(bot_option_type, how="left", on=["bot_id"])
-    bot_ranking = bot_ranking[["ticker", "bot_id", "bot_type", "bot_option_type", "bot_apps_name", "bot_apps_description", "duration", "time_to_exp", "time_to_exp_str"]]
-    bot_ranking = bot_ranking.loc[bot_ranking["duration"].isin(duration)]
+    bot_ranking = bot_ranking[["ticker", "bot_id", "ranking", "bot_type", "bot_option_type", "bot_apps_name", "bot_apps_description", "duration", "time_to_exp", "time_to_exp_str"]]
+    bot_ranking = bot_ranking.loc[bot_ranking["duration"].isin(duration_list)]
     bot_ranking["duration"] = bot_ranking["duration"].str.replace(" ", "-", regex=True)
+    bot_ranking = bot_ranking.sort_values(by=["ticker", "duration", "ranking"])
+    bot_ranking = bot_ranking.drop_duplicates(subset=["ticker", "duration", "bot_type"], keep="first")
+
     bot_statistic = get_bot_statistic_data(ticker=ticker, currency_code=currency_code)
     bot_statistic = bot_statistic.rename(columns={"option_type" : "bot_option_type"})
     bot_statistic = bot_statistic[["ticker", "time_to_exp", "lookback", "bot_type", "bot_option_type", "pct_profit", "avg_return", "avg_loss"]]
@@ -326,26 +328,31 @@ def mongo_universe_update(ticker=None, currency_code=None):
     bot_ranking = bot_ranking.merge(bot_statistic[["ticker", "time_to_exp", "bot_type", 
         "bot_option_type", "win_rate", "bot_return", "risk_moderation"]], 
         how="left", on=["ticker", "bot_type", "bot_option_type", "time_to_exp"])
+    print(bot_ranking)
     ranking = pd.DataFrame({"ticker":[], "ranking":[]}, index=[])
     for tick in bot_ranking["ticker"].unique():
         ranking_data = bot_ranking.loc[bot_ranking["ticker"] == tick]
+        ranking_data = ranking_data.sort_values(by=["ticker", "duration", "ranking"])
         ranking_df = pd.DataFrame({"ticker":[tick]}, index=[0])
-        for dur in ranking_data["duration"].unique():
-            rank_data = ranking_data.loc[ranking_data["duration"] == dur]
+        count = 0
+        for index, row in ranking_data.iterrows():
+            rank_data = ranking_data.loc[ranking_data["duration"] == row["duration"]]
+            rank_data = rank_data.loc[rank_data["bot_id"] == row["bot_id"]]
             rank_data = rank_data[["bot_id", "bot_apps_name", "bot_apps_description", "duration", "win_rate", "bot_return", "risk_moderation"]]
             rank_data = rank_data.to_dict("records")
-            rank_df = pd.DataFrame({"ticker":[tick], dur:[rank_data[0]]}, index=[0])
+            rank_df = pd.DataFrame({"ticker":[tick], count:[rank_data[0]]}, index=[0])
             ranking_df = ranking_df.merge(rank_df, how="left", on=["ticker"])
+            count += 1
         ranking_df = ranking_df.drop(columns=["ticker"])
-        rank = pd.DataFrame({"ticker":[tick], "ranking":[ranking_df.to_dict("records")[0]]}, index=[0])
+        rank = pd.DataFrame({"ticker":[tick], "ranking":[ranking_df.to_dict("records")]}, index=[0])
         ranking = ranking.append(rank)
     ranking = ranking.reset_index(inplace=False, drop=True)
+    print(ranking)
     print(ranking)
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
     print(universe)
     update_to_mongo(data=universe, index="ticker", table="universe", dict=False)
-
 
 def mongo_universe_rating_update():
     #Populate Universe
