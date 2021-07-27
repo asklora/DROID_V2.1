@@ -6,7 +6,6 @@ import time
 from environs import Env
 env = Env()
 
-# set the default Django settings module for the 'celery' program.
 debug = os.environ.get('DJANGO_SETTINGS_MODULE',True)
 if debug:
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.development')
