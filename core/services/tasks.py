@@ -65,7 +65,7 @@ app.conf.beat_schedule = {
         'task': 'core.services.tasks.ping_available_presence',
         'schedule': timedelta(seconds=50),
         'options': {
-                    'expires': 5*60,
+                    'expires': 5,
                     }
         # 'options':{
         #     'queue':'local'
@@ -75,7 +75,7 @@ app.conf.beat_schedule = {
         'task': 'core.services.tasks.channel_prune',
         'schedule': timedelta(seconds=60),
         'options': {
-                    'expires': 5*60,
+                    'expires': 5,
                     }
         # 'options':{
         #     'queue':'local'

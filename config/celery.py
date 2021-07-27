@@ -4,8 +4,12 @@ from celery import Celery,shared_task
 from importlib import import_module
 import time
 from environs import Env
-env = Env()
 
+
+from dotenv import load_dotenv
+
+env = Env()
+load_dotenv()
 debug = os.environ.get('DJANGO_SETTINGS_MODULE',True)
 if debug:
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.development')
