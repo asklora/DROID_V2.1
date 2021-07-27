@@ -124,7 +124,7 @@ class DroidDb(Cloud):
     def get_snapshot(self):
         try:
             snapshot = self.rds_client.describe_db_cluster_snapshots(
-                        DBClusterIdentifier='droid-v2-prod-cluster',
+                        DBClusterIdentifier='droid-v2-production-cluster',
                         DBClusterSnapshotIdentifier='droid-v2-snapshot',
                     )
             if len(snapshot['DBClusterSnapshots'])> 0:
@@ -148,14 +148,14 @@ class DroidDb(Cloud):
             if snapshot == "Not Found":
                 self.rds_client.create_db_cluster_snapshot(
                     DBClusterSnapshotIdentifier='droid-v2-snapshot',
-                    DBClusterIdentifier='droid-v2-prod-cluster',
+                    DBClusterIdentifier='droid-v2-production-cluster',
                 )
                 return True
             elif snapshot == "available":
                 self.delete_snapshot()
                 self.rds_client.create_db_cluster_snapshot(
                     DBClusterSnapshotIdentifier='droid-v2-snapshot',
-                    DBClusterIdentifier='droid-v2-prod-cluster',
+                    DBClusterIdentifier='droid-v2-production-cluster',
                 )
                 return False
             else:
@@ -164,9 +164,9 @@ class DroidDb(Cloud):
 
     def create_read_replica(self):
         rr =  self.rds_client.restore_db_cluster_to_point_in_time(
-                                    DBClusterIdentifier='droid-v2-prod-cluster-clone',
+                                    DBClusterIdentifier='droid-v2-production-cluster-clone',
                                     RestoreType='copy-on-write',
-                                    SourceDBClusterIdentifier='droid-v2-prod-cluster',
+                                    SourceDBClusterIdentifier='droid-v2-production-cluster',
                                     UseLatestRestorableTime=True
                                 )
         print(rr)
