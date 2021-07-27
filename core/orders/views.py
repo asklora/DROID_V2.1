@@ -56,6 +56,10 @@ class PositionUserViews(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         if self.kwargs:
+            if 'live' in self.request.query_params:
+                return OrderPosition.objects.filter(user_id=self.kwargs['user_id'],is_live=True)
+            elif 'complete' in self.request.query_params:
+                return OrderPosition.objects.filter(user_id=self.kwargs['user_id'],is_live=False)
             return OrderPosition.objects.filter(user_id=self.kwargs['user_id'])
         else:
             return OrderPosition.objects.filter(user_id=None)
@@ -83,7 +87,7 @@ class BotPerformanceViews(views.APIView):
 
 class OrderViews(views.APIView):
     serializer_class =OrderCreateSerializer
-    # permission_classes =(permissions.IsAuthenticated,)
+    permission_classes =(permissions.IsAuthenticated,)
 
 
     def post(self,request):
