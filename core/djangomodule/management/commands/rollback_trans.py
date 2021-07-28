@@ -8,10 +8,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         with transaction.atomic():
-            sid =transaction.savepoint()
             # try:
-            ThirdpartyCredentials.objects.create(services='asdad')
+        # transaction.set_autocommit(False)
+            ThirdpartyCredentials.objects.create(services='asjhd')
+            transaction.set_rollback(True)
+        transaction.rollback()
                 # raise ValueError('sss')
             # except Exception:
-            transaction.savepoint_rollback(sid)
-
+        # transaction.set_rollback(True)
