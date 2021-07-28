@@ -39,7 +39,7 @@ CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@16.162.110.123:5672'
 
 # print(f'using read: {read_endpoint}')
 # print(f'using write: {write_endpoint}')
-DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
+# DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
 DB_ENGINE = 'psqlextra.backend'
 DATABASES = {
     'default': {
