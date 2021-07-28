@@ -316,6 +316,7 @@ def ucdc_position_check(position_uid, to_date=None, lookback=False,rehedge=None)
                         order.status = "filled"
                         order.filled_at = log_time
                         order.save()
+                    
                 if status:
                     print(f"position end")
         return True

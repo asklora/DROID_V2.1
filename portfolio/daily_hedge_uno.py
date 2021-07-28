@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from pandas.io.sql import DatabaseError
 from bot import uno
 from core.master.models import LatestPrice, MasterOhlcvtr
 from core.orders.models import OrderPosition, PositionPerformance, Order

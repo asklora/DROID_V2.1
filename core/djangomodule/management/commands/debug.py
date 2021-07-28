@@ -11,6 +11,68 @@ from datetime import datetime
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        somelist=['ghEjI0WVyCD',
+    'e3IwjAI3cE',
+    'DhbkLckmDwPF',
+    'ZAYQwuIHz4RM',
+    'V7U8kiA2nNGk',
+    'wxTa8IdXNWo',
+    'ga2RAxEyaqj',
+    'Bf0Q68c4dEh',
+    '4lM840cdf391',
+    'NuDZKdpB7iRm',
+    'mN1xLsvVKbqq',
+    'qzp2I1DdJ4V',
+    'r42Z8bYHWPdb',
+    'q4ekLGJdHh',
+    'MziZupqNatb',
+    'aP22iV5Imd5',
+    '3ANOF7QdNrR',
+    'AdVfr67nHQCG',
+    '3ZdbGnXbUiy',
+    'YUH0t4lYwqy',
+    'Odp1sDI6HvfV',
+    'hYngGrTSBf8',
+    'a3dpeE2rxmEg',
+    'nr2veXCy9re0',
+    'mRm8rmBEkuwm',
+    'GJVjX0TfGuT',
+    'xtOynCEzdwdj',
+    'BOSdthgADgkE',
+    'uBubzAb8m6NT',
+    'PoeHNTpUKx9y',
+    'stNtPVkFWX',
+    'X97nCGRCFxUX',
+    'se7xzIXSO5MM',
+    'nXwq0qxX2VDi',
+    '4ODbcAYag1ku',
+    'UC09sSOzqMNz',
+    '4kgfGgReedXx',
+    'HW7wlSnWAHe',
+    'EZbziCaTmbE',
+    'LIZRQHpA0Ldq',
+    'Gteqo4bDcmNk',
+    'PTXWdOLcsoTY',
+    'bG8qceGUQ4R',
+    '6y3ZOiXljkiW',
+    'hkim7YtpUyqK',
+    'ZqQYYlK12iwv',
+    'XAhm5cO6tUeU',
+    '5XQtm9vbMCm',
+    '6eL9S2BCzJpM',
+    'F9MTYbf0Euzl',
+    'q16jNy4ew44',
+    'zHhwc3XYsl2',
+    'IOMmWL1tSA1U',
+    'Bh8NMJpjisdz',
+    'cv8lqoVYpJOu',
+    'Yj6i90kT8UNS',
+    'IMD2S1fD7x0',
+    'BoEwExBVezP']
+        for p in PositionPerformance.objects.filter(performance_uid__in=somelist):
+            p.delete()
+
+        # daily_hedge(currency="USD")
         # serv =['bot_tester','bot_advisor']
         # for a in serv:
         #     hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
@@ -110,10 +172,6 @@ class Command(BaseCommand):
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
-        daily_hedge(currency="KRW",rehedge={
-            'date':'2021-07-27',
-            'types':'hedge'
-        })
         # daily_hedge(currency="KRW",client_name="HANWHA",bot_tester=True,rehedge={
         #     'date':'2021-07-26',
         #     'types':'hedge'

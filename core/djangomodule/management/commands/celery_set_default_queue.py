@@ -1,4 +1,4 @@
-from django_celery_beat.models import PeriodicTask
+from django_celery_beat.models import PeriodicTask,PeriodicTasks
 from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
@@ -8,6 +8,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options['queue']:
-            PeriodicTask.objects.all().update(queue=options['queue'])
+            PeriodicTask.objects.all().update(queue=None)
         else:
             print('queue not set')
