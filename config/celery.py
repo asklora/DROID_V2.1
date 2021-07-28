@@ -12,7 +12,7 @@ env = Env()
 load_dotenv()
 debug = os.environ.get('DJANGO_SETTINGS_MODULE',True)
 if debug:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.production')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.development')
     # app2 = Celery('core.services',broker='amqp://rabbitmq:rabbitmq@16.162.110.123:5672')
 dbdebug=env.bool("DROID_DEBUG")
 

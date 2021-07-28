@@ -9,5 +9,6 @@ while True:
         print('reply')
         ws.send(json.dumps({
             'type':'ping',
-            'message':'PONG'
+            'message':'PONG',
+            'user':'agam'
         }))

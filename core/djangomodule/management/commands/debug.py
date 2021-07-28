@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 from core.universe.models import ExchangeMarket,Universe
 from core.Clients.models import UserClient
 from core.orders.models import OrderPosition,PositionPerformance
+from core.services.models import HedgeLogger
 from core.services.tasks import populate_client_top_stock_weekly,order_client_topstock,daily_hedge,send_csv_hanwha
 from datasource.rkd import RkdData
 from datetime import datetime
@@ -11,65 +12,7 @@ from datetime import datetime
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        somelist=['ghEjI0WVyCD',
-    'e3IwjAI3cE',
-    'DhbkLckmDwPF',
-    'ZAYQwuIHz4RM',
-    'V7U8kiA2nNGk',
-    'wxTa8IdXNWo',
-    'ga2RAxEyaqj',
-    'Bf0Q68c4dEh',
-    '4lM840cdf391',
-    'NuDZKdpB7iRm',
-    'mN1xLsvVKbqq',
-    'qzp2I1DdJ4V',
-    'r42Z8bYHWPdb',
-    'q4ekLGJdHh',
-    'MziZupqNatb',
-    'aP22iV5Imd5',
-    '3ANOF7QdNrR',
-    'AdVfr67nHQCG',
-    '3ZdbGnXbUiy',
-    'YUH0t4lYwqy',
-    'Odp1sDI6HvfV',
-    'hYngGrTSBf8',
-    'a3dpeE2rxmEg',
-    'nr2veXCy9re0',
-    'mRm8rmBEkuwm',
-    'GJVjX0TfGuT',
-    'xtOynCEzdwdj',
-    'BOSdthgADgkE',
-    'uBubzAb8m6NT',
-    'PoeHNTpUKx9y',
-    'stNtPVkFWX',
-    'X97nCGRCFxUX',
-    'se7xzIXSO5MM',
-    'nXwq0qxX2VDi',
-    '4ODbcAYag1ku',
-    'UC09sSOzqMNz',
-    '4kgfGgReedXx',
-    'HW7wlSnWAHe',
-    'EZbziCaTmbE',
-    'LIZRQHpA0Ldq',
-    'Gteqo4bDcmNk',
-    'PTXWdOLcsoTY',
-    'bG8qceGUQ4R',
-    '6y3ZOiXljkiW',
-    'hkim7YtpUyqK',
-    'ZqQYYlK12iwv',
-    'XAhm5cO6tUeU',
-    '5XQtm9vbMCm',
-    '6eL9S2BCzJpM',
-    'F9MTYbf0Euzl',
-    'q16jNy4ew44',
-    'zHhwc3XYsl2',
-    'IOMmWL1tSA1U',
-    'Bh8NMJpjisdz',
-    'cv8lqoVYpJOu',
-    'Yj6i90kT8UNS',
-    'IMD2S1fD7x0',
-    'BoEwExBVezP']
-        for p in PositionPerformance.objects.filter(performance_uid__in=somelist):
+        for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
             p.delete()
 
         # daily_hedge(currency="USD")

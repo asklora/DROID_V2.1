@@ -1,3 +1,4 @@
+from pandas.core.base import DataError
 from bot.calculate_bot import check_dividend_paid
 from datetime import datetime
 from core.master.models import LatestPrice, MasterOhlcvtr
@@ -6,7 +7,7 @@ from config.celery import app
 import pandas as pd
 from core.djangomodule.serializers import OrderPositionSerializer
 from core.djangomodule.general import formatdigit
-from core.services.models import ErrorLog
+from core.services.models import ErrorLog,HedgeLogger
 from django.db import transaction
 
 
@@ -151,7 +152,7 @@ def create_performance(price_data, position, latest_price=False,rehedge=False):
 
 
 @app.task
-def classic_position_check(position_uid, to_date=None, lookback=False,rehedge=None):
+def classic_position_check(position_uid, to_date=None, lookback=False,rehedge=None,hedge_type='hedge'):
     transaction.set_autocommit(False)
     try:
         position = OrderPosition.objects.get(
@@ -265,12 +266,23 @@ def classic_position_check(position_uid, to_date=None, lookback=False,rehedge=No
                     print(f"position end")
         transaction.commit()
         print('transaction committed')
+        logger=HedgeLogger.objects.get(position_uid=position,date=trading_day,log_type=hedge_type)
+        logger.status = 'OK'
+        logger.save()
         return True
     except OrderPosition.DoesNotExist as e:
         err = ErrorLog.objects.create_log(error_description=f'{position_uid} not exist',error_message=str(e))
         err.send_report_error()
-        return {'err':f'{position.ticker.ticker}'}
+        logger=HedgeLogger.objects.get(position_uid=position,date=trading_day,log_type=hedge_type)
+        logger.status='FAIL'
+        logger.error_log=str(e)
+        logger.save()
+        return {'err':f'{position.ticker.ticker} - {position_uid}'}
     except Exception as e:
         err = ErrorLog.objects.create_log(error_description=f'error in Position {position_uid}',error_message=str(e))
         err.send_report_error()
-        return {'err':f'{position.ticker.ticker}'}
+        logger=HedgeLogger.objects.get(position_uid=position,date=trading_day,log_type=hedge_type)
+        logger.status='FAIL'
+        logger.error_log=str(e)
+        logger.save()
+        return {'err':f'{position.ticker.ticker} - {position_uid}'}
