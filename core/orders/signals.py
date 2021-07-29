@@ -1,3 +1,4 @@
+import math
 from core.Clients.models import UserClient
 from django.db.models.signals import post_save, pre_save,post_delete
 from django.dispatch import receiver
@@ -34,6 +35,34 @@ def calculate_fee(amount, side, user_id):
     return formatdigit(commissions_fee), formatdigit(stamp_duty_fee), formatdigit(total_fee)
 
 
+
+def generate_hedge_setup(instance : Order) -> dict:
+    
+    bot = BotOptionType.objects.get(bot_id=instance.bot_id)
+    margin = False
+    if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
+        margin = True
+    expiry = get_expiry_date(
+        bot.time_to_exp, instance.created, instance.ticker.currency_code.currency_code)
+    if bot.bot_type.bot_type == "CLASSIC":
+        setup = get_classic(instance.ticker.ticker, instance.created,
+                            bot.time_to_exp, instance.amount, instance.price, expiry)
+    elif bot.bot_type.bot_type == "UNO":
+        setup = get_uno(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
+                        instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
+    elif bot.bot_type.bot_type == "UCDC":
+        setup = get_ucdc(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
+                                instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
+    
+    return setup
+
+
+
+
+
+
+
+
 @receiver(pre_save, sender=Order)
 def order_signal_check(sender, instance, **kwargs):
     if instance.placed:
@@ -53,25 +82,14 @@ def order_signal(sender, instance, created, **kwargs):
 
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
-        if instance.bot_id != "stock":
-            bot = BotOptionType.objects.get(bot_id=instance.bot_id)
-            margin = False
-            if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
-                margin = True
-            expiry = get_expiry_date(
-                bot.time_to_exp, instance.created, instance.ticker.currency_code.currency_code)
-            if bot.bot_type.bot_type == "CLASSIC":
-                setup = get_classic(instance.ticker.ticker, instance.created,
-                                    bot.time_to_exp, instance.amount, instance.price, expiry)
-            elif bot.bot_type.bot_type == "UNO":
-                setup = get_uno(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
-                                instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
-            elif bot.bot_type.bot_type == "UCDC":
-                setup = get_ucdc(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
-                                 instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
-            instance.setup = setup
-            instance.qty = setup["share_num"]
-            instance.amount = formatdigit(setup["share_num"] * setup['price'])
+            if instance.bot_id != "stock":
+                setup = generate_hedge_setup(instance)
+                instance.setup = setup
+                instance.qty = setup["share_num"]
+                instance.amount = formatdigit(setup["share_num"] * setup['price'])
+            else:
+                instance.setup =None
+                instance.qty = math.floor(instance.amount / instance.price)
             instance.save()
 
         # if not user can create the setup TP and SL
@@ -120,19 +138,6 @@ def order_signal(sender, instance, created, **kwargs):
                         if key == "total_bot_share_num":
                             setattr(order, "share_num", val)
                 digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
-
-                # multiplier bot cash balance
-                # margin_investment_amount = round(
-                #     order.investment_amount/order.margin, digits)
-                # order.margin_value = round(
-                #     order.investment_amount - margin_investment_amount, digits)
-                orderserialize = OrderPositionSerializer(order).data
-                orderdata = {
-                    "type": "function",
-                    "module": "core.djangomodule.crudlib.order.sync_position",
-                    "payload": dict(orderserialize)
-                }
-                # services.celery_app.send_task("config.celery.listener",args=(orderdata,),queue="asklora",)
 
                 perf.current_pnl_amt = 0  # need to calculate with fee
                 perf.current_bot_cash_balance = order.bot_cash_balance
@@ -378,17 +383,6 @@ def order_signal(sender, instance, created, **kwargs):
 
                                 },
                             )
-
-    # send payload to asklora
-    instanceserialize = OrderSerializer(instance).data
-    data = {
-        "type": "function",
-        "module": "core.djangomodule.crudlib.order.sync_order",
-        "payload": dict(instanceserialize)
-    }
-    # services.celery_app.send_task("config.celery.listener",args=(data,),queue="asklora")
-
-
 
 @receiver(post_delete,sender=PositionPerformance)
 def order_revert(sender, instance, **kwargs):

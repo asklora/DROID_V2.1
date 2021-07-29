@@ -63,19 +63,26 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def is_small(self):
-        user_client = self.client_user.all()[0]
-        return user_client.extra_data["capital"] == "small"
-
+        try:
+            user_client = self.client_user.all()[0]
+            return user_client.extra_data["capital"] == "small"
+        except AttributeError:
+            return False
     @property
     def is_large(self):
-        user_client = self.client_user.all()[0]
-
-        return user_client.extra_data["capital"] == "large"
+        try:
+            user_client = self.client_user.all()[0]
+            return user_client.extra_data["capital"] == "large_margin"
+        except AttributeError:
+            return False
 
     @property
     def is_large_margin(self):
-        user_client = self.client_user.all()[0]
-        return user_client.extra_data["capital"] == "large_margin"
+        try:
+            user_client = self.client_user.all()[0]
+            return user_client.extra_data["capital"] == "large_margin"
+        except AttributeError:
+            return False
 
     @property
     def get_dial_phone(self):
