@@ -91,7 +91,7 @@ class BotPerformanceViews(views.APIView):
 
 class OrderViews(views.APIView):
     serializer_class =OrderCreateSerializer
-    # permission_classes =(permissions.IsAuthenticated,)
+    permission_classes =(permissions.IsAuthenticated,)
 
 
     def post(self,request):
