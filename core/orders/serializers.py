@@ -258,6 +258,6 @@ class OrderActionSerializer(serializers.ModelSerializer):
             raise exceptions.MethodNotAllowed({'detail':'order already filled, you cannot cancel / confirm'})
         from core.services.order_services import order_executor
         payload = json.dumps(validated_data)
-        task = order_executor.apply_async(args=(payload,),queue='droid_dev')
+        task = order_executor.delay(payload)
         data = {'action_id':task.id,'status':'executed' ,'order_uid':validated_data['order_uid']}
         return data
