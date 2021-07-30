@@ -140,18 +140,18 @@ class PositionSerializer(serializers.ModelSerializer):
     
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    user_id = serializers.StringRelatedField(required=False)
+    user = serializers.CharField(required=False)
     price = serializers.FloatField(required=False)
     status = serializers.CharField(read_only=True)
     qty = serializers.FloatField(read_only=True)
     setup = serializers.JSONField(read_only=True)
     class Meta:
         model = Order
-        fields = ['ticker','price','bot_id','amount','user_id','side','status','order_uid','qty','setup']
+        fields = ['ticker','price','bot_id','amount','user','side','status','order_uid','qty','setup']
     
     
     
-    def validate_user_id(self,attr):
+    def validate_user(self,attr):
         if attr:
             user =apps.get_model('user', 'User')
             try:
@@ -164,18 +164,18 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     
     
     def create(self,validated_data):
-        if not 'user_id' in validated_data:
+        if not 'user' in validated_data:
             request = self.context.get('request', None)
             if request:
                 validated_data['user_id'] = request.user
                 user = request.user
             else:
-                error = {'detail':'missing user_id'}
+                error = {'detail':'missing user'}
                 raise serializers.ValidationError(error)
         else:
             usermodel =apps.get_model('user', 'User')
-            user =usermodel.objects.get(id=validated_data['user_id'])
-        
+            user =usermodel.objects.get(id=validated_data.pop('user'))
+            validated_data['user_id']=user
         if validated_data['amount'] > user.user_balance.amount:
             raise exceptions.NotAcceptable({'detail':'insuficent balance'})
 
@@ -217,10 +217,10 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
 
 class OrderDetailsSerializers(serializers.ModelSerializer):
     
-    created = UnixEpochDateField(source='created')
-    filled_at = UnixEpochDateField(source='filled_at')
-    placed_at = UnixEpochDateField(source='placed_at')
-    canceled_at = UnixEpochDateField(source='canceled_at')
+    # created = UnixEpochDateField(source='created')
+    # filled_at = UnixEpochDateField(source='filled_at')
+    # placed_at = UnixEpochDateField(source='placed_at')
+    # canceled_at = UnixEpochDateField(source='canceled_at')
     
     class Meta:
         model = Order
@@ -231,9 +231,9 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
 
 
 class OrderListSerializers(serializers.ModelSerializer):
-    created = UnixEpochDateField(source='created')
-    filled_at = UnixEpochDateField(source='filled_at')
-    placed_at = UnixEpochDateField(source='placed_at')
+    # created = UnixEpochDateField(source='created')
+    # filled_at = UnixEpochDateField(source='filled_at')
+    # placed_at = UnixEpochDateField(source='placed_at')
 
     class Meta:
         model=Order

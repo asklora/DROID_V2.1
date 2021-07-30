@@ -187,7 +187,7 @@ CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 
 
-
+APPEND_SLASH=False
 email_debug = False
 if email_debug:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
