@@ -149,22 +149,11 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['ticker','price','bot_id','amount','user','side','status','order_uid','qty','setup']
     
-    
-    
-    def validate_user(self,attr):
-        if attr:
-            user =apps.get_model('user', 'User')
-            try:
-                user.objects.get(id=attr)
-            except user.DoesNotExist:
-                error = {'detail':'user not found with the given payload user_id'}
-                raise exceptions.NotFound(error)
 
     
     
     
     def create(self,validated_data):
-        print(validated_data)
         if not 'user' in validated_data:
             request = self.context.get('request', None)
             if request:
