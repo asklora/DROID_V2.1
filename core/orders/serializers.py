@@ -164,6 +164,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     
     
     def create(self,validated_data):
+        print(validated_data)
         if not 'user' in validated_data:
             request = self.context.get('request', None)
             if request:
@@ -174,7 +175,11 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(error)
         else:
             usermodel =apps.get_model('user', 'User')
-            user =usermodel.objects.get(id=validated_data.pop('user'))
+            try:
+                user =usermodel.objects.get(id=validated_data.pop('user'))
+            except usermodel.DoesNotExist:
+                error = {'detail':'user not found with the given payload user'}
+                raise exceptions.NotFound(error)
             validated_data['user_id']=user
         if validated_data['amount'] > user.user_balance.amount:
             raise exceptions.NotAcceptable({'detail':'insuficent balance'})
