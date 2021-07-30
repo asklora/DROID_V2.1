@@ -28,7 +28,7 @@ DEBUG = django_debug
 ALLOWED_HOSTS = ['18.167.118.164',
                  '127.0.0.1', 'services.asklora.ai',
                  '16.162.110.123',
-                 '0.0.0.0','118.0.34.231']
+                 '0.0.0.0','118.0.34.231','439557f4b3e8.ngrok.io']
 CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
@@ -180,7 +180,7 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_IMPORTS = ['core.services.ingestiontask',
-                  'core.services.tasks', 'channels_presence.tasks', 'datasource.rkd']
+                  'core.services.tasks', 'channels_presence.tasks', 'datasource.rkd','core.services.order_services']
 CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 
@@ -259,7 +259,7 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     'USER_ID_FIELD': 'username',
-    'USER_ID_CLAIM': 'user_id',
+    'USER_ID_CLAIM': 'username',
     'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
 
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),

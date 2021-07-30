@@ -68,12 +68,25 @@ class User(AbstractBaseUser, PermissionsMixin):
             return user_client.extra_data["capital"] == "small"
         except AttributeError:
             return False
+        except self.DoesNotExist:
+            return False
+        except KeyError:
+            return False
+        except Exception:
+            return False
+        
     @property
     def is_large(self):
         try:
             user_client = self.client_user.all()[0]
             return user_client.extra_data["capital"] == "large_margin"
         except AttributeError:
+            return False
+        except self.DoesNotExist:
+            return False
+        except KeyError:
+            return False
+        except Exception:
             return False
 
     @property
@@ -82,6 +95,12 @@ class User(AbstractBaseUser, PermissionsMixin):
             user_client = self.client_user.all()[0]
             return user_client.extra_data["capital"] == "large_margin"
         except AttributeError:
+            return False
+        except self.DoesNotExist:
+            return False
+        except KeyError:
+            return False
+        except Exception:
             return False
 
     @property
@@ -219,7 +238,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         
 
     def __str__(self):
-        return self.email
+        if self.email:
+            return self.email
+        return str(self.id)
 
 
 class Accountbalance(BaseTimeStampModel):
@@ -232,7 +253,9 @@ class Accountbalance(BaseTimeStampModel):
         Currency, on_delete=models.DO_NOTHING, related_name='user_currency', default='USD', db_column='currency_code')
 
     def __str__(self):
-        return self.user.email
+        if self.user.email:
+            return self.user.email
+        return self.balance_uid
 
     def save(self, *args, **kwargs):
         if self.amount == None:
@@ -273,7 +296,9 @@ class TransactionHistory(BaseTimeStampModel):
     transaction_detail = models.JSONField(default=dict, null=True, blank=True)
 
     def __str__(self):
-        return f'{self.tr_type} - {self.balance_id.user.email}'
+        if self.balance_uid.user.email:
+            return f'{self.side} - {self.balance_uid.user.email}'
+        return self.side
 
     class Meta:
         db_table = 'user_transaction'

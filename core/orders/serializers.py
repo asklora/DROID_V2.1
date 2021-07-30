@@ -1,11 +1,14 @@
-from rest_framework import serializers, status,exceptions
+from rest_framework import serializers,exceptions
 from .models import OrderPosition, PositionPerformance,OrderFee,Order
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from django.db.models import Sum,F
 from core.user.models import TransactionHistory, User
 from django.utils import timezone
 from django.apps import apps
-
+from datasource.rkd import RkdData
+from django.db import transaction as db_transaction
+from core.djangomodule.general import UnixEpochDateField
+import json
 @extend_schema_serializer(
     examples = [
          OpenApiExample(
@@ -137,22 +140,25 @@ class PositionSerializer(serializers.ModelSerializer):
     
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    user_id = serializers.IntegerField(required=False)
+    user_id = serializers.StringRelatedField(required=False)
+    price = serializers.FloatField(required=False)
     status = serializers.CharField(read_only=True)
     qty = serializers.FloatField(read_only=True)
+    setup = serializers.JSONField(read_only=True)
     class Meta:
         model = Order
-        fields = ['ticker','price','bot_id','amount','user_id','side','status','order_uid','qty']
+        fields = ['ticker','price','bot_id','amount','user_id','side','status','order_uid','qty','setup']
     
     
     
     def validate_user_id(self,attr):
-        user =apps.get_model('user', 'User')
-        try:
-            user.objects.get(id=attr)
-        except user.DoesNotExist:
-            error = {'detail':'user not found with the given payload user_id'}
-            raise exceptions.NotFound(error)
+        if attr:
+            user =apps.get_model('user', 'User')
+            try:
+                user.objects.get(id=attr)
+            except user.DoesNotExist:
+                error = {'detail':'user not found with the given payload user_id'}
+                raise exceptions.NotFound(error)
 
     
     
@@ -162,11 +168,27 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             request = self.context.get('request', None)
             if request:
                 validated_data['user_id'] = request.user
+                user = request.user
             else:
                 error = {'detail':'missing user_id'}
                 raise serializers.ValidationError(error)
-        return Order.objects.create(**validated_data)
+        else:
+            usermodel =apps.get_model('user', 'User')
+            user =usermodel.objects.get(id=validated_data['user_id'])
+        
+        if validated_data['amount'] > user.user_balance.amount:
+            raise exceptions.NotAcceptable({'detail':'insuficent balance'})
 
+
+        if not 'price' in validated_data:
+            rkd = RkdData()
+            df = rkd.get_quote([validated_data['ticker'].ticker],df=True)
+            df['latest_price'] = df['latest_price'].astype(float)
+            ticker = df.loc[df["ticker"] == validated_data['ticker'].ticker]
+            validated_data['price'] = ticker.iloc[0]['latest_price']
+        with db_transaction.atomic():
+            order = Order.objects.create(**validated_data,order_type='apps')
+        return order
 
 class OrderUpdateSerializer(serializers.ModelSerializer):
     status = serializers.CharField(read_only=True)
@@ -179,34 +201,63 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
         fields = ['price','bot_id','amount','order_uid','status','qty','setup']
     
     def update(self,instance,validated_data):
-        order = instance.objects.get(order_uid=validated_data.pop('order_uid'))
-        order(**validated_data)
-        order.save()
-        return order
+        for keys,value in validated_data.items():
+            setattr(instance,keys,value)
+
+        with db_transaction.atomic():
+            try:
+                instance.save()
+            except Exception as e:
+                error = {'detail':'something went wrong'}
+                raise serializers.ValidationError(error)
+        return instance
 
 
 
 
-class OrderDetails(serializers.ModelSerializer):
-
-
+class OrderDetailsSerializers(serializers.ModelSerializer):
+    
+    created = UnixEpochDateField(source='created')
+    filled_at = UnixEpochDateField(source='filled_at')
+    placed_at = UnixEpochDateField(source='placed_at')
+    canceled_at = UnixEpochDateField(source='canceled_at')
+    
     class Meta:
         model = Order
         fields = ['ticker','price','bot_id','amount','side',
         'order_uid','status','setup','created','filled_at',
-        'placed','placed_at']
+        'placed','placed_at','canceled_at','qty']
 
 
 
-class OrderList(serializers.ModelSerializer):
-
+class OrderListSerializers(serializers.ModelSerializer):
+    created = UnixEpochDateField(source='created')
+    filled_at = UnixEpochDateField(source='filled_at')
+    placed_at = UnixEpochDateField(source='placed_at')
 
     class Meta:
         model=Order
         fields=['ticker','side',
         'order_uid','status','created','filled_at',
-        'placed','placed_at']
+        'placed','placed_at','qty']
 
 
+class OrderActionSerializer(serializers.ModelSerializer):
+    action_id = serializers.CharField(read_only=True)
+    order_uid = serializers.CharField(required=True)
+    firebase_token = serializers.CharField(required=False)
+
+    class Meta:
+        model=Order
+        fields=['order_uid','status','action_id','firebase_token']
 
 
+    def create(self,validated_data):
+        instance = OrderActionSerializer.Meta.model.objects.get(order_uid=validated_data['order_uid'])
+        if instance.status == 'filled':
+            raise exceptions.MethodNotAllowed({'detail':'order already filled, you cannot cancel / confirm'})
+        from core.services.order_services import order_executor
+        payload = json.dumps(validated_data)
+        task = order_executor.apply_async(args=(payload,),queue='droid_dev')
+        data = {'action_id':task.id,'status':'executed' ,'order_uid':validated_data['order_uid']}
+        return data

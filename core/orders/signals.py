@@ -65,7 +65,7 @@ def generate_hedge_setup(instance : Order) -> dict:
 
 @receiver(pre_save, sender=Order)
 def order_signal_check(sender, instance, **kwargs):
-    if instance.placed:
+    if instance.placed and instance.status=='placed':
         # instance.placed_at =datetime.now()
         if instance.setup and instance.is_init:
             if instance.setup["share_num"] == 0:
@@ -75,12 +75,7 @@ def order_signal_check(sender, instance, **kwargs):
                 # instance.filled_at = datetime.now()
             else:
                 instance.status = "pending"
-
-
-@receiver(post_save, sender=Order)
-def order_signal(sender, instance, created, **kwargs):
-
-    if created and instance.is_init:
+    if not instance.status in ["filled","placed","pending","cancel"] and instance.is_init:
         # if bot will create setup expiry , SL and TP
             if instance.bot_id != "stock":
                 setup = generate_hedge_setup(instance)
@@ -90,12 +85,98 @@ def order_signal(sender, instance, created, **kwargs):
             else:
                 instance.setup =None
                 instance.qty = math.floor(instance.amount / instance.price)
-            instance.save()
+                instance.amount = round(instance.qty * instance.price)
+
+@receiver(post_save, sender=Order)
+def order_signal(sender, instance, created, **kwargs):
+
+    if created and instance.is_init:
+        # if bot will create setup expiry , SL and TP
+            # if instance.bot_id != "stock":
+            #     setup = generate_hedge_setup(instance)
+            #     instance.setup = setup
+            #     instance.qty = setup["share_num"]
+            #     instance.amount = formatdigit(setup["share_num"] * setup['price'])
+            # else:
+            #     instance.setup =None
+            #     instance.qty = math.floor(instance.amount / instance.price)
+            #     instance.amount = round(instance.qty * instance.price)
+            # instance.save()
+            pass
 
         # if not user can create the setup TP and SL
     elif created and not instance.is_init and instance.bot_id != "stock":
         pass
+    
+    
+    elif not created and instance.status in "cancel":
+        trans = TransactionHistory.objects.filter(side='debit',transaction_detail__description='bot order',transaction_detail__order_uid=str(instance.order_uid))
+        if trans.exists():
+            trans = trans.get()
+            trans.delete()
 
+    
+    
+    elif not created and instance.side == 'buy' and instance.status in ["pending"] and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
+
+
+        # first transaction, user put the money to bot cash balance /in order
+        if instance.setup and instance.is_init:
+            inv_amt = instance.setup['investment_amount']
+        else:
+            inv_amt = instance.amt
+        digits = max(min(5-len(str(int(instance.price))), 2), -1)
+
+        TransactionHistory.objects.create(
+                    balance_uid=instance.user_id.wallet,
+                    side="debit",
+                    amount=round(inv_amt, digits),
+                    transaction_detail={
+                        "description": "bot order",
+                        # "position": f"{order.position_uid}",
+                        "event": "create",
+                        "order_uid":str(instance.order_uid)
+                    },
+                )
+        if not instance.order_type:
+            commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
+                        instance.amount, instance.side, instance.user_id)
+            fee=OrderFee.objects.create(
+                order_uid=instance,
+                fee_type=f"{instance.side} commissions fee",
+                amount=commissions_fee
+            )
+
+            TransactionHistory.objects.create(
+                balance_uid=instance.user_id.wallet,
+                side="debit",
+                amount=total_fee,
+                transaction_detail={
+                    "description": f"{instance.side} fee",
+                    # "position": f"{order.position_uid}",
+                    "event": "fee",
+                    "fee_id":fee.id
+                },
+            )
+            if stamp_duty_fee > 0:
+                stamp=OrderFee.objects.create(
+                    order_uid=instance,
+                    fee_type=f"{instance.side} stamp_duty fee",
+                    amount=stamp_duty_fee
+                )
+
+                TransactionHistory.objects.create(
+                    balance_uid=instance.user_id.wallet,
+                    side="debit",
+                    amount=stamp_duty_fee,
+                    transaction_detail={
+                        "description": f"{instance.side} fee",
+                            # "position": f"{order.position_uid}",
+                            "event": "stamp_duty",
+                            "stamp_duty_id":stamp.id
+                    },
+                )
+    
     elif not created and instance.status in "filled" and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         # update the status and create new position
         if instance.is_init:
@@ -157,59 +238,17 @@ def order_signal(sender, instance, created, **kwargs):
                 else:
                     instance.performance_uid = "stock"
                 instance.save()
+                trans = TransactionHistory.objects.filter(side='debit',transaction_detail__description='bot order',transaction_detail__order_uid=str(instance.order_uid))
+                if trans.exists():
+                    trans = trans.get()
+                    trans.transaction_detail['position'] = order.position_uid
+                    trans.save()
 
-                commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
-                    instance.amount, instance.side, instance.user_id)
+                
 
-                # first transaction, user put the money to bot cash balance
+                
 
-                TransactionHistory.objects.create(
-                    balance_uid=order.user_id.wallet,
-                    side="debit",
-                    amount=round(order.investment_amount, digits),
-                    transaction_detail={
-                        "description": "bot order",
-                        "position": f"{order.position_uid}",
-                        "event": "create",
-                        "order_uid":str(instance.order_uid)
-                    },
-                )
-
-                fee=OrderFee.objects.create(
-                    order_uid=instance,
-                    fee_type=f"{instance.side} commissions fee",
-                    amount=commissions_fee
-                )
-
-                TransactionHistory.objects.create(
-                    balance_uid=order.user_id.wallet,
-                    side="debit",
-                    amount=total_fee,
-                    transaction_detail={
-                        "description": f"{instance.side} fee",
-                        "position": f"{order.position_uid}",
-                        "event": "fee",
-                        "fee_id":fee.id
-                    },
-                )
-                if stamp_duty_fee > 0:
-                    stamp=OrderFee.objects.create(
-                        order_uid=instance,
-                        fee_type=f"{instance.side} stamp_duty fee",
-                        amount=stamp_duty_fee
-                    )
-
-                    TransactionHistory.objects.create(
-                        balance_uid=order.user_id.wallet,
-                        side="debit",
-                        amount=stamp_duty_fee,
-                        transaction_detail={
-                            "description": f"{instance.side} fee",
-                             "position": f"{order.position_uid}",
-                             "event": "stamp_duty",
-                             "stamp_duty_id":stamp.id
-                        },
-                    )
+                
 
                 # services.celery_app.send_task("config.celery.listener",args=(perfdata,),queue="asklora")
 
@@ -251,7 +290,7 @@ def order_signal(sender, instance, created, **kwargs):
                         instance.save()
 
                     # should be no transaction here except fee coz user already  put the money into bot
-                    if instance.side == "sell" and order_position.is_live:
+                    if instance.side == "sell" and order_position.is_live and not instance.order_type:
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             instance.amount, "sell", order_position.user_id)
 
@@ -290,7 +329,7 @@ def order_signal(sender, instance, created, **kwargs):
                                     "stamp_duty_id":stamp.id
                                 },
                             )
-                    elif instance.side == "buy" and order_position.is_live:
+                    elif instance.side == "buy" and order_position.is_live and not instance.order_type:
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             instance.amount, "buy", order_position.user_id)
                         fee =OrderFee.objects.create(
@@ -334,7 +373,7 @@ def order_signal(sender, instance, created, **kwargs):
                         # add bot_cash_dividend on return
                         amt = order_position.investment_amount  + order_position.final_pnl_amount 
                         return_amt = amt + order_position.bot_cash_dividend
-                        commissions_fee, stamp_duty_fee, total_fee = calculate_fee(amt, "sell", order_position.user_id)
+                        
                         TransactionHistory.objects.create(
                             balance_uid=order_position.user_id.wallet,
                             side="credit",
@@ -346,43 +385,44 @@ def order_signal(sender, instance, created, **kwargs):
                                 "order_uid":str(instance.order_uid)
                             },
                         )
-
-                        fee =OrderFee.objects.create(
-                            order_uid=instance,
-                            fee_type=f"{instance.side} commissions fee",
-                            amount=commissions_fee
-                        )
-
-                        TransactionHistory.objects.create(
-                            balance_uid=order_position.user_id.wallet,
-                            side="debit",
-                            amount=total_fee,
-                            transaction_detail={
-                                "description": f"{instance.side} fee",
-                                "position": f"{order_position.position_uid}",
-                                "event": "fee",
-                                "fee_id":fee.id
-                            },
-                        )
-                        if stamp_duty_fee > 0:
-                            stamp =OrderFee.objects.create(
+                        if not instance.order_type:
+                            commissions_fee, stamp_duty_fee, total_fee = calculate_fee(amt, "sell", order_position.user_id)
+                            fee =OrderFee.objects.create(
                                 order_uid=instance,
-                                fee_type=f"{instance.side} stamp_duty fee",
-                                amount=stamp_duty_fee
+                                fee_type=f"{instance.side} commissions fee",
+                                amount=commissions_fee
                             )
 
                             TransactionHistory.objects.create(
                                 balance_uid=order_position.user_id.wallet,
                                 side="debit",
-                                amount=stamp_duty_fee,
+                                amount=total_fee,
                                 transaction_detail={
                                     "description": f"{instance.side} fee",
                                     "position": f"{order_position.position_uid}",
-                                    "event": "stamp_duty",
-                                    "stamp_duty_id":stamp.id
-
+                                    "event": "fee",
+                                    "fee_id":fee.id
                                 },
                             )
+                            if stamp_duty_fee > 0:
+                                stamp =OrderFee.objects.create(
+                                    order_uid=instance,
+                                    fee_type=f"{instance.side} stamp_duty fee",
+                                    amount=stamp_duty_fee
+                                )
+
+                                TransactionHistory.objects.create(
+                                    balance_uid=order_position.user_id.wallet,
+                                    side="debit",
+                                    amount=stamp_duty_fee,
+                                    transaction_detail={
+                                        "description": f"{instance.side} fee",
+                                        "position": f"{order_position.position_uid}",
+                                        "event": "stamp_duty",
+                                        "stamp_duty_id":stamp.id
+
+                                    },
+                                )
 
 @receiver(post_delete,sender=PositionPerformance)
 def order_revert(sender, instance, **kwargs):

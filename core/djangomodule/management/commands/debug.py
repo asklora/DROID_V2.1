@@ -1,3 +1,4 @@
+from requests.api import get
 from ingestion.data_from_rkd import update_currency_code_from_rkd
 from django.core.management.base import BaseCommand
 from core.universe.models import ExchangeMarket,Universe
@@ -7,13 +8,23 @@ from core.services.models import HedgeLogger
 from core.services.tasks import populate_client_top_stock_weekly,order_client_topstock,daily_hedge,send_csv_hanwha
 from datasource.rkd import RkdData
 from datetime import datetime
-
+from channels.layers import get_channel_layer
   
-
+import asyncio
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
-            p.delete()
+        layer = get_channel_layer()
+        asyncio.run(
+            layer.group_send(
+                '1707b96f-9232-40bf-b815-0121ce8c1a07',
+                {
+                    'type':'send_message',
+                    'message':'hallow'
+                }
+            )
+        )
+        # for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
+        #     p.delete()
 
         # daily_hedge(currency="USD")
         # serv =['bot_tester','bot_advisor']
