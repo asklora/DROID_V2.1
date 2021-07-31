@@ -25,8 +25,6 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
-if not dbdebug:
-    app.conf.task_default_queue = 'droid_dev'
 
 @app.task(bind=True)
 def app_publish(self):

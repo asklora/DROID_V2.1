@@ -91,10 +91,9 @@ class Rkd:
                     resp = result.json()
                     logging.warning("Error: %s" % (json.dumps(result.json(),indent=2)))
                     err = json.dumps(result.json(),indent=2)
-
                     report =ErrorLog.objects.create(error_description=resp['Fault']['Reason']['Text']['Value'],error_traceback='err',
-                                                    error_message=err,
-                                                    error_function='RKD DATA')
+                    error_message='Token Invalid',
+                    error_function='RKD DATA')
                     report.send_report_error()
                     return None
         except requests.exceptions.RequestException as e:

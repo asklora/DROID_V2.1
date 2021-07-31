@@ -67,13 +67,10 @@ class UniverseConsumer(WebsocketConsumer):
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
         # print(text_data_json)
-        message = text_data_json['message']
+        # message = text_data_json['message']
         asyncio.run(self.channel_layer.group_send(
             self.room_group_name,
-            {
-                'type': text_data_json['type'],
-                'message': message
-            }
+            text_data_json
         ))
 
     
@@ -131,61 +128,78 @@ class UniverseConsumer(WebsocketConsumer):
         print("payload >>>> ",event['message'])
 
 
-class DurableConsumer(AsyncWebsocketConsumer):
+class OrderConsumer(AsyncWebsocketConsumer):
     
-    
+    payload = {
+        'message_type':'connect',
+        'message':'',
+        'status_code':200,
+        'payload':None
+    }
     
     async def connect(self):
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.room_group_name =self.room_name
+        # self.room_group_name =self.scope['url_route']['kwargs']['uid']
 
         # Join room group
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+        # await self.channel_layer.group_add(
+        #     self.room_group_name,
+        #     self.channel_name
+        # )
 
         await self.accept()
 
     async def disconnect(self, close_code):
-        # if not self.run_task.done():
-        #     # Clean up the task for the queue we created
-        #     self.run_task.cancel()
-        #     # try:
-        #     #     # let us get any exceptions from the nested loop
-        #     #     await self.run_task
-        #     # except Exception:
-        #     #     # Ignore this error as we just triggered it
-        #     #     pass
-        # else:
-        #     # throw any error from this nested loop
-        #     self.run_task.result()
-        # Leave room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
+        await self.close()
+    
+
+    async def func_off(self):
+        await asyncio.sleep(10)
+        await self.close()
 
     # Receive message from WebSocket
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-        type = text_data_json['type']
-
         # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': type,
-                'message': message
-            }
-        )
+        # message = text_data_json['message']
+        if 'request_id' in text_data_json:
+                self.room_group_name = text_data_json['request_id']
+                await self.channel_layer.group_add(
+                    text_data_json['request_id'],
+                    self.channel_name
+                )
+                self.payload['message'] = f'subscribed to {text_data_json["request_id"]}'
+                self.payload['type'] = 'send_message'
+                await self.channel_layer.group_send(
+                    text_data_json['request_id'],
+                    self.payload
+                )
+        else:
+            self.payload['message'] = f'payload doesnt have request_id connection will terminate in 10 second'
+            self.payload['type'] = 'send_message'
+            self.payload['status_code'] = 403
+            self.payload['message_type']='rejected'
+            self.room_group_name = 'rejected_channels'
+            await self.channel_layer.send(
+                self.channel_name,
+                self.payload
+            )
+            asyncio.ensure_future(self.func_off())
+            
 
     # Receive message from room group
-    async def chat_message(self, event):
-        message = event['message']
+    async def send_message(self, event):
+        event.pop('type')
 
         # Send message to WebSocket
-        await self.send(text_data=json.dumps({
-            'message': message
-        }))
+        await self.send(text_data=json.dumps(event))
+
+    async def send_order_message(self, event):
+        event.pop('type')
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps(event))
+        asyncio.ensure_future(self.func_off())

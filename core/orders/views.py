@@ -2,12 +2,16 @@ from .serializers import (
     PositionSerializer, 
     PerformanceSerializer,
     OrderCreateSerializer,
-    OrderUpdateSerializer
+    OrderUpdateSerializer,
+    OrderDetailsSerializers,
+    OrderListSerializers,
+    OrderActionSerializer
     )
 from rest_framework import viewsets, views, permissions, response, status, serializers
-from .models import OrderPosition, PositionPerformance
+from rest_framework.decorators import action
+from .models import OrderPosition, PositionPerformance,Order
 from core.Clients.models import UserClient
-from drf_spectacular.utils import extend_schema_view,extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema_view,extend_schema, OpenApiResponse,OpenApiParameter,OpenApiTypes
 
 
 class errserializer(serializers.Serializer):
@@ -91,7 +95,8 @@ class OrderViews(views.APIView):
 
 
     def post(self,request):
-        serializer = OrderCreateSerializer(data=request.data)
+
+        serializer = OrderCreateSerializer(data=request.data,context={'request':request})
         if serializer.is_valid():
             serializer.save()
             return response.Response(serializer.data,status=status.HTTP_201_CREATED)
@@ -104,8 +109,57 @@ class OrderUpdateViews(views.APIView):
 
 
     def post(self,request):
-        serializer = OrderUpdateSerializer(request.data)
+        try:
+            instance = OrderUpdateSerializer.Meta.model.objects.get(order_uid=request.data['order_uid'])
+        except OrderUpdateSerializer.Meta.model.DoesNotExist:
+            return response.Response({'detail':'order not found'},status=status.HTTP_404_NOT_FOUND)
+        if instance.user_id.username != request.user.username:
+            return response.Response({'detail':'credentials not allowed to change this order'},status=status.HTTP_403_FORBIDDEN)
+        serializer = OrderUpdateSerializer(instance,data=request.data)
         if serializer.is_valid():
             serializer.save()
             return response.Response(serializer.data,status=status.HTTP_200_OK)
         return response.Response(serializer.errors)
+
+
+class OrderGetViews(viewsets.ViewSet):
+    # permission_classes =(permissions.IsAuthenticated,)
+
+
+
+    def list(self,request):
+        instances = Order.objects.filter(user_id=request.user)
+        self.serialzer_class = OrderListSerializers
+        return response.Response(OrderListSerializers(instances, many=True).data,status=status.HTTP_200_OK )
+
+
+    def retrieve(self,request,order_uid=None):
+        try:
+            instance = Order.objects.get(order_uid=order_uid)
+            self.serialzer_class = OrderDetailsSerializers
+            return response.Response(OrderDetailsSerializers(instance).data,status=status.HTTP_200_OK )
+        except Order.DoesNotExist:
+            return response.Response({'detail':'order not forund'}, status=status.HTTP_404_NOT_FOUND)
+
+    
+
+class OrderActionViews(views.APIView):
+    serializer_class =OrderActionSerializer
+    permission_classes =(permissions.IsAuthenticated,)
+
+    def post(self,request):
+        try:
+            instance = OrderActionSerializer.Meta.model.objects.get(order_uid=request.data['order_uid'])
+        except OrderActionSerializer.Meta.model.DoesNotExist:
+            return response.Response({'detail':'order not found'},status=status.HTTP_404_NOT_FOUND)
+        if instance.user_id.username != request.user.username:
+            return response.Response({'detail':'credentials not allowed to change this order'},status=status.HTTP_403_FORBIDDEN)
+        serializer = OrderActionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(serializer.data,status=status.HTTP_200_OK)
+        return response.Response(serializer.errors)
+
+    
+        
+
