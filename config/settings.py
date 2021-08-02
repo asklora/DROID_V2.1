@@ -28,7 +28,7 @@ DEBUG = django_debug
 ALLOWED_HOSTS = ['18.167.118.164',
                  '127.0.0.1', 'services.asklora.ai',
                  '16.162.110.123',
-                 '0.0.0.0','118.0.34.231','439557f4b3e8.ngrok.io']
+                 '0.0.0.0', '118.0.34.231', '439557f4b3e8.ngrok.io']
 CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
@@ -180,14 +180,11 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_IMPORTS = ['core.services.ingestiontask',
-                  'core.services.tasks', 'channels_presence.tasks', 'datasource.rkd','core.services.order_services']
+                  'core.services.tasks', 'channels_presence.tasks', 'datasource.rkd', 'core.services.order_services']
 CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 
-
-
-
-APPEND_SLASH=False
+APPEND_SLASH = False
 email_debug = False
 if email_debug:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -241,7 +238,7 @@ SPECTACULAR_SETTINGS = {
     # https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.3.md#openapi-object
     'TITLE': 'DROID CLIENT API',
     'DESCRIPTION': 'CLIENT',
-    'VERSION': '1.0.0-beta',
+    'VERSION': '1.1.0-beta',
 }
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),
@@ -273,7 +270,8 @@ SIMPLE_JWT = {
 }
 
 
-credentials =  firebase_admin.credentials.Certificate('files/file_json/asklora-firebase.json')
+credentials = firebase_admin.credentials.Certificate(
+    'files/file_json/asklora-firebase.json')
 firebase_admin.initialize_app(credentials, {
-                    'databaseURL':'https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/'
-                                        })
+    'databaseURL': 'https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/'
+})
