@@ -154,7 +154,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['ticker', 'price', 'bot_id', 'amount', 'user',
-                  'side', 'status', 'order_uid', 'qty', 'setup']
+                  'side', 'status', 'order_uid', 'qty', 'setup', 'created']
 
     def create(self, validated_data):
         if not 'user' in validated_data:
