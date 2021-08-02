@@ -115,6 +115,7 @@ class OrderUpdateViews(views.APIView):
                 order_uid=request.data['order_uid'])
         except OrderUpdateSerializer.Meta.model.DoesNotExist:
             return response.Response({'detail': 'order not found'}, status=status.HTTP_404_NOT_FOUND)
+        # ignore if fels account
         if not instance.user_id.id == 135:
             if instance.user_id.username != request.user.username:
                 return response.Response({'detail': 'credentials not allowed to change this order'}, status=status.HTTP_403_FORBIDDEN)
