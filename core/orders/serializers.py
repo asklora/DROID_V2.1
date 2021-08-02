@@ -182,8 +182,12 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             df['latest_price'] = df['latest_price'].astype(float)
             ticker = df.loc[df["ticker"] == validated_data['ticker'].ticker]
             validated_data['price'] = ticker.iloc[0]['latest_price']
+        order_type = 'apps'
+        if user.id == 135:
+            order_type = None
         with db_transaction.atomic():
-            order = Order.objects.create(**validated_data, order_type='apps')
+            order = Order.objects.create(
+                **validated_data, order_type=order_type)
         return order
 
 
