@@ -150,6 +150,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     status = serializers.CharField(read_only=True)
     qty = serializers.FloatField(read_only=True)
     setup = serializers.JSONField(read_only=True)
+    created = serializers.DateTimeField(required=False, read_only=True)
 
     class Meta:
         model = Order
