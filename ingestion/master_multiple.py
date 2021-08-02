@@ -96,5 +96,5 @@ def master_multiple_update():
     # insert_data_to_database(result, "master_multiple", how="replace")
     upsert_data_to_database(result, get_master_multiple_table_name(), "uid", how="update", Text=True)
     delete_data_on_database(get_master_multiple_table_name(), f"trading_day < '{dlp_start_date_buffer()}'", delete_ticker=True)
-    report_to_slack("{} : === Master TAC Update Updated ===".format(datetimeNow()))
+    report_to_slack("{} : === Master Multiple Update Updated ===".format(datetimeNow()))
     del result
