@@ -148,6 +148,10 @@ class OrderConsumer(AsyncWebsocketConsumer):
         # )
 
         await self.accept()
+        await self.channel_layer.group_add(
+            'anonym_channel',
+            self.channel_name
+        )
 
     async def disconnect(self, close_code):
         if hasattr(self, 'room_group_name'):
@@ -155,7 +159,11 @@ class OrderConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 self.channel_name
             )
-        await self.close()
+        else:
+            await self.channel_layer.group_discard(
+                'anonym_channel',
+                self.channel_name
+            )
 
     async def force_close(self):
         await asyncio.sleep(10)

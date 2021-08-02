@@ -78,6 +78,7 @@ def order_executor(self, payload):
                                              'type': 'send_order_message',
                                              'message_type': messages,
                                              'message': 'order update',
-                                             'payload': payload_serilizer
+                                             'payload': payload_serilizer,
+                                             'status_code': 200
                                          }))
     return payload_serilizer
