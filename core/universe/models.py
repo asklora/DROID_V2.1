@@ -259,6 +259,8 @@ class Universe(models.Model):
     wk52_low =models.FloatField(null=True,blank=True)
     free_cash_flow =models.FloatField(null=True,blank=True)
     Error = models.TextField(null=True,blank=True)
+    schi_name = models.TextField(null=True,blank=True)
+    tchi_name = models.TextField(null=True,blank=True)
     def __str__(self):
         return self.ticker
 
