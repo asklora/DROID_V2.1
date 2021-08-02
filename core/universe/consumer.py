@@ -165,20 +165,20 @@ class OrderConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         # Send message to room group
         # message = text_data_json['message']
-        if 'request_id' in text_data_json:
-            self.room_group_name = text_data_json['request_id']
+        if 'action_id' in text_data_json:
+            self.room_group_name = text_data_json['action_id']
             await self.channel_layer.group_add(
-                text_data_json['request_id'],
+                text_data_json['action_id'],
                 self.channel_name
             )
-            self.payload['message'] = f'subscribed to {text_data_json["request_id"]}'
+            self.payload['message'] = f'subscribed to {text_data_json["action_id"]}'
             self.payload['type'] = 'send_message'
             await self.channel_layer.group_send(
-                text_data_json['request_id'],
+                text_data_json['action_id'],
                 self.payload
             )
         else:
-            self.payload['message'] = f'payload doesnt have request_id connection will terminate in 10 second'
+            self.payload['message'] = f'payload doesnt have action_id connection will terminate in 10 second'
             self.payload['type'] = 'send_message'
             self.payload['status_code'] = 403
             self.payload['message_type'] = 'rejected'

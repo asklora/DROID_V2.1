@@ -1,6 +1,6 @@
 import os
 
-from celery import Celery,shared_task
+from celery import Celery, shared_task
 from importlib import import_module
 import time
 from environs import Env
@@ -10,13 +10,11 @@ from dotenv import load_dotenv
 
 env = Env()
 load_dotenv()
-debug = os.environ.get('DJANGO_SETTINGS_MODULE',True)
+debug = os.environ.get('DJANGO_SETTINGS_MODULE', True)
 if debug:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.production')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.local')
     # app2 = Celery('core.services',broker='amqp://rabbitmq:rabbitmq@16.162.110.123:5672')
-dbdebug=env.bool("DROID_DEBUG")
-
-    
+dbdebug = env.bool("DROID_DEBUG")
 
 
 app = Celery('core.services')
@@ -25,6 +23,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
+
 
 @app.task(bind=True)
 def app_publish(self):
@@ -41,6 +40,7 @@ def debug_task():
         a += 1
         time.sleep(2)
 
+
 @app.task(bind=True)
 def listener(self, data):
     """
@@ -55,7 +55,7 @@ def listener(self, data):
         }
     """
     if not 'type' in data and not 'module' in data and not 'payload' in data:
-        return {'message': f'payload error, must have key type , module and payload','received_payload':data}
+        return {'message': f'payload error, must have key type , module and payload', 'received_payload': data}
     if data['type'] == 'function':
         module, function = data['module'].rsplit('.', 1)
         mod = import_module(module)
