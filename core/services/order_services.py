@@ -68,6 +68,7 @@ def order_executor(self, payload,recall=False):
         order.status = 'filled'
         order.filled_at = datetime.now()
         order.save()
+        
         print('open')
         messages = 'order_accepted'
         message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status filled'

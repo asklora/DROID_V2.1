@@ -176,6 +176,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             validated_data['user_id'] = user
         if validated_data['amount'] > user.user_balance.amount:
             raise exceptions.NotAcceptable({'detail': 'insuficent balance'})
+        if validated_data['amount'] <= 0:
+            raise exceptions.NotAcceptable({'detail': 'amount should not 0'})
 
         if not 'price' in validated_data:
             rkd = RkdData()
