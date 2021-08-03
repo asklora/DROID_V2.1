@@ -7,7 +7,7 @@ from core.djangomodule.network.cloud import DroidDb
 from datetime import timedelta
 import firebase_admin
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Build paths inside the project like this: BASE_DIR / 'subdir'
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
 env = Env()
