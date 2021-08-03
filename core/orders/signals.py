@@ -81,7 +81,7 @@ def order_signal_check(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Order)
 def order_signal(sender, instance, created, **kwargs):
-
+    print(instance.status,"<<<<<<<<<<<<STATUSSSSS>>>>>>>>>>>>>>>>>>")
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
         # if instance.bot_id != "stock":
