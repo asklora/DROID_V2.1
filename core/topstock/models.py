@@ -3,7 +3,6 @@ from core.universe.models import Universe, Currency
 from core.djangomodule.general import generate_id
 from core.Clients.models import Client
 
-
 class DLPAModel(models.Model):
     model_filename = models.TextField(primary_key=True)
     model_type = models.TextField(null=True, blank=True)
@@ -159,7 +158,6 @@ class DLPAModelStock(models.Model):
 #     number_of_quantiles = models.IntegerField(null=True,blank=True)
 #     predicted_quantile_1 = models.IntegerField(null=True,blank=True)
 #     signal_strength_1 = models.FloatField(null=True, blank=True)
-
 #     pc_number = models.TextField(null=True, blank=True)
 
 #     class Meta:

@@ -676,7 +676,6 @@ def daily_hedge(currency=None, **options):
     if not 'rehedge' in options:
         rkd = RkdData()  # LOGIN
         rkd.get_index_price(currency)  # GET INDEX PRICE
-
     hedge(currency=currency, **options)  # bot_advisor hanwha and fels
     hedge(currency=currency, bot_tester=True, **options)  # bot_tester
     return {"result": f"hedge {currency} done"}
