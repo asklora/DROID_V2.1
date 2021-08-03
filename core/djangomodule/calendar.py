@@ -37,9 +37,12 @@ class TradingHours:
     def get_market_timezone(self):
         url =f'https://api.tradinghours.com/v3/markets/details?fin_id={self.fin_id}&token={self.token}'
         req = requests.get(url)
-        res = req.json()
         if req.status_code == 200:
-            self.market_timezone=res['data'][0]['timezone']
+            try:
+                res = req.json()
+                self.market_timezone=res['data'][0]['timezone']
+            except Exception:
+                pass
     
     def timezone_to_utc(self,dt,timezone):
         time_zone = pytz.timezone(timezone)
@@ -98,15 +101,15 @@ class TradingHours:
             resp = req.json()
             if isinstance(self.fin_id,str):
                 stat = resp['data'][self.fin_id]['status']
-                try:
-                    len_date = len(resp['data'][self.fin_id]['next_bell']) - 6
-                    local_time = pd.to_datetime(resp['data'][self.fin_id]['next_bell'][:len_date])
-                    print(local_time,self.market_timezone)
-                    self.next_bell =self.timezone_to_utc(local_time,self.market_timezone)
-                    print(self.next_bell)
-                except Exception:
-                    pass
                 if stat == "Closed":
+                    try:
+                        len_date = len(resp['data'][self.fin_id]['next_bell']) - 6
+                        local_time = pd.to_datetime(resp['data'][self.fin_id]['next_bell'][:len_date])
+                        # print(local_time,self.market_timezone)
+                        self.next_bell =self.timezone_to_utc(local_time,self.market_timezone)
+                        # print(self.next_bell)
+                    except Exception:
+                        pass
                    
                     return False
                 else:
