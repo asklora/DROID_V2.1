@@ -111,7 +111,7 @@ def order_signal(sender, instance, created, **kwargs):
         if instance.setup and instance.is_init:
             inv_amt = instance.setup['investment_amount']
         else:
-            inv_amt = instance.amt
+            inv_amt = instance.amount
         digits = max(min(5-len(str(int(instance.price))), 2), -1)
 
         TransactionHistory.objects.create(
