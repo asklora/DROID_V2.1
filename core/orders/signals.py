@@ -81,7 +81,7 @@ def order_signal_check(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Order)
 def order_signal(sender, instance, created, **kwargs):
-    print(instance.status,"<<<<<<<<<<<<STATUSSSSS>>>>>>>>>>>>>>>>>>")
+    print(instance.status,"<<<<<<<<<<<<STATUSSSSS>>>>>>>>>>>>>>>>>>",PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists())
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
         # if instance.bot_id != "stock":
@@ -108,7 +108,7 @@ def order_signal(sender, instance, created, **kwargs):
             trans.delete()
 
     elif not created and instance.side == 'buy' and instance.status in ["pending"] and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
-
+        print(instance.status,"=================ORDERING===================")
         # first transaction, user put the money to bot cash balance /in order
         if instance.setup and instance.is_init:
             inv_amt = instance.setup['investment_amount']
