@@ -60,9 +60,7 @@ def generate_hedge_setup(instance: Order) -> dict:
 def order_signal_check(sender, instance, **kwargs):
     if instance.placed and instance.status == 'placed':
         if instance.is_init:
-            if instance.setup["share_num"] == 0:
-                instance.status = "allocated"
-            elif instance.status == "filled":
+            if instance.status == "filled":
                 instance.status = "filled"
             else:
                 instance.status = "pending"
