@@ -69,10 +69,7 @@ class UniverseConsumer(WebsocketConsumer):
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
         # print(text_data_json)
-<<<<<<< HEAD
-=======
         # message = text_data_json['message']
->>>>>>> e85d12cc31ff02a29bc97d2008dd775402d7a0b2
         asyncio.run(self.channel_layer.group_send(
             self.room_group_name,
             text_data_json
