@@ -1,17 +1,22 @@
+from requests.api import get
 from ingestion.data_from_rkd import update_currency_code_from_rkd
 from django.core.management.base import BaseCommand
 from core.universe.models import ExchangeMarket,Universe
 from core.Clients.models import UserClient
 from core.orders.models import OrderPosition,PositionPerformance
-from core.services.tasks import populate_client_top_stock_weekly,order_client_topstock,daily_hedge,send_csv_hanwha
+from core.services.models import HedgeLogger
+from core.services.tasks import populate_client_top_stock_weekly,order_client_topstock,daily_hedge,send_csv_hanwha,hedge
 from datasource.rkd import RkdData
 from datetime import datetime
-
-
-  
-
+from core.djangomodule.calendar import TradingHours  
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        market = TradingHours(mic='XNAS')
+        market.is_open
+        # for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
+        #     p.delete()
+
+        # daily_hedge(currency="USD")
         # serv =['bot_tester','bot_advisor']
         # for a in serv:
         #     hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
@@ -111,12 +116,8 @@ class Command(BaseCommand):
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
-        daily_hedge(currency="KRW",rehedge={
-            'date':'2021-07-27',
-            'types':'hedge'
-        })
-        # daily_hedge(currency="KRW",client_name="HANWHA",bot_tester=True,rehedge={
-        #     'date':'2021-07-26',
+        # hedge(currency="USD",client_name="HANWHA",bot_tester=True,rehedge={
+        #     'date':'2021-08-02',
         #     'types':'hedge'
         # })
         # send_csv_hanwha(currency="CNY")

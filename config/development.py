@@ -36,7 +36,7 @@ CACHES = {
 print('using test db changes')
 read_endpoint, write_endpoint, port = db.test_url
 CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@16.162.110.123:5672'
-CELERY_DEFAULT_QUEUE = 'dev_env'
+# CELERY_TASK_DEFAULT_QUEUE = 'droid_dev'
 
 
 # print(f'using read: {read_endpoint}')

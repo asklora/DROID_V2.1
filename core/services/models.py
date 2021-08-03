@@ -125,6 +125,20 @@ class ErrorLog(BaseTimeStampModel):
         report_to_slack(f'*Error Traceback:*\n {self.error_traceback}',channel='#error-log')
 
 
+class HedgeLogger(BaseTimeStampModel):
+    position_uid = models.ForeignKey('orders.OrderPosition',on_delete=models.CASCADE,related_name='position_hedge_log')
+    log_type = models.CharField(max_length=255)
+    status = models.CharField(max_length=50,default='PENDING')
+    error_log = models.TextField(null=True,blank=True)
+    date = models.DateField()
+    class Meta:
+        db_table = "log_hedge_position"
+        ordering = ['created']
+        unique_together = ['position_uid','log_type','date']
+
+    def __str__(self) -> str:
+        return self.status
+
 
     
 
