@@ -167,7 +167,7 @@ def order_signal(sender, instance, created, **kwargs):
                 )
 
     elif not created and instance.status in "filled" and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
-        # update the status and create new position
+        # update the status and create new positions
         if instance.is_init:
             margin = 1
             if instance.bot_id != "stock":
