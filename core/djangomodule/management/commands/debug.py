@@ -5,24 +5,14 @@ from core.universe.models import ExchangeMarket,Universe
 from core.Clients.models import UserClient
 from core.orders.models import OrderPosition,PositionPerformance
 from core.services.models import HedgeLogger
-from core.services.tasks import populate_client_top_stock_weekly,order_client_topstock,daily_hedge,send_csv_hanwha
+from core.services.tasks import populate_client_top_stock_weekly,order_client_topstock,daily_hedge,send_csv_hanwha,hedge
 from datasource.rkd import RkdData
 from datetime import datetime
-from channels.layers import get_channel_layer
-  
-import asyncio
+from core.djangomodule.calendar import TradingHours  
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        layer = get_channel_layer()
-        asyncio.run(
-            layer.group_send(
-                '1707b96f-9232-40bf-b815-0121ce8c1a07',
-                {
-                    'type':'send_message',
-                    'message':'hallow'
-                }
-            )
-        )
+        market = TradingHours(mic='XNAS')
+        market.is_open
         # for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
         #     p.delete()
 
@@ -126,8 +116,8 @@ class Command(BaseCommand):
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
-        # daily_hedge(currency="KRW",client_name="HANWHA",bot_tester=True,rehedge={
-        #     'date':'2021-07-26',
+        # hedge(currency="USD",client_name="HANWHA",bot_tester=True,rehedge={
+        #     'date':'2021-08-02',
         #     'types':'hedge'
         # })
         # send_csv_hanwha(currency="CNY")

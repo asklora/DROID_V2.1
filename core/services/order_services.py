@@ -7,16 +7,17 @@ from firebase_admin import messaging
 from datetime import datetime
 from rest_framework import serializers
 from channels.layers import get_channel_layer
+from datasource.rkd import RkdData
 import time
 import json
 import asyncio
 
 
 class OrderDetailsServicesSerializers(serializers.ModelSerializer):
-    created = UnixEpochDateField()
-    filled_at = UnixEpochDateField()
-    placed_at = UnixEpochDateField()
-    canceled_at = UnixEpochDateField()
+    # created = UnixEpochDateField()
+    # filled_at = UnixEpochDateField()
+    # placed_at = UnixEpochDateField()
+    # canceled_at = UnixEpochDateField()
 
     class Meta:
         model = apps.get_model('orders', 'Order')
@@ -26,10 +27,23 @@ class OrderDetailsServicesSerializers(serializers.ModelSerializer):
 
 
 @app.task(bind=True)
-def order_executor(self, payload):
+def order_executor(self, payload,recall=False):
     payload = json.loads(payload)
     Model = apps.get_model('orders', 'Order')
     order = Model.objects.get(order_uid=payload['order_uid'])
+    
+    if recall:
+        rkd = RkdData()
+        df = rkd.get_quote([order.ticker.ticker], df=True)
+        df['latest_price'] = df['latest_price'].astype(float)
+        ticker = df.loc[df["ticker"] == order.ticker.ticker]
+        order.price = ticker.iloc[0]['latest_price']
+        order.status = 'review'
+        with transaction.atomic():
+            order.save()
+        
+        
+        
     with transaction.atomic():
         if payload['status'] == 'cancel':
             order.status = payload['status']
@@ -40,8 +54,10 @@ def order_executor(self, payload):
             order.placed = True
             order.placed_at = datetime.now()
             order.save()
-
-    time.sleep(10)
+    
+    # debug only
+    # time.sleep(10)
+    
     print('placed')
     if order.bot_id == 'stock':
         share = order.qty
@@ -59,8 +75,11 @@ def order_executor(self, payload):
         print('close')
         messages = 'order_pending'
         message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status pending'
+        # create schedule to next bell and will recrusive until market status open
+        # still keep sending message. need to improve
+        order_executor.apply_async(args=(json.dumps(payload),),kwargs={'recall':True},eta=market.next_bell)
 
-    payload_serilizer = OrderDetailsServicesSerializers(order).data
+    payload_serializer = OrderDetailsServicesSerializers(order).data
     channel_layer = get_channel_layer()
     if 'firebase_token' in payload:
         if payload['firebase_token']:
@@ -78,7 +97,7 @@ def order_executor(self, payload):
                                              'type': 'send_order_message',
                                              'message_type': messages,
                                              'message': 'order update',
-                                             'payload': payload_serilizer,
+                                             'payload': payload_serializer,
                                              'status_code': 200
                                          }))
-    return payload_serilizer
+    return payload_serializer

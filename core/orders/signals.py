@@ -59,13 +59,11 @@ def generate_hedge_setup(instance: Order) -> dict:
 @receiver(pre_save, sender=Order)
 def order_signal_check(sender, instance, **kwargs):
     if instance.placed and instance.status == 'placed':
-        # instance.placed_at =datetime.now()
         if instance.setup and instance.is_init:
             if instance.setup["share_num"] == 0:
                 instance.status = "allocated"
             elif instance.status == "filled":
                 instance.status = "filled"
-                # instance.filled_at = datetime.now()
             else:
                 instance.status = "pending"
     if not instance.status in ["filled", "placed", "pending", "cancel"] and instance.is_init:
