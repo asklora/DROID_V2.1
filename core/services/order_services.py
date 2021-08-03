@@ -70,11 +70,11 @@ def order_executor(self, payload,recall=False):
         order.save()
         
         print('open')
-        messages = 'order_accepted'
+        messages = 'order accepted'
         message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status filled'
     else:
         print('close')
-        messages = 'order_pending'
+        messages = 'order pending'
         message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status pending'
         # create schedule to next bell and will recrusive until market status open
         # still keep sending message. need to improve
