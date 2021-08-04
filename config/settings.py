@@ -28,7 +28,7 @@ DEBUG = django_debug
 ALLOWED_HOSTS = ['18.167.118.164',
                  '127.0.0.1', 'services.asklora.ai',
                  '16.162.110.123',
-                 '0.0.0.0', '118.0.34.231', '320c232d572a.ngrok.io']
+                 '0.0.0.0', '118.0.34.231', '118.0.40.93','dev-services.asklora.ai']
 CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition

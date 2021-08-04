@@ -43,6 +43,10 @@ def order_executor(self, payload,recall=False):
             transaction_detail__order_uid=str(order.order_uid))
         if in_wallet_transactions.exists():
             in_wallet_transactions.get().delete()
+        if order.amount >= 10000:
+            order.amount = 20000
+        else:
+            order.amount = 10000
         order.status = 'review'
         order.placed = False
         order.placed_at =None
