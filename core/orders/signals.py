@@ -205,13 +205,13 @@ def order_signal(sender, instance, created, **kwargs):
                     else:
                         if key == "total_bot_share_num":
                             setattr(order, "share_num", val)
-                digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
             else:
                 order.investment_amount = instance.amount
                 order.bot_cash_balance = 0
                 order.share_num = instance.qty
                 perf.share_num = instance.qty
             
+            digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
             perf.current_pnl_amt = 0  # need to calculate with fee
             perf.current_bot_cash_balance = order.bot_cash_balance
 
