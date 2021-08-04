@@ -172,8 +172,6 @@ def order_signal(sender, instance, created, **kwargs):
                 bot = BotOptionType.objects.get(bot_id=instance.bot_id)
                 if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
                     margin = 1.5
-                else:
-                    margin = 1
 
             if instance.status == "filled":
                 spot_date = instance.filled_at
@@ -208,31 +206,34 @@ def order_signal(sender, instance, created, **kwargs):
                         if key == "total_bot_share_num":
                             setattr(order, "share_num", val)
                 digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
+            else:
+                order.investment_amount = instance.amount
+                order.bot_cash_balance = 0
+                order.share_num = instance.qty
+            
+            perf.current_pnl_amt = 0  # need to calculate with fee
+            perf.current_bot_cash_balance = order.bot_cash_balance
 
-                perf.current_pnl_amt = 0  # need to calculate with fee
-                perf.current_bot_cash_balance = order.bot_cash_balance
-
-                perf.current_investment_amount = round(
-                    perf.last_live_price * perf.share_num, digits)
-                perf.current_pnl_ret = (perf.current_bot_cash_balance + perf.current_investment_amount -
-                                        order.investment_amount) / order.investment_amount
-                # perf.margin_balance = formatdigit((order.investment_amount /
-                #                                    order.margin) - perf.current_investment_amount)
-                perf.order_id = instance
-                perf.save()
-                order.save()
-
-                if instance.bot_id != "stock":
-                    instance.performance_uid = perf.performance_uid
-                else:
-                    instance.performance_uid = "stock"
-                instance.save()
-                trans = TransactionHistory.objects.filter(
-                    side='debit', transaction_detail__description='bot order', transaction_detail__order_uid=str(instance.order_uid))
-                if trans.exists():
-                    trans = trans.get()
-                    trans.transaction_detail['position'] = order.position_uid
-                    trans.save()
+            perf.current_investment_amount = round(
+                perf.last_live_price * perf.share_num, digits)
+            perf.current_pnl_ret = (perf.current_bot_cash_balance + perf.current_investment_amount -
+                                    order.investment_amount) / order.investment_amount
+            # perf.margin_balance = formatdigit((order.investment_amount /
+            #                                    order.margin) - perf.current_investment_amount)
+            perf.order_id = instance
+            perf.save()
+            order.save()
+            instance.performance_uid = perf.performance_uid
+               
+            instance.save()
+            trans = TransactionHistory.objects.filter(
+                side='debit', transaction_detail__description='bot order', transaction_detail__order_uid=str(instance.order_uid))
+            if trans.exists():
+                trans = trans.get()
+                trans.transaction_detail['position'] = order.position_uid
+                trans.save()
+            
+                
 
                 # services.celery_app.send_task("config.celery.listener",args=(perfdata,),queue="asklora")
 
