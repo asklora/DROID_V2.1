@@ -38,7 +38,14 @@ def order_executor(self, payload,recall=False):
         df['latest_price'] = df['latest_price'].astype(float)
         ticker = df.loc[df["ticker"] == order.ticker.ticker]
         order.price = ticker.iloc[0]['latest_price']
+        TransactionHistory = apps.get_model('user', 'TransactionHistory')
+        in_wallet_transactions = TransactionHistory.objects.filter(
+            transaction_detail__order_uid=str(order.order_uid))
+        if in_wallet_transactions.exists():
+            in_wallet_transactions.get().delete()
         order.status = 'review'
+        order.placed = False
+        order.placed_at =None
         with transaction.atomic():
             order.save()
         
