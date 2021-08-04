@@ -153,6 +153,9 @@ class OrderActionViews(views.APIView):
                 order_uid=request.data['order_uid'])
         except OrderActionSerializer.Meta.model.DoesNotExist:
             return response.Response({'detail': 'order not found'}, status=status.HTTP_404_NOT_FOUND)
+        except KeyError as e:
+            err = str(e)
+            return response.Response({'detail': f'error key {err}'}, status=status.HTTP_400_BAD_REQUEST)
        # ignore if fels account
         if not instance.user_id.id == 135:
             if instance.user_id.username != request.user.username:

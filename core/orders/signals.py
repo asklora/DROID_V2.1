@@ -74,7 +74,7 @@ def order_signal_check(sender, instance, **kwargs):
         else:
             instance.setup = None
             instance.qty = math.floor(instance.amount / instance.price)
-            instance.amount = round(instance.qty * instance.price)
+            instance.amount = round(instance.qty * instance.price,2)
 
 
 @receiver(post_save, sender=Order)
