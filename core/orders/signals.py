@@ -422,18 +422,17 @@ def order_revert(sender, instance, **kwargs):
             in_wallet_transactions.get().delete()
         position = OrderPosition.objects.get(
             position_uid=instance.position_uid.position_uid)
-        print(position.bot_cash_balance, order.amount)
 
         # return to bot cash balance
         if order.side == 'sell':
-            print('sell')
             position.bot_cash_balance = position.bot_cash_balance - order.amount
         elif order.side == 'buy':
-            print('buy')
             position.bot_cash_balance = position.bot_cash_balance + order.amount
         order.delete()
-        print(position.bot_cash_balance)
-        position.save()
+        if position.order_position.all().exists():
+            position.save()
+        else:
+            position.delete()
 
 
 @receiver(post_delete, sender=OrderFee)
@@ -443,8 +442,6 @@ def return_fee_to_wallet(sender, instance, **kwargs):
     in_wallet_transactions_stamp = TransactionHistory.objects.filter(
         transaction_detail__stamp_duty_id=instance.id)
     if in_wallet_transactions_fee.exists():
-        print('fee')
         in_wallet_transactions_fee.get().delete()
     if in_wallet_transactions_stamp.exists():
-        print('stamp')
         in_wallet_transactions_stamp.get().delete()
