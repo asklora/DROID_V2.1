@@ -210,6 +210,7 @@ def order_signal(sender, instance, created, **kwargs):
                 order.investment_amount = instance.amount
                 order.bot_cash_balance = 0
                 order.share_num = instance.qty
+                perf.share_num = instance.qty
             
             perf.current_pnl_amt = 0  # need to calculate with fee
             perf.current_bot_cash_balance = order.bot_cash_balance
