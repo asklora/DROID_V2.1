@@ -5,9 +5,6 @@ from django.dispatch import receiver
 from .models import Order, OrderFee, OrderPosition, PositionPerformance
 from core.bot.models import BotOptionType
 from bot.calculate_bot import get_classic, get_expiry_date, get_uno, get_ucdc
-from core.djangomodule.serializers import (OrderSerializer,
-                                           OrderPositionSerializer,
-                                           PositionPerformanceSerializer)
 from core.djangomodule.general import formatdigit
 from core.user.models import TransactionHistory
 import pandas as pd
@@ -58,12 +55,13 @@ def generate_hedge_setup(instance: Order) -> dict:
 
 @receiver(pre_save, sender=Order)
 def order_signal_check(sender, instance, **kwargs):
+    
+    # this for locking balance before order is filled
     if instance.placed and instance.status == 'placed':
-        if instance.is_init:
-            if instance.status == "filled":
-                instance.status = "filled"
-            else:
-                instance.status = "pending"
+        if instance.status != "filled":
+            instance.status = "pending"
+    
+    # if status not in ["filled", "placed", "pending", "cancel"] and is new order, recalculate price and share
     if not instance.status in ["filled", "placed", "pending", "cancel"] and instance.is_init:
         # if bot will create setup expiry , SL and TP
         if instance.bot_id != "stock":
@@ -108,6 +106,8 @@ def order_signal(sender, instance, created, **kwargs):
     elif not created and instance.side == 'buy' and instance.status in ["pending"] and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         print(instance.status,"=================ORDERING===================")
         # first transaction, user put the money to bot cash balance /in order
+        # if the order still in pending state, it cancelable
+        # on this state user balance will decrease and lock for orders until it filled / cancel
         if instance.setup and instance.is_init:
             inv_amt = instance.setup['investment_amount']
         else:
@@ -166,7 +166,9 @@ def order_signal(sender, instance, created, **kwargs):
 
     elif not created and instance.status in "filled" and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         # update the status and create new positions
+        # if order is filled will create the position and first performance
         if instance.is_init:
+            # below is only for new order initiated
             margin = 1
             if instance.bot_id != "stock":
                 bot = BotOptionType.objects.get(bot_id=instance.bot_id)
@@ -192,6 +194,7 @@ def order_signal(sender, instance, created, **kwargs):
                     last_live_price=instance.price,
                     order_uid=instance
                 )
+            # if use bot
             if instance.setup:
 
                 for key, val in instance.setup.items():
@@ -206,11 +209,12 @@ def order_signal(sender, instance, created, **kwargs):
                         if key == "total_bot_share_num":
                             setattr(order, "share_num", val)
             else:
+                # for user without bot
                 order.investment_amount = instance.amount
                 order.bot_cash_balance = 0
                 order.share_num = instance.qty
                 perf.share_num = instance.qty
-            
+            # start creating position
             digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
             perf.current_pnl_amt = 0  # need to calculate with fee
             perf.current_bot_cash_balance = order.bot_cash_balance
@@ -219,14 +223,13 @@ def order_signal(sender, instance, created, **kwargs):
                 perf.last_live_price * perf.share_num, digits)
             perf.current_pnl_ret = (perf.current_bot_cash_balance + perf.current_investment_amount -
                                     order.investment_amount) / order.investment_amount
-            # perf.margin_balance = formatdigit((order.investment_amount /
-            #                                    order.margin) - perf.current_investment_amount)
             perf.order_id = instance
             perf.save()
             order.save()
             instance.performance_uid = perf.performance_uid
                
             instance.save()
+            # update the transaction
             trans = TransactionHistory.objects.filter(
                 side='debit', transaction_detail__description='bot order', transaction_detail__order_uid=str(instance.order_uid))
             if trans.exists():
@@ -430,6 +433,8 @@ def order_revert(sender, instance, **kwargs):
             position.bot_cash_balance = position.bot_cash_balance + order.amount
         order.delete()
         if position.order_position.all().exists():
+            if not position.is_live:
+                position.is_live = True
             position.save()
         else:
             position.delete()
