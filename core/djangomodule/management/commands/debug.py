@@ -1,3 +1,4 @@
+from core.user.models import User
 from requests.api import get
 from ingestion.data_from_rkd import update_currency_code_from_rkd
 from django.core.management.base import BaseCommand
@@ -12,16 +13,20 @@ from portfolio.daily_hedge_classic import classic_position_check
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        perfs = PositionPerformance.objects.filter(status=None)
-        for perf in perfs:
-            if perf.order_uid:
-                if perf.order_uid.is_init:
-                    perf.status = 'Populate'
-                else:
-                    perf.status ='Hedge'
-            else:
-                perf.status = 'Hedge'
-            perf.save()
+        exclude = [user["user"] for user in UserClient.objects.filter(client__client_name__in=[]).values("user")]
+        all = [user["id"] for user in User.objects.filter().values("id").exclude(id__in=exclude)]
+        print(all)
+        print(exclude)
+        # perfs = PositionPerformance.objects.filter(status=None)
+        # for perf in perfs:
+        #     if perf.order_uid:
+        #         if perf.order_uid.is_init:
+        #             perf.status = 'Populate'
+        #         else:
+        #             perf.status ='Hedge'
+        #     else:
+        #         perf.status = 'Hedge'
+        #     perf.save()
         # market = TradingHours(mic='XNAS')
         # market.is_open
         # for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
