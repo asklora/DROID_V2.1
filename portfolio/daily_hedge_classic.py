@@ -11,17 +11,17 @@ from core.services.models import ErrorLog
 from django.db import transaction
 
 
-def create_performance(price_data, position, latest_price=False, hedge_price=False, tac=False):
+def create_performance(price_data, position, latest=False, hedge=False, tac=False):
     bot = position.bot
 
-    if(latest_price):
+    if(latest):
         live_price = price_data.close
         if price_data.latest_price:
             live_price = price_data.latest_price
         trading_day = price_data.last_date
         high = price_data.high
         low = price_data.low
-    elif(hedge_price):
+    elif(hedge):
         live_price = price_data.latest_price
         trading_day = price_data.last_date
         high = price_data.high
@@ -67,7 +67,7 @@ def create_performance(price_data, position, latest_price=False, hedge_price=Fal
     log_time = pd.Timestamp(trading_day)
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()
-    if hedge_price:
+    if hedge:
         log_time = price_data.intraday_time
     performance = dict(
         position_uid=str(position.position_uid),
@@ -151,7 +151,7 @@ def create_performance(price_data, position, latest_price=False, hedge_price=Fal
 
 
 @app.task
-def classic_position_check(position_uid, to_date=None, tac=False, hedge_price=False, latest_price=False):
+def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, latest=False):
     transaction.set_autocommit(False)
     try:
         position = OrderPosition.objects.get(
@@ -169,7 +169,7 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge_price=Fa
         if(type(trading_day) == datetime):
                 trading_day = trading_day.date()
         status = False
-        if hedge_price:
+        if hedge:
             try:
                 lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date__gt=trading_day, types="hedge", ticker=position.ticker)
             except HedgeLatestPriceHistory.DoesNotExist:
@@ -184,9 +184,9 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge_price=Fa
         elif(tac):
             tac_data = MasterOhlcvtr.objects.filter(
                 ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=exp_date, day_status="trading_day").order_by("trading_day")
-            for tac in tac_data:
+            for tac_price in tac_data:
                 trading_day = tac.trading_day
-                status, order_id = create_performance(hedge_price, position, tac=True)
+                status, order_id = create_performance(tac_price, position, tac=True)
                 print(f"tac {trading_day}-{tac.ticker} done")
                 if status:
                     break
@@ -199,7 +199,7 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge_price=Fa
                         position.expiry = tac_data.trading_day
                         position.save()
                         print(f"force sell {tac_data.trading_day} done")
-                        status, order_id = create_performance(hedge_price, position, tac=True)
+                        status, order_id = create_performance(tac_data, position, tac=True)
                         if status:
                             print(f"position end")
                 except MasterOhlcvtr.DoesNotExist:
@@ -209,7 +209,7 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge_price=Fa
             if(not status and trading_day <= lastest_price_data.last_date and exp_date >= lastest_price_data.last_date):
                 trading_day = lastest_price_data.last_date
                 print(f"latest price {trading_day} done")
-                status, order_id = create_performance(hedge_price, position, latest_price=True)
+                status, order_id = create_performance(lastest_price_data, position, latest_price=True)
                 if status:
                     print(f"position end")
         transaction.commit()
