@@ -80,7 +80,7 @@ def order_signal(sender, instance, created, **kwargs):
     print(instance.status,"<<<<<<<<<<<<STATUSSSSS>>>>>>>>>>>>>>>>>>",PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists())
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
-        # if instance.bot_id != "stock":
+        # if instance.bot_id != "STOCK_stock_0":
         #     setup = generate_hedge_setup(instance)
         #     instance.setup = setup
         #     instance.qty = setup["share_num"]
@@ -245,7 +245,7 @@ def order_signal(sender, instance, created, **kwargs):
                 # services.celery_app.send_task("config.celery.listener",args=(perfdata,),queue="asklora")
 
         else:
-            # hedging daily here
+            # hedging daily bot here
             if not bot.stock():
                 if instance.setup:
                     # getting existing position from setup
