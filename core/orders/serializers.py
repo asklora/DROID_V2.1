@@ -227,46 +227,58 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
     # canceled_at = UnixEpochDateField(source='canceled_at')
     bot_name = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
+    bot_range= serializers.SerializerMethodField()
+
 
 
     class Meta:
         model = Order
         fields = ['ticker', 'price', 'bot_id', 'amount', 'side',
                   'order_uid', 'status', 'setup', 'created', 'filled_at',
-                  'placed', 'placed_at', 'canceled_at', 'qty','bot_name','currency']
+                  'placed', 'placed_at', 'canceled_at', 'qty','bot_name','currency','bot_range']
 
     def get_bot_name(self,obj) -> str:
         bot =BotOptionType.objects.get(bot_id=obj.bot_id)
         if not bot.is_stock():
             return bot.bot_type.bot_apps_name
-        return 'user'
+        return 'Unassisted Trade'
 
     def get_currency(self,obj) -> str:
         return obj.ticker.currency_code.currency_code
+    
+    def get_bot_range(self,obj):
+        bot =BotOptionType.objects.get(bot_id=obj.bot_id)
+        if not bot.is_stock():
+            return bot.bot_type.duration
 
 
 class OrderListSerializers(serializers.ModelSerializer):
     # created = UnixEpochDateField(source='created')
     # filled_at = UnixEpochDateField(source='filled_at')
     # placed_at = UnixEpochDateField(source='placed_at')
-
     bot_name = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
-
+    bot_range= serializers.SerializerMethodField()
+    
     class Meta:
         model = Order
         fields = ['ticker', 'side',
                   'order_uid', 'status', 'created', 'filled_at',
-                  'placed', 'placed_at', 'qty','amount','bot_name','currency']
+                  'placed', 'placed_at', 'qty','amount','bot_name','currency','bot_range']
     
     def get_bot_name(self,obj) -> str:
         bot =BotOptionType.objects.get(bot_id=obj.bot_id)
         if not bot.is_stock():
             return bot.bot_type.bot_apps_name
-        return 'user'
+        return 'Unassisted Trade'
 
     def get_currency(self,obj)-> str:
         return obj.ticker.currency_code.currency_code
+    
+    def get_bot_range(self,obj):
+        bot =BotOptionType.objects.get(bot_id=obj.bot_id)
+        if not bot.is_stock():
+            return bot.bot_type.duration
 
 
 class OrderActionSerializer(serializers.ModelSerializer):

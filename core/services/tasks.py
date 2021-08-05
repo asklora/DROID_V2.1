@@ -541,12 +541,14 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False,
     else:
         report_to_slack(f"=== {client_name} NO TOPSTOCK IN PENDING ===")
 
-def daily_hedge(currency=None, ingest=False, exclude_client=[]):
+
+@app.task
+def daily_hedge_user(currency=None, ingest=False, exclude_client=['HANWHA','FELS']):
     cache.clear()
-    report_to_slack(f"===  START DAILY HEDGE FOR {currency} ===")
+    report_to_slack(f"===  START DAILY USER HEDGE FOR {currency} ===")
     try:
         exclude = [user["user"] for user in UserClient.objects.filter(client__client_name__in=exclude_client).values("user")]
-        user_id = [user["id"] for user in User.objects.filter().values("id").exclude(id__in=exclude)]
+        user_id = [user["id"] for user in User.objects.filter(is_active=True,current_status='verified').values("id").exclude(id__in=exclude)]
         positions = OrderPosition.objects.filter(is_live=True, ticker__currency_code=currency, user_id__in=user_id)
         if positions.exists():
             if ingest:
