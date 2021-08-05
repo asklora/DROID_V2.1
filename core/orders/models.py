@@ -190,7 +190,7 @@ class PositionPerformance(BaseTimeStampModel):
     # order response from third party
     order_summary = models.JSONField(null=True, blank=True)
     order_uid = models.ForeignKey("Order", null=True, blank=True, on_delete=models.SET_NULL, db_column="order_uid")
-    status = models.FloatField(default="Populate")
+    status = models.CharField(null=True, blank=True, max_length=200)
 
     def save(self, *args, **kwargs):
         if not self.performance_uid:

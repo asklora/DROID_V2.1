@@ -175,17 +175,18 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
             except HedgeLatestPriceHistory.DoesNotExist:
                 print("not exist", position.ticker.ticker)
                 return None
+            print(lastest_price_data)
             for hedge_price in lastest_price_data:
-                trading_day = tac.trading_day
+                trading_day = hedge_price.last_date
                 status, order_id = create_performance(hedge_price, position, hedge=True)
                 if order_id:
                     order = Order.objects.get(order_uid=order_id)
-                    log_time = lastest_price_data.intraday_time
+                    log_time = hedge_price.intraday_time
                     if order.status in ["pending", "review"]:
                         order.status = "filled"
                         order.filled_at = log_time
                         order.save()
-                print(f"tac {trading_day}-{tac.ticker} done")
+                print(f"tac {trading_day}-{hedge_price.ticker} done")
                 if status:
                     break
         elif(tac):
@@ -201,7 +202,7 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
                         order.status = "filled"
                         order.filled_at = log_time
                         order.save()
-                print(f"tac {trading_day}-{tac.ticker} done")
+                print(f"tac {trading_day}-{tac_price.ticker} done")
                 if status:
                     break
             if(type(trading_day) == datetime):

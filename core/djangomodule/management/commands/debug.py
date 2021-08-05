@@ -109,7 +109,7 @@ class Command(BaseCommand):
         # get_quote_yahoo("TCOM", use_symbol=True)
         # daily_hedge(currency="HKD")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
-        # perf = PositionPerformance.objects.filter(
+        # perf = PositionPerformance.objehedgects.filter(
         #     position_uid__user_id__in=[108,
         #                                109,
         #                                110], created__gte=datetime.now().date(), position_uid__ticker__currency_code="KRW").order_by("created")
