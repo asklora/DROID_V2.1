@@ -599,22 +599,14 @@ def hedge(currency=None, bot_tester=False, **options):
                     # will add function to check run in production machine and local for debuging
                     if (position.bot.is_uno()):
                         # uno_position_check(position_uid)
-                        if not 'rehedge' in options:
-                            group_celery_jobs.append(
-                                uno_position_check.s(position_uid))
-                        else:
-                            print(f'rehedge {status} {position_uid}')
-                            group_celery_jobs.append(
-                                uno_position_check.s(position_uid, **options))
+                        group_celery_jobs.append(
+                            uno_position_check.s(position_uid,hedge=True))
+                           
                     elif (position.bot.is_ucdc()):
                         # ucdc_position_check(position_uid)
-                        if not 'rehedge' in options:
-                            group_celery_jobs.append(
-                                ucdc_position_check.s(position_uid))
-                        else:
-                            print(f'rehedge {status} {position_uid}')
-                            group_celery_jobs.append(
-                                ucdc_position_check.s(position_uid, **options))
+                        group_celery_jobs.append(
+                            ucdc_position_check.s(position_uid,hedge=True))
+                        
                     elif (position.bot.is_classic()):
                         # classic_position_check(position_uid)
                         group_celery_jobs.append(
