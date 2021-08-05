@@ -175,7 +175,6 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
             except HedgeLatestPriceHistory.DoesNotExist:
                 print("not exist", position.ticker.ticker)
                 return None
-            print(lastest_price_data)
             for hedge_price in lastest_price_data:
                 trading_day = hedge_price.last_date
                 status, order_id = create_performance(hedge_price, position, hedge=True)
