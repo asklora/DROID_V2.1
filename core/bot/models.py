@@ -35,6 +35,9 @@ class BotOptionType(models.Model):
     
     def is_ucdc(self):
         return self.bot_type.bot_type == 'UCDC'
+    
+    def is_stock(self):
+        return self.bot_type.bot_type == 'STOCK'
 
     def __str__(self):
         return f"{self.bot_type}-{self.bot_option_type}-{self.time_to_exp}"

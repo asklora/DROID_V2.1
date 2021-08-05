@@ -35,6 +35,7 @@ from general.slack import report_to_slack
 # POPULATE TOPSTOCK MODULE
 from client_test_pick import populate_fels_bot, test_pick, populate_bot_advisor, populate_bot_tester
 # HEDGE MODULE
+from portfolio.daily_hedge_user import user_position_check
 from portfolio.daily_hedge_classic import classic_position_check
 from portfolio.daily_hedge_ucdc import ucdc_position_check
 from portfolio.daily_hedge_uno import uno_position_check
@@ -599,18 +600,19 @@ def hedge(currency=None, bot_tester=False, **options):
                     # will add function to check run in production machine and local for debuging
                     if (position.bot.is_uno()):
                         # uno_position_check(position_uid)
-                        group_celery_jobs.append(
-                            uno_position_check.s(position_uid,hedge=True))
+                        group_celery_jobs.append(uno_position_check.s(position_uid,hedge=True))
                            
                     elif (position.bot.is_ucdc()):
                         # ucdc_position_check(position_uid)
-                        group_celery_jobs.append(
-                            ucdc_position_check.s(position_uid,hedge=True))
+                        group_celery_jobs.append(ucdc_position_check.s(position_uid,hedge=True))
                         
                     elif (position.bot.is_classic()):
                         # classic_position_check(position_uid)
                         group_celery_jobs.append(classic_position_check.s(position_uid, hedge=True))
                         
+                    elif(position.bot.is_stock()):
+                        group_celery_jobs.append(user_position_check.s(position_uid, hedge=True))
+
                 else:
                     report_to_slack(
                         f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
