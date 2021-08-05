@@ -233,16 +233,16 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
         model = Order
         fields = ['ticker', 'price', 'bot_id', 'amount', 'side',
                   'order_uid', 'status', 'setup', 'created', 'filled_at',
-                  'placed', 'placed_at', 'canceled_at', 'qty','bot_name']
+                  'placed', 'placed_at', 'canceled_at', 'qty','bot_name','currency']
 
-    def get_bot_name(self,obj):
+    def get_bot_name(self,obj) -> str:
         bot =BotOptionType.objects.get(bot_id=obj.bot_id)
         if not bot.is_stock():
             return bot.bot_type.bot_apps_name
-        return None
+        return 'user'
 
-    def get_currency(self,obj):
-        return obj.ticker.currency_code
+    def get_currency(self,obj) -> str:
+        return obj.ticker.currency_code.currency_code
 
 
 class OrderListSerializers(serializers.ModelSerializer):
@@ -259,14 +259,14 @@ class OrderListSerializers(serializers.ModelSerializer):
                   'order_uid', 'status', 'created', 'filled_at',
                   'placed', 'placed_at', 'qty','amount','bot_name','currency']
     
-    def get_bot_name(self,obj):
+    def get_bot_name(self,obj) -> str:
         bot =BotOptionType.objects.get(bot_id=obj.bot_id)
         if not bot.is_stock():
             return bot.bot_type.bot_apps_name
-        return None
+        return 'user'
 
-    def get_currency(self,obj):
-        return obj.ticker.currency_code
+    def get_currency(self,obj)-> str:
+        return obj.ticker.currency_code.currency_code
 
 
 class OrderActionSerializer(serializers.ModelSerializer):
