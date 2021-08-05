@@ -10,7 +10,6 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 
-
 def create_performance(price_data, position, latest=False, hedge=False, tac=False):
     bot = position.bot
 
@@ -185,7 +184,7 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
                         order.status = "filled"
                         order.filled_at = log_time
                         order.save()
-                print(f"tac {trading_day}-{hedge_price.ticker} done")
+                print(f"trading_day {trading_day}-{hedge_price.ticker} done")
                 if status:
                     break
         elif(tac):
@@ -201,7 +200,7 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
                         order.status = "filled"
                         order.filled_at = log_time
                         order.save()
-                print(f"tac {trading_day}-{tac_price.ticker} done")
+                print(f"trading_day {trading_day}-{tac_price.ticker} done")
                 if status:
                     break
             if(type(trading_day) == datetime):
