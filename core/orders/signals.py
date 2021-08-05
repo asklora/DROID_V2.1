@@ -214,6 +214,7 @@ def order_signal(sender, instance, created, **kwargs):
                 order.bot_cash_balance = 0
                 order.share_num = instance.qty
                 perf.share_num = instance.qty
+                perf.status = 'Populate'
             # start creating position
             digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
             perf.current_pnl_amt = 0  # need to calculate with fee
