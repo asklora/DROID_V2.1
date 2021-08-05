@@ -64,7 +64,7 @@ def order_signal_check(sender, instance, **kwargs):
     # if status not in ["filled", "placed", "pending", "cancel"] and is new order, recalculate price and share
     if not instance.status in ["filled", "placed", "pending", "cancel"] and instance.is_init:
         # if bot will create setup expiry , SL and TP
-        if instance.bot_id != "stock":
+        if instance.bot_id != "STOCK_stock_0":
             setup = generate_hedge_setup(instance)
             instance.setup = setup
             instance.qty = setup["share_num"]
@@ -170,10 +170,9 @@ def order_signal(sender, instance, created, **kwargs):
         if instance.is_init:
             # below is only for new order initiated
             margin = 1
-            if instance.bot_id != "stock":
-                bot = BotOptionType.objects.get(bot_id=instance.bot_id)
-                if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
-                    margin = 1.5
+            bot = BotOptionType.objects.get(bot_id=instance.bot_id)
+            if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
+                margin = 1.5
 
             if instance.status == "filled":
                 spot_date = instance.filled_at
