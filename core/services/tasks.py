@@ -609,8 +609,7 @@ def hedge(currency=None, bot_tester=False, **options):
                         
                     elif (position.bot.is_classic()):
                         # classic_position_check(position_uid)
-                        group_celery_jobs.append(
-                            classic_position_check.s(position_uid,hedge=True))
+                        group_celery_jobs.append(classic_position_check.s(position_uid, hedge=True))
                         
                 else:
                     report_to_slack(
