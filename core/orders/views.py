@@ -127,13 +127,20 @@ class OrderUpdateViews(views.APIView):
 
 
 class OrderGetViews(viewsets.ViewSet):
-    # permission_classes =(permissions.IsAuthenticated,)
-
+    permission_classes =(permissions.IsAuthenticated,)
+    @extend_schema(
+        responses=OrderListSerializers,
+        # more customizations
+    )
     def list(self, request):
         instances = Order.objects.filter(user_id=request.user)
         self.serialzer_class = OrderListSerializers
         return response.Response(OrderListSerializers(instances, many=True).data, status=status.HTTP_200_OK)
-
+    permission_classes =(permissions.IsAuthenticated,)
+    @extend_schema(
+        responses=OrderDetailsSerializers,
+        # more customizations
+    )
     def retrieve(self, request, order_uid=None):
         try:
             instance = Order.objects.get(order_uid=order_uid)

@@ -71,7 +71,7 @@ def order_executor(self, payload, recall=False):
     # time.sleep(10)
 
     print('placed')
-    if order.bot_id == 'stock':
+    if order.bot_id == 'STOCK_stock_0':
         share = order.qty
     else:
         share = order.setup['share_num']

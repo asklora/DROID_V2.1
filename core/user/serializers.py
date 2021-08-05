@@ -18,6 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
     total_stock_amount = serializers.FloatField(read_only=True)
     total_stamp_amount = serializers.FloatField(read_only=True)
     total_commission_amount = serializers.FloatField(read_only=True)
+    currency = serializers.CharField(read_only=True)
 
     class Meta:
         model = User

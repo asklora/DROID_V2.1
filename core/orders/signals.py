@@ -165,12 +165,15 @@ def order_signal(sender, instance, created, **kwargs):
                 )
 
     elif not created and instance.status in "filled" and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
+        bot = BotOptionType.objects.get(bot_id=instance.bot_id)
+
+
         # update the status and create new positions
         # if order is filled will create the position and first performance
         if instance.is_init:
             # below is only for new order initiated
             margin = 1
-            bot = BotOptionType.objects.get(bot_id=instance.bot_id)
+            
             if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
                 margin = 1.5
 
@@ -242,8 +245,8 @@ def order_signal(sender, instance, created, **kwargs):
                 # services.celery_app.send_task("config.celery.listener",args=(perfdata,),queue="asklora")
 
         else:
-            # hedging daily here
-            if instance.bot_id != "STOCK_stock_0":
+            # hedging daily bot here
+            if not bot.stock():
                 if instance.setup:
                     # getting existing position from setup
                     order_position = OrderPosition.objects.get(
