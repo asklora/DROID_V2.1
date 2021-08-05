@@ -80,7 +80,7 @@ def order_signal(sender, instance, created, **kwargs):
     print(instance.status,"<<<<<<<<<<<<STATUSSSSS>>>>>>>>>>>>>>>>>>",PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists())
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
-        # if instance.bot_id != "stock":
+        # if instance.bot_id != "STOCK_stock_0":
         #     setup = generate_hedge_setup(instance)
         #     instance.setup = setup
         #     instance.qty = setup["share_num"]
@@ -93,7 +93,7 @@ def order_signal(sender, instance, created, **kwargs):
         pass
 
         # if not user can create the setup TP and SL
-    elif created and not instance.is_init and instance.bot_id != "stock":
+    elif created and not instance.is_init and instance.bot_id != "STOCK_stock_0":
         pass
 
     elif not created and instance.status in "cancel":
@@ -243,7 +243,7 @@ def order_signal(sender, instance, created, **kwargs):
 
         else:
             # hedging daily here
-            if instance.bot_id != "stock":
+            if instance.bot_id != "STOCK_stock_0":
                 if instance.setup:
                     # getting existing position from setup
                     order_position = OrderPosition.objects.get(
