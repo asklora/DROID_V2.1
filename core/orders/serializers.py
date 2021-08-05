@@ -1,5 +1,6 @@
 from rest_framework import serializers, exceptions
 from .models import OrderPosition, PositionPerformance, OrderFee, Order
+from core.bot.models import BotOptionType
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from django.db.models import Sum, F
 from core.user.models import TransactionHistory, User
@@ -224,12 +225,24 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
     # filled_at = UnixEpochDateField(source='filled_at')
     # placed_at = UnixEpochDateField(source='placed_at')
     # canceled_at = UnixEpochDateField(source='canceled_at')
+    bot_name = serializers.SerializerMethodField()
+    currency = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Order
         fields = ['ticker', 'price', 'bot_id', 'amount', 'side',
                   'order_uid', 'status', 'setup', 'created', 'filled_at',
-                  'placed', 'placed_at', 'canceled_at', 'qty']
+                  'placed', 'placed_at', 'canceled_at', 'qty','bot_name']
+
+    def get_bot_name(self,obj):
+        bot =BotOptionType.objects.get(bot_id=obj.bot_id)
+        if not bot.is_stock():
+            return bot.bot_type.bot_apps_name
+        return None
+
+    def get_currency(self,obj):
+        return obj.ticker.currency_code
 
 
 class OrderListSerializers(serializers.ModelSerializer):
@@ -237,11 +250,23 @@ class OrderListSerializers(serializers.ModelSerializer):
     # filled_at = UnixEpochDateField(source='filled_at')
     # placed_at = UnixEpochDateField(source='placed_at')
 
+    bot_name = serializers.SerializerMethodField()
+    currency = serializers.SerializerMethodField()
+
     class Meta:
         model = Order
         fields = ['ticker', 'side',
                   'order_uid', 'status', 'created', 'filled_at',
-                  'placed', 'placed_at', 'qty']
+                  'placed', 'placed_at', 'qty','amount','bot_name','currency']
+    
+    def get_bot_name(self,obj):
+        bot =BotOptionType.objects.get(bot_id=obj.bot_id)
+        if not bot.is_stock():
+            return bot.bot_type.bot_apps_name
+        return None
+
+    def get_currency(self,obj):
+        return obj.ticker.currency_code
 
 
 class OrderActionSerializer(serializers.ModelSerializer):

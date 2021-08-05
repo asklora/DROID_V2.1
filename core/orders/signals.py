@@ -93,7 +93,7 @@ def order_signal(sender, instance, created, **kwargs):
         pass
 
         # if not user can create the setup TP and SL
-    elif created and not instance.is_init and instance.bot_id != "stock":
+    elif created and not instance.is_init and instance.bot_id != "STOCK_stock_0":
         pass
 
     elif not created and instance.status in "cancel":
@@ -165,12 +165,15 @@ def order_signal(sender, instance, created, **kwargs):
                 )
 
     elif not created and instance.status in "filled" and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
+        bot = BotOptionType.objects.get(bot_id=instance.bot_id)
+
+
         # update the status and create new positions
         # if order is filled will create the position and first performance
         if instance.is_init:
             # below is only for new order initiated
             margin = 1
-            bot = BotOptionType.objects.get(bot_id=instance.bot_id)
+            
             if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
                 margin = 1.5
 
@@ -243,7 +246,7 @@ def order_signal(sender, instance, created, **kwargs):
 
         else:
             # hedging daily here
-            if instance.bot_id != "stock":
+            if not bot.stock():
                 if instance.setup:
                     # getting existing position from setup
                     order_position = OrderPosition.objects.get(
