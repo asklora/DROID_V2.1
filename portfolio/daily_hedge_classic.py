@@ -177,7 +177,14 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
                 return None
             for hedge_price in lastest_price_data:
                 trading_day = tac.trading_day
-                status, order_id = create_performance(hedge_price, position, hedge_price=True)
+                status, order_id = create_performance(hedge_price, position, hedge=True)
+                if order_id:
+                    order = Order.objects.get(order_uid=order_id)
+                    log_time = lastest_price_data.intraday_time
+                    if order.status in ["pending", "review"]:
+                        order.status = "filled"
+                        order.filled_at = log_time
+                        order.save()
                 print(f"tac {trading_day}-{tac.ticker} done")
                 if status:
                     break
@@ -187,6 +194,13 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
             for tac_price in tac_data:
                 trading_day = tac.trading_day
                 status, order_id = create_performance(tac_price, position, tac=True)
+                if order_id:
+                    order = Order.objects.get(order_uid=order_id)
+                    log_time = pd.to_datetime(tac_data.trading_day)
+                    if order.status in ["pending", "review"]:
+                        order.status = "filled"
+                        order.filled_at = log_time
+                        order.save()
                 print(f"tac {trading_day}-{tac.ticker} done")
                 if status:
                     break
@@ -200,6 +214,14 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
                         position.save()
                         print(f"force sell {tac_data.trading_day} done")
                         status, order_id = create_performance(tac_data, position, tac=True)
+                        if order_id:
+                            order = Order.objects.get(order_uid=order_id)
+                            log_time = pd.to_datetime(tac_data.trading_day)
+                            if order.status in ["pending", "review"]:
+                                order.status = "filled"
+                                order.filled_at = log_time
+                                order.save()
+                        
                         if status:
                             print(f"position end")
                 except MasterOhlcvtr.DoesNotExist:
@@ -210,6 +232,13 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
                 trading_day = lastest_price_data.last_date
                 print(f"latest price {trading_day} done")
                 status, order_id = create_performance(lastest_price_data, position, latest_price=True)
+                if order_id:
+                    order = Order.objects.get(order_uid=order_id)
+                    log_time = lastest_price_data.intraday_time
+                    if order.status in ["pending", "review"]:
+                        order.status = "filled"
+                        order.filled_at = log_time
+                        order.save()
                 if status:
                     print(f"position end")
         transaction.commit()

@@ -617,13 +617,9 @@ def hedge(currency=None, bot_tester=False, **options):
                                 ucdc_position_check.s(position_uid, **options))
                     elif (position.bot.is_classic()):
                         # classic_position_check(position_uid)
-                        if not 'rehedge' in options:
-                            group_celery_jobs.append(
-                                classic_position_check.s(position_uid))
-                        else:
-                            print(f'rehedge {status} {position_uid}')
-                            group_celery_jobs.append(
-                                classic_position_check.s(position_uid, **options))
+                        group_celery_jobs.append(
+                            classic_position_check.s(position_uid,hedge=True))
+                        
                 else:
                     report_to_slack(
                         f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")

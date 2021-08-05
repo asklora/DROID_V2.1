@@ -12,8 +12,8 @@ from core.djangomodule.calendar import TradingHours
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        market = TradingHours(mic='XNAS')
-        market.is_open
+        # market = TradingHours(mic='XNAS')
+        # market.is_open
         # for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
         #     p.delete()
 
