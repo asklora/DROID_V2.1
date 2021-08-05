@@ -12,9 +12,16 @@ from portfolio.daily_hedge_classic import classic_position_check
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        print("START PROCESS")
-        position_uid = "f00fa133fc3d4ed8a2d4192b6c7beea4"
-        classic_position_check(position_uid, hedge=True)
+        perfs = PositionPerformance.objects.filter(status=None)
+        for perf in perfs:
+            if perf.order_uid:
+                if perf.order_uid.is_init:
+                    perf.status = 'Populate'
+                else:
+                    perf.status ='Hedge'
+            else:
+                perf.status = 'Hedge'
+            perf.save()
         # market = TradingHours(mic='XNAS')
         # market.is_open
         # for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
