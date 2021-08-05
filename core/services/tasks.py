@@ -22,7 +22,7 @@ from core.djangomodule.calendar import TradingHours
 from core.master.models import Currency
 from core.orders.models import Order, PositionPerformance, OrderPosition
 from core.Clients.models import UserClient, Client
-from core.services.models import ErrorLog, HedgeLogger
+from core.services.models import ErrorLog
 from .models import ChannelPresence
 from channels_presence.models import Presence
 from django.core.mail import EmailMessage
@@ -376,7 +376,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA", **opti
         # clear any existing cache
         cache.clear()
         # SKIP FELS FOR AUTO ORDER, SINCE FELS USING MANUAL TRIGER ORDER
-        
+
         if not client_name == "FELS":
             order_client_topstock(
                 currency=currency, client_name=client_name, **options)  # bot advisor
@@ -563,14 +563,8 @@ def hedge(currency=None, bot_tester=False, **options):
             hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name__in=[
                                                                          "HANWHA", "FELS"], extra_data__service_type__in=["bot_advisor", None]).values("user")]
         # GETTING LIVE POSITION
-        if 'rehedge' in options:
-            fail_position = [p.position_uid.position_uid for p in HedgeLogger.objects.filter(
-                status__in=['FAIL', 'PENDING'], position_uid__ticker__currency_code=currency, date=options['rehedge']['date'])]
-            positions = OrderPosition.objects.filter(
-                position_uid__in=fail_position)
-        else:
-            positions = OrderPosition.objects.filter(
-                is_live=True, ticker__currency_code=currency, user_id__in=hanwha)
+        positions = OrderPosition.objects.filter(
+            is_live=True, ticker__currency_code=currency, user_id__in=hanwha)
 
         if positions.exists():
             # DISTINCT TICKER TO BE USED IN TRKD
@@ -580,10 +574,6 @@ def hedge(currency=None, bot_tester=False, **options):
             if not 'rehedge' in options:
                 now = datetime.now().date()
                 rkd.get_quote(ticker_list, save=True, detail=f'hedge-{now}')
-                hedge_logger = [HedgeLogger(created=datetime.now(), updated=datetime.now(
-                ), position_uid=p, log_type='hedge', date=now) for p in positions]
-                HedgeLogger.objects.bulk_create(
-                    hedge_logger, ignore_conflicts=True)
             # PREPARE USING MULTIPROCESSING HEDGE GROUPS
             group_celery_jobs = []
             celery_jobs = celery_groups(group_celery_jobs)

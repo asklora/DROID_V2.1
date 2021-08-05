@@ -27,13 +27,14 @@ class OrderDetailsServicesSerializers(serializers.ModelSerializer):
 
 
 @app.task(bind=True)
-def order_executor(self, payload,recall=False):
+def order_executor(self, payload, recall=False):
     payload = json.loads(payload)
     Model = apps.get_model('orders', 'Order')
     order = Model.objects.get(order_uid=payload['order_uid'])
-    
+
     if recall:
         rkd = RkdData()
+        # getting new price
         df = rkd.get_quote([order.ticker.ticker], df=True)
         df['latest_price'] = df['latest_price'].astype(float)
         ticker = df.loc[df["ticker"] == order.ticker.ticker]
@@ -43,18 +44,18 @@ def order_executor(self, payload,recall=False):
             transaction_detail__order_uid=str(order.order_uid))
         if in_wallet_transactions.exists():
             in_wallet_transactions.get().delete()
+        
+        # for apps, need to change later with better logic
         if order.amount >= 10000:
             order.amount = 20000
         else:
             order.amount = 10000
         order.status = 'review'
         order.placed = False
-        order.placed_at =None
+        order.placed_at = None
         with transaction.atomic():
             order.save()
-        
-        
-        
+
     with transaction.atomic():
         if payload['status'] == 'cancel':
             order.status = payload['status']
@@ -65,10 +66,10 @@ def order_executor(self, payload,recall=False):
             order.placed = True
             order.placed_at = datetime.now()
             order.save()
-    
+
     # debug only
     # time.sleep(10)
-    
+
     print('placed')
     if order.bot_id == 'stock':
         share = order.qty
@@ -79,7 +80,7 @@ def order_executor(self, payload,recall=False):
         order.status = 'filled'
         order.filled_at = datetime.now()
         order.save()
-        
+
         print('open')
         messages = 'order accepted'
         message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status filled'
@@ -89,7 +90,8 @@ def order_executor(self, payload,recall=False):
         message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status pending'
         # create schedule to next bell and will recrusive until market status open
         # still keep sending message. need to improve
-        order_executor.apply_async(args=(json.dumps(payload),),kwargs={'recall':True},eta=market.next_bell)
+        order_executor.apply_async(args=(json.dumps(payload),), kwargs={
+                                   'recall': True}, eta=market.next_bell)
 
     payload_serializer = OrderDetailsServicesSerializers(order).data
     channel_layer = get_channel_layer()

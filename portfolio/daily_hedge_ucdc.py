@@ -15,11 +15,11 @@ from config.celery import app
 import pandas as pd
 from core.djangomodule.serializers import OrderPositionSerializer
 from core.djangomodule.general import formatdigit
-from core.services.models import ErrorLog,HedgeLogger
+from core.services.models import ErrorLog
 from django.db import transaction
 
 
-def create_performance(price_data, position, latest_price=False,rehedge=False):
+def create_performance(price_data, position, latest_price=False, rehedge=False):
     # new access bot reference
     bot = position.bot
     expiry = position.expiry
@@ -71,18 +71,18 @@ def create_performance(price_data, position, latest_price=False,rehedge=False):
             share_num = 0
             hedge_shares = last_performance.share_num * -1
             status = "sell"
-            bot_cash_balance = last_performance.current_bot_cash_balance + (last_performance.share_num * live_price)
+            bot_cash_balance = last_performance.current_bot_cash_balance + \
+                (last_performance.share_num * live_price)
         else:
             delta = uno.deltaRC(live_price, strike,
                                 strike_2, t/365, r, q, v1, v2)
             delta, hedge = get_ucdc_hedge(
                 currency_code, delta, last_performance.last_hedge_delta)
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, last_performance.current_bot_cash_balance,
-                ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta,
-                hedge=hedge, ucdc=True)
+                                                                            ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta,
+                                                                            hedge=hedge, ucdc=True)
             bot_cash_balance = formatdigit(
                 last_performance.current_bot_cash_balance-(share_num-last_performance.share_num)*live_price)
-            
 
     else:
         current_pnl_amt = 0  # initial value
@@ -98,8 +98,9 @@ def create_performance(price_data, position, latest_price=False,rehedge=False):
         share_num = position.share_num
         share_num = math.floor(delta * share_num)
         hedge_shares = share_num
-        bot_cash_balance = position.investment_amount - (share_num * live_price)
-        status ='buy'
+        bot_cash_balance = position.investment_amount - \
+            (share_num * live_price)
+        status = 'buy'
 
     current_investment_amount = live_price * share_num
     # current_pnl_ret = (bot_cash_balance + current_investment_amount -
@@ -112,7 +113,7 @@ def create_performance(price_data, position, latest_price=False,rehedge=False):
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()
     if rehedge:
-        log_time= price_data.intraday_time
+        log_time = price_data.intraday_time
     # not creating performance first, value stored at dict and placed in setup order we can use it later after the order filled
     # see below
     performance = dict(
@@ -177,6 +178,7 @@ def create_performance(price_data, position, latest_price=False,rehedge=False):
         )
         # only for bot
         if order:
+            order.status = 'placed'
             order.placed = True
             order.placed_at = log_time
             order.save()
@@ -204,7 +206,7 @@ def create_performance(price_data, position, latest_price=False,rehedge=False):
 
 
 @app.task
-def ucdc_position_check(position_uid, to_date=None, lookback=False,rehedge=None,hedge_type='hedge'):
+def ucdc_position_check(position_uid, to_date=None, lookback=False, rehedge=None, hedge_type='hedge'):
     transaction.set_autocommit(False)
 
     try:
@@ -223,23 +225,23 @@ def ucdc_position_check(position_uid, to_date=None, lookback=False,rehedge=None,
             exp_date = position.expiry
         if isinstance(trading_day, datetime):
             trading_day = trading_day.date()
-        tac_data = MasterOhlcvtr.objects.filter(
-            ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=exp_date, day_status='trading_day').order_by("trading_day")
+
         status = False
 
         if rehedge:
             from core.master.models import HedgeLatestPriceHistory
             try:
-                lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date=rehedge['date'],types=rehedge['types'],ticker=position.ticker)
+                lastest_price_data = HedgeLatestPriceHistory.objects.filter(
+                    last_date=rehedge['date'], types=rehedge['types'], ticker=position.ticker)
                 if lastest_price_data.exists():
                     lastest_price_data = lastest_price_data.get()
                 else:
                     return None
             except HedgeLatestPriceHistory.DoesNotExist:
-                print('not exist',position.ticker.ticker)
+                print('not exist', position.ticker.ticker)
                 return None
             except HedgeLatestPriceHistory.MultipleObjectsReturned:
-                print('nmulpile error',position.ticker.ticker)
+                print('nmulpile error', position.ticker.ticker)
                 return None
 
             if(type(trading_day) == datetime):
@@ -248,7 +250,7 @@ def ucdc_position_check(position_uid, to_date=None, lookback=False,rehedge=None,
                 trading_day = lastest_price_data.last_date
                 print(f"rehedge latest price {trading_day} done")
                 status, order_id = create_performance(
-                    lastest_price_data, position, latest_price=True,rehedge=True)
+                    lastest_price_data, position, latest_price=True, rehedge=True)
                 # position.save()
                 if order_id:
                     order = Order.objects.get(order_uid=order_id)
@@ -260,6 +262,8 @@ def ucdc_position_check(position_uid, to_date=None, lookback=False,rehedge=None,
                 if status:
                     print(f"rehedge position end")
         elif(lookback):
+            tac_data = MasterOhlcvtr.objects.filter(
+                ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=exp_date, day_status='trading_day').order_by("trading_day")
             for tac in tac_data:
                 # trading_day = tac.trading_day
                 status, order_id = create_performance(tac, position)
@@ -315,26 +319,22 @@ def ucdc_position_check(position_uid, to_date=None, lookback=False,rehedge=None,
                     if order.status in ["pending", "review"]:
                         order.status = "filled"
                         order.filled_at = log_time
-                        order.save()                  
+                        order.save()
                 if status:
                     print(f"position end")
         transaction.commit()
         print('transaction committed')
-        logger=HedgeLogger.objects.get(position_uid=position,date=trading_day,log_type=hedge_type)
-        logger.status = 'OK'
-        logger.save()
+        
         return True
     except OrderPosition.DoesNotExist as e:
-        err = ErrorLog.objects.create_log(error_description=f'{position_uid} not exist',error_message=str(e))
+        err = ErrorLog.objects.create_log(
+            error_description=f'{position_uid} not exist', error_message=str(e))
         err.send_report_error()
-        logger=HedgeLogger.objects.get(position_uid=position,date=trading_day,log_type=hedge_type)
-        logger(status='FAIL',error_log=str(e))
-        logger.save()
-        return {'err':f'{position.ticker.ticker}'}
+        
+        return {'err': f'{position.ticker.ticker}'}
     except Exception as e:
-        err = ErrorLog.objects.create_log(error_description=f'error in Position {position_uid}',error_message=str(e))
+        err = ErrorLog.objects.create_log(
+            error_description=f'error in Position {position_uid}', error_message=str(e))
         err.send_report_error()
-        logger=HedgeLogger.objects.get(position_uid=position,date=trading_day,log_type=hedge_type)
-        logger(status='FAIL',error_log=str(e))
-        logger.save()
-        return {'err':f'{position.ticker.ticker}'}
+        
+        return {'err': f'{position.ticker.ticker}'}

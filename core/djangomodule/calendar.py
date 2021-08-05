@@ -7,49 +7,44 @@ from core.universe.models import ExchangeMarket
 import pandas as pd
 
 
-
-
 class TradingHours:
     next_bell = None
     token = "1M1a35Qhk8gUbCsOSl6XRY2z3Qjj0of7y5ZEfE5MasUYm5b9YsoooA7RSxW7"
     market_timezone = None
 
-    def __init__(self, fins=None,mic=None):
+    def __init__(self, fins=None, mic=None):
         if mic:
-            if isinstance(mic,str):
+            if isinstance(mic, str):
                 exchange = ExchangeMarket.objects.get(mic=mic)
-                self.fin_id =exchange.fin_id
+                self.fin_id = exchange.fin_id
                 self.get_market_timezone()
-            elif isinstance(mic,list):
+            elif isinstance(mic, list):
                 exchange = ExchangeMarket.objects.filter(mic__in=mic)
-                self.fin_id =[finid.fin_id for finid in exchange]
+                self.fin_id = [finid.fin_id for finid in exchange]
             else:
-                mictype=type(mic)
-                raise ValueError(f"mic must be string or list instance not {mictype}")
+                mictype = type(mic)
+                raise ValueError(
+                    f"mic must be string or list instance not {mictype}")
         elif fins:
             self.fin_id = fins
         elif not fins and not mic:
             raise ValueError("fins and mic should not be Blank")
-    
-    
-    
-    
+
     def get_market_timezone(self):
-        url =f'https://api.tradinghours.com/v3/markets/details?fin_id={self.fin_id}&token={self.token}'
+        url = f'https://api.tradinghours.com/v3/markets/details?fin_id={self.fin_id}&token={self.token}'
         req = requests.get(url)
         if req.status_code == 200:
             try:
                 res = req.json()
-                self.market_timezone=res['data'][0]['timezone']
+                self.market_timezone = res['data'][0]['timezone']
             except Exception:
                 pass
-    
-    def timezone_to_utc(self,dt,timezone):
+
+    def timezone_to_utc(self, dt, timezone):
         time_zone = pytz.timezone(timezone)
         date_time = time_zone.localize(dt)
         return date_time.astimezone(pytz.utc)
-    
-    
+
     def get_index_symbol(self):
         url = "https://api.tradinghours.com/v3/markets?group=core&token="+self.token
         req = requests.get(url)
@@ -76,8 +71,7 @@ class TradingHours:
             resp = req.text
         print(resp)
         return True
-    
-    
+
     @property
     def fin_id(self):
         return self._fin_id
@@ -89,7 +83,7 @@ class TradingHours:
     @property
     def is_open(self):
         status = None
-        if isinstance(self.fin_id,list):
+        if isinstance(self.fin_id, list):
             fin_param = (",").join(self.fin_id)
         else:
             fin_param = self.fin_id
@@ -99,18 +93,22 @@ class TradingHours:
 
         if req.status_code == 200:
             resp = req.json()
-            if isinstance(self.fin_id,str):
+            if isinstance(self.fin_id, str):
                 stat = resp['data'][self.fin_id]['status']
                 if stat == "Closed":
                     try:
-                        len_date = len(resp['data'][self.fin_id]['next_bell']) - 6
-                        local_time = pd.to_datetime(resp['data'][self.fin_id]['next_bell'][:len_date])
+                        len_date = len(
+                            resp['data'][self.fin_id]['next_bell']) - 6
+                        local_time = pd.to_datetime(
+                            resp['data'][self.fin_id]['next_bell'][:len_date])
+                        local_time_extend = local_time + timedelta(minutes=30)
                         # print(local_time,self.market_timezone)
-                        self.next_bell =self.timezone_to_utc(local_time,self.market_timezone)
+                        self.next_bell = self.timezone_to_utc(
+                            local_time_extend, self.market_timezone)
                         # print(self.next_bell)
                     except Exception:
                         pass
-                   
+
                     return False
                 else:
                     return True
@@ -125,6 +123,6 @@ class TradingHours:
                     status.append(data)
         else:
             resp = req.text
-            print(fin_param,'error')
+            print(fin_param, 'error')
             status = False
         return status

@@ -1,14 +1,15 @@
 from requests.api import get
 from ingestion.data_from_rkd import update_currency_code_from_rkd
 from django.core.management.base import BaseCommand
-from core.universe.models import ExchangeMarket,Universe
+from core.universe.models import ExchangeMarket, Universe
 from core.Clients.models import UserClient
-from core.orders.models import OrderPosition,PositionPerformance
-from core.services.models import HedgeLogger
-from core.services.tasks import populate_client_top_stock_weekly,order_client_topstock,daily_hedge,send_csv_hanwha,hedge
+from core.orders.models import OrderPosition, PositionPerformance
+from core.services.tasks import populate_client_top_stock_weekly, order_client_topstock, daily_hedge, send_csv_hanwha, hedge
 from datasource.rkd import RkdData
 from datetime import datetime
-from core.djangomodule.calendar import TradingHours  
+from core.djangomodule.calendar import TradingHours
+
+
 class Command(BaseCommand):
     def handle(self, *args, **options):
         market = TradingHours(mic='XNAS')
@@ -19,7 +20,7 @@ class Command(BaseCommand):
         # daily_hedge(currency="USD")
         # serv =['bot_tester','bot_advisor']
         # for a in serv:
-        #     hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
+        #     hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA",
         #         extra_data__service_type=a).values("user")]
         #     perf  = PositionPerformance.objects.filter(position_uid__ticker__currency_code='CNY',position_uid__user_id__in=hanwha,position_uid__is_live=True,order_uid__is_init=True,created__gte='2021-07-26 02:00:00.541000' ,created__lte='2021-07-26 02:00:29.541000')
         #     list_email = [str(p.order_uid.order_uid) for p in perf]
@@ -121,5 +122,3 @@ class Command(BaseCommand):
         #     'types':'hedge'
         # })
         # send_csv_hanwha(currency="CNY")
-        
-
