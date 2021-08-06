@@ -246,7 +246,7 @@ def order_signal(sender, instance, created, **kwargs):
 
         else:
             # hedging daily bot here
-            if not bot.stock():
+            if not bot.is_stock():
                 if instance.setup:
                     # getting existing position from setup
                     order_position = OrderPosition.objects.get(
