@@ -107,7 +107,7 @@ def order_signal(sender, instance, created, **kwargs):
     elif not created and instance.side == 'buy' and instance.status in ["pending"] and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         print(instance.status,"=================ORDERING===================")
         # first transaction, user put the money to bot cash balance /in order
-        # if the order still in pending state, it cancelable
+        # if the order still in pending state, its cancelable
         # on this state user balance will decrease and lock for orders until it filled / cancel
         if instance.setup and instance.is_init:
             inv_amt = instance.setup['investment_amount']
