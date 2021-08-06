@@ -68,6 +68,7 @@ def create_performance(price_data, position, latest_price=False,rehedge=False,fo
         updated=str(log_time),
         created=str(log_time),
         last_hedge_delta=1,
+        status="Hedge"
     )
 
     if force_stop:

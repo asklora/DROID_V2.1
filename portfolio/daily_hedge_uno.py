@@ -152,7 +152,8 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
         option_price=option_price,
         order_summary={
             'hedge_shares': hedge_shares
-        }
+        },
+        status="Hedge"
     )
 
     if status_expiry:
