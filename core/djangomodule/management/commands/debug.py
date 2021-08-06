@@ -13,9 +13,9 @@ from portfolio.daily_hedge_classic import classic_position_check
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        daily_hedge(currency="USD",rehedge={
+        daily_hedge(currency="KRW",rehedge={
             'types':'hedge',
-            'date':'2021-08-05'
+            'date':'2021-08-06'
         })
         # exclude = [user["user"] for user in UserClient.objects.filter(client__client_name__in=[]).values("user")]
         # all = [user["id"] for user in User.objects.filter().values("id").exclude(id__in=exclude)]

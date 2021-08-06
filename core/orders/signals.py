@@ -239,9 +239,6 @@ def order_signal(sender, instance, created, **kwargs):
                 trans = trans.get()
                 trans.transaction_detail['position'] = order.position_uid
                 trans.save()
-            
-                #
-
                 # services.celery_app.send_task("config.celery.listener",args=(perfdata,),queue="asklora")
 
         else:

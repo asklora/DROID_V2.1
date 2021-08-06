@@ -228,6 +228,8 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
     bot_name = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
     bot_range= serializers.SerializerMethodField()
+    ticker_name = serializers.SerializerMethodField()
+
 
 
 
@@ -235,7 +237,12 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
         model = Order
         fields = ['ticker', 'price', 'bot_id', 'amount', 'side',
                   'order_uid', 'status', 'setup', 'created', 'filled_at',
-                  'placed', 'placed_at', 'canceled_at', 'qty','bot_name','currency','bot_range']
+                  'placed', 'placed_at', 'canceled_at', 'qty','bot_name','currency','bot_range','ticker_name']
+    
+    
+    def get_ticker_name(self,obj) -> str:
+        return obj.ticker.ticker_name
+
 
     def get_bot_name(self,obj) -> str:
         bot =BotOptionType.objects.get(bot_id=obj.bot_id)
@@ -246,7 +253,7 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
     def get_currency(self,obj) -> str:
         return obj.ticker.currency_code.currency_code
     
-    def get_bot_range(self,obj):
+    def get_bot_range(self,obj)-> str:
         bot =BotOptionType.objects.get(bot_id=obj.bot_id)
         return bot.duration
 
@@ -258,13 +265,17 @@ class OrderListSerializers(serializers.ModelSerializer):
     bot_name = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
     bot_range= serializers.SerializerMethodField()
+    ticker_name = serializers.SerializerMethodField()
     
     class Meta:
         model = Order
         fields = ['ticker', 'side',
                   'order_uid', 'status', 'created', 'filled_at',
-                  'placed', 'placed_at', 'qty','amount','bot_name','currency','bot_range']
+                  'placed', 'placed_at', 'qty','amount','bot_name','currency','bot_range','ticker_name']
     
+    def get_ticker_name(self,obj) -> str:
+        return obj.ticker.ticker_name
+
     def get_bot_name(self,obj) -> str:
         bot =BotOptionType.objects.get(bot_id=obj.bot_id)
         if not bot.is_stock():
@@ -274,7 +285,7 @@ class OrderListSerializers(serializers.ModelSerializer):
     def get_currency(self,obj)-> str:
         return obj.ticker.currency_code.currency_code
     
-    def get_bot_range(self,obj):
+    def get_bot_range(self,obj)-> str:
         bot =BotOptionType.objects.get(bot_id=obj.bot_id)
         return bot.duration
 
@@ -301,3 +312,5 @@ class OrderActionSerializer(serializers.ModelSerializer):
         data = {'action_id': task.id, 'status': 'executed',
                 'order_uid': validated_data['order_uid']}
         return data
+
+

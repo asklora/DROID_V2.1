@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework import permissions, response,status
-from .serializers import ClientSerializers, UserClientSerializers,ClientTopStockSerializers
+from .serializers import ClientSerializers, UserClientSerializers,ClientTopStockSerializers,ResponseSerializer
 from .models import Client,UserClient,ClientTopStock
-from drf_spectacular.utils import extend_schema
-from core.djangomodule.general import  set_cache_data,get_cached_data
+from core.user.models import TransactionHistory
+from drf_spectacular.utils import extend_schema,OpenApiExample
+from datetime import datetime
+from core.djangomodule.general import  set_cache_data,get_cached_data,errserializer
 
 class ClientView(APIView):
     serializer_class = ClientSerializers
@@ -62,3 +64,43 @@ class TopStockClientView(APIView):
         return response.Response(ClientTopStockSerializers(data,many=True).data,status=status.HTTP_200_OK)
     
         
+class TopStockAction(APIView):
+    permission_classes = [permissions.IsAdminUser]
+    
+    
+    @extend_schema(
+        responses=errserializer
+     )
+    def delete(self,request,uid):
+        try:
+            topstock = ClientTopStock.objects.get(uid=uid)
+        except ClientTopStock.DoesNotExist:
+            return response.Response({'detail':f'{uid} not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        topstock.delete()
+        return response.Response({'detail':'OK'},status=status.HTTP_204_NO_CONTENT)
+    
+    
+    
+    
+    @extend_schema(
+        request=ResponseSerializer,
+        responses=errserializer
+     )
+    def put(self, request,uid):
+        try:
+            topstock = ClientTopStock.objects.get(uid=uid)
+        except ClientTopStock.DoesNotExist:
+            return response.Response({'detail':f'{uid} not found'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+         trans = TransactionHistory.objects.filter(transaction_detail__order_uid=request.data['order_uid'])
+         trans.get()
+        except TransactionHistory.DoesNotExist:
+            return response.Response({'detail':f'transaction not found'}, status=status.HTTP_404_NOT_FOUND)
+        except TransactionHistory.MultipleObjectsReturned:
+            return response.Response({'detail':f'there is duplicate transaction found'}, status=status.HTTP_400_BAD_REQUEST)
+        topstock.position_uid = trans.transaction_detail['position_uid']
+        topstock.has_position = True
+        topstock.execution_date = datetime.now().date()
+        topstock.save()
+        return response.Response({'detail':'OK'},status=status.HTTP_200_OK)

@@ -181,3 +181,6 @@ class UnixEpochDateField(serializers.DateTimeField):
     def from_native(self, value):
         import datetime
         return datetime.datetime.fromtimestamp(int(value))
+
+class errserializer(serializers.Serializer):
+    detail = serializers.CharField()
