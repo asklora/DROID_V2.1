@@ -13,10 +13,14 @@ from portfolio.daily_hedge_classic import classic_position_check
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        exclude = [user["user"] for user in UserClient.objects.filter(client__client_name__in=[]).values("user")]
-        all = [user["id"] for user in User.objects.filter().values("id").exclude(id__in=exclude)]
-        print(all)
-        print(exclude)
+        daily_hedge(currency="USD",rehedge={
+            'types':'hedge',
+            'date':'2021-08-05'
+        })
+        # exclude = [user["user"] for user in UserClient.objects.filter(client__client_name__in=[]).values("user")]
+        # all = [user["id"] for user in User.objects.filter().values("id").exclude(id__in=exclude)]
+        # print(all)
+        # print(exclude)
         # perfs = PositionPerformance.objects.filter(status=None)
         # for perf in perfs:
         #     if perf.order_uid:

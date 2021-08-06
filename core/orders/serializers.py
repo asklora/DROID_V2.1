@@ -248,8 +248,7 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
     
     def get_bot_range(self,obj):
         bot =BotOptionType.objects.get(bot_id=obj.bot_id)
-        if not bot.is_stock():
-            return bot.bot_type.duration
+        return bot.duration
 
 
 class OrderListSerializers(serializers.ModelSerializer):
@@ -277,8 +276,7 @@ class OrderListSerializers(serializers.ModelSerializer):
     
     def get_bot_range(self,obj):
         bot =BotOptionType.objects.get(bot_id=obj.bot_id)
-        if not bot.is_stock():
-            return bot.bot_type.duration
+        return bot.duration
 
 
 class OrderActionSerializer(serializers.ModelSerializer):
