@@ -112,7 +112,7 @@ def order_signal(sender, instance, created, **kwargs):
         print(instance.status,"=================ORDERING===================")
         # first transaction, user put the money to bot cash balance /in order
         # if the order still in pending state, its cancelable
-        # on this state user balance will decrease and lock for orders until it filled / cancel
+        # on this state user balance will decrease and lock for orders until it filled / cancels
 
         if instance.setup and instance.is_init:
             inv_amt = instance.setup['investment_amount']
