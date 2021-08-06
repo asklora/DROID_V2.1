@@ -1,3 +1,4 @@
+from core import user
 import math
 from core.Clients.models import UserClient
 from django.db.models.signals import post_save, pre_save, post_delete
@@ -6,7 +7,7 @@ from .models import Order, OrderFee, OrderPosition, PositionPerformance
 from core.bot.models import BotOptionType
 from bot.calculate_bot import get_classic, get_expiry_date, get_uno, get_ucdc
 from core.djangomodule.general import formatdigit
-from core.user.models import TransactionHistory
+from core.user.models import TransactionHistory, Accountbalance
 import pandas as pd
 
 
@@ -113,12 +114,13 @@ def order_signal(sender, instance, created, **kwargs):
         else:
             inv_amt = instance.amount
         digits = max(min(5-len(str(int(instance.price))), 2), -1)
-
+        balance = Accountbalance.objects.get(user_id=instance.user_id)
         TransactionHistory.objects.create(
             balance_uid=instance.user_id.wallet,
             side="debit",
             amount=round(inv_amt, digits),
             transaction_detail={
+                "last_amount" : balance.amount,
                 "description": "bot order",
                 # "position": f"{order.position_uid}",
                 "event": "create",
@@ -133,7 +135,7 @@ def order_signal(sender, instance, created, **kwargs):
                 fee_type=f"{instance.side} commissions fee",
                 amount=commissions_fee
             )
-
+            balance = Accountbalance.objects.get(user_id=instance.user_id)
             TransactionHistory.objects.create(
                 balance_uid=instance.user_id.wallet,
                 side="debit",
@@ -151,12 +153,13 @@ def order_signal(sender, instance, created, **kwargs):
                     fee_type=f"{instance.side} stamp_duty fee",
                     amount=stamp_duty_fee
                 )
-
+                balance = Accountbalance.objects.get(user_id=instance.user_id)
                 TransactionHistory.objects.create(
                     balance_uid=instance.user_id.wallet,
                     side="debit",
                     amount=stamp_duty_fee,
                     transaction_detail={
+                        "last_amount" : balance.amount,
                         "description": f"{instance.side} fee",
                         # "position": f"{order.position_uid}",
                         "event": "stamp_duty",
@@ -291,12 +294,13 @@ def order_signal(sender, instance, created, **kwargs):
                             fee_type=f"{instance.side} commissions fee",
                             amount=commissions_fee
                         )
-
+                        balance = Accountbalance.objects.get(user_id=instance.user_id)
                         TransactionHistory.objects.create(
                             balance_uid=order_position.user_id.wallet,
                             side="debit",
                             amount=total_fee,
                             transaction_detail={
+                                "last_amount" : balance.amount,
                                 "description": f"{instance.side} fee",
                                 "position": f"{order_position.position_uid}",
                                 "event": "fee",
@@ -309,12 +313,14 @@ def order_signal(sender, instance, created, **kwargs):
                                 fee_type=f"{instance.side} stamp_duty fee",
                                 amount=stamp_duty_fee
                             )
+                            balance = Accountbalance.objects.get(user_id=instance.user_id)
 
                             TransactionHistory.objects.create(
                                 balance_uid=order_position.user_id.wallet,
                                 side="debit",
                                 amount=stamp_duty_fee,
                                 transaction_detail={
+                                    "last_amount" : balance.amount,
                                     "description": f"{instance.side} fee",
                                     "position": f"{order_position.position_uid}",
                                     "event": "stamp_duty",
@@ -329,12 +335,14 @@ def order_signal(sender, instance, created, **kwargs):
                             fee_type=f"{instance.side} commissions fee",
                             amount=total_fee
                         )
+                        balance = Accountbalance.objects.get(user_id=instance.user_id)
 
                         TransactionHistory.objects.create(
                             balance_uid=order_position.user_id.wallet,
                             side="debit",
                             amount=total_fee,
                             transaction_detail={
+                                "last_amount" : balance.amount,
                                 "description": f"{instance.side} fee",
                                 "position": f"{order_position.position_uid}",
                                 "event": "fee",
@@ -347,12 +355,14 @@ def order_signal(sender, instance, created, **kwargs):
                                 fee_type=f"{instance.side} stamp_duty fee",
                                 amount=stamp_duty_fee
                             )
+                            balance = Accountbalance.objects.get(user_id=instance.user_id)
 
                             TransactionHistory.objects.create(
                                 balance_uid=order_position.user_id.wallet,
                                 side="debit",
                                 amount=stamp_duty_fee,
                                 transaction_detail={
+                                    "last_amount" : balance.amount,
                                     "description": f"{instance.side} fee",
                                     "position": f"{order_position.position_uid}",
                                     "event": "stamp_duty",
@@ -365,12 +375,13 @@ def order_signal(sender, instance, created, **kwargs):
                         # add bot_cash_dividend on return
                         amt = order_position.investment_amount + order_position.final_pnl_amount
                         return_amt = amt + order_position.bot_cash_dividend
-
+                        balance = Accountbalance.objects.get(user_id=instance.user_id)
                         TransactionHistory.objects.create(
                             balance_uid=order_position.user_id.wallet,
                             side="credit",
                             amount=return_amt,
                             transaction_detail={
+                                "last_amount" : balance.amount,
                                 "description": "bot return",
                                 "position": f"{order_position.position_uid}",
                                 "event": "return",
@@ -385,12 +396,14 @@ def order_signal(sender, instance, created, **kwargs):
                                 fee_type=f"{instance.side} commissions fee",
                                 amount=commissions_fee
                             )
+                            balance = Accountbalance.objects.get(user_id=instance.user_id)
 
                             TransactionHistory.objects.create(
                                 balance_uid=order_position.user_id.wallet,
                                 side="debit",
                                 amount=total_fee,
                                 transaction_detail={
+                                    "last_amount" : balance.amount,
                                     "description": f"{instance.side} fee",
                                     "position": f"{order_position.position_uid}",
                                     "event": "fee",
@@ -403,12 +416,13 @@ def order_signal(sender, instance, created, **kwargs):
                                     fee_type=f"{instance.side} stamp_duty fee",
                                     amount=stamp_duty_fee
                                 )
-
+                                balance = Accountbalance.objects.get(user_id=instance.user_id)
                                 TransactionHistory.objects.create(
                                     balance_uid=order_position.user_id.wallet,
                                     side="debit",
                                     amount=stamp_duty_fee,
                                     transaction_detail={
+                                        "last_amount" : balance.amount,
                                         "description": f"{instance.side} fee",
                                         "position": f"{order_position.position_uid}",
                                         "event": "stamp_duty",
