@@ -13,12 +13,11 @@ from config.celery import app
 from celery.schedules import crontab
 from celery import group as celery_groups
 # MODELS AND UTILS
-from core.universe.models import Universe, UniverseConsolidated
+from core.universe.models import Universe, UniverseConsolidated,ExchangeMarket
 from core.Clients.models import ClientTopStock, UniverseClient
 from core.user.models import User
 from core.djangomodule.serializers import CsvSerializer
 from core.djangomodule.yahooFin import get_quote_index, get_quote_yahoo
-from core.djangomodule.calendar import TradingHours
 from core.master.models import Currency
 from core.orders.models import Order, PositionPerformance, OrderPosition
 from core.Clients.models import UserClient, Client
@@ -448,8 +447,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False,
                 extra_data__type=queue.bot
             )
             # TRADING HOURS CHECK
-            market = TradingHours(mic=queue.ticker.mic)
-
+            market = ExchangeMarket.objects.get(mic=queue.ticker.mic)
             if market.is_open or "repopulate" in options:
                 report_to_slack(
                     f"=== {client_name} MARKET {queue.ticker} IS OPEN AND CREATING INITIAL ORDER ===")
@@ -560,7 +558,7 @@ def daily_hedge_user(currency=None, ingest=False, exclude_client=['HANWHA','FELS
             celery_jobs = celery_groups(group_celery_jobs)
             for position in positions:
                 position_uid = position.position_uid
-                market = TradingHours(mic=position.ticker.mic)
+                market = ExchangeMarket.objects.get(mic=position.ticker.mic)
                 if market.is_open:
                     if (position.bot.is_uno()):
                         group_celery_jobs.append(uno_position_check.s(position_uid,hedge=True))
@@ -627,7 +625,7 @@ def hedge(currency=None, bot_tester=False, **options):
             # DO HEDGE
             for position in positions:
                 position_uid = position.position_uid
-                market = TradingHours(mic=position.ticker.mic)
+                market = ExchangeMarket.objects.get(mic=position.ticker.mic)
                 # MARKET OPEN CHECK TRADINGHOURS, ignore market time if rehedge
                 if market.is_open or "rehedge" in options:
                     # NOT USING YAHOO

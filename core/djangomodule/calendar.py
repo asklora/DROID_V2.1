@@ -9,14 +9,16 @@ import pandas as pd
 
 class TradingHours:
     next_bell = None
+    until = None
     token = "1M1a35Qhk8gUbCsOSl6XRY2z3Qjj0of7y5ZEfE5MasUYm5b9YsoooA7RSxW7"
     market_timezone = None
+    time_to_check =None
 
     def __init__(self, fins=None, mic=None):
         if mic:
             if isinstance(mic, str):
-                exchange = ExchangeMarket.objects.get(mic=mic)
-                self.fin_id = exchange.fin_id
+                self.exchange = ExchangeMarket.objects.get(mic=mic)
+                self.fin_id = self.exchange.fin_id
                 self.get_market_timezone()
             elif isinstance(mic, list):
                 exchange = ExchangeMarket.objects.filter(mic__in=mic)
@@ -27,6 +29,7 @@ class TradingHours:
                     f"mic must be string or list instance not {mictype}")
         elif fins:
             self.fin_id = fins
+            self.exchange = ExchangeMarket.objects.get(fin_id=fins)
         elif not fins and not mic:
             raise ValueError("fins and mic should not be Blank")
 
@@ -71,6 +74,11 @@ class TradingHours:
             resp = req.text
         print(resp)
         return True
+    
+    
+    def normalize_datetime(self,dt):
+        len_date = len(dt) - 6
+        return pd.to_datetime(dt[:len_date])
 
     @property
     def fin_id(self):
@@ -79,6 +87,42 @@ class TradingHours:
     @fin_id.setter
     def fin_id(self, value):
         self._fin_id = value
+
+
+    def run_market_check(self):
+        url = "http://api.tradinghours.com/v3/markets/status?fin_id=" + \
+            self.fin_id+"&token="+self.token
+        req = requests.get(url)
+        if req.status_code == 200:
+            resp = req.json()
+            now = datetime.now()
+            message_debug = f'{now} || market check for {self.fin_id}'
+            print(message_debug)
+            print(resp['data'])
+            if resp['data'][self.fin_id]['status'] == "Closed":
+                market_status =  False
+            else:
+                market_status =  True
+            try:
+                until_time = self.normalize_datetime(resp['data'][self.fin_id]['until'])
+                local_time_extend = self.normalize_datetime(resp['data'][self.fin_id]['next_bell']) + timedelta(minutes=30)
+                self.next_bell = self.timezone_to_utc(local_time_extend, self.market_timezone)
+                self.until = self.timezone_to_utc(until_time, self.market_timezone)
+            except Exception as e:
+                print(str(e))
+            if self.until:
+                self.time_to_check = self.until
+            else:
+                self.time_to_check =self.next_bell
+            if self.time_to_check:
+                self.exchange.until_time = self.time_to_check
+                self.exchange.is_open = market_status
+                self.exchange.save()
+        else:
+            print(req.status_code)
+
+            
+            
 
     @property
     def is_open(self):
@@ -93,22 +137,14 @@ class TradingHours:
 
         if req.status_code == 200:
             resp = req.json()
+            try:
+                nextbell_time_extend = self.normalize_datetime(resp['data'][self.fin_id]['next_bell']) + timedelta(minutes=30)
+                self.next_bell = self.timezone_to_utc(nextbell_time_extend, self.market_timezone)
+            except Exception:
+                pass
             if isinstance(self.fin_id, str):
                 stat = resp['data'][self.fin_id]['status']
                 if stat == "Closed":
-                    try:
-                        len_date = len(
-                            resp['data'][self.fin_id]['next_bell']) - 6
-                        local_time = pd.to_datetime(
-                            resp['data'][self.fin_id]['next_bell'][:len_date])
-                        local_time_extend = local_time + timedelta(minutes=30)
-                        # print(local_time,self.market_timezone)
-                        self.next_bell = self.timezone_to_utc(
-                            local_time_extend, self.market_timezone)
-                        # print(self.next_bell)
-                    except Exception:
-                        pass
-
                     return False
                 else:
                     return True

@@ -399,7 +399,8 @@ class ExchangeMarket(BaseTimeStampModel):
     asset_type= models.CharField(blank=True, null=True,max_length=255)
     group= models.CharField(blank=True, null=True,max_length=100)
     currency_code = models.ForeignKey(Currency,null=True,blank=True,related_name="currency_exchange", on_delete=models.CASCADE,db_column="currency_code")
-
+    is_open = models.BooleanField(default=False)
+    until_time = models.DateTimeField(null=True, blank=True)
     class Meta:
         managed = True
         db_table = "universe_exchange_market"
