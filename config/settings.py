@@ -178,8 +178,16 @@ CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_IMPORTS = ['core.services.ingestiontask',
-                  'core.services.tasks', 'channels_presence.tasks', 'datasource.rkd', 'core.services.order_services']
+CELERY_IMPORTS = [
+    'core.services.ingestiontask',
+    'core.services.tasks', 
+    'channels_presence.tasks', 
+    'datasource.rkd',
+    'core.services.order_services',
+    'core.services.exchange_services'
+    ]
+
+    
 CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 

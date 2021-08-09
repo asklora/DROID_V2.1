@@ -78,7 +78,9 @@ def order_signal_check(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Order)
 def order_signal(sender, instance, created, **kwargs):
-    print(instance.status,"<<<<<<<<<<<<STATUSSSSS>>>>>>>>>>>>>>>>>>",PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists())
+
+
+    print(instance.status,"<<<<<<<<<<<<STATUSSSSS>>>>>>>>>>>>>>>>>>")
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
         # if instance.bot_id != "STOCK_stock_0":
@@ -104,11 +106,14 @@ def order_signal(sender, instance, created, **kwargs):
             trans = trans.get()
             trans.delete()
 
-    elif not created and instance.side == 'buy' and instance.status in ["pending"] and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
+
+
+    elif not created and instance.side == 'buy' and instance.status in ["pending"] and instance.is_init and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         print(instance.status,"=================ORDERING===================")
         # first transaction, user put the money to bot cash balance /in order
         # if the order still in pending state, its cancelable
-        # on this state user balance will decrease and lock for orders until it filled / cancel
+        # on this state user balance will decrease and lock for orders until it filled / cancels
+
         if instance.setup and instance.is_init:
             inv_amt = instance.setup['investment_amount']
         else:
@@ -170,7 +175,6 @@ def order_signal(sender, instance, created, **kwargs):
     elif not created and instance.status in "filled" and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         bot = BotOptionType.objects.get(bot_id=instance.bot_id)
 
-
         # update the status and create new positions
         # if order is filled will create the position and first performance
         if instance.is_init:
@@ -197,7 +201,8 @@ def order_signal(sender, instance, created, **kwargs):
                     position_uid=order,
                     last_spot_price=instance.price,
                     last_live_price=instance.price,
-                    order_uid=instance
+                    order_uid=instance,
+                    status='Populate'
                 )
             # if use bot
             if instance.setup:
@@ -219,7 +224,6 @@ def order_signal(sender, instance, created, **kwargs):
                 order.bot_cash_balance = 0
                 order.share_num = instance.qty
                 perf.share_num = instance.qty
-                perf.status = 'Populate'
             # start creating position
             digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
             perf.current_pnl_amt = 0  # need to calculate with fee
