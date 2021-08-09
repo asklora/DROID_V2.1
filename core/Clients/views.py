@@ -99,7 +99,7 @@ class TopStockAction(APIView):
             return response.Response({'detail':f'transaction not found'}, status=status.HTTP_404_NOT_FOUND)
         except TransactionHistory.MultipleObjectsReturned:
             return response.Response({'detail':f'there is duplicate transaction found'}, status=status.HTTP_400_BAD_REQUEST)
-        topstock.position_uid = trans.transaction_detail['position_uid']
+        topstock.position_uid = trans.transaction_detail['position']
         topstock.has_position = True
         topstock.execution_date = datetime.now().date()
         topstock.save()
