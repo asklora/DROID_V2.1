@@ -26,7 +26,8 @@ class Command(BaseCommand):
             price=options["price"],
             bot_id=options["bot"],
             amount=options["amount"],
-            user_id=user
+            user_id=user,
+            status = "review"
         )
         if order:
             order.placed = True

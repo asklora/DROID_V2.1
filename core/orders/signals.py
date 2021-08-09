@@ -143,18 +143,6 @@ def order_signal(sender, instance, created, **kwargs):
             order_fee = order_fee.get()
             order_fee.delete()
 
-    #When Populate Position, Order Already Placed But The Status Review, Recalculate Setup
-    elif not created and instance.side == "buy" and instance.status in ["review"] and not performance_exist:
-        if instance.bot_id != "STOCK_stock_0":
-            setup = generate_hedge_setup(instance)
-            instance.setup = setup
-            instance.qty = setup["share_num"]
-            instance.amount = formatdigit(setup["share_num"] * setup["price"])
-        else:
-            instance.setup = None
-            instance.qty = math.floor(instance.amount / instance.price)
-            instance.amount = round(instance.qty * instance.price,2)
-
     #When Populate Position, Order Already Placed But The Status Pending
     elif not created and instance.side == "buy" and instance.status in ["pending"] and not performance_exist:
         print(instance.status,"=================ORDERING===================")
