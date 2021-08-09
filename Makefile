@@ -103,10 +103,10 @@ gbp_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.production --option_maker True --null_filler True --currency_code GBP --ucdc True --infer True
 
 worldscope_jpy:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.production --worldscope True --currency_code JPY
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.production --worldscope True --currency_code JPY SGD
 
 worldscope_krw:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.production --worldscope True --currency_code SGD GBP KRW
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.production --worldscope True --currency_code GBP KRW
 
 worldscope_cny:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.production --worldscope True --currency_code CNY
@@ -124,10 +124,10 @@ worldscope_usd:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.production --worldscope True --currency_code USD
 
 fundamentals_score_jpy:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.production --fundamentals_score True --currency_code JPY
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.production --fundamentals_score True --currency_code JPY SGD
 
 fundamentals_score_krw:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.production --fundamentals_score True --currency_code SGD GBP KRW
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.production --fundamentals_score True --currency_code GBP KRW
 
 fundamentals_score_cny:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.production --fundamentals_score True --currency_code CNY
