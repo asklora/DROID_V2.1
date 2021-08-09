@@ -80,7 +80,7 @@ def order_signal_check(sender, instance, **kwargs):
 def order_signal(sender, instance, created, **kwargs):
 
 
-    print(instance.status,"<<<<<<<<<<<<STATUSSSSS>>>>>>>>>>>>>>>>>>",PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists())
+    print(instance.status,"<<<<<<<<<<<<STATUSSSSS>>>>>>>>>>>>>>>>>>")
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
         # if instance.bot_id != "STOCK_stock_0":
@@ -201,7 +201,8 @@ def order_signal(sender, instance, created, **kwargs):
                     position_uid=order,
                     last_spot_price=instance.price,
                     last_live_price=instance.price,
-                    order_uid=instance
+                    order_uid=instance,
+                    status='Populate'
                 )
             # if use bot
             if instance.setup:
@@ -223,7 +224,6 @@ def order_signal(sender, instance, created, **kwargs):
                 order.bot_cash_balance = 0
                 order.share_num = instance.qty
                 perf.share_num = instance.qty
-                perf.status = 'Populate'
             # start creating position
             digits = max(min(5-len(str(int(perf.last_live_price))), 2), -1)
             perf.current_pnl_amt = 0  # need to calculate with fee
