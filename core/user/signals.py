@@ -29,8 +29,7 @@ def transaction(sender, instance, **kwargs):
     this function for decreasing and increasing the user balance
     instance is the object itself (TransactionHistory)
     """
-    wallet = Accountbalance.objects.get(
-        balance_uid=instance.balance_uid.balance_uid)
+    wallet = Accountbalance.objects.get(balance_uid=instance.balance_uid.balance_uid)
     trans_type = instance.side
     if trans_type == 'debit':
         result = wallet.amount + instance.amount
