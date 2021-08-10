@@ -80,7 +80,7 @@ def order_signal_check(sender, instance, **kwargs):
 def order_signal(sender, instance, created, **kwargs):
 
 
-    print(f"<<<<<<<<<<<<STATUSSSSS {instance.status} {instance.order_uid}>>>>>>>>>>>>>>>>>>")
+    print(f"<<<<<<<<<<<< STATUSSSSS CHANGE {instance.status} {instance.order_uid}>>>>>>>>>>>>>>>>>>")
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
         # if instance.bot_id != "STOCK_stock_0":
@@ -174,11 +174,11 @@ def order_signal(sender, instance, created, **kwargs):
 
     elif not created and instance.status in "filled" and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         bot = BotOptionType.objects.get(bot_id=instance.bot_id)
-        print(f"================= FILLED {instance.status} {instance.order_uid} ===================")
 
         # update the status and create new positions
         # if order is filled will create the position and first performance
         if instance.is_init:
+            print(f"================= INIT FILLED {instance.status} {instance.order_uid} ===================")
             # below is only for new order initiated
             margin = 1
             
@@ -252,7 +252,7 @@ def order_signal(sender, instance, created, **kwargs):
         else:
             # hedging daily bot here
             if not bot.is_stock():
-            
+                print(f"================= HEDGE FILLED {instance.status} {instance.order_uid} ===================")
                 if instance.setup:
                     # getting existing position from setup
                     order_position = OrderPosition.objects.get(
