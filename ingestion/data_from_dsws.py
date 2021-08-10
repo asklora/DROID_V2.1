@@ -589,7 +589,7 @@ def interest_update_from_dsws():
     report_to_slack("{} : === Interest Updated ===".format(datetimeNow()))
 
 def update_fred_data_from_fred():
-    print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
+    print("{} : === Fred Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
     start_date = droid_start_date()
     result = read_fred_csv(start_date, end_date)
@@ -597,7 +597,7 @@ def update_fred_data_from_fred():
     result["data"] = result["data"].astype(float)
     if(len(result)) > 0 :
         upsert_data_to_database(result, get_data_fred_table_name(), "uid", how="update", Text=True)
-        report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
+        report_to_slack("{} : === Fred Updated ===".format(datetimeNow()))
 
 def populate_ibes_table():
     table_name = get_data_ibes_table_name()
