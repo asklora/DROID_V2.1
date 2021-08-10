@@ -144,7 +144,8 @@ class TradingHours:
                 pass
             if isinstance(self.fin_id, str):
                 stat = resp['data'][self.fin_id]['status']
-                if stat == "Closed":
+                # hacky stuff need to change
+                if stat == "Closed" and not self.exchange.currency_code.currency_code == 'EUR':
                     return False
                 else:
                     return True
