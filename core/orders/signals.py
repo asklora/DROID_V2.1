@@ -252,6 +252,7 @@ def order_signal(sender, instance, created, **kwargs):
         else:
             # hedging daily bot here
             if not bot.is_stock():
+            
                 if instance.setup:
                     # getting existing position from setup
                     order_position = OrderPosition.objects.get(
@@ -288,6 +289,8 @@ def order_signal(sender, instance, created, **kwargs):
 
                     # should be no transaction here except fee coz user already  put the money into bot
                     if instance.side == "sell" and order_position.is_live and not instance.order_type:
+                        print(f"================= Hedge Sell ORDER success {instance.status} {instance.order_uid} ===================")
+
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             instance.amount, "sell", order_position.user_id)
 
@@ -330,6 +333,8 @@ def order_signal(sender, instance, created, **kwargs):
                                 },
                             )
                     elif instance.side == "buy" and order_position.is_live and not instance.order_type:
+                        print(f"================= Hedge Buy ORDER success {instance.status} {instance.order_uid} ===================")
+
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             instance.amount, "buy", order_position.user_id)
                         fee = OrderFee.objects.create(
@@ -374,6 +379,8 @@ def order_signal(sender, instance, created, **kwargs):
 
                     # end portfolio / bot
                     if not order_position.is_live:
+                        print(f"================= Hedge Stop/finish ORDER success {instance.status} {instance.order_uid} ===================")
+
                         # add bot_cash_dividend on return
                         amt = order_position.investment_amount + order_position.final_pnl_amount
                         return_amt = amt + order_position.bot_cash_dividend
