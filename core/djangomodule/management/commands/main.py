@@ -32,7 +32,8 @@ from ingestion.data_from_dsws import (
     update_fundamentals_score_from_dsws, 
     update_ibes_data_monthly_from_dsws, 
     update_industry_from_dsws, 
-    update_macro_data_monthly_from_dsws, 
+    update_macro_data_monthly_from_dsws,
+    update_rec_buy_sell_from_dsws, 
     update_ticker_name_from_dsws, 
     update_vix_from_dsws, 
     update_worldscope_identifier_from_dsws, 
@@ -169,6 +170,8 @@ class Command(BaseCommand):
                 status = "Ticker Name Ingestion"
                 update_ticker_name_from_dsws()
                 do_function("universe_populate")
+                status = "RECSELL & RECBUY Ingestion"
+                update_rec_buy_sell_from_dsws()
                 status = "Weekly Macro & Ibes Migration"
                 weekly_migrations()
 
