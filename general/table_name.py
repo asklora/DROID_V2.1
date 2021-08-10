@@ -1,3 +1,7 @@
+'''
+Utility functions to get database table names
+'''
+
 def get_region_table_name():
     return "region"
 
