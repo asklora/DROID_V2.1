@@ -67,8 +67,8 @@ class UserSummaryView(APIView):
 
         cache_key = f'usersummary{pk}'
         cached_data = get_cached_data(cache_key)
-        if cached_data:
-            return response.Response(cached_data,status=status.HTTP_200_OK)
+        # if cached_data:
+        #     return response.Response(cached_data,status=status.HTTP_200_OK)
         user = User.objects.get(id=pk)
         res =UserSummarySerializer(user).data
         set_cache_data(cache_key,data=res,interval=(60*60) *4)

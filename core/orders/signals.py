@@ -80,7 +80,7 @@ def order_signal_check(sender, instance, **kwargs):
 def order_signal(sender, instance, created, **kwargs):
 
 
-    print(instance.status,"<<<<<<<<<<<<STATUSSSSS>>>>>>>>>>>>>>>>>>")
+    print(f"<<<<<<<<<<<< STATUSSSSS CHANGE {instance.status} {instance.order_uid}>>>>>>>>>>>>>>>>>>")
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
         # if instance.bot_id != "STOCK_stock_0":
@@ -109,7 +109,7 @@ def order_signal(sender, instance, created, **kwargs):
 
 
     elif not created and instance.side == 'buy' and instance.status in ["pending"] and instance.is_init and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
-        print(instance.status,"=================ORDERING===================")
+        print(f"=================ORDERING {instance.status} {instance.order_uid} ===================")
         # first transaction, user put the money to bot cash balance /in order
         # if the order still in pending state, its cancelable
         # on this state user balance will decrease and lock for orders until it filled / cancels
@@ -178,6 +178,7 @@ def order_signal(sender, instance, created, **kwargs):
         # update the status and create new positions
         # if order is filled will create the position and first performance
         if instance.is_init:
+            print(f"================= INIT FILLED {instance.status} {instance.order_uid} ===================")
             # below is only for new order initiated
             margin = 1
             
@@ -251,6 +252,7 @@ def order_signal(sender, instance, created, **kwargs):
         else:
             # hedging daily bot here
             if not bot.is_stock():
+                print(f"================= HEDGE FILLED {instance.status} {instance.order_uid} ===================")
                 if instance.setup:
                     # getting existing position from setup
                     order_position = OrderPosition.objects.get(
@@ -287,6 +289,8 @@ def order_signal(sender, instance, created, **kwargs):
 
                     # should be no transaction here except fee coz user already  put the money into bot
                     if instance.side == "sell" and order_position.is_live and not instance.order_type:
+                        print(f"================= Hedge Sell ORDER success {instance.status} {instance.order_uid} ===================")
+
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             instance.amount, "sell", order_position.user_id)
 
@@ -329,6 +333,8 @@ def order_signal(sender, instance, created, **kwargs):
                                 },
                             )
                     elif instance.side == "buy" and order_position.is_live and not instance.order_type:
+                        print(f"================= Hedge Buy ORDER success {instance.status} {instance.order_uid} ===================")
+
                         commissions_fee, stamp_duty_fee, total_fee = calculate_fee(
                             instance.amount, "buy", order_position.user_id)
                         fee = OrderFee.objects.create(
@@ -371,8 +377,10 @@ def order_signal(sender, instance, created, **kwargs):
                                 },
                             )
 
-                    # end portfolio / bot
+                    # end portfolio / bots
                     if not order_position.is_live:
+                        print(f"================= Hedge Stop/finish ORDER success {instance.status} {instance.order_uid} ===================")
+
                         # add bot_cash_dividend on return
                         amt = order_position.investment_amount + order_position.final_pnl_amount
                         return_amt = amt + order_position.bot_cash_dividend

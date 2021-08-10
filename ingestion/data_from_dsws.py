@@ -898,4 +898,22 @@ def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filt
         result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
         print(result)
         upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
-        
+
+def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
+    print("{} : === RECSELL RECBUY Start Ingestion ===".format(datetimeNow()))
+    universe = get_all_universe(ticker=ticker, currency_code=currency_code)
+    print(universe)
+    filter_field = ["RECSELL", "RECBUY"]
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], "ticker", filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    print(result)
+    if(len(result)) > 0 :
+        result = result.rename(columns={"RECSELL": "recsell", "RECBUY" : "recbuy", "index":"ticker"})
+        result["trading_day"] = check_trading_day(days=6)
+        result = uid_maker(result, uid="uid", ticker="ticker", trading_day="trading_day")
+        result1 = result.loc[result["recsell"] != "NA"][["uid", "trading_day", "ticker", "recsell"]]
+        result2 = result.loc[result["recsell"] != "NA"][["uid", "trading_day", "ticker", "recbuy"]]
+        print(result1)
+        print(result2)
+        upsert_data_to_database(result1, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
+        upsert_data_to_database(result2, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
+        report_to_slack("{} : === RECSELL RECBUY Updated ===".format(datetimeNow()))
