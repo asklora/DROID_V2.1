@@ -116,7 +116,7 @@ app.conf.beat_schedule = {
     },
     "EUR-HEDGE": {
         "task": "core.services.tasks.daily_hedge",
-        "schedule": crontab(minute=EUR_CUR.top_stock_schedule.minute, hour=EUR_CUR.top_stock_schedule.hour, day_of_week="1-5"),
+        "schedule": crontab(minute=EUR_CUR.hedge_schedule.minute, hour=EUR_CUR.hedge_schedule.hour, day_of_week="1-5"),
         "kwargs": {"currency": "EUR"},
         "options": {
             "expires": 5*60,
