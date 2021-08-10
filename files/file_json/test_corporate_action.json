@@ -1,0 +1,29 @@
+{
+    "ExtractionRequest": {
+        "@odata.type": "#CorporateActionsExtractionRequests",
+        "ContentFieldNames": [
+            "RIC",
+            "Capital Additive Adjustment Factor",
+            "Capital Change Event Type",
+            "Capital Change Event Type Description",
+            "Capital Change Ex Date",
+            "Dividend Ex Date",
+            "Dividend Frequency",
+            "Dividend Frequency Description",
+            "Dividend Rate",
+            "Earnings Announcement Date",
+            "EPS Amount"
+        ],
+        "IdentifierList": {
+            "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+            "InstrumentIdentifiers": [
+            ],
+            "ValidationOptions":{"AllowHistoricalInstruments":true,"AllowOpenAccessInstruments":true},
+            "UseUserPreferencesForValidationOptions": false
+        },
+        "Condition":
+        {
+            
+      }
+    }
+}
