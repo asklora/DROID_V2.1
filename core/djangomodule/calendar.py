@@ -126,6 +126,8 @@ class TradingHours:
 
     @property
     def is_open(self):
+        if self.exchange.currency_code.currency_code == 'EUR':
+            return True
         status = None
         if isinstance(self.fin_id, list):
             fin_param = (",").join(self.fin_id)
@@ -144,6 +146,7 @@ class TradingHours:
                 pass
             if isinstance(self.fin_id, str):
                 stat = resp['data'][self.fin_id]['status']
+                # hacky stuff need to change
                 if stat == "Closed":
                     return False
                 else:

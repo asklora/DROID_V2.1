@@ -40,8 +40,8 @@ class UserClientView(APIView):
         """
         cache_key = f'users_client_{client_id}'
         cached_data = get_cached_data(cache_key)
-        if cached_data:
-            return response.Response(cached_data,status=status.HTTP_200_OK)
+        # if cached_data:
+        #     return response.Response(cached_data,status=status.HTTP_200_OK)
         users = UserClient.objects.filter(client_id=client_id,user__is_superuser=False,extra_data__service_type__in=['bot_advisor','bot_tester'])
         res = UserClientSerializers(users,many=True).data
         set_cache_data(cache_key,data=res,interval=(60*60)*4)

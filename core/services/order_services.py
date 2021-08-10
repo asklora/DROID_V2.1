@@ -30,7 +30,10 @@ class OrderDetailsServicesSerializers(serializers.ModelSerializer):
 def order_executor(self, payload, recall=False):
     payload = json.loads(payload)
     Model = apps.get_model('orders', 'Order')
-    order = Model.objects.get(order_uid=payload['order_uid'])
+    try:
+        order = Model.objects.get(order_uid=payload['order_uid'])
+    except Model.DoesNotExist:
+        return {'err':f"{payload['order_uid']} doesnt exists"}
 
     if recall:
         rkd = RkdData()

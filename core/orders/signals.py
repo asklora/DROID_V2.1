@@ -80,7 +80,7 @@ def order_signal_check(sender, instance, **kwargs):
 def order_signal(sender, instance, created, **kwargs):
 
 
-    print(instance.status,"<<<<<<<<<<<<STATUSSSSS>>>>>>>>>>>>>>>>>>")
+    print(f"<<<<<<<<<<<<STATUSSSSS {instance.status} {instance.order_uid}>>>>>>>>>>>>>>>>>>")
     if created and instance.is_init:
         # if bot will create setup expiry , SL and TP
         # if instance.bot_id != "STOCK_stock_0":
@@ -109,7 +109,7 @@ def order_signal(sender, instance, created, **kwargs):
 
 
     elif not created and instance.side == 'buy' and instance.status in ["pending"] and instance.is_init and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
-        print(instance.status,"=================ORDERING===================")
+        print(f"=================ORDERING {instance.status} {instance.order_uid} ===================")
         # first transaction, user put the money to bot cash balance /in order
         # if the order still in pending state, its cancelable
         # on this state user balance will decrease and lock for orders until it filled / cancels
@@ -174,6 +174,7 @@ def order_signal(sender, instance, created, **kwargs):
 
     elif not created and instance.status in "filled" and not PositionPerformance.objects.filter(performance_uid=instance.performance_uid).exists():
         bot = BotOptionType.objects.get(bot_id=instance.bot_id)
+        print(f"================= FILLED {instance.status} {instance.order_uid} ===================")
 
         # update the status and create new positions
         # if order is filled will create the position and first performance
