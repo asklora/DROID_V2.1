@@ -6,6 +6,9 @@ from core.djangomodule.models import BaseTimeStampModel
 
 
 class Client(BaseTimeStampModel):
+    """
+    Clients
+    """
     client_uid = models.CharField(
         max_length=255, primary_key=True, editable=False)
     client_name = models.CharField(max_length=255)
@@ -42,6 +45,9 @@ class Client(BaseTimeStampModel):
 
 
 class UserClient(BaseTimeStampModel):
+    """
+    Users for a client
+    """
     uid = models.CharField(max_length=255, primary_key=True, editable=False)
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="client_user", db_column="user_id")
