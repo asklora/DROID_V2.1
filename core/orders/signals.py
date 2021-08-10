@@ -377,7 +377,7 @@ def order_signal(sender, instance, created, **kwargs):
                                 },
                             )
 
-                    # end portfolio / bot
+                    # end portfolio / bots
                     if not order_position.is_live:
                         print(f"================= Hedge Stop/finish ORDER success {instance.status} {instance.order_uid} ===================")
 
