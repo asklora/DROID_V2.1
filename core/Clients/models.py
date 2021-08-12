@@ -89,6 +89,9 @@ class UserClient(BaseTimeStampModel):
 
 
 class UniverseClient(BaseTimeStampModel):
+    """
+    helper table to connect universe table to clients table
+    """
     ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
                                related_name="client_universe", db_column="ticker")
     client = models.ForeignKey(Client, on_delete=models.CASCADE,

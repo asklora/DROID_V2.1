@@ -380,6 +380,9 @@ class DataFundamentalScore(models.Model):
 
 
 class DataVix(models.Model):
+    """
+    Data used for AI
+    """
     uid = models.TextField(primary_key=True)
     vix_id = models.ForeignKey(
         Vix,
@@ -399,6 +402,9 @@ class DataVix(models.Model):
 
 
 class Macro(models.Model):
+    """
+    Data used for AI
+    """
     period_end = models.DateField(primary_key=True)
     chgdp = models.FloatField(blank=True, null=True)
     jpgdp = models.FloatField(blank=True, null=True)
@@ -421,6 +427,9 @@ class Macro(models.Model):
 
 
 class MacroMonthly(models.Model):
+    """
+    Data used for AI
+    """
     trading_day = models.DateField(primary_key=True)
     period_end = models.DateField(blank=True, null=True)
     chgdp = models.FloatField(blank=True, null=True)
@@ -444,6 +453,9 @@ class MacroMonthly(models.Model):
 
 
 class Ibes(models.Model):
+    """
+    Earnings estimates data for AI
+    """
     uid = models.TextField(primary_key=True)
     ticker = models.ForeignKey(
         Universe,
@@ -468,6 +480,9 @@ class Ibes(models.Model):
 
 
 class IbesMonthly(models.Model):
+    """
+    Same as above with monthly summaries
+    """
     uid = models.TextField(primary_key=True)
     ticker = models.ForeignKey(
         Universe,
@@ -493,6 +508,9 @@ class IbesMonthly(models.Model):
 
 
 class Fred(models.Model):
+    """
+    Data used for AI
+    """
     trading_day = models.DateField(primary_key=True)
     data = models.FloatField(blank=True, null=True)
 
