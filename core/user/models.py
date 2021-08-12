@@ -17,6 +17,7 @@ from django.db.models import (
 import base64
 from core.djangomodule.models import BaseTimeStampModel
 from core.djangomodule.general import nonetozero
+from simple_history.models import HistoricalRecords
 
 
 def generate_balance_id():
@@ -251,6 +252,7 @@ class Accountbalance(BaseTimeStampModel):
     amount = models.FloatField(default=0)
     currency_code = models.ForeignKey(
         Currency, on_delete=models.DO_NOTHING, related_name='user_currency', default='USD', db_column='currency_code')
+    history = HistoricalRecords(table_name='user_account_history')
 
     def __str__(self):
         if self.user.email:

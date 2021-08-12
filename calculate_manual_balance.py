@@ -26,7 +26,7 @@ if __name__ == "__main__":
         query = f"select sum(amount) as outcome2 from ( "
         query += f"select *, ut.transaction_detail ->> 'position' as position_uid from user_transaction ut "
         query += f"where ut.balance_uid = (select balance_uid from user_account_balance where user_id = {user_id})) result1 "
-        query += f"where side='debit' and (transaction_detail ->> 'event' = 'fee' or transaction_detail ->> 'event' = 'stamp_duty') and "
+        query += f"where side='debit' and (transaction_detail ->> 'event' = 'fee') and "
         query += f"position_uid in (select position_uid from orders_position where is_live=False and user_id = {user_id}) "
         total_fee_false = read_query(query, cpu_counts=True, prints=True)
         print(total_fee_false)
@@ -38,7 +38,7 @@ if __name__ == "__main__":
         query = f"select sum(amount) as outcome2 from ( "
         query += f"select *, ut.transaction_detail ->> 'position' as position_uid from user_transaction ut "
         query += f"where ut.balance_uid = (select balance_uid from user_account_balance where user_id = {user_id})) result1 "
-        query += f"where side='debit' and (transaction_detail ->> 'event' = 'fee' or transaction_detail ->> 'event' = 'stamp_duty') and "
+        query += f"where side='debit' and (transaction_detail ->> 'event' = 'fee') and "
         query += f"position_uid in (select position_uid from orders_position where is_live=True and user_id = {user_id}) "
         total_fee_true = read_query(query, cpu_counts=True, prints=True)
         print(total_fee_true)
