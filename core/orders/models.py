@@ -8,10 +8,11 @@ import uuid
 from core.djangomodule.general import generate_id, formatdigit
 from simple_history.models import HistoricalRecords
 
-# Create your models here.
-
 
 class Order(BaseTimeStampModel):
+    """
+    Orders created by the users
+    """
     order_uid = models.UUIDField(primary_key=True, editable=False)
     user_id = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="user_order", db_column="user_id")
@@ -61,7 +62,9 @@ class Order(BaseTimeStampModel):
 
 
 class OrderPosition(BaseTimeStampModel):
-
+    """
+    Confirmed orders with status field equals to "filled"
+    """
     position_uid = models.CharField(
         primary_key=True, editable=False, max_length=500)
     user_id = models.ForeignKey(

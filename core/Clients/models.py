@@ -105,6 +105,9 @@ class UniverseClient(BaseTimeStampModel):
 
 
 class ClientTopStock(BaseTimeStampModel):
+    """
+    Top stocks for clients returned by the AI
+    """
     uid = models.CharField(max_length=255, primary_key=True, editable=False)
     client = models.ForeignKey(Client, on_delete=models.CASCADE,
                                related_name="client_top_stock", db_column="client_uid")
