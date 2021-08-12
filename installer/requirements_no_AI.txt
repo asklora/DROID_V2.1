@@ -38,6 +38,7 @@ django-environ==0.4.5
 django-import-export==2.5.0
 django-postgres-extra==2.0.2
 django-redis==5.0.0
+django-simple-history==3.0.0
 django-cors-headers==3.7.0
 djangorestframework==3.12.2
 djangorestframework-simplejwt==4.7.0

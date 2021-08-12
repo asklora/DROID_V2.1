@@ -6,6 +6,7 @@ from core.bot.models import BotOptionType
 from django.db import IntegrityError
 import uuid
 from core.djangomodule.general import generate_id, formatdigit
+from simple_history.models import HistoricalRecords
 
 # Create your models here.
 
@@ -96,6 +97,7 @@ class OrderPosition(BaseTimeStampModel):
     vol = models.FloatField(null=True, blank=True)
     margin = models.FloatField(default=1)
     bot_cash_dividend = models.FloatField(null=True, blank=True, default=0)
+    history = HistoricalRecords()
 
     class Meta:
         managed = True

@@ -54,7 +54,8 @@ ADDITIONAL_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'channels',
     'channels_presence',
-    'django_redis'
+    'django_redis',
+    'simple_history',
 ]
 CORE_APPS = [
     'core.bot',
