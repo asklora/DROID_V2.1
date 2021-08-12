@@ -6,6 +6,9 @@ from core.djangomodule.models import BaseTimeStampModel
 
 
 class Client(BaseTimeStampModel):
+    """
+    Clients
+    """
     client_uid = models.CharField(
         max_length=255, primary_key=True, editable=False)
     client_name = models.CharField(max_length=255)
@@ -42,6 +45,9 @@ class Client(BaseTimeStampModel):
 
 
 class UserClient(BaseTimeStampModel):
+    """
+    Users for a client
+    """
     uid = models.CharField(max_length=255, primary_key=True, editable=False)
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="client_user", db_column="user_id")
@@ -83,6 +89,9 @@ class UserClient(BaseTimeStampModel):
 
 
 class UniverseClient(BaseTimeStampModel):
+    """
+    helper table to connect universe table to clients table
+    """
     ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
                                related_name="client_universe", db_column="ticker")
     client = models.ForeignKey(Client, on_delete=models.CASCADE,
@@ -99,6 +108,9 @@ class UniverseClient(BaseTimeStampModel):
 
 
 class ClientTopStock(BaseTimeStampModel):
+    """
+    Top stocks for clients returned by the AI
+    """
     uid = models.CharField(max_length=255, primary_key=True, editable=False)
     client = models.ForeignKey(Client, on_delete=models.CASCADE,
                                related_name="client_top_stock", db_column="client_uid")

@@ -90,4 +90,4 @@ if __name__ == "__main__":
     print(result)
     balance = balance.merge(result, how="left", on=["user_id"])
     print(balance)
-    balance.to_csv("balance1.csv")
+    balance.to_csv("balance.csv")

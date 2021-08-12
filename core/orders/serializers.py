@@ -216,7 +216,7 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
         if request:
             user = request.user
         
-        if validated_data['amount'] > instance.user_id.user_balance.amount:
+        if validated_data['amount'] > user.user_balance.amount:
             raise exceptions.NotAcceptable({'detail': 'insuficent balance'})
         if validated_data['amount'] <= 0:
             raise exceptions.NotAcceptable({'detail': 'amount should not 0'})
@@ -224,10 +224,10 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
             
         for keys, value in validated_data.items():
             setattr(instance, keys, value)
-        if instance.user_id.id == 135:
+        if user.id == 135:
             fee = validated_data.get('fee',None)
             if fee:
-                user_client = UserClient.objects.get(user_id=instance.user_id.id)
+                user_client = UserClient.objects.get(user_id=user.id)
                 client = Client.objects.get(client_uid=user_client.client.client_uid)
                 client.commissions_buy = fee
                 client.save()

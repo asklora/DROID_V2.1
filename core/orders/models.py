@@ -8,9 +8,11 @@ import uuid
 from core.djangomodule.general import generate_id, formatdigit
 from simple_history.models import HistoricalRecords
 
-# Create your models here.
 
 class Order(BaseTimeStampModel):
+    """
+    Orders created by the users
+    """
     order_uid = models.UUIDField(primary_key=True, editable=False)
     user_id = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="user_order", db_column="user_id")
@@ -32,8 +34,6 @@ class Order(BaseTimeStampModel):
     price = models.FloatField()
     performance_uid = models.CharField(null=True, blank=True, max_length=255)
     qty = models.FloatField(null=True, blank=True)
-    history = HistoricalRecords(table_name='orders_change_history')
-
 
     class Meta:
         managed = True
@@ -62,7 +62,9 @@ class Order(BaseTimeStampModel):
 
 
 class OrderPosition(BaseTimeStampModel):
-
+    """
+    Confirmed orders with status field equals to "filled"
+    """
     position_uid = models.CharField(
         primary_key=True, editable=False, max_length=500)
     user_id = models.ForeignKey(
@@ -169,6 +171,9 @@ class OrderPosition(BaseTimeStampModel):
 
 
 class PositionPerformance(BaseTimeStampModel):
+    """
+    Tracking the changes in the position of the orders and also AI's performance
+    """
     performance_uid = models.CharField(
         max_length=255, primary_key=True, editable=False)
     position_uid = models.ForeignKey(
@@ -224,6 +229,9 @@ class PositionPerformance(BaseTimeStampModel):
 
 
 class OrderFee(BaseTimeStampModel):
+    """
+    Order fees according to their types
+    """
     order_uid = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="orders_fee_orders", db_column="order_uid")
     fee_type = models.TextField(null=True, blank=True)

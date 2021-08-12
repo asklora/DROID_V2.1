@@ -1,5 +1,11 @@
 from .settings import *
 
+"""
+This Django configuration file in used in the production environment.
+You can use this configuration file by running:
+`python manage.py runserver --settings=config.production`
+"""
+
 CHANNEL_LAYERS = {
     'default': {
 

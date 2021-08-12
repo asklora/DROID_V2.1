@@ -220,6 +220,9 @@ class UniverseConsolidated(models.Model):
 
 
 class Universe(models.Model):
+    """
+    A group of tickers with their details
+    """
     objects = models.Manager()
     manager = UniverseManager()
     ticker = models.CharField(max_length=255, primary_key=True)
