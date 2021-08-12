@@ -169,7 +169,7 @@ app.conf.beat_schedule = {
         "options": {
             "expires": 5*60,
         }
-    }
+    },
 }
 # END TASK SCHEDULE
 
@@ -243,7 +243,6 @@ def new_ticker_ingestion(ticker):
         update_data_dss_from_dss(ticker=ticker, history=True)
         update_data_dsws_from_dsws(ticker=ticker, history=True)
         dividend_updated_from_dsws(ticker=ticker)
-
 
 @app.task
 def get_isin_populate_universe(ticker, user_id):

@@ -252,7 +252,7 @@ class Accountbalance(BaseTimeStampModel):
     amount = models.FloatField(default=0)
     currency_code = models.ForeignKey(
         Currency, on_delete=models.DO_NOTHING, related_name='user_currency', default='USD', db_column='currency_code')
-    history = HistoricalRecords()
+    history = HistoricalRecords(table_name='user_account_history')
 
     def __str__(self):
         if self.user.email:
