@@ -119,7 +119,7 @@ class OrderUpdateViews(views.APIView):
         if not instance.user_id.id == 135:
             if instance.user_id.username != request.user.username:
                 return response.Response({'detail': 'credentials not allowed to change this order'}, status=status.HTTP_403_FORBIDDEN)
-        serializer = OrderUpdateSerializer(instance, data=request.data)
+        serializer = OrderUpdateSerializer(instance, data=request.data,context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return response.Response(serializer.data, status=status.HTTP_200_OK)

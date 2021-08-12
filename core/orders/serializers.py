@@ -207,6 +207,16 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
                   'order_uid', 'status', 'qty', 'setup']
 
     def update(self, instance, validated_data):
+        request = self.context.get('request', None)
+        if request:
+            user = request.user
+        
+        if validated_data['amount'] > user.user_balance.amount:
+            raise exceptions.NotAcceptable({'detail': 'insuficent balance'})
+        if validated_data['amount'] <= 0:
+            raise exceptions.NotAcceptable({'detail': 'amount should not 0'})
+
+            
         for keys, value in validated_data.items():
             setattr(instance, keys, value)
 
