@@ -99,19 +99,10 @@ def get_data_from_reuters(
             }
 
     _extractReqHeader = makeExtractHeader(_token)
-<<<<<<< HEAD
-
-    print(
-        datetimeNow()
-        + " "
-        + "*** Step 4 Post the T&C Request to DSS REST server and check response status"
-    )
-=======
-    # Step 5
+    # Step 4
     print(_extractReqHeader)
     print(_jReqBody)
     print(datetimeNow()+ " " + "*** Step 5 Post the T&C Request to DSS REST server and check response status")
->>>>>>> dev
     # resp = requests.post(URL_Extrations, data=None, json=_jReqBody, headers=_extractReqHeader)
     # ======== USING EXTRACT WITH NOTES =================
     resp = requests.post(
