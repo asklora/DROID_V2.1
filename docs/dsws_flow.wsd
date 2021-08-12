@@ -1,0 +1,39 @@
+@startuml dsws
+
+title "DSWS data flow"
+
+!theme vibrant
+
+skinparam shadowing false
+skinparam defaultFontName Ubuntu
+
+box "Data source" #LightBlue
+participant DSWS
+end box
+participant data
+box "Database"
+participant data_dsws
+
+group ingestion/data_from_dsws
+    == Getting data from DSWS ==
+
+    group datasource/dsws
+        rnote over DSWS, data
+        Data is requested from DSWS within
+        a time window, split into chunks
+        end note
+
+        DSWS -> data : resulting data
+        activate data
+    end
+
+    == resulting data is inserted\ninto table data_dsws ==
+
+    group general/sql_output
+        data -> data_dsws : upsert_data_to_database()
+        deactivate data
+    end
+
+end
+
+@enduml
