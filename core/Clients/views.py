@@ -92,7 +92,7 @@ class TopStockAction(APIView):
         except ClientTopStock.DoesNotExist:
             return response.Response({'detail':f'{uid} not found'}, status=status.HTTP_404_NOT_FOUND)
         try:
-         trans = TransactionHistory.objects.filter(transaction_detail__order_uid=request.data['order_uid'])
+         trans = TransactionHistory.objects.filter(transaction_detail__order_uid=request.data['order_uid'],transaction_detail__description='bot order')
          trans = trans.get()
         except TransactionHistory.DoesNotExist:
             return response.Response({'detail':f'transaction not found'}, status=status.HTTP_404_NOT_FOUND)
