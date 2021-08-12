@@ -242,10 +242,6 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
 
 class OrderDetailsSerializers(serializers.ModelSerializer):
 
-    # created = UnixEpochDateField(source='created')
-    # filled_at = UnixEpochDateField(source='filled_at')
-    # placed_at = UnixEpochDateField(source='placed_at')
-    # canceled_at = UnixEpochDateField(source='canceled_at')
     bot_name = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
     bot_range= serializers.SerializerMethodField()
@@ -280,9 +276,6 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
 
 
 class OrderListSerializers(serializers.ModelSerializer):
-    # created = UnixEpochDateField(source='created')
-    # filled_at = UnixEpochDateField(source='filled_at')
-    # placed_at = UnixEpochDateField(source='placed_at')
     bot_name = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
     bot_range= serializers.SerializerMethodField()

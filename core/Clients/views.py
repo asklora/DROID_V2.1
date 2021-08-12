@@ -59,7 +59,7 @@ class TopStockClientView(APIView):
     def get(self, request,client_id):
         
         
-        data = ClientTopStock.objects.filter(has_position=False,client=client_id).order_by('spot_date','rank')
+        data = ClientTopStock.objects.filter(has_position=False,client=client_id).order_by('-spot_date','rank')
 
         return response.Response(ClientTopStockSerializers(data,many=True).data,status=status.HTTP_200_OK)
     
