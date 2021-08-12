@@ -25,8 +25,8 @@ class Client(BaseTimeStampModel):
         return self.client_name
 
     def save(self, *args, **kwargs):
-        if not self.uid:
-            self.uid = generate_id(6)
+        if not self.client_uid:
+            self.client_uid = generate_id(6)
             # using your function as above or anything else
         success = False
         failures = 0
@@ -39,7 +39,7 @@ class Client(BaseTimeStampModel):
                     raise KeyError
                 else:
                     # looks like a collision, try another random value
-                    self.uid = generate_id(6)
+                    self.client_uid = generate_id(6)
             else:
                 success = True
 
