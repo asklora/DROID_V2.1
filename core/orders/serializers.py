@@ -2,13 +2,12 @@ from rest_framework import serializers, exceptions
 from .models import OrderPosition, PositionPerformance, OrderFee, Order
 from core.bot.models import BotOptionType
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
-from django.db.models import Sum, F
-from core.user.models import TransactionHistory, User
-from django.utils import timezone
+from django.db.models import Sum
+from core.Clients.models import UserClient,Client
+from core.user.models import TransactionHistory
 from django.apps import apps
 from datasource.rkd import RkdData
 from django.db import transaction as db_transaction
-from core.djangomodule.general import UnixEpochDateField
 import json
 
 
@@ -188,6 +187,11 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             validated_data['price'] = ticker.iloc[0]['latest_price']
         order_type = 'apps'
         if user.id == 135:
+            fee = validated_data.get('fee',None)
+            if fee:
+                user_client = UserClient.objects.get(user_id=user.id)
+                client = Client.objects.get()
+                client.commissions_buy
             order_type = None
         with db_transaction.atomic():
             order = Order.objects.create(
@@ -200,11 +204,12 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
     setup = serializers.JSONField(read_only=True)
     qty = serializers.FloatField(read_only=True)
     order_uid = serializers.UUIDField()
+    fee = serializers.FloatField(write_only=True, required=False)
 
     class Meta:
         model = Order
         fields = ['price', 'bot_id', 'amount',
-                  'order_uid', 'status', 'qty', 'setup']
+                  'order_uid', 'status', 'qty', 'setup','fee']
 
     def update(self, instance, validated_data):
         request = self.context.get('request', None)
@@ -219,7 +224,13 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
             
         for keys, value in validated_data.items():
             setattr(instance, keys, value)
-
+        if user.id == 135:
+            fee = validated_data.get('fee',None)
+            if fee:
+                user_client = UserClient.objects.get(user_id=user.id)
+                client = Client.objects.get(client_uid=user_client.client.client_uid)
+                client.commissions_buy = fee
+                client.save()
         with db_transaction.atomic():
             try:
                 instance.save()
