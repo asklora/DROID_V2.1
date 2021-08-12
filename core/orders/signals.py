@@ -124,7 +124,7 @@ def order_signal_check(sender, instance, **kwargs):
 def order_signal(sender, instance, created, **kwargs):
     performance_exist = PositionPerformance.objects.filter(order_uid=instance).exists()
 
-    print(instance.status,"<<<<<<<<<<<<STATUSSSSS>>>>>>>>>>>>>>>>>>", performance_exist)
+    print("<<<<<<<<<<<< STATUSSSSS {instance.status} {performance_exist} >>>>>>>>>>>>>>>>>>", performance_exist)
 
     if created and instance.is_init:
         pass

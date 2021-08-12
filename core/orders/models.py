@@ -10,7 +10,6 @@ from simple_history.models import HistoricalRecords
 
 # Create your models here.
 
-
 class Order(BaseTimeStampModel):
     order_uid = models.UUIDField(primary_key=True, editable=False)
     user_id = models.ForeignKey(
@@ -33,6 +32,8 @@ class Order(BaseTimeStampModel):
     price = models.FloatField()
     performance_uid = models.CharField(null=True, blank=True, max_length=255)
     qty = models.FloatField(null=True, blank=True)
+    history = HistoricalRecords(table_name='orders_change_history')
+
 
     class Meta:
         managed = True
