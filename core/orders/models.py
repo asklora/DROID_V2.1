@@ -171,6 +171,9 @@ class OrderPosition(BaseTimeStampModel):
 
 
 class PositionPerformance(BaseTimeStampModel):
+    """
+    Tracking the changes in the position of the orders and also AI's performance
+    """
     performance_uid = models.CharField(
         max_length=255, primary_key=True, editable=False)
     position_uid = models.ForeignKey(
@@ -226,6 +229,9 @@ class PositionPerformance(BaseTimeStampModel):
 
 
 class OrderFee(BaseTimeStampModel):
+    """
+    Order fees according to their types
+    """
     order_uid = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="orders_fee_orders", db_column="order_uid")
     fee_type = models.TextField(null=True, blank=True)
