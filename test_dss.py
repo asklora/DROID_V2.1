@@ -52,12 +52,14 @@ def get_index_member():
     result.to_csv("index_member_HSLMI.csv")
 
 if __name__ == "__main__":
-    cred = credentials.Certificate("files/file_json/asklora-firebase.json")
-    firebase_admin.initialize_app(cred)
-    dbs = firestore.client()
-    snapshots = dbs.collection(u"universe").where("ticker", ">=", "001").where("ticker", "<=", "001" + "\uf8ff").get()
-    print(snapshots)
-    for snapshot in snapshots:
-        print(snapshot.to_dict()["ticker"])
-        print(snapshot.to_dict())
-        print()
+    identifier="ticker"
+    ticker = ["MSFT.O", "AAPL.O"]
+    universe = get_active_universe(ticker=ticker)
+    start_date = backdate_by_day(1)
+    end_date = dateNow()
+    jsonFileName = "files/file_json/test_corporate_action.json"
+    result = get_data_from_dss(start_date, end_date, universe["ticker"], jsonFileName, report=REPORT_INTRADAY)
+    print(result)
+    result.to_csv("/home/loratech/corporate_action.csv")
+    # result = result.drop(columns=["IdentifierType", "Identifier"])
+    # print(result)

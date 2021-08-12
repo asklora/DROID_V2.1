@@ -1,6 +1,6 @@
 {
     "ExtractionRequest": {
-        "@odata.type": "#CorporateActionsExtractionRequests",
+        "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.CorporateActionsStandardExtractionRequest",
         "ContentFieldNames": [
             "RIC",
             "Capital Additive Adjustment Factor",
@@ -21,9 +21,22 @@
             "ValidationOptions":{"AllowHistoricalInstruments":true,"AllowOpenAccessInstruments":true},
             "UseUserPreferencesForValidationOptions": false
         },
-        "Condition":
-        {
-            
-      }
+        "Condition": {
+            "ReportDateRangeType": "Last",
+            "PreviousDays": 30,
+            "ExcludeDeletedEvents": true,
+            "IncludeCapitalChangeEvents": true,
+            "IncludeDividendEvents": true,
+            "IncludeEarningsEvents": true,
+            "IncludeMergersAndAcquisitionsEvents": true,
+            "IncludeNominalValueEvents": true,
+            "IncludePublicEquityOfferingsEvents": true,
+            "IncludeSharesOutstandingEvents": true,
+            "IncludeVotingRightsEvents": true,
+            "CorporateActionsCapitalChangeType": "CapitalChangeExDate",
+            "CorporateActionsDividendsType": "DividendPayDate",
+            "CorporateActionsEarningsType": "PeriodEndDate",
+            "ShareAmountTypes": []
+        }
     }
 }
