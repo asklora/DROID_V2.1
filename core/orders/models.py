@@ -97,7 +97,7 @@ class OrderPosition(BaseTimeStampModel):
     vol = models.FloatField(null=True, blank=True)
     margin = models.FloatField(default=1)
     bot_cash_dividend = models.FloatField(null=True, blank=True, default=0)
-    history = HistoricalRecords()
+    history = HistoricalRecords(table_name='order_position_history')
 
     class Meta:
         managed = True
