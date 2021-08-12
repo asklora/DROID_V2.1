@@ -47,8 +47,7 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
         share_num = last_performance.share_num
         if(status_expiry):
             share_num = 0
-        bot_cash_balance = formatdigit(
-            last_performance.current_bot_cash_balance-(share_num-last_performance.share_num)*live_price)
+        bot_cash_balance = formatdigit(last_performance.current_bot_cash_balance -(share_num-last_performance.share_num)*live_price)
         current_pnl_amt = last_performance.current_pnl_amt + \
             (live_price - last_performance.last_live_price) * \
             last_performance.share_num

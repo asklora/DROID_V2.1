@@ -170,48 +170,6 @@ app.conf.beat_schedule = {
             "expires": 5*60,
         }
     },
-    # LATESTPRICE / QUOTES UPDATE
-    "EUR-Latestprice-update": {
-        "task": "core.services.tasks.get_latest_price",
-        "schedule": crontab(minute=EUR_CUR.ingestion_time.minute, hour=EUR_CUR.ingestion_time.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "EUR"},
-        "options": {
-            "expires": 5*60,
-        }
-    },
-    "HKD-Latestprice-update": {
-        "task": "core.services.tasks.get_latest_price",
-        "schedule": crontab(minute=HKD_CUR.ingestion_time.minute, hour=HKD_CUR.ingestion_time.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "HKD"},
-        "options": {
-            "expires": 5*60,
-        }
-    },
-    "CNY-Latestprice-update": {
-        "task": "core.services.tasks.get_latest_price",
-        "schedule": crontab(minute=CNY_CUR.ingestion_time.minute, hour=CNY_CUR.ingestion_time.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "CNY"},
-        "options": {
-            "expires": 5*60,
-        }
-    },
-    "KRW-Latestprice-update": {
-        "task": "core.services.tasks.get_latest_price",
-        "schedule": crontab(minute=KRW_CUR.ingestion_time.minute, hour=KRW_CUR.ingestion_time.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "KRW"},
-        "options": {
-            "expires": 5*60,
-        }
-    },
-    "USD-Latestprice-update": {
-        "task": "core.services.tasks.get_latest_price",
-        "schedule": crontab(minute=USD_CUR.ingestion_time.minute, hour=USD_CUR.ingestion_time.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "USD"},
-        "options": {
-            "expires": 5*60,
-        }
-    },
-
 }
 # END TASK SCHEDULE
 
@@ -285,15 +243,6 @@ def new_ticker_ingestion(ticker):
         update_data_dss_from_dss(ticker=ticker, history=True)
         update_data_dsws_from_dsws(ticker=ticker, history=True)
         dividend_updated_from_dsws(ticker=ticker)
-
-
-@app.task
-def get_latest_price(currency=None):
-    if currency:
-        tickers = [ ticker['ticker'] for ticker in Universe.objects.filter(currency_code=currency,is_active=True).values('ticker')]
-        rkd = RkdData()
-        rkd.get_rkd_data(tickers, save=True)
-        return {'status':'updated','currency':currency}
 
 @app.task
 def get_isin_populate_universe(ticker, user_id):
