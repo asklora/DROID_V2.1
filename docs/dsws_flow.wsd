@@ -24,14 +24,12 @@ group ingestion/data_from_dsws
         end note
 
         DSWS -> data : resulting data
-        activate data
     end
 
     == resulting data is inserted\ninto table data_dsws ==
 
     group general/sql_output
         data -> data_dsws : upsert_data_to_database()
-        deactivate data
     end
 
 end

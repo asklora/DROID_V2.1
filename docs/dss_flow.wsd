@@ -24,28 +24,24 @@ group ingestion/data_from_dss
         end note
 
         Reuters -> token : getAuthToken()
-        activate token
 
         rnote over Reuters, token
         Token obtained, request data
         end note
 
         token -> Reuters : get_data_from_reuters()
-        deactivate token
 
         rnote over Reuters, data
         Data is returned from Reuters
         end note
 
         Reuters -> data : resulting data
-        activate data
     end
 
     == resulting data is inserted\ninto table data_dss ==
 
     group general/sql_output
         data --> data_dss : upsert_data_to_database()
-        deactivate data
     end
 
 end

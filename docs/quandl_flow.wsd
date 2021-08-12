@@ -1,0 +1,56 @@
+@startuml quandl
+
+title "Quandl data flow"
+
+!theme vibrant
+
+skinparam shadowing false
+skinparam defaultFontName Ubuntu
+
+box "Database"
+participant data_quandl
+participant universe
+end box
+participant symbols
+box "Data source" #LightBlue
+participant Quandl
+end box
+participant data
+
+group ingestion/data_from_quandl
+    == Getting list of tickers with quandl symbols ==
+    group general/sql_query
+        rnote over universe, symbols
+        List of tickers is taken from universe
+        end note
+
+        universe -> symbols : get_active_universe_by_quandl_symbol()
+    end
+
+    == Getting data from Quandl ==
+    group datasource/quandl
+        rnote over symbols, Quandl
+        Reques to quandl is initialized
+        using quandl symbols as the filter
+        end note
+
+        symbols -> Quandl
+
+        rnote over Quandl, data
+        Data with specific symbols
+        is returned from Quandl
+        in the form of a csv, then is
+        read by pandas
+        end note
+
+        Quandl -> data : resulting data
+    end
+
+    == resulting data is inserted\ninto table data_quandl ==
+    group general/sql_output
+        data -> data_quandl : upsert_data_to_database()
+    end
+
+end
+
+@enduml
