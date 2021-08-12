@@ -577,7 +577,7 @@ class WorldscopeSummary(models.Model):
 
 class LatestPrice(models.Model):
     """
-    Latest stock prices
+    Latest stock prices for the day
     """
     ticker = models.OneToOneField(
         Universe,
