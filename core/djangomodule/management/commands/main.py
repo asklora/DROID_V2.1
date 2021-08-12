@@ -41,6 +41,9 @@ from ingestion.data_from_dsws import (
 
 
 def daily_ingestion(region_id=None):
+    """
+    possible deprecation after succesfully migrated to droid post-DLPDB
+    """
     dlp_ticker = get_active_universe_droid1()
     print(dlp_ticker)
     if(region_id == None):
