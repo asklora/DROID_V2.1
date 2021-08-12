@@ -91,9 +91,7 @@ def populate_intraday_latest_price_from_rkd(ticker=None, currency_code=None,use_
     field = ["CF_BID", "CF_ASK", "CF_OPEN", "CF_HIGH", "CF_LOW", "CF_LAST", "CF_DATE", "CF_TIME"]
     rkd = RKD.RkdData()
     result = rkd.get_data_from_rkd(ticker, field)
-    snapshot = rkd.get_snapshot(ticker,save=True,df=True)
     print(result)
-    print(snapshot)
     percentage_change =  get_yesterday_close_price(ticker=universe["ticker"], currency_code=currency_code)
     print(result)
     if(len(result) > 0):
