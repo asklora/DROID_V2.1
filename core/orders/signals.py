@@ -11,6 +11,32 @@ from core.user.models import TransactionHistory, Accountbalance
 import pandas as pd
 
 
+
+
+def update_initial_transaction_position(instance:Order,position_uid:str):
+    # update the transaction
+    trans = TransactionHistory.objects.filter(side="debit", transaction_detail__description="bot order", transaction_detail__order_uid=str(instance.order_uid))
+    if trans.exists():
+        trans = trans.get()
+        trans.transaction_detail["position"] = position_uid
+        trans.save()
+    # update fee transaction
+    fee_trans = TransactionHistory.objects.filter(side="debit", transaction_detail__event="fee", transaction_detail__order_uid=str(instance.order_uid))
+    if fee_trans.exists():
+        fee_trans = fee_trans.get()
+        fee_trans.transaction_detail["position"] = position_uid
+        fee_trans.save()
+    # update stamp_duty transaction
+    stamp_trans = TransactionHistory.objects.filter(side="debit", transaction_detail__event="stamp_duty", transaction_detail__order_uid=str(instance.order_uid))
+    if stamp_trans.exists():
+        stamp_trans = stamp_trans.get()
+        stamp_trans.transaction_detail["position"] = position_uid
+        stamp_trans.save()
+
+
+
+
+
 def calculate_fee(amount, side, user_id):
     try:
         user_client = UserClient.objects.get(user_id=user_id)
@@ -60,7 +86,8 @@ def create_fee(instance, user_id, balance_uid, position_uid, status):
                 "description": f"{instance.side} fee",
                 "position": f"{position_uid}",
                 "event": "fee",
-                "fee_id": fee.id
+                "fee_id": fee.id,
+                "order_uid": str(instance.order_uid)
             },
         )
     if stamp_duty_fee:
@@ -79,7 +106,8 @@ def create_fee(instance, user_id, balance_uid, position_uid, status):
                 "description": f"{instance.side} fee",
                 "position": f"{position_uid}",
                 "event": "stamp_duty",
-                "stamp_duty_id": stamp.id
+                "stamp_duty_id": stamp.id,
+                "order_uid": str(instance.order_uid)
             },
         )
 
@@ -232,13 +260,8 @@ def order_signal(sender, instance, created, **kwargs):
             order.save()
             instance.performance_uid = perf.performance_uid
             instance.save()
-            # update the transaction
-            trans = TransactionHistory.objects.filter(side="debit", transaction_detail__description="bot order", transaction_detail__order_uid=str(instance.order_uid))
-            if trans.exists():
-                trans = trans.get()
-                trans.transaction_detail["position"] = order.position_uid
-                trans.save()
-                # services.celery_app.send_task("config.celery.listener",args=(perfdata,),queue="asklora")
+
+            update_initial_transaction_position(instance,order.position_uid)
     
     # elif not created and instance.status in "filled" and performance_exist:
         else:
