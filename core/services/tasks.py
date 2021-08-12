@@ -170,6 +170,7 @@ app.conf.beat_schedule = {
             "expires": 5*60,
         }
     },
+    # LATESTPRICE / QUOTES UPDATE
     "EUR-Latestprice-update": {
         "task": "core.services.tasks.get_latest_price",
         "schedule": crontab(minute=EUR_CUR.ingestion_time.minute, hour=EUR_CUR.ingestion_time.hour, day_of_week="1-5"),
