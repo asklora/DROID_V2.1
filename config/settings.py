@@ -50,19 +50,6 @@ DJANGO_DEFAULT_APPS = [
     "django.contrib.postgres",
 ]
 ADDITIONAL_APPS = [
-<<<<<<< HEAD
-    "psqlextra",
-    "django_celery_results",
-    "rest_framework",
-    "import_export",
-    "django_celery_beat",
-    "drf_spectacular",
-    "corsheaders",
-    "rest_framework_simplejwt.token_blacklist",
-    "channels",
-    "channels_presence",
-    "django_redis",
-=======
     'psqlextra',
     'django_celery_results',
     'rest_framework',
@@ -75,7 +62,6 @@ ADDITIONAL_APPS = [
     'channels_presence',
     'django_redis',
     'simple_history',
->>>>>>> dev
 ]
 CORE_APPS = [
     "core.bot",
