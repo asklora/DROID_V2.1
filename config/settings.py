@@ -6,6 +6,11 @@ from core.djangomodule.network.cloud import DroidDb
 from datetime import timedelta
 import firebase_admin
 
+"""
+This is the default Django settings file sans the database settings, caches and celery configurations.
+This file will be imported by `local.py`, `development.py`, and `production.py` to be used in their respective environments.
+"""
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
