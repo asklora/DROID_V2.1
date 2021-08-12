@@ -6,14 +6,15 @@ title "DSS data flow"
 
 skinparam shadowing false
 skinparam defaultFontName Ubuntu
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
 
-box "Data source" #LightBlue
-participant Reuters
-participant token
-end box
-participant data
 box "Database"
 participant data_dss
+end box
+box "Data source" #LightBlue
+participant Reuters
+end box
 
 group ingestion/data_from_dss
     == Getting data from Reuters ==
@@ -23,6 +24,7 @@ group ingestion/data_from_dss
         Getting the token
         end note
 
+        create token
         Reuters -> token : getAuthToken()
 
         rnote over Reuters, token
@@ -31,6 +33,7 @@ group ingestion/data_from_dss
 
         token -> Reuters : get_data_from_reuters()
 
+        create data
         rnote over Reuters, data
         Data is returned from Reuters
         end note
@@ -41,7 +44,7 @@ group ingestion/data_from_dss
     == resulting data is inserted\ninto table data_dss ==
 
     group general/sql_output
-        data --> data_dss : upsert_data_to_database()
+        data -> data_dss : upsert_data_to_database()
     end
 
 end

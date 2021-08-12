@@ -6,20 +6,21 @@ title "Quandl data flow"
 
 skinparam shadowing false
 skinparam defaultFontName Ubuntu
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
 
 box "Database"
 participant data_quandl
 participant universe
 end box
-participant symbols
 box "Data source" #LightBlue
 participant Quandl
 end box
-participant data
 
 group ingestion/data_from_quandl
     == Getting list of tickers with quandl symbols ==
     group general/sql_query
+        create symbols
         rnote over universe, symbols
         List of tickers is taken from universe
         end note
@@ -30,12 +31,13 @@ group ingestion/data_from_quandl
     == Getting data from Quandl ==
     group datasource/quandl
         rnote over symbols, Quandl
-        Reques to quandl is initialized
+        Request to quandl is initialized
         using quandl symbols as the filter
         end note
 
         symbols -> Quandl
 
+        create data
         rnote over Quandl, data
         Data with specific symbols
         is returned from Quandl

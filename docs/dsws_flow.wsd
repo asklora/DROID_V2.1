@@ -6,18 +6,21 @@ title "DSWS data flow"
 
 skinparam shadowing false
 skinparam defaultFontName Ubuntu
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
 
 box "Data source" #LightBlue
 participant DSWS
 end box
-participant data
 box "Database"
 participant data_dsws
+end box
 
 group ingestion/data_from_dsws
     == Getting data from DSWS ==
 
     group datasource/dsws
+        create data
         rnote over DSWS, data
         Data is requested from DSWS within
         a time window, split into chunks
