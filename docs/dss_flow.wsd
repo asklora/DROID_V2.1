@@ -1,0 +1,58 @@
+@startuml dss
+
+title "DSS data flow"
+
+skinparam monochrome true
+
+participant latest_price
+participant data
+box "Data source" #LightBlue
+participant Reuters
+participant token
+end box
+
+group ingestion/data_from_dss
+    note over data, latest_price
+    Getting the previous latest_price data
+    end note
+    group general/sql_query
+        latest_price->data : get_latest_price_data()
+        activate data
+    end
+
+    note over Reuters, data
+    Getting updated prices data from Reuters
+    end note
+
+    group datasource/dss
+        note over Reuters, token
+        Getting the token
+        end note
+
+        Reuters -> token : getAuthToken()
+        activate token
+
+        note over Reuters, token
+        Token obtained, request data
+        end note
+
+        token -> Reuters : get_data_from_reuters()
+        deactivate token
+
+        note over Reuters, data
+        Data is returned from Reuters
+        end note
+
+        Reuters -> data : resulting data
+    end
+
+    note over data, latest_price
+    Data is merged with the updated prices
+    obtained from Reuters, and is inserted back
+    into table latest_price
+    end note
+
+    return updated data
+end
+
+@enduml
