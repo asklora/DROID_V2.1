@@ -63,7 +63,6 @@ class TopStockClientView(APIView):
 
         return response.Response(ClientTopStockSerializers(data,many=True).data,status=status.HTTP_200_OK)
     
-        
 class TopStockAction(APIView):
     permission_classes = [permissions.IsAdminUser]
     
