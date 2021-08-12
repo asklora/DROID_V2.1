@@ -25,7 +25,7 @@ def calculate_fee(amount, side, user_id):
         commissions = commissions_sell
         stamp_duty = stamp_duty_sell
     else:
-        commissions = commissions_sell
+        commissions = commissions_buy
         stamp_duty = stamp_duty_buy
 
     if(user_client.client.commissions_type == "percent"):
