@@ -7,7 +7,7 @@ class DLPAModel(models.Model):
     model_filename = models.TextField(primary_key=True)
     model_type = models.TextField(null=True, blank=True)
     data_period = models.TextField(null=True, blank=True)
-    created = models.DateField(null=True, blank=True)
+    created = models.DateTimeField(null=True, blank=True)
     forward_date = models.DateField(null=True, blank=True)
     forward_week = models.IntegerField(null=True, blank=True)
     forward_dow = models.TextField(null=True, blank=True)
@@ -63,7 +63,7 @@ class DLPAModelStock(models.Model):
     model_filename = models.ForeignKey(DLPAModel, on_delete=models.CASCADE, db_column="model_filename",
                                        related_name="dlpa_model_stock_model_filename", blank=True, null=True)
     data_period = models.TextField(null=True, blank=True)
-    created = models.DateField(null=True, blank=True)
+    created = models.DateTimeField(null=True, blank=True)
     forward_date = models.DateField(null=True, blank=True)
     spot_date = models.DateField(null=True, blank=True)
     year = models.IntegerField(null=True, blank=True)
