@@ -98,3 +98,5 @@ class ClientTopStockSerializers(serializers.ModelSerializer):
         ]
         
 
+class ResponseSerializer(serializers.Serializer):
+    order_uid = serializers.CharField(required=True)

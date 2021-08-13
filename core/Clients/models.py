@@ -6,6 +6,9 @@ from core.djangomodule.models import BaseTimeStampModel
 
 
 class Client(BaseTimeStampModel):
+    """
+    Clients
+    """
     client_uid = models.CharField(
         max_length=255, primary_key=True, editable=False)
     client_name = models.CharField(max_length=255)
@@ -22,8 +25,8 @@ class Client(BaseTimeStampModel):
         return self.client_name
 
     def save(self, *args, **kwargs):
-        if not self.uid:
-            self.uid = generate_id(6)
+        if not self.client_uid:
+            self.client_uid = generate_id(6)
             # using your function as above or anything else
         success = False
         failures = 0
@@ -36,12 +39,15 @@ class Client(BaseTimeStampModel):
                     raise KeyError
                 else:
                     # looks like a collision, try another random value
-                    self.uid = generate_id(6)
+                    self.client_uid = generate_id(6)
             else:
                 success = True
 
 
 class UserClient(BaseTimeStampModel):
+    """
+    Users for a client
+    """
     uid = models.CharField(max_length=255, primary_key=True, editable=False)
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="client_user", db_column="user_id")
@@ -83,6 +89,9 @@ class UserClient(BaseTimeStampModel):
 
 
 class UniverseClient(BaseTimeStampModel):
+    """
+    helper table to connect universe table to clients table
+    """
     ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
                                related_name="client_universe", db_column="ticker")
     client = models.ForeignKey(Client, on_delete=models.CASCADE,
@@ -99,6 +108,9 @@ class UniverseClient(BaseTimeStampModel):
 
 
 class ClientTopStock(BaseTimeStampModel):
+    """
+    Top stocks for clients returned by the AI
+    """
     uid = models.CharField(max_length=255, primary_key=True, editable=False)
     client = models.ForeignKey(Client, on_delete=models.CASCADE,
                                related_name="client_top_stock", db_column="client_uid")

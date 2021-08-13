@@ -1,0 +1,37 @@
+@startuml quandl
+
+title "Data flow of Droidv2"
+
+!theme vibrant
+
+skinparam shadowing false
+skinparam defaultFontName Ubuntu
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+box "Database"
+participant universe
+participant "data_dss, data_dsws" as base_tables
+participant "master_ohlcvtr, master_tac" as updated_tables
+end box
+participant "Data sources" as sources
+
+== Daily process is run ==
+rnote over universe, base_tables
+List of tickers is taken from universe
+end note
+universe -> sources : Getting the update from the list of tickers
+
+rnote over base_tables, sources
+The data obtained from sources is put into base tables
+end note
+sources -> base_tables : Base tables are updated
+
+
+rnote over base_tables, updated_tables
+Data from base tables are processed
+and input to the updated table
+end note
+base_tables -> updated_tables : Data is processed in database routines
+
+@enduml

@@ -115,11 +115,11 @@ class Command(BaseCommand):
                     position_uid = position.position_uid
                     if (position.bot.is_uno()):
                         
-                        status = uno_position_check(position_uid,to_date=topstock_date[index])
+                        status = uno_position_check(position_uid,to_date=topstock_date[index], hedge=True)
                     elif (position.bot.is_ucdc()):
                        
-                        status = ucdc_position_check(position_uid,to_date=topstock_date[index])
+                        status = ucdc_position_check(position_uid,to_date=topstock_date[index], hedge=True)
                     elif (position.bot.is_classic()):
                         
-                        status = classic_position_check(position_uid,to_date=topstock_date[index])
+                        status = classic_position_check(position_uid,to_date=topstock_date[index], hedge=True)
                     print(status, "done")

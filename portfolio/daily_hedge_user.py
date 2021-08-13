@@ -1,14 +1,14 @@
 from bot.calculate_bot import check_dividend_paid
 from datetime import datetime
 from core.djangomodule.calendar import TradingHours
-from core.master.models import LatestPrice, MasterOhlcvtr
+from core.master.models import LatestPrice, MasterOhlcvtr, HedgeLatestPriceHistory
 from core.orders.models import OrderPosition, PositionPerformance, Order
 from config.celery import app
 import pandas as pd
 from core.djangomodule.serializers import OrderPositionSerializer
 from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
-
+from django.db import transaction
 
 def create_performance(price_data, position, latest_price=False,rehedge=False,force_stop=False):
     if(latest_price):
@@ -68,6 +68,7 @@ def create_performance(price_data, position, latest_price=False,rehedge=False,fo
         updated=str(log_time),
         created=str(log_time),
         last_hedge_delta=1,
+        status="Hedge"
     )
 
     if force_stop:
@@ -127,13 +128,13 @@ def create_performance(price_data, position, latest_price=False,rehedge=False,fo
 
 
 @app.task
-def user_position_check(position_uid, to_date=None, lookback=False,rehedge=None):
+def user_position_check(position_uid, to_date=None, tac=False, hedge=False, latest=False):
+    transaction.set_autocommit(False)
     try:
         position = OrderPosition.objects.get(
             position_uid=position_uid, is_live=True)
         try:
-            performance = PositionPerformance.objects.filter(
-                position_uid=position.position_uid).latest("created")
+            performance = PositionPerformance.objects.filter(position_uid=position.position_uid, status="Hedge").latest("created")
             trading_day = performance.created
         except PositionPerformance.DoesNotExist:
             performance = False
@@ -141,52 +142,62 @@ def user_position_check(position_uid, to_date=None, lookback=False,rehedge=None)
         if to_date:
             exp_date = pd.to_datetime(to_date)
         else:
-            exp_date = datetime.now().date()
-        if isinstance(trading_day, datetime):
-            trading_day = trading_day.date()
-       
-        status = False
-
-        if rehedge:
-            from core.master.models import HedgeLatestPriceHistory
-            try:
-                lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date=rehedge['date'],types=rehedge['types'],ticker=position.ticker)
-                if lastest_price_data.exists():
-                    lastest_price_data = lastest_price_data.get()
-                else:
-                    return None
-            except HedgeLatestPriceHistory.DoesNotExist:
-                print('not exist',position.ticker.ticker)
-                return None
-            except HedgeLatestPriceHistory.MultipleObjectsReturned:
-                print('nmulpile error',position.ticker.ticker)
-                return None
-            if(type(trading_day) == datetime):
+            exp_date = position.expiry
+        if(type(trading_day) == datetime):
                 trading_day = trading_day.date()
+        status = False
+        if hedge:
+            try:
+                lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date__gt=trading_day, types="hedge", ticker=position.ticker)
+            except HedgeLatestPriceHistory.DoesNotExist:
+                print("not exist", position.ticker.ticker)
+                return None
+            for hedge_price in lastest_price_data:
+                trading_day = hedge_price.last_date
+                status, order_id = create_performance(hedge_price, position, hedge=True)
+                if order_id:
+                    order = Order.objects.get(order_uid=order_id)
+                    log_time = hedge_price.intraday_time
+                    if order.status in ["pending", "review"]:
+                        order.status = "filled"
+                        order.filled_at = log_time
+                        order.save()
+                print(f"trading_day {trading_day}-{hedge_price.ticker} done")
+                if status:
+                    break
+        elif(tac):
+            tac_data = MasterOhlcvtr.objects.filter(
+                ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=exp_date, day_status="trading_day").order_by("trading_day")
+            for tac_price in tac_data:
+                trading_day = tac.trading_day
+                status, order_id = create_performance(tac_price, position, tac=True)
+                if order_id:
+                    order = Order.objects.get(order_uid=order_id)
+                    log_time = pd.to_datetime(tac_data.trading_day)
+                    if order.status in ["pending", "review"]:
+                        order.status = "filled"
+                        order.filled_at = log_time
+                        order.save()
+                print(f"trading_day {trading_day}-{tac_price.ticker} done")
+                if status:
+                    break
+        else:
+            lastest_price_data = LatestPrice.objects.get(ticker=position.ticker)
             if(not status and trading_day <= lastest_price_data.last_date and exp_date >= lastest_price_data.last_date):
                 trading_day = lastest_price_data.last_date
-                print(f"rehedge latest price {trading_day} done")
-                status, order_id = create_performance(
-                    lastest_price_data, position, latest_price=True,rehedge=True)
-                
-        elif(lookback):
-            tac_data = MasterOhlcvtr.objects.filter(
-            ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=exp_date, day_status='trading_day').order_by("trading_day")
-            for tac in tac_data:
-                # trading_day = tac.trading_day
-                status, order_id = create_performance(tac, position)
-                # this is for debug only, make function this can be on/off
-        else:
-            if(type(trading_day) == datetime):
-                trading_day = trading_day.date()
-            lastest_price_data = LatestPrice.objects.get(
-                ticker=position.ticker)
-            if(not status):
-                trading_day = lastest_price_data.last_date
                 print(f"latest price {trading_day} done")
-                status, order_id = create_performance(
-                    lastest_price_data, position, latest_price=True)
-                # position.save()
+                status, order_id = create_performance(lastest_price_data, position, latest_price=True)
+                if order_id:
+                    order = Order.objects.get(order_uid=order_id)
+                    log_time = lastest_price_data.intraday_time
+                    if order.status in ["pending", "review"]:
+                        order.status = "filled"
+                        order.filled_at = log_time
+                        order.save()
+                if status:
+                    print(f"position end")
+        transaction.commit()
+        print("transaction committed")
         return True
     except OrderPosition.DoesNotExist as e:
         err = ErrorLog.objects.create_log(error_description=f'{position_uid} not exist',error_message=str(e))

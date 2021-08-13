@@ -7,26 +7,33 @@ from ingestion.master_multiple import master_multiple_update
 from general.sql_query import get_active_universe, get_universe_by_region
 from django.core.management.base import BaseCommand
 
-def daily_process_ohlcvtr(region_id = None):
-    if(type(region_id) != type(None)):
+
+def daily_process_ohlcvtr(region_id=None):
+    if type(region_id) != type(None):
         ticker = get_universe_by_region(region_id=region_id)
     else:
         ticker = get_active_universe()
+    """ The following two function calls are used to update the dss and dsws raw data """
     update_data_dss_from_dss(ticker=ticker)
     update_data_dsws_from_dsws(ticker=ticker)
+
+    """ The following two calls the database routines to process the data returned from above two """
     do_function("special_cases_1")
     do_function("master_ohlcvtr_update")
+
+    """ After updated, we process the data, filling missing days and adding day status """
     master_ohlctr_update()
     master_tac_update()
     master_multiple_update()
+
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("-na", "--na", type=bool, help="north_asia", default=False)
         parser.add_argument("-ws", "--ws", type=bool, help="west", default=False)
-        
+
     def handle(self, *args, **options):
-        if(options["na"]):
+        if options["na"]:
             daily_process_ohlcvtr(region_id=["na"])
-        elif(options["ws"]):
+        elif options["ws"]:
             daily_process_ohlcvtr(region_id=["ws"])

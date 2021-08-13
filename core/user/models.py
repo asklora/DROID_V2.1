@@ -17,6 +17,7 @@ from django.db.models import (
 import base64
 from core.djangomodule.models import BaseTimeStampModel
 from core.djangomodule.general import nonetozero
+from simple_history.models import HistoricalRecords
 
 
 def generate_balance_id():
@@ -63,19 +64,45 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def is_small(self):
-        user_client = self.client_user.all()[0]
-        return user_client.extra_data["capital"] == "small"
-
+        try:
+            user_client = self.client_user.all()[0]
+            return user_client.extra_data["capital"] == "small"
+        except AttributeError:
+            return False
+        except self.DoesNotExist:
+            return False
+        except KeyError:
+            return False
+        except Exception:
+            return False
+        
     @property
     def is_large(self):
-        user_client = self.client_user.all()[0]
-
-        return user_client.extra_data["capital"] == "large"
+        try:
+            user_client = self.client_user.all()[0]
+            return user_client.extra_data["capital"] == "large_margin"
+        except AttributeError:
+            return False
+        except self.DoesNotExist:
+            return False
+        except KeyError:
+            return False
+        except Exception:
+            return False
 
     @property
     def is_large_margin(self):
-        user_client = self.client_user.all()[0]
-        return user_client.extra_data["capital"] == "large_margin"
+        try:
+            user_client = self.client_user.all()[0]
+            return user_client.extra_data["capital"] == "large_margin"
+        except AttributeError:
+            return False
+        except self.DoesNotExist:
+            return False
+        except KeyError:
+            return False
+        except Exception:
+            return False
 
     @property
     def get_dial_phone(self):
@@ -212,7 +239,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         
 
     def __str__(self):
-        return self.email
+        if self.email:
+            return self.email
+        return str(self.id)
 
 
 class Accountbalance(BaseTimeStampModel):
@@ -223,9 +252,12 @@ class Accountbalance(BaseTimeStampModel):
     amount = models.FloatField(default=0)
     currency_code = models.ForeignKey(
         Currency, on_delete=models.DO_NOTHING, related_name='user_currency', default='USD', db_column='currency_code')
+    history = HistoricalRecords(table_name='user_account_history')
 
     def __str__(self):
-        return self.user.email
+        if self.user.email:
+            return self.user.email
+        return self.balance_uid
 
     def save(self, *args, **kwargs):
         if self.amount == None:
@@ -266,7 +298,9 @@ class TransactionHistory(BaseTimeStampModel):
     transaction_detail = models.JSONField(default=dict, null=True, blank=True)
 
     def __str__(self):
-        return f'{self.tr_type} - {self.balance_id.user.email}'
+        if self.balance_uid.user.email:
+            return f'{self.side} - {self.balance_uid.user.email}'
+        return self.side
 
     class Meta:
         db_table = 'user_transaction'

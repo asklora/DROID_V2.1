@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .forms import CustomUserCreationForm, CustomUserChangeForm
-from .models import User
+from .models import User,TransactionHistory
 
 
 
@@ -31,7 +31,7 @@ class AppUserAdmin(UserAdmin):
 
 
 admin.site.register(User, AppUserAdmin)
-
+admin.site.register(TransactionHistory)
 admin.site.site_title = "services asklora"
 admin.site.site_header = "Asklora database administration"
 admin.site.index_title = "ASKLORA.AI"

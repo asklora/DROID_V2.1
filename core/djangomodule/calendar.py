@@ -2,46 +2,51 @@ import requests
 import json
 import ast
 from datetime import datetime, timedelta
-from collections import OrderedDict
+import pytz
 from core.universe.models import ExchangeMarket
-# USD, HKD, CNY, KRW, EUR, GBP, TWD, JPY, SGD
-fin_id = "CN.SSE,US.NASDAQ,US.NYSE,HK.HKEX,KR.KRX,ES.BME,IT.MIB,DE.XETR,GB.LSE,TW.TWSE,JP.JPX"
-
-tradinghours_token = "1M1a35Qhk8gUbCsOSl6XRY2z3Qjj0of7y5ZEfE5MasUYm5b9YsoooA7RSxW7"
-
-########################### FROM GLOBAL_VARS.PY ###################################
-
-DSS_USERNAME = "9023786"
-
-DSS_PASSWORD = "askLORA20$"
-
-URL_Extrations = "https://hosted.datascopeapi.reuters.com/RestApi/v1/Extractions/Extract"
-
-URL_AuthToken = "https://hosted.datascopeapi.reuters.com/RestApi/v1/Authentication/RequestToken"
-
-REPORT_INTRADAY = "Intraday_Pricing"
-
-####################################################################################
+import pandas as pd
 
 
 class TradingHours:
+    next_bell = None
+    until = None
+    token = "1M1a35Qhk8gUbCsOSl6XRY2z3Qjj0of7y5ZEfE5MasUYm5b9YsoooA7RSxW7"
+    market_timezone = None
+    time_to_check =None
 
-    def __init__(self, fins=None,mic=None):
+    def __init__(self, fins=None, mic=None):
         if mic:
-            if isinstance(mic,str):
-                exchange = ExchangeMarket.objects.get(mic=mic)
-                self.fin_id =exchange.fin_id
-            elif isinstance(mic,list):
+            if isinstance(mic, str):
+                self.exchange = ExchangeMarket.objects.get(mic=mic)
+                self.fin_id = self.exchange.fin_id
+                self.get_market_timezone()
+            elif isinstance(mic, list):
                 exchange = ExchangeMarket.objects.filter(mic__in=mic)
-                self.fin_id =[finid.fin_id for finid in exchange]
+                self.fin_id = [finid.fin_id for finid in exchange]
             else:
-                mictype=type(mic)
-                raise ValueError(f"mic must be string or list instance not {mictype}")
+                mictype = type(mic)
+                raise ValueError(
+                    f"mic must be string or list instance not {mictype}")
         elif fins:
             self.fin_id = fins
+            self.exchange = ExchangeMarket.objects.get(fin_id=fins)
         elif not fins and not mic:
             raise ValueError("fins and mic should not be Blank")
-        self.token = tradinghours_token
+
+    def get_market_timezone(self):
+        url = f'https://api.tradinghours.com/v3/markets/details?fin_id={self.fin_id}&token={self.token}'
+        req = requests.get(url)
+        if req.status_code == 200:
+            try:
+                res = req.json()
+                self.market_timezone = res['data'][0]['timezone']
+            except Exception:
+                pass
+
+    def timezone_to_utc(self, dt, timezone):
+        time_zone = pytz.timezone(timezone)
+        date_time = time_zone.localize(dt)
+        return date_time.astimezone(pytz.utc)
 
     def get_index_symbol(self):
         url = "https://api.tradinghours.com/v3/markets?group=core&token="+self.token
@@ -50,7 +55,6 @@ class TradingHours:
         return res
 
     def get_weekly_holiday(self):
-        print(self.fin_id)
         if type(self.fin_id) == list:
             fin_id = (",").join(self.fin_id)
         else:
@@ -72,6 +76,10 @@ class TradingHours:
         return True
     
     
+    def normalize_datetime(self,dt):
+        len_date = len(dt) - 6
+        return pd.to_datetime(dt[:len_date])
+
     @property
     def fin_id(self):
         return self._fin_id
@@ -80,10 +88,48 @@ class TradingHours:
     def fin_id(self, value):
         self._fin_id = value
 
+
+    def run_market_check(self):
+        url = "http://api.tradinghours.com/v3/markets/status?fin_id=" + \
+            self.fin_id+"&token="+self.token
+        req = requests.get(url)
+        if req.status_code == 200:
+            resp = req.json()
+            now = datetime.now()
+            message_debug = f'{now} || market check for {self.fin_id}'
+            print(message_debug)
+            print(resp['data'])
+            if resp['data'][self.fin_id]['status'] == "Closed":
+                market_status =  False
+            else:
+                market_status =  True
+            try:
+                until_time = self.normalize_datetime(resp['data'][self.fin_id]['until'])
+                local_time_extend = self.normalize_datetime(resp['data'][self.fin_id]['next_bell']) + timedelta(minutes=30)
+                self.next_bell = self.timezone_to_utc(local_time_extend, self.market_timezone)
+                self.until = self.timezone_to_utc(until_time, self.market_timezone)
+            except Exception as e:
+                print(str(e))
+            if self.until:
+                self.time_to_check = self.until
+            else:
+                self.time_to_check =self.next_bell
+            if self.time_to_check:
+                self.exchange.until_time = self.time_to_check
+                self.exchange.is_open = market_status
+                self.exchange.save()
+        else:
+            print(req.status_code)
+
+            
+            
+
     @property
     def is_open(self):
+        if self.exchange.currency_code.currency_code == 'EUR':
+            return True
         status = None
-        if isinstance(self.fin_id,list):
+        if isinstance(self.fin_id, list):
             fin_param = (",").join(self.fin_id)
         else:
             fin_param = self.fin_id
@@ -93,8 +139,14 @@ class TradingHours:
 
         if req.status_code == 200:
             resp = req.json()
-            if isinstance(self.fin_id,str):
+            try:
+                nextbell_time_extend = self.normalize_datetime(resp['data'][self.fin_id]['next_bell']) + timedelta(minutes=30)
+                self.next_bell = self.timezone_to_utc(nextbell_time_extend, self.market_timezone)
+            except Exception:
+                pass
+            if isinstance(self.fin_id, str):
                 stat = resp['data'][self.fin_id]['status']
+                # hacky stuff need to change
                 if stat == "Closed":
                     return False
                 else:
@@ -110,123 +162,6 @@ class TradingHours:
                     status.append(data)
         else:
             resp = req.text
-            print(fin_param,'error')
+            print(fin_param, 'error')
             status = False
         return status
-
-# def get_trading_hour(currencylist):
-# 	fin_id = []
-# 	for curr in currencylist:
-# 		if comparation[curr] == {}:
-# 			pass
-# 		else:
-# 			fin_id.append(comparation[curr]["fin_id"])
-# 	if fin_id != []:
-# 		fin_id = (",").join(fin_id)
-# 	else:
-# 		print("Currency does not available")
-# 		return False
-# 	url = "http://api.tradinghours.com/v3/markets/status?fin_id="+fin_id+"&token="+tradinghours_token
-# 	req = requests.get(url)
-# 	res = req.json()
-# 	# print(res)
-# 	list_index = list(fin_id.split(","))
-# 	# print(len(list_index))
-# 	# for data in res['data'].keys():
-# 	#   print(data)
-# 	for data in list_index:
-# 		print(data, ": ", res['data'][data]['status'])
-# 		print("===========================================")
-
-# 	dss_date = get_quote_date_dss()
-# 	if dss_date != False:
-# 		if type(dss_date) == dict:
-# 			for dss in dss_date['value']:
-# 				print(dss)
-# 				print("===========================================")
-# 	return True
-
-# def makeExtractHeader(token):
-# 	_header = {}
-# 	_header['Prefer'] = 'respond-async, wait=5'
-# 	_header['Content-Type'] = 'application/json; odata.metadata=minimal'
-# 	_header['Accept-Charset'] = 'UTF-8'
-# 	_header['Authorization'] = token
-# 	return _header
-
-
-# def get_quote_date_dss():
-# 	# print("=====================")
-# 	authToken = None
-# 	header_get_token = {
-# 		"Content-Type": "application/json; odata.metadata=minimal",
-# 		"Prefer": "respond-async"
-# 	}
-
-# 	req_get_token = {'Credentials': {'Password': DSS_PASSWORD, 'Username': DSS_USERNAME}}
-
-# 	req_get_token = json.dumps(req_get_token)
-
-# 	req = requests.post(URL_AuthToken, data=req_get_token, headers=header_get_token)
-# 	# print("req_token_payload >> ", req_get_token)
-# 	if req.status_code == 200:
-# 		resp = req.json()
-# 		authToken = resp['value']
-# 	else:
-# 		# print("token respo >> ", req.text)
-# 		return False
-
-# 	# print("authToken >> ", authToken)
-
-# 	if authToken != None:
-# 		token = "Token "+authToken
-# 		header = makeExtractHeader(token)
-# 	data = {
-# 		"ExtractionRequest": {
-# 			"@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
-# 			"ContentFieldNames": [
-# 				"RIC",
-# 				"Trade Date"
-# 			],
-# 			"IdentifierList": {
-# 				"@odata.type": "#ThomsonReuters.Dss.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
-# 				"InstrumentIdentifiers": [
-# 				],
-# 				"ValidationOptions":{"AllowHistoricalInstruments":True,"AllowOpenAccessInstruments":True},
-# 				"UseUserPreferencesForValidationOptions": False
-# 			},
-# 			"Condition":
-# 			{
-
-# 		  }
-# 		}
-# 	}
-# 	data['ExtractionRequest']['Condition'] = OrderedDict(data['ExtractionRequest']['Condition'])
-# 	data['ExtractionRequest']['IdentifierList']['ValidationOptions'] = OrderedDict(data['ExtractionRequest']['IdentifierList']['ValidationOptions'])
-# 	data['ExtractionRequest']['IdentifierList'] = OrderedDict(data['ExtractionRequest']['IdentifierList'])
-# 	data['ExtractionRequest'] = OrderedDict(data['ExtractionRequest'])
-# 	data = OrderedDict(data)
-# 	# data = json.dumps(data)
-# 	# data = json.load(data, object_pairs_hook=OrderedDict)
-
-# 	listofticker = [".KS200", ".SPX", ".HSLI", ".CSI300"]
-
-
-# 	# stocks = universe.objects.filter(is_active=True, ticker=listofticker)
-# 	for _inst in listofticker:
-# 		_inst = "/"+_inst
-# 		data["ExtractionRequest"]["IdentifierList"]["InstrumentIdentifiers"].append(
-# 				{"IdentifierType": "Ric", "Identifier": _inst})
-# 	dss_resp = requests.post(URL_Extrations, data=None, json=data, headers=header)
-# 	print("status_code", dss_resp.status_code)
-# 	print(dss_resp.text)
-# 	if dss_resp.status_code == 200:
-# 		return ast.literal_eval(dss_resp.text)
-# 	else:
-# 		print("False")
-# 		return dss_resp.text
-
-# if __name__ == '__main__':
-# 	# get_trading_hour()
-# 	x = tradingHours(["GB.LSE", "CN.SSE"])
-# 	x.check_for_market()

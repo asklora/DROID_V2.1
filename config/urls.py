@@ -26,4 +26,5 @@ urlpatterns = [
     path('api/user/',include('core.user.urls')),
     path('api/client/',include('core.Clients.urls')),
     path('api/order/',include('core.orders.urls')),
+    path('api/bot/',include('core.bot.urls')),
 ]

@@ -3,9 +3,17 @@ from core.universe.models import Universe, Currency, Vix
 
 
 class DataDss(models.Model):
+    """
+    Data from DSS source
+    """
+
     dss_id = models.CharField(max_length=30, primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
-                               db_column="ticker", related_name="data_dss_ticker")
+    ticker = models.ForeignKey(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="data_dss_ticker",
+    )
     trading_day = models.DateField()
     open = models.FloatField(null=True, blank=True)
     high = models.FloatField(null=True, blank=True)
@@ -24,9 +32,17 @@ class DataDss(models.Model):
 
 
 class DataDsws(models.Model):
+    """
+    Data from DSWS source
+    """
+
     dsws_id = models.CharField(max_length=30, primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
-                               db_column="ticker", related_name="data_dsws_ticker")
+    ticker = models.ForeignKey(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="data_dsws_ticker",
+    )
     trading_day = models.DateField()
     total_return_index = models.FloatField(null=True, blank=True)
     # manager = DswsDataManager()
@@ -40,9 +56,54 @@ class DataDsws(models.Model):
         return self.ticker.ticker
 
 
+class DataQuandl(models.Model):
+    """
+    Data from Quandl source
+    """
+
+    uid = models.TextField(primary_key=True)
+    ticker = models.ForeignKey(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="data_quandl_ticker",
+    )
+    trading_day = models.DateField(blank=True, null=True)
+    stockpx = models.FloatField(blank=True, null=True)
+    iv30 = models.FloatField(blank=True, null=True)
+    iv60 = models.FloatField(blank=True, null=True)
+    iv90 = models.FloatField(blank=True, null=True)
+    m1atmiv = models.FloatField(blank=True, null=True)
+    m1dtex = models.FloatField(blank=True, null=True)
+    m2atmiv = models.FloatField(blank=True, null=True)
+    m2dtex = models.FloatField(blank=True, null=True)
+    m3atmiv = models.FloatField(blank=True, null=True)
+    m3dtex = models.FloatField(blank=True, null=True)
+    m4atmiv = models.FloatField(blank=True, null=True)
+    m4dtex = models.FloatField(blank=True, null=True)
+    slope = models.FloatField(blank=True, null=True)
+    deriv = models.FloatField(blank=True, null=True)
+    slope_inf = models.FloatField(blank=True, null=True)
+    deriv_inf = models.FloatField(blank=True, null=True)
+    # manager = DataQuandlManager()
+    objects = models.Manager()
+
+    class Meta:
+        managed = True
+        db_table = "data_quandl"
+
+    def __str__(self):
+        return f"{self.ticker.ticker}-{self.trading_day}"
+
+
 class ReportDatapoint(models.Model):
-    ticker = models.OneToOneField(Universe, on_delete=models.CASCADE,
-                                  db_column="ticker", related_name="dss_datapoint_ticker", primary_key=True)
+    ticker = models.OneToOneField(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="dss_datapoint_ticker",
+        primary_key=True,
+    )
     datapoint = models.IntegerField(blank=True, null=True)
     updated = models.DateField(blank=True, null=True)
     reingested = models.BooleanField(default=False)
@@ -55,32 +116,24 @@ class ReportDatapoint(models.Model):
         return self.ticker.ticker
 
 
-class MasterMultiple(models.Model):  # Master Daily Change to Master Multiply
+class MasterOhlcvtr(models.Model):
+    """
+    Combined data from DSS and DSWS data source, related models: :model:`master.DataDss` and :model:`master.DataDsws`
+    """
+
     uid = models.CharField(max_length=30, primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,db_column="ticker", related_name="master_multiple_ticker")
-    trading_day = models.DateField(blank=True, null=True)
-    open_multiple = models.FloatField(blank=True, null=True)
-    high_multiple = models.FloatField(blank=True, null=True)
-    low_multiple = models.FloatField(blank=True, null=True)
-    close_multiple = models.FloatField(blank=True, null=True)
-    volume_adj = models.FloatField(blank=True, null=True)
-    turn_over = models.FloatField(blank=True, null=True)
-    tri = models.FloatField(blank=True, null=True)
-
-    class Meta:
-        managed = True
-        db_table = "master_multiple"
-
-    def __str__(self):
-        return self.ticker.ticker
-
-
-class MasterOhlcvtr(models.Model):  # OHLCVTR DATA Change to master_ohlcvtr
-    uid = models.CharField(max_length=30, primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
-                               db_column="ticker", related_name="master_ohlcvtr_ticker")
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE,
-                                      db_column="currency_code", related_name="master_ohlcvtr_currency_code")
+    ticker = models.ForeignKey(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="master_ohlcvtr_ticker",
+    )
+    currency_code = models.ForeignKey(
+        Currency,
+        on_delete=models.CASCADE,
+        db_column="currency_code",
+        related_name="master_ohlcvtr_currency_code",
+    )
     trading_day = models.DateField(blank=True, null=True)
     open = models.FloatField(blank=True, null=True)
     high = models.FloatField(blank=True, null=True)
@@ -96,18 +149,67 @@ class MasterOhlcvtr(models.Model):  # OHLCVTR DATA Change to master_ohlcvtr
 
     class Meta:
         managed = True
-        db_table = "master_ohlcvtr"
-        indexes = [models.Index(fields=['ticker','currency_code',])]
-
+        db_table = "master_ohlcvtr"  # OHLCVTR DATA Change to master_ohlcvtr
+        indexes = [
+            models.Index(
+                fields=[
+                    "ticker",
+                    "currency_code",
+                ]
+            )
+        ]
 
     def __str__(self):
         return self.ticker.ticker
 
 
-class MasterTac(models.Model):  # Master TAC Change to master_tac
+class MasterMultiple(models.Model):
+    """
+    Updated after DLPA update
+    """
+
     uid = models.CharField(max_length=30, primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="master_tac_ticker")
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code", related_name="master_tac_currency_code")
+    ticker = models.ForeignKey(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="master_multiple_ticker",
+    )
+    trading_day = models.DateField(blank=True, null=True)
+    open_multiple = models.FloatField(blank=True, null=True)
+    high_multiple = models.FloatField(blank=True, null=True)
+    low_multiple = models.FloatField(blank=True, null=True)
+    close_multiple = models.FloatField(blank=True, null=True)
+    volume_adj = models.FloatField(blank=True, null=True)
+    turn_over = models.FloatField(blank=True, null=True)
+    tri = models.FloatField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = "master_multiple"  # Master Daily Change to Master Multiply
+
+    def __str__(self):
+        return self.ticker.ticker
+
+
+class MasterTac(models.Model):
+    """
+    Adjusted prices from :model:`master.MasterOhlcvtr`
+    """
+
+    uid = models.CharField(max_length=30, primary_key=True)
+    ticker = models.ForeignKey(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="master_tac_ticker",
+    )
+    currency_code = models.ForeignKey(
+        Currency,
+        on_delete=models.CASCADE,
+        db_column="currency_code",
+        related_name="master_tac_currency_code",
+    )
     trading_day = models.DateField(blank=True, null=True)
     volume = models.FloatField(blank=True, null=True)
     total_return_index = models.FloatField(blank=True, null=True)
@@ -122,7 +224,7 @@ class MasterTac(models.Model):  # Master TAC Change to master_tac
 
     class Meta:
         managed = True
-        db_table = "master_tac"
+        db_table = "master_tac"  # Master TAC Change to master_tac
 
     def __str__(self):
         return self.ticker.ticker
@@ -130,8 +232,12 @@ class MasterTac(models.Model):  # Master TAC Change to master_tac
 
 class DataDividend(models.Model):
     uid = models.TextField(primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
-                               db_column="ticker", related_name="data_dividend_ticker")
+    ticker = models.ForeignKey(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="data_dividend_ticker",
+    )
     ex_dividend_date = models.DateField(blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
     # manager = DataDividendManager()
@@ -145,10 +251,41 @@ class DataDividend(models.Model):
         return self.ticker.ticker
 
 
+class DataDividendDailyRates(models.Model):
+    uid = models.TextField(primary_key=True)
+    ticker = models.ForeignKey(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="data_dividend_daily_rates_ticker",
+    )
+    currency_code = models.ForeignKey(
+        Currency,
+        on_delete=models.CASCADE,
+        db_column="currency_code",
+        related_name="data_dividend_daily_rates_currency_code",
+    )
+    q = models.FloatField(blank=True, null=True)
+    t = models.IntegerField(blank=True, null=True)
+    spot_date = models.DateField(blank=True, null=True)
+    expiry_date = models.DateField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = "data_dividend_daily_rates"
+
+    def __str__(self):
+        return self.ticker.ticker
+
+
 class DataInterest(models.Model):
     ticker_interest = models.TextField(primary_key=True)
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE,
-                                      db_column="currency_code", related_name="data_interest_currency_code")
+    currency_code = models.ForeignKey(
+        Currency,
+        on_delete=models.CASCADE,
+        db_column="currency_code",
+        related_name="data_interest_currency_code",
+    )
     rate = models.FloatField(blank=True, null=True)
     raw_data = models.FloatField(blank=True, null=True)
     days_to_maturity = models.IntegerField(blank=True, null=True)
@@ -164,28 +301,14 @@ class DataInterest(models.Model):
         return self.ticker_interest
 
 
-class DataDividendDailyRates(models.Model):
-    uid = models.TextField(primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="data_dividend_daily_rates_ticker")
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE,
-                                      db_column="currency_code", related_name="data_dividend_daily_rates_currency_code")
-    q = models.FloatField(blank=True, null=True)
-    t = models.IntegerField(blank=True, null=True)
-    spot_date = models.DateField(blank=True, null=True)
-    expiry_date = models.DateField(blank=True, null=True)
-
-    class Meta:
-        managed = True
-        db_table = "data_dividend_daily_rates"
-
-    def __str__(self):
-        return self.ticker.ticker
-
-
 class DataInterestDailyRates(models.Model):
     uid = models.TextField(primary_key=True)
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE,
-                                      db_column="currency_code", related_name="data_interest_daily_rates_currency_code")
+    currency_code = models.ForeignKey(
+        Currency,
+        on_delete=models.CASCADE,
+        db_column="currency_code",
+        related_name="data_interest_daily_rates_currency_code",
+    )
     r = models.FloatField(blank=True, null=True)
     t = models.IntegerField(blank=True, null=True)
 
@@ -198,8 +321,13 @@ class DataInterestDailyRates(models.Model):
 
 
 class DataSplit(models.Model):
-    ticker = models.OneToOneField(Universe, on_delete=models.CASCADE,
-                                  db_column="ticker", related_name="data_split_ticker", primary_key=True)
+    ticker = models.OneToOneField(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="data_split_ticker",
+        primary_key=True,
+    )
     data_type = models.TextField(null=True, blank=True)
     intraday_date = models.DateField(blank=True, null=True)
     capital_change = models.FloatField(blank=True, null=True)
@@ -215,8 +343,13 @@ class DataSplit(models.Model):
 
 
 class DataFundamentalScore(models.Model):
-    ticker = models.OneToOneField(Universe, on_delete=models.CASCADE, db_column="ticker",
-                                  related_name="data_fundamental_score_ticker", primary_key=True)
+    ticker = models.OneToOneField(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="data_fundamental_score_ticker",
+        primary_key=True,
+    )
     eps = models.FloatField(blank=True, null=True)
     bps = models.FloatField(blank=True, null=True)
     ev = models.FloatField(blank=True, null=True)
@@ -246,51 +379,32 @@ class DataFundamentalScore(models.Model):
         return self.ticker.ticker
 
 
-class DataQuandl(models.Model):
-    uid = models.TextField(primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,
-                               db_column="ticker", related_name="data_quandl_ticker")
-    trading_day = models.DateField(blank=True, null=True)
-    stockpx = models.FloatField(blank=True, null=True)
-    iv30 = models.FloatField(blank=True, null=True)
-    iv60 = models.FloatField(blank=True, null=True)
-    iv90 = models.FloatField(blank=True, null=True)
-    m1atmiv = models.FloatField(blank=True, null=True)
-    m1dtex = models.FloatField(blank=True, null=True)
-    m2atmiv = models.FloatField(blank=True, null=True)
-    m2dtex = models.FloatField(blank=True, null=True)
-    m3atmiv = models.FloatField(blank=True, null=True)
-    m3dtex = models.FloatField(blank=True, null=True)
-    m4atmiv = models.FloatField(blank=True, null=True)
-    m4dtex = models.FloatField(blank=True, null=True)
-    slope = models.FloatField(blank=True, null=True)
-    deriv = models.FloatField(blank=True, null=True)
-    slope_inf = models.FloatField(blank=True, null=True)
-    deriv_inf = models.FloatField(blank=True, null=True)
-    # manager = DataQuandlManager()
-    objects = models.Manager()
-
-    class Meta:
-        managed = True
-        db_table = "data_quandl"
-
-    def __str__(self):
-        return f"{self.ticker.ticker}-{self.trading_day}"
-
-
 class DataVix(models.Model):
+    """
+    Data used for AI
+    """
     uid = models.TextField(primary_key=True)
-    vix_id = models.ForeignKey(Vix, on_delete=models.CASCADE, db_column="vix_id", related_name="data_vix_vix_id")
+    vix_id = models.ForeignKey(
+        Vix,
+        on_delete=models.CASCADE,
+        db_column="vix_id",
+        related_name="data_vix_vix_id",
+    )
     trading_day = models.DateField(blank=True, null=True)
     vix_value = models.FloatField(blank=True, null=True)
 
     class Meta:
         managed = True
         db_table = "data_vix"
+
     def __str__(self):
         return self.uid
 
+
 class Macro(models.Model):
+    """
+    Data used for AI
+    """
     period_end = models.DateField(primary_key=True)
     chgdp = models.FloatField(blank=True, null=True)
     jpgdp = models.FloatField(blank=True, null=True)
@@ -303,6 +417,7 @@ class Macro(models.Model):
     usgbill3 = models.FloatField(blank=True, null=True)
     jpmshort = models.FloatField(blank=True, null=True)
     fred_data = models.FloatField(blank=True, null=True)
+
     class Meta:
         managed = True
         db_table = "data_macro"
@@ -312,6 +427,9 @@ class Macro(models.Model):
 
 
 class MacroMonthly(models.Model):
+    """
+    Data used for AI
+    """
     trading_day = models.DateField(primary_key=True)
     period_end = models.DateField(blank=True, null=True)
     chgdp = models.FloatField(blank=True, null=True)
@@ -325,6 +443,7 @@ class MacroMonthly(models.Model):
     usgbill3 = models.FloatField(blank=True, null=True)
     jpmshort = models.FloatField(blank=True, null=True)
     fred_data = models.FloatField(blank=True, null=True)
+
     class Meta:
         managed = True
         db_table = "data_macro_monthly"
@@ -334,8 +453,16 @@ class MacroMonthly(models.Model):
 
 
 class Ibes(models.Model):
+    """
+    Earnings estimates data for AI
+    """
     uid = models.TextField(primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="data_ibes_ticker")
+    ticker = models.ForeignKey(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="data_ibes_ticker",
+    )
     period_end = models.DateField(blank=True, null=True)
     epsi1md = models.FloatField(blank=True, null=True)
     i0eps = models.FloatField(blank=True, null=True)
@@ -343,6 +470,7 @@ class Ibes(models.Model):
     ebd1fd12 = models.FloatField(blank=True, null=True)
     eps1fd12 = models.FloatField(blank=True, null=True)
     eps1tr12 = models.FloatField(blank=True, null=True)
+
     class Meta:
         managed = True
         db_table = "data_ibes"
@@ -352,8 +480,16 @@ class Ibes(models.Model):
 
 
 class IbesMonthly(models.Model):
+    """
+    Same as above with monthly summaries
+    """
     uid = models.TextField(primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="data_ibes_monthly_ticker")
+    ticker = models.ForeignKey(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="data_ibes_monthly_ticker",
+    )
     trading_day = models.DateField(blank=True, null=True)
     period_end = models.DateField(blank=True, null=True)
     eps1fd12 = models.FloatField(blank=True, null=True)
@@ -362,6 +498,7 @@ class IbesMonthly(models.Model):
     epsi1md = models.FloatField(blank=True, null=True)
     i0eps = models.FloatField(blank=True, null=True)
     ebd1fd12 = models.FloatField(blank=True, null=True)
+
     class Meta:
         managed = True
         db_table = "data_ibes_monthly"
@@ -371,8 +508,12 @@ class IbesMonthly(models.Model):
 
 
 class Fred(models.Model):
+    """
+    Data used for AI
+    """
     trading_day = models.DateField(primary_key=True)
     data = models.FloatField(blank=True, null=True)
+
     class Meta:
         managed = True
         db_table = "data_fred"
@@ -380,9 +521,15 @@ class Fred(models.Model):
     def __str__(self):
         return f"{self.trading_day}"
 
+
 class WorldscopeSummary(models.Model):
     uid = models.TextField(primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="data_worldscope_summary_ticker")
+    ticker = models.ForeignKey(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="data_worldscope_summary_ticker",
+    )
     worldscope_identifier = models.TextField(blank=True, null=True)
     year = models.IntegerField(blank=True, null=True)
     frequency_number = models.IntegerField(blank=True, null=True)
@@ -419,7 +566,6 @@ class WorldscopeSummary(models.Model):
     fn_2999 = models.FloatField(blank=True, null=True)
     fn_5192 = models.FloatField(blank=True, null=True)
     fn_5575 = models.FloatField(blank=True, null=True)
-    
 
     class Meta:
         managed = True
@@ -428,8 +574,18 @@ class WorldscopeSummary(models.Model):
     def __str__(self):
         return f"{self.ticker}-{self.period_end}"
 
+
 class LatestPrice(models.Model):
-    ticker = models.OneToOneField(Universe, on_delete=models.CASCADE,db_column="ticker", related_name="latest_price_ticker", primary_key=True)
+    """
+    Latest stock prices for the day
+    """
+    ticker = models.OneToOneField(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="latest_price_ticker",
+        primary_key=True,
+    )
     classic_vol = models.FloatField(blank=True, null=True)
     open = models.FloatField(blank=True, null=True)
     high = models.FloatField(blank=True, null=True)
@@ -444,7 +600,7 @@ class LatestPrice(models.Model):
     capital_change = models.FloatField(blank=True, null=True)
     volume = models.FloatField(blank=True, null=True)
     latest_price = models.FloatField(blank=True, null=True)
-    
+
     class Meta:
         managed = True
         db_table = "latest_price"
@@ -454,8 +610,13 @@ class LatestPrice(models.Model):
 
 
 class HedgeLatestPriceHistory(models.Model):
-    hedge_uid = models.CharField(max_length=255,primary_key=True)
-    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE,db_column="ticker", related_name="hedge_latest_price_ticker_history")
+    hedge_uid = models.CharField(max_length=255, primary_key=True)
+    ticker = models.ForeignKey(
+        Universe,
+        on_delete=models.CASCADE,
+        db_column="ticker",
+        related_name="hedge_latest_price_ticker_history",
+    )
     high = models.FloatField(blank=True, null=True)
     low = models.FloatField(blank=True, null=True)
     close = models.FloatField(blank=True, null=True)
@@ -464,8 +625,8 @@ class HedgeLatestPriceHistory(models.Model):
     last_date = models.DateField(blank=True, null=True)
     volume = models.FloatField(blank=True, null=True)
     latest_price = models.FloatField(blank=True, null=True)
-    types = models.CharField(max_length=20,null=True,blank=True)
-    
+    types = models.CharField(max_length=20, null=True, blank=True)
+
     class Meta:
         managed = True
         db_table = "hedge_latest_price_history"
@@ -473,13 +634,8 @@ class HedgeLatestPriceHistory(models.Model):
     def __str__(self):
         return f"{self.ticker.ticker}"
 
-
-
-    
     # def uno_ask_price(self):
     # def uno_bid_price(self):
-        
-    
+
     # def ucdc_ask_price(self):
     # def ucdc_bid_price(self):
-        

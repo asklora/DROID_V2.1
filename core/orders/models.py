@@ -6,11 +6,13 @@ from core.bot.models import BotOptionType
 from django.db import IntegrityError
 import uuid
 from core.djangomodule.general import generate_id, formatdigit
-
-# Create your models here.
+from simple_history.models import HistoricalRecords
 
 
 class Order(BaseTimeStampModel):
+    """
+    Orders created by the users
+    """
     order_uid = models.UUIDField(primary_key=True, editable=False)
     user_id = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="user_order", db_column="user_id")
@@ -60,7 +62,9 @@ class Order(BaseTimeStampModel):
 
 
 class OrderPosition(BaseTimeStampModel):
-
+    """
+    Confirmed orders with status field equals to "filled"
+    """
     position_uid = models.CharField(
         primary_key=True, editable=False, max_length=500)
     user_id = models.ForeignKey(
@@ -96,6 +100,7 @@ class OrderPosition(BaseTimeStampModel):
     vol = models.FloatField(null=True, blank=True)
     margin = models.FloatField(default=1)
     bot_cash_dividend = models.FloatField(null=True, blank=True, default=0)
+    history = HistoricalRecords(table_name='order_position_history')
 
     class Meta:
         managed = True
@@ -166,6 +171,9 @@ class OrderPosition(BaseTimeStampModel):
 
 
 class PositionPerformance(BaseTimeStampModel):
+    """
+    Tracking the changes in the position of the orders and also AI's performance
+    """
     performance_uid = models.CharField(
         max_length=255, primary_key=True, editable=False)
     position_uid = models.ForeignKey(
@@ -189,8 +197,8 @@ class PositionPerformance(BaseTimeStampModel):
     strike_2 = models.FloatField(blank=True, null=True)
     # order response from third party
     order_summary = models.JSONField(null=True, blank=True)
-    order_uid = models.ForeignKey(
-        "Order", null=True, blank=True, on_delete=models.SET_NULL, db_column="order_uid")
+    order_uid = models.ForeignKey("Order", null=True, blank=True, on_delete=models.SET_NULL, db_column="order_uid")
+    status = models.CharField(null=True, blank=True, max_length=200)
 
     def save(self, *args, **kwargs):
         if not self.performance_uid:
@@ -221,6 +229,9 @@ class PositionPerformance(BaseTimeStampModel):
 
 
 class OrderFee(BaseTimeStampModel):
+    """
+    Order fees according to their types
+    """
     order_uid = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="orders_fee_orders", db_column="order_uid")
     fee_type = models.TextField(null=True, blank=True)
