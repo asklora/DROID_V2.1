@@ -50,7 +50,6 @@ def dlpa_weekly():
 # Main Process
 if __name__ == "__main__":
     print("Start Process")
-    from migrate import weekly_migrations, daily_migrations
     currency_code = ["SGD"]
     ticker = ["MSFT.O", "AAPL.O"]
     update_lot_size_from_rkd(ticker=ticker)
