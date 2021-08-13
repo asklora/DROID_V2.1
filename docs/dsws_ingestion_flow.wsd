@@ -1,0 +1,46 @@
+@startuml "dsws ingestion flow"
+
+title "DSWS Ingestion flow"
+
+!theme vibrant
+
+skinparam shadowing false
+skinparam defaultFontName Ubuntu
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+actor Cron
+box Packages
+entity "ingestion/data_from_dsws" as data
+entity "datasource/dsws" as dsws
+end box
+box "Database"
+database universe
+database data_dsws
+end box
+box "Data source" #LightBlue
+participant DSWS as source
+end box
+
+== Daily cron jobs triggered ==
+Cron -> data ++ : update_data_dsws_from_dsws()
+
+data -> universe ++ : get_max_last_ingestion_from_universe()
+universe --> data -- : start_date
+
+data -> universe ++ : get_active_universe
+universe --> data -- : universe
+
+data -> dsws ++ : get_data_history_from_dsws()
+
+== Getting data from DSWS ==
+dsws -> source ++ : DS.fetch()
+source --> source : loop over\nchucks size
+source --> dsws -- : result
+
+dsws --> data -- : result
+
+== resulting data is inserted\ninto table data_dsws ==
+data -> data_dsws -- : upsert_data_to_database()
+
+@enduml

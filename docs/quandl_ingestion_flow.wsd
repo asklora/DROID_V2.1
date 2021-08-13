@@ -1,0 +1,46 @@
+@startuml "quandl ingestion flow"
+
+title "Quandl Ingestion flow"
+
+!theme vibrant
+
+skinparam shadowing false
+skinparam defaultFontName Ubuntu
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+actor Cron
+box Packages
+entity "ingestion/data_from_quandl" as data
+entity "general/date_process.py" as date
+entity "datasource/quandl" as quandl
+end box
+box "Database"
+database universe
+database data_quandl
+end box
+box "Data source" #LightBlue
+participant Quandl as source
+end box
+
+== Daily cron jobs triggered ==
+Cron -> data ++ : update_quandl_orats_from_quandl()
+
+data -> date ++ : droid_start_date()
+date --> data -- : start_date
+
+data -> universe ++ : get_active_universe_by_quandl_symbol()
+universe --> data -- : quandl_symbol_list
+
+data -> quandl ++ : read_quandl_csv()
+
+== Getting data from Quandl ==
+quandl -> source ++ : pd.read_csv()
+source --> quandl -- : data
+
+quandl --> data -- : data_from_quandl
+
+== resulting data is inserted\ninto table data_quandl ==
+data -> data_quandl -- : upsert_data_to_database()
+
+@enduml

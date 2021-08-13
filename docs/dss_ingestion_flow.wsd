@@ -1,0 +1,47 @@
+@startuml "dss ingestion flow"
+
+title "DSS Ingestion flow"
+
+!theme vibrant
+
+skinparam Shadowing false
+skinparam DefaultFontName Ubuntu
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+actor Cron
+box Packages
+entity "ingestion/data_from_dss" as data
+entity "datasource/dss" as dss
+end box
+box "Database"
+database universe
+database data_dss
+end box
+box "Data source" #LightBlue
+participant Reuters
+end box
+
+== Daily cron jobs triggered ==
+Cron -> data ++: update_data_dss_from_dss()
+
+data -> universe ++ : get_max_last_ingestion_from_universe()
+universe --> data -- : start_date
+
+data -> universe ++ : get_active_universe
+universe --> data -- : universe
+
+data -> dss ++ : get_data_from_dss()
+
+== Getting data from Reuters ==
+dss -> Reuters ++ : getAuthToken()
+Reuters --> dss -- : token
+
+dss -> Reuters ++ : get_data_from_reuters()
+Reuters --> dss -- : data
+return result
+
+== resulting data is inserted\ninto table data_dss ==
+data -> data_dss -- : upsert_data_to_database()
+
+@enduml
