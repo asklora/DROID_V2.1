@@ -2,7 +2,6 @@ from ingestion.data_from_timezone import update_utc_offset_from_timezone
 from ingestion.data_from_dsws import interest_update_from_dsws, populate_ibes_table, populate_macro_table
 from general.sql_process import do_function
 from django.core.management.base import BaseCommand
-from migrate import weekly_migrations, daily_migrations
 from bot.preprocess import dividend_daily_update, interest_daily_update
 from general.sql_process import do_function
 from ingestion.master_tac import master_tac_update
@@ -15,11 +14,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         do_function("universe_populate")
-        if(options["daily"]):
-            
-            daily_migrations()
-        else:
-            weekly_migrations()
         populate_macro_table()
         populate_ibes_table()
         do_function("special_cases_1")
