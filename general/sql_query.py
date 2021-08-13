@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
-from general.sql_process import db_read, dlp_db_read, alibaba_db_url
+from general.sql_process import db_read, alibaba_db_url
 from general.date_process import backdate_by_day, dateNow, droid_start_date, str_to_date
 from general.data_process import tuple_data
 from general.table_name import (
@@ -29,18 +29,9 @@ from general.table_name import (
     get_fundamental_score_table_name,
     get_master_ohlcvtr_table_name,
     get_report_datapoint_table_name,
-    get_universe_consolidated_table_name,
-)
+    get_universe_consolidated_table_name)
 
-
-def read_query(
-    query,
-    table=get_universe_table_name(),
-    cpu_counts=False,
-    dlp=False,
-    alibaba=False,
-    prints=True,
-):
+def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=True):
     """Base function for database query
 
     Args:
@@ -54,12 +45,10 @@ def read_query(
     Returns:
         DataFrame: Resulting data from the query
     """
-    if prints:
+  
+    if(prints):
         print(f"Get Data From Database on {table} table")
-
-    if dlp:
-        dbcon = dlp_db_read
-    elif alibaba:
+    if alibaba:
         dbcon = alibaba_db_url
     else:
         dbcon = db_read
@@ -79,19 +68,6 @@ def read_query(
     if prints:
         print("Total Data = " + str(len(data)))
     return data
-
-
-def get_active_universe_droid1(ticker=None, currency_code=None, active=True):
-    query = f"select * from {get_universe_table_name()} where is_active=True "
-    check = check_ticker_currency_code_query(
-        ticker=ticker, currency_code=currency_code, active=active
-    )
-    if check != "":
-        query += f"and " + check
-    query += f"order by ticker"
-    data = read_query(query, table=get_universe_table_name(), dlp=True)
-    return data
-
 
 def check_start_end_date(start_date, end_date):
     if type(start_date) == type(None):
