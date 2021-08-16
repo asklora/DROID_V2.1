@@ -14,55 +14,6 @@ new position or end position
 using broker or not
 include fee or not
 """
-class OrderServices:
-    
-    
-    
-    def __init__(self,instance:Order):
-        self.instance = instance
-        self.user_wallet = instance.user_id.user_balance
-        self.user_wallet_currency = instance.user_id.user_balance.currency_code
-
-    
-    def on_pending(self):
-        pass
-
-    def on_placed(self):
-        pass
-
-    def on_filled(self):
-        pass
-
-    def on_cancel(self):
-        pass
-    
-    def order_identity(self):
-        pass
-    
-    
-    def init_order_method(self):
-        pass
-
-    
-    def bot_order(self):
-        pass
-
-
-    def bot_hedge(self):
-        pass
-    
-    
-    def user_order(self):
-        pass
-
-    
-    def calculate_fee(self,amount, side, user_id):
-        pass
-    
-    
-    def create_fee(self, user_id, balance_uid, position_uid, status):
-        pass
-
 
 def update_initial_transaction_position(instance:Order,position_uid:str):
     # update the transaction
