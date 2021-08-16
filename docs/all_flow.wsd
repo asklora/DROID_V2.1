@@ -4,34 +4,27 @@ title "Data flow of Droidv2"
 
 !theme vibrant
 
-skinparam shadowing false
-skinparam defaultFontName Ubuntu
+skinparam Shadowing false
+skinparam DefaultFontName Ubuntu
 skinparam ParticipantPadding 20
 skinparam BoxPadding 10
 
+actor Cron
 box "Database"
-participant universe
-participant "data_dss, data_dsws" as base_tables
-participant "master_ohlcvtr, master_tac" as updated_tables
+database universe
+database "data_dss, data_dsws" as base
+database "master_ohlcvtr, master_tac" as updated
 end box
-participant "Data sources" as sources
+participant "Data source" as source
 
-== Daily process is run ==
-rnote over universe, base_tables
-List of tickers is taken from universe
-end note
-universe -> sources : Getting the update from the list of tickers
+== Daily cron jobs triggered ==
+Cron -> universe ++: Getting tickers to update
 
-rnote over base_tables, sources
-The data obtained from sources is put into base tables
-end note
-sources -> base_tables : Base tables are updated
+== Update data ==
+universe -> source --++ : Getting updated prices from data sources
+source --> base --++ : Resulting data is put into base tables
 
-
-rnote over base_tables, updated_tables
-Data from base tables are processed
-and input to the updated table
-end note
-base_tables -> updated_tables : Data is processed in database routines
+== Process data ==
+base -> updated -- : Data from base tables are processed\nand input to the updated table
 
 @enduml
