@@ -11,38 +11,22 @@ skinparam BoxPadding 10
 skinparam ConditionEndStyle diamond
 
 start
-partition "ingestion/data_from_dss" {
-    :update_data_dss_from_dss();
-}
+
 package "datasource/dss" {
     floating note: This file is used\nto get the data from\nReuters
     :get_data_from_dss();
 
-    split
-        :start date;
-    split again
-        :end_date;
-    split again
-        ->getAuthToken();
-        :Reuters;
-        :authToken;
-    split again
-        :jsonFile;
-    split again
-        :stocks;
-    split again
-        switch (report)
-        case ( REPORT\n_INTRADAY )
-        :_jReqBody;
-        case ( REPORT\n_HISTORY )
-        :_jReqBody;
-        case ( REPORT\n_INDEXMEMBER )
-        :_jReqBody;
-        endswitch
-    endsplit
+    :start_date\nend_date\njsonFile\nstocks\nreport}
 
-    :Reuters;
-    :data: DataFrame;
+    :getAuthToken()]
+
+    :token/
+
+    :get_data_from_reuters]
+
+    :s3.put_object()]
+
+    :data: DataFrame/
 }
 
 stop
