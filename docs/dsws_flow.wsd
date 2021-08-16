@@ -18,7 +18,7 @@ package "datasource/dsws" {
 
     :start_date\nend_date\nuniverse\nidentifier\n*field\nuse_ticker=True\ndividend=False\nsplit_number=40}
 
-    :np.array_split]
+    :np.array_split()]
     note right
         Ticker is split into chunks with ""n""
         items defined in ""split_number""
