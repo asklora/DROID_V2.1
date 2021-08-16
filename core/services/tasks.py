@@ -171,46 +171,46 @@ app.conf.beat_schedule = {
         }
     },
     # LATESTPRICE / QUOTES UPDATE
-    "EUR-Latestprice-update": {
-        "task": "core.services.tasks.get_latest_price",
-        "schedule": crontab(minute=EUR_CUR.ingestion_time.minute, hour=EUR_CUR.ingestion_time.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "EUR"},
-        "options": {
-            "expires": 5*60,
-        }
-    },
-    "HKD-Latestprice-update": {
-        "task": "core.services.tasks.get_latest_price",
-        "schedule": crontab(minute=HKD_CUR.ingestion_time.minute, hour=HKD_CUR.ingestion_time.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "HKD"},
-        "options": {
-            "expires": 5*60,
-        }
-    },
-    "CNY-Latestprice-update": {
-        "task": "core.services.tasks.get_latest_price",
-        "schedule": crontab(minute=CNY_CUR.ingestion_time.minute, hour=CNY_CUR.ingestion_time.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "CNY"},
-        "options": {
-            "expires": 5*60,
-        }
-    },
-    "KRW-Latestprice-update": {
-        "task": "core.services.tasks.get_latest_price",
-        "schedule": crontab(minute=KRW_CUR.ingestion_time.minute, hour=KRW_CUR.ingestion_time.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "KRW"},
-        "options": {
-            "expires": 5*60,
-        }
-    },
-    "USD-Latestprice-update": {
-        "task": "core.services.tasks.get_latest_price",
-        "schedule": crontab(minute=USD_CUR.ingestion_time.minute, hour=USD_CUR.ingestion_time.hour, day_of_week="1-5"),
-        "kwargs": {"currency": "USD"},
-        "options": {
-            "expires": 5*60,
-        }
-    },
+    # "EUR-Latestprice-update": {
+    #     "task": "core.services.tasks.get_latest_price",
+    #     "schedule": crontab(minute=EUR_CUR.ingestion_time.minute, hour=EUR_CUR.ingestion_time.hour, day_of_week="1-5"),
+    #     "kwargs": {"currency": "EUR"},
+    #     "options": {
+    #         "expires": 5*60,
+    #     }
+    # },
+    # "HKD-Latestprice-update": {
+    #     "task": "core.services.tasks.get_latest_price",
+    #     "schedule": crontab(minute=HKD_CUR.ingestion_time.minute, hour=HKD_CUR.ingestion_time.hour, day_of_week="1-5"),
+    #     "kwargs": {"currency": "HKD"},
+    #     "options": {
+    #         "expires": 5*60,
+    #     }
+    # },
+    # "CNY-Latestprice-update": {
+    #     "task": "core.services.tasks.get_latest_price",
+    #     "schedule": crontab(minute=CNY_CUR.ingestion_time.minute, hour=CNY_CUR.ingestion_time.hour, day_of_week="1-5"),
+    #     "kwargs": {"currency": "CNY"},
+    #     "options": {
+    #         "expires": 5*60,
+    #     }
+    # },
+    # "KRW-Latestprice-update": {
+    #     "task": "core.services.tasks.get_latest_price",
+    #     "schedule": crontab(minute=KRW_CUR.ingestion_time.minute, hour=KRW_CUR.ingestion_time.hour, day_of_week="1-5"),
+    #     "kwargs": {"currency": "KRW"},
+    #     "options": {
+    #         "expires": 5*60,
+    #     }
+    # },
+    # "USD-Latestprice-update": {
+    #     "task": "core.services.tasks.get_latest_price",
+    #     "schedule": crontab(minute=USD_CUR.ingestion_time.minute, hour=USD_CUR.ingestion_time.hour, day_of_week="1-5"),
+    #     "kwargs": {"currency": "USD"},
+    #     "options": {
+    #         "expires": 5*60,
+    #     }
+    # },
 
 }
 # END TASK SCHEDULE
@@ -419,8 +419,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA", **opti
                 err.send_report_error()
                 return {"err": str(e)}
 
-    report_to_slack(
-        f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
+    
     try:
         # WILL RUN EVERY BUSINESS DAY
         # clear any existing cache
@@ -428,6 +427,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA", **opti
         # SKIP FELS FOR AUTO ORDER, SINCE FELS USING MANUAL TRIGER ORDER
 
         if not client_name == "FELS":
+            report_to_slack(f"===  START ORDER FOR {client_name} TOP PICK {currency} ===")
             order_client_topstock(
                 currency=currency, client_name=client_name, **options)  # bot advisor
             order_client_topstock(
@@ -561,6 +561,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False,
                     user_id=user.user
                 )
                 if order:
+                    order.status='placed'
                     order.placed = True
                     order.placed_at = spot_date
                     order.save()
@@ -639,7 +640,7 @@ def daily_hedge_user(currency=None, ingest=False, exclude_client=['HANWHA','FELS
 
 
 def hedge(currency=None, bot_tester=False, **options):
-    # clear any existing cache
+    # clear any existing caches
     cache.clear()
     if bot_tester:
         report_to_slack(f"===  START HEDGE FOR {currency} Bot Tester ===")
