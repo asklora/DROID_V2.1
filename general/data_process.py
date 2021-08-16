@@ -1,11 +1,6 @@
 import pandas as pd
 from pandas.core.series import Series
 
-def nonetozero(value):
-    if value:
-        return value
-    return 0
-    
 def uid_maker(data, uid="uid", ticker="ticker", trading_day="trading_day", date=True, replace=True):
     data[trading_day] = data[trading_day].astype(str)
     data[uid]=data[trading_day] + data[ticker]
