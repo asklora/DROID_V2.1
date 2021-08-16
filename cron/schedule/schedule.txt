@@ -4,11 +4,34 @@
 # the "2>&1" is used to redirect the standard error stream (stderr) to the standard out stream (stdout)
 # 2-6 in day of week field means the cronjob will run from tuesday up to saturday
 
+# =======================================
+# This is the crontab file contents on PC 1
+# =======================================
+
+42 09 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_krw.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_krw.log 2>&1
+43 09 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_cny.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_cny.log 2>&1
+44 09 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_mix.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_mix.log 2>&1
+46 09 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_eur.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_eur.log 2>&1
+47 09 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_usd.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_usd.log 2>&1
+
+00 03 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/monthly.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/monthly.log 2>&1
+
+51 15 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_krw.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_krw.log 2>&1
+52 15 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_cny.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_cny.log 2>&1
+53 15 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_mix.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_mix.log 2>&1
+55 15 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_eur.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_eur.log 2>&1
+56 15 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_usd.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_usd.log 2>&1
+
+
+# =======================================
+# This is the crontab file contents on PC 5
+# =======================================
+
+00 00 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/training.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/training.log 2>&1
+
 00 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/west_market.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/west_market.log 2>&1
 
 00 10 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/north_asia_market.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/north_asia_market.log 2>&1
-
-00 19 * * 6 /home/loratech/PycharmProjects/DROID_V2.1/cron/training.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/training.log 2>&1
 
 30 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/classic.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/classic_na.log 2>&1
 
@@ -24,18 +47,6 @@
 35 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/cny_uno.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/cny_uno.log 2>&1
 36 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/cny_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/cny_ucdc.log 2>&1
 
-34 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/sgd_prep.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/sgd_prep.log 2>&1
-37 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/sgd_uno.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/sgd_uno.log 2>&1
-38 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/sgd_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/sgd_ucdc.log 2>&1
-
-35 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/twd_prep.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/twd_prep.log 2>&1
-39 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/twd_uno.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/twd_uno.log 2>&1
-40 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/twd_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/twd_ucdc.log 2>&1
-
-36 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/jpy_prep.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/jpy_prep.log 2>&1
-41 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/jpy_uno.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/jpy_uno.log 2>&1
-42 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/jpy_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/jpy_ucdc.log 2>&1
-
 30 10 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/classic.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/classic_ws.log 2>&1
 
 31 10 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/usd_prep.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/usd_prep.log 2>&1
@@ -50,30 +61,6 @@
 35 11 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/gbp_uno.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/gbp_uno.log 2>&1
 36 11 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/gbp_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/gbp_ucdc.log 2>&1
 
-41 10 * * 0#1 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_jpy.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_jpy.log 2>&1
-42 10 * * 0#1 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_krw.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_krw.log 2>&1
-43 10 * * 0#1 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_cny.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_cny.log 2>&1
-44 10 * * 0#1 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_mix.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_mix.log 2>&1
-45 10 * * 0#1 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_twd.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_twd.log 2>&1
-46 10 * * 0#1 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_eur.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_eur.log 2>&1
-47 10 * * 0#1 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_usd.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_usd.log 2>&1
-
-00 04 * * 0#1 /home/loratech/PycharmProjects/DROID_V2.1/cron/monthly.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/monthly.log 2>&1
-
-
-50 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_jpy.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_jpy.log 2>&1
-51 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_krw.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_krw.log 2>&1
-52 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_cny.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_cny.log 2>&1
-53 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_mix.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_mix.log 2>&1
-54 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_twd.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_twd.log 2>&1
-55 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_eur.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_eur.log 2>&1
-56 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_usd.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_usd.log 2>&1
-
-
-30 00 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/north_asia_market.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/north_asia_market.log 2>&1
-
-30 08 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/west_market.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/west_market.log 2>&1
-
 00 05 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/vix.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/vix.log 2>&1
 
 15 05 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/interest.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/interest.log 2>&1
@@ -82,15 +69,5 @@
 
 00 04 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/utc_offset.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/utc_offset.log 2>&1
 
-00 04 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/dividend.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/dividend.log 2>&1
-
-00 04 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/weekly.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/weekly.log 2>&1
-
-
-
-
-
-
-
-
+00 05 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/weekly.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/weekly.log 2>&1
 
