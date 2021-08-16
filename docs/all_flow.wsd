@@ -15,7 +15,7 @@ database universe
 database "data_dss, data_dsws" as base
 database "master_ohlcvtr, master_tac" as updated
 end box
-participant "Data source" as source
+participant "Data sources" as source
 
 == Daily cron jobs triggered ==
 Cron -> universe ++: Getting tickers to update
