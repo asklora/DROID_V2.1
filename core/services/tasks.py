@@ -640,7 +640,7 @@ def daily_hedge_user(currency=None, ingest=False, exclude_client=['HANWHA','FELS
 
 
 def hedge(currency=None, bot_tester=False, **options):
-    # clear any existing cache
+    # clear any existing caches
     cache.clear()
     if bot_tester:
         report_to_slack(f"===  START HEDGE FOR {currency} Bot Tester ===")
