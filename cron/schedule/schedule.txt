@@ -1,4 +1,9 @@
-BOT SCHEDULE IN HK TIME
+# Bot schedule is in Hongkong time
+# format "<minute> <hour> <day-of-month> <month> <day-of-week> <command>
+"
+# the "2>&1" is used to redirect the standard error stream (stderr) to the standard out stream (stdout)
+# 2-6 in day of week field means the cronjob will run from tuesday up to saturday
+
 00 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/west_market.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/west_market.log 2>&1
 
 00 10 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/north_asia_market.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/north_asia_market.log 2>&1
