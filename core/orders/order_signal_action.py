@@ -53,33 +53,7 @@ class AbstracOrderConnector(ABC):
         pass
     
 
-class AbstractActionBase(ABC):
-
-    @abstractmethod
-    def set_init(self):
-        pass
-
-    @abstractmethod
-    def set_actor(self):
-        pass
-
-
-class SellAction(AbstractActionBase):
-
-    def process_sell(self):
-        pass
-
-class BuyAction(AbstractActionBase):
-
-    def set_init(self):
-        return self.instance.is_init
-    
-    def set_actor(self):
-        return self.bot.is_stock()
-
 class BaseOrderConnector(AbstracOrderConnector):
-    sell_handle = SellAction()
-    buy_handle = BuyAction()
     
     def __init__(self,*args,**kwargs):
         for key, value in kwargs.items():
@@ -89,6 +63,9 @@ class BaseOrderConnector(AbstracOrderConnector):
     def run(self):
         func_name =f'on_{self.instance.side}_{self.instance.status}'
         if hasattr(self,func_name):
+            """
+            SKIP REVIEW STATUS
+            """
             function = getattr(self, func_name)
             function()
 
@@ -98,7 +75,7 @@ class BaseOrderConnector(AbstracOrderConnector):
     
     def on_buy_pending(self):
         """
-        Take amount off order from wallet
+        Only Take amount off order from wallet if order initialized
         """
         if self.instance.is_init:
             TransactionHistory.objects.create(
@@ -117,60 +94,26 @@ class BaseOrderConnector(AbstracOrderConnector):
     
     def on_buy_filled(self):
         if self.instance.is_init:
+            """
+            Can be BOT or USER
+            """
             # create position and performance
-            margin=1
-            order = OrderPosition.objects.create(
-                    user_id=self.instance.user_id,
-                    ticker=self.instance.ticker,
-                    bot_id=self.instance.bot_id,
-                    spot_date=self.instance.filled_at.date(),
-                    entry_price=self.instance.price,
-                    is_live=True,
-                    margin=margin
-                )
-            perf = PositionPerformance.objects.create(
-                created=self.instance.filled_at.date(),
-                position_uid=order,
-                last_spot_price=self.instance.price,
-                last_live_price=self.instance.price,
-                order_uid=self.instance,
-                status='Populate'
-            )
-            # if use bot
-            if self.instance.setup:
+            position_uid,performance_uid = self.create_position_perfomance()
+        
+        else:
+            """
+            Only Bot hedge behaviour
+            """
+            position_uid,performance_uid =self.hedge_position_performance()
+        
+        # create fee
+        self.create_fee(position_uid)
+            
+        # update last pending transaction 
+        self.update_initial_transaction_position(position_uid)
 
-                for key, val in self.instance.setup.items():
-                    if hasattr(perf, key):
-                        setattr(perf, key, val)
-                    if hasattr(order, key):
-                        if key == "share_num":
-                            continue
-                        else:
-                            setattr(order, key, val)
-                    else:
-                        if key == "total_bot_share_num":
-                            setattr(order, "share_num", val)
-            else:
-                # for user without bot
-                order.investment_amount = self.instance.amount
-                order.bot_cash_balance = 0
-                order.share_num = self.instance.qty
-                perf.share_num = self.instance.qty
-            # start creating position
-            perf.current_pnl_amt = 0  # need to calculate with fee
-            perf.current_bot_cash_balance = order.bot_cash_balance
-
-            perf.current_investment_amount = round(
-                perf.last_live_price * perf.share_num, self.digits)
-            perf.current_pnl_ret = (perf.current_bot_cash_balance + perf.current_investment_amount -
-                                    order.investment_amount) / order.investment_amount
-            perf.order_id = self.instance
-            perf.save()
-            order.save()
-            self.instance.performance_uid = perf.performance_uid
-            self.instance.save()
-            self.create_fee(order.position_uid)
-            self.update_initial_transaction_position(order.position_uid)
+        # update to connect performance and prevent triger signal
+        Order.objects.filter(pk=self.instance.order_uid).update(performance_uid=performance_uid)
     
     def on_buy_cancel(self):
         if self.instance.is_init and self.instance.status == 'pending':
@@ -192,6 +135,106 @@ class BaseOrderConnector(AbstracOrderConnector):
     def on_sell_cancel(self):
         pass
 
+    def hedge_position_performance(self):
+        
+        """
+        Only Bot hedge behaviour
+        UPDATE the position and CREATE performance
+        """
+        
+        order = OrderPosition.objects.get(
+                        position_uid=self.instance.setup["position"]["position_uid"])
+        key_list = list(self.instance.setup["position"])
+
+        # UPDATE the position
+        for key in key_list:
+            if not key in ["created", "updated", "share_num"]:
+                if hasattr(order, key):
+                    field = order._meta.get_field(key)
+                    if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
+                        raw_key = f"{key}_id"
+                        setattr(
+                            order, raw_key, self.instance.setup["position"].pop(key))
+                    else:
+                        setattr(order, key,
+                                self.instance.setup["position"].pop(key))
+        
+        # remove field position_uid, cause it will double
+        self.instance.setup["performance"].pop("position_uid")
+        
+        # CREATE performance from hedge setup
+        perf = PositionPerformance.objects.create(
+            position_uid=order,  # replace with self.instance
+            # the rest is value from setup
+            **self.instance.setup["performance"]
+        )
+
+        perf.order_uid = self.instance
+        order.save()
+        perf.save()
+
+        
+        return order.position_uid,perf.performance_uid 
+    
+    def create_position_perfomance(self):
+        """
+        execute Every init order
+        BOT / USER
+        CREATE position and CREATE performance
+        """
+        margin=1
+        order = OrderPosition.objects.create(
+                    user_id=self.instance.user_id,
+                    ticker=self.instance.ticker,
+                    bot_id=self.instance.bot_id,
+                    spot_date=self.instance.filled_at.date(),
+                    entry_price=self.instance.price,
+                    is_live=True,
+                    margin=margin
+                )
+        perf = PositionPerformance.objects.create(
+            created=self.instance.filled_at.date(),
+            position_uid=order,
+            last_spot_price=self.instance.price,
+            last_live_price=self.instance.price,
+            order_uid=self.instance,
+            status='Populate'
+        )
+        
+        # if bot
+        if not self.bot.is_stock():
+
+            for key, val in self.instance.setup.items():
+                if hasattr(perf, key):
+                    setattr(perf, key, val)
+                if hasattr(order, key):
+                    if key == "share_num":
+                        continue
+                    else:
+                        setattr(order, key, val)
+                else:
+                    if key == "total_bot_share_num":
+                        setattr(order, "share_num", val)
+        else:
+            # without bot
+            order.investment_amount = self.instance.amount
+            order.bot_cash_balance = 0
+            order.share_num = self.instance.qty
+            perf.share_num = self.instance.qty
+            # start creating position
+        perf.current_pnl_amt = 0  # need to calculate with fee
+        perf.current_bot_cash_balance = order.bot_cash_balance
+
+        perf.current_investment_amount = round(
+            perf.last_live_price * perf.share_num, self.digits)
+        perf.current_pnl_ret = (perf.current_bot_cash_balance + perf.current_investment_amount -
+                                order.investment_amount) / order.investment_amount
+        perf.order_id = self.instance
+
+        perf.save()
+        order.save()
+        return order.position_uid,perf.performance_uid
+    
     
     
     
@@ -285,16 +328,31 @@ class BaseOrderConnector(AbstracOrderConnector):
             )
 
 class LiveOrderConnector(BaseOrderConnector):
+    """
+    different behaviour in order placed.
+    will start sent request to broker
+
+    """
   
     def __init__(self,*args,**kwargs):
         super().__init__(*args, **kwargs)
 
+    def on_buy_placed(self):
+        print('sent order to broker')
 
 class SimulationOrderConnector(BaseOrderConnector):
-    
+    """
+    different behaviour in order placed.
+    will do nothing in here
+
+    """
     
     def __init__(self,*args,**kwargs):
         super().__init__(*args, **kwargs)
+    
+    def on_buy_placed(self):
+        """do nothing"""
+        pass
         
         
     
@@ -314,15 +372,16 @@ class OrderServices:
         self.user_wallet_amount = instance.user_id.amount
         self.user_wallet_currency = instance.user_id.user_balance.currency_code
         self.bot = BotOptionType.objects.get(bot_id=instance.bot_id)
-        order_property = self.__dict__
-        self.bot_handler = BotOrder(**order_property)
-        self.user_handler = UserOrder(**order_property)
+        self.order_property = self.__dict__
 
     
     
     def process_transaction(self):
-        if self.bot.is_stock():
-            self.user_handler
+        if self.live():
+            handler = LiveOrderConnector(**self.order_property)
         else:
-            self.bot_handler
+            handler = SimulationOrderConnector(**self.order_property)
+        
+        handler.run()
+
     
