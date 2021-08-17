@@ -1,0 +1,35 @@
+@startuml master_ohlcvtr_update
+
+title "master_ohlcvtr_update routine flow"
+
+!theme vibrant
+
+skinparam Shadowing false
+skinparam DefaultFontName Ubuntu
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+skinparam ConditionEndStyle diamond
+
+start
+
+:do_function("master_ohlcvtr_update");
+
+:remove all data in the table ""master_ohlcvtr""\nwith ""day_status"" holiday or missing]
+
+:add data from ""data_dss"" table]
+
+:add data from ""data_dsws"" table]
+
+:update records with empty ""total_return_index""\nfrom table ""master_ohlcvtr"" from ""data_dsws""]
+
+:update records with empty ohlc prices\nfrom table ""master_ohlcvtr"" from ""data_dss""]
+
+:remove records with trading day set on weekends]
+
+:remove old data (more than 12 years old)]
+
+:delete records with tickers that arent registered in\n""universe"" table]
+
+stop
+
+@enduml

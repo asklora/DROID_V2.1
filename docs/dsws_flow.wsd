@@ -4,37 +4,38 @@ title "DSWS data flow"
 
 !theme vibrant
 
-skinparam shadowing false
-skinparam defaultFontName Ubuntu
+skinparam Shadowing false
+skinparam DefaultFontName Ubuntu
 skinparam ParticipantPadding 20
 skinparam BoxPadding 10
+skinparam ConditionEndStyle diamond
 
-box "Data source" #LightBlue
-participant DSWS
-end box
-box "Database"
-participant data_dsws
-end box
+start
 
-group ingestion/data_from_dsws
-    == Getting data from DSWS ==
+package "datasource/dsws" {
+    floating note: This file is used\nto get the data from\nDSWS
+    :get_data_from_dss();
 
-    group datasource/dsws
-        create data
-        rnote over DSWS, data
-        Data is requested from DSWS within
-        a time window, split into chunks
-        end note
+    :start_date\nend_date\nuniverse\nidentifier\n*field\nuse_ticker=True\ndividend=False\nsplit_number=40}
 
-        DSWS -> data : resulting data
-    end
+    :np.array_split()]
+    note right
+        Ticker is split into chunks with ""n""
+        items defined in ""split_number""
+    end note
 
-    == resulting data is inserted\ninto table data_dsws ==
+    :DS.fetch()]
 
-    group general/sql_output
-        data -> data_dsws : upsert_data_to_database()
-    end
+    :frame.reset_index()]
+    note right
+        The data reset by the ""DS.fetch()""
+        bring their own index columns, so we
+        remove those and create our own
+    end note
 
-end
+    :data: Series[Dtype@concat] | list\nerror_universe: list/
+}
+
+stop
 
 @enduml

@@ -4,55 +4,38 @@ title "Quandl data flow"
 
 !theme vibrant
 
-skinparam shadowing false
-skinparam defaultFontName Ubuntu
+skinparam Shadowing false
+skinparam DefaultFontName Ubuntu
 skinparam ParticipantPadding 20
 skinparam BoxPadding 10
+skinparam ConditionEndStyle diamond
 
-box "Database"
-participant data_quandl
-participant universe
-end box
-box "Data source" #LightBlue
-participant Quandl
-end box
+start
 
-group ingestion/data_from_quandl
-    == Getting list of tickers with quandl symbols ==
-    group general/sql_query
-        create symbols
-        rnote over universe, symbols
-        List of tickers is taken from universe
-        end note
+package "datasource/quandl" {
+    floating note: This file is used\nto get the data from\nQuandl
+    :read_quandl_csv();
 
-        universe -> symbols : get_active_universe_by_quandl_symbol()
-    end
+    :ticker\nquandl_symbol\nstart_date\nend_date}
 
-    == Getting data from Quandl ==
-    group datasource/quandl
-        rnote over symbols, Quandl
-        Request to quandl is initialized
-        using quandl symbols as the filter
-        end note
+    :pd.read_csv()]
+    note right
+        The csv file is downloaded from quandl api
+    end note
 
-        symbols -> Quandl
+    :data = data.rename()]
+    note right
+        the date column is renamed into "trading_day"
+    end note
 
-        create data
-        rnote over Quandl, data
-        Data with specific symbols
-        is returned from Quandl
-        in the form of a csv, then is
-        read by pandas
-        end note
+    :uid_maker()]
+    note right
+        Create uids for the data_quandl
+    end note
 
-        Quandl -> data : resulting data
-    end
+    :data: DataFrame/
+}
 
-    == resulting data is inserted\ninto table data_quandl ==
-    group general/sql_output
-        data -> data_quandl : upsert_data_to_database()
-    end
-
-end
+stop
 
 @enduml
