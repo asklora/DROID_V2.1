@@ -1,4 +1,3 @@
-from core import user
 import math
 from core.Clients.models import UserClient
 from django.db.models.signals import post_save, pre_save, post_delete
@@ -8,10 +7,13 @@ from core.bot.models import BotOptionType
 from bot.calculate_bot import get_classic, get_expiry_date, get_uno, get_ucdc
 from core.djangomodule.general import formatdigit
 from core.user.models import TransactionHistory, Accountbalance
-import pandas as pd
 
-
-
+"""
+bot or not
+new position or end position
+using broker or not
+include fee or not
+"""
 
 def update_initial_transaction_position(instance:Order,position_uid:str):
     # update the transaction
@@ -148,7 +150,6 @@ def order_signal_check(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Order)
 def order_signal(sender, instance, created, **kwargs):
-
 
     print(f"<<<<<<<<<<<< STATUSSSSS CHANGE {instance.status} {instance.order_uid}>>>>>>>>>>>>>>>>>>")
     if created and instance.is_init:

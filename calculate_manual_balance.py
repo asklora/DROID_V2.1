@@ -1,6 +1,6 @@
 import pandas as pd
 from general.sql_query import read_query
-
+from general.date_process import datetimeNow
 if __name__ == "__main__":
     query = f"select * from user_account_balance order by user_id;"
     balance = read_query(query, cpu_counts=True, prints=True)
@@ -90,4 +90,4 @@ if __name__ == "__main__":
     print(result)
     balance = balance.merge(result, how="left", on=["user_id"])
     print(balance)
-    balance.to_csv("balance.csv")
+    balance.to_csv(f"balance-{datetimeNow()}.csv")
