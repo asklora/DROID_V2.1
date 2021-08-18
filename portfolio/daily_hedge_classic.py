@@ -22,7 +22,7 @@ def classic_sell_position(high, low, live_price, trading_day, position_uid):
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()
 
-    performance = populate_performance(live_price, trading_day, log_time, position, expiry=True)
+    performance, position = populate_performance(live_price, trading_day, log_time, position, expiry=True)
 
     position.final_price = live_price
     position.current_inv_ret = performance["current_pnl_ret"]
@@ -71,16 +71,9 @@ def classic_sell_position(high, low, live_price, trading_day, position_uid):
         order.save()
     # go to core/orders/signal.py Line 54 and 112
     # this will wait until order filled then creating performance along with it
-    position.save()
     order.save()
-    
     # remove position_uid from dict and swap with instance
-    performance.pop("position_uid")
-    new_performance = PositionPerformance.objects.create(
-        position_uid=position,  # swapped with instance
-        **performance  # the dict value
-    )
-    return position, order, new_performance
+    return position, order
 
 def populate_performance(live_price, trading_day, log_time, position, expiry=False):
     try:
@@ -102,7 +95,6 @@ def populate_performance(live_price, trading_day, log_time, position, expiry=Fal
     current_pnl_ret = current_pnl_amt / position.investment_amount
     # position.bot_cash_dividend = check_dividend_paid(position.ticker.ticker, trading_day, share_num, position.bot_cash_dividend)
     position.bot_cash_balance = round(bot_cash_balance, 2)
-    position.save()
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
     log_time = pd.Timestamp(trading_day)
 
@@ -120,7 +112,7 @@ def populate_performance(live_price, trading_day, log_time, position, expiry=Fal
         last_hedge_delta=1,
         status="Hedge"
     )
-    return performance
+    return performance, position
 
 def create_performance(price_data, position, latest=False, hedge=False, tac=False):
     if(latest):
@@ -154,9 +146,10 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
 
     status_expiry = high > position.target_profit_price or low < position.max_loss_price or trading_day >= position.expiry
     if(status_expiry):
-        position, order, new_performance = classic_sell_position(high, low, live_price, trading_day, position.position_uid)
+        position, order = classic_sell_position(high, low, live_price, trading_day, position.position_uid)
+        return True, None
     else:
-        performance = populate_performance(live_price, trading_day, log_time, position)
+        performance, position = populate_performance(live_price, trading_day, log_time, position)
         # remove position_uid from dict and swap with instance
         performance.pop("position_uid")
         # create the record
@@ -165,9 +158,6 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
             **performance  # the dict value
         )
         position.save()
-    if(status_expiry):
-        return True, None
-    else:
         return False, None
 
 # def create_performance(price_data, position, latest=False, hedge=False, tac=False):
