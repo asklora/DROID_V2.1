@@ -49,7 +49,7 @@ class PositionViews(viewsets.ReadOnlyModelViewSet):
     list=extend_schema(
         operation_id='Get positions by Account',
         parameters=[
-            OpenApiParameter(name='live',required=False,type=int)
+            OpenApiParameter(name='live',required=False,type=int,description='1 is true (still live), 0 is false (completed)')
         ]
     )
 )
@@ -64,13 +64,14 @@ class PositionUserViews(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = PositionSerializer
     queryset = OrderPosition.objects.all()
-    # permission_classes = (IsRegisteredUser,)
+    permission_classes = (IsRegisteredUser,)
 
     def get_queryset(self):
         if self.kwargs:
             if 'live' in self.request.query_params:
                 params = self.request.query_params.get('live',None)
-                print(params)
+                if params not in ['0','1']:
+                    return []
                 if params:
                     return OrderPosition.objects.prefetch_related('ticker').filter(user_id=self.kwargs['user_id'], is_live=params)
                 else:
