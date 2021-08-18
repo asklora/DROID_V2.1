@@ -1,6 +1,7 @@
 from core.bot.models import BotOptionType
 from core.user.models import TransactionHistory
 from .models import Order, OrderFee, OrderPosition, PositionPerformance
+from core.universe.models import Currency
 from abc import ABC,abstractmethod
 from core.djangomodule.general import formatdigit
 from core.Clients.models import UserClient
@@ -287,6 +288,7 @@ class BaseOrderConnector(AbstracOrderConnector):
 
     def calculate_fee(self):
         user_client = UserClient.objects.get(user_id=self.instance.user_id)
+        currency = Currency.objects.get(currency_code=user_client.currency_code.currency_code)
         if(self.instance.side == "sell"):
             commissions = user_client.client.commissions_sell
             stamp_duty = user_client.stamp_duty_sell
@@ -304,7 +306,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         else:
             stamp_duty_fee = stamp_duty
         total_fee = commissions_fee + stamp_duty_fee
-        return formatdigit(commissions_fee), formatdigit(stamp_duty_fee), formatdigit(total_fee)
+        return formatdigit(commissions_fee, currency.is_decimal), formatdigit(stamp_duty_fee, currency.is_decimal), formatdigit(total_fee, currency.is_decimal)
 
 
 
