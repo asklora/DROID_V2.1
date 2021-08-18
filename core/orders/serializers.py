@@ -9,7 +9,7 @@ from django.apps import apps
 from datasource.rkd import RkdData
 from django.db import transaction as db_transaction
 import json
-
+from .services import is_portfolio_exist
 
 @extend_schema_serializer(
     examples=[
@@ -158,6 +158,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                   'side', 'status', 'order_uid', 'qty', 'setup', 'created']
 
     def create(self, validated_data):
+        if is_portfolio_exist(validated_data['ticker'],validated_data['bot_id'],validated_data['user']):
+            raise exceptions.NotAcceptable({'detail': f'user already has position for {validated_data["ticker"]} in current options'})
         if not 'user' in validated_data:
             request = self.context.get('request', None)
             if request:
@@ -197,6 +199,46 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             order = Order.objects.create(
                 **validated_data, order_type=order_type)
         return order
+
+@extend_schema_serializer(
+    exclude_fields=('user',), # schema ignore these fields
+)
+class OrderPortfolioCheckSerializer(serializers.Serializer):
+    
+    
+    ticker=serializers.CharField(required=True,write_only=True)
+    bot_id=serializers.CharField(required=True,write_only=True)
+    user = serializers.CharField(required=False,write_only=True)
+    position = serializers.CharField(required=False,read_only=True)
+    
+    
+    
+    def create(self,validated_data):
+        request = self.context.get('request', None)
+        user = validated_data.get('user',None)
+        if user:
+            user_id =user
+        else: 
+            if request:
+                user = request.user
+                if user.is_anonymous():
+                    raise exceptions.NotAcceptable()
+                user_id = user.id
+            else:
+                raise exceptions.NotAcceptable()
+        portfolio = is_portfolio_exist(
+                                        validated_data['ticker'],
+                                        validated_data['bot_id'],
+                                        user_id)
+        
+        
+        if portfolio:
+            return {'position':f'{portfolio.position_uid}'}
+        else:
+            raise exceptions.NotFound({'detail':'no position exist'})
+
+
+
 
 
 class OrderUpdateSerializer(serializers.ModelSerializer):
