@@ -10,6 +10,83 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 
+def end_classic(price_data, position, performance=None, latest=False, hedge=False, tac=False):
+    if not performance:
+        performance = PositionPerformance.objects.filter(position_uid=position.position_uid, status="Hedge").latest("created")
+    bot = position.bot
+    if(latest):
+        live_price = price_data.close
+        if price_data.latest_price:
+            live_price = price_data.latest_price
+        trading_day = price_data.last_date
+        high = price_data.high
+        low = price_data.low
+    elif(hedge):
+        live_price = price_data.latest_price
+        trading_day = price_data.last_date
+        high = price_data.high
+        low = price_data.low
+    else:
+        live_price = price_data.close
+        trading_day = price_data.trading_day
+        high = price_data.high
+        low = price_data.low
+    if high == 0 or high == None:
+        high = live_price
+    if low == 0 or low == None:
+        low = live_price
+    log_time = datetime.now()
+    position.final_price = live_price
+    position.current_inv_ret = performance["current_pnl_ret"]
+    position.final_return = position.current_inv_ret
+    position.final_pnl_amount = performance["current_pnl_amt"]
+    position.current_inv_amt = live_price * performance["share_num"]
+    position.event_date = trading_day
+    position.is_live = False
+    if high > position.target_profit_price:
+        position.event = "Targeted Profit"
+    elif low < position.max_loss_price:
+        position.event = "Maximum Loss"
+    elif trading_day >= position.expiry:
+        if live_price < position.entry_price:
+            position.event = "Loss"
+        elif live_price > position.entry_price:
+            position.event = "Profit"
+        else:
+            position.event = "Bot Expired"
+    position.save()
+    # serializing -> make dictionary position instance
+    position_val = OrderPositionSerializer(position).data
+    # remove created and updated from position
+    [position_val.pop(key) for key in ["created", "updated"]]
+
+    # merge two dict, and save to order setup
+    setup = {"performance": performance, "position": position_val}
+    order = Order.objects.create(
+        is_init=False,
+        ticker=position.ticker,
+        created=log_time,
+        updated=log_time,
+        price=live_price,
+        bot_id=bot.bot_id,
+        amount=position.share_num * live_price,
+        user_id=position.user_id,
+        side="sell",
+        qty=position.share_num,
+        setup=setup
+    )
+    # only for bot
+    if order:
+        order.status = "placed"
+        order.placed = True
+        order.placed_at = log_time
+        order.save()
+    # go to core/orders/signal.py Line 54 and 112
+    # this will wait until order filled then creating performance along with it
+    position.save()
+    order.save()
+    return position, order
+
 def create_performance(price_data, position, latest=False, hedge=False, tac=False):
     bot = position.bot
 
