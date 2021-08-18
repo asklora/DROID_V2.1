@@ -149,11 +149,10 @@ class BaseOrderConnector(AbstracOrderConnector):
             if trans.exists():
                 trans.delete()
 
+    
     def on_sell_placed(self):
-        position_uid = self.instance.setup.get('position',{}).get('position_uid',None)
-        if not position_uid:
-            raise Exception('position_uid not found')
-        # TODO: FORCE STOP FUNCTION/FORCE SELL POSITION GOES HERE
+        pass
+    
     
     def on_sell_pending(self):
         """
@@ -411,7 +410,7 @@ class LiveOrderConnector(BaseOrderConnector):
     def __init__(self,*args,**kwargs):
         super().__init__(*args, **kwargs)
     
-    # TODO: INTERACTIVE BROKER ORDER REQUEST
+    # TODO: #51 INTERACTIVE BROKER ORDER REQUEST
     def on_buy_placed(self):
         print('sent buy order to broker')
         
@@ -431,6 +430,12 @@ class SimulationOrderConnector(BaseOrderConnector):
     def on_buy_placed(self):
         """do nothing"""
         pass
+
+    def on_sell_placed(self):
+        position_uid = self.instance.setup.get('position',{}).get('position_uid',None)
+        if not position_uid:
+            raise Exception('position_uid not found')
+        # TODO: FORCE STOP FUNCTION/FORCE SELL POSITION GOES HERE
         
         
     
