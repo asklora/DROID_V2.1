@@ -98,6 +98,7 @@ class PositionSerializer(serializers.ModelSerializer):
     
     
     def get_bot_details(self,obj) -> BotDetailSerializer:
+        """add detail bot"""
         return BotDetailSerializer(obj.bot).data
 
     def get_turnover(self, obj) -> float:
