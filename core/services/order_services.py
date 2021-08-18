@@ -8,7 +8,6 @@ from datetime import datetime
 from rest_framework import serializers
 from channels.layers import get_channel_layer
 from datasource.rkd import RkdData
-import time
 import json
 import asyncio
 
@@ -48,7 +47,7 @@ def order_executor(self, payload, recall=False):
         if in_wallet_transactions.exists():
             in_wallet_transactions.get().delete()
         
-        # for apps, need to change later with better logic
+        # FIXME: for apps, need to change later with better logic
         if order.amount >= 10000:
             order.amount = 20000
         else:
