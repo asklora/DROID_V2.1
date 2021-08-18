@@ -7,13 +7,15 @@ from .views import (
     OrderUpdateViews,
     OrderGetViews,
     OrderActionViews,
-    OrderPortfolioCheckView
+    OrderPortfolioCheckView,
+    PositionDetailViews
     )
 
 
 urlpatterns = [
-    path('position/<int:user_id>/', PositionUserViews.as_view({'get':'list'}), name='account_position'),
     path('client/position/', PositionViews.as_view({'get':'list'}), name='position'),
+    path('position/<int:user_id>/', PositionUserViews.as_view({'get':'list'}), name='account_position'),
+    path('position/<str:position_uid>/details/', PositionDetailViews.as_view(), name='account_position_details'),
     path('position/', OrderPortfolioCheckView.as_view(), name='position_check'),
     path('performance/<str:position_uid>/', BotPerformanceViews.as_view(), name='performance'),
     path('create/', OrderViews.as_view(), name='order_create'),

@@ -68,6 +68,33 @@ class PositionUserViews(viewsets.ReadOnlyModelViewSet):
         else:
             return OrderPosition.objects.filter(user_id=None)
 
+class PositionDetailViews(views.APIView):
+    """
+    get Detail positions
+    """
+    serializer_class = PositionSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @extend_schema(
+        operation_id='Get bot Performance by positions',
+        responses={
+            200: OpenApiResponse(response=PositionSerializer,),
+            404: OpenApiResponse(description='Bad request (position not found)', response=errserializer),
+            401: OpenApiResponse(description='Unauthorized request', response=errserializer),
+        }
+    )
+    def get(self, request, position_uid):
+        user = request.user
+        position = OrderPosition.objects.filter(
+            position_uid=position_uid)
+        if position.exists():
+            position = position.get()
+            if position.user_id == user or user.is_superuser:
+                return response.Response(PositionSerializer(position).data, status=status.HTTP_200_OK)
+            else:
+                return response.Response({'detail': f'this position not belong to current user'}, status=status.HTTP_403_FORBIDDEN)
+
+        return response.Response({'detail': f'{position_uid} doesnt exist'}, status=status.HTTP_404_NOT_FOUND)
 
 class BotPerformanceViews(views.APIView):
     """

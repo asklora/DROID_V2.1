@@ -156,6 +156,16 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['ticker', 'price', 'bot_id', 'amount', 'user',
                   'side', 'status', 'order_uid', 'qty', 'setup', 'created']
+    
+    def side_validation(self,validated_data):
+        if validated_data['side']:
+            init = False
+            position = validated_data.get('setup',{}).get('position',None)
+            if not position:
+                raise exceptions.NotAcceptable({'detail':'must provided the position uid for sell side'})
+        else:
+            init = True
+        return init
 
     def create(self, validated_data):
         if is_portfolio_exist(validated_data['ticker'],validated_data['bot_id'],validated_data['user']):
@@ -195,12 +205,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             #     client = Client.objects.get()
             #     client.commissions_buy
             order_type = None
-        init = True
-        if validated_data['sell']:
-            init = False
-            position = validated_data.get('setup',{}).get('position',None)
-            if not position:
-                raise exceptions.NotAcceptable({'detail':'must provided the position uid for sell side'})
+        
+        init = self.side_validation(validated_data)
+        
             
 
         with db_transaction.atomic():
@@ -229,7 +236,7 @@ class OrderPortfolioCheckSerializer(serializers.Serializer):
         else: 
             if request:
                 user = request.user
-                if user.is_anonymous():
+                if user.is_anonymous:
                     raise exceptions.NotAcceptable()
                 user_id = user.id
             else:
