@@ -435,7 +435,7 @@ class SimulationOrderConnector(BaseOrderConnector):
         position_uid = self.instance.setup.get('position',{}).get('position_uid',None)
         if not position_uid:
             raise Exception('position_uid not found')
-        # TODO: FORCE STOP FUNCTION/FORCE SELL POSITION GOES HERE
+        # TODO: #52 FORCE STOP FUNCTION/FORCE SELL POSITION GOES HERE
         
         
     
