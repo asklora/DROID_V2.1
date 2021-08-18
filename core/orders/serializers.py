@@ -1,5 +1,6 @@
 from rest_framework import serializers, exceptions
 from .models import OrderPosition, PositionPerformance, OrderFee, Order
+from core.bot.serializers import BotDetailSerializer
 from core.bot.models import BotOptionType
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from django.db.models import Sum
@@ -89,10 +90,15 @@ class PositionSerializer(serializers.ModelSerializer):
     commission = serializers.SerializerMethodField()
     total_fee = serializers.SerializerMethodField()
     turnover = serializers.SerializerMethodField()
+    bot_details = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderPosition
         exclude = ("commision_fee", "commision_fee_sell")
+    
+    
+    def get_bot_details(self,obj) -> BotDetailSerializer:
+        return BotDetailSerializer(obj.bot).data
 
     def get_turnover(self, obj) -> float:
         total = 0
