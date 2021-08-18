@@ -1,6 +1,7 @@
 from core.bot.models import BotOptionType
 from core.user.models import TransactionHistory
 from .models import Order, OrderFee, OrderPosition, PositionPerformance
+from core.universe.models import Currency
 from abc import ABC,abstractmethod
 from core.djangomodule.general import formatdigit
 from core.Clients.models import UserClient
@@ -61,10 +62,31 @@ class BaseOrderConnector(AbstracOrderConnector):
         self.digits = max(min(5-len(str(int(self.instance.price))), 2), -1)
     
     def run(self):
+        """
+        in here we delete the long if else statement
+
+        will trigger the function inside this class with prefix name and invoke
+        """
         func_name =f'on_{self.instance.side}_{self.instance.status}'
+        
         if hasattr(self,func_name):
             """
-            SKIP REVIEW STATUS
+            only invoke this function.
+            hasattr will check the function name is exist or not 
+
+           - on_buy_placed
+           - on_buy_pending
+           - on_buy_filled
+           - on_buy_cancel
+           - on_sell_placed
+           - on_sell_pending
+           - on_sell_filled
+           - on_sell_cancel
+
+            we SKIP REVIEW STATUS because the handler is before save
+
+
+            gettattr => make string function name into a function variable and ready to be invoked
             """
             function = getattr(self, func_name)
             function()
@@ -90,6 +112,9 @@ class BaseOrderConnector(AbstracOrderConnector):
                     "order_uid": str(self.instance.order_uid)
                 },
             )
+        else:
+            """Must be BOT buy here"""
+            pass
     
     
     def on_buy_filled(self):
@@ -263,6 +288,7 @@ class BaseOrderConnector(AbstracOrderConnector):
 
     def calculate_fee(self):
         user_client = UserClient.objects.get(user_id=self.instance.user_id)
+        currency = Currency.objects.get(currency_code=user_client.currency_code.currency_code)
         if(self.instance.side == "sell"):
             commissions = user_client.client.commissions_sell
             stamp_duty = user_client.stamp_duty_sell
@@ -280,7 +306,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         else:
             stamp_duty_fee = stamp_duty
         total_fee = commissions_fee + stamp_duty_fee
-        return formatdigit(commissions_fee), formatdigit(stamp_duty_fee), formatdigit(total_fee)
+        return formatdigit(commissions_fee, currency.is_decimal), formatdigit(stamp_duty_fee, currency.is_decimal), formatdigit(total_fee, currency.is_decimal)
 
 
 
@@ -377,7 +403,7 @@ class OrderServices:
     
     
     def process_transaction(self):
-        if self.live():
+        if self.instance.order_type == 'live':
             handler = LiveOrderConnector(**self.order_property)
         else:
             handler = SimulationOrderConnector(**self.order_property)

@@ -5,7 +5,8 @@ from .serializers import (
     OrderUpdateSerializer,
     OrderDetailsSerializers,
     OrderListSerializers,
-    OrderActionSerializer
+    OrderActionSerializer,
+    OrderPortfolioCheckSerializer
 )
 from rest_framework import viewsets, views, permissions, response, status, serializers
 from rest_framework.decorators import action
@@ -55,7 +56,7 @@ class PositionUserViews(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = PositionSerializer
     queryset = OrderPosition.objects.all()
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         if self.kwargs:
@@ -73,7 +74,7 @@ class BotPerformanceViews(views.APIView):
     get bot Performance by positions
     """
     serializer_class = PerformanceSerializer
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (permissions.IsAuthenticated,)
 
     @extend_schema(
         operation_id='Get bot Performance by positions',
@@ -104,6 +105,29 @@ class OrderViews(views.APIView):
             return response.Response(serializer.data, status=status.HTTP_201_CREATED)
         return response.Response(serializer.errors)
 
+class OrderPortfolioCheckView(views.APIView):
+    """
+    check user positions
+    """
+    serializer_class = OrderPortfolioCheckSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    @extend_schema(
+        operation_id='check positions',
+        responses={
+            200: OpenApiResponse(response=OrderPortfolioCheckSerializer,),
+            404: OpenApiResponse(description='Bad request (position not found)', response=errserializer),
+            401: OpenApiResponse(description='Unauthorized request', response=errserializer),
+        },
+        description="check user positions"
+    )
+    def post(self, request):
+
+        serializer = OrderPortfolioCheckSerializer(
+            data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(serializer.data, status=status.HTTP_200_OK)
+        return response.Response(serializer.errors)
 
 class OrderUpdateViews(views.APIView):
     serializer_class = OrderUpdateSerializer
