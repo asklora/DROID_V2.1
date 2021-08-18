@@ -19,7 +19,7 @@ if __name__ == "__main__":
         total_investment_false = read_query(query, cpu_counts=True, prints=True)
         print(total_investment_false)
 
-        query = f"select coalesce(sum(bot_cash_balance) as outcome2 from orders_position where user_id = {user_id} and is_live = False;"
+        query = f"select coalesce(sum(bot_cash_balance), 0) as outcome2 from orders_position where user_id = {user_id} and is_live = False;"
         total_return = read_query(query, cpu_counts=True, prints=True)
         print(total_return)
 
