@@ -149,7 +149,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     price = serializers.FloatField(required=False)
     status = serializers.CharField(read_only=True)
     qty = serializers.FloatField(read_only=True)
-    setup = serializers.JSONField(read_only=True)
+    setup = serializers.JSONField(required=False)
     created = serializers.DateTimeField(required=False, read_only=True)
 
     class Meta:
@@ -189,15 +189,23 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             validated_data['price'] = ticker.iloc[0]['latest_price']
         order_type = 'apps'
         if user.id == 135:
-            fee = validated_data.get('fee',None)
-            if fee:
-                user_client = UserClient.objects.get(user_id=user.id)
-                client = Client.objects.get()
-                client.commissions_buy
+            # fee = validated_data.get('fee',None)
+            # if fee:
+            #     user_client = UserClient.objects.get(user_id=user.id)
+            #     client = Client.objects.get()
+            #     client.commissions_buy
             order_type = None
+        init = True
+        if validated_data['sell']:
+            init = False
+            position = validated_data.get('setup',{}).get('position',None)
+            if not position:
+                raise exceptions.NotAcceptable({'detail':'must provided the position uid for sell side'})
+            
+
         with db_transaction.atomic():
             order = Order.objects.create(
-                **validated_data, order_type=order_type)
+                **validated_data, order_type=order_type,is_init=init)
         return order
 
 @extend_schema_serializer(
