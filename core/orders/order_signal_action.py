@@ -156,7 +156,15 @@ class BaseOrderConnector(AbstracOrderConnector):
         # TODO: FORCE STOP FUNCTION/FORCE SELL POSITION GOES HERE
     
     def on_sell_pending(self):
-        """DO NOTHING"""
+        """
+        STILL DO NOTHING
+        
+        are we gonna to take position bot_cash_balance / real position values here before move to wallet?
+        problems:
+            we dont store current values of the position as a balance position,
+            current_values should not change in position when sell order is pending
+            surely not bot cash balance we take/hold in here
+        """
         pass
     
     
@@ -402,9 +410,13 @@ class LiveOrderConnector(BaseOrderConnector):
   
     def __init__(self,*args,**kwargs):
         super().__init__(*args, **kwargs)
-
+    
+    # TODO: INTERACTIVE BROKER ORDER REQUEST
     def on_buy_placed(self):
-        print('sent order to broker')
+        print('sent buy order to broker')
+        
+    def on_sell_placed(self):
+        print('sent sell order to broker')
 
 class SimulationOrderConnector(BaseOrderConnector):
     """
