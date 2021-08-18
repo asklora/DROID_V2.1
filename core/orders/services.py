@@ -6,4 +6,4 @@ def is_portfolio_exist(ticker,bot_id,user_id):
     if portfolios.exists():
         portfolio = portfolios.latest('created')
         return portfolio
-    return False
+    return None

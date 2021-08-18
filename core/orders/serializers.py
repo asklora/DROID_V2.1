@@ -236,7 +236,7 @@ class OrderPortfolioCheckSerializer(serializers.Serializer):
         else: 
             if request:
                 user = request.user
-                if user.is_anonymous():
+                if user.is_anonymous:
                     raise exceptions.NotAcceptable()
                 user_id = user.id
             else:
