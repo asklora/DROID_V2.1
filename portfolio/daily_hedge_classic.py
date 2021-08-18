@@ -35,7 +35,7 @@ def classic_sell_position(high, low, live_price, trading_day, position_uid):
         position.event = "Targeted Profit"
     elif low < position.max_loss_price:
         position.event = "Maximum Loss"
-    # TODO: #42 without bot expiry will None, and create error 
+    # TODO: #46 without bot expiry will None, and will create error in conditional
     elif trading_day >= position.expiry:
         if live_price < position.entry_price:
             position.event = "Loss"
@@ -43,7 +43,7 @@ def classic_sell_position(high, low, live_price, trading_day, position_uid):
             position.event = "Profit"
         else:
             position.event = "Bot Expired"
-    # TODO: #43 No need to save here
+    # TODO: #47 No need to save here
     position.save()
     # serializing -> make dictionary position instance
     position_val = OrderPositionSerializer(position).data

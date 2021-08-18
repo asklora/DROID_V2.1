@@ -153,7 +153,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         position_uid = self.instance.setup.get('position',{}).get('position_uid',None)
         if not position_uid:
             raise Exception('position_uid not found')
-        # TODO: FORCE STOP FUNCTION GOES HERE
+        # TODO: FORCE STOP FUNCTION/FORCE SELL POSITION GOES HERE
     
     def on_sell_pending(self):
         """DO NOTHING"""
@@ -167,7 +167,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         
         - Only if position stop live we will transfer the money back to wallet
         """
-        # TODO: Please Check the logic here
+        # TODO: #49 Please Check the logic here
 
         # update position and create performance from setup 
         position,performance = self.update_position_performance()
