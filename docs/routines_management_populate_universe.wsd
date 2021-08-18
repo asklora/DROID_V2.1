@@ -14,6 +14,15 @@ start
 
 :do_function("universe_populate");
 
+:new data is input from ""universe_consolidated"" table]
+
+note right
+    this table gets its data from calling
+    ""populate_universe_consolidated""
+    ""_by_isin_sedol_from_dsws()""
+    function
+end note
+
 :set all ""is_active"" fields on table ""universe"" to false]
 
 :set them back to active on specific tickers]
