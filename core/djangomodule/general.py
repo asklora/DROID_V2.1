@@ -15,9 +15,12 @@ from rest_framework.exceptions import APIException
 
 
 class NeedRegister(APIException):
+    """
+    change 401 to 403
+    """
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = {'detail': 'User is not Registered or has permission'}
-    default_code = 'authentication_failed'
+    default_code = 'credentials_error'
 
 
 class IsRegisteredUser(permissions.BasePermission):
