@@ -55,7 +55,7 @@ class PositionUserViews(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = PositionSerializer
     queryset = OrderPosition.objects.all()
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         if self.kwargs:
@@ -73,7 +73,7 @@ class BotPerformanceViews(views.APIView):
     get bot Performance by positions
     """
     serializer_class = PerformanceSerializer
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (permissions.IsAuthenticated,)
 
     @extend_schema(
         operation_id='Get bot Performance by positions',
