@@ -107,7 +107,7 @@ class OrderViews(views.APIView):
 
 class OrderPortfolioCheckView(views.APIView):
     """
-    check positions
+    check user positions
     """
     serializer_class = OrderPortfolioCheckSerializer
     permission_classes = (permissions.IsAuthenticated,)
