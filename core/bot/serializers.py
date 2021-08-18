@@ -13,7 +13,7 @@ class BotDetailSerializer(serializers.ModelSerializer):
     bot_apps_description=serializers.SerializerMethodField()
     class Meta:
         model = BotOptionType
-        fields = ('bot_id','bot_option_type','bot_apps_name','bot_apps_description')
+        fields = ('bot_id','bot_option_type','bot_apps_name','bot_apps_description','duration')
     
     def get_bot_apps_name(self,obj) -> str:
         return obj.bot_type.bot_apps_name
