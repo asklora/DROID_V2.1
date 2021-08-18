@@ -175,8 +175,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return init
 
     def create(self, validated_data):
-        if is_portfolio_exist(validated_data['ticker'],validated_data['bot_id'],validated_data['user']):
-            raise exceptions.NotAcceptable({'detail': f'user already has position for {validated_data["ticker"]} in current options'})
+        
         if not 'user' in validated_data:
             request = self.context.get('request', None)
             if request:
@@ -214,7 +213,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             order_type = None
         
         init = self.side_validation(validated_data)
-        
+        if is_portfolio_exist(validated_data['ticker'],validated_data['bot_id'],user.id):
+            raise exceptions.NotAcceptable({'detail': f'user already has position for {validated_data["ticker"]} in current options'})
             
 
         with db_transaction.atomic():
