@@ -8,7 +8,14 @@ from core.user.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainSerializer,PasswordField,api_settings,update_last_login,RefreshToken
 from django.contrib.auth import get_user_model,authenticate
-from core.djangomodule.general import set_cache_data,get_cached_data
+from core.djangomodule.general import set_cache_data,get_cached_data,IsRegisteredUser
+
+
+
+
+
+
+
 class PairTokenSerializer(TokenObtainSerializer):
     username_field = get_user_model().AUTH_FIELD_NAME
 
@@ -55,7 +62,7 @@ class PairTokenView(TokenObtainPairView):
     serializer_class = PairTokenSerializer
 class UserSummaryView(APIView):
     serializer_class = UserSummarySerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsRegisteredUser]
     
     @extend_schema(
         operation_id='Get user summary'
@@ -77,7 +84,7 @@ class UserSummaryView(APIView):
 
 class UserProfile(APIView):
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsRegisteredUser]
     
     @extend_schema(
         operation_id='Get user information'

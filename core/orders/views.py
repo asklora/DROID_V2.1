@@ -8,15 +8,15 @@ from .serializers import (
     OrderActionSerializer,
     OrderPortfolioCheckSerializer
 )
-from rest_framework import viewsets, views, permissions, response, status, serializers
+from rest_framework import viewsets, views, response, status, serializers
 from rest_framework.decorators import action
 from .models import OrderPosition, PositionPerformance, Order
 from core.Clients.models import UserClient
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiResponse, OpenApiParameter, OpenApiTypes
+from core.djangomodule.general import IsRegisteredUser,errserializer
 
 
-class errserializer(serializers.Serializer):
-    detail = serializers.CharField()
+
 
 
 @extend_schema_view(
@@ -31,7 +31,7 @@ class PositionViews(viewsets.ReadOnlyModelViewSet):
 
     serializer_class = PositionSerializer
     queryset = OrderPosition.objects.all()
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (IsRegisteredUser,)
 
     def get_queryset(self):
         if self.request.user.email == 'asklora@loratechai.com':
@@ -56,7 +56,7 @@ class PositionUserViews(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = PositionSerializer
     queryset = OrderPosition.objects.all()
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (IsRegisteredUser,)
 
     def get_queryset(self):
         if self.kwargs:
@@ -73,7 +73,7 @@ class PositionDetailViews(views.APIView):
     get Detail positions
     """
     serializer_class = PositionSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (IsRegisteredUser,)
 
     @extend_schema(
         operation_id='Get bot Performance by positions',
@@ -101,7 +101,7 @@ class BotPerformanceViews(views.APIView):
     get bot Performance by positions
     """
     serializer_class = PerformanceSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (IsRegisteredUser,)
 
     @extend_schema(
         operation_id='Get bot Performance by positions',
@@ -121,7 +121,7 @@ class BotPerformanceViews(views.APIView):
 
 class OrderViews(views.APIView):
     serializer_class = OrderCreateSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (IsRegisteredUser,)
 
     def post(self, request):
 
@@ -137,7 +137,7 @@ class OrderPortfolioCheckView(views.APIView):
     check user positions
     """
     serializer_class = OrderPortfolioCheckSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (IsRegisteredUser,)
     @extend_schema(
         operation_id='check positions',
         responses={
@@ -158,7 +158,7 @@ class OrderPortfolioCheckView(views.APIView):
 
 class OrderUpdateViews(views.APIView):
     serializer_class = OrderUpdateSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (IsRegisteredUser,)
 
     def post(self, request):
         try:
@@ -178,7 +178,7 @@ class OrderUpdateViews(views.APIView):
 
 
 class OrderGetViews(viewsets.ViewSet):
-    permission_classes =(permissions.IsAuthenticated,)
+    permission_classes =(IsRegisteredUser,)
     @extend_schema(
         responses=OrderListSerializers,
         # more customizations
@@ -187,7 +187,7 @@ class OrderGetViews(viewsets.ViewSet):
         instances = Order.objects.filter(user_id=request.user)
         self.serialzer_class = OrderListSerializers
         return response.Response(OrderListSerializers(instances, many=True).data, status=status.HTTP_200_OK)
-    permission_classes =(permissions.IsAuthenticated,)
+    permission_classes =(IsRegisteredUser,)
     @extend_schema(
         responses=OrderDetailsSerializers,
         # more customizations
@@ -203,7 +203,7 @@ class OrderGetViews(viewsets.ViewSet):
 
 class OrderActionViews(views.APIView):
     serializer_class = OrderActionSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (IsRegisteredUser,)
 
     def post(self, request):
         try:

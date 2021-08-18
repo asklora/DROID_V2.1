@@ -7,6 +7,29 @@ import time
 from config.celery import app
 from django.core.cache import cache
 import json
+from rest_framework import permissions,status
+from rest_framework.exceptions import APIException
+
+
+
+
+
+class NeedRegister(APIException):
+    status_code = status.HTTP_403_FORBIDDEN
+    default_detail = {'detail': 'User is not Registered or has permission'}
+    default_code = 'authentication_failed'
+
+
+class IsRegisteredUser(permissions.BasePermission):
+    message = 'User is not Registered or has permission'
+
+    def has_permission(self, request, view):
+        print(request)
+        if request.user.is_anonymous:
+            return NeedRegister()
+        return True
+
+
 @deconstructible
 class UploadTo:
     def __init__(self, name):
