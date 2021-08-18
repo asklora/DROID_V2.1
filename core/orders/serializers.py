@@ -1,5 +1,6 @@
 from rest_framework import serializers, exceptions
 from .models import OrderPosition, PositionPerformance, OrderFee, Order
+from core.bot.serializers import BotDetailSerializer
 from core.bot.models import BotOptionType
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from django.db.models import Sum
@@ -89,10 +90,16 @@ class PositionSerializer(serializers.ModelSerializer):
     commission = serializers.SerializerMethodField()
     total_fee = serializers.SerializerMethodField()
     turnover = serializers.SerializerMethodField()
+    bot_details = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderPosition
         exclude = ("commision_fee", "commision_fee_sell")
+    
+    
+    def get_bot_details(self,obj) -> BotDetailSerializer:
+        """add detail bot"""
+        return BotDetailSerializer(obj.bot).data
 
     def get_turnover(self, obj) -> float:
         total = 0
@@ -149,13 +156,23 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     price = serializers.FloatField(required=False)
     status = serializers.CharField(read_only=True)
     qty = serializers.FloatField(read_only=True)
-    setup = serializers.JSONField(read_only=True)
+    setup = serializers.JSONField(required=False)
     created = serializers.DateTimeField(required=False, read_only=True)
 
     class Meta:
         model = Order
         fields = ['ticker', 'price', 'bot_id', 'amount', 'user',
                   'side', 'status', 'order_uid', 'qty', 'setup', 'created']
+    
+    def side_validation(self,validated_data):
+        if validated_data['side']:
+            init = False
+            position = validated_data.get('setup',{}).get('position',None)
+            if not position:
+                raise exceptions.NotAcceptable({'detail':'must provided the position uid for sell side'})
+        else:
+            init = True
+        return init
 
     def create(self, validated_data):
         if is_portfolio_exist(validated_data['ticker'],validated_data['bot_id'],validated_data['user']):
@@ -189,15 +206,20 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             validated_data['price'] = ticker.iloc[0]['latest_price']
         order_type = 'apps'
         if user.id == 135:
-            fee = validated_data.get('fee',None)
-            if fee:
-                user_client = UserClient.objects.get(user_id=user.id)
-                client = Client.objects.get()
-                client.commissions_buy
+            # fee = validated_data.get('fee',None)
+            # if fee:
+            #     user_client = UserClient.objects.get(user_id=user.id)
+            #     client = Client.objects.get()
+            #     client.commissions_buy
             order_type = None
+        
+        init = self.side_validation(validated_data)
+        
+            
+
         with db_transaction.atomic():
             order = Order.objects.create(
-                **validated_data, order_type=order_type)
+                **validated_data, order_type=order_type,is_init=init)
         return order
 
 @extend_schema_serializer(
@@ -221,7 +243,7 @@ class OrderPortfolioCheckSerializer(serializers.Serializer):
         else: 
             if request:
                 user = request.user
-                if user.is_anonymous():
+                if user.is_anonymous:
                     raise exceptions.NotAcceptable()
                 user_id = user.id
             else:

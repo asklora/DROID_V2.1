@@ -59,7 +59,7 @@ class BaseOrderConnector(AbstracOrderConnector):
     def __init__(self,*args,**kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
-        self.digits = max(min(5-len(str(int(self.instance.price))), 2), -1)
+        self.is_decimal = self.instance.ticker.currency_code.is_decimal
     
     def run(self):
         """
@@ -103,7 +103,7 @@ class BaseOrderConnector(AbstracOrderConnector):
             TransactionHistory.objects.create(
                 balance_uid=self.user_wallet,
                 side="debit",
-                amount=round(self.instance.amount, self.digits),
+                amount=formatdigit(self.instance.amount, self.is_decimal),
                 transaction_detail={
                     "last_amount" : self.user_wallet_amount,
                     "description": "bot order",
@@ -250,8 +250,8 @@ class BaseOrderConnector(AbstracOrderConnector):
         perf.current_pnl_amt = 0  # need to calculate with fee
         perf.current_bot_cash_balance = order.bot_cash_balance
 
-        perf.current_investment_amount = round(
-            perf.last_live_price * perf.share_num, self.digits)
+        perf.current_investment_amount = formatdigit(
+            perf.last_live_price * perf.share_num, self.is_decimal)
         perf.current_pnl_ret = (perf.current_bot_cash_balance + perf.current_investment_amount -
                                 order.investment_amount) / order.investment_amount
         perf.order_id = self.instance
@@ -288,7 +288,6 @@ class BaseOrderConnector(AbstracOrderConnector):
 
     def calculate_fee(self):
         user_client = UserClient.objects.get(user_id=self.instance.user_id)
-        currency = Currency.objects.get(currency_code=user_client.currency_code.currency_code)
         if(self.instance.side == "sell"):
             commissions = user_client.client.commissions_sell
             stamp_duty = user_client.stamp_duty_sell
@@ -306,7 +305,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         else:
             stamp_duty_fee = stamp_duty
         total_fee = commissions_fee + stamp_duty_fee
-        return formatdigit(commissions_fee, currency.is_decimal), formatdigit(stamp_duty_fee, currency.is_decimal), formatdigit(total_fee, currency.is_decimal)
+        return formatdigit(commissions_fee, self.is_decimal), formatdigit(stamp_duty_fee, self.is_decimal), formatdigit(total_fee, self.is_decimal)
 
 
 
