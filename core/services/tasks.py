@@ -407,6 +407,7 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA", **opti
                                         currency], client_name=client_name, capital="large", bot="CLASSIC", top_pick=2, top_pick_stock=25)
                 # skip any currency except  currency and client fels only
                 # has own populate schedule ctrl+f search for EUR-POPULATE-PICK-FELS and USD-POPULATE-PICK-FELS
+                # TODO: give better instruction
                 if currency in ["EUR", ] and client_name == "FELS":
                     test_pick(currency_code=[currency],
                               client_name=client_name)
@@ -474,7 +475,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False,
         service_type = "bot_advisor"
 
     topstock = client.client_top_stock.filter(
-        has_position=False,  # HERE ARE SAME WITH STATUS, DO WE STILL NEED STATUS??
+        has_position=False,  #FIXME: HERE ARE SAME WITH STATUS, DO WE STILL NEED STATUS??
         service_type=service_type,  # bot advisor / bot tester
         currency_code=currency,
         week_of_year=int(interval)  # WITH THIS WILL AUTO DETECT WEEKLY UNPICK
@@ -686,7 +687,7 @@ def hedge(currency=None, bot_tester=False, **options):
                     #     get_quote_yahoo(position.ticker.ticker, use_symbol=False)
                     # END NOT USING YAHOO
 
-                    # ENCHANCE CODE HERE, MAKE MULTIPROCESSING INSTEAD OF WAITING ONE BY ONE HEDGE POSITION
+                    # TODO: ENCHANCE CODE HERE, MAKE MULTIPROCESSING INSTEAD OF WAITING ONE BY ONE HEDGE POSITION
 
                     # WARNING!!!!!!!!!!!
                     # BELOW THIS CODE USE CELERY TO RUN
