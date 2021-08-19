@@ -404,6 +404,10 @@ class OrderActionSerializer(serializers.ModelSerializer):
         if instance.status == 'filled':
             raise exceptions.MethodNotAllowed(
                 {'detail': 'order already filled, you cannot cancel / confirm'})
+        if instance.status == validated_data['status']:
+            raise exceptions.MethodNotAllowed(
+                {'detail': f'order already {instance.status}'})
+                
         from core.services.order_services import order_executor
         payload = json.dumps(validated_data)
         print(payload)
