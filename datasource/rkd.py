@@ -3,6 +3,7 @@ from general.slack import report_to_slack
 import boto3
 import requests
 import json
+# TODO: remove this unneded import
 import math
 import pandas as pd
 from requests.api import head
@@ -239,6 +240,7 @@ class RkdData(Rkd):
 
                     formated_json = {}
                     formated_json["ticker"] = base_response["Issues"]["Issue"][0]["IssueID"][2]["Value"]
+                    # TODO: remove duplicated lines below (lines 278-287)
                     fields = ["AREVPS",
                               "MKTCAP",
                               "APEEXCLXOR",

@@ -17,6 +17,7 @@ from core.universe.models import Universe, UniverseConsolidated,ExchangeMarket
 from core.Clients.models import ClientTopStock, UniverseClient
 from core.user.models import User
 from core.djangomodule.serializers import CsvSerializer
+# TODO: remove unneeded imports and lines of code for Yahoo finance
 from core.djangomodule.yahooFin import get_quote_index, get_quote_yahoo
 from core.master.models import Currency
 from core.orders.models import Order, PositionPerformance, OrderPosition
