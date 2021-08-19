@@ -19,7 +19,7 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 
-def ucdc_sell_position(live_price, trading_day, position_uid):
+def ucdc_sell_position(live_price, trading_day, position_uid, apps=False):
     position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
     bot = position.bot
     latest = LatestPrice.objects.get(ticker=position.ticker)
@@ -50,9 +50,10 @@ def ucdc_sell_position(live_price, trading_day, position_uid):
 
     if trading_day >= expiry:
         position.event = "Bot Expired"
-    order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position)
+    order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=apps)
+    return position, order
 
-def populate_order(status, hedge_shares, log_time, live_price, bot, performance, position):
+def populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=False):
     position_val = OrderPositionSerializer(position).data
     # remove created and updated from position
     [position_val.pop(key) for key in ["created", "updated"]]
@@ -74,9 +75,7 @@ def populate_order(status, hedge_shares, log_time, live_price, bot, performance,
             qty=hedge_shares,
             setup=setup
         )
-        # only for bot
-        # FIXME: conditional buat apps dan simulasi. sama kyk di classic
-        if order:
+        if order and not apps:
             order.status = "placed"
             order.placed = True
             order.placed_at = log_time
@@ -196,8 +195,8 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
     expiry = to_date(position.expiry)
     status_expiry = trading_day >= expiry
     if(status_expiry):
-        ucdc_sell_position(live_price, trading_day, position.position_uid)
-        return False, None
+        position, order = ucdc_sell_position(live_price, trading_day, position.position_uid)
+        return True, order.order_uid
     else:
         performance, position, status, hedge_shares = populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=False)
 
@@ -210,7 +209,9 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
         )
         position.save()
         order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position)
-        return True, None
+        if (order):
+            return False, order.order_uid
+        return False, None
 
 # def create_performance(price_data, position, latest=False, hedge=False, tac=False):
 #     # new access bot reference

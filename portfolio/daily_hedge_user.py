@@ -10,7 +10,7 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 
-def user_sell_position(live_price, trading_day, position_uid):
+def user_sell_position(live_price, trading_day, position_uid, apps=False):
     position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
     log_time = pd.Timestamp(trading_day)
     if log_time.date() == datetime.now().date():
@@ -26,8 +26,6 @@ def user_sell_position(live_price, trading_day, position_uid):
     position.event_date = trading_day
     position.is_live = False
     position.event = "Stopped by User"
-    #FIXME:position no save
-    position.save()
     position_val = OrderPositionSerializer(position).data
     [position_val.pop(key) for key in ["created", "updated"]]
     setup = {"performance": performance, "position": position_val}
@@ -44,14 +42,13 @@ def user_sell_position(live_price, trading_day, position_uid):
         qty=position.share_num,
         setup=setup
     )
-    #FIXME:perlu kondisinonal g ya? ini udah pasti apps.. tapi buat ke depan?
-    if order:
+    if order and not apps:
         order.placed = True
         order.placed_at = log_time
         order.status = "placed"
         order.save()
     #FIXME: kenapa return nya beda dari bot?
-    return True, order
+    return position, order
 
 def populate_performance(live_price, trading_day, log_time, position, expiry=False):
     try:

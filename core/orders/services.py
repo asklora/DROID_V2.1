@@ -15,11 +15,11 @@ def is_portfolio_exist(ticker,bot_id,user_id):
 def sell_position_service(price, trading_day, position_uid):
     position  = OrderPosition.objects.get(position_uid=position_uid)
     if position.bot.is_ucdc():
-       positions,order= ucdc_sell_position(price, trading_day, position_uid)
+       positions, order= ucdc_sell_position(price, trading_day, position_uid)
     elif position.bot.is_uno():
-        positions,order=uno_sell_position(price, trading_day, position_uid)
+        positions, order=uno_sell_position(price, trading_day, position_uid)
     elif position.bot.is_classic():
-        positions,order=classic_sell_position(price, trading_day, position_uid)
+        positions, order=classic_sell_position(price, trading_day, position_uid)
     elif position.bot.is_stock():
-        positions,order=user_sell_position(price, trading_day, position_uid)
-    return order
+        positions, order=user_sell_position(price, trading_day, position_uid)
+    return positions, order

@@ -236,7 +236,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                     **validated_data, order_type=order_type,is_init=init)
             else:
                 # FIXME: return order nya
-                position,order = sell_position_service(validated_data["price"],
+                position, order = sell_position_service(validated_data["price"],
                  datetime.now(), 
                  validated_data.get("setup",{}).get("position",None))
         return order
