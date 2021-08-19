@@ -27,7 +27,6 @@ class IsRegisteredUser(permissions.BasePermission):
     message = 'User is not Registered or has permission'
 
     def has_permission(self, request, view):
-        print(request)
         if request.user.is_anonymous:
             return NeedRegister()
         return True

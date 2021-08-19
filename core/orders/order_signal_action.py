@@ -1,3 +1,4 @@
+from django.db.models.expressions import RawSQL
 from core.bot.models import BotOptionType
 from core.user.models import TransactionHistory
 from .models import Order, OrderFee, OrderPosition, PositionPerformance
@@ -5,6 +6,7 @@ from core.universe.models import Currency
 from abc import ABC,abstractmethod
 from core.djangomodule.general import formatdigit
 from core.Clients.models import UserClient
+from django.db import transaction as db_transaction
 
 
 """
@@ -123,22 +125,22 @@ class BaseOrderConnector(AbstracOrderConnector):
             Can be BOT or USER
             """
             # create position and performance
-            position_uid,performance_uid = self.create_position_perfomance()
+            position,performance = self.create_position_perfomance()
         
         else:
             """
             Only Bot hedge behaviour
             """
-            position_uid,performance_uid =self.hedge_position_performance()
+            position,performance =self.update_position_performance()
         
         # create fee
-        self.create_fee(position_uid)
+        self.create_fee(position.position_uid)
             
         # update last pending transaction 
-        self.update_initial_transaction_position(position_uid)
+        self.update_initial_transaction_position(position.position_uid)
 
         # update to connect performance and prevent triger signal
-        Order.objects.filter(pk=self.instance.order_uid).update(performance_uid=performance_uid)
+        Order.objects.filter(pk=self.instance.order_uid).update(performance_uid=performance.performance_uid)
     
     def on_buy_cancel(self):
         if self.instance.is_init and self.instance.status == 'pending':
@@ -147,59 +149,104 @@ class BaseOrderConnector(AbstracOrderConnector):
             if trans.exists():
                 trans.delete()
 
+    
     def on_sell_placed(self):
         pass
     
+    
     def on_sell_pending(self):
+        """
+        STILL DO NOTHING
+        
+        are we gonna to take position bot_cash_balance / real position values here before move to wallet?
+        problems:
+            we dont store current values of the position as a balance position,
+            current_values should not change in position when sell order is pending
+            surely not bot cash balance we take/hold in here
+        """
         pass
     
     
     def on_sell_filled(self):
-        pass
+        """
+        if sell is successfully filled. we will unpack the setup
+        then update the position and creating performances
+        
+        - Only if position stop live we will transfer the money back to wallet
+        """
+        # TODO: #49 Please Check the logic here
+
+        # update position and create performance from setup 
+        position,performance = self.update_position_performance()
+        
+        if not position.live:
+            # transfer to wallet
+            self.transfer_to_wallet(position)
+            self.create_fee(position.position_uid)
+    
     
     def on_sell_cancel(self):
         pass
+    
 
-    def hedge_position_performance(self):
+    def transfer_to_wallet(self,position:OrderPosition):
+
+        amt = position.investment_amount + position.final_pnl_amount
+        return_amt = amt + position.bot_cash_dividend
+        TransactionHistory.objects.create(
+            balance_uid=self.user_wallet,
+            side="credit",
+            amount=formatdigit(return_amt,self.is_decimal) ,
+            transaction_detail={
+                "last_amount" : self.user_wallet_amount,
+                "description": "bot return",
+                "position": f"{position.position_uid}",
+                "event": "return",
+                "order_uid": str(self.instance.order_uid)
+            },
+        )
+
+
+    def update_position_performance(self):
         
         """
-        Only Bot hedge behaviour
+        Only Bot hedge behaviour and sell
         UPDATE the position and CREATE performance
         """
         
-        order = OrderPosition.objects.get(
+        position = OrderPosition.objects.get(
                         position_uid=self.instance.setup["position"]["position_uid"])
         key_list = list(self.instance.setup["position"])
 
         # UPDATE the position
         for key in key_list:
             if not key in ["created", "updated", "share_num"]:
-                if hasattr(order, key):
-                    field = order._meta.get_field(key)
+                if hasattr(position, key):
+                    field = position._meta.get_field(key)
                     if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
                         raw_key = f"{key}_id"
                         setattr(
-                            order, raw_key, self.instance.setup["position"].pop(key))
+                            position, raw_key, self.instance.setup["position"].pop(key))
                     else:
-                        setattr(order, key,
+                        setattr(position, key,
                                 self.instance.setup["position"].pop(key))
         
         # remove field position_uid, cause it will double
         self.instance.setup["performance"].pop("position_uid")
         
         # CREATE performance from hedge setup
-        perf = PositionPerformance.objects.create(
-            position_uid=order,  # replace with self.instance
+        performance = PositionPerformance.objects.create(
+            position_uid=position,  # replace with self.instance
             # the rest is value from setup
             **self.instance.setup["performance"]
         )
 
-        perf.order_uid = self.instance
-        order.save()
-        perf.save()
+        performance.order_uid = self.instance
+        position.save()
+        performance.save()
 
         
-        return order.position_uid,perf.performance_uid 
+        return position,performance 
     
     def create_position_perfomance(self):
         """
@@ -208,7 +255,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         CREATE position and CREATE performance
         """
         margin=1
-        order = OrderPosition.objects.create(
+        position = OrderPosition.objects.create(
                     user_id=self.instance.user_id,
                     ticker=self.instance.ticker,
                     bot_id=self.instance.bot_id,
@@ -217,9 +264,9 @@ class BaseOrderConnector(AbstracOrderConnector):
                     is_live=True,
                     margin=margin
                 )
-        perf = PositionPerformance.objects.create(
+        performance = PositionPerformance.objects.create(
             created=self.instance.filled_at.date(),
-            position_uid=order,
+            position_uid=position,
             last_spot_price=self.instance.price,
             last_live_price=self.instance.price,
             order_uid=self.instance,
@@ -230,35 +277,36 @@ class BaseOrderConnector(AbstracOrderConnector):
         if not self.bot.is_stock():
 
             for key, val in self.instance.setup.items():
-                if hasattr(perf, key):
-                    setattr(perf, key, val)
-                if hasattr(order, key):
+                if hasattr(performance, key):
+                    setattr(performance, key, val)
+                if hasattr(position, key):
                     if key == "share_num":
                         continue
                     else:
-                        setattr(order, key, val)
+                        setattr(position, key, val)
                 else:
                     if key == "total_bot_share_num":
-                        setattr(order, "share_num", val)
+                        setattr(position, "share_num", val)
         else:
             # without bot
-            order.investment_amount = self.instance.amount
-            order.bot_cash_balance = 0
-            order.share_num = self.instance.qty
-            perf.share_num = self.instance.qty
+            position.investment_amount = self.instance.amount
+            position.bot_cash_balance = 0
+            position.share_num = self.instance.qty
+            performance.share_num = self.instance.qty
             # start creating position
-        perf.current_pnl_amt = 0  # need to calculate with fee
-        perf.current_bot_cash_balance = order.bot_cash_balance
+        performance.current_pnl_amt = 0  # need to calculate with fee
+        performance.current_bot_cash_balance = position.bot_cash_balance
 
-        perf.current_investment_amount = formatdigit(
-            perf.last_live_price * perf.share_num, self.is_decimal)
-        perf.current_pnl_ret = (perf.current_bot_cash_balance + perf.current_investment_amount -
-                                order.investment_amount) / order.investment_amount
-        perf.order_id = self.instance
+        performance.current_investment_amount = formatdigit(
+            performance.last_live_price * performance.share_num, self.is_decimal)
+        performance.current_pnl_ret = (performance.current_bot_cash_balance + performance.current_investment_amount -
+                                position.investment_amount) / position.investment_amount
+        performance.order_id = self.instance
 
-        perf.save()
-        order.save()
-        return order.position_uid,perf.performance_uid
+        performance.save()
+        position.save()
+        
+        return position,performance
     
     
     
@@ -361,9 +409,13 @@ class LiveOrderConnector(BaseOrderConnector):
   
     def __init__(self,*args,**kwargs):
         super().__init__(*args, **kwargs)
-
+    
+    # TODO: #51 INTERACTIVE BROKER ORDER REQUEST
     def on_buy_placed(self):
-        print('sent order to broker')
+        print('sent buy order to broker')
+        
+    def on_sell_placed(self):
+        print('sent sell order to broker')
 
 class SimulationOrderConnector(BaseOrderConnector):
     """
@@ -378,6 +430,12 @@ class SimulationOrderConnector(BaseOrderConnector):
     def on_buy_placed(self):
         """do nothing"""
         pass
+
+    def on_sell_placed(self):
+        position_uid = self.instance.setup.get('position',{}).get('position_uid',None)
+        if not position_uid:
+            raise Exception('position_uid not found')
+        # TODO: #52 FORCE STOP FUNCTION/FORCE SELL POSITION GOES HERE
         
         
     

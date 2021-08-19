@@ -47,12 +47,20 @@ class PositionViews(viewsets.ReadOnlyModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        operation_id='Get positions by Account'
+        operation_id='Get positions by Account',
+        parameters=[
+            OpenApiParameter(name='live',required=False,type=int,description='1 is true (still live), 0 is false (completed)')
+        ]
     )
 )
 class PositionUserViews(viewsets.ReadOnlyModelViewSet):
     """
-    get positions by account
+    get positions by accounts
+    params to sort live/completed
+    - live positions
+        - url/?live
+    - complete positions
+        - url/?complete
     """
     serializer_class = PositionSerializer
     queryset = OrderPosition.objects.all()
@@ -61,12 +69,18 @@ class PositionUserViews(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         if self.kwargs:
             if 'live' in self.request.query_params:
-                return OrderPosition.objects.filter(user_id=self.kwargs['user_id'], is_live=True)
+                params = self.request.query_params.get('live',None)
+                if params not in ['0','1']:
+                    return []
+                if params:
+                    return OrderPosition.objects.prefetch_related('ticker').filter(user_id=self.kwargs['user_id'], is_live=params)
+                else:
+                    return OrderPosition.objects.prefetch_related('ticker').filter(user_id=self.kwargs['user_id'], is_live=True)
             elif 'complete' in self.request.query_params:
-                return OrderPosition.objects.filter(user_id=self.kwargs['user_id'], is_live=False)
-            return OrderPosition.objects.filter(user_id=self.kwargs['user_id'])
+                return OrderPosition.objects.prefetch_related('ticker').filter(user_id=self.kwargs['user_id'], is_live=False)
+            return OrderPosition.objects.prefetch_related('ticker').filter(user_id=self.kwargs['user_id'])
         else:
-            return OrderPosition.objects.filter(user_id=None)
+            return OrderPosition.objects.prefetch_related('ticker').filter(user_id=None)
 
 class PositionDetailViews(views.APIView):
     """
