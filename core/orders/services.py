@@ -11,7 +11,6 @@ def is_portfolio_exist(ticker,bot_id,user_id):
         return portfolio
     return None
 
-# FIXME: return order
 def sell_position_service(price, trading_day, position_uid):
     position  = OrderPosition.objects.get(position_uid=position_uid)
     if position.bot.is_ucdc():

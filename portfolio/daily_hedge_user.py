@@ -47,7 +47,6 @@ def user_sell_position(live_price, trading_day, position_uid, apps=False):
         order.placed_at = log_time
         order.status = "placed"
         order.save()
-    #FIXME: kenapa return nya beda dari bot?
     return position, order
 
 def populate_performance(live_price, trading_day, log_time, position, expiry=False):
