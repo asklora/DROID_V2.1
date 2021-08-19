@@ -454,9 +454,9 @@ class OrderServices:
     
     def __init__(self,instance:Order):
         self.instance = instance
-        self.user_wallet = instance.user_id.user_balance
-        self.user_wallet_amount = instance.user_id.user_balance.amount
-        self.user_wallet_currency = instance.user_id.user_balance.currency_code
+        self.user_wallet = instance.user_id.wallet
+        self.user_wallet_amount = instance.user_id.balance
+        self.user_wallet_currency = instance.user_id.currency
         self.bot = BotOptionType.objects.get(bot_id=instance.bot_id)
         self.order_property = self.__dict__
 
