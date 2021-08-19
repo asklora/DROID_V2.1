@@ -10,9 +10,11 @@ from datasource.rkd import RkdData
 from datetime import datetime
 from core.djangomodule.calendar import TradingHours
 from portfolio.daily_hedge_classic import classic_position_check
-
+from config.celery import app 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        # app.control.revoke('eb3cdebb-1c89-44d0-a022-65527f2863ee', terminate=True)
+
         # daily_hedge(currency="KRW",rehedge={
         #     'types':'hedge',
         #     'date':'2021-08-06'

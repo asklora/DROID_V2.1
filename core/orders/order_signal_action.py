@@ -6,8 +6,7 @@ from core.djangomodule.general import formatdigit
 from core.Clients.models import UserClient
 from django.db import transaction as db_transaction
 from datasource.rkd import RkdData
-from portfolio import classic_sell_position
-
+from config.celery import app as worker
 """
 user/bot
 broker/simulation
@@ -144,11 +143,17 @@ class BaseOrderConnector(AbstracOrderConnector):
         Order.objects.filter(pk=self.instance.order_uid).update(performance_uid=performance.performance_uid)
     
     def on_buy_cancel(self):
+        """
+        stopping any order schedule on celery
+        """
+        
         if self.instance.is_init and self.instance.status == 'pending':
             trans = TransactionHistory.objects.filter(
                 side='debit', transaction_detail__description='bot order', transaction_detail__order_uid=str(self.instance.order_uid))
             if trans.exists():
                 trans.delete()
+        # cancel any pending shedule in celery worker
+        worker.control.revoke(self.instance.order_uid,terminate=True)
     
     
     def on_sell_pending(self):
@@ -168,7 +173,12 @@ class BaseOrderConnector(AbstracOrderConnector):
     
     
     def on_sell_cancel(self):
-        pass
+        """
+        stopping any order schedule on celery
+        """
+       
+        # cancel any pending shedule in celery worker
+        worker.control.revoke(self.instance.order_uid,terminate=True)
     
 
     def transfer_to_wallet(self,position:OrderPosition):

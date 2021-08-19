@@ -1,7 +1,6 @@
 from config.celery import app
 from django.apps import apps
 from core.djangomodule.calendar import TradingHours
-from core.djangomodule.general import UnixEpochDateField
 from django.db import transaction
 from firebase_admin import messaging
 from datetime import datetime
@@ -14,10 +13,6 @@ import asyncio
 
 
 class OrderDetailsServicesSerializers(serializers.ModelSerializer):
-    # created = UnixEpochDateField()
-    # filled_at = UnixEpochDateField()
-    # placed_at = UnixEpochDateField()
-    # canceled_at = UnixEpochDateField()
 
     class Meta:
         model = apps.get_model('orders', 'Order')
@@ -70,33 +65,42 @@ def order_executor(self, payload, recall=False):
             order.placed = True
             order.placed_at = datetime.now()
             order.save()
+    
 
     # debug only
     # time.sleep(10)
+    if not order.canceled_at:
+        """
+        should not go here if canceled
+        """
+        if order.bot_id == 'STOCK_stock_0' or order.side=='sell':
+            share = order.qty
+        else:
+            share = order.setup['share_num']
+        market = TradingHours(mic=order.ticker.mic)
+        opens=True
+        if opens:
+            order.status = 'filled'
+            order.filled_at = datetime.now()
+            order.save()
 
-    print('placed')
-    if order.bot_id == 'STOCK_stock_0' or order.side=='sell':
-        share = order.qty
+            print('open')
+            messages = 'order accepted'
+            message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status filled'
+        else:
+            print('close')
+            messages = 'order pending'
+            message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status pending'
+            # create schedule to next bell and will recrusive until market status open
+            # still keep sending message. need to improve
+            order_executor.apply_async(args=(json.dumps(payload),), kwargs={
+                                    'recall': True}, eta=market.next_bell)
     else:
-        share = order.setup['share_num']
-    market = TradingHours(mic=order.ticker.mic)
-    opens=True
-    if opens:
-        order.status = 'filled'
-        order.filled_at = datetime.now()
-        order.save()
-
-        print('open')
-        messages = 'order accepted'
-        message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status filled'
-    else:
-        print('close')
-        messages = 'order pending'
-        message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status pending'
-        # create schedule to next bell and will recrusive until market status open
-        # still keep sending message. need to improve
-        order_executor.apply_async(args=(json.dumps(payload),), kwargs={
-                                   'recall': True}, eta=market.next_bell)
+        """
+        we need message if order is cancel
+        """
+        messages = 'order canceled'
+        message = f'{order.side} order  stocks {order.ticker.ticker} was canceled'
 
     payload_serializer = OrderDetailsServicesSerializers(order).data
     channel_layer = get_channel_layer()
