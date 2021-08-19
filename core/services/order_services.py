@@ -48,10 +48,11 @@ def order_executor(self, payload, recall=False):
             in_wallet_transactions.get().delete()
         
         # FIXME: for apps, need to change later with better logic
-        if order.amount >= 10000:
-            order.amount = 20000
-        else:
-            order.amount = 10000
+        if order.order_type=='apps':
+            if order.amount >= 10000:
+                order.amount = 20000
+            else:
+                order.amount = 10000
         order.status = 'review'
         order.placed = False
         order.placed_at = None

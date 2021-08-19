@@ -5,7 +5,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from general.data_process import tuple_data
 from general.sql_query import read_query
-from general.date_process import dateNow
+from general.date_process import dateNow, date_interval
 from general.slack import report_to_slack
 from general.data_process import uid_maker, NoneToZero
 from general.sql_output import upsert_data_to_database
@@ -332,15 +332,13 @@ def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stoc
             #### ADD INTERVAL WEEK OF YEAR ####
             #TODO: #53 can be put into its own function since it is also found in `core/services/tasks.py` line 377 (populate_client_top_stock_weekly() function)
             dates = pd.to_datetime(spot_date)
-            week = dates.isocalendar()[1]
-            year = dates.isocalendar()[0]
-            interval = f'{year}{week}'
+            interval = date_interval(dates)
             ##### ================ #####
             temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], "bot":[None], 
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
             "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id], "currency_code":[currency_code[0]], "service_type":[service_type], 
             "capital":[capital], 
-            "week_of_year":[int(interval)] # ADD INTERVAL TO DATAFRAME
+            "week_of_year":[interval] # ADD INTERVAL TO DATAFRAME
             }, index=[0])
             last_ticker.append(ticker)
             count+=1
@@ -421,14 +419,12 @@ def populate_bot_tester(currency_code=None, client_name="HANWHA", top_pick_stock
             #### ADD INTERVAL WEEK OF YEAR ####
             #TODO: can be put into its own function since it is also found above
             dates = pd.to_datetime(spot_date)
-            week = dates.isocalendar()[1]
-            year = dates.isocalendar()[0]
-            interval = f'{year}{week}'
+            interval = date_interval(dates)
             ##### ================ #####
             temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], 
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
             "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id],"bot":[bot], "currency_code":[currency_code[0]], "service_type":[service_type], 
-            "capital":[capital], "week_of_year":[int(interval)]}, index=[0])
+            "capital":[capital], "week_of_year":[interval]}, index=[0])
             last_ticker.append(ticker)
             last_industry_code.append(industry_code)
             count+=1
@@ -473,14 +469,12 @@ def populate_fels_bot(currency_code=None, client_name="FELS", time_to_exp=[0.076
             #### ADD INTERVAL WEEK OF YEAR ####
             #TODO: the third one
             dates = pd.to_datetime(spot_date)
-            week = dates.isocalendar()[1]
-            year = dates.isocalendar()[0]
-            interval = f'{year}{week}'
+            interval = date_interval(dates)
             ##### ================ #####
             temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], 
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
             "rank":[count], "client_uid":[client_uid], "ticker":[ticker],"bot_id":[bot_id],"bot":[bot], "currency_code":[currency_code[0]], "service_type":[None], 
-            "capital":[None], "week_of_year":[int(interval)]}, index=[0])
+            "capital":[None], "week_of_year":[interval]}, index=[0])
             last_ticker.append(ticker)
             count+=1
             fels_pick = fels_pick.append(temp)
