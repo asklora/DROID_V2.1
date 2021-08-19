@@ -10,9 +10,13 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 
-def classic_sell_position(high, low, live_price, trading_day, position_uid):
+def classic_sell_position(live_price, trading_day, position_uid):
     position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
     bot = position.bot
+    latest = LatestPrice.objects.get(ticker=position.ticker)
+    high = latest.high
+    low= latest.low
+
     if high == 0 or high == None:
         high = live_price
     if low == 0 or low == None:
@@ -44,7 +48,7 @@ def classic_sell_position(high, low, live_price, trading_day, position_uid):
         else:
             position.event = "Bot Expired"
     # TODO: #47 No need to save here
-    position.save()
+    # position.save()
     # serializing -> make dictionary position instance
     position_val = OrderPositionSerializer(position).data
     # remove created and updated from position

@@ -165,7 +165,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                   'side', 'status', 'order_uid', 'qty', 'setup', 'created']
     
     def side_validation(self,validated_data):
-        if validated_data['side']:
+        if validated_data['side'] == 'sell':
             init = False
             position = validated_data.get('setup',{}).get('position',None)
             if not position:
@@ -386,7 +386,7 @@ class OrderActionSerializer(serializers.ModelSerializer):
         from core.services.order_services import order_executor
         payload = json.dumps(validated_data)
         print(payload)
-        task = order_executor.delay(payload)
+        task = order_executor.apply_async(args=(payload,))
         data = {'action_id': task.id, 'status': 'executed',
                 'order_uid': validated_data['order_uid']}
         return data
