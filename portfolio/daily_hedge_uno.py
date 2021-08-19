@@ -39,6 +39,7 @@ def uno_sell_position(live_price, trading_day, position_uid, apps=False):
     log_time = pd.Timestamp(trading_day)
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()
+    trading_day = to_date(trading_day)
 
     performance, position, status, hedge_shares = populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=True)
     current_pnl_amt = performance["current_pnl_amt"]
@@ -50,7 +51,6 @@ def uno_sell_position(live_price, trading_day, position_uid, apps=False):
     position.event_date = trading_day
     position.is_live = False
 
-    trading_day = to_date(trading_day)
     expiry = to_date(position.expiry)
     
     if high > position.target_profit_price:
