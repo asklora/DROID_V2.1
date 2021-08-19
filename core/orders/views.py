@@ -138,7 +138,30 @@ class OrderViews(views.APIView):
     permission_classes = (IsRegisteredUser,)
 
     def post(self, request):
-
+        # TODO: create documentation API for Order create @hendika
+        # refer to https://drf-spectacular.readthedocs.io/en/latest/
+        # two type example requests for SELL and BUY
+        """
+        - Buy request:
+                {
+                "ticker": "string",
+                "price": 0,
+                "bot_id": "string",
+                "amount": 0,
+                "user": "string",
+                "side": "string",
+                }
+        - Sell request:
+            {
+                "user": "string",
+                "side": "string",
+                "ticker":"string",
+                "setup": {
+                "position":"string"
+                }
+            }
+        """
+                
         serializer = OrderCreateSerializer(
             data=request.data, context={'request': request})
         if serializer.is_valid():
