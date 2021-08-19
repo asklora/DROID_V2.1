@@ -80,7 +80,8 @@ def order_executor(self, payload, recall=False):
     else:
         share = order.setup['share_num']
     market = TradingHours(mic=order.ticker.mic)
-    if market.is_open:
+    opens=True
+    if opens:
         order.status = 'filled'
         order.filled_at = datetime.now()
         order.save()
