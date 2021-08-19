@@ -5,7 +5,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from general.data_process import tuple_data
 from general.sql_query import read_query
-from general.date_process import dateNow
+from general.date_process import dateNow, date_interval
 from general.slack import report_to_slack
 from general.data_process import uid_maker, NoneToZero
 from general.sql_output import upsert_data_to_database
@@ -331,9 +331,7 @@ def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stoc
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
             #### ADD INTERVAL WEEK OF YEAR ####
             dates = pd.to_datetime(spot_date)
-            week = dates.isocalendar()[1]
-            year = dates.isocalendar()[0]
-            interval = f'{year}{week}'
+            interval = date_interval(dates)
             ##### ================ #####
             temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], "bot":[None], 
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
@@ -419,9 +417,7 @@ def populate_bot_tester(currency_code=None, client_name="HANWHA", top_pick_stock
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
             #### ADD INTERVAL WEEK OF YEAR ####
             dates = pd.to_datetime(spot_date)
-            week = dates.isocalendar()[1]
-            year = dates.isocalendar()[0]
-            interval = f'{year}{week}'
+            interval = date_interval(dates)
             ##### ================ #####
             temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], 
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],
@@ -470,9 +466,7 @@ def populate_fels_bot(currency_code=None, client_name="FELS", time_to_exp=[0.076
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
             #### ADD INTERVAL WEEK OF YEAR ####
             dates = pd.to_datetime(spot_date)
-            week = dates.isocalendar()[1]
-            year = dates.isocalendar()[0]
-            interval = f'{year}{week}'
+            interval = date_interval(dates)
             ##### ================ #####
             temp = pd.DataFrame({"created":[spot_date], "updated":[spot_date], "uid":[uid],"spot_date":[spot_date], 
             "expiry_date":[expiry_date], "has_position":["False"], "position_uid":[None],"execution_date":[None], "completed_date":[None], "event":[None],

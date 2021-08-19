@@ -31,6 +31,8 @@ from datasource.rkd import RkdData
 from general.sql_process import do_function
 # SLACK REPORT
 from general.slack import report_to_slack
+# date interval
+from general.date_process import date_interval
 # POPULATE TOPSTOCK MODULE
 from client_test_pick import populate_fels_bot, test_pick, populate_bot_advisor, populate_bot_tester
 # HEDGE MODULE
@@ -462,11 +464,10 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False,
     client = Client.objects.get(client_name=client_name)
 
     # ONLY PICK RELATED WEEK OF YEAR, WEEK WITH FULL HOLIDAY WILL SKIPPED/IGNORED
+    # maybe we need to swap the following two lines
     day = datetime.now()
     now = day.date()
-    week = day.isocalendar()[1]
-    year = day.isocalendar()[0]
-    interval = f"{year}{week}"
+    interval = date_interval(day)
 
     if bot_tester:
         service_type = "bot_tester"
