@@ -21,5 +21,5 @@ def sell_position_service(price, trading_day, position_uid):
     elif position.bot.is_classic():
         positions, order=classic_sell_position(price, trading_day, position_uid)
     elif position.bot.is_stock():
-        positions, order=user_sell_position(price, trading_day, position_uid)
+        positions, order=user_sell_position(price, trading_day, position_uid, apps=True)
     return positions, order
