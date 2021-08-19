@@ -174,6 +174,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             self.fields['amount'].required = False
             self.fields['ticker'].required = True
             self.fields['setup'].required = True
+        else:
+            self.fields['bot_id'].required = True
+            self.fields['amount'].required = True
+            self.fields['ticker'].required = True
 
     def side_validation(self,validated_data):
         if validated_data['side'] == 'sell':
@@ -231,6 +235,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 order = Order.objects.create(
                     **validated_data, order_type=order_type,is_init=init)
             else:
+                #TODO: FUNGSI WRAPPER NYA AKAN DI PANGGIL DI SINI
+                # sell kasih route function untuk user,uno,ucdc,classic dari posisi_uid
+                # param yang aq masukkan ada 3. price,trading_day,position_uid
                 position,order = classic_sell_position(
                     validated_data['price'],datetime.now(),
                     validated_data.get('setup',{}).get('position',None))
@@ -400,7 +407,7 @@ class OrderActionSerializer(serializers.ModelSerializer):
         from core.services.order_services import order_executor
         payload = json.dumps(validated_data)
         print(payload)
-        task = order_executor.apply_async(args=(payload,))
+        task = order_executor.apply_async(args=(payload,),queue='droiddev')
         data = {'action_id': task.id, 'status': 'executed',
                 'order_uid': validated_data['order_uid']}
         return data

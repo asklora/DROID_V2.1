@@ -430,7 +430,7 @@ class SimulationOrderConnector(BaseOrderConnector):
         # update position and create performance from setup 
         position,performance = self.update_position_performance()
         
-        if not position.live:
+        if not position.is_live:
             # transfer to wallet
             self.transfer_to_wallet(position)
             if self.instance.order_type == 'apps':
