@@ -21,7 +21,6 @@ def classic_sell_position(live_price, trading_day, position_uid,apps=True):
         high = live_price
     if low == 0 or low == None:
         low = live_price
-
     log_time = pd.Timestamp(trading_day)
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()
