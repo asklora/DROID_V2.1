@@ -417,9 +417,6 @@ class SimulationOrderConnector(BaseOrderConnector):
         position_uid = self.instance.setup.get('position',{}).get('position_uid',None)
         if not position_uid:
             raise Exception('position_uid not found')
-        rkd = RkdData()
-        rkd.get_quote([self.instance.ticker.ticker],save=True)
-        classic_sell_position(self.instance.price,self.instance.created,position_uid)
         # TODO: #52 FORCE STOP FUNCTION/FORCE SELL POSITION GOES HERE
     
     def on_sell_filled(self):

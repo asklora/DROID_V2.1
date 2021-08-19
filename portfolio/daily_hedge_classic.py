@@ -10,7 +10,7 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 
-def classic_sell_position(live_price, trading_day, position_uid):
+def classic_sell_position(live_price, trading_day, position_uid,apps=True):
     position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
     bot = position.bot
     latest = LatestPrice.objects.get(ticker=position.ticker)
@@ -39,7 +39,6 @@ def classic_sell_position(live_price, trading_day, position_uid):
         position.event = "Targeted Profit"
     elif low < position.max_loss_price:
         position.event = "Maximum Loss"
-    # TODO: #46 without bot expiry will None, and will create error in conditional
     elif trading_day >= position.expiry:
         if live_price < position.entry_price:
             position.event = "Loss"
@@ -47,8 +46,6 @@ def classic_sell_position(live_price, trading_day, position_uid):
             position.event = "Profit"
         else:
             position.event = "Bot Expired"
-    # TODO: #47 No need to save here
-    # position.save()
     # serializing -> make dictionary position instance
     position_val = OrderPositionSerializer(position).data
     # remove created and updated from position
@@ -69,16 +66,15 @@ def classic_sell_position(live_price, trading_day, position_uid):
         qty=position.share_num,
         setup=setup
     )
-    # only for bot
-    if order:
+    # only for none apps
+    if order and not apps:
+        # TODO: new conditional here
+        # for apps this will not trigered
         order.status = "placed"
         order.placed = True
         order.placed_at = log_time
         order.save()
-    # go to core/orders/signal.py Line 54 and 112
-    # this will wait until order filled then creating performance along with it
     order.save()
-    # remove position_uid from dict and swap with instance
     return position, order
 
 def populate_performance(live_price, trading_day, log_time, position, expiry=False):

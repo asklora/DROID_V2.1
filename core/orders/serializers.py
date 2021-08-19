@@ -11,6 +11,8 @@ from datasource.rkd import RkdData
 from django.db import transaction as db_transaction
 import json
 from .services import is_portfolio_exist
+from portfolio import classic_sell_position
+from datetime import datetime
 
 @extend_schema_serializer(
     examples=[
@@ -163,7 +165,16 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['ticker', 'price', 'bot_id', 'amount', 'user',
                   'side', 'status', 'order_uid', 'qty', 'setup', 'created']
-    
+    def __init__(self, *args, **kwargs):
+        # initialize fields
+        super(OrderCreateSerializer, self).__init__(*args, **kwargs)
+        # now modify the required field for sell
+        if self.initial_data['side'] == 'sell':
+            self.fields['bot_id'].required = False
+            self.fields['amount'].required = False
+            self.fields['ticker'].required = True
+            self.fields['setup'].required = True
+
     def side_validation(self,validated_data):
         if validated_data['side'] == 'sell':
             init = False
@@ -172,10 +183,17 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 raise exceptions.NotAcceptable({'detail':'must provided the position uid for sell side'})
         else:
             init = True
+            if validated_data['amount'] > validated_data['user_id'].user_balance.amount:
+                raise exceptions.NotAcceptable({'detail': 'insuficent balance'})
+            if validated_data['amount'] <= 0:
+                raise exceptions.NotAcceptable({'detail': 'amount should not 0'})
+            if is_portfolio_exist(validated_data['ticker'],validated_data['bot_id'],validated_data['user_id'].id):
+                raise exceptions.NotAcceptable({'detail': f'user already has position for {validated_data["ticker"]} in current options'})
+
         return init
 
     def create(self, validated_data):
-        
+        print('in save')
         if not 'user' in validated_data:
             request = self.context.get('request', None)
             if request:
@@ -192,10 +210,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 error = {'detail': 'user not found with the given payload user'}
                 raise exceptions.NotFound(error)
             validated_data['user_id'] = user
-        if validated_data['amount'] > user.user_balance.amount:
-            raise exceptions.NotAcceptable({'detail': 'insuficent balance'})
-        if validated_data['amount'] <= 0:
-            raise exceptions.NotAcceptable({'detail': 'amount should not 0'})
+        
 
         if not 'price' in validated_data:
             rkd = RkdData()
@@ -203,23 +218,22 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             df['latest_price'] = df['latest_price'].astype(float)
             ticker = df.loc[df["ticker"] == validated_data['ticker'].ticker]
             validated_data['price'] = ticker.iloc[0]['latest_price']
+        
+        
         order_type = 'apps'
         if user.id == 135:
-            # fee = validated_data.get('fee',None)
-            # if fee:
-            #     user_client = UserClient.objects.get(user_id=user.id)
-            #     client = Client.objects.get()
-            #     client.commissions_buy
             order_type = None
         
         init = self.side_validation(validated_data)
-        if is_portfolio_exist(validated_data['ticker'],validated_data['bot_id'],user.id):
-            raise exceptions.NotAcceptable({'detail': f'user already has position for {validated_data["ticker"]} in current options'})
-            
-
+        
         with db_transaction.atomic():
-            order = Order.objects.create(
-                **validated_data, order_type=order_type,is_init=init)
+            if validated_data['side']=='buy':
+                order = Order.objects.create(
+                    **validated_data, order_type=order_type,is_init=init)
+            else:
+                position,order = classic_sell_position(
+                    validated_data['price'],datetime.now(),
+                    validated_data.get('setup',{}).get('position',None))
         return order
 
 @extend_schema_serializer(
