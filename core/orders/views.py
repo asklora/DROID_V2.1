@@ -138,7 +138,7 @@ class OrderViews(views.APIView):
     permission_classes = (IsRegisteredUser,)
 
     def post(self, request):
-        # TODO: create documentation API for Order create @hendika
+        # TODO: #56 create documentation API for Order create @hendika
         # refer to https://drf-spectacular.readthedocs.io/en/latest/
         # two type example requests for SELL and BUY
         """
