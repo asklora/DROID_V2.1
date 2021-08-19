@@ -137,11 +137,18 @@ class OrderViews(views.APIView):
     serializer_class = OrderCreateSerializer
     permission_classes = (IsRegisteredUser,)
 
-    def post(self, request):
-
+    @extend_schema(
+        operation_id='Create new orders',
+        responses={
+            201: OpenApiResponse(response=OrderCreateSerializer),
+            404: OpenApiResponse(description='User not found', response=errserializer),
+            406: OpenApiResponse(description='Bad request (check your parameters)', response=errserializer),
+        }
+    )
+    def post(self, request):                
         serializer = OrderCreateSerializer(
             data=request.data, context={'request': request})
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             serializer.save()
             return response.Response(serializer.data, status=status.HTTP_201_CREATED)
         return response.Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)

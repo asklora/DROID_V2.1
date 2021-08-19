@@ -11,7 +11,7 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 
-def classic_sell_position(live_price, trading_day, position_uid,apps=True):
+def classic_sell_position(live_price, trading_day, position_uid, apps=False):
     position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
     bot = position.bot
     latest = LatestPrice.objects.get(ticker=position.ticker)
@@ -150,8 +150,8 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
     expiry = to_date(position.expiry)
     status_expiry = high > position.target_profit_price or low < position.max_loss_price or trading_day >= expiry
     if(status_expiry):
-        position, order = classic_sell_position(high, low, live_price, trading_day, position.position_uid,apps=False)
-        return True, None
+        position, order = classic_sell_position(high, low, live_price, trading_day, position.position_uid, apps=False)
+        return True, order.order_uid
     else:
         performance, position = populate_performance(live_price, trading_day, log_time, position)
         # remove position_uid from dict and swap with instance
@@ -161,7 +161,6 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
             position_uid=position,  # swapped with instance
             **performance  # the dict value
         )
-        position.save()
         return False, None
 
 # def create_performance(price_data, position, latest=False, hedge=False, tac=False):

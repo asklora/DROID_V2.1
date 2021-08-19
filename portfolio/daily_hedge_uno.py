@@ -21,7 +21,7 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 
-def uno_sell_position(live_price, trading_day, position_uid):
+def uno_sell_position(live_price, trading_day, position_uid, apps=False):
     position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
     bot = position.bot
     latest = LatestPrice.objects.get(ticker=position.ticker)
@@ -62,14 +62,12 @@ def uno_sell_position(live_price, trading_day, position_uid):
             position.event = "Profit"
         else:
             position.event = "Bot Expired"
-    position.save()
-    order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position)
+    order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=apps)
+    return position, order
 
-def populate_order(status, hedge_shares, log_time, live_price, bot, performance, position):
+def populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=False):
     position_val = OrderPositionSerializer(position).data
-    # remove created and updated from position
     [position_val.pop(key) for key in ["created", "updated"]]
-    # merge two dict, and save to order setup
     setup = {"performance": performance, "position": position_val}
     if not status == "hold":
         if hedge_shares < 0:
@@ -88,7 +86,7 @@ def populate_order(status, hedge_shares, log_time, live_price, bot, performance,
             qty=hedge_shares,
             setup=setup
         )
-        if order:
+        if order and not apps:
             order.status = "placed"
             order.placed = True
             order.placed_at = log_time
@@ -99,8 +97,7 @@ def populate_order(status, hedge_shares, log_time, live_price, bot, performance,
 def populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=False):
     bot = position.bot
     try:
-        last_performance = PositionPerformance.objects.filter(
-            position_uid=position.position_uid).latest("created")
+        last_performance = PositionPerformance.objects.filter(position_uid=position.position_uid).latest("created")
     except PositionPerformance.DoesNotExist:
         last_performance = False
 
@@ -217,21 +214,20 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
     status_expiry = high > position.target_profit_price or trading_day >= expiry
 
     if(status_expiry):
-        uno_sell_position(live_price, trading_day, position.position_uid)
-        return False, None
+        position, order = uno_sell_position(live_price, trading_day, position.position_uid)
+        return True, order.order_uid
     else:
         performance, position, status, hedge_shares = populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=False)
-
-        # remove position_uid from dict and swap with instance
         performance.pop("position_uid")
-        # create the record
         PositionPerformance.objects.create(
             position_uid=position,  # swapped with instance
             **performance  # the dict value
         )
         position.save()
         order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position)
-        return True, None
+        if (order):
+            return False, order.order_uid
+        return False, None
 
 # def create_performance(price_data, position, latest=False, hedge=False, tac=False):
 #     # new access bot reference
