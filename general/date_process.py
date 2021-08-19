@@ -1,5 +1,6 @@
 import time
 import functools
+from typing import Union
 import pandas as pd
 from pytz import timezone
 from datetime import date, datetime, timedelta
@@ -152,7 +153,8 @@ def timeit(func):
     return newfunc
 
 
-def date_interval(date: datetime) -> str:
+def date_interval(date: Union[date, datetime]) -> int:
     week = date.isocalendar()[1]
     year = date.isocalendar()[0]
-    return f"{year}{week}"
+    interval = f"{year}{week}"
+    return int(interval)

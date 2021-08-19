@@ -377,10 +377,8 @@ def populate_client_top_stock_weekly(currency=None, client_name="HANWHA", **opti
     day = datetime.now()
     # POPULATED ONLY/EVERY MONDAY OF THE WEEK
     if day.weekday() == 0:
-        week = day.isocalendar()[1]
-        year = day.isocalendar()[0]
-        interval = f"{year}{week}"
-        if not ClientTopStock.objects.filter(week_of_year=int(interval), currency_code=currency).exists():
+        interval = date_interval(day)
+        if not ClientTopStock.objects.filter(week_of_year=interval, currency_code=currency).exists():
             report_to_slack(
                 f"===  POPULATING {client_name} TOP PICK {currency} ===")
             try:
@@ -478,7 +476,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False,
         has_position=False,  # HERE ARE SAME WITH STATUS, DO WE STILL NEED STATUS??
         service_type=service_type,  # bot advisor / bot tester
         currency_code=currency,
-        week_of_year=int(interval)  # WITH THIS WILL AUTO DETECT WEEKLY UNPICK
+        week_of_year=interval  # WITH THIS WILL AUTO DETECT WEEKLY UNPICK
     ).order_by("service_type", "spot_date", "currency_code", "capital", "rank")
     pos_list = []
     # ONLY EXECUTE IF EXIST / ANY UNPICKED OF THE WEEK
