@@ -284,6 +284,8 @@ class UniverseRating(models.Model):
     wts_rating2 = models.FloatField(blank=True, null=True)
     classic_vol = models.FloatField(blank=True, null=True)
     updated = models.DateField(blank=True, null=True)
+    ai_score = models.FloatField(blank=True, null=True)
+    ai_score2 = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return str(self.ticker.ticker)
