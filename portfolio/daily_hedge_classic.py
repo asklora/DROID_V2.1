@@ -1,3 +1,4 @@
+from general.date_process import to_date
 from pandas.core.base import DataError
 from bot.calculate_bot import check_dividend_paid
 from datetime import datetime
@@ -25,9 +26,11 @@ def classic_sell_position(live_price, trading_day, position_uid):
     log_time = pd.Timestamp(trading_day)
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()
+        
+    trading_day = to_date(trading_day)
+    expiry = to_date(position.expiry)
 
     performance, position = populate_performance(live_price, trading_day, log_time, position, expiry=True)
-
     position.final_price = live_price
     position.current_inv_ret = performance["current_pnl_ret"]
     position.final_return = position.current_inv_ret
@@ -40,7 +43,7 @@ def classic_sell_position(live_price, trading_day, position_uid):
     elif low < position.max_loss_price:
         position.event = "Maximum Loss"
     # TODO: #46 without bot expiry will None, and will create error in conditional
-    elif trading_day >= position.expiry:
+    elif trading_day >= expiry:
         if live_price < position.entry_price:
             position.event = "Loss"
         elif live_price > position.entry_price:

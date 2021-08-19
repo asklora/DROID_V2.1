@@ -10,6 +10,212 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 
+def uno_sell_position(live_price, trading_day, position_uid):
+    position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
+    bot = position.bot
+    latest = LatestPrice.objects.get(ticker=position.ticker)
+    ask_price = latest.intraday_ask
+    bid_price= latest.intraday_bid
+    high= latest.high
+
+    if high == 0 or high == None:
+        high = live_price
+    if ask_price == 0 or ask_price == None:
+        ask_price = live_price
+    if bid_price == 0 or bid_price == None:
+        bid_price = live_price
+
+    log_time = pd.Timestamp(trading_day)
+    if log_time.date() == datetime.now().date():
+        log_time = datetime.now()
+
+    performance, position, status, hedge_shares = populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=True)
+    current_pnl_amt = performance["current_pnl_amt"]
+    position.final_price = live_price
+    position.current_inv_ret = performance["current_pnl_ret"]
+    position.final_return = position.current_inv_ret
+    position.final_pnl_amount = performance["current_pnl_amt"]
+    position.current_inv_amt = live_price * performance["share_num"]
+    position.event_date = trading_day
+    position.is_live = False
+    if high > position.target_profit_price:
+        position.event = "KO"
+    elif trading_day >= position.expiry:
+        if current_pnl_amt < 0:
+            position.event = "Loss"
+        elif current_pnl_amt >= 0:
+            position.event = "Profit"
+        else:
+            position.event = "Bot Expired"
+    position.save()
+    order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position)
+
+def populate_order(status, hedge_shares, log_time, live_price, bot, performance, position):
+    position_val = OrderPositionSerializer(position).data
+    # remove created and updated from position
+    [position_val.pop(key) for key in ["created", "updated"]]
+    # merge two dict, and save to order setup
+    setup = {"performance": performance, "position": position_val}
+    if not status == "hold":
+        if hedge_shares < 0:
+            hedge_shares = hedge_shares * -1  # make it positif in order
+
+        order = Order.objects.create(
+            is_init=False,
+            ticker_id=position_val["ticker"],
+            created=log_time,
+            updated=log_time,
+            price=live_price,
+            bot_id=bot.bot_id,
+            amount=(hedge_shares*live_price),
+            user_id_id=position_val["user_id"],
+            side=status,
+            qty=hedge_shares,
+            setup=setup
+        )
+        if order:
+            order.status = "placed"
+            order.placed = True
+            order.placed_at = log_time
+            order.save()
+        return order, performance, position
+    return None, performance, position
+
+def populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=False):
+    bot = position.bot
+    try:
+        last_performance = PositionPerformance.objects.filter(
+            position_uid=position.position_uid).latest("created")
+    except PositionPerformance.DoesNotExist:
+        last_performance = False
+
+    t, r, q = get_trq(position.ticker.ticker, position.expiry, trading_day, position.ticker.currency_code)
+    if last_performance:
+        strike = last_performance.strike
+        barrier = last_performance.barrier
+        option_price = last_performance.option_price
+        rebate = barrier - strike
+        v1, v2 = get_v1_v2(position.ticker.ticker, live_price, trading_day, t, r, q, strike, barrier)
+        if(expiry):
+            delta = last_performance.last_hedge_delta
+            hedge = False
+            share_num = 0
+            hedge_shares = last_performance.share_num * -1
+            status = "sell"
+            bot_cash_balance = last_performance.current_bot_cash_balance + (last_performance.share_num * live_price)
+        else:
+            delta = uno.deltaUnOC(live_price, strike, barrier, rebate, t/365, r, q, v1, v2)
+            delta, hedge = get_uno_hedge(live_price, strike, delta, last_performance.last_hedge_delta)
+            share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, last_performance.current_bot_cash_balance, 
+                ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta, 
+                hedge=hedge, uno=True)
+
+        bot_cash_balance = formatdigit(last_performance.current_bot_cash_balance - (share_num - last_performance.share_num) * live_price)
+        current_pnl_amt = last_performance.current_pnl_amt + (live_price - last_performance.last_live_price) * last_performance.share_num
+    else:
+        current_pnl_amt = 0  # initial value
+        share_num = round((position.investment_amount / live_price), 1)
+        bot_cash_balance = position.bot_cash_balance
+        vol = get_vol(position.ticker.ticker, trading_day, t, r, q, bot.time_to_exp)
+        strike, barrier = get_strike_barrier(live_price, vol, bot.bot_option_type, bot.bot_type.bot_type)
+        rebate = barrier - strike
+        v1, v2 = get_v1_v2(position.ticker.ticker, live_price, trading_day, t, r, q, strike, barrier)
+        delta = uno.deltaUnOC(live_price, strike, barrier, rebate, t/365, r, q, v1, v2)
+        option_price = get_option_price_uno(live_price, strike, barrier, rebate, t, r, q, v1, v2)
+        share_num = position.share_num
+        bot_cash_balance = position.investment_amount - (share_num * live_price)
+        hedge_shares = share_num
+        status = "buy"
+        
+    current_investment_amount = live_price * share_num
+    current_pnl_ret = current_pnl_amt / position.investment_amount
+    # position.bot_cash_dividend = check_dividend_paid(position.ticker.ticker, trading_day, share_num, position.bot_cash_dividend)
+    position.bot_cash_balance = round(bot_cash_balance, 2)
+    position.save()
+    digits = max(min(5-len(str(int(position.entry_price))), 2), -1)
+    performance = dict(
+        position_uid=str(position.position_uid),
+        share_num=share_num,
+        last_live_price=round(live_price, 2),
+        last_spot_price=position.entry_price,
+        current_pnl_ret=round(current_pnl_ret, 4),
+        current_pnl_amt=round(current_pnl_amt, digits),
+        current_investment_amount=round(current_investment_amount, 2),
+        current_bot_cash_balance=round(bot_cash_balance, 2),
+        updated=str(log_time),
+        created=str(log_time),
+        last_hedge_delta=delta,
+        v1=v1,
+        v2=v2,
+        r=r,
+        q=q,
+        strike=strike,
+        barrier=barrier,
+        option_price=option_price,
+        order_summary={
+            "hedge_shares": hedge_shares
+        },
+        status="Hedge"
+    )
+    return performance, position, status, hedge_shares
+    
+def create_performance(price_data, position, latest=False, hedge=False, tac=False):
+    bot = position.bot
+    if(latest):
+        live_price = price_data.close
+        if price_data.latest_price:
+            live_price = price_data.latest_price
+        trading_day = price_data.last_date
+        bid_price = price_data.intraday_bid
+        ask_price = price_data.intraday_ask
+        high = price_data.high
+    elif(hedge):
+        live_price = price_data.latest_price
+        trading_day = price_data.last_date
+        bid_price = price_data.latest_price
+        ask_price = price_data.latest_price
+        high = price_data.high
+    else:
+        live_price = price_data.close
+        if price_data.latest_price:
+            live_price = price_data.latest_price
+        trading_day = price_data.last_date
+        bid_price = price_data.intraday_bid
+        ask_price = price_data.intraday_ask
+        high = price_data.high
+
+    if high == 0 or high == None:
+        high = live_price
+    if ask_price == 0 or ask_price == None:
+        ask_price = live_price
+    if bid_price == 0 or bid_price == None:
+        bid_price = live_price
+
+    log_time = pd.Timestamp(trading_day)
+    if log_time.date() == datetime.now().date():
+        log_time = datetime.now()
+    if hedge:
+        log_time = price_data.intraday_time
+
+    status_expiry = high > position.target_profit_price or trading_day >= position.expiry
+
+    if(status_expiry):
+        uno_sell_position(live_price, trading_day, position.position_uid)
+        return False, None
+    else:
+        performance, position, status, hedge_shares = populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=False)
+
+        # remove position_uid from dict and swap with instance
+        performance.pop("position_uid")
+        # create the record
+        PositionPerformance.objects.create(
+            position_uid=position,  # swapped with instance
+            **performance  # the dict value
+        )
+        position.save()
+        order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position)
+        return True, None
+
 def create_performance(price_data, position, latest_price=False,rehedge=False,force_stop=False):
     if(latest_price):
         live_price = price_data.close
@@ -125,6 +331,122 @@ def create_performance(price_data, position, latest_price=False,rehedge=False,fo
     #     return True, None
     # else:
     #     return False, None
+    
+# def create_performance(price_data, position, latest_price=False,rehedge=False,force_stop=False):
+#     if(latest_price):
+#         live_price = price_data.close
+#         if price_data.latest_price:
+#             live_price = price_data.latest_price
+#         trading_day = price_data.last_date
+#     else:
+#         live_price = price_data.close
+#         if price_data.latest_price:
+#             live_price = price_data.latest_price
+#         trading_day = price_data.last_date
+
+#     try:
+#         last_performance = PositionPerformance.objects.filter(
+#             position_uid=position.position_uid).latest("created")
+#     except PositionPerformance.DoesNotExist:
+#         last_performance = False
+
+#     if last_performance:
+#         share_num = last_performance.share_num
+#         if(force_stop):
+#             share_num = 0
+#         # bot_cash_balance = last_performance.current_bot_cash_balance + \
+#         #     ((last_performance.share_num - share_num) * live_price)
+#         bot_cash_balance = formatdigit(
+#             last_performance.current_bot_cash_balance-(share_num-last_performance.share_num)*live_price)
+#         current_pnl_amt = last_performance.current_pnl_amt + \
+#             (live_price - last_performance.last_live_price) * \
+#             last_performance.share_num
+
+#     else:
+#         live_price = position.entry_price
+#         current_pnl_amt = 0
+#         bot_cash_balance =0
+#         share_num = position.share_num
+#     current_investment_amount = live_price * share_num
+#     current_pnl_ret = current_pnl_amt / position.investment_amount
+#     # position.bot_cash_dividend = check_dividend_paid(position.ticker.ticker, trading_day, share_num, position.bot_cash_dividend)
+#     position.bot_cash_balance = round(bot_cash_balance, 2)
+#     position.save()
+#     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
+#     log_time = pd.Timestamp(trading_day)
+#     if log_time.date() == datetime.now().date():
+#         log_time = datetime.now()
+#     if rehedge:
+#         log_time= price_data.intraday_time
+#     performance = dict(
+#         position_uid=str(position.position_uid),
+#         share_num=share_num,
+#         last_live_price=round(live_price, 2),
+#         last_spot_price=position.entry_price,
+#         current_pnl_ret=round(current_pnl_ret, 4),
+#         current_pnl_amt=round(current_pnl_amt, digits),
+#         current_investment_amount=round(current_investment_amount, 2),
+#         current_bot_cash_balance=round(bot_cash_balance, 2),
+#         updated=str(log_time),
+#         created=str(log_time),
+#         last_hedge_delta=1,
+#         status="Hedge"
+#     )
+
+#     if force_stop:
+#         position.final_price = live_price
+#         position.current_inv_ret = performance['current_pnl_ret']
+#         position.final_return = position.current_inv_ret
+#         position.final_pnl_amount = performance['current_pnl_amt']
+#         position.current_inv_amt = live_price * performance['share_num']
+#         position.event_date = trading_day
+#         position.is_live = False
+#         position.event = "Stopped by User"
+#         position.save()
+#         # serializing -> make dictionary position instance
+#         position_val = OrderPositionSerializer(position).data
+#         # remove created and updated from position
+#         [position_val.pop(key) for key in ["created", "updated"]]
+
+#         # merge two dict, and save to order setup
+#         setup = {"performance": performance, "position": position_val}
+#         order = Order.objects.create(
+#             is_init=False,
+#             ticker=position.ticker,
+#             created=log_time,
+#             updated=log_time,
+#             price=live_price,
+#             bot_id=position.bot_id,
+#             amount=position.share_num * live_price,
+#             user_id=position.user_id,
+#             side="sell",
+#             qty=position.share_num,
+#             setup=setup
+#         )
+#         # only for bot
+#         if order:
+#             order.placed = True
+#             order.placed_at = log_time
+#             order.status = 'pending'
+#             order.save()
+#         # go to core/orders/signal.py Line 54 and 112
+#         # this will wait until order filled then creating performance along with it
+#         if(force_stop):
+#             return True, order
+#         else:
+#             return False, order
+#     # remove position_uid from dict and swap with instance
+#     performance.pop("position_uid")
+#     # create the record
+#     PositionPerformance.objects.create(
+#         position_uid=position,  # swapped with instance
+#         **performance  # the dict value
+#     )
+#     position.save()
+#     # if(force_stop):
+#     #     return True, None
+#     # else:
+#     #     return False, None
 
 
 @app.task
