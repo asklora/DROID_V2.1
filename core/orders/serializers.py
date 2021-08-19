@@ -165,10 +165,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         model = Order
         fields = ["ticker", "price", "bot_id", "amount", "user",
                   "side", "status", "order_uid", "qty", "setup", "created"]
-    def __init__(self, *args, **kwargs):
-        # initialize fields
-        super(OrderCreateSerializer, self).__init__(*args, **kwargs)
-        # now modify the required field for sell
+    
+    
+    def to_internal_value(self, data):
         if self.initial_data["side"] == "sell":
             self.fields["bot_id"].required = False
             self.fields["amount"].required = False
@@ -178,6 +177,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             self.fields["bot_id"].required = True
             self.fields["amount"].required = True
             self.fields["ticker"].required = True
+
+        return super(OrderCreateSerializer, self).to_internal_value(data)
+   
+        
 
     def side_validation(self,validated_data):
         if validated_data["side"] == "sell":
