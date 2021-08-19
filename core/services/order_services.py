@@ -74,7 +74,7 @@ def order_executor(self, payload, recall=False):
     # time.sleep(10)
 
     print('placed')
-    if order.bot_id == 'STOCK_stock_0':
+    if order.bot_id == 'STOCK_stock_0' or order.side=='sell':
         share = order.qty
     else:
         share = order.setup['share_num']
@@ -94,7 +94,7 @@ def order_executor(self, payload, recall=False):
         # create schedule to next bell and will recrusive until market status open
         # still keep sending message. need to improve
         order_executor.apply_async(args=(json.dumps(payload),), kwargs={
-                                   'recall': True}, eta=market.next_bell)
+                                   'recall': True}, eta=market.next_bell,queue='droiddev')
 
     payload_serializer = OrderDetailsServicesSerializers(order).data
     channel_layer = get_channel_layer()

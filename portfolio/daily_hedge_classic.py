@@ -22,7 +22,6 @@ def classic_sell_position(live_price, trading_day, position_uid,apps=True):
         high = live_price
     if low == 0 or low == None:
         low = live_price
-
     log_time = pd.Timestamp(trading_day)
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()
@@ -42,7 +41,6 @@ def classic_sell_position(live_price, trading_day, position_uid,apps=True):
         position.event = "Targeted Profit"
     elif low < position.max_loss_price:
         position.event = "Maximum Loss"
-    # TODO: #46 without bot expiry will None, and will create error in conditional
     elif trading_day >= expiry:
         if live_price < position.entry_price:
             position.event = "Loss"
@@ -72,7 +70,6 @@ def classic_sell_position(live_price, trading_day, position_uid,apps=True):
     )
     # only for none apps
     if order and not apps:
-        # TODO: new conditional here
         # for apps this will not trigered
         order.status = "placed"
         order.placed = True
@@ -102,7 +99,6 @@ def populate_performance(live_price, trading_day, log_time, position, expiry=Fal
     # position.bot_cash_dividend = check_dividend_paid(position.ticker.ticker, trading_day, share_num, position.bot_cash_dividend)
     position.bot_cash_balance = round(bot_cash_balance, 2)
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
-    log_time = pd.Timestamp(trading_day)
 
     performance = dict(
         position_uid=str(position.position_uid),
@@ -150,9 +146,11 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
     if hedge:
         log_time = price_data.intraday_time
 
-    status_expiry = high > position.target_profit_price or low < position.max_loss_price or trading_day >= position.expiry
+    trading_day = to_date(trading_day)
+    expiry = to_date(position.expiry)
+    status_expiry = high > position.target_profit_price or low < position.max_loss_price or trading_day >= expiry
     if(status_expiry):
-        position, order = classic_sell_position(high, low, live_price, trading_day, position.position_uid)
+        position, order = classic_sell_position(high, low, live_price, trading_day, position.position_uid,apps=False)
         return True, None
     else:
         performance, position = populate_performance(live_price, trading_day, log_time, position)

@@ -496,7 +496,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     
     if(len(fundamentals)) > 0 :
         print(fundamentals)
-        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality"]].merge(universe_rating, how="left", on="ticker")
+        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
         result["updated"] = dateNow()
         print(result)
         print(universe_rating_history)
