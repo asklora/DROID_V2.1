@@ -229,7 +229,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return init
 
     def create(self, validated_data):
-        print("in save")
         if not "user" in validated_data:
             request = self.context.get("request", None)
             if request:
@@ -440,7 +439,7 @@ class OrderActionSerializer(serializers.ModelSerializer):
         from core.services.order_services import order_executor
         payload = json.dumps(validated_data)
         print(payload)
-        task = order_executor.apply_async(args=(payload,),queue="droiddev")
+        task = order_executor.apply_async(args=(payload,))
         data = {"action_id": task.id, "status": "executed",
                 "order_uid": validated_data["order_uid"]}
         return data

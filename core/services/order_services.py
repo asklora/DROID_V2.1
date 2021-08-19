@@ -95,7 +95,7 @@ def order_executor(self, payload, recall=False):
         # create schedule to next bell and will recrusive until market status open
         # still keep sending message. need to improve
         order_executor.apply_async(args=(json.dumps(payload),), kwargs={
-                                   'recall': True}, eta=market.next_bell,queue='droiddev')
+                                   'recall': True}, eta=market.next_bell)
 
     payload_serializer = OrderDetailsServicesSerializers(order).data
     channel_layer = get_channel_layer()
