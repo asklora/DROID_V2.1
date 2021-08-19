@@ -6,6 +6,16 @@ from pytz import timezone
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
+from pandas._libs.tslibs.timestamps import Timestamp
+
+def to_date(dates):
+    if type(dates) == str:
+        dates = datetime.strptime(dates, "%Y-%m-%d").date()
+    if(type(dates) == datetime):
+        dates = dates.date()
+    if(type(dates) == Timestamp):
+        dates = dates.date()
+    return dates
 
 
 def get_time_by_timezone(timezone_location):
