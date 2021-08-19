@@ -330,6 +330,7 @@ def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stoc
             expiry_date = get_expiry_date(time_to_exp[0], str(spot_date), currency_code[0])
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
             #### ADD INTERVAL WEEK OF YEAR ####
+            #TODO: can be put into its own function since it is also found in `core/services/tasks.py` line 377 (populate_client_top_stock_weekly() function)
             dates = pd.to_datetime(spot_date)
             week = dates.isocalendar()[1]
             year = dates.isocalendar()[0]
@@ -418,6 +419,7 @@ def populate_bot_tester(currency_code=None, client_name="HANWHA", top_pick_stock
             expiry_date = get_expiry_date(time_to_exp[0], str(spot_date), currency_code[0])
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
             #### ADD INTERVAL WEEK OF YEAR ####
+            #TODO: can be put into its own function since it is also found above
             dates = pd.to_datetime(spot_date)
             week = dates.isocalendar()[1]
             year = dates.isocalendar()[0]
@@ -469,6 +471,7 @@ def populate_fels_bot(currency_code=None, client_name="FELS", time_to_exp=[0.076
             expiry_date = get_expiry_date(time_to_exp[0], str(spot_date), currency_code[0])
             uid = uid.replace("-", "").replace(".", "").replace(" ", "")
             #### ADD INTERVAL WEEK OF YEAR ####
+            #TODO: the third one
             dates = pd.to_datetime(spot_date)
             week = dates.isocalendar()[1]
             year = dates.isocalendar()[0]
