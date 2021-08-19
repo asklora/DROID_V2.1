@@ -11,16 +11,15 @@ def is_portfolio_exist(ticker,bot_id,user_id):
         return portfolio
     return None
 
-
-# TODO: FUNGSI WRAPPERNYA BUAT DISINI
-# example
+# FIXME: return order
 def sell_position_service(price, trading_day, position_uid):
     position  = OrderPosition.objects.get(position_uid=position_uid)
     if position.bot.is_ucdc():
-        ucdc_sell_position(price, trading_day, position_uid)
+       positions,order= ucdc_sell_position(price, trading_day, position_uid)
     elif position.bot.is_uno():
-        uno_sell_position(price, trading_day, position_uid)
+        positions,order=uno_sell_position(price, trading_day, position_uid)
     elif position.bot.is_classic():
-        classic_sell_position(price, trading_day, position_uid)
+        positions,order=classic_sell_position(price, trading_day, position_uid)
     elif position.bot.is_stock():
-        user_sell_position(price, trading_day, position_uid)
+        positions,order=user_sell_position(price, trading_day, position_uid)
+    return order

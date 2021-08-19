@@ -235,13 +235,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 order = Order.objects.create(
                     **validated_data, order_type=order_type,is_init=init)
             else:
-                #TODO: FUNGSI WRAPPER NYA AKAN DI PANGGIL DI SINI
-                # sell kasih route function untuk user,uno,ucdc,classic dari posisi_uid
-                # param yang aq masukkan ada 3. price,trading_day,position_uid
-                sell_position_service(validated_data["price"], datetime.now(), validated_data.get("setup",{}).get("position",None))
-                # position,order = classic_sell_position(
-                #     validated_data["price"],datetime.now(),
-                #     validated_data.get("setup",{}).get("position",None))
+                # FIXME: return order nya
+                position,order = sell_position_service(validated_data["price"],
+                 datetime.now(), 
+                 validated_data.get("setup",{}).get("position",None))
         return order
 
 @extend_schema_serializer(
