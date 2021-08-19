@@ -91,7 +91,7 @@ def populate_performance(live_price, ask_price, bid_price, trading_day, log_time
     except PositionPerformance.DoesNotExist:
         last_performance = False
 
-    t, r, q = get_trq(position.ticker, expiry, trading_day,position.ticker.currency_code)
+    t, r, q = get_trq(position.ticker, position.expiry, trading_day,position.ticker.currency_code)
     if last_performance:
         currency_code = str(position.ticker.currency_code)
         strike = last_performance.strike
