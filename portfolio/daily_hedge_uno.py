@@ -212,7 +212,9 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
     if hedge:
         log_time = price_data.intraday_time
 
-    status_expiry = high > position.target_profit_price or trading_day >= position.expiry
+    trading_day = to_date(trading_day)
+    expiry = to_date(position.expiry)
+    status_expiry = high > position.target_profit_price or trading_day >= expiry
 
     if(status_expiry):
         uno_sell_position(live_price, trading_day, position.position_uid)
