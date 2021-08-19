@@ -169,7 +169,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         # initialize fields
         super(OrderCreateSerializer, self).__init__(*args, **kwargs)
         # now modify the required field for sell
-        if self.initial_data["side"] == "sell":
+        if self.data["side"] == "sell":
             self.fields["bot_id"].required = False
             self.fields["amount"].required = False
             self.fields["ticker"].required = True
