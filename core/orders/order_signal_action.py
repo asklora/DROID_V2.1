@@ -1,13 +1,12 @@
-from django.db.models.expressions import RawSQL
 from core.bot.models import BotOptionType
 from core.user.models import TransactionHistory
 from .models import Order, OrderFee, OrderPosition, PositionPerformance
-from core.universe.models import Currency
 from abc import ABC,abstractmethod
 from core.djangomodule.general import formatdigit
 from core.Clients.models import UserClient
 from django.db import transaction as db_transaction
-
+from datasource.rkd import RkdData
+from portfolio import classic_sell_position
 
 """
 user/bot
@@ -134,7 +133,9 @@ class BaseOrderConnector(AbstracOrderConnector):
             position,performance =self.update_position_performance()
         
         # create fee
-        self.create_fee(position.position_uid)
+
+        if self.instance.order_type != 'apps':
+            self.create_fee(position.position_uid)
             
         # update last pending transaction 
         self.update_initial_transaction_position(position.position_uid)
@@ -148,10 +149,6 @@ class BaseOrderConnector(AbstracOrderConnector):
                 side='debit', transaction_detail__description='bot order', transaction_detail__order_uid=str(self.instance.order_uid))
             if trans.exists():
                 trans.delete()
-
-    
-    def on_sell_placed(self):
-        pass
     
     
     def on_sell_pending(self):
@@ -167,22 +164,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         pass
     
     
-    def on_sell_filled(self):
-        """
-        if sell is successfully filled. we will unpack the setup
-        then update the position and creating performances
-        
-        - Only if position stop live we will transfer the money back to wallet
-        """
-        # TODO: #49 Please Check the logic here
-
-        # update position and create performance from setup 
-        position,performance = self.update_position_performance()
-        
-        if not position.live:
-            # transfer to wallet
-            self.transfer_to_wallet(position)
-            self.create_fee(position.position_uid)
+    
     
     
     def on_sell_cancel(self):
@@ -357,7 +339,7 @@ class BaseOrderConnector(AbstracOrderConnector):
 
 
 
-    def create_fee(self,  position_uid,):
+    def create_fee(self,  position_uid):
         commissions_fee, stamp_duty_fee, total_fee = self.calculate_fee()
         
         if commissions_fee:
@@ -435,7 +417,28 @@ class SimulationOrderConnector(BaseOrderConnector):
         position_uid = self.instance.setup.get('position',{}).get('position_uid',None)
         if not position_uid:
             raise Exception('position_uid not found')
+        rkd = RkdData()
+        rkd.get_quote([self.instance.ticker.ticker],save=True)
+        classic_sell_position(self.instance.price,self.instance.created,position_uid)
         # TODO: #52 FORCE STOP FUNCTION/FORCE SELL POSITION GOES HERE
+    
+    def on_sell_filled(self):
+        """
+        if sell is successfully filled. we will unpack the setup
+        then update the position and creating performances
+        
+        - Only if position stop live we will transfer the money back to wallet
+        """
+        # TODO: #49 Please Check the logic here
+
+        # update position and create performance from setup 
+        position,performance = self.update_position_performance()
+        
+        if not position.live:
+            # transfer to wallet
+            self.transfer_to_wallet(position)
+            if self.instance.order_type == 'apps':
+                self.create_fee(position.position_uid)
         
         
     
@@ -452,7 +455,7 @@ class OrderServices:
     def __init__(self,instance:Order):
         self.instance = instance
         self.user_wallet = instance.user_id.user_balance
-        self.user_wallet_amount = instance.user_id.amount
+        self.user_wallet_amount = instance.user_id.user_balance.amount
         self.user_wallet_currency = instance.user_id.user_balance.currency_code
         self.bot = BotOptionType.objects.get(bot_id=instance.bot_id)
         self.order_property = self.__dict__
