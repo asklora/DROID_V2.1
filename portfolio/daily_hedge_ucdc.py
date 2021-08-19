@@ -75,6 +75,7 @@ def populate_order(status, hedge_shares, log_time, live_price, bot, performance,
             setup=setup
         )
         # only for bot
+        # FIXME: conditional buat apps dan simulasi. sama kyk di classic
         if order:
             order.status = "placed"
             order.placed = True

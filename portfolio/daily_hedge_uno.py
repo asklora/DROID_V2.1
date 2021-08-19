@@ -62,6 +62,7 @@ def uno_sell_position(live_price, trading_day, position_uid):
             position.event = "Profit"
         else:
             position.event = "Bot Expired"
+    #FIXME: jangan ada position save di sini karena udah di handle signal
     position.save()
     order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position)
 
@@ -88,6 +89,7 @@ def populate_order(status, hedge_shares, log_time, live_price, bot, performance,
             qty=hedge_shares,
             setup=setup
         )
+         # FIXME: conditional buat apps dan simulasi. sama kyk di classic
         if order:
             order.status = "placed"
             order.placed = True
