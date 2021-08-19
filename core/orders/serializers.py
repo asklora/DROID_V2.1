@@ -152,7 +152,36 @@ class PositionSerializer(serializers.ModelSerializer):
     def get_last_price(self, obj) -> float:
         return obj.ticker.latest_price_ticker.close
 
-
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            'Create new buy order',
+            description='Create new buy order',
+            value={
+                "ticker": "string",
+                "price": 0,
+                "bot_id": "string",
+                "amount": 0,
+                "user": "string",
+                "side": "string",
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            'Create new sell order',
+            description='Create new sell order',
+            value={
+                "user": "string",
+                "side": "string",
+                "ticker":"string",
+                "setup": {
+                    "position":"string"
+                }
+            },
+            request_only=True,
+        ),
+    ]
+)
 class OrderCreateSerializer(serializers.ModelSerializer):
     user = serializers.CharField(required=False)
     price = serializers.FloatField(required=False)
