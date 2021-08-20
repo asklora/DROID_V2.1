@@ -23,13 +23,40 @@ class ClientView(APIView):
             200: OpenApiResponse(
                 response=ClientSerializers,
             ),
-            404: OpenApiResponse(
-                description="Clients not found", response=errserializer
+            401: OpenApiResponse(
+                description="User is not logged in", response=errserializer
             ),
             403: OpenApiResponse(
                 description="User does not have the permisson", response=errserializer
             ),
+            404: OpenApiResponse(
+                description="Clients not found", response=errserializer
+            ),
         },
+        examples=[
+            OpenApiExample(
+                "Return List of Users",
+                description="Return List of Users",
+                value=[{"client_uid": "string", "client_name": "string"}],
+                response_only=True,  # signal that example only applies to responses
+            ),
+            OpenApiExample(
+                "Shows error that no user is logged in (no access token)",
+                value={"detail": "Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=[
+                    "401",
+                ],
+            ),
+            OpenApiExample(
+                "User does not have the permission",
+                value={"detail": "You do not have permission to perform this action."},
+                response_only=True,
+                status_codes=[
+                    "403",
+                ],
+            ),
+        ],
     )
     def get(self, request, format=None):
         """
