@@ -443,7 +443,7 @@ class SimulationOrderConnector(BaseOrderConnector):
         if not position.is_live:
             # transfer to wallet
             self.transfer_to_wallet(position)
-            if self.instance.order_type == 'apps':
+            if self.instance.order_type != 'apps':
                 self.create_fee(position.position_uid)
         
         
