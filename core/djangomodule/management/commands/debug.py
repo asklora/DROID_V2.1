@@ -4,6 +4,7 @@ from ingestion.data_from_rkd import update_currency_code_from_rkd
 from django.core.management.base import BaseCommand
 from core.universe.models import ExchangeMarket, Universe
 from core.Clients.models import UserClient
+from core.Clients.IBClientModule import Client
 from core.orders.models import OrderPosition, PositionPerformance
 from core.services.tasks import populate_client_top_stock_weekly, order_client_topstock, daily_hedge, send_csv_hanwha, hedge
 from datasource.rkd import RkdData
@@ -13,6 +14,11 @@ from portfolio.daily_hedge_classic import classic_position_check
 from config.celery import app 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        c = Client()
+        c.get_position('DU2898616',0)
+        # c.market_order(2,'DU2898616','order first',265598)
+        
+        # c.find_contract('MSFT')
         # app.control.revoke('eb3cdebb-1c89-44d0-a022-65527f2863ee', terminate=True)
 
         # daily_hedge(currency="KRW",rehedge={
@@ -23,16 +29,16 @@ class Command(BaseCommand):
         # all = [user["id"] for user in User.objects.filter().values("id").exclude(id__in=exclude)]
         # print(all)
         # print(exclude)
-        perfs = PositionPerformance.objects.filter(status=None)
-        for perf in perfs:
-            if perf.order_uid:
-                if perf.order_uid.is_init:
-                    perf.status = 'Populate'
-                else:
-                    perf.status ='Hedge'
-            else:
-                perf.status = 'Hedge'
-            perf.save()
+        # perfs = PositionPerformance.objects.filter(status=None)
+        # for perf in perfs:
+        #     if perf.order_uid:
+        #         if perf.order_uid.is_init:
+        #             perf.status = 'Populate'
+        #         else:
+        #             perf.status ='Hedge'
+        #     else:
+        #         perf.status = 'Hedge'
+        #     perf.save()
         # market = TradingHours(mic='XNAS')
         # market.is_open
         # for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
