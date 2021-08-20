@@ -277,7 +277,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return order
 
 @extend_schema_serializer(
-    exclude_fields=("user",), # schema ignore these fields
+    exclude_fields=("user",), # schema ignore these field
 )
 class OrderPortfolioCheckSerializer(serializers.Serializer):
     
