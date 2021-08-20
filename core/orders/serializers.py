@@ -432,8 +432,14 @@ class OrderActionSerializer(serializers.ModelSerializer):
         fields = ["order_uid", "status", "action_id", "firebase_token"]
 
     def create(self, validated_data):
-        instance = OrderActionSerializer.Meta.model.objects.get(
-            order_uid=validated_data["order_uid"])
+        try:
+            instance = OrderActionSerializer.Meta.model.objects.get(
+                order_uid=validated_data["order_uid"])
+        except Order.DoesNotExist:
+            raise exceptions.NotFound({'detail':'order not found'})
+            
+        if validated_data["status"] == "cancel" and instance.status not in ["pending","review"]:
+            raise exceptions.MethodNotAllowed({'detail': f'cannot cancel order in {instance.status}'})
         if instance.status == "filled":
             raise exceptions.MethodNotAllowed(
                 {'detail': 'order already filled, you cannot cancel / confirm'})
