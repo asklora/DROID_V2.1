@@ -21,7 +21,7 @@ from django.db import transaction
 
 
 def create_performance(price_data, position, latest_price=False,rehedge=False):
-    # new access bot reference
+    # new access bot references
     bot = position.bot
 
     # ============ prepare to be replaced with third party latest price ========
