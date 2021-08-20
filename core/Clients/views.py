@@ -85,6 +85,47 @@ class UserClientView(APIView):
 
     @extend_schema(
         operation_id="Retrive users of client",
+        responses={
+            200: OpenApiResponse(
+                response=ClientSerializers,
+            ),
+            401: OpenApiResponse(
+                description="User is not logged in", response=errserializer
+            ),
+            403: OpenApiResponse(
+                description="User does not have the permisson", response=errserializer
+            ),
+        },
+        examples=[
+            OpenApiExample(
+                "Return List of Users",
+                description="Return List of Users",
+                value=[
+                    {
+                        "email": "string",
+                        "user_id": 0,
+                        "extra_data": {"property1": "string", "property2": "string"},
+                    }
+                ],
+                response_only=True,  # signal that example only applies to responses
+            ),
+            OpenApiExample(
+                "Shows error that no user is logged in (no access token)",
+                value={"detail": "Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=[
+                    "401",
+                ],
+            ),
+            OpenApiExample(
+                "User does not have the permission",
+                value={"detail": "You do not have permission to perform this action."},
+                response_only=True,
+                status_codes=[
+                    "403",
+                ],
+            ),
+        ],
     )
     def get(self, request, client_id, format=None):
         """
@@ -109,7 +150,60 @@ class TopStockClientView(APIView):
     serializer_class = ClientTopStockSerializers
     permission_classes = [permissions.IsAdminUser]
 
-    @extend_schema(operation_id="Retrive unexecuted top stock client")
+    @extend_schema(
+        operation_id="Retrive unexecuted top stock client",
+        responses={
+            200: OpenApiResponse(
+                response=ClientSerializers,
+            ),
+            401: OpenApiResponse(
+                description="User is not logged in", response=errserializer
+            ),
+            403: OpenApiResponse(
+                description="User does not have the permisson", response=errserializer
+            ),
+        },
+        examples=[
+            OpenApiExample(
+                "Return List of unexecuted Top stock",
+                description="Return List of unexecuted Top stock",
+                value=[
+                    {
+                        "uid": "ffokeu",
+                        "client": "SwxyYhs",
+                        "ticker": "AAPL.O",
+                        "spot_date": "2021-06-20",
+                        "expiry_date": "2021-06-20",
+                        "has_position": False,
+                        "bot_id": "classic_0987_093",
+                        "currency_code": "HKD",
+                        "rank": 1,
+                        "service_type": "bot_advisor",
+                        "capital": "small",
+                        "bot": "UNO",
+                        "week_of_year": 2,
+                    }
+                ],
+                response_only=True,  # signal that example only applies to responses
+            ),
+            OpenApiExample(
+                "Shows error that no user is logged in (no access token)",
+                value={"detail": "Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=[
+                    "401",
+                ],
+            ),
+            OpenApiExample(
+                "User does not have the permission",
+                value={"detail": "You do not have permission to perform this action."},
+                response_only=True,
+                status_codes=[
+                    "403",
+                ],
+            ),
+        ],
+    )
     def get(self, request, client_id):
 
         data = ClientTopStock.objects.filter(
