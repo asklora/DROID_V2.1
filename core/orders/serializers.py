@@ -152,7 +152,36 @@ class PositionSerializer(serializers.ModelSerializer):
     def get_last_price(self, obj) -> float:
         return obj.ticker.latest_price_ticker.close
 
-
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            'Create new buy order',
+            description='Create new buy order',
+            value={
+                "ticker": "string",
+                "price": 0,
+                "bot_id": "string",
+                "amount": 0,
+                "user": "string",
+                "side": "string",
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            'Create new sell order',
+            description='Create new sell order',
+            value={
+                "user": "string",
+                "side": "string",
+                "ticker":"string",
+                "setup": {
+                    "position":"string"
+                }
+            },
+            request_only=True,
+        ),
+    ]
+)
 class OrderCreateSerializer(serializers.ModelSerializer):
     user = serializers.CharField(required=False)
     price = serializers.FloatField(required=False)
@@ -200,7 +229,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return init
 
     def create(self, validated_data):
-        print("in save")
         if not "user" in validated_data:
             request = self.context.get("request", None)
             if request:
@@ -238,7 +266,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 order = Order.objects.create(
                     **validated_data, order_type=order_type,is_init=init)
             else:
-                # FIXME: return order nya
                 position, order = sell_position_service(validated_data["price"],
                  datetime.now(), 
                  validated_data.get("setup",{}).get("position",None))
@@ -412,7 +439,13 @@ class OrderActionSerializer(serializers.ModelSerializer):
         from core.services.order_services import order_executor
         payload = json.dumps(validated_data)
         print(payload)
-        task = order_executor.apply_async(args=(payload,),queue="droiddev")
+        # NOTE: you need to run celery in your local machine and docker redis installed
+        # if having problem install docker.. run ./installer/install-docker.sh
+        # ===run redis command===
+        # docker run -p 6379:6379 -d redis:5
+        # ===run celery command===
+        # celery -A core.services worker -l  INFO --hostname=localdev@%h -Q localdev
+        task = order_executor.apply_async(args=(payload,),task_id=validated_data["order_uid"])
         data = {"action_id": task.id, "status": "executed",
                 "order_uid": validated_data["order_uid"]}
         return data
