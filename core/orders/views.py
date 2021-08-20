@@ -237,6 +237,10 @@ class OrderPortfolioCheckView(views.APIView):
 
 
 class OrderUpdateViews(views.APIView):
+    """
+    Update positions
+    """
+
     serializer_class = OrderUpdateSerializer
     permission_classes = (IsRegisteredUser,)
 
@@ -266,6 +270,10 @@ class OrderUpdateViews(views.APIView):
 
 
 class OrderGetViews(viewsets.ViewSet):
+    """
+    Get details of an order
+    """
+    
     permission_classes = (IsRegisteredUser,)
 
     @extend_schema(
@@ -299,6 +307,10 @@ class OrderGetViews(viewsets.ViewSet):
 
 
 class OrderActionViews(views.APIView):
+    """
+    Order actions
+    """
+
     serializer_class = OrderActionSerializer
     permission_classes = (IsRegisteredUser,)
 
