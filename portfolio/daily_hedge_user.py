@@ -1,5 +1,7 @@
 from bot.calculate_bot import check_dividend_paid
 from datetime import datetime
+from general.date_process import to_date
+
 from core.djangomodule.calendar import TradingHours
 from core.master.models import LatestPrice, MasterOhlcvtr, HedgeLatestPriceHistory
 from core.orders.models import OrderPosition, PositionPerformance, Order
@@ -15,6 +17,7 @@ def user_sell_position(live_price, trading_day, position_uid, apps=False):
     log_time = pd.Timestamp(trading_day)
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()
+    trading_day = to_date(trading_day)
 
     performance, position = populate_performance(live_price, trading_day, log_time, position, expiry=True)
 

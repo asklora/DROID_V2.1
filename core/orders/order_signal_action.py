@@ -445,6 +445,8 @@ class SimulationOrderConnector(BaseOrderConnector):
             if self.instance.order_type != 'apps':
                 # apps no fee
                 self.create_fee(position.position_uid)
+        # update to connect performance and prevent triger signal
+        Order.objects.filter(pk=self.instance.order_uid).update(performance_uid=performance.performance_uid)
         
         
     
