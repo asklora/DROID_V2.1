@@ -1,18 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from .manager import AppUserManager
-from django.core.exceptions import ValidationError
 import uuid
-from django.utils import timezone
-from core.universe.models import Currency, Country
-from datetime import datetime, date
+from core.universe.models import Currency
 from django.db import IntegrityError
-from django.conf import settings
-import time
 from django.db.models import (
-    Case, When, Value,
-    F, FloatField, ExpressionWrapper,
-    Sum, Q, Lookup
+    Sum
 )
 import base64
 from core.djangomodule.models import BaseTimeStampModel

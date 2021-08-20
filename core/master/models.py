@@ -370,7 +370,21 @@ class DataFundamentalScore(models.Model):
     environment = models.FloatField(blank=True, null=True)
     social = models.FloatField(blank=True, null=True)
     goverment = models.FloatField(blank=True, null=True)
-
+    total_asset = models.FloatField(blank=True, null=True)
+    cash = models.FloatField(blank=True, null=True)
+    current_asset = models.FloatField(blank=True, null=True)
+    equity = models.FloatField(blank=True, null=True)
+    ttm_cogs = models.FloatField(blank=True, null=True)
+    inventory = models.FloatField(blank=True, null=True)
+    ttm_eps = models.FloatField(blank=True, null=True)
+    ttm_gm = models.FloatField(blank=True, null=True)
+    income_tax = models.FloatField(blank=True, null=True)
+    pension_exp = models.FloatField(blank=True, null=True)
+    ppe_depreciation = models.FloatField(blank=True, null=True)
+    ppe_impairment = models.FloatField(blank=True, null=True)
+    mkt_cap_usd = models.FloatField(blank=True, null=True)
+    eps_lastq = models.FloatField(blank=True, null=True)
+    
     class Meta:
         managed = True
         db_table = "data_fundamental_score"
@@ -566,6 +580,10 @@ class WorldscopeSummary(models.Model):
     fn_2999 = models.FloatField(blank=True, null=True)
     fn_5192 = models.FloatField(blank=True, null=True)
     fn_5575 = models.FloatField(blank=True, null=True)
+    fn_1451 = models.FloatField(blank=True, null=True)
+    fn_18810 = models.FloatField(blank=True, null=True)
+    fn_2401 = models.FloatField(blank=True, null=True)
+    fn_18274 = models.FloatField(blank=True, null=True)
 
     class Meta:
         managed = True

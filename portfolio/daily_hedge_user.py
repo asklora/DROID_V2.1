@@ -1,5 +1,7 @@
 from bot.calculate_bot import check_dividend_paid
 from datetime import datetime
+from general.date_process import to_date
+
 from core.djangomodule.calendar import TradingHours
 from core.master.models import LatestPrice, MasterOhlcvtr, HedgeLatestPriceHistory
 from core.orders.models import OrderPosition, PositionPerformance, Order
@@ -15,6 +17,7 @@ def user_sell_position(live_price, trading_day, position_uid, apps=False):
     log_time = pd.Timestamp(trading_day)
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()
+    trading_day = to_date(trading_day)
 
     performance, position = populate_performance(live_price, trading_day, log_time, position, expiry=True)
 
@@ -29,6 +32,8 @@ def user_sell_position(live_price, trading_day, position_uid, apps=False):
     position_val = OrderPositionSerializer(position).data
     [position_val.pop(key) for key in ["created", "updated"]]
     setup = {"performance": performance, "position": position_val}
+    order_type = 'apps' if apps else None
+
     order = Order.objects.create(
         is_init=False,
         ticker=position.ticker,
@@ -40,7 +45,8 @@ def user_sell_position(live_price, trading_day, position_uid, apps=False):
         user_id=position.user_id,
         side="sell",
         qty=position.share_num,
-        setup=setup
+        setup=setup,
+        order_type=order_type,
     )
 
     return position, order

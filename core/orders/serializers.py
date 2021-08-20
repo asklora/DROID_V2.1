@@ -249,7 +249,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
         if not "price" in validated_data:
             rkd = RkdData()
-            df = rkd.get_quote([validated_data["ticker"].ticker], df=True)
+            df = rkd.get_quote([validated_data["ticker"].ticker],save=True, df=True)
             df["latest_price"] = df["latest_price"].astype(float)
             ticker = df.loc[df["ticker"] == validated_data["ticker"].ticker]
             validated_data["price"] = ticker.iloc[0]["latest_price"]
@@ -266,13 +266,18 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 order = Order.objects.create(
                     **validated_data, order_type=order_type,is_init=init)
             else:
-                position, order = sell_position_service(validated_data["price"],
-                 datetime.now(), 
-                 validated_data.get("setup",{}).get("position",None))
+                try:
+                    position, order = sell_position_service(validated_data["price"],
+                                                datetime.now(), 
+                                                validated_data.get("setup",{}).get("position",None))
+                except OrderPosition.DoesNotExist:
+                    raise exceptions.NotFound({'detail':'live position not found error'})
+                except Exception as e:
+                    raise exceptions.APIException({'detail':f'{str(e)}'})
         return order
 
 @extend_schema_serializer(
-    exclude_fields=("user",), # schema ignore these fields
+    exclude_fields=("user",), # schema ignore these field
 )
 class OrderPortfolioCheckSerializer(serializers.Serializer):
     
@@ -427,8 +432,14 @@ class OrderActionSerializer(serializers.ModelSerializer):
         fields = ["order_uid", "status", "action_id", "firebase_token"]
 
     def create(self, validated_data):
-        instance = OrderActionSerializer.Meta.model.objects.get(
-            order_uid=validated_data["order_uid"])
+        try:
+            instance = OrderActionSerializer.Meta.model.objects.get(
+                order_uid=validated_data["order_uid"])
+        except Order.DoesNotExist:
+            raise exceptions.NotFound({'detail':'order not found'})
+            
+        if validated_data["status"] == "cancel" and instance.status not in ["pending","review"]:
+            raise exceptions.MethodNotAllowed({'detail': f'cannot cancel order in {instance.status}'})
         if instance.status == "filled":
             raise exceptions.MethodNotAllowed(
                 {'detail': 'order already filled, you cannot cancel / confirm'})

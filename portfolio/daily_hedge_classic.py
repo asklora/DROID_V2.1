@@ -55,6 +55,7 @@ def classic_sell_position(live_price, trading_day, position_uid, apps=False):
 
     # merge two dict, and save to order setup
     setup = {"performance": performance, "position": position_val}
+    order_type = 'apps' if apps else None
     order = Order.objects.create(
         is_init=False,
         ticker=position.ticker,
@@ -66,7 +67,8 @@ def classic_sell_position(live_price, trading_day, position_uid, apps=False):
         user_id=position.user_id,
         side="sell",
         qty=position.share_num,
-        setup=setup
+        setup=setup,
+        order_type=order_type,
     )
     # only for none apps
     if order and not apps:
@@ -150,7 +152,7 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
     expiry = to_date(position.expiry)
     status_expiry = high > position.target_profit_price or low < position.max_loss_price or trading_day >= expiry
     if(status_expiry):
-        position, order = classic_sell_position(high, low, live_price, trading_day, position.position_uid, apps=False)
+        position, order = classic_sell_position(live_price, trading_day, position.position_uid, apps=False)
         return True, order.order_uid
     else:
         performance, position = populate_performance(live_price, trading_day, log_time, position)
