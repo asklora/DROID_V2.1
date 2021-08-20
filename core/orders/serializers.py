@@ -249,7 +249,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
         if not "price" in validated_data:
             rkd = RkdData()
-            df = rkd.get_quote([validated_data["ticker"].ticker], df=True)
+            df = rkd.get_quote([validated_data["ticker"].ticker],save=True, df=True)
             df["latest_price"] = df["latest_price"].astype(float)
             ticker = df.loc[df["ticker"] == validated_data["ticker"].ticker]
             validated_data["price"] = ticker.iloc[0]["latest_price"]
