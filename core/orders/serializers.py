@@ -229,7 +229,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return init
 
     def create(self, validated_data):
-        print("in save")
         if not "user" in validated_data:
             request = self.context.get("request", None)
             if request:
@@ -440,7 +439,13 @@ class OrderActionSerializer(serializers.ModelSerializer):
         from core.services.order_services import order_executor
         payload = json.dumps(validated_data)
         print(payload)
-        task = order_executor.apply_async(args=(payload,),queue="droiddev")
+        # NOTE: you need to run celery in your local machine and docker redis installed
+        # if having problem install docker.. run ./installer/install-docker.sh
+        # ===run redis command===
+        # docker run -p 6379:6379 -d redis:5
+        # ===run celery command===
+        # celery -A core.services worker -l  INFO --hostname=localdev@%h -Q localdev
+        task = order_executor.apply_async(args=(payload,),task_id=validated_data["order_uid"])
         data = {"action_id": task.id, "status": "executed",
                 "order_uid": validated_data["order_uid"]}
         return data

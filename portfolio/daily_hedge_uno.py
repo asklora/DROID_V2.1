@@ -39,6 +39,7 @@ def uno_sell_position(live_price, trading_day, position_uid, apps=False):
     log_time = pd.Timestamp(trading_day)
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()
+    trading_day = to_date(trading_day)
 
     performance, position, status, hedge_shares = populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=True)
     current_pnl_amt = performance["current_pnl_amt"]
@@ -50,7 +51,6 @@ def uno_sell_position(live_price, trading_day, position_uid, apps=False):
     position.event_date = trading_day
     position.is_live = False
 
-    trading_day = to_date(trading_day)
     expiry = to_date(position.expiry)
     
     if high > position.target_profit_price:
@@ -218,15 +218,19 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
         return True, order.order_uid
     else:
         performance, position, status, hedge_shares = populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=False)
+        
+        order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position)
+        if (order):
+            return False, order.order_uid
+        
+        #NOTE: only create record, no buy and sell
         performance.pop("position_uid")
         PositionPerformance.objects.create(
             position_uid=position,  # swapped with instance
             **performance  # the dict value
         )
         position.save()
-        order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position)
-        if (order):
-            return False, order.order_uid
+
         return False, None
 
 # def create_performance(price_data, position, latest=False, hedge=False, tac=False):
