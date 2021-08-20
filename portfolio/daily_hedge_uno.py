@@ -218,15 +218,19 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
         return True, order.order_uid
     else:
         performance, position, status, hedge_shares = populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=False)
+        
+        order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position)
+        if (order):
+            return False, order.order_uid
+        
+        #NOTE: only create record, no buy and sell
         performance.pop("position_uid")
         PositionPerformance.objects.create(
             position_uid=position,  # swapped with instance
             **performance  # the dict value
         )
         position.save()
-        order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position)
-        if (order):
-            return False, order.order_uid
+
         return False, None
 
 # def create_performance(price_data, position, latest=False, hedge=False, tac=False):
