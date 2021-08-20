@@ -22,7 +22,7 @@ from .serializers import (
 
 class BotPerformanceViews(views.APIView):
     """
-    get bot Performance by positions
+    Get bot performance by positions
     """
 
     serializer_class = PerformanceSerializer
@@ -59,7 +59,7 @@ class BotPerformanceViews(views.APIView):
 @extend_schema_view(list=extend_schema(operation_id="Get positions by Client"))
 class PositionViews(viewsets.ReadOnlyModelViewSet):
     """
-    get positions by Client
+    Get positions for a client
     """
 
     serializer_class = PositionSerializer
@@ -133,7 +133,7 @@ class PositionUserViews(viewsets.ReadOnlyModelViewSet):
 
 class PositionDetailViews(views.APIView):
     """
-    get Detail positions
+    View detailed information for a given position of a user
     """
 
     serializer_class = PositionSerializer
@@ -146,10 +146,10 @@ class PositionDetailViews(views.APIView):
                 response=PositionSerializer,
             ),
             404: OpenApiResponse(
-                description="Bad request (position not found)", response=errserializer
+                description="Bad request: position not found", response=errserializer
             ),
-            401: OpenApiResponse(
-                description="Unauthorized request", response=errserializer
+            403: OpenApiResponse(
+                description="Bad request: position does not belong to current user", response=errserializer
             ),
         },
     )
@@ -169,11 +169,15 @@ class PositionDetailViews(views.APIView):
                 )
 
         return response.Response(
-            {"detail": f"{position_uid} doesnt exist"}, status=status.HTTP_404_NOT_FOUND
+            {"detail": f"{position_uid} does not exist"}, status=status.HTTP_404_NOT_FOUND
         )
 
 
 class OrderViews(views.APIView):
+    """
+    Create a new order position
+    """
+
     serializer_class = OrderCreateSerializer
     permission_classes = (IsRegisteredUser,)
 
