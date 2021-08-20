@@ -205,7 +205,7 @@ class OrderGetViews(viewsets.ViewSet):
         # more customizations
     )
     def list(self, request):
-        instances = Order.objects.prefetch_related('ticker').filter(user_id=request.user).exclude(status__in=['review',None])
+        instances = Order.objects.prefetch_related('ticker').filter(user_id=request.user).exclude(status__in=['review',None]).order_by('-created')
         self.serialzer_class = OrderListSerializers
         return response.Response(OrderListSerializers(instances, many=True).data, status=status.HTTP_200_OK)
     permission_classes =(IsRegisteredUser,)
