@@ -188,7 +188,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     status = serializers.CharField(read_only=True)
     qty = serializers.FloatField(read_only=True)
     setup = serializers.JSONField(required=False)
-    created = serializers.DateTimeField(read_only=True)
+    created = serializers.DateTimeField(required=False, read_only=True)
 
     class Meta:
         model = Order
@@ -272,9 +272,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                                                 validated_data.get("setup",{}).get("position",None))
                 except OrderPosition.DoesNotExist:
                     raise exceptions.NotFound({'detail':'live position not found error'})
-                # except Exception as e:
-                #     raise exceptions.APIException({'detail':f'{str(e)}'})
+                except Exception as e:
+                    raise exceptions.APIException({'detail':f'{str(e)}'})
         return order
+
 @extend_schema_serializer(
     exclude_fields=("user",), # schema ignore these fields
 )
