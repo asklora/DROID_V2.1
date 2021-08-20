@@ -178,8 +178,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def total_fee_amount(self):
-        transaction=self.user_balance.account_transaction.filter(
-            transaction_detail__event__in=['fee','stamp_duty']).aggregate(total=Sum('amount'))
+        transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=['fee']).aggregate(total=Sum('amount'))
         if transaction['total']:
             result = round(transaction['total'], 2)
             return result
@@ -187,8 +186,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def total_stamp_amount(self):
-        transaction=self.user_balance.account_transaction.filter(
-            transaction_detail__event__in=['stamp_duty']).aggregate(total=Sum('amount'))
+        transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=['stamp_duty']).aggregate(total=Sum('amount'))
         if transaction['total']:
             result = round(transaction['total'], 2)
             return result
@@ -196,10 +194,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def total_commission_amount(self):
-        transaction=self.user_balance.account_transaction.filter(
-            transaction_detail__event__in=['fee']).aggregate(total=Sum('amount'))
+        transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=['fee']).aggregate(total=Sum('amount'))
+        transaction2=self.user_balance.account_transaction.filter(transaction_detail__event__in=['stamp_duty']).aggregate(total=Sum('amount'))
         if transaction['total']:
-            result = round(transaction['total'], 2)
+            result = round(transaction['total'] - transaction2['total'], 2)
             return result
         return 0
 
