@@ -197,7 +197,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=['fee']).aggregate(total=Sum('amount'))
         transaction2=self.user_balance.account_transaction.filter(transaction_detail__event__in=['stamp_duty']).aggregate(total=Sum('amount'))
         if transaction['total']:
-            result = round(transaction['total'] - transaction2['total'], 2)
+            if transaction2['total']:
+                total2=transaction2['total']
+            else:
+                total2=0
+            result = round(transaction['total'] -total2, 2)
             return result
         return 0
 
