@@ -65,7 +65,6 @@ def order_executor(self, payload, recall=False):
             order.placed = True
             order.placed_at = datetime.now()
             order.save()
-    
 
     # debug only
     # time.sleep(10)
@@ -78,6 +77,7 @@ def order_executor(self, payload, recall=False):
         else:
             share = order.setup['share_num']
         market = TradingHours(mic=order.ticker.mic)
+        debug=True
         if market.is_open:
             order.status = 'filled'
             order.filled_at = datetime.now()
@@ -93,7 +93,7 @@ def order_executor(self, payload, recall=False):
             # create schedule to next bell and will recrusive until market status open
             # still keep sending message. need to improve
             order_executor.apply_async(args=(json.dumps(payload),), kwargs={
-                                    'recall': True}, eta=market.next_bell,task_id=order.order_uid)
+                                    'recall': True}, eta=market.next_bell,task_id=str(order.order_uid))
     else:
         """
         we need message if order is cancel

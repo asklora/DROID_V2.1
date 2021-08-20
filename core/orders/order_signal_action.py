@@ -146,13 +146,16 @@ class BaseOrderConnector(AbstracOrderConnector):
         stopping any order schedule on celery
         """
         
-        if self.instance.is_init and self.instance.status == 'pending':
+        if self.instance.is_init and self.instance.status == 'cancel':
+            print(str(self.instance.order_uid))
             trans = TransactionHistory.objects.filter(
-                side='debit', transaction_detail__description='bot order', transaction_detail__order_uid=str(self.instance.order_uid))
+                side='debit', transaction_detail__description='bot order', transaction_detail__order_uid=str(self.instance.order_uid),transaction_detail__event='create')
             if trans.exists():
-                trans.delete()
+                print(trans)
+                trans.get().delete()
         # cancel any pending shedule in celery worker
-        worker.control.revoke(self.instance.order_uid,terminate=True)
+        print("canceled")
+        print(worker.control.revoke(str(self.instance.order_uid),terminate=True))
     
     
     def on_sell_pending(self):
@@ -177,7 +180,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         """
        
         # cancel any pending shedule in celery worker
-        worker.control.revoke(self.instance.order_uid,terminate=True)
+        worker.control.revoke(str(self.instance.order_uid),terminate=True)
     
 
     def transfer_to_wallet(self,position:OrderPosition):
