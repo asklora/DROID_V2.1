@@ -5,7 +5,6 @@ from abc import ABC,abstractmethod
 from core.djangomodule.general import formatdigit
 from core.Clients.models import UserClient
 from django.db import transaction as db_transaction
-from datasource.rkd import RkdData
 from config.celery import app as worker
 """
 user/bot
@@ -443,7 +442,8 @@ class SimulationOrderConnector(BaseOrderConnector):
         if not position.is_live:
             # transfer to wallet
             self.transfer_to_wallet(position)
-            if self.instance.order_type == 'apps':
+            if self.instance.order_type != 'apps':
+                # apps no fee
                 self.create_fee(position.position_uid)
         
         

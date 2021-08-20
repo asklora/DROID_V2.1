@@ -36,7 +36,8 @@
             "CorporateActionsCapitalChangeType": "CapitalChangeExDate",
             "CorporateActionsDividendsType": "DividendPayDate",
             "CorporateActionsEarningsType": "PeriodEndDate",
-            "ShareAmountTypes": []
+            "ShareAmountTypes": [
+            ]
         }
     }
 }
