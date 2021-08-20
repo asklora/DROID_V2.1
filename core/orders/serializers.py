@@ -266,9 +266,14 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 order = Order.objects.create(
                     **validated_data, order_type=order_type,is_init=init)
             else:
-                position, order = sell_position_service(validated_data["price"],
-                 datetime.now(), 
-                 validated_data.get("setup",{}).get("position",None))
+                try:
+                    position, order = sell_position_service(validated_data["price"],
+                                                datetime.now(), 
+                                                validated_data.get("setup",{}).get("position",None))
+                except OrderPosition.DoesNotExist:
+                    raise exceptions.NotFound({'detail':'live position not found error'})
+                except Exception as e:
+                    raise exceptions.APIException({'detail':f'{str(e)}'})
         return order
 
 @extend_schema_serializer(
