@@ -63,6 +63,8 @@ def populate_order(status, hedge_shares, log_time, live_price, bot, performance,
     if not status == "hold":
         if hedge_shares < 0:
             hedge_shares = hedge_shares * -1  # make it positive in order
+        order_type = 'apps' if apps else None
+        
         order = Order.objects.create(
             is_init=False,
             ticker_id=position_val["ticker"],
@@ -74,7 +76,8 @@ def populate_order(status, hedge_shares, log_time, live_price, bot, performance,
             user_id_id=position_val["user_id"],
             side=status,
             qty=hedge_shares,
-            setup=setup
+            setup=setup,
+            order_type=order_type,
         )
         if order and not apps:
             order.status = "placed"

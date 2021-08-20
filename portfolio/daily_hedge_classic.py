@@ -55,6 +55,7 @@ def classic_sell_position(live_price, trading_day, position_uid, apps=False):
 
     # merge two dict, and save to order setup
     setup = {"performance": performance, "position": position_val}
+    order_type = 'apps' if apps else None
     order = Order.objects.create(
         is_init=False,
         ticker=position.ticker,
@@ -66,7 +67,8 @@ def classic_sell_position(live_price, trading_day, position_uid, apps=False):
         user_id=position.user_id,
         side="sell",
         qty=position.share_num,
-        setup=setup
+        setup=setup,
+        order_type=order_type,
     )
     # only for none apps
     if order and not apps:
