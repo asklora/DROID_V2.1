@@ -1,9 +1,9 @@
 from abc import get_cache_token
 from rest_framework.views import APIView
-from rest_framework import permissions, response, status, serializers, exceptions
+from rest_framework import response, status, serializers, exceptions
 from .serializers import UserSerializer, TokenRevokeSerializer, UserSummarySerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-from drf_spectacular.utils import extend_schema, OpenApiTypes, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiExample
 from core.user.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import (
@@ -94,7 +94,7 @@ class UserProfile(APIView):
         user = request.user
         if str(user) == "AnonymousUser":
             return response.Response(
-                {"error": "User is not logged in"},
+                {"message": "User is not logged in"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
         else:
