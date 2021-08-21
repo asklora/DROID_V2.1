@@ -733,7 +733,24 @@ def daily_hedge(currency=None, **options):
         rkd.get_index_price(currency)  # GET INDEX PRICE
     hedge(currency=currency, **options)  # bot_advisor hanwha and fels
     hedge(currency=currency, bot_tester=True, **options)  # bot_tester
+    daily_hedge_user(currency=currency,ingest=True)
     return {"result": f"hedge {currency} done"}
+
+
+
+
+
+
+
+
+
+
+
+####### DEPRECATED HANWHA STOPPED ##############
+
+
+
+
 
 
 def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=False, bot=None, capital=None, **options):
