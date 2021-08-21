@@ -1,7 +1,7 @@
-from ingestion.data_from_rkd import update_lot_size_from_rkd
 from general.date_process import dateNow
-from general.sql_process import do_function
 from general.sql_query import read_query
+from general.sql_process import do_function
+
 
 def dlpa_weekly():
     print("Run DLPA")
@@ -50,6 +50,3 @@ def dlpa_weekly():
 # Main Process
 if __name__ == "__main__":
     print("Start Process")
-    currency_code = ["SGD"]
-    ticker = ["MSFT.O", "AAPL.O"]
-    update_lot_size_from_rkd(ticker=ticker)

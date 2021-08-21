@@ -507,7 +507,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     
     if(len(fundamentals)) > 0 :
         print(fundamentals)
-        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality"]].merge(universe_rating, how="left", on="ticker")
+        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
         result["updated"] = dateNow()
         print(result)
         print(universe_rating_history)
@@ -600,7 +600,7 @@ def interest_update_from_dsws():
     report_to_slack("{} : === Interest Updated ===".format(datetimeNow()))
 
 def update_fred_data_from_fred():
-    print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
+    print("{} : === Fred Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
     start_date = droid_start_date()
     result = read_fred_csv(start_date, end_date)
@@ -608,7 +608,7 @@ def update_fred_data_from_fred():
     result["data"] = result["data"].astype(float)
     if(len(result)) > 0 :
         upsert_data_to_database(result, get_data_fred_table_name(), "uid", how="update", Text=True)
-        report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
+        report_to_slack("{} : === Fred Updated ===".format(datetimeNow()))
 
 def populate_ibes_table():
     table_name = get_data_ibes_table_name()

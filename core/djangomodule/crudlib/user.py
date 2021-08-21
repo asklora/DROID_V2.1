@@ -10,9 +10,9 @@ def sync_user(payload):
     except User.DoesNotExist:
         create =True
     unused_key =[]
+    if 'id' in payload:
+        user_id =payload.pop('id')
     if not create:
-        if 'id' in payload:
-            payload.pop('id')
         
         for attrib, val in payload.items():
             if hasattr(user,attrib):

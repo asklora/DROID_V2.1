@@ -52,12 +52,29 @@ def get_index_member():
     result.to_csv("index_member_HSLMI.csv")
 
 if __name__ == "__main__":
-    cred = credentials.Certificate("files/file_json/asklora-firebase.json")
-    firebase_admin.initialize_app(cred)
-    dbs = firestore.client()
-    snapshots = dbs.collection(u"universe").where("ticker", ">=", "001").where("ticker", "<=", "001" + "\uf8ff").get()
-    print(snapshots)
-    for snapshot in snapshots:
-        print(snapshot.to_dict()["ticker"])
-        print(snapshot.to_dict())
-        print()
+    identifier="ticker"
+    ticker = ["MSFT.O", "AAPL.O"]
+    universe = get_active_universe()
+    start_date = backdate_by_day(1)
+    end_date = dateNow()
+    jsonFileName = "files/file_json/test_corporate_action.json"
+    result = get_data_from_dss(start_date, end_date, universe["ticker"], jsonFileName, report=REPORT_INTRADAY)
+    result = result.drop(columns=["IdentifierType", "Identifier"])
+    result = result.rename(columns={"RIC" : "ticker"})
+    print(result)
+    columns_list = ["Capital Additive Adjustment Factor", "Capital Change Event Type", "Capital Change Event Type Description", 
+        "Capital Change Ex Date", "Dividend Ex Date", "Dividend Frequency", "Dividend Frequency Description", "Dividend Rate", 
+        "Earnings Announcement Date", "EPS Amount"]
+    result2 = universe[["ticker"]]
+    for col in columns_list:
+        temp = result[["ticker", col]].dropna()
+        if len(temp) <= 0:
+            temp = pd.DataFrame({"ticker" : [] , col : []}, index=[])
+        result2 = result2.merge(temp, how="left", on=["ticker"])
+    print(result2)
+    result2 = result2.drop_duplicates(subset=columns_list, keep="first")
+    print(result2)
+    result2.to_csv("/home/loratech/corporate_action.csv")
+    
+
+    

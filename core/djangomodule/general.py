@@ -1,11 +1,37 @@
 import base64
 import os
 from django.utils.deconstruct import deconstructible
+from rest_framework import serializers
 import boto3
 import time
 from config.celery import app
 from django.core.cache import cache
 import json
+from rest_framework import permissions,status
+from rest_framework.exceptions import APIException
+
+
+
+
+
+class NeedRegister(APIException):
+    """
+    change 401 to 403
+    """
+    status_code = status.HTTP_403_FORBIDDEN
+    default_detail = {'detail': 'User is not Registered or has permission'}
+    default_code = 'credentials_error'
+
+
+class IsRegisteredUser(permissions.BasePermission):
+    message = 'User is not Registered or has permission'
+
+    def has_permission(self, request, view):
+        if request.user.is_anonymous:
+            return NeedRegister()
+        return True
+
+
 @deconstructible
 class UploadTo:
     def __init__(self, name):
@@ -165,3 +191,21 @@ def get_cached_data(key):
 
 def set_cache_data(key,data=None,interval=60*60):
     cache.set(key,json.dumps(data),interval)
+
+
+
+class UnixEpochDateField(serializers.DateTimeField):
+    def to_native(self, value):
+        """ Return epoch time for a datetime object or ``None``"""
+        import time
+        try:
+            return int(time.mktime(value.timetuple()))
+        except (AttributeError, TypeError):
+            return None
+
+    def from_native(self, value):
+        import datetime
+        return datetime.datetime.fromtimestamp(int(value))
+
+class errserializer(serializers.Serializer):
+    detail = serializers.CharField()

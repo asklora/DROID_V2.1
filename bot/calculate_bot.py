@@ -77,7 +77,9 @@ def get_expiry_date(time_to_exp, spot_date, currency_code):
     """
     spot_date = check_date(spot_date)
     days = int(round((time_to_exp * 365), 0))
-    expiry = spot_date + relativedelta(days=(days-1))
+    expiry = spot_date + relativedelta(days=(days))
+    while(expiry.weekday() != 5):
+        expiry = expiry - relativedelta(days=1)
     # days = int(round((time_to_exp * 256), 0))
     # expiry = spot_date + BDay(days-1)
 

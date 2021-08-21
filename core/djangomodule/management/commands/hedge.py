@@ -27,17 +27,17 @@ class Command(BaseCommand):
                     status = uno_position_check.apply_async(
                         args=(position_uid,), queue=options["queue"])
                 else:
-                    status = uno_position_check(position_uid)
+                    status = uno_position_check(position_uid, hedge=True)
             elif (position.bot.is_ucdc()):
                 if options["celery"]:
                     status = ucdc_position_check.apply_async(
                         args=(position_uid,), queue=options["queue"])
                 else:
-                    status = ucdc_position_check(position_uid)
+                    status = ucdc_position_check(position_uid, hedge=True)
             elif (position.bot.is_classic()):
                 if options["celery"]:
                     status = classic_position_check.apply_async(
                         args=(position_uid,), queue=options["queue"])
                 else:
-                    status = classic_position_check(position_uid)
+                    status = classic_position_check(position_uid, hedge=True)
             print(status, "done")

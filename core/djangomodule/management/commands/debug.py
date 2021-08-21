@@ -1,20 +1,53 @@
+from core.user.models import User
+from requests.api import get
 from ingestion.data_from_rkd import update_currency_code_from_rkd
 from django.core.management.base import BaseCommand
-from core.universe.models import ExchangeMarket,Universe
+from core.universe.models import ExchangeMarket, Universe
 from core.Clients.models import UserClient
-from core.orders.models import OrderPosition,PositionPerformance
-from core.services.tasks import populate_client_top_stock_weekly,order_client_topstock,daily_hedge,send_csv_hanwha
+from core.Clients.IBClientModule import Client
+from core.orders.models import OrderPosition, PositionPerformance
+from core.services.tasks import populate_client_top_stock_weekly, order_client_topstock, daily_hedge, send_csv_hanwha, hedge
 from datasource.rkd import RkdData
 from datetime import datetime
-
-
-  
-
+from core.djangomodule.calendar import TradingHours
+from portfolio.daily_hedge_classic import classic_position_check
+from config.celery import app 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        c = Client()
+        c.get_position('DU2898616',0)
+        # c.market_order(2,'DU2898616','order first',265598)
+        
+        # c.find_contract('MSFT')
+        # app.control.revoke('eb3cdebb-1c89-44d0-a022-65527f2863ee', terminate=True)
+
+        # daily_hedge(currency="KRW",rehedge={
+        #     'types':'hedge',
+        #     'date':'2021-08-06'
+        # })
+        # exclude = [user["user"] for user in UserClient.objects.filter(client__client_name__in=[]).values("user")]
+        # all = [user["id"] for user in User.objects.filter().values("id").exclude(id__in=exclude)]
+        # print(all)
+        # print(exclude)
+        # perfs = PositionPerformance.objects.filter(status=None)
+        # for perf in perfs:
+        #     if perf.order_uid:
+        #         if perf.order_uid.is_init:
+        #             perf.status = 'Populate'
+        #         else:
+        #             perf.status ='Hedge'
+        #     else:
+        #         perf.status = 'Hedge'
+        #     perf.save()
+        # market = TradingHours(mic='XNAS')
+        # market.is_open
+        # for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
+        #     p.delete()
+
+        # daily_hedge(currency="USD")
         # serv =['bot_tester','bot_advisor']
         # for a in serv:
-        #     hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA", 
+        #     hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA",
         #         extra_data__service_type=a).values("user")]
         #     perf  = PositionPerformance.objects.filter(position_uid__ticker__currency_code='CNY',position_uid__user_id__in=hanwha,position_uid__is_live=True,order_uid__is_init=True,created__gte='2021-07-26 02:00:00.541000' ,created__lte='2021-07-26 02:00:29.541000')
         #     list_email = [str(p.order_uid.order_uid) for p in perf]
@@ -100,7 +133,7 @@ class Command(BaseCommand):
         # get_quote_yahoo("TCOM", use_symbol=True)
         # daily_hedge(currency="HKD")
         # orders = [ids.order_uid for ids in Order.objects.filter(is_init=True)]
-        # perf = PositionPerformance.objects.filter(
+        # perf = PositionPerformance.objehedgects.filter(
         #     position_uid__user_id__in=[108,
         #                                109,
         #                                110], created__gte=datetime.now().date(), position_uid__ticker__currency_code="KRW").order_by("created")
@@ -111,14 +144,8 @@ class Command(BaseCommand):
         # print(user.client_user.all()[0].client.client_uid)
         # migrate_droid1.apply_async(queue='droid')
         # print(daily_hedge(currency="KRW"))
-        daily_hedge(currency="KRW",rehedge={
-            'date':'2021-07-27',
-            'types':'hedge'
-        })
-        # daily_hedge(currency="KRW",client_name="HANWHA",bot_tester=True,rehedge={
-        #     'date':'2021-07-26',
+        # hedge(currency="USD",client_name="HANWHA",bot_tester=True,rehedge={
+        #     'date':'2021-08-02',
         #     'types':'hedge'
         # })
         # send_csv_hanwha(currency="CNY")
-        
-

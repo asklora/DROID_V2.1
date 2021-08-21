@@ -91,10 +91,9 @@ class Rkd:
                     resp = result.json()
                     logging.warning("Error: %s" % (json.dumps(result.json(),indent=2)))
                     err = json.dumps(result.json(),indent=2)
-
                     report =ErrorLog.objects.create(error_description=resp['Fault']['Reason']['Text']['Value'],error_traceback='err',
-                                                    error_message=err,
-                                                    error_function='RKD DATA')
+                    error_message='Token Invalid',
+                    error_function='RKD DATA')
                     report.send_report_error()
                     return None
         except requests.exceptions.RequestException as e:
@@ -318,7 +317,6 @@ class RkdData(Rkd):
         splitting_df = np.array_split(identifier, max(split, 1))
         for universe in splitting_df:
             tick = universe.tolist()
-            print(tick)
             payload = self.retrive_template(tick, fields=field)
             response = self.send_request(quote_url, payload, self.auth_headers())
             formated_json_data = self.parse_response(response)

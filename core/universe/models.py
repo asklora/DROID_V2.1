@@ -220,6 +220,9 @@ class UniverseConsolidated(models.Model):
 
 
 class Universe(models.Model):
+    """
+    A group of tickers with their details
+    """
     objects = models.Manager()
     manager = UniverseManager()
     ticker = models.CharField(max_length=255, primary_key=True)
@@ -281,6 +284,8 @@ class UniverseRating(models.Model):
     wts_rating2 = models.FloatField(blank=True, null=True)
     classic_vol = models.FloatField(blank=True, null=True)
     updated = models.DateField(blank=True, null=True)
+    ai_score = models.FloatField(blank=True, null=True)
+    ai_score2 = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return str(self.ticker.ticker)
@@ -305,6 +310,8 @@ class UniverseRatingHistory(models.Model):
     wts_rating = models.FloatField(blank=True, null=True)
     wts_rating2 = models.FloatField(blank=True, null=True)
     classic_vol = models.FloatField(blank=True, null=True)
+    recsell = models.FloatField(blank=True, null=True)
+    recbuy = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return str(self.ticker.ticker)
@@ -399,7 +406,8 @@ class ExchangeMarket(BaseTimeStampModel):
     asset_type= models.CharField(blank=True, null=True,max_length=255)
     group= models.CharField(blank=True, null=True,max_length=100)
     currency_code = models.ForeignKey(Currency,null=True,blank=True,related_name="currency_exchange", on_delete=models.CASCADE,db_column="currency_code")
-
+    is_open = models.BooleanField(default=False)
+    until_time = models.DateTimeField(null=True, blank=True)
     class Meta:
         managed = True
         db_table = "universe_exchange_market"
