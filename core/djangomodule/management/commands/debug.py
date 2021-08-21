@@ -14,8 +14,8 @@ from portfolio.daily_hedge_classic import classic_position_check
 from config.celery import app 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        c = Client()
-        c.get_position('DU2898616',0)
+        # c = Client()
+        # c.get_position('DU2898616',0)
         # c.market_order(2,'DU2898616','order first',265598)
         
         # c.find_contract('MSFT')
@@ -29,7 +29,8 @@ class Command(BaseCommand):
         # all = [user["id"] for user in User.objects.filter().values("id").exclude(id__in=exclude)]
         # print(all)
         # print(exclude)
-        # perfs = PositionPerformance.objects.filter(status=None)
+        perfs = PositionPerformance.objects.filter(status=None,order_uid__is_init=True).update(status='Populate')
+        perfs2 = PositionPerformance.objects.filter(status=None).update(status='Hedge')
         # for perf in perfs:
         #     if perf.order_uid:
         #         if perf.order_uid.is_init:
