@@ -133,11 +133,18 @@ class PositionSerializer(serializers.ModelSerializer):
             return result
         return 0
 
-    def get_total_fee(self, obj) -> float:
-        transaction = TransactionHistory.objects.filter(
-            transaction_detail__event__in=["fee", "stamp_duty"], transaction_detail__position=obj.position_uid).aggregate(total=Sum("amount"))
-        if transaction["total"]:
-            result = round(transaction["total"], 2)
+    
+    def get_total_fee(self,obj)-> float:
+        transaction=TransactionHistory.objects.filter(
+            transaction_detail__event__in=['fee'],transaction_detail__position=obj.position_uid).aggregate(total=Sum('amount'))
+        transaction2=TransactionHistory.objects.filter(transaction_detail__event__in=['stamp_duty'],transaction_detail__position=obj.position_uid).aggregate(total=Sum('amount'))
+        if transaction['total']:
+            if transaction2['total']:
+                total2=transaction2['total']
+            else:
+                total2=0
+            result = round(transaction['total'] -total2, 2)
+
             return result
         return 0
 

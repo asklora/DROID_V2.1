@@ -25,19 +25,13 @@ if __name__ == "__main__":
 
         query = f"select coalesce(sum(amount), 0)  as outcome2 from ( "
         query += f"select *, ut.transaction_detail ->> 'position' as position_uid from user_transaction ut "
-        query += f"where ut.balance_uid = (select balance_uid from user_account_balance where user_id = {user_id}) and updated < '2021-08-12') result1 "
+
+        query += f"where ut.balance_uid = (select balance_uid from user_account_balance where user_id = {user_id})) result1 "
         query += f"where side='debit' and (transaction_detail ->> 'event' = 'fee') and "
         query += f"position_uid in (select position_uid from orders_position where is_live=False and user_id = {user_id}) "
         total_fee_false = read_query(query, cpu_counts=True, prints=True)
         print(total_fee_false)
 
-        query = f"select coalesce(sum(amount), 0)  as outcome2 from ( "
-        query += f"select *, ut.transaction_detail ->> 'position' as position_uid from user_transaction ut "
-        query += f"where ut.balance_uid = (select balance_uid from user_account_balance where user_id = {user_id}) and updated >= '2021-08-12') result1 "
-        query += f"where side='debit' and (transaction_detail ->> 'event' = 'fee' or transaction_detail ->> 'event' = 'stamp_duty') and "
-        query += f"position_uid in (select position_uid from orders_position where is_live=False and user_id = {user_id}) "
-        total_fee_false1 = read_query(query, cpu_counts=True, prints=True)
-        print(total_fee_false1)
 
         query = f"select coalesce(sum(investment_amount), 0)  as outcome2 from orders_position where user_id = {user_id} and is_live = True;"
         total_investment_true = read_query(query, cpu_counts=True, prints=True)
@@ -45,21 +39,12 @@ if __name__ == "__main__":
 
         query = f"select coalesce(sum(amount), 0)  as outcome2 from ( "
         query += f"select *, ut.transaction_detail ->> 'position' as position_uid from user_transaction ut "
-        query += f"where ut.balance_uid = (select balance_uid from user_account_balance where user_id = {user_id}) and updated < '2021-08-12') result1 "
+        query += f"where ut.balance_uid = (select balance_uid from user_account_balance where user_id = {user_id})) result1 "
         query += f"where side='debit' and (transaction_detail ->> 'event' = 'fee') and "
         query += f"position_uid in (select position_uid from orders_position where is_live=True and user_id = {user_id}) "
         total_fee_true = read_query(query, cpu_counts=True, prints=True)
         print(total_fee_true)
-
-        query = f"select coalesce(sum(amount), 0)  as outcome2 from ( "
-        query += f"select *, ut.transaction_detail ->> 'position' as position_uid from user_transaction ut "
-        query += f"where ut.balance_uid = (select balance_uid from user_account_balance where user_id = {user_id}) and updated >= '2021-08-12') result1 "
-        query += f"where side='debit' and (transaction_detail ->> 'event' = 'fee' or transaction_detail ->> 'event' = 'stamp_duty') and "
-        query += f"position_uid in (select position_uid from orders_position where is_live=True and user_id = {user_id}) "
-        total_fee_true1 = read_query(query, cpu_counts=True, prints=True)
-        print(total_fee_true1)
-
-        right_balance = (first_deposit2 - total_investment_false - total_fee_false - total_fee_false1 + total_return - total_investment_true - total_fee_true - total_fee_true1)
+        right_balance = (first_deposit2 - total_investment_false - total_fee_false  + total_return - total_investment_true - total_fee_true)
         right_balance["user_id"] = user_id
         print(right_balance)
 
