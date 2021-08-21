@@ -214,6 +214,15 @@ app.conf.beat_schedule = {
     #     }
     # },
 
+    "Firebase-Universe-update": {
+    "task": "core.services.tasks.weekly_universe_firebase_update",
+    "schedule": crontab(minute=00, hour=00, day_of_week=5),
+    "kwargs": {"currency_code": ["HKD"]},
+    "options": {
+        "expires": 5*60,
+        }
+        },
+
 }
 # END TASK SCHEDULE
 
@@ -287,6 +296,15 @@ def new_ticker_ingestion(ticker):
         update_data_dss_from_dss(ticker=ticker, history=True)
         update_data_dsws_from_dsws(ticker=ticker, history=True)
         dividend_updated_from_dsws(ticker=ticker)
+
+@app.task
+def weekly_universe_firebase_update(currency_code:list) -> dict:
+    from ingestion.mongo_migration import mongo_universe_update
+    try:
+        mongo_universe_update(currency_code=currency_code)
+    except Exception as e:
+        return {'error':str(e)}
+    return {'status':'updated firebase update'}
 
 
 @app.task
@@ -592,7 +610,6 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False,
 
 @app.task
 def daily_hedge_user(currency=None, ingest=False, exclude_client=['HANWHA','FELS']):
-    cache.clear()
     report_to_slack(f"===  START DAILY USER HEDGE FOR {currency} ===")
     try:
         exclude = [user["user"] for user in UserClient.objects.prefetch_related('user_id').filter(client__client_name__in=exclude_client).values("user")]
