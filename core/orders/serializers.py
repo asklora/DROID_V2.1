@@ -200,6 +200,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
 
 class OrderUpdateSerializer(serializers.ModelSerializer):
+    user = serializers.CharField(required=False)
     status = serializers.CharField(read_only=True)
     setup = serializers.JSONField(read_only=True)
     qty = serializers.FloatField(read_only=True)
@@ -208,18 +209,21 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['price', 'bot_id', 'amount',
-                  'order_uid', 'status', 'qty', 'setup','fee']
+        fields = ["price", "bot_id", "amount",
+                  "order_uid", "status", "qty", "setup", "fee", "user"]
 
     def update(self, instance, validated_data):
-        request = self.context.get('request', None)
-        if request:
+        request = self.context.get("request", None)
+        if validated_data.get("user", None):
+            usermodel = apps.get_model("user", "User")
+            user = usermodel.objects.get(id=validated_data.pop("user"))
+        else:
             user = request.user
-        
-        if validated_data['amount'] > user.user_balance.amount:
-            raise exceptions.NotAcceptable({'detail': 'insuficent balance'})
-        if validated_data['amount'] <= 0:
-            raise exceptions.NotAcceptable({'detail': 'amount should not 0'})
+
+        if validated_data["amount"] > user.user_balance.amount:
+            raise exceptions.NotAcceptable({"detail": "insuficent balance"})
+        if validated_data["amount"] <= 0:
+            raise exceptions.NotAcceptable({"detail": "amount should not 0"})
 
             
         for keys, value in validated_data.items():
