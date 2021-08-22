@@ -102,7 +102,7 @@ class BaseOrderConnector(AbstracOrderConnector):
             if self.bot.is_stock():
                 amount = self.instance.amount
             else:
-                amount = self.setup['investment_amount']
+                amount = self.instance.setup['investment_amount']
                 
             TransactionHistory.objects.create(
                 balance_uid=self.user_wallet,
