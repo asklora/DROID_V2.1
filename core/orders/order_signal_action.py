@@ -4,8 +4,8 @@ from .models import Order, OrderFee, OrderPosition, PositionPerformance
 from abc import ABC,abstractmethod
 from core.djangomodule.general import formatdigit
 from core.Clients.models import UserClient
-
-
+from django.db import transaction as db_transaction
+from config.celery import app as worker
 """
 user/bot
 broker/simulation
@@ -58,13 +58,34 @@ class BaseOrderConnector(AbstracOrderConnector):
     def __init__(self,*args,**kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
-        self.digits = max(min(5-len(str(int(self.instance.price))), 2), -1)
+        self.is_decimal = self.instance.ticker.currency_code.is_decimal
     
     def run(self):
+        """
+        in here we delete the long if else statement
+
+        will trigger the function inside this class with prefix name and invoke
+        """
         func_name =f'on_{self.instance.side}_{self.instance.status}'
+        
         if hasattr(self,func_name):
             """
-            SKIP REVIEW STATUS
+            only invoke this function.
+            hasattr will check the function name is exist or not 
+
+           - on_buy_placed
+           - on_buy_pending
+           - on_buy_filled
+           - on_buy_cancel
+           - on_sell_placed
+           - on_sell_pending
+           - on_sell_filled
+           - on_sell_cancel
+
+            we SKIP REVIEW STATUS because the handler is before save
+
+
+            gettattr => make string function name into a function variable and ready to be invoked
             """
             function = getattr(self, func_name)
             function()
@@ -78,10 +99,15 @@ class BaseOrderConnector(AbstracOrderConnector):
         Only Take amount off order from wallet if order initialized
         """
         if self.instance.is_init:
+            if self.bot.is_stock():
+                amount = self.instance.amount
+            else:
+                amount = self.setup['investment_amount']
+                
             TransactionHistory.objects.create(
                 balance_uid=self.user_wallet,
                 side="debit",
-                amount=round(self.instance.amount, self.digits),
+                amount=formatdigit(amount, self.is_decimal),
                 transaction_detail={
                     "last_amount" : self.user_wallet_amount,
                     "description": "bot order",
@@ -90,6 +116,9 @@ class BaseOrderConnector(AbstracOrderConnector):
                     "order_uid": str(self.instance.order_uid)
                 },
             )
+        else:
+            """Must be BOT buy here"""
+            pass
     
     
     def on_buy_filled(self):
@@ -98,83 +127,132 @@ class BaseOrderConnector(AbstracOrderConnector):
             Can be BOT or USER
             """
             # create position and performance
-            position_uid,performance_uid = self.create_position_perfomance()
+            position,performance = self.create_position_perfomance()
         
         else:
             """
             Only Bot hedge behaviour
             """
-            position_uid,performance_uid =self.hedge_position_performance()
+            position,performance =self.update_position_performance()
         
         # create fee
-        self.create_fee(position_uid)
+
+        if self.instance.order_type != 'apps':
+            self.create_fee(position.position_uid)
             
         # update last pending transaction 
-        self.update_initial_transaction_position(position_uid)
+        self.update_initial_transaction_position(position.position_uid)
 
         # update to connect performance and prevent triger signal
-        Order.objects.filter(pk=self.instance.order_uid).update(performance_uid=performance_uid)
+        Order.objects.filter(pk=self.instance.order_uid).update(performance_uid=performance.performance_uid)
     
     def on_buy_cancel(self):
-        if self.instance.is_init and self.instance.status == 'pending':
+        """
+        stopping any order schedule on celery
+        """
+        
+        if self.instance.is_init and self.instance.status == 'cancel':
+            print(str(self.instance.order_uid))
             trans = TransactionHistory.objects.filter(
-                side='debit', transaction_detail__description='bot order', transaction_detail__order_uid=str(self.instance.order_uid))
+                side='debit', transaction_detail__description='bot order', transaction_detail__order_uid=str(self.instance.order_uid),transaction_detail__event='create')
             if trans.exists():
-                trans.delete()
+                print(trans)
+                trans.get().delete()
+            # cancel any pending shedule in celery worker
+            print("canceled")
+            try:
+                worker.control.revoke(self.instance.order_uid,terminate=True)
+            except Exception as e:
+                print(e)
 
-    def on_sell_placed(self):
-        pass
+    
     
     def on_sell_pending(self):
+        """
+        STILL DO NOTHING
+        
+        are we gonna to take position bot_cash_balance / real position values here before move to wallet?
+        problems:
+            we dont store current values of the position as a balance position,
+            current_values should not change in position when sell order is pending
+            surely not bot cash balance we take/hold in here
+        """
         pass
     
     
-    def on_sell_filled(self):
-        pass
+    
+    
     
     def on_sell_cancel(self):
-        pass
+        """
+        stopping any order schedule on celery
+        """
+       
+        # cancel any pending shedule in celery worker
+        try:
+            worker.control.revoke(self.instance.order_uid,terminate=True)
+        except Exception as e:
+            print(e)
+    
 
-    def hedge_position_performance(self):
+    def transfer_to_wallet(self,position:OrderPosition):
+
+        amt = position.investment_amount + position.final_pnl_amount
+        return_amt = amt + position.bot_cash_dividend
+        TransactionHistory.objects.create(
+            balance_uid=self.user_wallet,
+            side="credit",
+            amount=formatdigit(return_amt,self.is_decimal) ,
+            transaction_detail={
+                "last_amount" : self.user_wallet_amount,
+                "description": "bot return",
+                "position": f"{position.position_uid}",
+                "event": "return",
+                "order_uid": str(self.instance.order_uid)
+            },
+        )
+
+
+    def update_position_performance(self):
         
         """
-        Only Bot hedge behaviour
+        Only Bot hedge behaviour and sell
         UPDATE the position and CREATE performance
         """
         
-        order = OrderPosition.objects.get(
+        position = OrderPosition.objects.get(
                         position_uid=self.instance.setup["position"]["position_uid"])
         key_list = list(self.instance.setup["position"])
 
         # UPDATE the position
         for key in key_list:
             if not key in ["created", "updated", "share_num"]:
-                if hasattr(order, key):
-                    field = order._meta.get_field(key)
+                if hasattr(position, key):
+                    field = position._meta.get_field(key)
                     if field.one_to_many or field.many_to_many or field.many_to_one or field.one_to_one:
                         raw_key = f"{key}_id"
                         setattr(
-                            order, raw_key, self.instance.setup["position"].pop(key))
+                            position, raw_key, self.instance.setup["position"].pop(key))
                     else:
-                        setattr(order, key,
+                        setattr(position, key,
                                 self.instance.setup["position"].pop(key))
         
         # remove field position_uid, cause it will double
         self.instance.setup["performance"].pop("position_uid")
         
         # CREATE performance from hedge setup
-        perf = PositionPerformance.objects.create(
-            position_uid=order,  # replace with self.instance
+        performance = PositionPerformance.objects.create(
+            position_uid=position,  # replace with self.instance
             # the rest is value from setup
             **self.instance.setup["performance"]
         )
 
-        perf.order_uid = self.instance
-        order.save()
-        perf.save()
+        performance.order_uid = self.instance
+        position.save()
+        performance.save()
 
         
-        return order.position_uid,perf.performance_uid 
+        return position,performance 
     
     def create_position_perfomance(self):
         """
@@ -183,7 +261,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         CREATE position and CREATE performance
         """
         margin=1
-        order = OrderPosition.objects.create(
+        position = OrderPosition.objects.create(
                     user_id=self.instance.user_id,
                     ticker=self.instance.ticker,
                     bot_id=self.instance.bot_id,
@@ -192,9 +270,9 @@ class BaseOrderConnector(AbstracOrderConnector):
                     is_live=True,
                     margin=margin
                 )
-        perf = PositionPerformance.objects.create(
+        performance = PositionPerformance.objects.create(
             created=self.instance.filled_at.date(),
-            position_uid=order,
+            position_uid=position,
             last_spot_price=self.instance.price,
             last_live_price=self.instance.price,
             order_uid=self.instance,
@@ -205,35 +283,36 @@ class BaseOrderConnector(AbstracOrderConnector):
         if not self.bot.is_stock():
 
             for key, val in self.instance.setup.items():
-                if hasattr(perf, key):
-                    setattr(perf, key, val)
-                if hasattr(order, key):
+                if hasattr(performance, key):
+                    setattr(performance, key, val)
+                if hasattr(position, key):
                     if key == "share_num":
                         continue
                     else:
-                        setattr(order, key, val)
+                        setattr(position, key, val)
                 else:
                     if key == "total_bot_share_num":
-                        setattr(order, "share_num", val)
+                        setattr(position, "share_num", val)
         else:
             # without bot
-            order.investment_amount = self.instance.amount
-            order.bot_cash_balance = 0
-            order.share_num = self.instance.qty
-            perf.share_num = self.instance.qty
+            position.investment_amount = self.instance.amount
+            position.bot_cash_balance = 0
+            position.share_num = self.instance.qty
+            performance.share_num = self.instance.qty
             # start creating position
-        perf.current_pnl_amt = 0  # need to calculate with fee
-        perf.current_bot_cash_balance = order.bot_cash_balance
+        performance.current_pnl_amt = 0  # need to calculate with fee
+        performance.current_bot_cash_balance = position.bot_cash_balance
 
-        perf.current_investment_amount = round(
-            perf.last_live_price * perf.share_num, self.digits)
-        perf.current_pnl_ret = (perf.current_bot_cash_balance + perf.current_investment_amount -
-                                order.investment_amount) / order.investment_amount
-        perf.order_id = self.instance
+        performance.current_investment_amount = formatdigit(
+            performance.last_live_price * performance.share_num, self.is_decimal)
+        performance.current_pnl_ret = (performance.current_bot_cash_balance + performance.current_investment_amount -
+                                position.investment_amount) / position.investment_amount
+        performance.order_id = self.instance
 
-        perf.save()
-        order.save()
-        return order.position_uid,perf.performance_uid
+        performance.save()
+        position.save()
+        
+        return position,performance
     
     
     
@@ -280,11 +359,11 @@ class BaseOrderConnector(AbstracOrderConnector):
         else:
             stamp_duty_fee = stamp_duty
         total_fee = commissions_fee + stamp_duty_fee
-        return formatdigit(commissions_fee), formatdigit(stamp_duty_fee), formatdigit(total_fee)
+        return formatdigit(commissions_fee, self.is_decimal), formatdigit(stamp_duty_fee, self.is_decimal), formatdigit(total_fee, self.is_decimal)
 
 
 
-    def create_fee(self,  position_uid,):
+    def create_fee(self,  position_uid):
         commissions_fee, stamp_duty_fee, total_fee = self.calculate_fee()
         
         if commissions_fee:
@@ -336,9 +415,13 @@ class LiveOrderConnector(BaseOrderConnector):
   
     def __init__(self,*args,**kwargs):
         super().__init__(*args, **kwargs)
-
+    
+    # TODO: #51 INTERACTIVE BROKER ORDER REQUEST
     def on_buy_placed(self):
-        print('sent order to broker')
+        print('sent buy order to broker')
+        
+    def on_sell_placed(self):
+        print('sent sell order to broker')
 
 class SimulationOrderConnector(BaseOrderConnector):
     """
@@ -353,6 +436,32 @@ class SimulationOrderConnector(BaseOrderConnector):
     def on_buy_placed(self):
         """do nothing"""
         pass
+
+    def on_sell_placed(self):
+        position_uid = self.instance.setup.get('position',{}).get('position_uid',None)
+        if not position_uid:
+            raise Exception('position_uid not found')
+    
+    def on_sell_filled(self):
+        """
+        if sell is successfully filled. we will unpack the setup
+        then update the position and creating performances
+        
+        - Only if position stop live we will transfer the money back to wallet
+        """
+        # TODO: #49 Please Check the logic here
+
+        # update position and create performance from setup 
+        position,performance = self.update_position_performance()
+        
+        if not position.is_live:
+            # transfer to wallet
+            self.transfer_to_wallet(position)
+            if self.instance.order_type != 'apps':
+                # apps no fee
+                self.create_fee(position.position_uid)
+        # update to connect performance and prevent triger signal
+        Order.objects.filter(pk=self.instance.order_uid).update(performance_uid=performance.performance_uid)
         
         
     
@@ -368,16 +477,16 @@ class OrderServices:
     
     def __init__(self,instance:Order):
         self.instance = instance
-        self.user_wallet = instance.user_id.user_balance
-        self.user_wallet_amount = instance.user_id.amount
-        self.user_wallet_currency = instance.user_id.user_balance.currency_code
+        self.user_wallet = instance.user_id.wallet
+        self.user_wallet_amount = instance.user_id.balance
+        self.user_wallet_currency = instance.user_id.currency
         self.bot = BotOptionType.objects.get(bot_id=instance.bot_id)
         self.order_property = self.__dict__
 
     
     
     def process_transaction(self):
-        if self.live():
+        if self.instance.order_type == 'live':
             handler = LiveOrderConnector(**self.order_property)
         else:
             handler = SimulationOrderConnector(**self.order_property)
