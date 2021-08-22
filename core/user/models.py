@@ -1,18 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from .manager import AppUserManager
-from django.core.exceptions import ValidationError
 import uuid
-from django.utils import timezone
-from core.universe.models import Currency, Country
-from datetime import datetime, date
+from core.universe.models import Currency
 from django.db import IntegrityError
-from django.conf import settings
-import time
 from django.db.models import (
-    Case, When, Value,
-    F, FloatField, ExpressionWrapper,
-    Sum, Q, Lookup
+    Sum
 )
 import base64
 from core.djangomodule.models import BaseTimeStampModel
@@ -205,8 +198,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def total_fee_amount(self):
-        transaction=self.user_balance.account_transaction.filter(
-            transaction_detail__event__in=['fee','stamp_duty']).aggregate(total=Sum('amount'))
+        transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=['fee']).aggregate(total=Sum('amount'))
         if transaction['total']:
             result = round(transaction['total'], 2)
             return result
@@ -214,8 +206,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def total_stamp_amount(self):
-        transaction=self.user_balance.account_transaction.filter(
-            transaction_detail__event__in=['stamp_duty']).aggregate(total=Sum('amount'))
+        transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=['stamp_duty']).aggregate(total=Sum('amount'))
         if transaction['total']:
             result = round(transaction['total'], 2)
             return result
@@ -223,10 +214,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def total_commission_amount(self):
-        transaction=self.user_balance.account_transaction.filter(
-            transaction_detail__event__in=['fee']).aggregate(total=Sum('amount'))
+        transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=['fee']).aggregate(total=Sum('amount'))
+        transaction2=self.user_balance.account_transaction.filter(transaction_detail__event__in=['stamp_duty']).aggregate(total=Sum('amount'))
         if transaction['total']:
-            result = round(transaction['total'], 2)
+            if transaction2['total']:
+                total2=transaction2['total']
+            else:
+                total2=0
+            result = round(transaction['total'] -total2, 2)
             return result
         return 0
 

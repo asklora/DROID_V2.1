@@ -6,6 +6,21 @@ from .models import BotOptionType
 from datetime import datetime
 
 
+
+
+class BotDetailSerializer(serializers.ModelSerializer):
+    bot_apps_name=serializers.SerializerMethodField()
+    bot_apps_description=serializers.SerializerMethodField()
+    class Meta:
+        model = BotOptionType
+        fields = ('bot_id','bot_option_type','bot_apps_name','bot_apps_description','duration')
+    
+    def get_bot_apps_name(self,obj) -> str:
+        return obj.bot_type.bot_apps_name
+    
+    def get_bot_apps_description(self,obj) -> str:
+        return obj.bot_type.bot_apps_description
+
 class BotHedgerSerializer(serializers.Serializer):
     bot_id=serializers.CharField(required=True,write_only=True)
     ticker=serializers.CharField(required=True,write_only=True)

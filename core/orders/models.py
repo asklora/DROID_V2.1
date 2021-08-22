@@ -34,7 +34,7 @@ class Order(BaseTimeStampModel):
     price = models.FloatField()
     performance_uid = models.CharField(null=True, blank=True, max_length=255)
     qty = models.FloatField(null=True, blank=True)
-
+    history = HistoricalRecords(table_name='order_changes_history')
     class Meta:
         managed = True
         db_table = "orders"

@@ -74,7 +74,7 @@ class UniverseConsumer(WebsocketConsumer):
             self.room_group_name,
             text_data_json
         ))
-
+    
     @touch_presence
     def ping(self, event):
         print("ping event", event)
@@ -212,3 +212,35 @@ class OrderConsumer(AsyncWebsocketConsumer):
         # Send message to WebSocket
         await self.send(text_data=json.dumps(event))
         asyncio.ensure_future(self.force_close())
+
+
+class TestConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+
+        await self.accept()
+        self.room_group_name='test_channel'
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+    
+    async def receive(self, text_data):
+        print(text_data)
+        text_data_json = json.loads(text_data)
+
+        await self.channel_layer.send(
+                self.channel_name,
+                text_data_json
+            )
+    
+    async def send_message(self, event):
+        event.pop('type')
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps(event))
+    
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
