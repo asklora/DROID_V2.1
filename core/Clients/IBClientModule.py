@@ -167,7 +167,7 @@ class Client():
 						"tif": "DAY"
 					}
 				payload = json.dumps(payload)
-				status, mesage = self.request_data(method='post', endpoint=endpoint, data=payload)
+				status, message = self.request_data(method='post', endpoint=endpoint, data=payload)
 				if status:
 					print("Success")
 					print(message)
