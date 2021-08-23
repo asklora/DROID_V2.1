@@ -278,7 +278,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     else:
         total_bot_share_num = round(investment_amount / price, 0)
     bot_hedge_share = math.floor(delta *total_bot_share_num)
-    bot_cash_balance = investment_amount - (bot_hedge_share * price), digits
+    bot_cash_balance = round(investment_amount - (bot_hedge_share * price), digits)
     data['performance']["last_hedge_delta"] = delta
     data['performance']["option_price"] = option_price
     data['performance']["t"] = t
@@ -382,7 +382,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     else:
         total_bot_share_num = round(investment_amount / price, 1)
     bot_hedge_share = math.floor(delta *total_bot_share_num)
-    bot_cash_balance = investment_amount - (bot_hedge_share * price), digits
+    bot_cash_balance = round(investment_amount - (bot_hedge_share * price), digits)
     data['performance']["option_price"] = option_price
     data['performance']["t"] = t
     data['performance']["last_hedge_delta"] = delta

@@ -203,7 +203,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def total_pending_amount(self):
         pending_transaction=self.user_order.filter(status='pending').aggregate(total=Sum(Case(
-            When(~Q(bot_id='STOCK_stock_0'),then=Cast('setup__perfromance_current_bot_cash_balance',FloatField())+F('amount')),
+            When(~Q(bot_id='STOCK_stock_0'),then=Cast('setup__performance__current_bot_cash_balance',FloatField())+F('amount')),
             default='amount',
             output_field=FloatField()
         )))

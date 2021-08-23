@@ -76,7 +76,7 @@ def order_executor(self, payload, recall=False):
         if order.bot_id == 'STOCK_stock_0' or order.side=='sell':
             share = order.qty
         else:
-            share = order.setup['share_num']
+            share = order.setup['performance']['share_num']
         Model = apps.get_model('orders', 'Order')
         market = TradingHours(mic=order.ticker.mic)
         market.is_open
