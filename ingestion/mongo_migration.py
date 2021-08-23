@@ -18,7 +18,9 @@ from general.sql_query import (
     get_latest_price_data,
     get_latest_ranking,
     get_latest_ranking_rank_1, 
-    get_master_tac_data, 
+    get_master_tac_data,
+    get_orders_position,
+    get_orders_position_performance, 
     get_region, 
     get_universe_rating, 
     get_universe_rating_detail_history, 
@@ -297,6 +299,9 @@ def mongo_universe_update(ticker=None, currency_code=None):
 
 def firebase_user_update(user_id=None, currency_code=None):
     print("Start User Populate")
+    bot_type = get_bot_type()
+    bot_option_type = get_bot_option_type()
+    bot_option_type = bot_option_type.merge(bot_type, how="left", on=["bot_type"])
     currency = get_currency_data(currency_code=currency_code)
     currency = currency[["currency_code", "is_decimal"]]
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")
@@ -307,6 +312,20 @@ def firebase_user_update(user_id=None, currency_code=None):
     user_core.loc[user_core["is_decimal"] == True, "balance"] = round(user_core.loc[user_core["is_decimal"] == True, "balance"], 2)
     user_core.loc[user_core["is_decimal"] == False, "balance"] = round(user_core.loc[user_core["is_decimal"] == False, "balance"], 0)
     print(user_core)
+
+    for user in user_core["user_id"].unique():
+        orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
+        orders_position = get_orders_position(user_id=[user], active=True, field=orders_position_field)
+        orders_performance_field = "position_uid, share_num, order_uid"
+        orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)
+        orders_position = orders_position.merge(orders_performance, how="left", on=["position_uid"])
+        orders_position = orders_position.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
+        print(orders_position)
+        print(orders_position.columns)
+        import sys
+        sys.exit(1)
+
+
 # def mongo_create_currency():
 #     collection = json.load(open("files/file_json/validator_currency.json"))
 #     print(collection)
