@@ -22,7 +22,7 @@ class Client():
 			req = requests.get(endpoint, verify=False)
 
 		
-		print(f"{req.headers} - {req.status_code} - {req.text}")
+		print(f"{req.headers} - {req.status_code}")
 		
 		if req.status_code == 200:
 			res = req.json()
@@ -116,8 +116,12 @@ class Client():
 				return message
 			else:
 				return f"QTY must in integer not in {type(qty)}"
+	
+	def get_position(self,accountId,conid):
+		stat,res =self.request_data('get',f'https://localhost:5000/v1/api/portfolio/{accountId}/positions/{conid}')
+		print(res)
 
 
-if __name__=="__main__":
-	c = Client()
-	c.find_contract('FB')
+# if __name__=="__main__":
+# 	c = Client()
+# 	c.find_contract('FB')

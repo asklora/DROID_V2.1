@@ -133,11 +133,18 @@ class PositionSerializer(serializers.ModelSerializer):
             return result
         return 0
 
-    def get_total_fee(self, obj) -> float:
-        transaction = TransactionHistory.objects.filter(
-            transaction_detail__event__in=["fee", "stamp_duty"], transaction_detail__position=obj.position_uid).aggregate(total=Sum("amount"))
-        if transaction["total"]:
-            result = round(transaction["total"], 2)
+    
+    def get_total_fee(self,obj)-> float:
+        transaction=TransactionHistory.objects.filter(
+            transaction_detail__event__in=['fee'],transaction_detail__position=obj.position_uid).aggregate(total=Sum('amount'))
+        transaction2=TransactionHistory.objects.filter(transaction_detail__event__in=['stamp_duty'],transaction_detail__position=obj.position_uid).aggregate(total=Sum('amount'))
+        if transaction['total']:
+            if transaction2['total']:
+                total2=transaction2['total']
+            else:
+                total2=0
+            result = round(transaction['total'] -total2, 2)
+
             return result
         return 0
 
@@ -318,6 +325,7 @@ class OrderPortfolioCheckSerializer(serializers.Serializer):
 
 
 class OrderUpdateSerializer(serializers.ModelSerializer):
+    user = serializers.CharField(required=False)
     status = serializers.CharField(read_only=True)
     setup = serializers.JSONField(read_only=True)
     qty = serializers.FloatField(read_only=True)
@@ -327,13 +335,16 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ["price", "bot_id", "amount",
-                  "order_uid", "status", "qty", "setup","fee"]
+                  "order_uid", "status", "qty", "setup", "fee", "user"]
 
     def update(self, instance, validated_data):
         request = self.context.get("request", None)
-        if request:
+        if validated_data.get("user", None):
+            usermodel = apps.get_model("user", "User")
+            user = usermodel.objects.get(id=validated_data.pop("user"))
+        else:
             user = request.user
-        
+
         if validated_data["amount"] > user.user_balance.amount:
             raise exceptions.NotAcceptable({"detail": "insuficent balance"})
         if validated_data["amount"] <= 0:

@@ -99,10 +99,15 @@ class BaseOrderConnector(AbstracOrderConnector):
         Only Take amount off order from wallet if order initialized
         """
         if self.instance.is_init:
+            if self.bot.is_stock():
+                amount = self.instance.amount
+            else:
+                amount = self.instance.setup['investment_amount']
+                
             TransactionHistory.objects.create(
                 balance_uid=self.user_wallet,
                 side="debit",
-                amount=formatdigit(self.instance.amount, self.is_decimal),
+                amount=formatdigit(amount, self.is_decimal),
                 transaction_detail={
                     "last_amount" : self.user_wallet_amount,
                     "description": "bot order",
@@ -146,13 +151,20 @@ class BaseOrderConnector(AbstracOrderConnector):
         stopping any order schedule on celery
         """
         
-        if self.instance.is_init and self.instance.status == 'pending':
+        if self.instance.is_init and self.instance.status == 'cancel':
+            print(str(self.instance.order_uid))
             trans = TransactionHistory.objects.filter(
-                side='debit', transaction_detail__description='bot order', transaction_detail__order_uid=str(self.instance.order_uid))
+                side='debit', transaction_detail__description='bot order', transaction_detail__order_uid=str(self.instance.order_uid),transaction_detail__event='create')
             if trans.exists():
-                trans.delete()
-        # cancel any pending shedule in celery worker
-        worker.control.revoke(self.instance.order_uid,terminate=True)
+                print(trans)
+                trans.get().delete()
+            # cancel any pending shedule in celery worker
+            print("canceled")
+            try:
+                worker.control.revoke(self.instance.order_uid,terminate=True)
+            except Exception as e:
+                print(e)
+
     
     
     def on_sell_pending(self):
@@ -177,7 +189,10 @@ class BaseOrderConnector(AbstracOrderConnector):
         """
        
         # cancel any pending shedule in celery worker
-        worker.control.revoke(self.instance.order_uid,terminate=True)
+        try:
+            worker.control.revoke(self.instance.order_uid,terminate=True)
+        except Exception as e:
+            print(e)
     
 
     def transfer_to_wallet(self,position:OrderPosition):
@@ -267,17 +282,12 @@ class BaseOrderConnector(AbstracOrderConnector):
         # if bot
         if not self.bot.is_stock():
 
-            for key, val in self.instance.setup.items():
+            for key, val in self.instance.setup['performance'].items():
                 if hasattr(performance, key):
                     setattr(performance, key, val)
-                if hasattr(position, key):
-                    if key == "share_num":
-                        continue
-                    else:
-                        setattr(position, key, val)
-                else:
-                    if key == "total_bot_share_num":
-                        setattr(position, "share_num", val)
+            for key, val in self.instance.setup['position'].items():
+                if key == "total_bot_share_num":
+                    setattr(position, "share_num", val)
         else:
             # without bot
             position.investment_amount = self.instance.amount

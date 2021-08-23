@@ -384,7 +384,7 @@ class DataFundamentalScore(models.Model):
     ppe_impairment = models.FloatField(blank=True, null=True)
     mkt_cap_usd = models.FloatField(blank=True, null=True)
     eps_lastq = models.FloatField(blank=True, null=True)
-    
+
     class Meta:
         managed = True
         db_table = "data_fundamental_score"
@@ -584,6 +584,7 @@ class WorldscopeSummary(models.Model):
     fn_18810 = models.FloatField(blank=True, null=True)
     fn_2401 = models.FloatField(blank=True, null=True)
     fn_18274 = models.FloatField(blank=True, null=True)
+
 
     class Meta:
         managed = True

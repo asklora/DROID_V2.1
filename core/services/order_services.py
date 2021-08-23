@@ -25,6 +25,7 @@ class OrderDetailsServicesSerializers(serializers.ModelSerializer):
 def order_executor(self, payload, recall=False):
     payload = json.loads(payload)
     Model = apps.get_model('orders', 'Order')
+    Exchange = apps.get_model('universe', 'ExchangeMarket')
     try:
         order = Model.objects.get(order_uid=payload['order_uid'])
     except Model.DoesNotExist:
@@ -65,7 +66,6 @@ def order_executor(self, payload, recall=False):
             order.placed = True
             order.placed_at = datetime.now()
             order.save()
-    
 
     # debug only
     # time.sleep(10)
@@ -77,9 +77,11 @@ def order_executor(self, payload, recall=False):
             share = order.qty
         else:
             share = order.setup['share_num']
+        Model = apps.get_model('orders', 'Order')
         market = TradingHours(mic=order.ticker.mic)
-        opens=True
-        if opens:
+        market.is_open
+        market_db = Exchange.objects.get(mic=order.ticker.mic)
+        if market_db.is_open:
             order.status = 'filled'
             order.filled_at = datetime.now()
             order.save()
@@ -94,7 +96,7 @@ def order_executor(self, payload, recall=False):
             # create schedule to next bell and will recrusive until market status open
             # still keep sending message. need to improve
             order_executor.apply_async(args=(json.dumps(payload),), kwargs={
-                                    'recall': True}, eta=market.next_bell)
+                                    'recall': True}, eta=market.next_bell,task_id=str(order.order_uid))
     else:
         """
         we need message if order is cancel
