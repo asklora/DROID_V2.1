@@ -4,9 +4,9 @@ import json
 class Client():
 
 	def __init__(self):
-		# gateway_host = f"https://47.242.9.23"
-		gateway_host = f"https://localhost"
+		gateway_host = "https://47.242.9.23"
 		gateway_port = f"5000"
+
 		self.gateway_url = f"{gateway_host}:{gateway_port}"
 		self.json_headers = {
 			"Content-Type":"application/json"
@@ -17,20 +17,28 @@ class Client():
 		if method.lower() == 'post':
 			if not data:
 				return False, "there is no payload attach, please put the payload in"
+			print("Request POST")
 			req = requests.post(endpoint, headers=header, data=data, verify=False)
 		elif method.lower() == 'get':
 			req = requests.get(endpoint, verify=False)
+		elif method.lower() == 'put':
+			req = requests.put(endpoint, data=data, headers=header, verify=False)
+		elif method.lower() == 'delete':
+			req = requests.delete(endpoint, verify=False)
+		else:
+			return False, "request method not registered"
 
-		
-		print(f"{req.headers} - {req.status_code}")
+		print(f"{req.headers} - {req.status_code} - {req.text}")
 		
 		if req.status_code == 200:
 			res = req.json()
+			print(json.dumps(res, sort_keys=True, indent=4))
 			return True, res
 		else:
 			print(f"\n {header} \n {data} - {type(data)}\n {endpoint} \n {method}")
 			if req.status_code == 401:
-				print("Session ended unexpectedly")
+				message = "Session ended unexpectedly"
+				return False, message
 		return False, None
 
 	def get_account(self):
@@ -50,11 +58,11 @@ class Client():
 				messages.append(msg['id'])
 		print(messages)
 		return messages
-			
 
+	"""
 	def find_contract(self, ticker_id):
 		endpoint = self.gateway_url+"/v1/portal/iserver/secdef/search"
-		""" as stephen says we traded Stock only, so i set it to STK in secType"""
+		#  as stephen says we traded Stock only, so i set it to STK in secType
 		payload = {
 			"symbol":ticker_id,
 			"name":False,
@@ -62,6 +70,7 @@ class Client():
 		}
 		payload = json.dumps(payload)
 		status, message = self.request_data(method='post', endpoint=endpoint, data=payload)
+		print(f"Messages >> {message}")
 		if status:
 			if isinstance(message, list):
 				messages = []
@@ -73,11 +82,58 @@ class Client():
 						"description":res['description']
 					}
 					messages.append(msg)
-			print(messages)
 			return messages
 		else:
 			return message
+		"""
 
+	def find_contract(self, ticker_id):
+		url = f"{self.gateway_url}/v1/api/trsrv/stocks?symbols={ticker_id}"
+		status, response = self.request_data('get',url)
+		response = None
+		if status:
+			contracts = response[ticker_id]
+			for contract in contracts:
+				for data in contract:
+					if data['assetClass'] == "STK":
+						for con in data['contracts']:
+							if con['isUS']:
+								response = con
+			return response
+		else:
+			return None
+
+
+	def limit_order(self, account_id, con_order_id, price, qty, conID=None, ticker=None):
+		if account_id not in self.get_account():
+			return "Account ID is not registered"
+		else:
+			if not conID:
+				if not ticker:
+					return "please submit your ticker symbol or contract id"
+				list_of_contract = self.find_contract(ticker)
+				if not list_of_contract:
+					return "Failed to fetch data"
+				conID = list_of_contract['conid']
+
+		endpoint = f'{self.gateway_url}/v1/api/iserver/account/{account_id}/order'
+		payload = {
+			"conid": conID,
+			"secType": f"{conID}:STK",
+			"cOID": con_order_id,
+			"orderType": "LMT",
+			"price": price,
+			"side": "BUY",
+			"quantity": qty,
+			"tif": "DAY"
+		}
+		payload = json.dumps(payload)
+		status, message = self.request_data(method='post', endpoint=endpoint, data=payload)
+		print(f"{status} - {message}")
+		if not status:
+			return f"Failed to order"
+		else:
+			return message
 
 	def market_order(self, qty, account_id, con_order_id, conID=None, ticker=None):
 		if account_id not in self.get_account():
@@ -87,10 +143,14 @@ class Client():
 				if not ticker:
 					return "please submit your ticker symbol or contract id"
 				list_of_contract = self.find_contract(ticker)
+				if not list_of_contract:
+					return "Failed to fetch data"
+				conID = list_of_contract['conid']
+
 				"""==== this is just debug for AAPL stock, comment out this pat and you should choose the conrtact id ===="""
-				for con in list_of_contract:
-					if con['description'] == 'NASDAQ': 
-						conID = con['contract_id']
+				# for con in list_of_contract:
+				# 	if con['description'] == 'NASDAQ': 
+				# 		conID = con['contract_id']
 				""" ======================================================================================================"""
 				""" if you comment out the code above, you should not comment out the return below""" 
 				# return list_of_contract
@@ -116,10 +176,39 @@ class Client():
 				return message
 			else:
 				return f"QTY must in integer not in {type(qty)}"
-	
-	def get_position(self,accountId,conid):
-		stat,res =self.request_data('get',f'https://localhost:5000/v1/api/portfolio/{accountId}/positions/{conid}')
-		print(res)
+
+	def order_status(self, orderId):
+		url = f"{self.gateway_url}/v1/api/iserver/account/order/status/{orderId}"
+		status, response = self.request_data("get")
+		if status:
+			return response
+		else:
+			return "Failed to fetch data"
+
+	def cancel_order(self, account_id, orderId):
+		url = f"{self.gateway_url}/v1/api/iserver/account/{account_id}/order/{orderId}"
+		status, response = self.request_data('delete', url)
+		if status:
+			return response
+		else:
+			return "Failed to fetch data"
+
+	def get_position(self, account_id, conID, orderId):
+		url = f"{self.gateway_url}/v1/api/portfolio/{account_id}/positions/{conID}"
+		stat,res =self.request_data('get', url)
+		print(stat,res)
+		if stat:
+			return res
+		else:
+			return "Failed to fetch data"
+
+	def portofolio_account(self):
+		url = f"{self.gateway}/v1/api/portfolio/accounts"
+		status, response = self.request_data("get", url)
+		if status:
+			return response
+		else:
+			return "Failed to fetch data"
 
 
 # if __name__=="__main__":
