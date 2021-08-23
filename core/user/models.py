@@ -123,7 +123,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def balance(self):
-        return round(self.user_balance.amount - self.total_pending_amount,2)
+        return round(self.user_balance.amount + self.total_pending_amount,2)
 
     @property
     def wallet(self):
