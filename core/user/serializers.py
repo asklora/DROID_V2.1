@@ -95,6 +95,9 @@ class UserSerializer(serializers.ModelSerializer):
     total_stamp_amount = serializers.FloatField(read_only=True)
     total_commission_amount = serializers.FloatField(read_only=True)
     currency = serializers.CharField(read_only=True)
+    total_user_invested_amount = serializers.FloatField(read_only=True)
+    total_bot_invested_amount = serializers.FloatField(read_only=True)
+    total_pending_amount = serializers.FloatField(read_only=True)
 
     class Meta:
         model = User
@@ -117,6 +120,10 @@ class UserSummarySerializer(serializers.ModelSerializer):
     total_stock_amount = serializers.FloatField(read_only=True)
     total_stamp_amount = serializers.FloatField(read_only=True)
     total_commission_amount = serializers.FloatField(read_only=True)
+    currency = serializers.CharField(read_only=True)
+    total_user_invested_amount = serializers.FloatField(read_only=True)
+    total_bot_invested_amount = serializers.FloatField(read_only=True)
+    total_pending_amount = serializers.FloatField(read_only=True)
 
     class Meta:
         model = User
@@ -138,4 +145,7 @@ class UserSummarySerializer(serializers.ModelSerializer):
             "total_fee_amount",
             "total_stamp_amount",
             "total_commission_amount",
+            "total_user_invested_amount",
+            "total_bot_invested_amount",
+            "total_pending_amount"
         )

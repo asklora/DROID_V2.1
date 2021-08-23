@@ -150,6 +150,22 @@ class User(AbstractBaseUser, PermissionsMixin):
         return 0
     
     @property
+    def total_user_invested_amount(self):
+        order = self.user_position.filter(user_id=self,is_live=True,bot_id='STOCK_stock_0').aggregate(total=Sum('investment_amount'))
+        if order['total']:
+            result = round(order['total'], 2)
+            return result
+        return 0
+    
+    @property
+    def total_bot_invested_amount(self):
+        order = self.user_position.filter(user_id=self,is_live=True).exclude(bot_id='STOCK_stock_0').aggregate(total=Sum('investment_amount'))
+        if order['total']:
+            result = round(order['total'], 2)
+            return result
+        return 0
+
+    @property
     def total_invested_amount(self):
         order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum('investment_amount'))
         if order['total']:
@@ -176,11 +192,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def current_total_investment_value(self):
-        # USER BOT INVESTMENT
+        # USER all INVESTMENT VALUE UNREALIZED
         order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum('current_values'))
         if order['total']:
             result = round(order['total'], 2)
             return result
+        return 0
+    
+    @property
+    def total_pending_amount(self):
+        pending_transaction=self.user_order.filter(status='pending').aggregate(total=Sum('amount'))
+        if pending_transaction['total']:
+            return pending_transaction['total']
         return 0
     
     @property
