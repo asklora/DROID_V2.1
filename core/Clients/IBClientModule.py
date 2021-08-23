@@ -22,7 +22,7 @@ class Client():
 			req = requests.get(endpoint, verify=False)
 
 		
-		# print(f"{req.headers} - {req.status_code} - {req.text}")
+		print(f"{req.headers} - {req.status_code}")
 		
 		if req.status_code == 200:
 			res = req.json()

@@ -18,7 +18,7 @@ class Command(BaseCommand):
         # c.get_position('DU2898616',0)
         # c.market_order(2,'DU2898616','order first',265598)
         
-        c.find_contract('MSFT')
+        c.find_contract('TSLA')
         # app.control.revoke('eb3cdebb-1c89-44d0-a022-65527f2863ee', terminate=True)
 
         # daily_hedge(currency="KRW",rehedge={

@@ -5,8 +5,9 @@ import uuid
 from core.universe.models import Currency
 from django.db import IntegrityError
 from django.db.models import (
-    Sum
+    Sum,Case,When,F,Q,FloatField
 )
+from django.db.models.functions import Cast
 import base64
 from core.djangomodule.models import BaseTimeStampModel
 from core.djangomodule.general import nonetozero
@@ -201,14 +202,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def total_pending_amount(self):
-        pending_transaction=self.user_order.filter(status='pending').aggregate(total=Sum('amount'))
+        pending_transaction=self.user_order.filter(status='pending').aggregate(total=Sum(Case(
+            When(~Q(bot_id='STOCK_stock_0'),then=Cast('setup__position_bot_cash_balance',FloatField())+F('amount')),
+            default='amount',
+            output_field=FloatField()
+        )))
         if pending_transaction['total']:
             return pending_transaction['total']
         return 0
     
     @property
     def total_amount(self):
-        return round(self.balance  + self.current_total_investment_value + self.total_pending_amount,2)
+        return round(self.balance  + self.current_total_investment_value + self.total_pending_amount ,2)
     
     
     @property
