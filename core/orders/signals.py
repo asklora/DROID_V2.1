@@ -45,7 +45,7 @@ def order_signal_check(sender, instance, **kwargs):
         if instance.bot_id != "STOCK_stock_0":
             setup = generate_hedge_setup(instance)
             instance.setup = setup
-            instance.qty = setup["share_num"]
+            instance.qty = setup['performance']["share_num"]
             instance.amount = formatdigit(setup["share_num"] * setup['price'])
         else:
             instance.setup = None
