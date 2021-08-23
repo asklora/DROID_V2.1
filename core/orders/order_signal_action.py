@@ -282,17 +282,12 @@ class BaseOrderConnector(AbstracOrderConnector):
         # if bot
         if not self.bot.is_stock():
 
-            for key, val in self.instance.setup.items():
+            for key, val in self.instance.setup['performance'].items():
                 if hasattr(performance, key):
                     setattr(performance, key, val)
-                if hasattr(position, key):
-                    if key == "share_num":
-                        continue
-                    else:
-                        setattr(position, key, val)
-                else:
-                    if key == "total_bot_share_num":
-                        setattr(position, "share_num", val)
+            for key, val in self.instance.setup['position'].items():
+                if key == "total_bot_share_num":
+                    setattr(position, "share_num", val)
         else:
             # without bot
             position.investment_amount = self.instance.amount

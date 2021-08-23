@@ -25,6 +25,7 @@ class OrderDetailsServicesSerializers(serializers.ModelSerializer):
 def order_executor(self, payload, recall=False):
     payload = json.loads(payload)
     Model = apps.get_model('orders', 'Order')
+    Exchange = apps.get_model('universe', 'ExchangeMarket')
     try:
         order = Model.objects.get(order_uid=payload['order_uid'])
     except Model.DoesNotExist:
@@ -76,9 +77,11 @@ def order_executor(self, payload, recall=False):
             share = order.qty
         else:
             share = order.setup['share_num']
+        Model = apps.get_model('orders', 'Order')
         market = TradingHours(mic=order.ticker.mic)
-        debug=True
-        if market.is_open:
+        market.is_open
+        market_db = Exchange.objects.get(mic=order.ticker.mic)
+        if market_db.is_open:
             order.status = 'filled'
             order.filled_at = datetime.now()
             order.save()
