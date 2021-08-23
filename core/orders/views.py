@@ -149,7 +149,8 @@ class PositionDetailViews(views.APIView):
                 description="Bad request: position not found", response=errserializer
             ),
             403: OpenApiResponse(
-                description="Bad request: position does not belong to current user", response=errserializer
+                description="Bad request: position does not belong to current user",
+                response=errserializer,
             ),
         },
     )
@@ -169,7 +170,8 @@ class PositionDetailViews(views.APIView):
                 )
 
         return response.Response(
-            {"detail": f"{position_uid} does not exist"}, status=status.HTTP_404_NOT_FOUND
+            {"detail": f"{position_uid} does not exist"},
+            status=status.HTTP_404_NOT_FOUND,
         )
 
 
@@ -273,7 +275,7 @@ class OrderGetViews(viewsets.ViewSet):
     """
     Get details of an order
     """
-    
+
     permission_classes = (IsRegisteredUser,)
 
     @extend_schema(
@@ -281,7 +283,12 @@ class OrderGetViews(viewsets.ViewSet):
         # more customizations
     )
     def list(self, request):
-        instances = Order.objects.prefetch_related('ticker').filter(user_id=request.user).exclude(status__in=['review',None]).order_by('-created')
+        instances = (
+            Order.objects.prefetch_related("ticker")
+            .filter(user_id=request.user)
+            .exclude(status__in=["review", None])
+            .order_by("-created")
+        )
         self.serialzer_class = OrderListSerializers
         return response.Response(
             OrderListSerializers(instances, many=True).data, status=status.HTTP_200_OK
