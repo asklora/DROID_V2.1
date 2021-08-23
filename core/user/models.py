@@ -123,7 +123,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def balance(self):
-        return self.user_balance.amount
+        return round(self.user_balance.amount - self.total_pending_amount,2)
 
     @property
     def wallet(self):
@@ -208,7 +208,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def total_amount(self):
-        return round(self.balance + self.current_total_investment_value,2)
+        return round(self.balance  + self.current_total_investment_value,2)
     
     
     @property
