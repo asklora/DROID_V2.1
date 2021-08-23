@@ -181,22 +181,22 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry
 
     data = {
         "price": price,
-        'performance':{},
-        'position':{}
+        "performance":{},
+        "position":{}
     }
-    data['performance']["vol"] = dur
-    data['performance']["share_num"] = data["total_bot_share_num"]
-    data['perfromance']["last_hedge_delta"] = 1
-    data['position']["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
-    data['position']["total_bot_share_num"] = math.floor(investment_amount / price)
-    data['position']["max_loss_pct"] = - (dur * classic_vol * 1.25)
-    data['position']["max_loss_price"] = round(price * (1 + data["max_loss_pct"]), int(digits))
-    data['position']["max_loss_amount"] = round((data["max_loss_price"] - price) * data["share_num"], int(digits))
-    data['position']["target_profit_pct"] = (dur * classic_vol)
-    data['position']["target_profit_price"] = round(price * (1 + data["target_profit_pct"]), digits)
-    data['position']["target_profit_amount"] = round((data["target_profit_price"] - price) * data["share_num"], digits)
-    data['position']["bot_cash_balance"] = round(investment_amount - (data["share_num"] * price), 2)
-    data['position']["investment_amount"]=investment_amount
+    data["performance"]["vol"] = dur
+    data["perfromance"]["last_hedge_delta"] = 1
+    data["position"]["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
+    data["position"]["total_bot_share_num"] = math.floor(investment_amount / price)
+    data["performance"]["share_num"] = data["position"]["total_bot_share_num"]
+    data["position"]["max_loss_pct"] = - (dur * classic_vol * 1.25)
+    data["position"]["max_loss_price"] = round(price * (1 + data["position"]["max_loss_pct"]), int(digits))
+    data["position"]["max_loss_amount"] = round((data["position"]["max_loss_price"] - price) * data["performance"]["share_num"], int(digits))
+    data["position"]["target_profit_pct"] = (dur * classic_vol)
+    data["position"]["target_profit_price"] = round(price * (1 + data["position"]["target_profit_pct"]), digits)
+    data["position"]["target_profit_amount"] = round((data["position"]["target_profit_price"] - price) * data["performance"]["share_num"], digits)
+    data["position"]["bot_cash_balance"] = round(investment_amount - (data["performance"]["share_num"] * price), 2)
+    data["position"]["investment_amount"]=investment_amount
     return data
 
 
@@ -270,6 +270,10 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     targeted_profit = -1 * option_price / price
     delta = uno.deltaRC(price, strike, strike_2, t/365, r, q, v1, v2)
     delta = np.nan_to_num(delta, nan=0)
+    if(margin):
+        total_bot_share_num = round((investment_amount * 1.5) / price, 0)
+    else:
+        total_bot_share_num = round(investment_amount / price, 0)
     data['performace']["last_hedge_delta"] = delta
     data['performace']["option_price"] = option_price
     data['performace']["t"] = t
@@ -279,23 +283,18 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     data['performace']["strike_2"] = strike_2
     data['performace']["v1"] = v1
     data['performace']["v2"] = v2
-    data['performace']["share_num"] = math.floor(delta * data["total_bot_share_num"])
+    data['performace']["share_num"] = math.floor(delta * total_bot_share_num)
     data['performace']["vol"] = vol
     data['position']["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
     data['position']["vol"] = vol
-    if(margin):
-        data['position']["total_bot_share_num"] = round((investment_amount * 1.5) / price, 0)
-    else:
-        data['position']["total_bot_share_num"] = round(investment_amount / price, 0)
+    data['position']["total_bot_share_num"] = total_bot_share_num
     data['position']["max_loss_pct"] = potential_loss
-    data['position']["max_loss_pct_display"] = round(data["max_loss_pct"] * 100, 2)
-    data['position']["max_loss_amount"] = round((strike_2 - strike) * data["total_bot_share_num"], int(digits))
+    data['position']["max_loss_amount"] = round((strike_2 - strike) * total_bot_share_num, int(digits))
     data['position']["max_loss_price"] = round(strike_2, int(digits))
     data['position']["target_profit_pct"] = targeted_profit
-    data['position']["target_profit_pct_display"] = round(data["target_profit_pct"] * 100, 2)
     data['position']["target_profit_price"] = round(((-1 * option_price) + price), int(digits))
-    data['position']["target_profit_amount"] = round(option_price * data["total_bot_share_num"], int(digits)) * -1
-    data['position']["bot_cash_balance"] = round(investment_amount - (data["share_num"] * price), digits)
+    data['position']["target_profit_amount"] = round(option_price * total_bot_share_num, int(digits)) * -1
+    data['position']["bot_cash_balance"] = round(investment_amount - (data['performace']["share_num"] * price), digits)
     data['position']["investment_amount"]=investment_amount
     return data
 
@@ -372,6 +371,10 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     option_price = np.nan_to_num(option_price, nan=0)
     potential_loss = -1 * option_price / price
     targeted_profit = (barrier-strike) / price
+    if(margin):
+        total_bot_share_num = round((investment_amount * 1.5) / price, 1)
+    else:
+        total_bot_share_num = round(investment_amount / price, 1)
     data['performance']["option_price"] = option_price
     data['performance']["t"] = t
     data['performance']["last_hedge_delta"] = delta
@@ -381,24 +384,20 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     data['performance']["barrier"] = barrier
     data['performance']["v1"] = v1
     data['performance']["v2"] = v2
-    data['performance']["share_num"] = math.floor(delta * data["total_bot_share_num"])
+    data['performance']["share_num"] = math.floor(delta *total_bot_share_num)
     data['performance']["vol"] = vol
+    data['position']["total_bot_share_num"] = total_bot_share_num
     data['position']["vol"] = vol
     data['position']["max_loss_pct"] = potential_loss
-    data['position']["max_loss_pct_display"] = round(data["max_loss_pct"] * 100, 2)
-    data['position']["max_loss_amount"] = round(option_price * data["total_bot_share_num"], int(digits)) * -1
+    data['position']["max_loss_amount"] = round(option_price * total_bot_share_num, int(digits)) * -1
     data['position']["max_loss_price"] = round(price - option_price, int(digits))
     data['position']["target_profit_pct"] = targeted_profit
-    data['position']["target_profit_pct_display"] = round(data["target_profit_pct"] * 100, 2)
     data['position']["target_profit_price"] = round(barrier, int(digits))
-    data['position']["target_profit_amount"] = round(rebate * data["total_bot_share_num"], int(digits))
-    data['position']["bot_cash_balance"] = round(investment_amount - (data["share_num"] * price), digits)
+    data['position']["target_profit_amount"] = round(rebate * total_bot_share_num, int(digits))
+    data['position']["bot_cash_balance"] = round(investment_amount - (data['performance']["share_num"] * price), digits)
     data['position']["investment_amount"]=investment_amount
     data['position']["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
-    if(margin):
-        data['position']["total_bot_share_num"] = round((investment_amount * 1.5) / price, 1)
-    else:
-        data['position']["total_bot_share_num"] = round(investment_amount / price, 1)
+    
     
     return data
 
