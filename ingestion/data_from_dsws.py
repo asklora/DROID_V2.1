@@ -44,15 +44,20 @@ from general.sql_query import (
     get_active_universe_consolidated_by_field, 
     get_all_universe, get_data_by_table_name,
     get_data_ibes_monthly,
-    get_data_macro_monthly, 
+    get_data_macro_monthly,
+    get_factor_calculation_formula,
+    get_factor_rank,
     get_fundamentals_score,
     get_ibes_new_ticker, 
     get_last_close_industry_code, 
     get_max_last_ingestion_from_universe, 
     get_pred_mean, 
-    get_specific_tri, 
+    get_specific_tri,
+    get_specific_tri_avg,
+    get_specific_volume_avg,
     get_universe_rating, 
-    get_vix)
+    get_vix,
+    get_master_ohlcvtr_data)
 from general.date_process import (
     backdate_by_day, 
     backdate_by_month,
@@ -353,7 +358,112 @@ def check_trading_day(days = 0):
     else:
         return today.strftime("%Y-%m-%d")
 
-    
+def score_update_vol_rs(list_of_start_end, days_in_year=256):
+    ''' Calculate roger satchell volatility:
+        daily = average over period from start to end: Log(High/Open)*Log(High/Close)+Log(Low/Open)*Log(Open/Close)
+        annualized = sqrt(daily*256)
+    '''
+
+    tri = get_master_ohlcvtr_data(trading_day=backdate_by_month(list_of_start_end[-1][-1]))
+    open_data, high_data, low_data, close_data = tri['open'].values, tri['high'].values, tri['low'].values, tri[
+        'close'].values
+
+    # Calculate daily volatility
+    hc_ratio = np.divide(high_data, close_data)
+    log_hc_ratio = np.log(hc_ratio.astype(float))
+    ho_ratio = np.divide(high_data, open_data)
+    log_ho_ratio = np.log(ho_ratio.astype(float))
+    lo_ratio = np.divide(low_data, open_data)
+    log_lo_ratio = np.log(lo_ratio.astype(float))
+    lc_ratio = np.divide(low_data, close_data)
+    log_lc_ratio = np.log(lc_ratio.astype(float))
+
+    input1 = np.multiply(log_hc_ratio, log_ho_ratio)
+    input2 = np.multiply(log_lo_ratio, log_lc_ratio)
+    sum_ = np.add(input1, input2)
+
+    # Calculate annualize volatility
+    vol_col = []
+    for l in list_of_start_end:
+        start, end = l[0], l[1]
+        name_col = f'vol_{start}_{end}'
+        vol_col.append(name_col)
+        tri[name_col] = sum_
+        tri[name_col] = tri.groupby('ticker')[name_col].rolling(end - start, min_periods=1).mean().reset_index(drop=1)
+        tri[name_col] = tri[name_col].apply(lambda x: np.sqrt(x * days_in_year))
+        tri[name_col] = tri[name_col].shift(start)
+        tri.loc[tri.groupby('ticker').head(end - 1).index, name_col] = np.nan  # y-1 ~ y0
+
+    return tri[['ticker']+vol_col].dropna(how='any').groupby(['ticker']).last().reset_index()
+
+def score_update_stock_return(list_of_start_end):
+    ''' Calculate specific period stock return (months) '''
+
+    df = pd.DataFrame(get_active_universe()['ticker'])
+
+    for l in list_of_start_end:
+        name_col = f'stock_return_{l[0]}_{l[1]}'
+        tri_start = get_specific_tri_avg(backdate_by_month(l[0]), avg_days=7, tri_name=f"tri_{l[0]}m")
+        tri_end = get_specific_tri_avg(backdate_by_month(l[1]), avg_days=7, tri_name=f"tri_{l[1]}m")
+        tri = tri_start.merge(tri_end, how="left", on="ticker")
+        tri[name_col] = tri[f"tri_{l[0]}m"] / tri[f"tri_{l[1]}m"]
+        df = df.merge(tri[["ticker", name_col]], how="left", on="ticker")
+        print(df)
+
+    return df
+
+def score_update_factor_ratios(df):
+    ''' Calculate all factor used referring to DB ratio table '''
+
+    formula = get_factor_calculation_formula()
+
+    print(df.columns)
+
+    # Prepare for field requires add/minus
+    add_minus_fields = formula[['field_num', 'field_denom']].dropna(how='any').to_numpy().flatten()
+    add_minus_fields = [i for i in list(set(add_minus_fields)) if any(['-' in i, '+' in i, '*' in i])]
+
+    for i in add_minus_fields:
+        x = [op.strip() for op in i.split()]
+        if x[0] in "*+-": raise Exception("Invalid formula")
+        temp = df[x[0]].copy()
+        n = 1
+        while n < len(x):
+            if x[n] == '+':
+                temp += np.nan_to_num(df[x[n + 1]],0)
+            elif x[n] == '-':
+                temp -= np.nan_to_num(df[x[n + 1]],0)
+            elif x[n] == '*':
+                temp *= df[x[n + 1]]
+            else:
+                raise Exception(f"Unexpected operand/operator: {x[n]}")
+            n += 2
+        df[i] = temp
+
+    # a) Keep original values
+    keep_original_mask = formula['field_denom'].isnull() & formula['field_num'].notnull()
+    new_name = formula.loc[keep_original_mask, 'name'].to_list()
+    old_name = formula.loc[keep_original_mask, 'field_num'].to_list()
+    df[new_name] = df[old_name]
+
+    # b) Time series ratios (Calculate 1m change first)
+    for r in formula.loc[formula['field_num'] == formula['field_denom'], ['name', 'field_denom']].to_dict(
+            orient='records'):  # minus calculation for ratios
+        if r['name'][-2:] == 'yr':
+            df[r['name']] = df[r['field_denom']] / df[r['field_denom']].shift(12) - 1
+            df.loc[df.groupby('ticker').head(12).index, r['name']] = np.nan
+        elif r['name'][-1] == 'q':
+            df[r['name']] = df[r['field_denom']] / df[r['field_denom']].shift(3) - 1
+            df.loc[df.groupby('ticker').head(3).index, r['name']] = np.nan
+
+    # c) Divide ratios
+    print(f'      ------------------------> Calculate dividing ratios ')
+    for r in formula.dropna(how='any', axis=0).loc[(formula['field_num'] != formula['field_denom'])].to_dict(
+            orient='records'):  # minus calculation for ratios
+        df[r['name']] = df[r['field_num']] / df[r['field_denom']]
+
+    return df
+
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
     universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
@@ -365,23 +475,34 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
     print(fundamentals_score)
 
+    # get last trading price for factor calculation
     close_price = get_last_close_industry_code(ticker=ticker, currency_code=currency_code)
     print(close_price)
+
+    # get volatility
+    vol = score_update_vol_rs(list_of_start_end=[[0,1]])     # calculate RS volatility -> list_of_start_end in ascending sequence (start_month, end_month)
+    print(vol)
 
     pred_mean = get_pred_mean()
     print(pred_mean)
 
-    tri_2m = get_specific_tri(backdate_by_month(2), tri_name="tri_2m")
-    tri_6m = get_specific_tri(backdate_by_month(6), tri_name="tri_6m")
-    tri_2m = tri_2m.merge(tri_6m, how="left", on="ticker")
-    tri_2m["tri"] = tri_2m["tri_2m"] / tri_2m["tri_6m"]
-    print(tri_2m)
-    
+    # get different period stock return
+    tri = score_update_stock_return(list_of_start_end=[[0,1],[2,6],[6,12]])
+    print(tri)
+
+    # get last week average volume
+    volume = get_specific_volume_avg(backdate_by_month(0), avg_days=7)
+    print(volume)
+
+    # merge scores used for calculation
     fundamentals_score = close_price.merge(fundamentals_score, how="left", on="ticker")
+    fundamentals_score = fundamentals_score.merge(vol, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(pred_mean, how="left", on="ticker")
-    fundamentals_score = fundamentals_score.merge(tri_2m[["ticker", "tri"]], how="left", on="ticker")
-    fundamentals_score["earnings_yield"] = fundamentals_score["eps"] / fundamentals_score["close"]
-    fundamentals_score["book_to_price"] = fundamentals_score["bps"] / fundamentals_score["close"]
+    fundamentals_score = fundamentals_score.merge(tri, how="left", on="ticker")
+    fundamentals_score = fundamentals_score.merge(volume, how="left", on="ticker")
+
+    fundamentals_score = score_update_factor_ratios(fundamentals_score)
+
     fundamentals_score["ebitda_to_ev"] = fundamentals_score["ttm_ebitda"] / fundamentals_score["ev"]
     fundamentals_score["sales_to_price"] = fundamentals_score["ttm_rev"] / fundamentals_score["mkt_cap"]
     fundamentals_score["roic"] = (fundamentals_score["ttm_ebitda"] - fundamentals_score["ttm_capex"]) / (fundamentals_score["mkt_cap"] + fundamentals_score["net_debt"])
@@ -397,7 +518,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals = fundamentals_score[["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", 
         "roic", "roe", "cf_to_price", "eps_growth", "currency_code", "ticker", "industry_code","fwd_bps",
         "fwd_ebitda_to_ev","fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred", 
-        "environment", "social", "goverment", "tri"]]
+        "environment", "social", "goverment", "stock_return_2_6"]]
     print(fundamentals)
 
     calculate_column_score = []
@@ -470,11 +591,11 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         fundamentals["earnings_pred_minmax_currency_code"]).round(1)
 
     print("Calculate Momentum Value")
-    quantile = pd.DataFrame({"ticker" : [], "tri" : [], "tri_quantile":[]}, index=[])
+    quantile = pd.DataFrame({"ticker" : [], "stock_return_r2_6" : [], "tri_quantile":[]}, index=[])
     for currency in fundamentals["currency_code"].unique():
         data = fundamentals.loc[fundamentals["currency_code"] == currency]
-        data = data[["ticker", "tri"]]
-        quantile_data = data["tri"].to_numpy().reshape((len(data),1))
+        data = data[["ticker", "stock_return_r2_6"]]
+        quantile_data = data["stock_return_r2_6"].to_numpy().reshape((len(data),1))
         data["tri_quantile"] = quantile_transform(quantile_data, n_quantiles=4)
         quantile = quantile.append(data)
     fundamentals = fundamentals.merge(quantile[["ticker", "tri_quantile"]], how="left", on="ticker")

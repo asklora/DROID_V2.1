@@ -97,7 +97,13 @@ def get_data_macro_monthly_table_name():
 
 def get_data_worldscope_summary_table_name():
     return "data_worldscope_summary"
-    
+
+def get_factor_calculation_table_name():
+    return "factor_formula_ratios_prod"
+
+def get_factor_rank_table_name():
+    return "factor_result_pred_prod"
+
 def get_top_stock_models_table_name():
     return "top_stock_models"
 
