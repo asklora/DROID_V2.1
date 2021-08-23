@@ -274,17 +274,17 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
         total_bot_share_num = round((investment_amount * 1.5) / price, 0)
     else:
         total_bot_share_num = round(investment_amount / price, 0)
-    data['performace']["last_hedge_delta"] = delta
-    data['performace']["option_price"] = option_price
-    data['performace']["t"] = t
-    data['performace']["r"] = r
-    data['performace']["q"] = q
-    data['performace']["strike"] = strike
-    data['performace']["strike_2"] = strike_2
-    data['performace']["v1"] = v1
-    data['performace']["v2"] = v2
-    data['performace']["share_num"] = math.floor(delta * total_bot_share_num)
-    data['performace']["vol"] = vol
+    data['performance']["last_hedge_delta"] = delta
+    data['performance']["option_price"] = option_price
+    data['performance']["t"] = t
+    data['performance']["r"] = r
+    data['performance']["q"] = q
+    data['performance']["strike"] = strike
+    data['performance']["strike_2"] = strike_2
+    data['performance']["v1"] = v1
+    data['performance']["v2"] = v2
+    data['performance']["share_num"] = math.floor(delta * total_bot_share_num)
+    data['performance']["vol"] = vol
     data['position']["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
     data['position']["vol"] = vol
     data['position']["total_bot_share_num"] = total_bot_share_num
@@ -294,7 +294,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     data['position']["target_profit_pct"] = targeted_profit
     data['position']["target_profit_price"] = round(((-1 * option_price) + price), int(digits))
     data['position']["target_profit_amount"] = round(option_price * total_bot_share_num, int(digits)) * -1
-    data['position']["bot_cash_balance"] = round(investment_amount - (data['performace']["share_num"] * price), digits)
+    data['position']["bot_cash_balance"] = round(investment_amount - (data['performance']["share_num"] * price), digits)
     data['position']["investment_amount"]=investment_amount
     return data
 
