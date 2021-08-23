@@ -2,8 +2,13 @@ from rest_framework.views import APIView
 from rest_framework import response, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from drf_spectacular.utils import extend_schema, OpenApiExample
-from core.djangomodule.general import set_cache_data, get_cached_data, IsRegisteredUser
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
+from core.djangomodule.general import (
+    errserializer,
+    set_cache_data,
+    get_cached_data,
+    IsRegisteredUser,
+)
 from core.user.models import User
 from .serializers import (
     PairTokenSerializer,
@@ -37,11 +42,22 @@ class UserSummaryView(APIView):
         return response.Response(res, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    responses={
+        200: OpenApiResponse(
+            description="Request successful",
+            response=UserSerializer,
+        ),
+        401: OpenApiResponse(
+            description="Unauthorized request",
+            response=errserializer,
+        ),
+    }
+)
 class UserProfile(APIView):
     serializer_class = UserSerializer
     permission_classes = [IsRegisteredUser]
 
-    @extend_schema(operation_id="Get user profile")
     def get(self, request, format=None):
         """
         Get the profile of currently logged-in user
@@ -49,7 +65,7 @@ class UserProfile(APIView):
         user = request.user
         if str(user) == "AnonymousUser":
             return response.Response(
-                {"message": "User is not logged in"},
+                {"detail": "User is not logged in"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
         else:

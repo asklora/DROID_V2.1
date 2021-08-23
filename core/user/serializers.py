@@ -1,9 +1,6 @@
 from django.contrib.auth import get_user_model, authenticate
-from drf_spectacular.utils import (
-    OpenApiExample,
-    OpenApiResponse,
-    extend_schema_serializer,
-)
+from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
+
 from rest_framework import serializers, exceptions
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import (
