@@ -180,6 +180,7 @@ class PositionSerializer(serializers.ModelSerializer):
             value={
                 "user": "string",
                 "side": "string",
+                "price": 0,
                 "ticker":"string",
                 "setup": {
                     "position":"string"
