@@ -181,6 +181,8 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry
 
     data = {
         "price": price,
+        'performance':{},
+        'position':{}
     }
     data['performance']["vol"] = dur
     data['performance']["share_num"] = data["total_bot_share_num"]
@@ -252,6 +254,8 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         "price": price,
+        'performance':{},
+        'position':{}
     }
     t, r, q = get_trq(ticker, expiry_date, spot_date, currency_code)
     vol = get_vol(ticker, spot_date, t, r, q, time_to_exp)
@@ -350,6 +354,8 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     digits = max(min(4-len(str(int(price))), 2), -1)
     data = {
         "price": price,
+        'performance':{},
+        'position':{}
     }
 
     t, r, q = get_trq(ticker, expiry_date, spot_date, currency_code)
