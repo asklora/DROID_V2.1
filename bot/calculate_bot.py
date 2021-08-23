@@ -257,6 +257,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
         'performance':{},
         'position':{}
     }
+    
     t, r, q = get_trq(ticker, expiry_date, spot_date, currency_code)
     vol = get_vol(ticker, spot_date, t, r, q, time_to_exp)
     strike, strike_2 = get_strike_barrier(
