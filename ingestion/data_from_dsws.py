@@ -510,9 +510,12 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     factor_rank['pillar'] = factor_rank['factor_name'].map(factor_to_pillar)
     factor_from_table = list(factor_to_pillar.keys())
 
-    fundamentals_score[factor_rank.loc[~factor_rank['long_large'],'factor_name'].to_list()] *= -1
-
-    des = fundamentals_score.describe()
+    # des1 = fundamentals_score.describe()
+    # change ratio to negative if original factor calculation using reverse premiums
+    for g in factor_rank['group'].unique():
+        neg_factor = factor_rank.loc[(~factor_rank['long_large'])&(factor_rank['group']==g),'factor_name'].to_list()
+        fundamentals_score.loc[fundamentals_score['currency_code']==g, neg_factor] *= -1
+    # des = fundamentals_score.describe()
 
     # calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth",
     #                     "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred",
@@ -576,16 +579,16 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             print(e)
 
     print("Calculate Momentum Value")
-    quantile = []
     for column in calculate_column:
+        quantile = []
         try:
             column_quantile = column + "_quantile"
             for name, g in fundamentals.groupby(["currency_code"]):
-                data = g[["ticker", column]]
-                quantile_data = g[column].to_numpy().reshape((len(data), 1))
-                data[column_quantile] = quantile_transform(quantile_data, n_quantiles=4)
-                quantile = quantile.append(data[["ticker", column_quantile]])
-            fundamentals = fundamentals.merge(pd.concat(quantile, axis=0), how="left", on="ticker")
+                quantile_data = g[column].to_numpy().reshape((len(g), 1))
+                g[column_quantile] = quantile_transform(quantile_data, n_quantiles=4)
+                quantile = quantile.append(g[["ticker", column_quantile]])
+                quantile_df = pd.concat(quantile, axis=0)
+            fundamentals = fundamentals.merge(quantile_df, how="left", on="ticker")
         except Exception as e:
             print(e)
 
@@ -595,10 +598,10 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     from general.sql_query import get_factor_calculation_formula
 
     with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
-        fundamentals.to_sql('test_fundamentals', conn)
+        extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
+        fundamentals.to_sql('test_fundamentals', **extra)
 
     des = fundamentals.describe()
-
 
     # fundamentals["momentum"] = fundamentals["tri_quantile"] * 10
     fundamentals["trading_day"] = check_trading_day(days=6)
