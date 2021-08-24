@@ -26,9 +26,6 @@ def get_universe_rating_history_table_name():
 def get_universe_rating_detail_history_table_name():
     return "universe_rating_detail_history"
 
-def get_country_table_name():
-    return "country"
-
 def get_currency_table_name():
     return "currency"
 
@@ -144,13 +141,6 @@ def get_data_vol_surface_inferred_table_name():
 def get_bot_statistic_table_name():
     return "bot_statistic"
 
-#DLPA
-def get_top_stock_models_table_name():
-    return "top_stock_models"
-
-def get_top_stock_models_stock_table_name():
-    return "top_stock_models_stock"
-
 def get_client_table_name():
     return "client"
 
@@ -190,23 +180,21 @@ def get_orders_table_name():
 def get_orders_position_table_name():
     return "orders_position"
 
+def get_orders_position_performance_table_name():
+    return "orders_position_performance"
+
 def get_client_test_pick_table_name():
     return "client_test_pick"
 
 def get_client_top_stock_table_name():
     return "client_top_stock"
 
-def get_orders_position_performance_table_name():
-    return "orders_position_performance"
+def get_user_core_table_name():
+    return "user_core"
 
 def get_user_account_balance_table_name():
     return "user_account_balance"
 
-def get_universe_rating_detail_history_table_name():
-    return "universe_rating_detail_history"
-
-def get_universe_rating_history_table_name():
-    return "universe_rating_history"
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 
@@ -214,4 +202,4 @@ def get_universe_rating_history_table_name():
 # currency_table = Currency._meta.db_table
 # report_datapoint_table = ReportDatapoint._meta.db_table
 # master_ohlcvtr_table = MasterOhlcvtr._meta.db_table
-report_datapoint_table = ""
+# report_datapoint_table = ""
