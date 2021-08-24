@@ -573,7 +573,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     from sqlalchemy import create_engine
     from global_vars import DB_URL_ALIBABA
-    with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_lvel="AUTOCOMMIT").connect() as conn:
+    with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
         extra = {'con': conn, 'index': False, 'if_exists': 'append', 'method': 'multi'}
         fundamentals.to_sql('test_fundamentals', **extra)
     exit(1)
