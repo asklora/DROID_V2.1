@@ -466,11 +466,6 @@ def score_update_factor_ratios(df):
 
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
-    import matplotlib
-    matplotlib.use('TkAgg')
-    x = matplotlib.get_backend()
-    print(x)
-
     print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
     universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
     universe_rating = universe_rating[["ticker", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
@@ -511,31 +506,15 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals_score["earnings_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
                                            fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
 
-
-
     factor_rank = get_factor_rank()
     factor_rank['pillar'] = factor_rank['factor_name'].map(factor_to_pillar)
-
     factor_from_table = list(factor_to_pillar.keys())
-    plt = matplotlib.pyplot
-    import math
-    n = math.ceil(len(factor_from_table)**0.5)
-    fig = plt.figure(figsize=(n*4,n*4), dpi=60, constrained_layout=True)
-    k=1
-    for i in factor_from_table:
-        print(i)
-        val = fundamentals_score[i].dropna().values
-        ax = fig.add_subplot(n,n,k)
-        ax.hist(val, bins=100)
-        k+=1
-    plt.savefig('plot.png')
-    exit(1)
 
     # calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth",
     #                     "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred",
     #                     "environment", "social", "goverment"]
     #
-    calculate_column = list(factor_rank['factor_name'].unique()) + ["earnings_pred", "environment", "social", "goverment"]
+    calculate_column = factor_from_table + ["earnings_pred", "environment", "social", "goverment"]
 
     fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
     print(fundamentals)
@@ -543,45 +522,100 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # trim outlier to +/- 2 std
     calculate_column_score = []
     for column in calculate_column:
-        column_score = column + "_score"
-        mean = np.nanmean(fundamentals[column])
-        std = np.nanstd(fundamentals[column])
-        upper = mean + (std * 2)
-        lower = mean - (std * 2)
-        fundamentals[column_score] = np.where(fundamentals[column] > upper, upper, fundamentals[column])
-        fundamentals[column_score] = np.where(fundamentals[column_score] < lower, lower, fundamentals[column_score])
-        calculate_column_score.append(column_score)
+        try:
+            column_score = column + "_score"
+            mean = np.nanmean(fundamentals[column])
+            std = np.nanstd(fundamentals[column])
+            upper = mean + (std * 2)
+            lower = mean - (std * 2)
+            fundamentals[column_score] = np.where(fundamentals[column] > upper, upper, fundamentals[column])
+            fundamentals[column_score] = np.where(fundamentals[column_score] < lower, lower, fundamentals[column_score])
+            calculate_column_score.append(column_score)
+        except Exception as e:
+            print(e)
+            continue
     print(calculate_column_score)
 
     # apply robust scaler
     calculate_column_robust_score = []
     for column in calculate_column:
-        column_score = column + "_score"
-        column_robust_score = column + "_robust_score"
-        fundamentals[column_robust_score] = robust_scale(fundamentals[column_score])
-        calculate_column_robust_score.append(column_robust_score)
+        try:
+            column_score = column + "_score"
+            column_robust_score = column + "_robust_score"
+            fundamentals[column_robust_score] = robust_scale(fundamentals[column_score])
+            calculate_column_robust_score.append(column_robust_score)
+        except Exception as e:
+            print(e)
 
     # apply maxmin scaler on Currency / Industry
     minmax_column = ["uid", "ticker", "trading_day"]
     for column in calculate_column:
-        column_robust_score = column + "_robust_score"
-        column_minmax_currency_code = column + "_minmax_currency_code"
-        column_minmax_industry = column + "_minmax_industry"
-        df_currency_code = fundamentals[["currency_code", column_robust_score]]
-        df_currency_code = df_currency_code.rename(columns = {column_robust_score : "score"})
-        df_industry = fundamentals[["industry_code", column_robust_score]]
-        df_industry = df_industry.rename(columns = {column_robust_score : "score"})
-        fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)))
-        fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)))
-        if(column == "earnings_pred"):
-            fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0, fundamentals[column_minmax_currency_code])
-            fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0, fundamentals[column_minmax_industry])
-        else:
-            fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0.4, fundamentals[column_minmax_currency_code])
-            fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
-        minmax_column.append(column_minmax_currency_code)
-        minmax_column.append(column_minmax_industry)
-    
+        try:
+            column_robust_score = column + "_robust_score"
+            column_minmax_currency_code = column + "_minmax_currency_code"
+            column_minmax_industry = column + "_minmax_industry"
+            df_currency_code = fundamentals[["currency_code", column_robust_score]]
+            df_currency_code = df_currency_code.rename(columns = {column_robust_score : "score"})
+            df_industry = fundamentals[["industry_code", column_robust_score]]
+            df_industry = df_industry.rename(columns = {column_robust_score : "score"})
+            fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)))
+            fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)))
+            if(column == "earnings_pred"):
+                fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0, fundamentals[column_minmax_currency_code])
+                fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0, fundamentals[column_minmax_industry])
+            else:
+                fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0.4, fundamentals[column_minmax_currency_code])
+                fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
+            minmax_column.append(column_minmax_currency_code)
+            minmax_column.append(column_minmax_industry)
+        except Exception as e:
+            print(e)
+
+    from sqlalchemy import create_engine
+    from global_vars import DB_URL_ALIBABA
+    with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_lvel="AUTOCOMMIT").connect() as conn:
+        extra = {'con': conn, 'index': False, 'if_exists': 'append', 'method': 'multi'}
+        fundamentals.to_sql('test_fundamentals', **extra)
+    exit(1)
+
+    s = fundamentals.skew()
+    k = fundamentals.kurtosis()
+    pd.concat([s, k], axis=1).to_csv('skew_kurt1.csv')
+
+    import matplotlib
+    matplotlib.use('TkAgg')
+    plt = matplotlib.pyplot
+    import math
+    n = math.ceil(len(factor_from_table)**0.5)
+    fig1 = plt.figure(figsize=(n*4,n*4), dpi=120, constrained_layout=True)
+    fig2 = plt.figure(figsize=(n*4,n*4), dpi=120, constrained_layout=True)
+    fig3 = plt.figure(figsize=(n*4,n*4), dpi=120, constrained_layout=True)
+    fig4 = plt.figure(figsize=(n*4,n*4), dpi=120, constrained_layout=True)
+    k=1
+    for i in factor_from_table:
+        try:
+            ax1 = fig1.add_subplot(n,n,k)
+            ax2 = fig2.add_subplot(n,n,k)
+            ax3 = fig3.add_subplot(n,n,k)
+            ax4 = fig4.add_subplot(n,n,k)
+            ax1.hist(fundamentals[i].dropna().values, bins=100)
+            ax2.hist(fundamentals[i+'_score'].dropna().values, bins=100)
+            ax3.hist(fundamentals[i+'_robust_score'].dropna().values, bins=100)
+            ax4.hist(fundamentals[i+'_minmax_currency_code'].dropna().values, bins=100)
+            ax1.set_xlabel(i)
+            ax2.set_xlabel(i)
+            ax3.set_xlabel(i)
+            ax4.set_xlabel(i)
+        except Exception as e:
+            print(e)
+        plt.ylim((0, 1000))
+        k+=1
+    fig1.savefig('plot_1org.png')
+    fig2.savefig('plot_2trim.png')
+    fig3.savefig('plot_3robust.png')
+    fig4.savefig('plot_4minmax.png')
+    exit(1)
+
     fundamentals["trading_day"] = check_trading_day(days=6)
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
 
