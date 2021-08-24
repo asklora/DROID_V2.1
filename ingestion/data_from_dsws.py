@@ -449,7 +449,7 @@ def score_update_factor_ratios(df):
     # b) Time series ratios (Calculate 1m change first)
     for r in formula.loc[formula['field_num'] == formula['field_denom'], ['name', 'field_denom']].to_dict(
             orient='records'):  # minus calculation for ratios
-        if r['name'][-2:] == 'yr':
+        if r['name'] not in ['assets_1yr'] and r['name'][-2:] == 'yr':
             df[r['name']] = df[r['field_denom']] / df[r['field_denom']].shift(12) - 1
             df.loc[df.groupby('ticker').head(12).index, r['name']] = np.nan
         elif r['name'][-1] == 'q':
@@ -510,7 +510,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     factor_rank['pillar'] = factor_rank['factor_name'].map(factor_to_pillar)
     factor_from_table = list(factor_to_pillar.keys())
 
-    fundamentals_score[factor_rank.loc[~factor_rank['long_large'],'factor_name'].to_list()] *= -1
+    columns_to_flip = factor_rank.loc[~factor_rank['long_large'],'factor_name'].to_list()
+    fundamentals_score[list(set(columns_to_flip) & set(fundamentals_score.columns))] *= -1
 
     des = fundamentals_score.describe()
 
@@ -521,20 +522,21 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     calculate_column = factor_from_table + ["earnings_pred", "environment", "social", "goverment"]
 
     fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
+    fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
     print(fundamentals)
 
     # trim outlier to +/- 2 std
     calculate_column_score = []
     for column in calculate_column:
         try:
-            column_score = column + "_score"
-            mean = np.nanmean(fundamentals[column])
-            std = np.nanstd(fundamentals[column])
-            upper = mean + (std * 2)
-            lower = mean - (std * 2)
-            fundamentals[column_score] = np.where(fundamentals[column] > upper, upper, fundamentals[column])
-            fundamentals[column_score] = np.where(fundamentals[column_score] < lower, lower, fundamentals[column_score])
-            calculate_column_score.append(column_score)
+            if fundamentals[column].notnull().sum():
+                column_score = column + "_score"
+                mean = np.nanmean(fundamentals[column])
+                std = np.nanstd(fundamentals[column])
+                upper = mean + (std * 2)
+                lower = mean - (std * 2)
+                fundamentals[column_score] = np.clip(fundamentals[column], lower, upper)
+                calculate_column_score.append(column_score)
         except Exception as e:
             print(e)
             continue
@@ -562,8 +564,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             df_currency_code = df_currency_code.rename(columns = {column_robust_score : "score"})
             df_industry = fundamentals[["industry_code", column_robust_score]]
             df_industry = df_industry.rename(columns = {column_robust_score : "score"})
-            fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)))
-            fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)))
+            fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
+            fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
             if(column == "earnings_pred"):
                 fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0, fundamentals[column_minmax_currency_code])
                 fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0, fundamentals[column_minmax_industry])
@@ -576,18 +578,16 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             print(e)
 
     print("Calculate Momentum Value")
-    quantile = []
-    for column in calculate_column:
-        try:
-            column_quantile = column + "_quantile"
-            for name, g in fundamentals.groupby(["currency_code"]):
-                data = g[["ticker", column]]
-                quantile_data = g[column].to_numpy().reshape((len(data), 1))
-                data[column_quantile] = quantile_transform(quantile_data, n_quantiles=4)
-                quantile = quantile.append(data[["ticker", column_quantile]])
-            fundamentals = fundamentals.merge(pd.concat(quantile, axis=0), how="left", on="ticker")
-        except Exception as e:
-            print(e)
+    try:
+        tmp = fundamentals.melt(['ticker', 'currency_code', 'industry_code'], calculate_column)
+        tmp['quantile_transformed'] = tmp.groupby(['currency_code', 'variable'])['value'].transform(lambda x: quantile_transform(x.values.reshape(-1, 1), n_quantiles=4).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
+        tmp = tmp[['ticker', 'variable', 'quantile_transformed']]
+        tmp['variable'] = tmp['variable'] + '_quantile'
+        tmp = tmp.pivot(['ticker'], ['variable']).droplevel(0, axis=1)
+        tmp.columns.name = None
+        fundamentals = fundamentals.merge(tmp, how='left', on='ticker')
+    except Exception as e:
+        print(e)
 
     from sqlalchemy import create_engine
     from global_vars import DB_URL_ALIBABA
