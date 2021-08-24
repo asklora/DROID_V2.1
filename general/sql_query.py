@@ -615,7 +615,7 @@ def get_user_account_balance(currency_code=None, user_id=None, field="*"):
     table_name = get_user_account_balance_table_name()
     query = f"select {field} from {table_name} where amount is not null "
     if type(user_id) != type(None):
-        query += f"and id in {tuple_data(user_id)}  "
+        query += f"and user_id in {tuple_data(user_id)}  "
     elif type(currency_code) != type(None):
         query += f"and currency_code in {tuple_data(currency_code)} "
     data = read_query(query, table_name, cpu_counts=True)

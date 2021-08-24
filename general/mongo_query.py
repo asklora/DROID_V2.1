@@ -48,15 +48,20 @@ def insert_to_mongo(data, index, table, dict=False):
 
 def update_to_mongo(data, index, table, dict=False):
     data = change_date_to_str(data)
-    data['indexes'] = data['ticker']
-    data = data.set_index('indexes')
-    df = data.to_dict('index')
+    data["indexes"] = data[index]
+    data = data.set_index("indexes")
+    df = data.to_dict("index")
         
 
     del data
     db = firestore.client()
     for key,val in df.items():
-        doc_ref = db.collection(u'universe').document(f'{key}')
+        if(table=="universe"):
+            doc_ref = db.collection(u"universe").document(f"{key}")
+        elif(table=="portfolio"):
+            doc_ref = db.collection(u"portfolio").document(f"{key}")
+        else:
+            doc_ref = db.collection(u"universe").document(f"{key}")
         doc_ref.set(val)
     # db_connect = connects(table)
     # if(dict):
