@@ -510,10 +510,12 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     factor_rank['pillar'] = factor_rank['factor_name'].map(factor_to_pillar)
     factor_from_table = list(factor_to_pillar.keys())
 
-    columns_to_flip = factor_rank.loc[~factor_rank['long_large'],'factor_name'].to_list()
-    fundamentals_score[list(set(columns_to_flip) & set(fundamentals_score.columns))] *= -1
-
-    des = fundamentals_score.describe()
+    # des1 = fundamentals_score.describe()
+    # change ratio to negative if original factor calculation using reverse premiums
+    for g in factor_rank['group'].unique():
+        neg_factor = factor_rank.loc[(~factor_rank['long_large'])&(factor_rank['group']==g),'factor_name'].to_list()
+        fundamentals_score.loc[fundamentals_score['currency_code']==g, list(set(neg_factor) & set(fundamentals_score.columns))] *= -1
+    # des = fundamentals_score.describe()
 
     # calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth",
     #                     "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred",
@@ -595,10 +597,10 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     from general.sql_query import get_factor_calculation_formula
 
     with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
-        fundamentals.to_sql('test_fundamentals', conn)
+        extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
+        fundamentals.to_sql('test_fundamentals', **extra)
 
     des = fundamentals.describe()
-
 
     # fundamentals["momentum"] = fundamentals["tri_quantile"] * 10
     fundamentals["trading_day"] = check_trading_day(days=6)
