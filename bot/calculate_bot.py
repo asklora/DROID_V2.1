@@ -187,7 +187,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry
     total_bot_share_num = math.floor(investment_amount / price)
     bot_cash_balance =round(investment_amount - (total_bot_share_num * price), 2)
     data["performance"]["vol"] = dur
-    data["perfromance"]["last_hedge_delta"] = 1
+    data["performance"]["last_hedge_delta"] = 1
     data["performance"]["share_num"] = total_bot_share_num
     data['performance']["current_bot_cash_balance"] = bot_cash_balance
     data["position"]["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
