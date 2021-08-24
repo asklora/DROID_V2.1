@@ -342,8 +342,15 @@ def firebase_user_update(user_id=None, currency_code=None):
         total_profit = sum(orders_position["profit"].to_list())
         active_df = []
         orders_position = change_date_to_str(orders_position)
+        print(orders_position)
+
+        # orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
+        # orders_position = get_orders_position(user_id=[user], active=False, field=orders_position_field)
+
         for index, row in orders_position.iterrows():
             act_df = orders_position.loc[orders_position["position_uid"] == row["position_uid"]]
+            act_df["position_uid"] = act_df["position_uid"].astype(str)
+            act_df["order_uid"] = act_df["order_uid"].astype(str)
             act_df = act_df.to_dict("records")[0]
             active_df.append(act_df)
         active = pd.DataFrame({"user_id":[user], "total_inv_amt":[total_inv_amt], "bot_inv_amt":[bot_inv_amt], 
