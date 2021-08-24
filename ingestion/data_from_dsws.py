@@ -286,12 +286,14 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
     identifier = "ticker"
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
     print(universe)
+    # filter_field = ["WC18312A","WC08001","WC08621","WC18267A"]
+
     filter_field = ["EPS1TR12","WC05480","WC18100A","WC18262A","WC08005",
         "WC18309A","WC18311A","WC18199A","WC08372","WC05510","WC08636A",
         "BPS1FD12","EBD1FD12","EVT1FD12","EPS1FD12","SAL1FD12","CAP1FD12",
-        "WC02999", "WC02001", "WC03101", "WC03501", "WC18312", "WC02101", 
-        "WC18264", "WC18267", "WC01451", "WC18810", "WC02401", "WC18274", 
-        "WC07211", "i0eps"]
+        "WC08621", "WC02001", "WC03101", "WC03501", "WC18312A", "WC02101", 
+        "WC18264", "WC18267A", "WC01451", "WC18810", "WC02401", "WC18274", 
+        "WC07211", "i0eps", "WC08001"]
 
     static_field = ["ENSCORE","SOSCORE","CGSCORE"]
     column_name = {"EPS1TR12": "eps", "WC05480": "bps", "WC18100A": "ev",
@@ -302,13 +304,13 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
         "SAL1FD12" : "sal1fd12","CAP1FD12" : "cap1fd12",
         "ENSCORE" : "environment","SOSCORE" : "social",
         "CGSCORE" : "goverment", 
-        "WC02999" : "total_asset", "WC02001" : "cash", 
+        "WC08621" : "assets_1yr", "WC02001" : "cash", 
         "WC03101" : "current_asset", "WC03501" : "equity", 
-        "WC18312" : "ttm_cogs", "WC02101" : "inventory", 
-        "WC18264" : "ttm_eps", "WC18267" : "ttm_gm", 
+        "WC18312A" : "ttm_cogs", "WC02101" : "inventory", 
+        "WC18264" : "ttm_eps", "WC18267A" : "ttm_gm", 
         "WC01451" : "income_tax", "WC18810" : "pension_exp", 
         "WC02401" : "ppe_depreciation", "WC18274" : "ppe_impairment", 
-        "WC07211" : "mkt_cap_usd", "i0eps" : "eps_lastq"}
+        "WC07211" : "mkt_cap_usd", "i0eps" : "eps_lastq", "WC08001" : "mkt_cap_ye"}
 
     result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
     result2, except_field2 = get_data_history_frequently_from_dsws(start_date2, end_date, universe, identifier, static_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
