@@ -5,8 +5,9 @@ import uuid
 from core.universe.models import Currency
 from django.db import IntegrityError
 from django.db.models import (
-    Sum
+    Sum,Case,When,F,Q,FloatField
 )
+from django.db.models.functions import Cast
 import base64
 from core.djangomodule.models import BaseTimeStampModel
 from core.djangomodule.general import nonetozero
@@ -123,7 +124,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def balance(self):
-        return self.user_balance.amount
+        return round(self.user_balance.amount,2)
 
     @property
     def wallet(self):
@@ -149,6 +150,22 @@ class User(AbstractBaseUser, PermissionsMixin):
             return position
         return 0
     
+    @property
+    def total_user_invested_amount(self):
+        order = self.user_position.filter(user_id=self,is_live=True,bot_id='STOCK_stock_0').aggregate(total=Sum('investment_amount'))
+        if order['total']:
+            result = round(order['total'], 2)
+            return result
+        return 0
+    
+    @property
+    def total_bot_invested_amount(self):
+        order = self.user_position.filter(user_id=self,is_live=True).exclude(bot_id='STOCK_stock_0').aggregate(total=Sum('investment_amount'))
+        if order['total']:
+            result = round(order['total'], 2)
+            return result
+        return 0
+
     @property
     def total_invested_amount(self):
         order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum('investment_amount'))
@@ -176,7 +193,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def current_total_investment_value(self):
-        # USER BOT INVESTMENT
+        # USER all INVESTMENT VALUE UNREALIZED
         order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum('current_values'))
         if order['total']:
             result = round(order['total'], 2)
@@ -184,8 +201,19 @@ class User(AbstractBaseUser, PermissionsMixin):
         return 0
     
     @property
+    def total_pending_amount(self):
+        pending_transaction=self.user_order.filter(status='pending').aggregate(total=Sum(Case(
+            When(~Q(bot_id='STOCK_stock_0'),then=Cast('setup__performance__current_bot_cash_balance',FloatField())+F('amount')),
+            default='amount',
+            output_field=FloatField()
+        )))
+        if pending_transaction['total']:
+            return pending_transaction['total']
+        return 0
+    
+    @property
     def total_amount(self):
-        return round(self.balance + self.current_total_investment_value,2)
+        return round(self.balance  + self.current_total_investment_value + self.total_pending_amount ,2)
     
     
     @property

@@ -35,25 +35,23 @@ def get_history():
     # result = result.drop(columns=["IdentifierType", "Identifier"])
     print(result)
 
-def get_index_member():
-    currencylist = pd.DataFrame({"index" : ["0#.HSLMI"]}, index=[0])
+def get_index_member(currencylist, isin=0, manual=0):
+    # currencylist = pd.DataFrame({"index" : ["0#.SPX", "0#.NDX"]}, index=[0, 1])
     jsonFileName = "files/file_json/index_member.json"
     print(currencylist)
-    end_date = dateNow()
-    start_date = backdate_by_year(1)
     result = get_data_from_dss("start_date", "end_date", currencylist["index"], jsonFileName, report=REPORT_INDEXMEMBER)
     print(result)
     result["origin_ticker"] = result["RIC"]
     result = result.drop(columns=["IdentifierType", "Identifier", "RIC"])
     result["source_id"] = "DSS"
-    result["use_isin"] = 0
-    result["use_manual"] = 1
+    result["use_isin"] = isin
+    result["use_manual"] = manual
+    result = result.drop_duplicates(subset="origin_ticker", keep="first")
+    result = result.sort_values(by=["ticker"])
     print(result)
-    result.to_csv("index_member_HSLMI.csv")
+    result.to_csv(f"/home/loratech/new_universe_{currencylist['index'].to_list()}.csv")
 
-if __name__ == "__main__":
-    identifier="ticker"
-    ticker = ["MSFT.O", "AAPL.O"]
+def corporate_action():
     universe = get_active_universe()
     start_date = backdate_by_day(1)
     end_date = dateNow()
@@ -75,6 +73,15 @@ if __name__ == "__main__":
     result2 = result2.drop_duplicates(subset=columns_list, keep="first")
     print(result2)
     result2.to_csv("/home/loratech/corporate_action.csv")
+
+if __name__ == "__main__":
+    print("Start Process")
+    currencylist = pd.DataFrame({"index" : ["0#.HSLMI"]}, index=[0])
+    get_index_member(currencylist, manual=0)
+    currencylist = pd.DataFrame({"index" : ["0#.SPX", "0#.NDX"]}, index=[0, 1])
+    get_index_member(currencylist, isin=1)
+    currencylist = pd.DataFrame({"index" : ["0#.SXXE"]}, index=[0])
+    get_index_member(currencylist, isin=1)
     
 
     
