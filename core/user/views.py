@@ -12,7 +12,6 @@ from .serializers import (
     UserSummarySerializer,
 )
 
-
 class PairTokenView(TokenObtainPairView):
     serializer_class = PairTokenSerializer
 
