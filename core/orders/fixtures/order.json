@@ -1,0 +1,29 @@
+[
+{
+    "model": "orders.order",
+    "pk": "ce7159ce-a73b-42e2-ae57-c3156ef1bfc5",
+    "fields": {
+        "created": "2021-08-24T08:40:57.204",
+        "updated": "2021-08-24T08:40:57.204",
+        "user_id": [
+            "4d04e96afels_eur_fels_asklora_ai"
+        ],
+        "ticker": "0780.HK",
+        "bot_id": "STOCK_stock_0",
+        "setup": null,
+        "order_type": null,
+        "placed": false,
+        "status": "review",
+        "side": "buy",
+        "amount": 0.0,
+        "placed_at": null,
+        "filled_at": null,
+        "canceled_at": null,
+        "order_summary": {},
+        "is_init": true,
+        "price": 13.0,
+        "performance_uid": null,
+        "qty": 0.0
+    }
+}
+]

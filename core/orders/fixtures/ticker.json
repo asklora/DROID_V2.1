@@ -1,0 +1,39 @@
+[
+{
+    "model": "universe.universe",
+    "pk": "0780.HK",
+    "fields": {
+        "currency_code": "HKD",
+        "industry_code": "40501015",
+        "wc_industry_code": "8580",
+        "created": "2021-07-15",
+        "updated": "2021-08-07",
+        "last_ingestion": "2021-08-05",
+        "is_active": true,
+        "quandl_symbol": null,
+        "ticker_name": "TONGCHENG-ELONG",
+        "ticker_fullname": "TONGCHENG-ELONG HOLDINGS",
+        "company_description": "Tongcheng-Elong Holdings Limited is a China-based holding company principally engaged in the provision of online travel products and services. The Company mainly conducts its businesses through three segments. The Transportation Ticketing segment mainly provides online air ticketing, train ticketing, bus ticketing and ferry ticketing services. The Accommodation Reservation segment mainly provides accommodation reservation services. The Others segment provides various ancillary value-added travel products and services to meet customers' evolving travel needs throughout their trips.",
+        "lot_size": 400,
+        "worldscope_identifier": "C344V31F0",
+        "icb_code": "40501015",
+        "fiscal_year_end": "DEC",
+        "entity_type": "C",
+        "ticker_symbol": "0780",
+        "mic": "XHKG",
+        "revenue_per_share": 3.26503,
+        "market_cap": 42042.86,
+        "pe_ratio": 105.8266,
+        "pe_forecast": 22.07567,
+        "pb": 2.47233,
+        "ev": null,
+        "ebitda": 1225.199,
+        "wk52_high": 21.35,
+        "wk52_low": 12.5,
+        "free_cash_flow": 0.51048,
+        "Error": "nan",
+        "schi_name": "同程艺龙",
+        "tchi_name": "同程藝龍"
+    }
+}
+]
