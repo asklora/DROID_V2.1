@@ -510,6 +510,10 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     factor_rank['pillar'] = factor_rank['factor_name'].map(factor_to_pillar)
     factor_from_table = list(factor_to_pillar.keys())
 
+    fundamentals_score[factor_rank.loc[~factor_rank['long_large'],'factor_name'].to_list()] *= -1
+
+    des = fundamentals_score.describe()
+
     # calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth",
     #                     "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred",
     #                     "environment", "social", "goverment"]
@@ -571,51 +575,32 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         except Exception as e:
             print(e)
 
-    from sqlalchemy import create_engine
-    from global_vars import DB_URL_ALIBABA
-    with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
-        extra = {'con': conn, 'index': False, 'if_exists': 'append', 'method': 'multi'}
-        fundamentals.to_sql('test_fundamentals', **extra)
-    exit(1)
-
-    s = fundamentals.skew()
-    k = fundamentals.kurtosis()
-    pd.concat([s, k], axis=1).to_csv('skew_kurt1.csv')
-
-    import matplotlib
-    matplotlib.use('TkAgg')
-    plt = matplotlib.pyplot
-    import math
-    n = math.ceil(len(factor_from_table)**0.5)
-    fig1 = plt.figure(figsize=(n*4,n*4), dpi=120, constrained_layout=True)
-    fig2 = plt.figure(figsize=(n*4,n*4), dpi=120, constrained_layout=True)
-    fig3 = plt.figure(figsize=(n*4,n*4), dpi=120, constrained_layout=True)
-    fig4 = plt.figure(figsize=(n*4,n*4), dpi=120, constrained_layout=True)
-    k=1
-    for i in factor_from_table:
+    print("Calculate Momentum Value")
+    quantile = []
+    for column in calculate_column:
         try:
-            ax1 = fig1.add_subplot(n,n,k)
-            ax2 = fig2.add_subplot(n,n,k)
-            ax3 = fig3.add_subplot(n,n,k)
-            ax4 = fig4.add_subplot(n,n,k)
-            ax1.hist(fundamentals[i].dropna().values, bins=100)
-            ax2.hist(fundamentals[i+'_score'].dropna().values, bins=100)
-            ax3.hist(fundamentals[i+'_robust_score'].dropna().values, bins=100)
-            ax4.hist(fundamentals[i+'_minmax_currency_code'].dropna().values, bins=100)
-            ax1.set_xlabel(i)
-            ax2.set_xlabel(i)
-            ax3.set_xlabel(i)
-            ax4.set_xlabel(i)
+            column_quantile = column + "_quantile"
+            for name, g in fundamentals.groupby(["currency_code"]):
+                data = g[["ticker", column]]
+                quantile_data = g[column].to_numpy().reshape((len(data), 1))
+                data[column_quantile] = quantile_transform(quantile_data, n_quantiles=4)
+                quantile = quantile.append(data[["ticker", column_quantile]])
+            fundamentals = fundamentals.merge(pd.concat(quantile, axis=0), how="left", on="ticker")
         except Exception as e:
             print(e)
-        plt.ylim((0, 1000))
-        k+=1
-    fig1.savefig('plot_1org.png')
-    fig2.savefig('plot_2trim.png')
-    fig3.savefig('plot_3robust.png')
-    fig4.savefig('plot_4minmax.png')
-    exit(1)
 
+    from sqlalchemy import create_engine
+    from global_vars import DB_URL_ALIBABA
+    import pandas as pd
+    from general.sql_query import get_factor_calculation_formula
+
+    with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
+        fundamentals.to_sql('test_fundamentals', conn)
+
+    des = fundamentals.describe()
+
+
+    # fundamentals["momentum"] = fundamentals["tri_quantile"] * 10
     fundamentals["trading_day"] = check_trading_day(days=6)
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
 
@@ -658,18 +643,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     #     (fundamentals["fwd_roic_minmax_industry"]) +
     #     fundamentals["earnings_pred_minmax_industry"] +
     #     fundamentals["earnings_pred_minmax_currency_code"]).round(1)
-
-    print("Calculate Momentum Value")
-    quantile = pd.DataFrame({"ticker" : [], "stock_return_r2_6" : [], "tri_quantile":[]}, index=[])
-    for currency in fundamentals["currency_code"].unique():
-        data = fundamentals.loc[fundamentals["currency_code"] == currency]
-        data = data[["ticker", "stock_return_r2_6"]]
-        quantile_data = data["stock_return_r2_6"].to_numpy().reshape((len(data),1))
-        data["tri_quantile"] = quantile_transform(quantile_data, n_quantiles=4)
-        quantile = quantile.append(data)
-    fundamentals = fundamentals.merge(quantile[["ticker", "tri_quantile"]], how="left", on="ticker")
-    minmax_column.append("tri_quantile")
-    fundamentals["momentum"] = fundamentals["tri_quantile"] * 10
 
     print("Calculate Momentum Value")
     fundamentals = fundamentals.merge(universe_rating, how="left", on="ticker")
