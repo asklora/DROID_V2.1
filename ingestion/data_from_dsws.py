@@ -465,13 +465,17 @@ def score_update_factor_ratios(df):
     return df, formula[['name','pillar']].set_index(['name']).to_dict()['pillar']
 
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
+
+    import matplotlib
+    matplotlib.use('TkAgg')
+    x = matplotlib.get_backend()
+    print(x)
+
     print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
     universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
     universe_rating = universe_rating[["ticker", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
+
     print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
-    calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth", 
-                        "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred", 
-                        "environment", "social", "goverment"]
     fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
     print(fundamentals_score)
 
@@ -504,11 +508,36 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # calculate ratios refering to table X
     fundamentals_score, factor_to_pillar = score_update_factor_ratios(fundamentals_score)
 
-    fundamentals_score["earnings_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] - fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
-    fundamentals = fundamentals_score[["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", 
-        "roic", "roe", "cf_to_price", "eps_growth", "currency_code", "ticker", "industry_code","fwd_bps",
-        "fwd_ebitda_to_ev","fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred", 
-        "environment", "social", "goverment", "stock_return_2_6"]]
+    fundamentals_score["earnings_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
+                                           fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
+
+
+
+    factor_rank = get_factor_rank()
+    factor_rank['pillar'] = factor_rank['factor_name'].map(factor_to_pillar)
+
+    factor_from_table = list(factor_to_pillar.keys())
+    plt = matplotlib.pyplot
+    import math
+    n = math.ceil(len(factor_from_table)**0.5)
+    fig = plt.figure(figsize=(n*4,n*4), dpi=60, constrained_layout=True)
+    k=1
+    for i in factor_from_table:
+        print(i)
+        val = fundamentals_score[i].dropna().values
+        ax = fig.add_subplot(n,n,k)
+        ax.hist(val, bins=100)
+        k+=1
+    plt.savefig('plot.png')
+    exit(1)
+
+    # calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth",
+    #                     "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred",
+    #                     "environment", "social", "goverment"]
+    #
+    calculate_column = list(factor_rank['factor_name'].unique()) + ["earnings_pred", "environment", "social", "goverment"]
+
+    fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
     print(fundamentals)
 
     # trim outlier to +/- 2 std
@@ -559,8 +588,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     addition_col_by_pillar = {'quality':['earnings_pred'], 'momentum':['wts_rating','dlp_1m']}
 
     # Calculate fundamental score based on ranking
-    factor_rank = get_factor_rank()
-    factor_rank['pillar'] = factor_rank['factor_name'].map(factor_to_pillar)
     for name, g in factor_rank.groupby(['pillar']):
         print(f"Calculate Fundamentals [{name}]")
         sub_g = g.loc[g['factor_weight']==2]    # use all rank=2 (best class)
