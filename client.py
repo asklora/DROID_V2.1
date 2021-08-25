@@ -1,7 +1,7 @@
 from websocket import create_connection
 import json
-ws = create_connection('ws://127.0.0.1:8000/orders/')
-ws.send(json.dumps({'request_id':'room'}))
+ws = create_connection('ws://127.0.0.1:8000/ws/market/')
+ws.send(json.dumps({'type':'streaming','message':'i need to stream'}))
 while True:
     payload = json.loads(ws.recv())
     print(payload)
@@ -12,3 +12,4 @@ while True:
             'message':'PONG',
             'user':'agam'
         }))
+
