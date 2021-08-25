@@ -449,7 +449,7 @@ def score_update_factor_ratios(df):
     # b) Time series ratios (Calculate 1m change first)
     for r in formula.loc[formula['field_num'] == formula['field_denom'], ['name', 'field_denom']].to_dict(
             orient='records'):  # minus calculation for ratios
-        if r['name'] not in ['assets_1yr'] and r['name'][-2:] == 'yr':
+        if r['name'][-2:] == 'yr':
             df[r['name']] = df[r['field_denom']] / df[r['field_denom']].shift(12) - 1
             df.loc[df.groupby('ticker').head(12).index, r['name']] = np.nan
         elif r['name'][-1] == 'q':
@@ -599,8 +599,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
         extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
         fundamentals.to_sql('test_fundamentals', **extra)
-
-    des = fundamentals.describe()
+    # exit(20)
 
     # fundamentals["momentum"] = fundamentals["tri_quantile"] * 10
     fundamentals["trading_day"] = check_trading_day(days=6)
