@@ -629,26 +629,19 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
                 score_col.append(f'{col}{fundamental_score_col_suffix}')
             
         fundamentals.loc[fundamentals['currency_code'] == group, f"fundamentals_{name}"] = fundamentals[score_col].mean(axis=1)
-        # tmp = fundamentals[score_col].melt(var_name='factor_name')
-        # tmp['value_qcut'] = tmp.groupby(['factor_name'])['value'].transform(lambda x: pd.qcut(x, q=10, labels=False, duplicates='drop')).astype(float)
-        # print(tmp)
     
     for group, g in factor_rank.groupby('group'):
         print(f"Calculate Fundamentals [extra] in group {group}")
-        sub_g = g.loc[g['factor_weight']==2]    # use all rank=2 (best class)
+        sub_g = g.loc[(g['factor_weight']==2) & (g['pred_z'] >= 1)]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
 
-        if len(sub_g) > 0:     # if no factor rank=2, use the highest ranking one
-            for top_n in [2, 4, 6, -1]:
-                if top_n == -1:
-                    score_col = [f'{x}{fundamental_score_col_suffix}' for x in sub_g['factor_name']]
-                    fundamentals.loc[fundamentals['currency_code'] == group, f'fundamentals_extra_all_best'] = fundamentals[score_col].mean(axis=1)
-                else:
-                    score_col = [f'{x}{fundamental_score_col_suffix}' for x in sub_g.nlargest(top_n, columns=['pred_rank_same_time_and_group'])['factor_name']]
-                    fundamentals.loc[fundamentals['currency_code'] == group, f'fundamentals_extra_top{top_n}'] = fundamentals[score_col].mean(axis=1)
+        if len(sub_g) > 0:     # if no factor rank=2, don't add any factor into extra pillar
+            score_col = [f'{x}{fundamental_score_col_suffix}' for x in sub_g['factor_name']]
+            fundamentals.loc[fundamentals['currency_code'] == group, f'fundamentals_extra'] = fundamentals[score_col].mean(axis=1)
+        else:
+            fundamentals.loc[fundamentals['currency_code'] == group, f'fundamentals_extra'] = 0.
 
     fundamentals_factors_scores_col = fundamentals.filter(regex='^fundamentals_').columns
     fundamentals[fundamentals_factors_scores_col] = (fundamentals[fundamentals_factors_scores_col]*10).round(1)
-    # tmp = fundamentals.filter(regex='^(?:ticker$|currency_code$|fundamentals_)')
     
     with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
         extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
