@@ -4,7 +4,7 @@ import requests
 import json
 import math
 import pandas as pd
-from requests.api import head
+from typing import List,Optional,Union
 from core.services.models import ThirdpartyCredentials,ErrorLog
 from core.universe.models import ExchangeMarket,Universe
 from core.djangomodule.calendar import TradingHours
@@ -16,7 +16,7 @@ import asyncio
 import socket
 import time
 # from channels.layers import get_channel_layer
-from config.celery import app, shared_task
+from config.celery import app
 import numpy as np
 from firebase_admin import firestore
 import multiprocessing as mp
@@ -34,25 +34,20 @@ class Rkd:
     def __init__(self, *args, **kwargs):
         self.credentials = ThirdpartyCredentials.objects.get(services="RKD")
         self.headers = {"content-type": "application/json;charset=utf-8"}
-        if self.is_valid_token:
-            logging.info("valid token")
-            logging.info("using existing token")
-            self.token = self.credentials.token
-        else:
-            self.token = self.get_token()
+        self.validate_token()
 
-    async def gather_request(self, url, payload, headers):
+    async def snapshot_gather_request(self, url, payload, headers):
         async with aiohttp.ClientSession(headers=headers) as session:
 
             responses = []
             for data in payload:
                 responses.append(asyncio.ensure_future(
-                    self.async_send_request(session, url, data)))
+                    self.async_send_request_snapsot(session, url, data)))
 
             original_responses = await asyncio.gather(*responses)
             return original_responses
 
-    async def async_send_request(self, session, url, payload):
+    async def async_send_request_snapsot(self, session, url, payload):
         async with session.post(url, data=json.dumps(payload)) as resp:
             response = await resp.json()
             status = resp.status
@@ -74,6 +69,16 @@ class Rkd:
                     "ACFSHR": None,
                 }
                 return response
+    
+    
+    
+    def validate_token(self):
+        if self.is_valid_token:
+            logging.info("valid token")
+            logging.info("using existing token")
+            self.token = self.credentials.token
+        else:
+            self.token = self.get_token()
 
     def send_request(self, url, payload, headers):
         result = None
@@ -155,18 +160,22 @@ class Rkd:
         return headers
 
     def parse_response(self, response):
-        json_data = response["RetrieveItem_Response_3"]["ItemResponse"][0]["Item"]
-        formated_json_data = []
-        for index, item in enumerate(json_data):
-            ticker = item["RequestKey"]["Name"]
-            formated_json_data.append({"ticker": ticker})
-            if item["Status"]["StatusMsg"] == "OK":
-                for f in item["Fields"]["F"]:
-                    field = f["n"]
-                    val = f["Value"]
-                    formated_json_data[index].update({field: val})
-            else:
-                logging.warning(f"error status message {item['Status']['StatusMsg']} for {ticker}, no response data")
+        json_data = response.get("RetrieveItem_Response_3",{}).get("ItemResponse",[])
+        if json_data:
+            data = json_data[0].get("Item",None)
+            if not data:
+                raise Exception(response)
+            formated_json_data = []
+            for index, item in enumerate(data):
+                ticker = item["RequestKey"]["Name"]
+                formated_json_data.append({"ticker": ticker})
+                if item["Status"]["StatusMsg"] == "OK":
+                    for f in item["Fields"]["F"]:
+                        field = f["n"]
+                        val = f["Value"]
+                        formated_json_data[index].update({field: val})
+                else:
+                    logging.warning(f"error status message {item['Status']['StatusMsg']} for {ticker}, no response data")
         return formated_json_data
 
 
@@ -229,7 +238,7 @@ class RkdData(Rkd):
                     }
                 }
                 list_payload.append(payload)
-            responses = asyncio.run(self.gather_request(
+            responses = asyncio.run(self.snapshot_gather_request(
                 snapshot_url, list_payload, self.auth_headers()))
             
             for response in responses:
@@ -340,6 +349,85 @@ class RkdData(Rkd):
         currency.index_price = formated_json_data[0]["CF_LAST"]
         currency.save()
 
+    def response_to_df(self,response:dict) -> pd.DataFrame:
+        formated_json_data = self.parse_response(response)
+        df_data = pd.DataFrame(formated_json_data).rename(columns={
+                "CF_ASK": "intraday_ask",
+                "CF_CLOSE": "close",
+                "CF_BID": "intraday_bid",
+                "CF_HIGH": "high", 
+                "CF_LOW": "low",
+                "PCTCHNG": "latest_price_change",
+                "TRADE_DATE": "last_date",
+                "CF_VOLUME": "volume",
+                "CF_LAST": "latest_price",
+                "CF_NETCHNG": "latest_net_change"
+                })
+        df_data["last_date"] = datetime.now().date()
+        df_data["intraday_time"] = str(datetime.now())
+        df_data =df_data.astype(
+            {
+                "intraday_ask":"float",
+                "close":"float",
+                "intraday_bid":"float",
+                "high":"float",
+                "low":"float",
+                "latest_price_change":"float",
+                "volume":"float",
+                "latest_price":"float",
+                "latest_net_change":"float"
+            }
+        )
+        return df_data
+
+    async def quote_gather_request(self, url:str, payload:list, headers:dict)-> List[pd.DataFrame]:
+        async with aiohttp.ClientSession(headers=headers) as session:
+
+            responses = []
+            for data in payload:
+                responses.append(asyncio.ensure_future(
+                    self.async_send_request_quote(session, url, data)))
+
+            original_responses = await asyncio.gather(*responses)
+            return original_responses
+
+    async def async_send_request_quote(self, session, url, payload) -> pd.DataFrame:
+        async with session.post(url, data=json.dumps(payload)) as resp:
+            response = await resp.json()
+            status = resp.status
+
+            if status == 200:
+                return self.response_to_df(response)
+            else:
+                raise Exception(response)
+
+    def bulk_get_quote(self, ticker:list, df=False, save=False,**options)->Optional[Union[pd.DataFrame, dict]] :
+        quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
+        split = len(ticker)/50
+        collected_data =[]
+        if split < 1:
+            split = math.ceil(split)
+        splitting_df = np.array_split(ticker, split)
+        bulk_payload=[]
+        print(len(ticker))
+        for universe in splitting_df:
+            ticker = universe.tolist()
+            payload = self.retrive_template(ticker, fields=[
+                                            "CF_ASK", "CF_CLOSE", "CF_BID", "PCTCHNG", "CF_HIGH", "CF_LOW", "CF_LAST", 
+                                            "CF_VOLUME", "TRADE_DATE","CF_NETCHNG"])
+            bulk_payload.append(payload)
+        
+        self.validate_token()
+        
+        response:List[pd.DataFrame] = asyncio.run(self.quote_gather_request(quote_url,bulk_payload,self.auth_headers()))
+        data : pd.DataFrame = pd.concat(response,ignore_index=True)
+        if df:
+            return data
+        return data.to_dict("records")
+
+
+
+
     def get_quote(self, ticker, df=False, save=False,**options):
         import math
         if isinstance(ticker,str):
@@ -354,7 +442,8 @@ class RkdData(Rkd):
             ticker = universe.tolist()
             print(len(ticker))
             payload = self.retrive_template(ticker, fields=[
-                                            "CF_ASK", "CF_CLOSE", "CF_BID", "PCTCHNG", "CF_HIGH", "CF_LOW", "CF_LAST", "CF_VOLUME", "TRADE_DATE"])
+                                            "CF_ASK", "CF_CLOSE", "CF_BID", "PCTCHNG", "CF_HIGH", "CF_LOW", "CF_LAST", 
+                                            "CF_VOLUME", "TRADE_DATE","CF_NETCHNG"])
             response = self.send_request(quote_url, payload, self.auth_headers())
 
             formated_json_data = self.parse_response(response)
@@ -362,16 +451,18 @@ class RkdData(Rkd):
                 "CF_ASK": "intraday_ask",
                 "CF_CLOSE": "close",
                 "CF_BID": "intraday_bid",
-                "CF_HIGH": "high", "CF_LOW": "low",
+                "CF_HIGH": "high", 
+                "CF_LOW": "low",
                 "PCTCHNG": "latest_price_change",
                 "TRADE_DATE": "last_date",
                 "CF_VOLUME": "volume",
-                "CF_LAST": "latest_price"
+                "CF_LAST": "latest_price",
+                "CF_NETCHNG": "latest_net_change"
             })
             df_data["last_date"] = datetime.now().date()
             df_data["intraday_time"] = str(datetime.now())
             collected_data.append(df_data)
-        collected_data = pd.concat(collected_data)
+        collected_data = pd.concat(collected_data,ignore_index=True)
         if save:
             print("saving....")
             self.save("master", "LatestPrice", collected_data.to_dict("records"))
@@ -485,6 +576,35 @@ class RkdStream(RkdData):
     @classmethod
     def trkd_stream_initiate(cls,ticker):
         return cls(ticker)
+    
+    def thread_stream_quote(self):
+        from django import db
+        db.connections.close_all()
+        threads = mp.Process(target=self.stream_quote)
+        threads.name = self.chanels
+        self.is_thread =True
+        return threads
+
+    def stream_quote(self):
+        # FOR NOW ONLY HKD
+        # TODO: Need to enhance this
+        while True:
+            hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
+            if hkd_exchange.is_open:
+                data =self.bulk_get_quote(self.ticker_data,df=True)
+                for index in data.index:
+                    split_data = data.iloc[[index]]
+                    self.update_rtdb.apply_async(args=(split_data.to_dict("records"),),queue="broadcaster")
+                del data
+                gc.collect()
+            else:
+                break
+            time.sleep(6)
+        if self.is_thread:
+                sys.exit()
+        
+
+
     
     def thread_stream(self):
         from django import db
@@ -722,6 +842,7 @@ class RkdStream(RkdData):
     def update_rtdb(self,data):
         data = data[0]
         ticker = data.pop("ticker")
+        print(ticker)
         ref = db.collection("universe").document(ticker)
         try:
             ref.set({"price":data},merge=True)

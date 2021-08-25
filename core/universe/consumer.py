@@ -83,7 +83,7 @@ class UniverseConsumer(WebsocketConsumer):
         if not process:
             rkd = RkdStream()
             rkd.chanels = self.room_group_name
-            proc = rkd.thread_stream()
+            proc = rkd.thread_stream_quote()
             proc.daemon = True
             proc.start()
 
@@ -103,7 +103,7 @@ class UniverseConsumer(WebsocketConsumer):
 
                 rkd = RkdStream()
                 rkd.chanels = self.room_group_name
-                proc = rkd.thread_stream()
+                proc = rkd.thread_stream_quote()
                 proc.daemon = True
                 proc.start()
             asyncio.run(self.channel_layer.send(
@@ -119,7 +119,7 @@ class UniverseConsumer(WebsocketConsumer):
                 self.channel_name,
                 {
                     'type': 'broadcastmessage',
-                    'message': f'message streaming cannot be empty, your payload was {event["message"]}',
+                    'message': f'message streaming cannot be empty, your payload was {event}',
                     'status': 400
                 }
             ))
