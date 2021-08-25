@@ -1,3 +1,4 @@
+from core.djangomodule.management.commands.populate_ticker import populate_ticker_monthly
 from core.user.models import User
 from requests.api import get
 from ingestion.data_from_rkd import update_currency_code_from_rkd

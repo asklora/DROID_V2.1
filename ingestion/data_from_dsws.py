@@ -64,13 +64,15 @@ from general.date_process import (
     forwarddate_by_day)
 from datasource.fred import read_fred_csv
 
-def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
+def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None, manual_universe=None, universe=None):
     print("{} : === Ticker ISIN Start Ingestion ===".format(datetimeNow()))
-    manual_universe = get_active_universe_consolidated_by_field(manual=True, ticker=ticker)
+    if(manual_universe is None):
+        manual_universe = get_active_universe_consolidated_by_field(manual=True, ticker=ticker)
     manual_universe = manual_universe.loc[manual_universe["use_manual"] == True]
     manual_universe["consolidated_ticker"] = manual_universe["origin_ticker"]
 
-    universe = get_active_universe_consolidated_by_field(isin=True, ticker=ticker)
+    if(universe is None):
+        universe = get_active_universe_consolidated_by_field(isin=True, ticker=ticker)
     universe = universe.loc[universe["use_manual"] == False]
     if(len(universe) > 0):
         universe = universe.drop(columns=["isin", "consolidated_ticker", "sedol", "is_active", "cusip", "permid", "updated"])
@@ -133,6 +135,7 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None):
     print(result)
     upsert_data_to_database(result, get_universe_consolidated_table_name(), "uid", how="update", Text=True)
     report_to_slack("{} : === Ticker ISIN Updated ===".format(datetimeNow()))
+    return result
 
 def update_ticker_name_from_dsws(ticker=None, currency_code=None):
     print("{} : === Ticker Name Start Ingestion ===".format(datetimeNow()))
@@ -286,56 +289,57 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
     identifier = "ticker"
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
     print(universe)
-    filter_field = ["EPS1TR12","WC05480","WC18100A","WC18262A","WC08005",
-        "WC18309A","WC18311A","WC18199A","WC08372","WC05510","WC08636A",
-        "BPS1FD12","EBD1FD12","EVT1FD12","EPS1FD12","SAL1FD12","CAP1FD12",
-        "WC02999", "WC02001", "WC03101", "WC03501", "WC18312", "WC02101", 
-        "WC18264", "WC18267", "WC01451", "WC18810", "WC02401", "WC18274", 
-        "WC07211", "i0eps"]
+    if(len(universe)):
+        filter_field = ["EPS1TR12","WC05480","WC18100A","WC18262A","WC08005",
+            "WC18309A","WC18311A","WC18199A","WC08372","WC05510","WC08636A",
+            "BPS1FD12","EBD1FD12","EVT1FD12","EPS1FD12","SAL1FD12","CAP1FD12",
+            "WC02999", "WC02001", "WC03101", "WC03501", "WC18312", "WC02101", 
+            "WC18264", "WC18267", "WC01451", "WC18810", "WC02401", "WC18274", 
+            "WC07211", "i0eps"]
 
-    static_field = ["ENSCORE","SOSCORE","CGSCORE"]
-    column_name = {"EPS1TR12": "eps", "WC05480": "bps", "WC18100A": "ev",
-        "WC18262A": "ttm_rev","WC08005": "mkt_cap","WC18309A": "ttm_ebitda",
-        "WC18311A": "ttm_capex","WC18199A": "net_debt","WC08372": "roe",
-        "WC05510": "cfps","WC08636A": "peg","BPS1FD12" : "bps1fd12",
-        "EBD1FD12" : "ebd1fd12","EVT1FD12" : "evt1fd12","EPS1FD12" : "eps1fd12",
-        "SAL1FD12" : "sal1fd12","CAP1FD12" : "cap1fd12",
-        "ENSCORE" : "environment","SOSCORE" : "social",
-        "CGSCORE" : "goverment", 
-        "WC02999" : "total_asset", "WC02001" : "cash", 
-        "WC03101" : "current_asset", "WC03501" : "equity", 
-        "WC18312" : "ttm_cogs", "WC02101" : "inventory", 
-        "WC18264" : "ttm_eps", "WC18267" : "ttm_gm", 
-        "WC01451" : "income_tax", "WC18810" : "pension_exp", 
-        "WC02401" : "ppe_depreciation", "WC18274" : "ppe_impairment", 
-        "WC07211" : "mkt_cap_usd", "i0eps" : "eps_lastq"}
+        static_field = ["ENSCORE","SOSCORE","CGSCORE"]
+        column_name = {"EPS1TR12": "eps", "WC05480": "bps", "WC18100A": "ev",
+            "WC18262A": "ttm_rev","WC08005": "mkt_cap","WC18309A": "ttm_ebitda",
+            "WC18311A": "ttm_capex","WC18199A": "net_debt","WC08372": "roe",
+            "WC05510": "cfps","WC08636A": "peg","BPS1FD12" : "bps1fd12",
+            "EBD1FD12" : "ebd1fd12","EVT1FD12" : "evt1fd12","EPS1FD12" : "eps1fd12",
+            "SAL1FD12" : "sal1fd12","CAP1FD12" : "cap1fd12",
+            "ENSCORE" : "environment","SOSCORE" : "social",
+            "CGSCORE" : "goverment", 
+            "WC02999" : "total_asset", "WC02001" : "cash", 
+            "WC03101" : "current_asset", "WC03501" : "equity", 
+            "WC18312" : "ttm_cogs", "WC02101" : "inventory", 
+            "WC18264" : "ttm_eps", "WC18267" : "ttm_gm", 
+            "WC01451" : "income_tax", "WC18810" : "pension_exp", 
+            "WC02401" : "ppe_depreciation", "WC18274" : "ppe_impairment", 
+            "WC07211" : "mkt_cap_usd", "i0eps" : "eps_lastq"}
 
-    result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
-    result2, except_field2 = get_data_history_frequently_from_dsws(start_date2, end_date, universe, identifier, static_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
-    print("Error Ticker = " + str(except_field))
-    if len(except_field) == 0 :
-        second_result = []
-    else:
-        second_result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, except_field, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
-    try:
-        if(len(result) == 0):
+        result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
+        result2, except_field2 = get_data_history_frequently_from_dsws(start_date2, end_date, universe, identifier, static_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
+        print("Error Ticker = " + str(except_field))
+        if len(except_field) == 0 :
+            second_result = []
+        else:
+            second_result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, except_field, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
+        try:
+            if(len(result) == 0):
+                result = second_result
+            elif(len(second_result) == 0):
+                result = result
+            else :
+                result = result.append(second_result)
+        except Exception as e:
             result = second_result
-        elif(len(second_result) == 0):
-            result = result
-        else :
-            result = result.append(second_result)
-    except Exception as e:
-        result = second_result
-    print(result)
-    result = result.rename(columns=column_name)
-    result.reset_index(inplace = True)
-    result = result.drop(columns={"index", "level_0"})
-    result2 = result2.drop(columns=["index"])
-    result = result.merge(result2, how="left", on="ticker")
-    print(result)
-    if(len(universe)) > 0 :
-        upsert_data_to_database(result, get_fundamental_score_table_name(), "ticker", how="update", Text=True)
-        report_to_slack("{} : === Fundamentals Score Updated ===".format(datetimeNow()))
+        print(result)
+        result = result.rename(columns=column_name)
+        result.reset_index(inplace = True)
+        result = result.drop(columns={"index", "level_0"})
+        result2 = result2.drop(columns=["index"])
+        result = result.merge(result2, how="left", on="ticker")
+        print(result)
+        if(len(universe)) > 0 :
+            upsert_data_to_database(result, get_fundamental_score_table_name(), "ticker", how="update", Text=True)
+            report_to_slack("{} : === Fundamentals Score Updated ===".format(datetimeNow()))
 
 def check_trading_day(days = 0):
     today = datetime.now().date()
@@ -810,7 +814,7 @@ def update_macro_data_monthly_from_dsws():
     report_to_slack("{} : === Data MACRO Monthly Update Updated ===".format(datetimeNow()))
     populate_macro_table()
 
-def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None):
+def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, history=False):
     filter_field = [
         "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
         "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
@@ -818,16 +822,17 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
         "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
         "WC02001A", "WC05575A", "WC01451A", "WC18810A", "WC02401A", "WC18274A"]
     for field in filter_field:
-        worldscope_quarter_summary_from_dsws(ticker=ticker, currency_code=currency_code, filter_field=[field])
+        worldscope_quarter_summary_from_dsws(ticker=ticker, currency_code=currency_code, filter_field=[field], history=history)
     report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
 
-def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filter_field=None):
-
+def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filter_field=None, history=False):
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
     if(len(universe) < 1):
         return False
     end_date = dateNow()
     start_date = backdate_by_month(6)
+    if(history):
+        start_date = "2000-03-31"
     identifier="ticker"
     ticker = universe[["ticker"]]
     ticker = ticker["ticker"].tolist()
