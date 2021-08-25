@@ -1,7 +1,4 @@
 # PYTHON TOOLS
-from ingestion.master_ohlcvtr import master_ohlctr_update
-from ingestion.master_multiple import master_multiple_update
-from ingestion.master_tac import master_tac_update
 import time as tm
 import pandas as pd
 import io
@@ -51,14 +48,9 @@ from ingestion.data_from_dsws import (
     update_company_desc_from_dsws,
     update_data_dsws_from_dsws,
     update_entity_type_from_dsws,
-    update_fundamentals_quality_value,
-    update_fundamentals_score_from_dsws,
-    update_ibes_data_monthly_from_dsws,
     update_industry_from_dsws,
-    update_rec_buy_sell_from_dsws,
     update_ticker_name_from_dsws,
-    update_worldscope_identifier_from_dsws,
-    update_worldscope_quarter_summary_from_dsws)
+    update_worldscope_identifier_from_dsws)
 
 
 USD_CUR = Currency.objects.get(currency_code="USD")
@@ -304,16 +296,6 @@ def new_ticker_ingestion(ticker):
         update_data_dss_from_dss(ticker=ticker, history=True)
         update_data_dsws_from_dsws(ticker=ticker, history=True)
         dividend_updated_from_dsws(ticker=ticker)
-    do_function("special_cases_1")
-    do_function("master_ohlcvtr_update")
-    master_ohlctr_update()
-    master_tac_update()
-    master_multiple_update()
-    update_fundamentals_score_from_dsws(ticker=ticker)
-    update_fundamentals_quality_value()
-    update_ibes_data_monthly_from_dsws(ticker=ticker, history=True)
-    update_worldscope_quarter_summary_from_dsws(ticker=ticker, history=True)
-    update_rec_buy_sell_from_dsws(ticker=ticker)
 
 @app.task
 def weekly_universe_firebase_update(currency_code:list) -> dict:
