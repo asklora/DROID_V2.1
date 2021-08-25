@@ -297,9 +297,9 @@ class BaseOrderConnector(AbstracOrderConnector):
             position.bot_cash_balance = 0
             position.share_num = self.instance.qty
             performance.share_num = self.instance.qty
+            performance.current_bot_cash_balance = position.bot_cash_balance
             # start creating position
         performance.current_pnl_amt = 0  # need to calculate with fee
-        # performance.current_bot_cash_balance = position.bot_cash_balance
 
         performance.current_investment_amount = formatdigit(
             performance.last_live_price * performance.share_num, self.is_decimal)
