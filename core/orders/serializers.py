@@ -28,7 +28,11 @@ from datetime import datetime
                 "price": 0,
                 "hedge_share": "string",
                 "stamp": 0,
-                "commission": 0
+                "commission": 0,
+                "current_pnl_ret":0,
+                "current_pnl_amt":0,
+                "initial_investment_amt":0,
+                "current_value":0
 
             }],
             response_only=True,  # signal that example only applies to responses
@@ -43,11 +47,22 @@ class PerformanceSerializer(serializers.ModelSerializer):
     hedge_share = serializers.SerializerMethodField()
     stamp = serializers.SerializerMethodField()
     commission = serializers.SerializerMethodField()
+    initial_investment_amt = serializers.SerializerMethodField()
+    current_value = serializers.SerializerMethodField()
 
     class Meta:
         model = PositionPerformance
         fields = ("created", "prev_bot_share_num", "share_num", "current_investment_amount",
-                  "side", "price", "hedge_share", "stamp", "commission")
+                  "side", "price", "hedge_share", "stamp", "commission","current_pnl_ret",
+                  "current_pnl_amt","initial_investment_amt","current_value")
+
+    
+    def get_current_value(self,obj)->float:
+        return obj.current_bot_cash_balance + obj.current_investment_amount
+    
+    def get_initial_investment_amt(self,obj)-> float:
+        return obj.position_uid.investment_amount
+
 
     def get_hedge_share(self, obj) -> int:
         if obj.order_summary:
@@ -93,6 +108,7 @@ class PositionSerializer(serializers.ModelSerializer):
     total_fee = serializers.SerializerMethodField()
     turnover = serializers.SerializerMethodField()
     bot_details = serializers.SerializerMethodField()
+    currency = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderPosition
@@ -155,6 +171,9 @@ class PositionSerializer(serializers.ModelSerializer):
         if obj.ticker.ticker_name:
             return obj.ticker.ticker_name
         return obj.ticker.ticker_fullname
+    
+    def get_currency(self,obj)->str:
+        return obj.ticker.currency_code.currency_code
 
     def get_last_price(self, obj) -> float:
         return obj.ticker.latest_price_ticker.close

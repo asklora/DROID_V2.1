@@ -15,7 +15,6 @@ from portfolio.daily_hedge_classic import classic_position_check
 from config.celery import app 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        populate_ticker_monthly()
         # c = Client()
         # c.get_position('DU2898616',0)
         # c.market_order(2,'DU2898616','order first',265598)
@@ -79,9 +78,15 @@ class Command(BaseCommand):
 #             else:
 #                 print(ticker)
 #         print(len(HKD_universe))
-#         rkd = RkdData()
+        HKD_universe = [ticker['ticker'] for ticker in Universe.objects.prefetch_related('currency_code').filter(currency_code__in=['HKD'],is_active=True).values('ticker')]
+        rkd = RkdData()
 #         now = datetime.now().date()
-#         rkd.get_quote(HKD_universe, save=True,detail=f'hedge-{now}')
+        data =rkd.bulk_get_quote(HKD_universe,df=True)
+        print(data.iloc[[0]])
+        # for index in data.index:
+        #     r =data.loc[index]
+        #     r.to_dict("records")
+        # print(data)
         # populate_client_top_stock_weekly(currency='HKD')
         # order_client_topstock(currency='HKD',bot_tester=False,repopulate={
         #     'date':'2021-07-26',

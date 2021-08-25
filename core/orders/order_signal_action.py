@@ -6,6 +6,7 @@ from core.djangomodule.general import formatdigit
 from core.Clients.models import UserClient
 from django.db import transaction as db_transaction
 from config.celery import app as worker
+from core.Clients.IBClientModule import IBClient 
 """
 user/bot
 broker/simulation
@@ -296,9 +297,9 @@ class BaseOrderConnector(AbstracOrderConnector):
             position.bot_cash_balance = 0
             position.share_num = self.instance.qty
             performance.share_num = self.instance.qty
+            performance.current_bot_cash_balance = position.bot_cash_balance
             # start creating position
         performance.current_pnl_amt = 0  # need to calculate with fee
-        # performance.current_bot_cash_balance = position.bot_cash_balance
 
         performance.current_investment_amount = formatdigit(
             performance.last_live_price * performance.share_num, self.is_decimal)
@@ -413,8 +414,38 @@ class LiveOrderConnector(BaseOrderConnector):
     def __init__(self,*args,**kwargs):
         super().__init__(*args, **kwargs)
     
+    def cancel_order(self):
+        self.instance.status = "cancel"
+        self.instance.canceled_at = datetime.now()
+        self.instance.save()
     # TODO: #51 INTERACTIVE BROKER ORDER REQUEST
     def on_buy_placed(self):
+        if self.instance.ticker.currency_code == "USD":
+            contract = IBClient.find_contract(self.instance.ticker.ticker_symbol)
+            if not contract:
+                self.cancel_order()
+            else:
+                order = IBClient.market_order(qty=self.instance.qty, 
+                    account_id="DU2898614",
+                    side=self.instance.side.upper(),
+                    con_order_id=self.instance.order_uid)
+                order_id = order['order_id'] # must save this for retrive orders update 
+                # if order['order_status'] == 'PreSubmit':
+                #     # run_ws("DU2898614", order_id) ditambahin ws connection buat callback
+                # elif order['order_status'] == 'Filled':
+
+
+        else:
+            self.cancel_order()
+        """
+        find contract
+
+        if not True:
+            status = cancel
+        else:
+            market or limit order
+            status = pending
+        """
         print('sent buy order to broker')
         
     def on_sell_placed(self):
