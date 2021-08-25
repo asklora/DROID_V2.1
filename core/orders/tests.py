@@ -8,6 +8,7 @@ import time
 from core.orders.models import Order
 from core.user.models import Accountbalance, User, TransactionHistory
 import uuid
+from django.db import transaction
 
 class TestSimple:
     pytestmark = pytest.mark.django_db
@@ -166,39 +167,59 @@ class TestComplex:
     def test_should_update_new_buy_order_for_user(self) -> None:
         """
         A new BUY order's status will be set to PENDING and the price is deducted from USER balance
+        #NOTE : after test must clean
         """
 
         ticker = "3377.HK"
-        user_id = 197
         bot_id = "STOCK_stock_0"
+        with transaction.atomic():
+            """
+            all inside this with context will be written into database,
+            IF ALL THE TRANSACTION DOESNT HAVE ERROR,
+            OTHERWISE IF ANY ERROR, ANYTHING INSIDE THIS BLOCK WILL REVERTED BEFORE WITH CONTEXT
+            """
+            user = User.objects.create_user(
+                email='pytest@tests.com',
+                username='pikachu_icikiwiw', 
+                password='helloworld',
+                is_active=True,
+                current_status='verified'
+                )
+            user_balance = Accountbalance.objects.create(
+                user=user,
+                amount=0,
+                currency_code_id="HKD",
+            )
+            trans = TransactionHistory.objects.create(balance_uid=user_balance,side='credit',amount=100000,
+            transaction_detail={
+                'event':'first deposit'
+            })
 
-        user_balance = Accountbalance.objects.create(
-            balance_uid=uuid.uuid4().hex,
-            user_id=user_id,
-            amount=100000,
-            currency_code_id="HKD",
-        )
+            order = Order.objects.create(
+                qty=1,
+                price=1317,
+                side="buy",
+                bot_id=bot_id,
+                ticker_id=ticker,
+                user_id=user,
+                #NOTE: this is will error, stock/user order need amount
+            )
 
-        order = Order.objects.create(
-            qty=1,
-            price=1317,
-            side="buy",
-            bot_id=bot_id,
-            ticker_id=ticker,
-            user_id_id=user_id,
-        )
+            time.sleep(3)
 
-        time.sleep(3)
+            order.status = "pending"
+            order.placed = True
+            order.placed_at = datetime.now()
+            order.save()
 
-        order.status = "pending"
-        order.placed = True
-        order.placed_at = datetime.now()
-        order.save()
 
-        # transaction = TransactionHistory.objects.get(amount=order.amount)
-
-        assert order.amount == (order.price * order.qty + 1)
-        assert user_balance.amount == user_balance - order.amount
+            assert order.amount == (order.price * order.qty + 1)
+            assert user_balance.amount == user_balance - order.amount
+        # cleaning CASCADE user
+        # if success all the transaction will commited to db(recorded)
+        # deleting user will cascade deleted all related model to it
+        # so delete the user after all success will clean test data
+        user.delete()
 
 
 # def test_should_create_new_sell_order_for_user() -> None:
