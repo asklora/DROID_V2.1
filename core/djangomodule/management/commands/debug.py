@@ -1,3 +1,4 @@
+from core.djangomodule.management.commands.populate_ticker import populate_ticker_monthly
 from core.user.models import User
 from requests.api import get
 from ingestion.data_from_rkd import update_currency_code_from_rkd
@@ -14,11 +15,12 @@ from portfolio.daily_hedge_classic import classic_position_check
 from config.celery import app 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        c = Client()
+        populate_ticker_monthly()
+        # c = Client()
         # c.get_position('DU2898616',0)
         # c.market_order(2,'DU2898616','order first',265598)
         
-        c.find_contract('TSLA')
+        # c.find_contract('TSLA')
         # app.control.revoke('eb3cdebb-1c89-44d0-a022-65527f2863ee', terminate=True)
 
         # daily_hedge(currency="KRW",rehedge={

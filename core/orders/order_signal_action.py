@@ -103,7 +103,7 @@ class BaseOrderConnector(AbstracOrderConnector):
             if self.bot.is_stock():
                 amount = self.instance.amount
             else:
-                amount = self.instance.setup['investment_amount']
+                amount = self.instance.setup['position']['investment_amount']
                 
             TransactionHistory.objects.create(
                 balance_uid=self.user_wallet,
@@ -287,6 +287,8 @@ class BaseOrderConnector(AbstracOrderConnector):
                 if hasattr(performance, key):
                     setattr(performance, key, val)
             for key, val in self.instance.setup['position'].items():
+                if hasattr(position, key):
+                    setattr(position, key, val)
                 if key == "total_bot_share_num":
                     setattr(position, "share_num", val)
         else:
@@ -297,7 +299,7 @@ class BaseOrderConnector(AbstracOrderConnector):
             performance.share_num = self.instance.qty
             # start creating position
         performance.current_pnl_amt = 0  # need to calculate with fee
-        performance.current_bot_cash_balance = position.bot_cash_balance
+        # performance.current_bot_cash_balance = position.bot_cash_balance
 
         performance.current_investment_amount = formatdigit(
             performance.last_live_price * performance.share_num, self.is_decimal)

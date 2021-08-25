@@ -20,6 +20,7 @@ from general.table_name import (
     get_orders_position_performance_table_name,
     get_orders_position_table_name,
     get_region_table_name,
+    get_universe_client_table_name,
     get_universe_rating_detail_history_table_name,
     get_universe_rating_history_table_name,
     get_user_account_balance_table_name,
@@ -177,15 +178,17 @@ def get_all_universe(ticker=None, currency_code=None, active=True):
 
 def get_active_universe(ticker=None, currency_code=None, active=True):
     query = f"select * from {get_universe_table_name()} where is_active=True "
-    check = check_ticker_currency_code_query(
-        ticker=ticker, currency_code=currency_code, active=active
-    )
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
     if check != "":
         query += f"and " + check
     query += f"order by ticker"
     data = read_query(query, table=get_universe_table_name())
     return data
 
+def get_active_universe_by_created(created=dateNow()):
+    query = f"select * from {get_universe_table_name()} where is_active=True and created='{created}' order by ticker"
+    data = read_query(query, table=get_universe_table_name())
+    return data
 
 def get_universe_rating(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_table_name()
@@ -252,6 +255,12 @@ def get_active_universe_by_quandl_symbol(
         data = read_query(query, table=get_universe_table_name())
     return data
 
+def get_universe_client(client_uid=None):
+    query = f"select * from {get_universe_client_table_name()} "
+    if type(client_uid) != type(None):
+        query += f"where client_uid in {tuple_data(client_uid)} "
+    data = read_query(query, table=get_universe_table_name())
+    return data
 
 def get_universe_by_region(region_id=None):
     query = f"select * from {get_universe_table_name()} where is_active=True "
@@ -457,6 +466,11 @@ def get_master_tac_data(
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+def get_consolidated_universe_data():
+    table_name = get_universe_consolidated_table_name()
+    query = f"select * from {table_name} "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
 
 def get_consolidated_data(column, condition, group_field=None):
     table_name = get_universe_consolidated_table_name()
@@ -467,7 +481,6 @@ def get_consolidated_data(column, condition, group_field=None):
         query += f"group by {group_field} "
     data = read_query(query, table_name, cpu_counts=True)
     return data
-
 
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_history_table_name()
@@ -605,7 +618,7 @@ def get_user_core(currency_code=None, user_id=None, field="*"):
     query = f"select {field} from {table_name} where is_active=True and is_superuser=False "
     if type(user_id) != type(None):
         query += f"and id in {tuple_data(user_id)}  "
-    if type(currency_code) != type(None):
+    elif type(currency_code) != type(None):
         query += f"and id in (select user_id as id from {get_user_account_balance_table_name()} where currency_code in {tuple_data(currency_code)}) "
     query += "order by id "
     data = read_query(query, table_name, cpu_counts=True)
@@ -615,8 +628,43 @@ def get_user_account_balance(currency_code=None, user_id=None, field="*"):
     table_name = get_user_account_balance_table_name()
     query = f"select {field} from {table_name} where amount is not null "
     if type(user_id) != type(None):
-        query += f"and id in {tuple_data(user_id)}  "
-    if type(currency_code) != type(None):
+        query += f"and user_id in {tuple_data(user_id)}  "
+    elif type(currency_code) != type(None):
         query += f"and currency_code in {tuple_data(currency_code)} "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_orders_position(user_id=None, ticker=None, currency_code=None, position_uid=None, field="*", active=True):
+    table_name = get_orders_position_table_name()
+    query = f"select {field} from {table_name} where is_live={active} "
+    if type(user_id) != type(None):
+        query += f"and user_id in {tuple_data(user_id)}  "
+    elif type(position_uid) != type(None):
+        query += f"where position_uid in {position_uid} "
+    elif type(ticker) != type(None):
+        query += f"and ticker in {tuple_data(ticker)} "
+    elif type(currency_code) != type(None):
+        query += f"and ticker in (select ticker from universe where currency_code in {tuple_data(currency_code)}) "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_orders_position_performance(user_id=None, ticker=None, currency_code=None, position_uid=None, field="*", active=True, latest=False):
+    table_name = get_orders_position_performance_table_name()
+    query = f"select {field} from {table_name} opp "
+    if type(user_id) != type(None):
+        query += f"where position_uid in (select position_uid from {get_orders_position_table_name()} where is_live={active} and "
+        query += f"user_id in {tuple_data(user_id)}) "
+    elif type(position_uid) != type(None):
+        query += f"where position_uid in {tuple_data(position_uid)} "
+    elif type(ticker) != type(None):
+        query += f"where position_uid in (select position_uid from {get_orders_position_table_name()} where is_live={active} and "
+        query += f"ticker in {tuple_data(ticker)}) "
+    elif type(currency_code) != type(None):
+        query += f"where position_uid in (select position_uid from {get_orders_position_table_name()} where is_live={active} and "
+        query += f"ticker in (select ticker from universe where currency_code in {tuple_data(currency_code)})) "
+    if(latest):
+        query += "and exists (select 1 from (select filters.position_uid, max(filters.created) max_date "
+        query += "from orders_position_performance as filters group by filters.position_uid) result "
+        query += "where result.position_uid=opp.position_uid and result.max_date::date=opp.created::date) "
     data = read_query(query, table_name, cpu_counts=True)
     return data
