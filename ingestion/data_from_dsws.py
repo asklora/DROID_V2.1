@@ -509,6 +509,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     factor_rank = get_factor_rank()
     factor_rank['pillar'] = factor_rank['factor_name'].map(factor_to_pillar)
     factor_from_table = list(factor_to_pillar.keys())
+    factor_rank = factor_rank[factor_rank['factor_name'].isin(factor_from_table)]
 
     # des1 = fundamentals_score.describe()
     # change ratio to negative if original factor calculation using reverse premiums
@@ -579,7 +580,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         except Exception as e:
             print(e)
 
-    print("Calculate Momentum Value")
     try:
         tmp = fundamentals.melt(['ticker', 'currency_code', 'industry_code'], calculate_column)
         tmp['quantile_transformed'] = tmp.groupby(['currency_code', 'variable'])['value'].transform(lambda x: quantile_transform(x.values.reshape(-1, 1), n_quantiles=4).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
@@ -596,9 +596,9 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     import pandas as pd
     from general.sql_query import get_factor_calculation_formula
 
-    with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
-        extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
-        fundamentals.to_sql('test_fundamentals', **extra)
+    # with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
+    #     extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
+    #     fundamentals.to_sql('test_fundamentals', **extra)
     # exit(20)
 
     fundamentals = fundamentals.merge(universe_rating, on='ticker', how='left')
@@ -609,15 +609,51 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     addition_col_by_pillar = {'value': [], 'quality':['earnings_pred'], 'momentum':['wts_rating','dlp_1m']}
 
-    # Calculate fundamental score based on ranking
-    for name, g in factor_rank.groupby(['pillar']):
-        print(f"Calculate Fundamentals [{name}]")
+    fundamentals[[f"fundamentals_{name}" for name in addition_col_by_pillar.keys()]] = np.nan
+
+    fundamental_score_norm_method = 'minmax'
+    fundamental_score_col_suffix = f'_{fundamental_score_norm_method}_currency_code'
+
+    for (group, name), g in factor_rank.groupby(['group', 'pillar']):
+        print(f"Calculate Fundamentals [{name}] in group {group}")
         sub_g = g.loc[g['factor_weight']==2]    # use all rank=2 (best class)
         if len(sub_g) == 0:     # if no factor rank=2, use the highest ranking one
             sub_g = g.nlargest(1, columns=['pred_rank_same_time_and_group'])
-        score_col = [f'{x}_minmax_industry' for x in sub_g['factor_name']] + \
-                    [f'{x}_minmax_currency_code' for x in sub_g['factor_name']] + addition_col_by_pillar.get(name)
-        fundamentals[f"fundamentals_{name}"] = fundamentals[score_col].mean(axis=1).round(2)*10
+
+        score_col = [f'{x}{fundamental_score_col_suffix}' for x in sub_g['factor_name']]
+
+        for col in addition_col_by_pillar.get(name):
+            if col in universe_rating.columns:
+                score_col.append(col)
+            else:
+                score_col.append(f'{col}{fundamental_score_col_suffix}')
+            
+        fundamentals.loc[fundamentals['currency_code'] == group, f"fundamentals_{name}"] = fundamentals[score_col].mean(axis=1)
+        # tmp = fundamentals[score_col].melt(var_name='factor_name')
+        # tmp['value_qcut'] = tmp.groupby(['factor_name'])['value'].transform(lambda x: pd.qcut(x, q=10, labels=False, duplicates='drop')).astype(float)
+        # print(tmp)
+    
+    for group, g in factor_rank.groupby('group'):
+        print(f"Calculate Fundamentals [extra] in group {group}")
+        sub_g = g.loc[g['factor_weight']==2]    # use all rank=2 (best class)
+
+        if len(sub_g) > 0:     # if no factor rank=2, use the highest ranking one
+            for top_n in [2, 4, 6, -1]:
+                if top_n == -1:
+                    score_col = [f'{x}{fundamental_score_col_suffix}' for x in sub_g['factor_name']]
+                    fundamentals.loc[fundamentals['currency_code'] == group, f'fundamentals_extra_all_best'] = fundamentals[score_col].mean(axis=1)
+                else:
+                    score_col = [f'{x}{fundamental_score_col_suffix}' for x in sub_g.nlargest(top_n, columns=['pred_rank_same_time_and_group'])['factor_name']]
+                    fundamentals.loc[fundamentals['currency_code'] == group, f'fundamentals_extra_top{top_n}'] = fundamentals[score_col].mean(axis=1)
+
+    fundamentals_factors_scores_col = fundamentals.filter(regex='^fundamentals_').columns
+    fundamentals[fundamentals_factors_scores_col] = (fundamentals[fundamentals_factors_scores_col]*10).round(1)
+    # tmp = fundamentals.filter(regex='^(?:ticker$|currency_code$|fundamentals_)')
+    
+    with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
+        extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
+        fundamentals.to_sql('test_fundamentals', **extra)
+    exit(0)
 
     # print("Calculate Fundamentals Value")
     # fundamentals["fundamentals_value"] = ((fundamentals["earnings_yield_minmax_currency_code"]) +
@@ -648,7 +684,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     #     fundamentals["earnings_pred_minmax_currency_code"]).round(1)
 
     print("Calculate Momentum Value")
-    fundamentals["technical"] = (fundamentals["wts_rating"] + fundamentals["dlp_1m"]+ fundamentals["momentum"]) / 3
+    fundamentals["technical"] = (fundamentals["wts_rating"] + fundamentals["dlp_1m"]+ fundamentals["fundamentals_momentum"]) / 3
 
     print("Calculate ESG Value")
     fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
@@ -664,7 +700,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     
     universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", 
     "fundamentals_quality", "ai_score", "ai_score2", "esg", 
-    "momentum", "technical", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
+    "fundamentals_momentum", "technical", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
 
     universe_rating_detail_history = fundamentals[minmax_column]
     
