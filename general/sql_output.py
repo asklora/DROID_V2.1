@@ -25,22 +25,22 @@ def truncate_table(table_name):
     data = execute_query(query, table=table_name)
     return True
 
-# def insert_data_to_database(data, table, how="replace"):
-#     print(f"=== Insert Data to Database on Table {table} ===")
-#     engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
-#     try:
-#         with engine.connect() as conn:
-#             data.to_sql(
-#                 table,
-#                 if_exists=how,
-#                 index=False,
-#                 chunksize=20000,
-#                 con=conn
-#             )
-#         engine.dispose()
-#         print(f"DATA INSERTED TO {table}")
-#     except Exception as ex:
-#         print(f"error: ", ex)
+def insert_data_to_database(data, table, how="append"):
+    print(f"=== Insert Data to Database on Table {table} ===")
+    engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    try:
+        with engine.connect() as conn:
+            data.to_sql(
+                table,
+                if_exists=how,
+                index=False,
+                chunksize=20000,
+                con=conn
+            )
+        engine.dispose()
+        print(f"DATA INSERTED TO {table}")
+    except Exception as ex:
+        print(f"error: ", ex)
 
 def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=False, Text=False, Date=False, Int=False, Bigint=False, Bool=False, debug=False):
     print(f"=== Upsert Data to Database on Table {table} ===")

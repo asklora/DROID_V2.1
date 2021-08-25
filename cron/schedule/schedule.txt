@@ -64,11 +64,6 @@ BOT SCHEDULE IN HK TIME
 55 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_eur.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_eur.log 2>&1
 56 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_score_usd.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_score_usd.log 2>&1
 
-
-30 00 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/north_asia_market.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/north_asia_market.log 2>&1
-
-30 08 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/west_market.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/west_market.log 2>&1
-
 00 05 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/vix.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/vix.log 2>&1
 
 15 05 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/interest.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/interest.log 2>&1

@@ -620,6 +620,7 @@ class LatestPrice(models.Model):
     capital_change = models.FloatField(blank=True, null=True)
     volume = models.FloatField(blank=True, null=True)
     latest_price = models.FloatField(blank=True, null=True)
+    latest_net_change = models.FloatField(blank=True, null=True)
 
     class Meta:
         managed = True

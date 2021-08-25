@@ -117,7 +117,7 @@ class Command(BaseCommand):
                 status = "Fundamentals Score Ingestion"
                 update_fundamentals_score_from_dsws(currency_code=options["currency_code"])
                 status = "Fundamentals Quality Update"
-                update_fundamentals_quality_value(currency_code=options["currency_code"])
+                update_fundamentals_quality_value()
 
             if(options["quandl"]):
                 status = "Quandl Ingestion"
