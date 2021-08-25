@@ -4,11 +4,12 @@ from django.conf import settings
 from django.core.management import call_command
 from core.djangomodule.network.cloud import DroidDb
 from datetime import datetime
-import time
 from core.orders.models import Order
 from core.user.models import Accountbalance, User, TransactionHistory
-import uuid
-from django.db import transaction
+
+
+
+
 
 class TestSimple:
     pytestmark = pytest.mark.django_db
@@ -147,7 +148,7 @@ class TestSimple:
 class TestComplex:
     pytestmark = pytest.mark.django_db
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture(scope="session")
     def django_db_setup(self):
         db = DroidDb()
         read_endpoint, write_endpoint, port = db.test_url
@@ -155,7 +156,7 @@ class TestComplex:
         DB_ENGINE = "psqlextra.backend"
         settings.DATABASES["default"] = {
             "ENGINE": DB_ENGINE,
-            "HOST": write_endpoint,
+            "HOST": read_endpoint,
             "NAME": "postgres",
             "USER": "postgres",
             "PASSWORD": "ml2021#LORA",
@@ -163,7 +164,6 @@ class TestComplex:
         }
 
 
-    @pytestmark(transaction=True)
     def test_should_update_new_buy_order_for_user(self) -> None:
         """
         A new BUY order's status will be set to PENDING and the price is deducted from USER balance
@@ -172,54 +172,68 @@ class TestComplex:
 
         ticker = "3377.HK"
         bot_id = "STOCK_stock_0"
-        with transaction.atomic():
-            """
-            all inside this with context will be written into database,
-            IF ALL THE TRANSACTION DOESNT HAVE ERROR,
-            OTHERWISE IF ANY ERROR, ANYTHING INSIDE THIS BLOCK WILL REVERTED BEFORE WITH CONTEXT
-            """
-            user = User.objects.create_user(
-                email='pytest@tests.com',
-                username='pikachu_icikiwiw', 
-                password='helloworld',
-                is_active=True,
-                current_status='verified'
-                )
-            user_balance = Accountbalance.objects.create(
-                user=user,
-                amount=0,
-                currency_code_id="HKD",
+        """
+        nyoba dg kode kemarin error pada signal, balance g mau berubah
+        """
+        user = User.objects.create_user(
+            email='pytest@tests.com',
+            username='pikachu_icikiwiw', 
+            password='helloworld',
+            is_active=True,
+            current_status='verified'
             )
-            trans = TransactionHistory.objects.create(balance_uid=user_balance,side='credit',amount=100000,
-            transaction_detail={
-                'event':'first deposit'
-            })
+        user_balance = Accountbalance.objects.create(
+            user=user,
+            amount=0,
+            currency_code_id="HKD",
+        )
+        print('saldo awal',user_balance.amount)
 
-            order = Order.objects.create(
-                qty=1,
-                price=1317,
-                side="buy",
-                bot_id=bot_id,
-                ticker_id=ticker,
-                user_id=user,
-                #NOTE: this is will error, stock/user order need amount
-            )
+        trans = TransactionHistory.objects.create(balance_uid=user_balance,side='credit',amount=100000,
+        transaction_detail={
+            'event':'first deposit'
+        })
+        # NOTE: setelah top up pertama harus di get balance, kenapa? alasan nya di bawah ada
+        user_balance = Accountbalance.objects.get(
+            user=user
+        )
+        # simpan saldo sebelum terpotong di variable
+        saldo_blm_terpotong = user_balance.amount
+        print('saldo top up',user_balance.amount)
+        order = Order.objects.create(
+            amount=10000,
+            price=1317,
+            side="buy",
+            bot_id=bot_id,
+            ticker_id=ticker,
+            user_id=user,
+            
+        )
+        user_balance = Accountbalance.objects.get(
+            user=user,
+        )
+        # harusnya masih tetap
+        print('saldo order review',user_balance.amount)
 
-            time.sleep(3)
+        order.status = "placed"
+        order.placed = True
+        order.placed_at = datetime.now()
+        order.save()
 
-            order.status = "pending"
-            order.placed = True
-            order.placed_at = datetime.now()
-            order.save()
+        # ketika pending terpotong, harus di get lagi
+        # karena perubahan balance ikut signal
+        # COBA AJA COMMENT BAWAH INI HASILNYA PASTI FAIL!!
+        # GA ADA PERUBAHAN MESKIPUN SIGNAL NYA KE TRIGER. HARUS DI GET LAGI BUAT LIHAT PERUBAHAN
+        user_balance = Accountbalance.objects.get(
+            user=user,
+        )
+        print('saldo pending terpotong',user_balance.amount)
 
 
-            assert order.amount == (order.price * order.qty + 1)
-            assert user_balance.amount == user_balance - order.amount
-        # cleaning CASCADE user
-        # if success all the transaction will commited to db(recorded)
-        # deleting user will cascade deleted all related model to it
-        # so delete the user after all success will clean test data
-        user.delete()
+
+        assert order.amount == (order.price * order.qty)
+        assert user_balance.amount == saldo_blm_terpotong - order.amount
+    
 
 
 # def test_should_create_new_sell_order_for_user() -> None:

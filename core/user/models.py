@@ -319,7 +319,6 @@ class TransactionHistory(BaseTimeStampModel):
     side = models.CharField(max_length=100, choices=type_choice)
     amount = models.FloatField(default=0)
     transaction_detail = models.JSONField(default=dict, null=True, blank=True)
-
     def __str__(self):
         if self.balance_uid.user.email:
             return f'{self.side} - {self.balance_uid.user.email}'
