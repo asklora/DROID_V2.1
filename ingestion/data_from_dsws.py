@@ -602,20 +602,22 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     des = fundamentals.describe()
 
+    fundamentals = fundamentals.merge(universe_rating, on='ticker', how='left')
+
     # fundamentals["momentum"] = fundamentals["tri_quantile"] * 10
     fundamentals["trading_day"] = check_trading_day(days=6)
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
 
-    addition_col_by_pillar = {'quality':['earnings_pred'], 'momentum':['wts_rating','dlp_1m']}
+    addition_col_by_pillar = {'value': [], 'quality':['earnings_pred'], 'momentum':['wts_rating','dlp_1m']}
 
     # Calculate fundamental score based on ranking
     for name, g in factor_rank.groupby(['pillar']):
         print(f"Calculate Fundamentals [{name}]")
         sub_g = g.loc[g['factor_weight']==2]    # use all rank=2 (best class)
         if len(sub_g) == 0:     # if no factor rank=2, use the highest ranking one
-            sub_g = g.head(1)
+            sub_g = g.nlargest(1, columns=['pred_rank_same_time_and_group'])
         score_col = [f'{x}_minmax_industry' for x in sub_g['factor_name']] + \
-                    [f'{x}_minmax_currency_code' for x in sub_g['factor_name']] + addition_col_by_pillar[name]
+                    [f'{x}_minmax_currency_code' for x in sub_g['factor_name']] + addition_col_by_pillar.get(name)
         fundamentals[f"fundamentals_{name}"] = fundamentals[score_col].mean(axis=1).round(2)*10
 
     # print("Calculate Fundamentals Value")
@@ -647,7 +649,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     #     fundamentals["earnings_pred_minmax_currency_code"]).round(1)
 
     print("Calculate Momentum Value")
-    fundamentals = fundamentals.merge(universe_rating, how="left", on="ticker")
     fundamentals["technical"] = (fundamentals["wts_rating"] + fundamentals["dlp_1m"]+ fundamentals["momentum"]) / 3
 
     print("Calculate ESG Value")
