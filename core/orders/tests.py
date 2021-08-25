@@ -1,11 +1,14 @@
+# import uuid
 import pytest
 
+# from datetime import datetime, time
+
 from django.conf import settings
-from django.core.management import call_command
+# from django.core.management import call_command
 from core.djangomodule.network.cloud import DroidDb
 
 from core.orders.models import Order
-from core.user.models import Accountbalance, User, TransactionHistory
+# from core.user.models import Accountbalance, User, TransactionHistory
 
 
 class TestSimple:
