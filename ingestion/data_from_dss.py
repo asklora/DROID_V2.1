@@ -13,7 +13,8 @@ from general.table_name import (
     get_universe_table_name)
 from datasource.dss import get_data_from_dss
 from general.sql_query import (
-    get_active_universe, 
+    get_active_universe,
+    get_consolidated_universe_data, 
     get_latest_price_capital_change, 
     get_latest_price_data, 
     get_max_last_ingestion_from_universe, 
