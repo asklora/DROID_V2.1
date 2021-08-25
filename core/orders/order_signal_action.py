@@ -6,7 +6,7 @@ from core.djangomodule.general import formatdigit
 from core.Clients.models import UserClient
 from django.db import transaction as db_transaction
 from config.celery import app as worker
-from Clients.IBClientModule import IBClient 
+from core.Clients.IBClientModule import IBClient 
 """
 user/bot
 broker/simulation
