@@ -530,6 +530,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     #                     "environment", "social", "goverment"]
     #
     calculate_column = list(factor_formula.loc[factor_formula['scaler'].notnull()].index)
+    calculate_column = sorted(set(calculate_column))
     calculate_column += ["environment", "social", "goverment"]
 
     fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
