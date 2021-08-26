@@ -1,4 +1,3 @@
-from ingestion.data_from_rkd import update_currency_code_from_rkd
 import numpy as np
 import pandas as pd
 from general.slack import report_to_slack
@@ -8,7 +7,7 @@ from general.date_process import backdate_by_day, dateNow, dlp_start_date, datet
 from general.sql_query import get_master_ohlcvtr_data
 from general.sql_output import delete_data_on_database, upsert_data_to_database
 from general.table_name import get_master_ohlcvtr_table_name
-from ingestion.data_from_dsws import update_data_dsws_from_dsws
+from ingestion.data_from_dsws import update_currency_code_from_dsws, update_data_dsws_from_dsws
 from ingestion.data_from_dss import update_data_dss_from_dss
 
 #New Ticker Categories is When Datapoint Less Than 1000 Datapoint
@@ -18,8 +17,8 @@ def FindNewTicker(fulldatapoint):
     new_ticker = new_ticker["ticker"].to_list()
     print(new_ticker)
     if(len(new_ticker) > 0):
-        #report_to_slack("{} : === New Ticker Found {} Start Historical Ingestion ===".format(datetimeNow(), new_ticker))
-        update_currency_code_from_rkd(ticker=new_ticker)
+        report_to_slack("{} : === New Ticker Found {} Start Historical Ingestion ===".format(datetimeNow(), new_ticker))
+        update_currency_code_from_dsws(ticker=new_ticker)
         update_data_dss_from_dss(ticker=new_ticker, history=True)
         update_data_dsws_from_dsws(ticker=new_ticker, history=True)
     print(new_ticker)
