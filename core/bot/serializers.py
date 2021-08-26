@@ -69,5 +69,4 @@ class BotHedgerSerializer(serializers.Serializer):
         data["position"]["target_profit_pct"]=setup["position"]["target_profit_pct"]
         data["position"]["target_profit_price"]=setup["position"]["target_profit_price"]
         data["position"]["target_profit_amount"]=setup["position"]["target_profit_amount"]
-    
         return data   
