@@ -1,22 +1,19 @@
-# import uuid
-from core.orders.services import sell_position_service
-from django import setup
+from datetime import datetime
+
 import pytest
-import time
-
-from datetime import date, datetime
-
-from django.conf import settings
-from django.forms.models import model_to_dict
-from rest_framework import exceptions
-
 from core.djangomodule.network.cloud import DroidDb
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.orders.serializers import OrderCreateSerializer
+from core.orders.services import sell_position_service
 from core.user.models import Accountbalance, TransactionHistory, User
+from dateutil.relativedelta import relativedelta
+from django import setup
+from django.conf import settings
+from portfolio.daily_hedge_classic import classic_position_check
+from rest_framework import exceptions
 
 
-class TestSimple:
+class TestBuy:
     pytestmark = pytest.mark.django_db
 
     @pytest.fixture(scope="class")
@@ -36,22 +33,19 @@ class TestSimple:
 
     def test_should_create_order(self) -> None:
         """
-        A new order should be created with default values for is_init, placed, status, amount, etc.
+        A new order should be created with default values for is_init, placed, status, dates, etc.
         """
 
         side = "buy"
         ticker = "0780.HK"
-        qty = 1
         price = 1317
         user_id = 135
         bot_id = "STOCK_stock_0"
 
         order = Order.objects.create(
-            amount=price * qty,
+            amount=1317,
             bot_id=bot_id,
-            order_type="apps",
             price=price,
-            qty=qty,
             side=side,
             ticker_id=ticker,
             user_id_id=user_id,
@@ -63,9 +57,9 @@ class TestSimple:
         assert order.placed_at == None
         assert order.filled_at == None
         assert order.canceled_at == None
-        assert order.amount == 0
+        assert order.amount == 1317
         assert order.price == 1317
-        assert order.qty == 0
+        assert order.qty == 1 # from order.amount divided by order.price
 
     def test_should_create_new_buy_order_for_user(self) -> None:
         """
@@ -92,6 +86,83 @@ class TestSimple:
 
         assert order.side == "buy"
         assert order.setup == None  # should be empty
+
+    def test_should_update_new_buy_order_for_user(self) -> None:
+        """
+        A new BUY order's status will be set to PENDING and the price is deducted from USER balance
+        #NOTE : after test must clean
+        """
+
+        side = "buy"
+        ticker = "3377.HK"
+        qty = 3
+        price = 1317
+        bot_id = "STOCK_stock_0"
+
+        """
+        nyoba dg kode kemarin error pada signal, balance g mau berubah
+        """
+        user = User.objects.create_user(
+            email="pytest@tests.com",
+            username="pikachu_icikiwiw",
+            password="helloworld",
+            is_active=True,
+            current_status="verified",
+        )
+
+        user_balance = Accountbalance.objects.create(
+            user=user,
+            amount=0,
+            currency_code_id="HKD",
+        )
+
+        print("\n")
+        print("saldo awal", user_balance.amount)
+
+        trans = TransactionHistory.objects.create(
+            balance_uid=user_balance,
+            side="credit",
+            amount=100000,
+            transaction_detail={"event": "first deposit"},
+        )
+        # NOTE: setelah top up pertama harus di get balance, kenapa? alasan nya di bawah ada
+        user_balance = Accountbalance.objects.get(user=user)
+        # simpan saldo sebelum terpotong di variable
+        saldo_blm_terpotong = user_balance.amount
+        print("saldo top up", user_balance.amount)
+
+        order = Order.objects.create(
+            amount=price * qty,
+            bot_id=bot_id,
+            order_type="apps",
+            price=price,
+            qty=qty,
+            side=side,
+            ticker_id=ticker,
+            user_id=user,
+        )
+
+        user_balance = Accountbalance.objects.get(user=user)
+
+        # harusnya masih tetap
+        print("saldo order review", user_balance.amount)
+
+        order.status = "placed"
+        order.placed = True
+        order.placed_at = datetime.now()
+        order.save()
+
+        # ketika pending terpotong, harus di get lagi
+        # karena perubahan balance ikut signal
+        # COBA AJA COMMENT BAWAH INI HASILNYA PASTI FAIL!!
+        # GA ADA PERUBAHAN MESKIPUN SIGNAL NYA KE TRIGER. HARUS DI GET LAGI BUAT LIHAT PERUBAHAN
+        user_balance = Accountbalance.objects.get(user=user)
+        print("saldo pending terpotong", user_balance.amount)
+
+        order = Order.objects.get(pk=order.order_uid)
+
+        assert order.amount == price * qty
+        assert user_balance.amount == saldo_blm_terpotong - order.amount
 
     def test_should_create_new_buy_order_for_classic_bot(self) -> None:
         """
@@ -175,7 +246,7 @@ class TestSimple:
         assert order.bot_id == bot_id
 
 
-class TestComplex:
+class TestSell:
     pytestmark = pytest.mark.django_db
 
     @pytest.fixture(scope="session")
@@ -192,83 +263,6 @@ class TestComplex:
             "PASSWORD": "ml2021#LORA",
             "PORT": port,
         }
-
-    def test_should_update_new_buy_order_for_user(self) -> None:
-        """
-        A new BUY order's status will be set to PENDING and the price is deducted from USER balance
-        #NOTE : after test must clean
-        """
-
-        side = "buy"
-        ticker = "3377.HK"
-        qty = 3
-        price = 1317
-        bot_id = "STOCK_stock_0"
-
-        """
-        nyoba dg kode kemarin error pada signal, balance g mau berubah
-        """
-        user = User.objects.create_user(
-            email="pytest@tests.com",
-            username="pikachu_icikiwiw",
-            password="helloworld",
-            is_active=True,
-            current_status="verified",
-        )
-
-        user_balance = Accountbalance.objects.create(
-            user=user,
-            amount=0,
-            currency_code_id="HKD",
-        )
-
-        print("\n")
-        print("saldo awal", user_balance.amount)
-
-        trans = TransactionHistory.objects.create(
-            balance_uid=user_balance,
-            side="credit",
-            amount=100000,
-            transaction_detail={"event": "first deposit"},
-        )
-        # NOTE: setelah top up pertama harus di get balance, kenapa? alasan nya di bawah ada
-        user_balance = Accountbalance.objects.get(user=user)
-        # simpan saldo sebelum terpotong di variable
-        saldo_blm_terpotong = user_balance.amount
-        print("saldo top up", user_balance.amount)
-
-        order = Order.objects.create(
-            amount=price * qty,
-            bot_id=bot_id,
-            order_type="apps",
-            price=price,
-            qty=qty,
-            side=side,
-            ticker_id=ticker,
-            user_id=user,
-        )
-
-        user_balance = Accountbalance.objects.get(user=user)
-
-        # harusnya masih tetap
-        print("saldo order review", user_balance.amount)
-
-        order.status = "placed"
-        order.placed = True
-        order.placed_at = datetime.now()
-        order.save()
-
-        # ketika pending terpotong, harus di get lagi
-        # karena perubahan balance ikut signal
-        # COBA AJA COMMENT BAWAH INI HASILNYA PASTI FAIL!!
-        # GA ADA PERUBAHAN MESKIPUN SIGNAL NYA KE TRIGER. HARUS DI GET LAGI BUAT LIHAT PERUBAHAN
-        user_balance = Accountbalance.objects.get(user=user)
-        print("saldo pending terpotong", user_balance.amount)
-
-        order = Order.objects.get(pk=order.order_uid)
-
-        assert order.amount == price * qty
-        assert user_balance.amount == saldo_blm_terpotong - order.amount
 
     def test_should_create_new_sell_order_for_user(self) -> None:
         """
@@ -527,6 +521,71 @@ class TestComplex:
         confirmed_sell_order.status = "filled"
         confirmed_sell_order.filled_at = datetime.now()
         confirmed_sell_order.save()
+
+
+class TestHedge:
+    pytestmark = pytest.mark.django_db
+
+    @pytest.fixture(scope="class")
+    def django_db_setup(self):
+        db = DroidDb()
+        read_endpoint, write_endpoint, port = db.test_url
+
+        DB_ENGINE = "psqlextra.backend"
+        settings.DATABASES["default"] = {
+            "ENGINE": DB_ENGINE,
+            "HOST": write_endpoint,
+            "NAME": "postgres",
+            "USER": "postgres",
+            "PASSWORD": "ml2021#LORA",
+            "PORT": port,
+        }
+
+    def test_should_create_hedge_order_for_classic_bot(self) -> None:
+        # step 1: create a new order
+        ticker = "6606.HK"
+        qty = 1
+        price = 1317
+        user_id = 198
+        bot_id = "CLASSIC_classic_007692"
+
+        buy_order = Order.objects.create(
+            amount=price * qty,
+            bot_id=bot_id,
+            order_type="apps",
+            price=price,
+            qty=qty,
+            side="buy",
+            ticker_id=ticker,
+            user_id_id=user_id,
+        )
+
+        buy_order.status = "placed"
+        buy_order.placed = True
+        buy_order.placed_at = datetime.now() - relativedelta(months=2)
+        buy_order.save()
+
+        buy_order.status = "filled"
+        buy_order.filled_at = datetime.now() - relativedelta(months=2)
+        buy_order.save()
+
+        confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
+
+        performance = PositionPerformance.objects.get(
+            order_uid_id=confirmed_buy_order.order_uid
+        )
+
+        position: OrderPosition = OrderPosition.objects.get(
+            pk=performance.position_uid_id
+        )
+
+        # step 2: setup hedge
+        classic_position_check(
+            position_uid=position.position_uid,
+            to_date=datetime.now() - relativedelta(months=1),
+            hedge=True
+        )
+        # step 3: get hedge positions
 
 
 class TestSerializer:
