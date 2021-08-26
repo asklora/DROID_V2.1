@@ -568,3 +568,10 @@ def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
         if(str(result.loc[0, "dividend_ex_date"]) == str(trading_day)):
             return bot_cash_dividend + (result.loc[0, "dividend_per_share"] * share_num)
     return bot_cash_dividend
+
+def populate_daily_profit(currency_code=None, user_id=None):
+    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")
+    user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, amount as balance, currency_code")
+    orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
+    orders_position = get_orders_position(user_id=[user], active=True, field=orders_position_field)
+    orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)

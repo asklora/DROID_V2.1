@@ -333,6 +333,7 @@ class UserProfitHistory(BaseTimeStampModel):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_profit_history_user_id", db_column="user_id")
     trading_day = models.DateField(null=True, blank=True)
     daily_profit = models.FloatField(default=0)
+    daily_profit_pct = models.FloatField(default=0)
 
     def __str__(self):
         if self.balance_uid.user.email:
