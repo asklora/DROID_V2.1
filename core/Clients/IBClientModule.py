@@ -3,7 +3,7 @@ import json
 
 class IBClient():
 	def __init__(self):
-		gateway_host = "https://47.242.9.23"
+		gateway_host = "https://localhost"
 		gateway_port = f"5000"
 		# gateway_host = "https://2.tcp.ngrok.io"
 		# gateway_port = f"16229"
