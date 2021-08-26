@@ -46,7 +46,7 @@ def order_executor(self, payload, recall=False):
         
         # for apps, need to change later with better logic
         if order.order_type=='apps':
-            if order.amount >= 10000:
+            if order.amount > 10000:
                 order.amount = 20000
             else:
                 order.amount = 10000
@@ -77,6 +77,7 @@ def order_executor(self, payload, recall=False):
             share = order.qty
         else:
             share = order.setup['performance']['share_num']
+            
         Model = apps.get_model('orders', 'Order')
         market = TradingHours(mic=order.ticker.mic)
         market.is_open

@@ -336,9 +336,7 @@ class UserProfitHistory(models.Model):
     daily_profit_pct = models.FloatField(default=0)
 
     def __str__(self):
-        if self.balance_uid.user.email:
-            return f"{self.side} - {self.balance_uid.user.email}"
-        return self.side
+        return self.user_id.email
 
     class Meta:
         db_table = "user_profit_history"
