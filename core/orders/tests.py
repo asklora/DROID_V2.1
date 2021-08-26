@@ -1,3 +1,4 @@
+from core.master.models import MasterOhlcvtr
 from datetime import datetime
 
 import pytest
@@ -9,7 +10,7 @@ from core.user.models import Accountbalance, TransactionHistory, User
 from dateutil.relativedelta import relativedelta
 from django import setup
 from django.conf import settings
-from portfolio.daily_hedge_classic import classic_position_check
+from portfolio import classic_position_check, uno_position_check, ucdc_position_check
 from rest_framework import exceptions
 
 
@@ -59,7 +60,7 @@ class TestBuy:
         assert order.canceled_at == None
         assert order.amount == 1317
         assert order.price == 1317
-        assert order.qty == 1 # from order.amount divided by order.price
+        assert order.qty == 1  # from order.amount divided by order.price
 
     def test_should_create_new_buy_order_for_user(self) -> None:
         """
@@ -545,13 +546,19 @@ class TestHedge:
         # step 1: create a new order
         ticker = "6606.HK"
         qty = 1
-        price = 1317
         user_id = 198
         bot_id = "CLASSIC_classic_007692"
+        master = MasterOhlcvtr.objects.get(
+            ticker=ticker,
+            trading_day='2021-06-01',
+        )
+        price = master.close
+        log_time = datetime.combine(master.trading_day, datetime.min.time())
 
         buy_order = Order.objects.create(
             amount=price * qty,
             bot_id=bot_id,
+            created=log_time,
             order_type="apps",
             price=price,
             qty=qty,
@@ -562,11 +569,11 @@ class TestHedge:
 
         buy_order.status = "placed"
         buy_order.placed = True
-        buy_order.placed_at = datetime.now() - relativedelta(months=2)
+        buy_order.placed_at = log_time
         buy_order.save()
 
         buy_order.status = "filled"
-        buy_order.filled_at = datetime.now() - relativedelta(months=2)
+        buy_order.filled_at = log_time
         buy_order.save()
 
         confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
@@ -582,11 +589,135 @@ class TestHedge:
         # step 2: setup hedge
         classic_position_check(
             position_uid=position.position_uid,
-            to_date=datetime.now() - relativedelta(months=1),
-            hedge=True
+            tac=True,
         )
         # step 3: get hedge positions
+        performance = PositionPerformance.objects.filter(
+            position_uid=position.position_uid
+        )
 
+        print(performance.count())
+
+        assert performance.exists() == True
+        assert performance.count() > 1
+
+    def test_should_create_hedge_order_for_uno_bot(self) -> None:
+        # step 1: create a new order
+        ticker = "6606.HK"
+        qty = 1
+        user_id = 198
+        bot_id = "UNO_OTM_007692"
+        master = MasterOhlcvtr.objects.get(
+            ticker=ticker,
+            trading_day='2021-06-01',
+        )
+        price = master.close
+        log_time = datetime.combine(master.trading_day, datetime.min.time())
+
+        buy_order = Order.objects.create(
+            amount=price * qty,
+            bot_id=bot_id,
+            created=log_time,
+            order_type="apps",
+            price=price,
+            qty=qty,
+            side="buy",
+            ticker_id=ticker,
+            user_id_id=user_id,
+        )
+
+        buy_order.status = "placed"
+        buy_order.placed = True
+        buy_order.placed_at = log_time
+        buy_order.save()
+
+        buy_order.status = "filled"
+        buy_order.filled_at = log_time
+        buy_order.save()
+
+        confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
+
+        performance = PositionPerformance.objects.get(
+            order_uid_id=confirmed_buy_order.order_uid
+        )
+
+        position: OrderPosition = OrderPosition.objects.get(
+            pk=performance.position_uid_id
+        )
+
+        # step 2: setup hedge
+        uno_position_check(
+            position_uid=position.position_uid,
+            tac=True,
+        )
+        # step 3: get hedge positions
+        performance = PositionPerformance.objects.filter(
+            position_uid=position.position_uid
+        )
+
+        print(performance.count())
+
+        assert performance.exists() == True
+        assert performance.count() > 1
+    
+    def test_should_create_hedge_order_for_ucdc_bot(self) -> None:
+        # step 1: create a new order
+        ticker = "6606.HK"
+        qty = 1
+        user_id = 198
+        bot_id = "UCDC_ATM_007692"
+        master = MasterOhlcvtr.objects.get(
+            ticker=ticker,
+            trading_day='2021-06-01',
+        )
+        price = master.close
+        log_time = datetime.combine(master.trading_day, datetime.min.time())
+
+        buy_order = Order.objects.create(
+            amount=price * qty,
+            bot_id=bot_id,
+            created=log_time,
+            order_type="apps",
+            price=price,
+            qty=qty,
+            side="buy",
+            ticker_id=ticker,
+            user_id_id=user_id,
+        )
+
+        buy_order.status = "placed"
+        buy_order.placed = True
+        buy_order.placed_at = log_time
+        buy_order.save()
+
+        buy_order.status = "filled"
+        buy_order.filled_at = log_time
+        buy_order.save()
+
+        confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
+
+        performance = PositionPerformance.objects.get(
+            order_uid_id=confirmed_buy_order.order_uid
+        )
+
+        position: OrderPosition = OrderPosition.objects.get(
+            pk=performance.position_uid_id
+        )
+
+        # step 2: setup hedge
+        ucdc_position_check(
+            position_uid=position.position_uid,
+            tac=True,
+        )
+        # step 3: get hedge positions
+        performance = PositionPerformance.objects.filter(
+            position_uid=position.position_uid
+        )
+
+        print(performance.count())
+
+        assert performance.exists() == True
+        assert performance.count() > 1
 
 class TestSerializer:
     pytestmark = pytest.mark.django_db

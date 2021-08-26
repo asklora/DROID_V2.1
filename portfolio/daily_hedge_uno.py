@@ -195,11 +195,9 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
         high = price_data.high
     else:
         live_price = price_data.close
-        if price_data.latest_price:
-            live_price = price_data.latest_price
-        trading_day = price_data.last_date
-        bid_price = price_data.intraday_bid
-        ask_price = price_data.intraday_ask
+        trading_day = price_data.trading_day
+        bid_price = price_data.close
+        ask_price = price_data.close
         high = price_data.high
 
     if high == 0 or high == None:
@@ -225,7 +223,7 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
     else:
         performance, position, status, hedge_shares = populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=False)
         
-        order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=apps)
+        order, performance_order, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=apps)
         if (order):
             return False, order.order_uid
         
@@ -292,6 +290,9 @@ def uno_position_check(position_uid, to_date=None, tac=False, hedge=False, lates
                         order.status = "filled"
                         order.filled_at = log_time
                         order.save()
+
+                        print(f"Position event: {OrderPosition.objects.get(position_uid=position.position_uid).event}")
+                print(f"Position amt: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_pnl_amt}")
                 print(f"trading_day {trading_day}-{tac_price.ticker} done")
                 if status:
                     break

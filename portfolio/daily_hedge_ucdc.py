@@ -181,11 +181,9 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
         ask_price = price_data.latest_price
     else:
         live_price = price_data.close
-        if price_data.latest_price:
-            live_price = price_data.latest_price
-        trading_day = price_data.last_date
-        bid_price = price_data.intraday_bid
-        ask_price = price_data.intraday_ask
+        trading_day = price_data.trading_day
+        bid_price = price_data.close
+        ask_price = price_data.close
 
     if ask_price == 0 or ask_price == None:
         ask_price = live_price
@@ -260,6 +258,9 @@ def ucdc_position_check(position_uid, to_date=None, tac=False, hedge=False, late
                         order.status = "filled"
                         order.filled_at = log_time
                         order.save()
+                        
+                        print(f"Position event: {OrderPosition.objects.get(position_uid=position.position_uid).event}")
+                        print(f"Position amt: {OrderPosition.objects.get(position_uid=position.position_uid).current_inv_amt}")
                 print(f"trading_day {trading_day}-{hedge_price.ticker} done")
                 if status:
                     break

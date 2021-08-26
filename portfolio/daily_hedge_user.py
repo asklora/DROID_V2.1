@@ -101,8 +101,6 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
         trading_day = price_data.last_date
     else:
         live_price = price_data.close
-        if price_data.latest_price:
-            live_price = price_data.latest_price
         trading_day = price_data.last_date
 
     log_time = pd.Timestamp(trading_day)
