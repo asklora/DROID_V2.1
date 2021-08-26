@@ -524,7 +524,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     factor_rank = factor_rank.dropna(subset=['pillar'])
     append_df = factor_rank.loc[factor_rank['field_num'].isnull()]
 
-    # des1 = fundamentals_score.describe()
     for group in factor_rank['group'].dropna().unique():
         # change ratio to negative if original factor calculation using reverse premiums
         neg_factor = factor_rank.loc[(factor_rank['long_large']==False)&(factor_rank['group']==group), 'factor_name'].to_list()
@@ -534,12 +533,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         append_df['group'] = group
         factor_rank = factor_rank.append(append_df, ignore_index=True)
 
-    # des = fundamentals_score.describe()
-
-    # calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth",
-    #                     "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred",
-    #                     "environment", "social", "goverment"]
-    #
     calculate_column = list(factor_formula.loc[factor_formula['scaler'].notnull()].index)
     calculate_column = sorted(set(calculate_column))
     calculate_column += ["environment", "social", "goverment"]
@@ -554,11 +547,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         try:
             if fundamentals[column].notnull().sum():
                 column_score = column + "_score"
-                # mean = np.nanmean(fundamentals[column])
-                # std = np.nanstd(fundamentals[column])
-                # upper = mean + (std * 2)
-                # lower = mean - (std * 2)
-                # fundamentals[column_score] = np.clip(fundamentals[column], lower, upper)
                 fundamentals[column_score] = fundamentals.groupby("currency_code")[column].transform(
                     lambda x: np.clip(x, np.nanmean(x)-2*np.nanstd(x), np.nanmean(x)+2*np.nanstd(x)))
 
@@ -574,7 +562,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         try:
             column_score = column + "_score"
             column_robust_score = column + "_robust_score"
-            # fundamentals[column_robust_score] = robust_scale(fundamentals[column_score])
             fundamentals[column_robust_score] = fundamentals.groupby("currency_code")[column_score].transform(lambda x: robust_scale(x))
             calculate_column_robust_score.append(column_robust_score)
         except Exception as e:
@@ -621,14 +608,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals["trading_day"] = check_trading_day(days=6)
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
 
-    # addition_col is factors will be used in ai_score calculation but not included in table "factor_formula_ratios_prod"
-    # addition_col_by_pillar = {'value': [], 'quality':['earnings_pred'], 'momentum':['wts_rating','dlp_1m']}
-
     # add column for 3 pillar score
     fundamentals[[f"fundamentals_{name}" for name in factor_rank['pillar'].unique()]] = np.nan
-
-    # fundamental_score_norm_method = 'minmax'    # by default, we use minmax scaler score on ai_score calculation
-    # fundamental_score_col_suffix = f'_{fundamental_score_norm_method}
 
     # calculate ai_score by each currency_code (i.e. group) for each of 3 pillar
     for (group, pillar_name), g in factor_rank.groupby(['group', 'pillar']):
@@ -636,14 +617,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         sub_g = g.loc[(g['factor_weight']==2)|(g['factor_weight'].isnull())]        # use all rank=2 (best class)
         if len(sub_g) == 0:                         # if no factor rank=2, use the highest ranking one & DLPA/ai_value scores
             sub_g = g.loc[g.nlargest(1, columns=['pred_z']).index.union(g.loc[g['factor_weight'].isnull()].index)]
-
-        # score_col = [f'{x}{fundamental_score_col_suffix}' for x in sub_g['factor_name']]
-        #
-        # for col in addition_col_by_pillar.get(name):    # add score
-        #     if col in universe_rating.columns:
-        #         score_col.append(col)
-        #     else:
-        #         score_col.append(f'{col}{fundamental_score_col_suffix}')
 
         score_col = [f'{x}_{y}_currency_code' for x, y in sub_g.loc[sub_g['scaler'].notnull(), ['factor_name','scaler']].to_numpy()]
         score_col += [x for x in sub_g.loc[sub_g['scaler'].isnull(), 'factor_name']]
@@ -669,37 +642,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
         fundamentals.to_sql('test_fundamentals_clair', **extra)
     exit(0)
-
-    # print("Calculate Fundamentals Value")
-    # fundamentals["fundamentals_value"] = ((fundamentals["earnings_yield_minmax_currency_code"]) +
-    #     fundamentals["earnings_yield_minmax_industry"] +
-    #     fundamentals["book_to_price_minmax_currency_code"] +
-    #     fundamentals["book_to_price_minmax_industry"] +
-    #     fundamentals["ebitda_to_ev_minmax_currency_code"] +
-    #     fundamentals["ebitda_to_ev_minmax_industry"] +
-    #     fundamentals["fwd_bps_minmax_currency_code"] +
-    #     fundamentals["fwd_bps_minmax_industry"] +
-    #     fundamentals["fwd_ebitda_to_ev_minmax_currency_code"] +
-    #     fundamentals["fwd_ebitda_to_ev_minmax_industry"] +
-    #     fundamentals["roe_minmax_currency_code"]+
-    #     fundamentals["roe_minmax_industry"]).round(1)
-    #
-    # print("Calculate Fundamentals Quality")
-    # fundamentals["fundamentals_quality"] = ((fundamentals["roic_minmax_currency_code"]) +
-    #     fundamentals["roic_minmax_industry"] +
-    #     fundamentals["cf_to_price_minmax_currency_code"] +
-    #     fundamentals["cf_to_price_minmax_industry"] +
-    #     fundamentals["eps_growth_minmax_currency_code"] +
-    #     fundamentals["eps_growth_minmax_industry"] +
-    #     fundamentals["fwd_ey_minmax_industry"] +
-    #     fundamentals["fwd_ey_minmax_currency_code"] +
-    #     fundamentals["fwd_sales_to_price_minmax_industry"]+
-    #     (fundamentals["fwd_roic_minmax_industry"]) +
-    #     fundamentals["earnings_pred_minmax_industry"] +
-    #     fundamentals["earnings_pred_minmax_currency_code"]).round(1)
-
-    # print("Calculate Momentum Value")
-    # fundamentals["technical"] = (fundamentals["wts_rating"] + fundamentals["dlp_1m"]+ fundamentals["fundamentals_momentum"]) / 3
 
     print("Calculate ESG Value")
     fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
