@@ -364,7 +364,8 @@ def score_update_vol_rs(list_of_start_end, days_in_year=256):
         annualized = sqrt(daily*256)
     '''
 
-    tri = get_master_ohlcvtr_data(trading_day=backdate_by_month(list_of_start_end[-1][-1]))
+    # download past prices since 1 months before the earliest volitility calculation month i.e. end
+    tri = get_master_ohlcvtr_data(trading_day=backdate_by_month(list_of_start_end[-1][-1]+1))
     tri = tri.sort_values(by=['ticker', 'trading_day'], ascending=[True, False]).reset_index(drop=True)
     open_data, high_data, low_data, close_data = tri['open'].values, tri['high'].values, tri['low'].values, tri[
         'close'].values
@@ -386,7 +387,7 @@ def score_update_vol_rs(list_of_start_end, days_in_year=256):
     # Calculate annualize volatility
     vol_col = []
     for l in list_of_start_end:
-        start, end = l[0], l[1]
+        start, end = l[0]*30, l[1]*30
         name_col = f'vol_{start}_{end}'
         vol_col.append(name_col)
         tri[name_col] = sum_
@@ -395,7 +396,11 @@ def score_update_vol_rs(list_of_start_end, days_in_year=256):
         tri[name_col] = tri[name_col].shift(start)
         tri.loc[tri.groupby('ticker').head(end - 1).index, name_col] = np.nan  # y-1 ~ y0
 
-    return tri[['ticker']+vol_col].dropna(how='any').groupby(['ticker']).last().reset_index()
+    # return tri on the most recent trading_day
+    final_tri = tri[['ticker']+vol_col].dropna(how='any').groupby(['ticker']).last().reset_index()
+    # print(final_tri[name_col].min(), final_tri[name_col].max(), final_tri[name_col].std())
+
+    return final_tri
 
 def score_update_stock_return(list_of_start_end):
     ''' Calculate specific period stock return (months) '''
@@ -543,11 +548,14 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         try:
             if fundamentals[column].notnull().sum():
                 column_score = column + "_score"
-                mean = np.nanmean(fundamentals[column])
-                std = np.nanstd(fundamentals[column])
-                upper = mean + (std * 2)
-                lower = mean - (std * 2)
-                fundamentals[column_score] = np.clip(fundamentals[column], lower, upper)
+                # mean = np.nanmean(fundamentals[column])
+                # std = np.nanstd(fundamentals[column])
+                # upper = mean + (std * 2)
+                # lower = mean - (std * 2)
+                # fundamentals[column_score] = np.clip(fundamentals[column], lower, upper)
+                fundamentals[column_score] = fundamentals.groupby("currency_code")[column].transform(
+                    lambda x: np.clip(x, np.nanmean(x)-2*np.nanstd(x), np.nanmean(x)+2*np.nanstd(x)))
+
                 calculate_column_score.append(column_score)
         except Exception as e:
             print(e)
@@ -560,7 +568,9 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         try:
             column_score = column + "_score"
             column_robust_score = column + "_robust_score"
-            fundamentals[column_robust_score] = robust_scale(fundamentals[column_score])
+            # fundamentals[column_robust_score] = robust_scale(fundamentals[column_score])
+
+            fundamentals[column_robust_score] = fundamentals.groupby("currency_code")[column_score].transform(lambda x: robust_scale(x))
             calculate_column_robust_score.append(column_robust_score)
         except Exception as e:
             print(e)
