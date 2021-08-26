@@ -7,7 +7,7 @@ from ingestion.master_tac import master_tac_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
 from ingestion.data_from_quandl import update_quandl_orats_from_quandl
 from general.table_name import get_universe_client_table_name
-from general.sql_output import insert_data_to_database
+from general.sql_output import fill_null_quandl_symbol, insert_data_to_database
 from general.date_process import dateNow
 from general.sql_process import do_function
 from general.sql_query import (
@@ -78,7 +78,6 @@ def populate_ticker_monthly(client=None):
 
     new_universe = pd.read_csv("/home/loratech/new_universe.csv")
     new_universe = new_universe[["origin_ticker", "source_id", "use_isin", "use_manual"]]
-    new_universe = new_universe.head(5)
     new_universe["use_manual"] = np.where(new_universe["use_manual"] == 1, True, False)
     new_universe["use_isin"] = np.where(new_universe["use_isin"] == 1, True, False)
     new_universe["uid"] = new_universe["origin_ticker"]
