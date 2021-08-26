@@ -10,7 +10,7 @@ from core.user.models import TransactionHistory, Accountbalance
 from .order_signal_action import OrderServices
 
 
-def generate_hedge_setup(instance: Order) -> dict:
+def generate_hedge_setup(instance: Order,margin:int) -> dict:
 
     bot = BotOptionType.objects.get(bot_id=instance.bot_id)
     margin = 1
@@ -43,14 +43,15 @@ def order_signal_check(sender, instance, **kwargs):
     if not instance.status in ["filled", "placed", "pending", "cancel"] and instance.is_init:
         # if bot will create setup expiry , SL and TP
         if instance.bot_id != "STOCK_stock_0":
-            setup = generate_hedge_setup(instance)
+            setup = generate_hedge_setup(instance,instance.margin)
             instance.setup = setup
             instance.qty = setup['performance']["share_num"]
             instance.amount = formatdigit(setup['performance']["share_num"] * setup['price'])
         else:
             instance.setup = None
+            # amount should still 
             instance.amount = round(instance.qty * instance.price,2)
-            instance.qty = math.floor(instance.amount / instance.price)
+            instance.qty = math.floor((instance.amount / instance.price) * instance.margin) 
 
 
 @receiver(post_save, sender=Order)

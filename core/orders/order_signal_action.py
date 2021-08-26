@@ -153,11 +153,9 @@ class BaseOrderConnector(AbstracOrderConnector):
         """
         
         if self.instance.is_init and self.instance.status == 'cancel':
-            print(str(self.instance.order_uid))
             trans = TransactionHistory.objects.filter(
                 side='debit', transaction_detail__description='bot order', transaction_detail__order_uid=str(self.instance.order_uid),transaction_detail__event='create')
             if trans.exists():
-                print(trans)
                 trans.get().delete()
             # cancel any pending shedule in celery worker
             print("canceled")
@@ -261,7 +259,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         BOT / USER
         CREATE position and CREATE performance
         """
-        margin=1
+        margin=self.instance.margin
         position = OrderPosition.objects.create(
                     user_id=self.instance.user_id,
                     ticker=self.instance.ticker,
