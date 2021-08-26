@@ -1,7 +1,6 @@
 from core.djangomodule.management.commands.populate_ticker import populate_ticker_monthly
 from core.user.models import User
 from requests.api import get
-from ingestion.data_from_rkd import update_currency_code_from_rkd
 from django.core.management.base import BaseCommand
 from core.universe.models import ExchangeMarket, Universe
 from core.Clients.models import UserClient

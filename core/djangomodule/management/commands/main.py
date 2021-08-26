@@ -13,11 +13,6 @@ from bot.preprocess import (
 from ingestion.data_from_timezone import update_utc_offset_from_timezone
 from ingestion.data_from_dss import update_data_dss_from_dss, update_ticker_symbol_from_dss
 from ingestion.data_from_quandl import update_quandl_orats_from_quandl
-from ingestion.data_from_rkd import (
-    update_currency_code_from_rkd, 
-    update_currency_price_from_rkd, 
-    update_lot_size_from_rkd, 
-    update_mic_from_rkd)
 from ingestion.data_from_dsws import (
     dividend_updated_from_dsws, 
     interest_update_from_dsws, 
@@ -36,7 +31,10 @@ from ingestion.data_from_dsws import (
     update_ticker_name_from_dsws, 
     update_vix_from_dsws, 
     update_worldscope_identifier_from_dsws, 
-    update_worldscope_quarter_summary_from_dsws)
+    update_worldscope_quarter_summary_from_dsws,
+    update_currency_code_from_dsws,
+    update_lot_size_from_dsws,
+    update_mic_from_dsws)
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
@@ -59,8 +57,6 @@ class Command(BaseCommand):
         try:
             status = ""
             if (options["na"]):
-                status = "Currency Price Update"
-                update_currency_price_from_rkd()
                 status = "Daily Ingestion Update"
                 ticker = get_universe_by_region(region_id=["na"])["ticker"].to_list()
                 update_data_dss_from_dss(ticker=ticker)
@@ -81,8 +77,6 @@ class Command(BaseCommand):
                 populate_ibes_table()
             
             if (options["ws"]):
-                status = "Currency Price Update"
-                update_currency_price_from_rkd()
                 status = "Daily Ingestion Update"
                 ticker = get_universe_by_region(region_id=["ws"])["ticker"].to_list()
                 update_data_dss_from_dss(ticker=ticker)
@@ -165,9 +159,9 @@ class Command(BaseCommand):
                     status = "Entity Type Ingestion"
                     update_entity_type_from_dsws()
                     status = "Lot Size Ingestion"
-                    update_lot_size_from_rkd()
+                    update_lot_size_from_dsws()
                     status = "Currency Code Ingestion"
-                    update_currency_code_from_rkd()
+                    update_currency_code_from_dsws()
                     status = "Industry Ingestion"
                     update_industry_from_dsws()
                     status = "Company Name Ingestion"
@@ -177,7 +171,7 @@ class Command(BaseCommand):
                     status = "Ticker Symbol Ingestion"
                     update_ticker_symbol_from_dss()
                     status = "MIC Ingestion"
-                    update_mic_from_rkd()
+                    update_mic_from_dsws()
                     status = "Dividend Ingestion"
                     dividend_updated_from_dsws()
                     status = "Dividend Daily Update"
