@@ -631,7 +631,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         print(f"Calculate Fundamentals [{pillar_name}] in group [{group}]")
         sub_g = g.loc[(g['factor_weight']==2)|(g['factor_weight'].isnull())]        # use all rank=2 (best class)
         if len(sub_g) == 0:                         # if no factor rank=2, use the highest ranking one & DLPA/ai_value scores
-            sub_g = g.loc[(g.nlargest(1, columns=['pred_z']).index)|(g.loc[g['factor_weight'].isnull()].index)]
+            sub_g = g.loc[g.nlargest(1, columns=['pred_z']).index.union(g.loc[g['factor_weight'].isnull()].index)]
 
         # score_col = [f'{x}{fundamental_score_col_suffix}' for x in sub_g['factor_name']]
         #
