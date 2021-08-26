@@ -330,14 +330,12 @@ class TransactionHistory(BaseTimeStampModel):
 
 class UserProfitHistory(BaseTimeStampModel):
     uid = models.CharField(primary_key=True, max_length=300, blank=True, editable=False, unique=True)
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_profit_history_user_id", db_column="user_id")
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_profit_history", db_column="user_id")
     trading_day = models.DateField(null=True, blank=True)
     daily_profit = models.FloatField(default=0)
 
     def __str__(self):
-        if self.balance_uid.user.email:
-            return f"{self.side} - {self.balance_uid.user.email}"
-        return self.side
+        return self.user_id.email
 
     class Meta:
         db_table = "user_profit_history"
