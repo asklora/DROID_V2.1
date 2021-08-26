@@ -3,7 +3,7 @@ import json
 
 class IBClient():
 	def __init__(self):
-		gateway_host = "https://47.242.9.23"
+		gateway_host = "https://localhost"
 		gateway_port = f"5000"
 		# gateway_host = "https://2.tcp.ngrok.io"
 		# gateway_port = f"16229"
@@ -258,6 +258,14 @@ class IBClient():
 
 	def get_position(self, account_id, conID):
 		url = f"{self.gateway_url}/v1/api/portfolio/{account_id}/positions/{conID}"
+		stat,res =self.request_data('get', url)
+		print(stat,res)
+		if stat:
+			return res
+		else:
+			return "Failed to fetch data"
+	def auth(self):
+		url = f"{self.gateway_url}/v1/portal/iserver/auth/status"
 		stat,res =self.request_data('get', url)
 		print(stat,res)
 		if stat:

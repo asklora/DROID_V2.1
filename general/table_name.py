@@ -183,6 +183,8 @@ def get_user_core_table_name():
 def get_user_account_balance_table_name():
     return "user_account_balance"
 
+def get_user_profit_history_table_name():
+    return "user_profit_history"
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 

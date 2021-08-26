@@ -10,15 +10,15 @@ from general.sql_output import fill_null_company_desc_with_ticker_name, fill_nul
 from general.sql_query import get_active_universe, get_active_universe_consolidated_by_field, get_data_from_table_name
 from ingestion.data_from_dss import update_ticker_symbol_from_dss
 from ingestion.data_from_rkd import (
-    populate_intraday_latest_price_from_rkd, 
-    update_currency_code_from_rkd, 
-    update_lot_size_from_rkd, 
-    update_mic_from_rkd)
+    populate_intraday_latest_price_from_rkd)
 from ingestion.data_from_dsws import (
     populate_universe_consolidated_by_isin_sedol_from_dsws, 
-    update_company_desc_from_dsws, 
+    update_company_desc_from_dsws,
+    update_currency_code_from_dsws, 
     update_entity_type_from_dsws, 
-    update_industry_from_dsws, 
+    update_industry_from_dsws,
+    update_lot_size_from_dsws,
+    update_mic_from_dsws, 
     update_ticker_name_from_dsws, 
     update_worldscope_identifier_from_dsws)
 from general.table_name import (
@@ -77,11 +77,11 @@ def ticker_changes(old_ticker, new_ticker):
     update_ticker_name_from_dsws(ticker=ticker)
     update_ticker_symbol_from_dss(ticker=ticker)
     update_entity_type_from_dsws(ticker=ticker)
-    update_lot_size_from_rkd(ticker=ticker)
-    update_currency_code_from_rkd(ticker=ticker)
+    update_lot_size_from_dsws(ticker=ticker)
+    update_currency_code_from_dsws(ticker=ticker)
     update_industry_from_dsws(ticker=ticker)
     update_company_desc_from_dsws(ticker=ticker)
-    update_mic_from_rkd(ticker=ticker)
+    update_mic_from_dsws(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
 
 

@@ -10,17 +10,14 @@ from core.user.models import TransactionHistory, Accountbalance
 from .order_signal_action import OrderServices
 
 
-def generate_hedge_setup(instance: Order) -> dict:
+def generate_hedge_setup(instance: Order,margin:int) -> dict:
 
     bot = BotOptionType.objects.get(bot_id=instance.bot_id)
-    margin = False
-    if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
-        margin = True
     expiry = get_expiry_date(
         bot.time_to_exp, instance.created, instance.ticker.currency_code.currency_code)
     if bot.bot_type.bot_type == "CLASSIC":
         setup = get_classic(instance.ticker.ticker, instance.created,
-                            bot.time_to_exp, instance.amount, instance.price, expiry)
+                            bot.time_to_exp, instance.amount, instance.price, expiry,margin=margin)
     elif bot.bot_type.bot_type == "UNO":
         setup = get_uno(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
                         instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
@@ -43,14 +40,15 @@ def order_signal_check(sender, instance, **kwargs):
     if not instance.status in ["filled", "placed", "pending", "cancel"] and instance.is_init:
         # if bot will create setup expiry , SL and TP
         if instance.bot_id != "STOCK_stock_0":
-            setup = generate_hedge_setup(instance)
+            setup = generate_hedge_setup(instance,instance.margin)
             instance.setup = setup
             instance.qty = setup['performance']["share_num"]
             instance.amount = formatdigit(setup['performance']["share_num"] * setup['price'])
         else:
             instance.setup = None
-            instance.qty = math.floor(instance.amount / instance.price)
+            # amount should still 
             instance.amount = round(instance.qty * instance.price,2)
+            instance.qty = math.floor((instance.amount / instance.price) * instance.margin) 
 
 
 @receiver(post_save, sender=Order)

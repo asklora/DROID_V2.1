@@ -1,11 +1,12 @@
-
+from general.sql_output import upsert_data_to_database
+from general.date_process import dateNow, str_to_date
 import math
 import numpy as np
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
-from general.data_process import tuple_data
-from general.sql_query import get_active_universe, read_query
+from general.data_process import tuple_data, NoneToZero, uid_maker
+from general.sql_query import get_active_universe, get_orders_position, get_orders_position_performance, get_user_core, read_query
 from general.table_name import (
     get_currency_calendar_table_name,
     get_data_dividend_daily_rates_table_name,
@@ -14,7 +15,8 @@ from general.table_name import (
     get_data_vol_surface_table_name,
     get_latest_price_table_name,
     get_latest_vol_table_name,
-    get_master_tac_table_name)
+    get_master_tac_table_name,
+    get_user_profit_history_table_name)
 from datasource.dsws import get_data_static_from_dsws
 from bot import uno
 from global_vars import large_hedge, small_hedge, buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem, max_vol, min_vol, default_vol, REPORT_INTRADAY
@@ -169,7 +171,7 @@ def get_vol(ticker, trading_day, t, r, q, time_to_exp):
     return float(vol)
 
 
-def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry_date):
+def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry_date,margin:int=1):
     spot_date = check_date(spot_date)
     expiry_date = check_date(expiry_date)
     digits = max(min(4-len(str(int(price))), 2), -1)
@@ -184,7 +186,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry
         "performance":{},
         "position":{}
     }
-    total_bot_share_num = math.floor(investment_amount / price)
+    total_bot_share_num = round((investment_amount * margin) / price, 0)
     bot_cash_balance =round(investment_amount - (total_bot_share_num * price), 2)
     data["performance"]["vol"] = dur
     data["performance"]["last_hedge_delta"] = 1
@@ -240,7 +242,7 @@ def get_ucdc_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, 
     return data
 
 
-def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group, margin=False):
+def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group, margin:int=1):
     """
     - ticker -> str
     - currency_code -> str
@@ -273,10 +275,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     targeted_profit = -1 * option_price / price
     delta = uno.deltaRC(price, strike, strike_2, t/365, r, q, v1, v2)
     delta = np.nan_to_num(delta, nan=0)
-    if(margin):
-        total_bot_share_num = round((investment_amount * 1.5) / price, 0)
-    else:
-        total_bot_share_num = round(investment_amount / price, 0)
+    total_bot_share_num = round((investment_amount * margin) / price, 0)
     bot_hedge_share = math.floor(delta *total_bot_share_num)
     bot_cash_balance = round(investment_amount - (bot_hedge_share * price), digits)
     data['performance']["last_hedge_delta"] = delta
@@ -342,7 +341,7 @@ def get_uno_detail(ticker, currency_code, expiry_date, spot_date, time_to_exp, p
     return data
 
 
-def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group, margin=False):
+def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investment_amount, price, bot_option_type, bot_group, margin:int=1):
     """
     - ticker -> str
     - currency_code -> str
@@ -377,10 +376,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     option_price = np.nan_to_num(option_price, nan=0)
     potential_loss = -1 * option_price / price
     targeted_profit = (barrier-strike) / price
-    if(margin):
-        total_bot_share_num = round((investment_amount * 1.5) / price, 1)
-    else:
-        total_bot_share_num = round(investment_amount / price, 1)
+    total_bot_share_num = round((investment_amount * margin) / price, 1)
     bot_hedge_share = math.floor(delta *total_bot_share_num)
     bot_cash_balance = round(investment_amount - (bot_hedge_share * price), digits)
     data['performance']["option_price"] = option_price
@@ -574,3 +570,29 @@ def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
         if(str(result.loc[0, "dividend_ex_date"]) == str(trading_day)):
             return bot_cash_dividend + (result.loc[0, "dividend_per_share"] * share_num)
     return bot_cash_dividend
+
+def populate_daily_profit(currency_code=None, user_id=None):
+    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")[["user_id"]]
+    print(user_core)
+    for index, row in user_core.iterrows():
+        user = row["user_id"]
+        orders_position_field = "position_uid, investment_amount"
+        orders_position = get_orders_position(user_id=[user], active=True, field=orders_position_field)
+        if(len(orders_position)):
+            orders_performance_field = "position_uid, current_bot_cash_balance, current_investment_amount"
+            orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)
+            orders_position = orders_position.merge(orders_performance, how="left", on=["position_uid"])
+            orders_position["daily_profit"] = orders_position["investment_amount"] - (orders_position["current_investment_amount"] + orders_position["current_bot_cash_balance"])
+            profit = NoneToZero(sum(orders_position["daily_profit"].to_list()))
+            daily_profit_pct = round(profit / NoneToZero(sum(orders_position["investment_amount"].to_list())) * 100, 2)
+        else:
+            profit = 0
+            profit_pct = 0
+        user_core.loc[index, "daily_profit"] = profit
+        user_core.loc[index, "daily_profit_pct"] = daily_profit_pct
+    user_core["trading_day"] =  str_to_date(dateNow())
+    user_core["user_id"] = user_core["user_id"].astype(str)
+    user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
+    user_core["user_id"] = user_core["user_id"].astype(int)
+    print(user_core)
+    upsert_data_to_database(user_core, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)

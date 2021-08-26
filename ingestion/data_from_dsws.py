@@ -538,7 +538,7 @@ def dividend_updated_from_dsws(ticker=None, currency_code=None):
     result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, dividend=True, split_number=1)
     print(result)
     if(len(result)) > 0 :
-        result = result.rename(columns={"UDDE": "amount", "level_1":"ex_dividend_date"})
+        result = result.rename(columns={"UDDE": "amount", "index":"ex_dividend_date"})
         result = result.dropna(subset=["amount"])
         result = remove_null(result, "amount")
         result = uid_maker(result, uid="uid", ticker="ticker", trading_day="ex_dividend_date")
