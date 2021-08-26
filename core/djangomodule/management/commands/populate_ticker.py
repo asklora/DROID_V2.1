@@ -78,7 +78,6 @@ def populate_ticker_monthly(client=None):
 
     new_universe = pd.read_csv("/home/loratech/new_universe.csv")
     new_universe = new_universe[["origin_ticker", "source_id", "use_isin", "use_manual"]]
-    new_universe = new_universe.head(5)
     new_universe["use_manual"] = np.where(new_universe["use_manual"] == 1, True, False)
     new_universe["use_isin"] = np.where(new_universe["use_isin"] == 1, True, False)
     new_universe["uid"] = new_universe["origin_ticker"]
