@@ -1,3 +1,5 @@
+from general.date_process import datetimeNow
+from ingestion.mongo_migration import firebase_user_update
 from core.djangomodule.management.commands.populate_ticker import populate_ticker_monthly
 from core.user.models import User
 from requests.api import get
@@ -14,8 +16,12 @@ from portfolio.daily_hedge_classic import classic_position_check
 from config.celery import app 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        c = IBClient()
-        c.get_position('DU2898616',0)
+        contoh = datetimeNow()
+        firebase_user_update()
+        print(contoh)
+        print(datetimeNow())
+        # c = IBClient()
+        # c.get_position('DU2898616',0)
         # c.market_order(2,'DU2898616','order first',265598)
         
         # c.find_contract('TSLA')

@@ -15,26 +15,26 @@ from simple_history.models import HistoricalRecords
 
 
 def generate_balance_id():
-    r_id = base64.b64encode(uuid.uuid4().bytes).replace('=', '').decode()
+    r_id = base64.b64encode(uuid.uuid4().bytes).replace("=", "").decode()
     return r_id
 
 
 def usermanagerprofile(instance, filename):
-    ext = filename.split('.')[-1]
+    ext = filename.split(".")[-1]
     filename = "%s.%s" % (uuid.uuid4(), ext)
-    return '{0}_manager_profile_pic/{1}'.format(instance.username, filename)
+    return "{0}_manager_profile_pic/{1}".format(instance.username, filename)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    WAIT, APPROVED ,UNVERIFIED,VERIFIED= 'in waiting list', 'approved','unverified','verified'
+    WAIT, APPROVED ,UNVERIFIED,VERIFIED= "in waiting list", "approved","unverified","verified"
     status_choices = (
-        (UNVERIFIED, 'unverified'),
-        (VERIFIED, 'verified'),
-        (WAIT, 'in waiting list'),
-        (APPROVED, 'approved'),
+        (UNVERIFIED, "unverified"),
+        (VERIFIED, "verified"),
+        (WAIT, "in waiting list"),
+        (APPROVED, "approved"),
     )
 
-    email = models.EmailField(('email address'),null=True, blank=True)
+    email = models.EmailField(("email address"),null=True, blank=True)
     username = models.CharField(
         max_length=255, unique=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
@@ -50,9 +50,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     current_status = models.CharField(
         max_length=255, null=True, blank=True, choices=status_choices, default=UNVERIFIED)
 
-    USERNAME_FIELD = 'username'
-    AUTH_FIELD_NAME = 'email'
-    # REQUIRED_FIELDS = ['username']
+    USERNAME_FIELD = "username"
+    AUTH_FIELD_NAME = "email"
+    # REQUIRED_FIELDS = ["username"]
 
     objects = AppUserManager()
 
@@ -101,22 +101,22 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def get_dial_phone(self):
         phones = list(self.phone)
-        if phones[0] == '0':
-            phones[0] = ''
-            phone = ''.join(phones).strip()
+        if phones[0] == "0":
+            phones[0] = ""
+            phone = "".join(phones).strip()
             phone = self.country.country_dial + phone
             return phone
         return self.country_dial.country_dial_code+self.phone
 
     @property
     def name(self):
-        return f'{self.first_name} {self.last_name}'
+        return f"{self.first_name} {self.last_name}"
 
     @property
     def current_assets(self):
         order = self.user_position.filter(
-            is_live=True).aggregate(total=Sum('current_values'))
-        asset = nonetozero(order['total']) + self.user_balance.amount
+            is_live=True).aggregate(total=Sum("current_values"))
+        asset = nonetozero(order["total"]) + self.user_balance.amount
         result = round(asset, 2)
         return result
 
@@ -152,33 +152,33 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def total_user_invested_amount(self):
-        order = self.user_position.filter(user_id=self,is_live=True,bot_id='STOCK_stock_0').aggregate(total=Sum('investment_amount'))
-        if order['total']:
-            result = round(order['total'], 2)
+        order = self.user_position.filter(user_id=self,is_live=True,bot_id="STOCK_stock_0").aggregate(total=Sum("investment_amount"))
+        if order["total"]:
+            result = round(order["total"], 2)
             return result
         return 0
     
     @property
     def total_bot_invested_amount(self):
-        order = self.user_position.filter(user_id=self,is_live=True).exclude(bot_id='STOCK_stock_0').aggregate(total=Sum('investment_amount'))
-        if order['total']:
-            result = round(order['total'], 2)
+        order = self.user_position.filter(user_id=self,is_live=True).exclude(bot_id="STOCK_stock_0").aggregate(total=Sum("investment_amount"))
+        if order["total"]:
+            result = round(order["total"], 2)
             return result
         return 0
 
     @property
     def total_invested_amount(self):
-        order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum('investment_amount'))
-        if order['total']:
-            result = round(order['total'], 2)
+        order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum("investment_amount"))
+        if order["total"]:
+            result = round(order["total"], 2)
             return result
         return 0
     
     @property
     def total_stock_amount(self):
-        order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum('current_inv_amt'))
-        if order['total']:
-            result = round(order['total'], 2)
+        order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum("current_inv_amt"))
+        if order["total"]:
+            result = round(order["total"], 2)
             return result
         return 0
 
@@ -186,29 +186,29 @@ class User(AbstractBaseUser, PermissionsMixin):
     def starting_amount(self):
         #USER STARTING AMOUNT
         wallet = self.user_balance.account_transaction.filter(
-            transaction_detail__event='first deposit').aggregate(total=Sum('amount'))
-        if wallet['total']:
-            return wallet['total']
+            transaction_detail__event="first deposit").aggregate(total=Sum("amount"))
+        if wallet["total"]:
+            return wallet["total"]
         return 0
 
     @property
     def current_total_investment_value(self):
         # USER all INVESTMENT VALUE UNREALIZED
-        order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum('current_values'))
-        if order['total']:
-            result = round(order['total'], 2)
+        order = self.user_position.filter(user_id=self,is_live=True).aggregate(total=Sum("current_values"))
+        if order["total"]:
+            result = round(order["total"], 2)
             return result
         return 0
     
     @property
     def total_pending_amount(self):
-        pending_transaction=self.user_order.filter(status='pending').aggregate(total=Sum(Case(
-            When(~Q(bot_id='STOCK_stock_0'),then=Cast('setup__performance__current_bot_cash_balance',FloatField())+F('amount')),
-            default='amount',
+        pending_transaction=self.user_order.filter(status="pending").aggregate(total=Sum(Case(
+            When(~Q(bot_id="STOCK_stock_0"),then=Cast("setup__performance__current_bot_cash_balance",FloatField())+F("amount")),
+            default="amount",
             output_field=FloatField()
         )))
-        if pending_transaction['total']:
-            return pending_transaction['total']
+        if pending_transaction["total"]:
+            return pending_transaction["total"]
         return 0
     
     @property
@@ -226,30 +226,30 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def total_fee_amount(self):
-        transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=['fee']).aggregate(total=Sum('amount'))
-        if transaction['total']:
-            result = round(transaction['total'], 2)
+        transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=["fee"]).aggregate(total=Sum("amount"))
+        if transaction["total"]:
+            result = round(transaction["total"], 2)
             return result
         return 0
     
     @property
     def total_stamp_amount(self):
-        transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=['stamp_duty']).aggregate(total=Sum('amount'))
-        if transaction['total']:
-            result = round(transaction['total'], 2)
+        transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=["stamp_duty"]).aggregate(total=Sum("amount"))
+        if transaction["total"]:
+            result = round(transaction["total"], 2)
             return result
         return 0
     
     @property
     def total_commission_amount(self):
-        transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=['fee']).aggregate(total=Sum('amount'))
-        transaction2=self.user_balance.account_transaction.filter(transaction_detail__event__in=['stamp_duty']).aggregate(total=Sum('amount'))
-        if transaction['total']:
-            if transaction2['total']:
-                total2=transaction2['total']
+        transaction=self.user_balance.account_transaction.filter(transaction_detail__event__in=["fee"]).aggregate(total=Sum("amount"))
+        transaction2=self.user_balance.account_transaction.filter(transaction_detail__event__in=["stamp_duty"]).aggregate(total=Sum("amount"))
+        if transaction["total"]:
+            if transaction2["total"]:
+                total2=transaction2["total"]
             else:
                 total2=0
-            result = round(transaction['total'] -total2, 2)
+            result = round(transaction["total"] -total2, 2)
             return result
         return 0
 
@@ -257,8 +257,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     
 
     class Meta:
-        db_table = 'user_core'
-        indexes = [models.Index(fields=['email','username',])]
+        db_table = "user_core"
+        indexes = [models.Index(fields=["email","username",])]
         
 
     def __str__(self):
@@ -271,11 +271,11 @@ class Accountbalance(BaseTimeStampModel):
     balance_uid = models.CharField(
         primary_key=True, max_length=300, blank=True, editable=False, unique=True)
     user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name='user_balance', db_column='user_id')
+        User, on_delete=models.CASCADE, related_name="user_balance", db_column="user_id")
     amount = models.FloatField(default=0)
     currency_code = models.ForeignKey(
-        Currency, on_delete=models.DO_NOTHING, related_name='user_currency', default='USD', db_column='currency_code')
-    history = HistoricalRecords(table_name='user_account_history')
+        Currency, on_delete=models.DO_NOTHING, related_name="user_currency", default="USD", db_column="currency_code")
+    history = HistoricalRecords(table_name="user_account_history")
 
     def __str__(self):
         if self.user.email:
@@ -304,26 +304,40 @@ class Accountbalance(BaseTimeStampModel):
                 success = True
 
     class Meta:
-        db_table = 'user_account_balance'
+        db_table = "user_account_balance"
 
 
 class TransactionHistory(BaseTimeStampModel):
-    C = 'credit'
-    D = 'debit'
+    C = "credit"
+    D = "debit"
     type_choice = (
-        (C, 'credit'),
-        (D, 'debit')
+        (C, "credit"),
+        (D, "debit")
     )
     balance_uid = models.ForeignKey(Accountbalance, on_delete=models.CASCADE,
-                                    related_name='account_transaction', db_column='balance_uid')
+                                    related_name="account_transaction", db_column="balance_uid")
     side = models.CharField(max_length=100, choices=type_choice)
     amount = models.FloatField(default=0)
     transaction_detail = models.JSONField(default=dict, null=True, blank=True)
 
     def __str__(self):
         if self.balance_uid.user.email:
-            return f'{self.side} - {self.balance_uid.user.email}'
+            return f"{self.side} - {self.balance_uid.user.email}"
         return self.side
 
     class Meta:
-        db_table = 'user_transaction'
+        db_table = "user_transaction"
+
+class UserProfitHistory(BaseTimeStampModel):
+    uid = models.CharField(primary_key=True, max_length=300, blank=True, editable=False, unique=True)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_profit_history_user_id", db_column="user_id")
+    trading_day = models.DateField(null=True, blank=True)
+    daily_profit = models.FloatField(default=0)
+
+    def __str__(self):
+        if self.balance_uid.user.email:
+            return f"{self.side} - {self.balance_uid.user.email}"
+        return self.side
+
+    class Meta:
+        db_table = "user_profit_history"
