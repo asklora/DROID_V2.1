@@ -635,11 +635,11 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals_factors_scores_col = fundamentals.filter(regex='^fundamentals_').columns
     fundamentals[fundamentals_factors_scores_col] = (fundamentals[fundamentals_factors_scores_col]*10).round(1)
 
-    from sqlalchemy import create_engine
-    from global_vars import DB_URL_ALIBABA
-    with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
-        extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
-        fundamentals.to_sql('test_fundamentals_clair', **extra)
+    # from sqlalchemy import create_engine
+    # from global_vars import DB_URL_ALIBABA
+    # with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
+    #     extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
+    #     fundamentals.to_sql('test_fundamentals_clair', **extra)
     
     return
 
