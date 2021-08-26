@@ -158,7 +158,7 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
         position, order = classic_sell_position(live_price, trading_day, position.position_uid, apps=apps)
         return True, order.order_uid
     else:
-        performance, position = populate_performance(live_price, trading_day, log_time, position,apps=apps)
+        performance, position = populate_performance(live_price, trading_day, log_time, position)
         # remove position_uid from dict and swap with instance
         performance.pop("position_uid")
         # create the record

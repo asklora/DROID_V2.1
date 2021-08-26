@@ -181,11 +181,9 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
         ask_price = price_data.latest_price
     else:
         live_price = price_data.close
-        if price_data.latest_price:
-            live_price = price_data.latest_price
-        trading_day = price_data.last_date
-        bid_price = price_data.intraday_bid
-        ask_price = price_data.intraday_ask
+        trading_day = price_data.trading_day
+        bid_price = price_data.close
+        ask_price = price_data.close
 
     if ask_price == 0 or ask_price == None:
         ask_price = live_price
