@@ -14,9 +14,9 @@ from portfolio.daily_hedge_classic import classic_position_check
 from config.celery import app 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        c = IBClient()
+        # c = IBClient()
         # c.auth()
-        c.market_order(3,'DU2898616','order222',265598)
+        # c.market_order(3,'DU2898616','order222',265598)
         
         # c.get_position('DU2898616',0)
         # c.find_contract('TSLA')
@@ -46,7 +46,7 @@ class Command(BaseCommand):
         # for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
         #     p.delete()
 
-        # daily_hedge(currency="USD")
+        daily_hedge(currency="HKD")
         # serv =['bot_tester','bot_advisor']
         # for a in serv:
         #     hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA",

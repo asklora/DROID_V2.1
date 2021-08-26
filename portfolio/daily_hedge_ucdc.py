@@ -164,6 +164,9 @@ def populate_performance(live_price, ask_price, bid_price, trading_day, log_time
     
 def create_performance(price_data, position, latest=False, hedge=False, tac=False):
     bot = position.bot
+    apps=False
+    if position.user_id.current_status == "verified":
+        apps =True
     if(latest):
         live_price = price_data.close
         if price_data.latest_price:
@@ -199,12 +202,12 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
     expiry = to_date(position.expiry)
     status_expiry = trading_day >= expiry
     if(status_expiry):
-        position, order = ucdc_sell_position(live_price, trading_day, position.position_uid)
+        position, order = ucdc_sell_position(live_price, trading_day, position.position_uid,apps=apps)
         return True, order.order_uid
     else:
         performance, position, status, hedge_shares = populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=False)
         
-        order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position)
+        order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position,apps=apps)
         if (order):
             return False, order.order_uid
         
