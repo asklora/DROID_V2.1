@@ -109,12 +109,17 @@ class PositionSerializer(serializers.ModelSerializer):
     turnover = serializers.SerializerMethodField()
     bot_details = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
+    total_share_num = serializers.FloatField(source="share_num")
+    current_share_num=serializers.SerializerMethodField()
 
     class Meta:
         model = OrderPosition
-        exclude = ("commision_fee", "commision_fee_sell")
+        exclude = ("commision_fee", "commision_fee_sell","share_num")
     
-    
+    def get_current_share_num(self,obj) -> float:
+        return obj.order_position.latest("created").share_num
+
+
     def get_bot_details(self,obj) -> BotDetailSerializer:
         """add detail bot"""
         return BotDetailSerializer(obj.bot).data
