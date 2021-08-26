@@ -7,7 +7,7 @@ from ingestion.master_tac import master_tac_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
 from ingestion.data_from_quandl import update_quandl_orats_from_quandl
 from general.table_name import get_universe_client_table_name
-from general.sql_output import insert_data_to_database
+from general.sql_output import fill_null_quandl_symbol, insert_data_to_database
 from general.date_process import dateNow
 from general.sql_process import do_function
 from general.sql_query import (
@@ -46,6 +46,7 @@ def new_ticker_ingestion(ticker):
     update_company_desc_from_dsws(ticker=ticker)
     update_mic_from_dsws(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
+    fill_null_quandl_symbol()
     update_quandl_orats_from_quandl(ticker=ticker)
     update_data_dss_from_dss(ticker=ticker, history=True)
     update_data_dsws_from_dsws(ticker=ticker, history=True)
