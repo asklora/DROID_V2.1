@@ -620,7 +620,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
         score_col = [f'{x}_{y}_currency_code' for x, y in sub_g.loc[sub_g['scaler'].notnull(), ['factor_name','scaler']].to_numpy()]
         score_col += [x for x in sub_g.loc[sub_g['scaler'].isnull(), 'factor_name']]
-        x = fundamentals[['ticker']+score_col]
         fundamentals.loc[fundamentals['currency_code'] == group, f"fundamentals_{pillar_name}"] = fundamentals[score_col].mean(axis=1)
     
     for group, g in factor_rank.groupby('group'):
