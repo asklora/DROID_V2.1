@@ -61,12 +61,12 @@ class BotHedgerSerializer(serializers.Serializer):
         elif bot.bot_type.bot_type == "UCDC":
             setup = calculate_bot.get_ucdc(ticker.ticker, ticker.currency_code.currency_code, expiry,
                                     datetime.now(), bot.time_to_exp, validated_data['amount'], validated_data['price'], bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
-        data={"position":{}}
-        data["position"]["expiry"]=setup["position"]["expiry"]
-        data["position"]["max_loss_pct"]=setup["position"]["max_loss_pct"]
-        data["position"]["max_loss_price"]=setup["position"]["max_loss_price"]
-        data["position"]["max_loss_amount"]=setup["position"]["max_loss_amount"]
-        data["position"]["target_profit_pct"]=setup["position"]["target_profit_pct"]
-        data["position"]["target_profit_price"]=setup["position"]["target_profit_price"]
-        data["position"]["target_profit_amount"]=setup["position"]["target_profit_amount"]
+        data={}
+        data["expiry"]=setup["position"]["expiry"]
+        data["max_loss_pct"]=setup["position"]["max_loss_pct"]
+        data["max_loss_price"]=setup["position"]["max_loss_price"]
+        data["max_loss_amount"]=setup["position"]["max_loss_amount"]
+        data["target_profit_pct"]=setup["position"]["target_profit_pct"]
+        data["target_profit_price"]=setup["position"]["target_profit_price"]
+        data["target_profit_amount"]=setup["position"]["target_profit_amount"]
         return data   
