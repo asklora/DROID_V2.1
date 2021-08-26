@@ -570,7 +570,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             column_score = column + "_score"
             column_robust_score = column + "_robust_score"
             # fundamentals[column_robust_score] = robust_scale(fundamentals[column_score])
-
             fundamentals[column_robust_score] = fundamentals.groupby("currency_code")[column_score].transform(lambda x: robust_scale(x))
             calculate_column_robust_score.append(column_robust_score)
         except Exception as e:
@@ -643,6 +642,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
         score_col = [f'{x}_{y}_currency_code' for x, y in sub_g.loc[sub_g['scaler'].notnull(), ['factor_name','scaler']].to_numpy()]
         score_col += [x for x in sub_g.loc[sub_g['scaler'].isnull(), 'factor_name']]
+        x = fundamentals[['ticker']+score_col]
         fundamentals.loc[fundamentals['currency_code'] == group, f"fundamentals_{pillar_name}"] = fundamentals[score_col].mean(axis=1)
     
     for group, g in factor_rank.groupby('group'):
@@ -693,8 +693,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     #     fundamentals["earnings_pred_minmax_industry"] +
     #     fundamentals["earnings_pred_minmax_currency_code"]).round(1)
 
-    print("Calculate Momentum Value")
-    fundamentals["technical"] = (fundamentals["wts_rating"] + fundamentals["dlp_1m"]+ fundamentals["fundamentals_momentum"]) / 3
+    # print("Calculate Momentum Value")
+    # fundamentals["technical"] = (fundamentals["wts_rating"] + fundamentals["dlp_1m"]+ fundamentals["fundamentals_momentum"]) / 3
 
     print("Calculate ESG Value")
     fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
@@ -703,14 +703,15 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     print("Calculate AI Score")
     fundamentals["ai_score"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] + \
-        fundamentals["technical"] + fundamentals["technical"]) / 4
+        fundamentals["fundamentals_momentum"] + fundamentals["fundamentals_extra"]) / 4
 
     print("Calculate AI Score 2")
-    fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] + fundamentals["technical"] + fundamentals["esg"]) / 4
+    fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] +
+                                 fundamentals["fundamentals_momentum"] + fundamentals["esg"]) / 4
     
-    universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", 
-    "fundamentals_quality", "ai_score", "ai_score2", "esg", 
-    "fundamentals_momentum", "technical", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
+    universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
+                                            "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
+                                            "dlp_3m", "wts_rating2", "classic_vol"]]
 
     universe_rating_detail_history = fundamentals[minmax_column]
 
