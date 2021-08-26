@@ -641,7 +641,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
         extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
         fundamentals.to_sql('test_fundamentals_clair', **extra)
-    exit(0)
+    
+    return
 
     print("Calculate ESG Value")
     fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
