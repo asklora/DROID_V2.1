@@ -365,6 +365,7 @@ def score_update_vol_rs(list_of_start_end, days_in_year=256):
     '''
 
     tri = get_master_ohlcvtr_data(trading_day=backdate_by_month(list_of_start_end[-1][-1]))
+    tri = tri.sort_values(by=['ticker', 'trading_day'], ascending=[True, False]).reset_index(drop=True)
     open_data, high_data, low_data, close_data = tri['open'].values, tri['high'].values, tri['low'].values, tri[
         'close'].values
 
