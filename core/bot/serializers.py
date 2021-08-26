@@ -62,12 +62,12 @@ class BotHedgerSerializer(serializers.Serializer):
             setup = calculate_bot.get_ucdc(ticker.ticker, ticker.currency_code.currency_code, expiry,
                                     datetime.now(), bot.time_to_exp, validated_data['amount'], validated_data['price'], bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
         data={}
-        data["expiry"]=setup["expiry"]
-        data["max_loss_pct"]=setup["max_loss_pct"]
-        data["max_loss_price"]=setup["max_loss_price"]
-        data["max_loss_amount"]=setup["max_loss_amount"]
-        data["target_profit_pct"]=setup["target_profit_pct"]
-        data["target_profit_price"]=setup["target_profit_price"]
-        data["target_profit_amount"]=setup["target_profit_amount"]
+        data["position"]["expiry"]=setup["expiry"]
+        data["position"]["max_loss_pct"]=setup["max_loss_pct"]
+        data["position"]["max_loss_price"]=setup["max_loss_price"]
+        data["position"]["max_loss_amount"]=setup["max_loss_amount"]
+        data["position"]["target_profit_pct"]=setup["target_profit_pct"]
+        data["position"]["target_profit_price"]=setup["target_profit_price"]
+        data["position"]["target_profit_amount"]=setup["target_profit_amount"]
     
         return data   
