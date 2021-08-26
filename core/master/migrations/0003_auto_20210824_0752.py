@@ -10,14 +10,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameField(
-            model_name='datafundamentalscore',
-            old_name='total_asset',
-            new_name='assets_1yr',
-        ),
-        migrations.AddField(
-            model_name='datafundamentalscore',
-            name='mkt_cap_ye',
-            field=models.FloatField(blank=True, null=True),
-        ),
+        # migrations.RenameField(
+        #     model_name='datafundamentalscore',
+        #     old_name='total_asset',
+        #     new_name='assets_1yr',
+        # ),
+        # migrations.AddField(
+        #     model_name='datafundamentalscore',
+        #     name='mkt_cap_ye',
+        #     field=models.FloatField(blank=True, null=True),
+        # ),
     ]
