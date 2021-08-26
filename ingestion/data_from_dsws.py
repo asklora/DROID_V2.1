@@ -10,7 +10,8 @@ from general.slack import report_to_slack
 from general.sql_output import (
     delete_data_on_database, 
     delete_old_dividends_on_database, 
-    fill_null_company_desc_with_ticker_name, 
+    fill_null_company_desc_with_ticker_name,
+    update_universe_where_currency_code_null, 
     upsert_data_to_database)
 from general.table_name import (
     get_data_dividend_table_name, 
@@ -938,3 +939,54 @@ def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
         upsert_data_to_database(result1, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
         upsert_data_to_database(result2, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
         report_to_slack("{} : === RECSELL RECBUY Updated ===".format(datetimeNow()))
+
+def update_currency_code_from_dsws(ticker=None, currency_code=None):
+    print("{} : === CURRENCY CODE Start Ingestion ===".format(datetimeNow()))
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    universe = universe.drop(columns=["currency_code"])
+    filter_field = ["NPCUR"]
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], "ticker", filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    print(result)
+    if(len(result)) > 0 :
+        result = result.rename(columns={"NPCUR": "currency_code", "index":"ticker"})
+        result = remove_null(result, "currency_code")
+        result = universe.merge(result, how="left", on=["ticker"])
+        result["currency_code"] = result["currency_code"].str.upper()
+        print(result)
+        upsert_data_to_database(result, get_universe_table_name(), "ticker", how="update", Text=True)
+        report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
+        update_universe_where_currency_code_null()
+
+def update_lot_size_from_dsws(ticker=None, currency_code=None):
+    print("{} : === LOT SIZE Start Ingestion ===".format(datetimeNow()))
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    universe = universe.drop(columns=["lot_size"])
+    filter_field = ["LSZ"]
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], "ticker", filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    print(result)
+    if(len(result)) > 0 :
+        result = result.rename(columns={"LSZ": "lot_size", "index":"ticker"})
+        result = remove_null(result, "lot_size")
+        result = universe.merge(result, how="left", on=["ticker"])
+        print(result)
+        upsert_data_to_database(result, get_universe_table_name(), "ticker", how="update", Text=True)
+        report_to_slack("{} : === Lot Size Updated ===".format(datetimeNow()))
+
+def update_mic_from_dsws(ticker=None, currency_code=None):
+    print("{} : === MIC Start Ingestion ===".format(datetimeNow()))
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    universe = universe.drop(columns=["mic"])
+    filter_field = ["SEGM"]
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], "ticker", filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    print(result)
+    if(len(result)) > 0 :
+        result = result.rename(columns={"SEGM": "mic", "index":"ticker"})
+        result = remove_null(result, "mic")
+        result["mic"] = np.where(result["mic"] == "XETB", "XETA", result["mic"])
+        result["mic"] = np.where(result["mic"] == "XXXX", "XNAS", result["mic"])
+        result["mic"] = np.where(result["mic"] == "MTAA", "XMIL", result["mic"])
+        result["mic"] = np.where(result["mic"] == "WBAH", "XEUR", result["mic"])
+        result = universe.merge(result, how="left", on=["ticker"])
+        print(result)
+        upsert_data_to_database(result, get_universe_table_name(), "ticker", how="update", Text=True)
+        report_to_slack("{} : === MIC Updated ===".format(datetimeNow()))
