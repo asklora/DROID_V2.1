@@ -21,13 +21,16 @@ from ingestion.data_from_dss import (
 from ingestion.data_from_dsws import (
     dividend_updated_from_dsws, 
     populate_universe_consolidated_by_isin_sedol_from_dsws, 
-    update_company_desc_from_dsws, 
+    update_company_desc_from_dsws,
+    update_currency_code_from_dsws, 
     update_data_dsws_from_dsws, 
     update_entity_type_from_dsws, 
     update_fundamentals_quality_value, 
     update_fundamentals_score_from_dsws, 
     update_ibes_data_monthly_from_dsws, 
-    update_industry_from_dsws, 
+    update_industry_from_dsws,
+    update_lot_size_from_dsws,
+    update_mic_from_dsws, 
     update_rec_buy_sell_from_dsws, 
     update_ticker_name_from_dsws, 
     update_worldscope_identifier_from_dsws, 
@@ -37,11 +40,11 @@ def new_ticker_ingestion(ticker):
     update_ticker_name_from_dsws(ticker=ticker)
     update_ticker_symbol_from_dss(ticker=ticker)
     update_entity_type_from_dsws(ticker=ticker)
-    # update_lot_size_from_rkd(ticker=ticker)
-    # update_currency_code_from_rkd(ticker=ticker)
+    update_lot_size_from_dsws(ticker=ticker)
+    update_currency_code_from_dsws(ticker=ticker)
     update_industry_from_dsws(ticker=ticker)
     update_company_desc_from_dsws(ticker=ticker)
-    # update_mic_from_rkd(ticker=ticker)
+    update_mic_from_dsws(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
     update_quandl_orats_from_quandl(ticker=ticker)
     update_data_dss_from_dss(ticker=ticker, history=True)
