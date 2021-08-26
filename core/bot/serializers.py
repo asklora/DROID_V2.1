@@ -62,7 +62,7 @@ class BotHedgerSerializer(serializers.Serializer):
             setup = calculate_bot.get_ucdc(ticker.ticker, ticker.currency_code.currency_code, expiry,
                                     datetime.now(), bot.time_to_exp, validated_data['amount'], validated_data['price'], bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
         data={"position":{}}
-        data["expiry"]=setup["position"]["expiry"]
+        data["position"]["expiry"]=setup["position"]["expiry"]
         data["position"]["max_loss_pct"]=setup["position"]["max_loss_pct"]
         data["position"]["max_loss_price"]=setup["position"]["max_loss_price"]
         data["position"]["max_loss_amount"]=setup["position"]["max_loss_amount"]
