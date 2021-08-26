@@ -508,7 +508,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     factor_rank = get_factor_rank()
     factor_rank['pillar'] = factor_rank['factor_name'].map(factor_to_pillar)
-    factor_from_table = list(factor_to_pillar.keys())
+    factor_from_table = [x for x in factor_to_pillar.keys() if x not in ['dlp_1m', 'wts_rating']]
     factor_rank = factor_rank[factor_rank['factor_name'].isin(factor_from_table)]
 
     # des1 = fundamentals_score.describe()
@@ -523,6 +523,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     #                     "environment", "social", "goverment"]
     #
     calculate_column = factor_from_table + ["earnings_pred", "environment", "social", "goverment"]
+    calculate_column = sorted(set(calculate_column))
 
     fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
     fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
@@ -586,7 +587,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         tmp = tmp[['ticker', 'variable', 'quantile_transformed']]
         tmp['variable'] = tmp['variable'] + '_quantile'
         tmp = tmp.pivot(['ticker'], ['variable']).droplevel(0, axis=1)
-        tmp.columns.name = None
         fundamentals = fundamentals.merge(tmp, how='left', on='ticker')
     except Exception as e:
         print(e)
@@ -601,9 +601,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     #     fundamentals.to_sql('test_fundamentals', **extra)
     # exit(20)
 
-    fundamentals = fundamentals.merge(universe_rating, on='ticker', how='left')
-
     # fundamentals["momentum"] = fundamentals["tri_quantile"] * 10
+    fundamentals = fundamentals.merge(universe_rating, how="left", on="ticker")
     fundamentals["trading_day"] = check_trading_day(days=6)
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
 
@@ -618,7 +617,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         print(f"Calculate Fundamentals [{name}] in group {group}")
         sub_g = g.loc[g['factor_weight']==2]    # use all rank=2 (best class)
         if len(sub_g) == 0:     # if no factor rank=2, use the highest ranking one
-            sub_g = g.nlargest(1, columns=['pred_rank_same_time_and_group'])
+            sub_g = g.nlargest(1, columns=['pred_z'])
 
         score_col = [f'{x}{fundamental_score_col_suffix}' for x in sub_g['factor_name']]
 
