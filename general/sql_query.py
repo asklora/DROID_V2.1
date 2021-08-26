@@ -11,6 +11,7 @@ from general.table_name import (
     get_bot_type_table_name,
     get_data_ibes_monthly_table_name,
     get_data_macro_monthly_table_name,
+    get_ai_value_pred_table_name,
     get_industry_group_table_name,
     get_industry_table_name,
     get_latest_bot_update_table_name,
@@ -362,6 +363,13 @@ def get_pred_mean():
     data = data.drop_duplicates(subset=["ticker"], keep="first")
     data = data.drop(columns=["update_time"])
     return data
+
+def get_ai_value_pred_final():
+    query = f"SELECT * FROM {get_ai_value_pred_table_name()}"
+    data = read_query(query, table=get_ai_value_pred_table_name(), alibaba=True)
+    data = pd.pivot_table(data, index=['ticker'], columns=['y_type'], values='final_pred')
+    data.columns = ['ai_value_'+x for x in data.columns]
+    return data.reset_index()
 
 
 def get_specific_tri(trading_day, tri_name="tri"):

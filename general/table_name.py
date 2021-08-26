@@ -95,6 +95,9 @@ def get_data_macro_monthly_table_name():
 def get_data_worldscope_summary_table_name():
     return "data_worldscope_summary"
 
+def get_ai_value_pred_table_name():
+    return "ai_value_lgbm_pred_final_eps"
+
 def get_factor_calculation_table_name():
     return "factor_formula_ratios_prod"
 
@@ -194,6 +197,7 @@ def get_user_core_table_name():
 
 def get_user_account_balance_table_name():
     return "user_account_balance"
+
 
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr

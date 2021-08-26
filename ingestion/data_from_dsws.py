@@ -52,7 +52,8 @@ from general.sql_query import (
     get_ibes_new_ticker, 
     get_last_close_industry_code, 
     get_max_last_ingestion_from_universe, 
-    get_pred_mean, 
+    get_pred_mean,
+    get_ai_value_pred_final,
     get_specific_tri,
     get_specific_tri_avg,
     get_specific_volume_avg,
@@ -494,7 +495,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     vol = score_update_vol_rs(list_of_start_end=[[0,1]])     # calculate RS volatility -> list_of_start_end in ascending sequence (start_month, end_month)
     print(vol)
 
-    pred_mean = get_pred_mean()
+    pred_mean = get_ai_value_pred_final()
     print(pred_mean)
 
     # get different period stock return
@@ -515,14 +516,16 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # calculate ratios refering to table X
     fundamentals_score, factor_formula = score_update_factor_ratios(fundamentals_score)
 
-    fundamentals_score["earnings_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
-                                           fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
+    # fundamentals_score["earnings_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
+    #                                        fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
+    # fundamentals_score["revenue_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
+    #                                        fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
 
     factor_rank = get_factor_rank()
     factor_rank = factor_rank.merge(factor_formula, left_on=['factor_name'], right_index=True, how='outer')
     factor_rank['long_large'] = factor_rank['long_large'].fillna(True)
     factor_rank = factor_rank.dropna(subset=['pillar'])
-    append_df = factor_rank.loc[factor_rank['field_num'].isnull()]
+    append_df = factor_rank.loc[factor_rank['keep']]
 
     for group in factor_rank['group'].dropna().unique():
         # change ratio to negative if original factor calculation using reverse premiums
@@ -641,8 +644,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     #     extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
     #     fundamentals.to_sql('test_fundamentals_clair', **extra)
     
-    return
-
     print("Calculate ESG Value")
     fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
         fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
@@ -666,7 +667,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     
     if(len(fundamentals)) > 0 :
         print(fundamentals)
-        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
+        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum",
+                               "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
         result["updated"] = dateNow()
         print(result)
         print(universe_rating_history)
