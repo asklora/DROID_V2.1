@@ -527,6 +527,8 @@ class TestComplex:
         confirmed_sell_order.status = "filled"
         confirmed_sell_order.filled_at = datetime.now()
         confirmed_sell_order.save()
+
+
 class TestSerializer:
     pytestmark = pytest.mark.django_db
 
