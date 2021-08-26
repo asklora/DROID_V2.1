@@ -1,3 +1,4 @@
+from bot.calculate_bot import populate_daily_profit
 from ingestion.data_from_dsws import update_fundamentals_score_from_dsws
 from general.date_process import dateNow
 from general.sql_query import read_query
@@ -51,4 +52,4 @@ def dlpa_weekly():
 # Main Process
 if __name__ == "__main__":
     print("Start Process")
-    update_fundamentals_score_from_dsws(ticker=None, currency_code=["GBP"])
+    populate_daily_profit(currency_code=None, user_id=[108])

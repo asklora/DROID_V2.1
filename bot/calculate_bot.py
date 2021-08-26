@@ -1,11 +1,12 @@
-
+from general.sql_output import upsert_data_to_database
+from general.date_process import dateNow, str_to_date
 import math
 import numpy as np
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
-from general.data_process import tuple_data
-from general.sql_query import get_active_universe, read_query
+from general.data_process import tuple_data, NoneToZero, uid_maker
+from general.sql_query import get_active_universe, get_orders_position, get_orders_position_performance, get_user_core, read_query
 from general.table_name import (
     get_currency_calendar_table_name,
     get_data_dividend_daily_rates_table_name,
@@ -14,7 +15,8 @@ from general.table_name import (
     get_data_vol_surface_table_name,
     get_latest_price_table_name,
     get_latest_vol_table_name,
-    get_master_tac_table_name)
+    get_master_tac_table_name,
+    get_user_profit_history_table_name)
 from datasource.dsws import get_data_static_from_dsws
 from bot import uno
 from global_vars import large_hedge, small_hedge, buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem, max_vol, min_vol, default_vol, REPORT_INTRADAY
@@ -570,8 +572,27 @@ def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
     return bot_cash_dividend
 
 def populate_daily_profit(currency_code=None, user_id=None):
-    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")
-    user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, amount as balance, currency_code")
-    orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
-    orders_position = get_orders_position(user_id=[user], active=True, field=orders_position_field)
-    orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)
+    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")[["user_id"]]
+    print(user_core)
+    for index, row in user_core.iterrows():
+        user = row["user_id"]
+        orders_position_field = "position_uid, investment_amount"
+        orders_position = get_orders_position(user_id=[user], active=True, field=orders_position_field)
+        if(len(orders_position)):
+            orders_performance_field = "position_uid, current_bot_cash_balance, current_investment_amount"
+            orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)
+            orders_position = orders_position.merge(orders_performance, how="left", on=["position_uid"])
+            orders_position["daily_profit"] = orders_position["investment_amount"] - (orders_position["current_investment_amount"] + orders_position["current_bot_cash_balance"])
+            profit = NoneToZero(sum(orders_position["daily_profit"].to_list()))
+            daily_profit_pct = round(profit / NoneToZero(sum(orders_position["investment_amount"].to_list())) * 100, 2)
+        else:
+            profit = 0
+            profit_pct = 0
+        user_core.loc[index, "daily_profit"] = profit
+        user_core.loc[index, "daily_profit_pct"] = daily_profit_pct
+    user_core["trading_day"] =  str_to_date(dateNow())
+    user_core["user_id"] = user_core["user_id"].astype(str)
+    user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
+    user_core["user_id"] = user_core["user_id"].astype(int)
+    print(user_core)
+    upsert_data_to_database(user_core, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
