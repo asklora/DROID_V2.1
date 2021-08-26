@@ -46,6 +46,7 @@ def new_ticker_ingestion(ticker):
     update_company_desc_from_dsws(ticker=ticker)
     update_mic_from_dsws(ticker=ticker)
     update_worldscope_identifier_from_dsws(ticker=ticker)
+    fill_null_quandl_symbol()
     update_quandl_orats_from_quandl(ticker=ticker)
     update_data_dss_from_dss(ticker=ticker, history=True)
     update_data_dsws_from_dsws(ticker=ticker, history=True)
