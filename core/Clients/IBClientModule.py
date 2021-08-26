@@ -264,6 +264,14 @@ class IBClient():
 			return res
 		else:
 			return "Failed to fetch data"
+	def auth(self):
+		url = f"{self.gateway_url}/v1/portal/iserver/auth/status"
+		stat,res =self.request_data('get', url)
+		print(stat,res)
+		if stat:
+			return res
+		else:
+			return "Failed to fetch data"
 
 
 

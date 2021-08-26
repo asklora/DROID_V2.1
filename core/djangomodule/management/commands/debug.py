@@ -15,9 +15,10 @@ from config.celery import app
 class Command(BaseCommand):
     def handle(self, *args, **options):
         c = IBClient()
-        c.get_position('DU2898616',0)
-        # c.market_order(2,'DU2898616','order first',265598)
+        # c.auth()
+        c.market_order(3,'DU2898616','order222',265598)
         
+        # c.get_position('DU2898616',0)
         # c.find_contract('TSLA')
         # app.control.revoke('eb3cdebb-1c89-44d0-a022-65527f2863ee', terminate=True)
 

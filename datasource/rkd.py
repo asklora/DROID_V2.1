@@ -90,16 +90,16 @@ class Rkd:
 
                 logging.warning("Request fail")
                 logging.warning(f"request url :  {url}")
-                # logging.warning(f"request header :  {headers}")
+                logging.warning(f"request header :  {headers}")
                 logging.warning(f"response status {result.status_code}")
                 if result.status_code == 500:  # if username or password or appid is wrong
                     resp = result.json()
                     logging.warning("Error: %s" % (json.dumps(result.json(),indent=2)))
                     err = json.dumps(result.json(),indent=2)
-                    report =ErrorLog.objects.create(error_description=resp['Fault']['Reason']['Text']['Value'],error_traceback='err',
-                    error_message='Token Invalid',
-                    error_function='RKD DATA')
-                    report.send_report_error()
+                    # report =ErrorLog.objects.create(error_description=resp['Fault']['Reason']['Text']['Value'],error_traceback='err',
+                    # error_message='Token Invalid',
+                    # error_function='RKD DATA')
+                    # report.send_report_error()
                     return None
         except requests.exceptions.RequestException as e:
             logging.warning("error : {str(e)}")

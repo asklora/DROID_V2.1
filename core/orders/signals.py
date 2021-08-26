@@ -13,14 +13,14 @@ from .order_signal_action import OrderServices
 def generate_hedge_setup(instance: Order) -> dict:
 
     bot = BotOptionType.objects.get(bot_id=instance.bot_id)
-    margin = False
+    margin = 1
     if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
-        margin = True
+        margin =  1
     expiry = get_expiry_date(
         bot.time_to_exp, instance.created, instance.ticker.currency_code.currency_code)
     if bot.bot_type.bot_type == "CLASSIC":
         setup = get_classic(instance.ticker.ticker, instance.created,
-                            bot.time_to_exp, instance.amount, instance.price, expiry)
+                            bot.time_to_exp, instance.amount, instance.price, expiry,margin=margin)
     elif bot.bot_type.bot_type == "UNO":
         setup = get_uno(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
                         instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
@@ -49,8 +49,8 @@ def order_signal_check(sender, instance, **kwargs):
             instance.amount = formatdigit(setup['performance']["share_num"] * setup['price'])
         else:
             instance.setup = None
-            instance.qty = math.floor(instance.amount / instance.price)
             instance.amount = round(instance.qty * instance.price,2)
+            instance.qty = math.floor(instance.amount / instance.price)
 
 
 @receiver(post_save, sender=Order)
