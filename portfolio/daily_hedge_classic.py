@@ -346,11 +346,11 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
             tac_data = MasterOhlcvtr.objects.filter(
                 ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=exp_date, day_status="trading_day").order_by("trading_day")
             for tac_price in tac_data:
-                trading_day = tac.trading_day
+                trading_day = tac_price.trading_day
                 status, order_id = create_performance(tac_price, position, tac=True)
                 if order_id:
                     order = Order.objects.get(order_uid=order_id)
-                    log_time = pd.to_datetime(tac_data.trading_day)
+                    log_time = pd.to_datetime(tac_price.trading_day)
                     if order.status in ["pending", "review"]:
                         order.status = "filled"
                         order.filled_at = log_time

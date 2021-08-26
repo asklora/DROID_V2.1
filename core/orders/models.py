@@ -35,6 +35,7 @@ class Order(BaseTimeStampModel):
     performance_uid = models.CharField(null=True, blank=True, max_length=255)
     qty = models.FloatField(null=True, blank=True)# disini x margin
     history = HistoricalRecords(table_name='order_changes_history')
+    margin = models.FloatField(null=True, blank=True,default=1)
     class Meta:
         managed = True
         db_table = "orders"
