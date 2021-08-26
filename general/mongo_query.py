@@ -18,7 +18,10 @@ def change_date_to_str(data):
         if (str(type(data.loc[0, col])) == "<class 'datetime.date'>" or 
             str(type(data.loc[0, col])) == "<class 'pandas._libs.tslibs.timestamps.Timestamp'>" or 
             str(type(data.loc[0, col])) == "<class 'datetime.time'>") :
-            print(f"Change columns {col} to string")
+            print(f"Change DATE columns {col} to string")
+            data[col] = data[col].astype(str)
+        elif(str(type(data.loc[0, col])) == "<class 'uuid.UUID'>"):
+            print(f"Change UUID columns {col} to string")
             data[col] = data[col].astype(str)
         elif(type(data.loc[0, col]) == str):
             data[col] = np.where(data[col].isnull(), "", data[col])
@@ -48,15 +51,18 @@ def insert_to_mongo(data, index, table, dict=False):
 
 def update_to_mongo(data, index, table, dict=False):
     data = change_date_to_str(data)
-    data['indexes'] = data['ticker']
-    data = data.set_index('indexes')
-    df = data.to_dict('index')
-        
-
+    data["indexes"] = data[index]
+    data = data.set_index("indexes")
+    df = data.to_dict("index")
     del data
     db = firestore.client()
     for key,val in df.items():
-        doc_ref = db.collection(u'universe').document(f'{key}')
+        if(table=="universe"):
+            doc_ref = db.collection(u"universe").document(f"{key}")
+        elif(table=="portfolio"):
+            doc_ref = db.collection(u"portfolio").document(f"{key}")
+        else:
+            doc_ref = db.collection(u"universe").document(f"{key}")
         doc_ref.set(val)
     # db_connect = connects(table)
     # if(dict):

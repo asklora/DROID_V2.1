@@ -16,25 +16,25 @@ from general.sql_query import get_active_currency, get_active_currency_ric_not_n
 from general.date_process import dateNow, datetimeNow, str_to_date
 from datasource import rkd as RKD
 
-def update_currency_code_from_rkd(ticker=None, currency_code=None):
-    print("{} : === Currency Code Start Ingestion ===".format(datetimeNow()))
-    identifier="ticker"
-    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
-    universe = universe.drop(columns=["currency_code"])
-    ticker = universe["ticker"].to_list()
-    field = ["CF_CURRENCY"]
-    rkd = RKD.RkdData()
-    result = rkd.get_data_from_rkd(ticker, field)
-    print(result)
-    if (len(result) > 0 ):
-        result = result.rename(columns={"CF_CURRENCY": "currency_code"})
-        result = remove_null(result, "currency_code")
-        result = universe.merge(result, how="left", on=["ticker"])
-        result["currency_code"] = result["currency_code"].str.upper()
-        print(result)
-        upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
-        report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
-        update_universe_where_currency_code_null()
+# def update_currency_code_from_rkd(ticker=None, currency_code=None):
+#     print("{} : === Currency Code Start Ingestion ===".format(datetimeNow()))
+#     identifier="ticker"
+#     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+#     universe = universe.drop(columns=["currency_code"])
+#     ticker = universe["ticker"].to_list()
+#     field = ["CF_CURRENCY"]
+#     rkd = RKD.RkdData()
+#     result = rkd.get_data_from_rkd(ticker, field)
+#     print(result)
+#     if (len(result) > 0 ):
+#         result = result.rename(columns={"CF_CURRENCY": "currency_code"})
+#         result = remove_null(result, "currency_code")
+#         result = universe.merge(result, how="left", on=["ticker"])
+#         result["currency_code"] = result["currency_code"].str.upper()
+#         print(result)
+#         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+#         report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
+#         update_universe_where_currency_code_null()
 
 def update_currency_price_from_rkd(currency_code=None):
     print("{} : === Currency Price Ingestion ===".format(datetimeNow()))
@@ -150,43 +150,43 @@ def populate_intraday_latest_price_from_rkd(ticker=None, currency_code=None,use_
             print(latest_price)
             upsert_data_to_database(latest_price, get_latest_price_table_name(), "ticker", how="update", Text=True)
 
-def update_lot_size_from_rkd(ticker=None, currency_code=None):
-    print("{} : === Lot Size Start Ingestion ===".format(datetimeNow()))
-    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
-    universe = universe.drop(columns=["lot_size"])
-    ticker = universe["ticker"].to_list()
-    field = ["CF_LOTSIZE"]
-    rkd = RKD.RkdData()
-    result = rkd.get_data_from_rkd(ticker, field)
-    print(result)
-    if (len(result) > 0 ):
-        result = result.rename(columns={"CF_LOTSIZE": "lot_size"})
-        result["lot_size"] = result["lot_size"].astype(float)
-        result = remove_null(result, "lot_size")
-        result = universe.merge(result, how="left", on=["ticker"])
-        print(result)
-        upsert_data_to_database(result, get_universe_table_name(), "ticker", how="update", Text=True)
-        report_to_slack("{} : === Lot Size Updated ===".format(datetimeNow()))
+# def update_lot_size_from_rkd(ticker=None, currency_code=None):
+#     print("{} : === Lot Size Start Ingestion ===".format(datetimeNow()))
+#     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+#     universe = universe.drop(columns=["lot_size"])
+#     ticker = universe["ticker"].to_list()
+#     field = ["CF_LOTSIZE"]
+#     rkd = RKD.RkdData()
+#     result = rkd.get_data_from_rkd(ticker, field)
+#     print(result)
+#     if (len(result) > 0 ):
+#         result = result.rename(columns={"CF_LOTSIZE": "lot_size"})
+#         result["lot_size"] = result["lot_size"].astype(float)
+#         result = remove_null(result, "lot_size")
+#         result = universe.merge(result, how="left", on=["ticker"])
+#         print(result)
+#         upsert_data_to_database(result, get_universe_table_name(), "ticker", how="update", Text=True)
+#         report_to_slack("{} : === Lot Size Updated ===".format(datetimeNow()))
 
-def update_mic_from_rkd(ticker=None, currency_code=None):
-    print("{} : === MIC Start Ingestion ===".format(datetimeNow()))
-    identifier="ticker"
-    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
-    universe = universe.drop(columns=["mic"])
-    ticker = universe["ticker"].to_list()
-    field = ["CF_LAST"]
-    rkd = RKD.RkdData()
-    result = rkd.get_data_from_rkd(ticker, field)
-    print(result)
-    if (len(result) > 0 ):
-        result = result.rename(columns={
-            "Market MIC": "mic"
-        })
-        result["mic"] = np.where(result["mic"] == "XETB", "XETA", result["mic"])
-        result["mic"] = np.where(result["mic"] == "XXXX", "XNAS", result["mic"])
-        result["mic"] = np.where(result["mic"] == "MTAA", "XMIL", result["mic"])
-        result["mic"] = np.where(result["mic"] == "WBAH", "XEUR", result["mic"])
-        result = universe.merge(result, how="left", on=["ticker"])
-        print(result)
-        upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
-        report_to_slack("{} : === MIC Updated ===".format(datetimeNow()))
+# def update_mic_from_rkd(ticker=None, currency_code=None):
+#     print("{} : === MIC Start Ingestion ===".format(datetimeNow()))
+#     identifier="ticker"
+#     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+#     universe = universe.drop(columns=["mic"])
+#     ticker = universe["ticker"].to_list()
+#     field = ["CF_LAST"]
+#     rkd = RKD.RkdData()
+#     result = rkd.get_data_from_rkd(ticker, field)
+#     print(result)
+#     if (len(result) > 0 ):
+#         result = result.rename(columns={
+#             "Market MIC": "mic"
+#         })
+#         result["mic"] = np.where(result["mic"] == "XETB", "XETA", result["mic"])
+#         result["mic"] = np.where(result["mic"] == "XXXX", "XNAS", result["mic"])
+#         result["mic"] = np.where(result["mic"] == "MTAA", "XMIL", result["mic"])
+#         result["mic"] = np.where(result["mic"] == "WBAH", "XEUR", result["mic"])
+#         result = universe.merge(result, how="left", on=["ticker"])
+#         print(result)
+#         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+#         report_to_slack("{} : === MIC Updated ===".format(datetimeNow()))

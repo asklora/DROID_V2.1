@@ -124,9 +124,10 @@ class PositionUserViews(viewsets.ReadOnlyModelViewSet):
                 return OrderPosition.objects.prefetch_related("ticker").filter(
                     user_id=self.kwargs["user_id"], is_live=False
                 )
-            return OrderPosition.objects.prefetch_related("ticker").filter(
-                user_id=self.kwargs["user_id"]
-            )
+            else:
+                return OrderPosition.objects.prefetch_related("ticker").filter(
+                    user_id=self.kwargs["user_id"]
+                )
         else:
             return OrderPosition.objects.prefetch_related("ticker").filter(user_id=None)
 

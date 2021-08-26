@@ -370,7 +370,7 @@ class DataFundamentalScore(models.Model):
     environment = models.FloatField(blank=True, null=True)
     social = models.FloatField(blank=True, null=True)
     goverment = models.FloatField(blank=True, null=True)
-    total_asset = models.FloatField(blank=True, null=True)
+    assets_1yr = models.FloatField(blank=True, null=True)
     cash = models.FloatField(blank=True, null=True)
     current_asset = models.FloatField(blank=True, null=True)
     equity = models.FloatField(blank=True, null=True)
@@ -384,6 +384,7 @@ class DataFundamentalScore(models.Model):
     ppe_impairment = models.FloatField(blank=True, null=True)
     mkt_cap_usd = models.FloatField(blank=True, null=True)
     eps_lastq = models.FloatField(blank=True, null=True)
+    mkt_cap_ye = models.FloatField(blank=True, null=True)
 
     class Meta:
         managed = True
@@ -619,6 +620,7 @@ class LatestPrice(models.Model):
     capital_change = models.FloatField(blank=True, null=True)
     volume = models.FloatField(blank=True, null=True)
     latest_price = models.FloatField(blank=True, null=True)
+    latest_net_change = models.FloatField(blank=True, null=True)
 
     class Meta:
         managed = True
