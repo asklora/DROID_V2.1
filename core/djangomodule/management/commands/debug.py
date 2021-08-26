@@ -4,7 +4,7 @@ from requests.api import get
 from django.core.management.base import BaseCommand
 from core.universe.models import ExchangeMarket, Universe
 from core.Clients.models import UserClient
-from core.Clients.IBClientModule import Client
+from core.Clients.IBClientModule import IBClient
 from core.orders.models import OrderPosition, PositionPerformance
 from core.services.tasks import populate_client_top_stock_weekly, order_client_topstock, daily_hedge, send_csv_hanwha, hedge
 from datasource.rkd import RkdData
@@ -14,8 +14,8 @@ from portfolio.daily_hedge_classic import classic_position_check
 from config.celery import app 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        # c = Client()
-        # c.get_position('DU2898616',0)
+        c = IBClient()
+        c.get_position('DU2898616',0)
         # c.market_order(2,'DU2898616','order first',265598)
         
         # c.find_contract('TSLA')
@@ -77,11 +77,11 @@ class Command(BaseCommand):
 #             else:
 #                 print(ticker)
 #         print(len(HKD_universe))
-        HKD_universe = [ticker['ticker'] for ticker in Universe.objects.prefetch_related('currency_code').filter(currency_code__in=['HKD'],is_active=True).values('ticker')]
-        rkd = RkdData()
+        # HKD_universe = [ticker['ticker'] for ticker in Universe.objects.prefetch_related('currency_code').filter(currency_code__in=['HKD'],is_active=True).values('ticker')]
+        # rkd = RkdData()
 #         now = datetime.now().date()
-        data =rkd.bulk_get_quote(HKD_universe,df=True)
-        print(data.iloc[[0]])
+        # data =rkd.bulk_get_quote(HKD_universe,df=True)
+        # print(data.iloc[[0]])
         # for index in data.index:
         #     r =data.loc[index]
         #     r.to_dict("records")
