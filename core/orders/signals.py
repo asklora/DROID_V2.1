@@ -13,9 +13,6 @@ from .order_signal_action import OrderServices
 def generate_hedge_setup(instance: Order,margin:int) -> dict:
 
     bot = BotOptionType.objects.get(bot_id=instance.bot_id)
-    margin = 1
-    if instance.user_id.is_large_margin and bot.bot_type.bot_type != "CLASSIC":
-        margin =  1
     expiry = get_expiry_date(
         bot.time_to_exp, instance.created, instance.ticker.currency_code.currency_code)
     if bot.bot_type.bot_type == "CLASSIC":
