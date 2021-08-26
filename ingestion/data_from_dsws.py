@@ -365,6 +365,7 @@ def score_update_vol_rs(list_of_start_end, days_in_year=256):
     '''
 
     tri = get_master_ohlcvtr_data(trading_day=backdate_by_month(list_of_start_end[-1][-1]))
+    tri['trading_day'] = pd.to_datetime(tri['trading_day'])
     tri = tri.sort_values(by=['ticker', 'trading_day'], ascending=[True, False]).reset_index(drop=True)
     open_data, high_data, low_data, close_data = tri['open'].values, tri['high'].values, tri['low'].values, tri[
         'close'].values
@@ -393,7 +394,8 @@ def score_update_vol_rs(list_of_start_end, days_in_year=256):
         tri[name_col] = tri.groupby('ticker')[name_col].rolling(end - start, min_periods=1).mean().reset_index(drop=1)
         tri[name_col] = tri[name_col].apply(lambda x: np.sqrt(x * days_in_year))
         tri[name_col] = tri[name_col].shift(start)
-        tri.loc[tri.groupby('ticker').head(end - 1).index, name_col] = np.nan  # y-1 ~ y0
+        nan_idx = tri.groupby('ticker')['trading_day'].nlargest(end - 1).index.get_level_values(1)
+        tri.loc[nan_idx, name_col] = np.nan  # y-1 ~ y0
 
     return tri[['ticker']+vol_col].dropna(how='any').groupby(['ticker']).last().reset_index()
 
