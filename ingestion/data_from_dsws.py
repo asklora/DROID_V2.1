@@ -462,7 +462,7 @@ def score_update_factor_ratios(df):
                          (formula['field_num']!= formula['field_denom'])].to_dict(orient='records'):  # minus calculation for ratios
         df[r['name']] = df[r['field_num']] / df[r['field_denom']]
 
-    return df, formula[['name','pillar','scaler']].set_index(['name'])
+    return df, formula.set_index(['name'])
 
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
@@ -508,20 +508,28 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     factor_rank = get_factor_rank()
     factor_rank = factor_rank.merge(factor_formula, left_on=['factor_name'], right_index=True, how='outer')
+    factor_rank['long_large'] = factor_rank['long_large'].fillna(True)
+    factor_rank = factor_rank.dropna(subset=['pillar'])
+    append_df = factor_rank.loc[factor_rank['field_num'].isnull()]
 
     # des1 = fundamentals_score.describe()
-    # change ratio to negative if original factor calculation using reverse premiums
-    for g in factor_rank['group'].unique():
-        neg_factor = factor_rank.loc[(~factor_rank['long_large'])&(factor_rank['group']==g),'factor_name'].to_list()
-        fundamentals_score.loc[fundamentals_score['currency_code']==g, list(set(neg_factor) & set(fundamentals_score.columns))] *= -1
+    for group in factor_rank['group'].dropna().unique():
+        # change ratio to negative if original factor calculation using reverse premiums
+        neg_factor = factor_rank.loc[(factor_rank['long_large']==False)&(factor_rank['group']==group), 'factor_name'].to_list()
+        fundamentals_score.loc[fundamentals_score['currency_code']==group, list(set(neg_factor) & set(fundamentals_score.columns))] *= -1
+
+        # for non calculating socre -> we add same for each one
+        append_df['group'] = group
+        factor_rank = factor_rank.append(append_df, ignore_index=True)
+
     # des = fundamentals_score.describe()
 
     # calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth",
     #                     "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred",
     #                     "environment", "social", "goverment"]
     #
-    calculate_column = factor_formula.loc[factor_formula['scaler'].notnull(), 'factor_name'].to_list()
-    calculate_column += ["earnings_pred", "environment", "social", "goverment"]
+    calculate_column = list(factor_formula.loc[factor_formula['scaler'].notnull()].index)
+    calculate_column += ["environment", "social", "goverment"]
 
     fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
     fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
@@ -584,7 +592,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         tmp = fundamentals.melt(['ticker', 'currency_code', 'industry_code'], calculate_column)
         tmp['quantile_transformed'] = tmp.groupby(['currency_code', 'variable'])['value'].transform(lambda x: quantile_transform(x.values.reshape(-1, 1), n_quantiles=4).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
         tmp = tmp[['ticker', 'variable', 'quantile_transformed']]
-        tmp['variable'] = tmp['variable'] + '_quantile'
+        tmp['variable'] = tmp['variable'] + '_quantile_currency_code'
         tmp = tmp.pivot(['ticker'], ['variable']).droplevel(0, axis=1)
         tmp.columns.name = None
         fundamentals = fundamentals.merge(tmp, how='left', on='ticker')
@@ -609,9 +617,9 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # calculate ai_score by each currency_code (i.e. group) for each of 3 pillar
     for (group, pillar_name), g in factor_rank.groupby(['group', 'pillar']):
         print(f"Calculate Fundamentals [{pillar_name}] in group [{group}]")
-        sub_g = g.loc[g['factor_weight']==2]        # use all rank=2 (best class)
-        if len(sub_g) == 0:                         # if no factor rank=2, use the highest ranking one
-            sub_g = g.nlargest(1, columns=['pred_z'])
+        sub_g = g.loc[(g['factor_weight']==2)|(g['factor_weight'].isnull())]        # use all rank=2 (best class)
+        if len(sub_g) == 0:                         # if no factor rank=2, use the highest ranking one & DLPA/ai_value scores
+            sub_g = g.loc[(g.nlargest(1, columns=['pred_z']).index)|(g.loc[g['factor_weight'].isnull()].index)]
 
         # score_col = [f'{x}{fundamental_score_col_suffix}' for x in sub_g['factor_name']]
         #
@@ -621,16 +629,16 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         #     else:
         #         score_col.append(f'{col}{fundamental_score_col_suffix}')
 
-        score_col = [f'{x}_{y}_currency_code' for x, y in sub_g.loc[sub_g['scaler'].notnull(), ['factor_name','scaler']]]
+        score_col = [f'{x}_{y}_currency_code' for x, y in sub_g.loc[sub_g['scaler'].notnull(), ['factor_name','scaler']].to_numpy()]
         score_col += [x for x in sub_g.loc[sub_g['scaler'].isnull(), 'factor_name']]
         fundamentals.loc[fundamentals['currency_code'] == group, f"fundamentals_{pillar_name}"] = fundamentals[score_col].mean(axis=1)
     
     for group, g in factor_rank.groupby('group'):
-        print(f"Calculate Fundamentals [extra] in group {group}")
+        print(f"Calculate Fundamentals [extra] in group [{group}]")
         sub_g = g.loc[(g['factor_weight']==2) & (g['pred_z'] >= 1)]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
 
         if len(sub_g) > 0:     # if no factor rank=2, don't add any factor into extra pillar
-            score_col = [f'{x}_{y}_currency_code' for x, y in sub_g.loc[sub_g['scaler'].notnull(), ['factor_name', 'scaler']]]
+            score_col = [f'{x}_{y}_currency_code' for x, y in sub_g.loc[sub_g['scaler'].notnull(), ['factor_name', 'scaler']].to_numpy()]
             fundamentals.loc[fundamentals['currency_code'] == group, f'fundamentals_extra'] = fundamentals[score_col].mean(axis=1)
         else:
             fundamentals.loc[fundamentals['currency_code'] == group, f'fundamentals_extra'] = 0.
@@ -642,7 +650,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     from global_vars import DB_URL_ALIBABA
     with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
         extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
-        fundamentals.to_sql('test_fundamentals', **extra)
+        fundamentals.to_sql('test_fundamentals_clair', **extra)
     exit(0)
 
     # print("Calculate Fundamentals Value")
