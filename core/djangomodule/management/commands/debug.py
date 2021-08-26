@@ -24,6 +24,7 @@ class Command(BaseCommand):
         # c.get_position('DU2898616',0)
         # c.market_order(2,'DU2898616','order first',265598)
         
+        # c.get_position('DU2898616',0)
         # c.find_contract('TSLA')
         # app.control.revoke('eb3cdebb-1c89-44d0-a022-65527f2863ee', terminate=True)
 
@@ -51,7 +52,7 @@ class Command(BaseCommand):
         # for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
         #     p.delete()
 
-        # daily_hedge(currency="USD")
+        daily_hedge(currency="HKD")
         # serv =['bot_tester','bot_advisor']
         # for a in serv:
         #     hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA",
