@@ -346,7 +346,7 @@ def firebase_user_update(user_id=None, currency_code=None):
 
         # orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
         # orders_position = get_orders_position(user_id=[user], active=False, field=orders_position_field)
-
+        orders_position = orders_position.sort_values(by=["profit"])
         for index, row in orders_position.iterrows():
             act_df = orders_position.loc[orders_position["position_uid"] == row["position_uid"]]
             act_df["position_uid"] = act_df["position_uid"].astype(str)

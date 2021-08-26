@@ -13,7 +13,8 @@ from general.table_name import (
     get_universe_table_name)
 from datasource.dss import get_data_from_dss
 from general.sql_query import (
-    get_active_universe, 
+    get_active_universe,
+    get_consolidated_universe_data, 
     get_latest_price_capital_change, 
     get_latest_price_data, 
     get_max_last_ingestion_from_universe, 
@@ -24,7 +25,7 @@ from general.date_process import (
     datetimeNow, 
     dlp_start_date, 
     str_to_date)
-from global_vars import REPORT_HISTORY
+from global_vars import REPORT_HISTORY, REPORT_INDEXMEMBER
 
 def update_ticker_symbol_from_dss(ticker=None, currency_code=None):
     print("{} : === Ticker Symbol Start Ingestion ===".format(datetimeNow()))
@@ -109,3 +110,19 @@ def split_order_and_performance(ticker=None, currency_code=None):
             update_all_data_by_capital_change(ticker, last_date, capital_change, price, percent_change)
             update_capital_change(ticker)
             report_to_slack("{} : === PRICE SPLIT ON TICKER {} with CAPITAL CHANGE {} ===".format(str(dateNow()), ticker, capital_change))
+
+def populate_ticker_from_dss(index_list=None, isin=0, manual=0):
+    jsonFileName = "files/file_json/index_member.json"
+    if(type(index_list) == str):
+        index_list = pd.Series([index_list])
+    if(type(index_list) == list):
+        index_list = pd.Series(index_list)
+    result = get_data_from_dss("start_date", "end_date", index_list, jsonFileName, report=REPORT_INDEXMEMBER)
+    result["origin_ticker"] = result["RIC"]
+    result = result.drop(columns=["IdentifierType", "Identifier", "RIC"])
+    result["source_id"] = "DSS"
+    result["use_isin"] = isin
+    result["use_manual"] = manual
+    result = result.drop_duplicates(subset="origin_ticker", keep="first")
+    result = result.sort_values(by=["origin_ticker"])
+    return result

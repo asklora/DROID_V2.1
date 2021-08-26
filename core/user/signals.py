@@ -5,7 +5,7 @@ from core.djangomodule.general import formatdigit
 
 
 @receiver(post_save, sender=TransactionHistory)
-def transaction(sender, instance, created, **kwargs):
+def transaction_add(sender, instance, created, **kwargs):
     """
     this function for decreasing and increasing the user balance
     instance is the object itself (TransactionHistory)
@@ -16,15 +16,15 @@ def transaction(sender, instance, created, **kwargs):
     if created:
         if trans_type == 'debit':
             result = wallet.amount - instance.amount
-            wallet.amount = formatdigit(result, wallet.currency_code.is_decimal)
-            wallet.save()
         elif trans_type == 'credit':
             result = wallet.amount + instance.amount
-            wallet.amount = formatdigit(result, wallet.currency_code.is_decimal)
-            wallet.save()
+        
+        wallet.amount = result
+
+        wallet.save()
 
 @receiver(post_delete, sender=TransactionHistory)
-def transaction(sender, instance, **kwargs):
+def transaction_dec(sender, instance, **kwargs):
     """
     this function for decreasing and increasing the user balance
     instance is the object itself (TransactionHistory)
