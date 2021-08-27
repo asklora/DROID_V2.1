@@ -25,10 +25,10 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
 
-# @worker_ready.connect
-# def at_start(sender, **k):
-#     with sender.app.connection() as conn:
-#          sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn)
+@worker_ready.connect
+def at_start(sender, **k):
+    with sender.app.connection() as conn:
+         sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn)
 
 @app.task(bind=True)
 def app_publish(self):
