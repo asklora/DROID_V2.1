@@ -19,7 +19,7 @@ MONGO_URL = "mongodb+srv://postgres:postgres@cluster0.b0com.mongodb.net/test?ret
 
 DB_URL_READ = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+os.getenv("DBHOSTREAD")+":"+os.getenv("DBPORT")+"/"+os.getenv("DBUSER")
 DB_URL_WRITE = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+os.getenv("DBHOSTWRITE")+":"+os.getenv("DBPORT")+"/"+os.getenv("DBUSER")
-DB_URL_ALIBABA = "postgres://loratechai:AskLORAv2@pgm-3nse9b275d7vr3u18o.pg.rds.aliyuncs.com:1921/postgres"
+DB_URL_ALIBABA = "postgres://asklora:AskLORAv2@pgm-3nse9b275d7vr3u18o.pg.rds.aliyuncs.com:1921/postgres"
 
 DBPASSWORDHKPOLYU="DLvalue123"
 DBHOSTHKPOLYU="hkpolyu.cgqhw7rofrpo.ap-northeast-2.rds.amazonaws.com"
@@ -30,8 +30,8 @@ DSWS_PASSWORD="LOTUS239"
 DSWS_USERNAME2="ZLOL003"
 DSWS_PASSWORD2="YOUNG862"
 
-# DSS_USERNAME = "9029345" # Corporate Action
-# DSS_PASSWORD = "AskLORA2" 
+DSS_USERNAME2 = "9029345" # Corporate Action
+DSS_PASSWORD2 = "AskLORA2" 
 
 DSS_USERNAME="9023786"
 DSS_PASSWORD="AskLORAv2" #CHANGED Password
@@ -57,7 +57,7 @@ QUANDL_KEY="waqWZxLx2dx84mTcsn_w"
 
 REPORT_INDEXMEMBER="Index_Member"
 REPORT_EOD="End_Of_Day"
-REPORT_INTRADAY="Intraday_Pricing"
+REPORT_CORPORATE_ACTION="Corporate_Action"
 REPORT_HISTORY="Price_History"
 
 DLP_HISTORY_YEARS=12
@@ -131,76 +131,3 @@ def folder_check(path=saved_model_path):
     if platform.system() == "Linux":
         if not os.path.exists(path):
             os.makedirs(path)
-
-
-#DLPA
-EC2_hostname="13.209.141.35"
-EC2_username="seoul"
-EC2_model_key_file="dlpa/extra/model_saving_key.pem"
-no_top_models = 10
-signal_threshold = 0.5
-candle_type_candles = 0 # this should DEFAULT TO 0 - use all candles
-candle_type_returnsY = 4 # this should DEFAULT TO 4 - use close
-candle_type_returnsX = 4 # this should DEFAULT TO 4 - use close
-pickle_update = False
-model_type=1  # use DLPM
-epoch=25  # 25 epochs seem enough (more takes too much time)
-Hyperopt_runs=10 # don"t need more than 20
-forward_year=0
-forward_week=1 #v2 default = 1
-forward_dayt=5  #v2 default = 5
-dow=5
-data_period=0  # the period to forecast - one week ahead of one day ahead?
-stage=0  # not going to explore other stages yet
-stock_percentage=1.0
-train_num=390 # number of periods to train before test period (and valid periods if >0) 390 for weekly 1250 for daily
-valid_num=0 # valid_num = 0 => random shuffle 20%, else chronological periods before test period
-test_num=1  # test_num should BE 1.
-period_jump=1 # JUMP <>1 for model tuning and sampling - should go to 1 for prod
-update_lookback=2 # how many EXTRA periods to update?
-num_periods_to_predict=1 # needs to be >1 for --future
-num_bins=3
-num_nans_to_skip=1# Nan FILTERING
-seed=123
-best_train_acc=1e-1
-best_valid_acc=1e-1
-test_acc_1=0
-test_acc_2=0
-test_acc_3=0
-test_acc_4=0
-test_acc_5=0
-lowest_train_loss=1e-1
-lowest_valid_loss=1e-1
-best_valid_epoch=1
-lowest_train_epoch=1
-unique_num_of_returns=1
-unique_num_of_outputs=1
-timestamp=time.time()
-gpu_number=0
-pc_number="unknown"
-# db_end_date=datetime.today() - BDay(2)
-
-aws_columns_list = ["model_type", "data_period", "when_created", "forward_date", "forward_week", "forward_dow",
-                    "train_dow", "best_train_acc",
-                    "best_valid_acc", "test_acc_1", "test_acc_2", "test_acc_3", "test_acc_4",
-                    "test_acc_5", "run_time_min", "train_num", "cnn_kernel_size",
-                    "batch_size", "learning_rate", "lookback",
-                    "epoch", "param_name_1", "param_val_1", "param_name_2", "param_val_2", "param_name_3",
-                    "param_val_3", "param_name_4", "param_val_4", "param_name_5", "param_val_5",
-                    "num_bins", "num_nans_to_skip", "accuracy_for_embedding",
-                    "candle_type_returnsX", "candle_type_returnsY", "candle_type_candles", "seed",
-                    "best_valid_epoch", "best_train_epoch", "model_filename",
-                    "pc_number", "stock_percentage", "valid_num", "test_num", "num_periods_to_predict"]
-
-
-#WTS Poprtfolio
-# 0 -> weekly,
-# 1 -> daily,
-# 2 -> Point in time (PIT),
-portfolio_period=0
-client_name="LORATECH"
-signal_threshold = 0.5
-seed=123
-mode="client"
-port=64891
-num_periods_to_predict=1

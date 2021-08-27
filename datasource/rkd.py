@@ -90,16 +90,16 @@ class Rkd:
 
                 logging.warning("Request fail")
                 logging.warning(f"request url :  {url}")
-                # logging.warning(f"request header :  {headers}")
+                logging.warning(f"request header :  {headers}")
                 logging.warning(f"response status {result.status_code}")
                 if result.status_code == 500:  # if username or password or appid is wrong
                     resp = result.json()
                     logging.warning("Error: %s" % (json.dumps(result.json(),indent=2)))
                     err = json.dumps(result.json(),indent=2)
-                    report =ErrorLog.objects.create(error_description=resp['Fault']['Reason']['Text']['Value'],error_traceback='err',
-                    error_message='Token Invalid',
-                    error_function='RKD DATA')
-                    report.send_report_error()
+                    # report =ErrorLog.objects.create(error_description=resp['Fault']['Reason']['Text']['Value'],error_traceback='err',
+                    # error_message='Token Invalid',
+                    # error_function='RKD DATA')
+                    # report.send_report_error()
                     return None
         except requests.exceptions.RequestException as e:
             logging.warning("error : {str(e)}")
@@ -339,14 +339,14 @@ class RkdData(Rkd):
         Model = apps.get_model("universe", "Currency")
         currency = Model.objects.get(currency_code=currency)
         quote_url = f"{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3"
-        payload = self.retrive_template(currency.index_ticker, fields=["CF_LAST"])
+        payload = self.retrive_template(currency.index_ticker, fields=["CF_CLOSE"])
         response = self.send_request(quote_url, payload, self.auth_headers())
 
         formated_json_data = self.parse_response(response)
         df_data = pd.DataFrame(formated_json_data).rename(columns={
-            "CF_LAST": "index_price",
+            "CF_CLOSE": "index_price",
         })
-        currency.index_price = formated_json_data[0]["CF_LAST"]
+        currency.index_price = formated_json_data[0]["CF_CLOSE"]
         currency.save()
 
     def response_to_df(self,response:dict) -> pd.DataFrame:

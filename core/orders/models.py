@@ -25,7 +25,7 @@ class Order(BaseTimeStampModel):
     status = models.CharField(max_length=10, null=True,
                               blank=True, default="review")
     side = models.CharField(max_length=10, default="buy")
-    amount = models.FloatField()
+    amount = models.FloatField() # default
     placed_at = models.DateTimeField(null=True, blank=True)
     filled_at = models.DateTimeField(null=True, blank=True)
     canceled_at = models.DateTimeField(null=True, blank=True)
@@ -33,8 +33,9 @@ class Order(BaseTimeStampModel):
     is_init = models.BooleanField(default=True)
     price = models.FloatField()
     performance_uid = models.CharField(null=True, blank=True, max_length=255)
-    qty = models.FloatField(null=True, blank=True)
+    qty = models.FloatField(null=True, blank=True)# disini x margin
     history = HistoricalRecords(table_name='order_changes_history')
+    margin = models.FloatField(null=True, blank=True,default=1)
     class Meta:
         managed = True
         db_table = "orders"

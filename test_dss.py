@@ -1,7 +1,8 @@
+from general.slack import report_to_slack
 import pandas as pd
 from general.sql_query import get_active_universe
-from general.date_process import backdate_by_day, backdate_by_year, dateNow, datetimeNow
-from global_vars import REPORT_INTRADAY, REPORT_HISTORY, REPORT_EOD, REPORT_INDEXMEMBER
+from general.date_process import backdate_by_day, backdate_by_month, backdate_by_year, dateNow, datetimeNow
+from global_vars import REPORT_CORPORATE_ACTION, REPORT_HISTORY, REPORT_EOD, REPORT_INDEXMEMBER
 from datasource.dss import get_data_from_dss
 import firebase_admin
 from firebase_admin import firestore, credentials, db
@@ -16,7 +17,7 @@ def get_intraday():
     print(currencylist)
     end_date = dateNow()
     start_date = backdate_by_year(1)
-    result = get_data_from_dss("start_date", "end_date", currencylist["ticker"], jsonFileName, report=REPORT_INTRADAY)
+    result = get_data_from_dss("start_date", "end_date", currencylist["ticker"], jsonFileName, report=REPORT_CORPORATE_ACTION)
     print(result)
     # result = result.drop(columns=["IdentifierType", "Identifier"])
     print(result)
@@ -51,37 +52,33 @@ def get_index_member(currencylist, isin=0, manual=0):
     print(result)
     result.to_csv(f"/home/loratech/new_universe_{currencylist['index'].to_list()}.csv")
 
-def corporate_action():
-    universe = get_active_universe()
-    start_date = backdate_by_day(1)
-    end_date = dateNow()
+def corporate_action(ticker=None):
+    universe = get_active_universe(ticker=ticker)
+    start_date = backdate_by_month(2)
+    end_date = backdate_by_month(1)
     jsonFileName = "files/file_json/test_corporate_action.json"
-    result = get_data_from_dss(start_date, end_date, universe["ticker"], jsonFileName, report=REPORT_INTRADAY)
+    result = get_data_from_dss(start_date, end_date, universe["ticker"], jsonFileName, report=REPORT_CORPORATE_ACTION)
+    print(result)
     result = result.drop(columns=["IdentifierType", "Identifier"])
     result = result.rename(columns={"RIC" : "ticker"})
     print(result)
-    columns_list = ["Capital Additive Adjustment Factor", "Capital Change Event Type", "Capital Change Event Type Description", 
-        "Capital Change Ex Date", "Dividend Ex Date", "Dividend Frequency", "Dividend Frequency Description", "Dividend Rate", 
-        "Earnings Announcement Date", "EPS Amount"]
-    result2 = universe[["ticker"]]
-    for col in columns_list:
-        temp = result[["ticker", col]].dropna()
-        if len(temp) <= 0:
-            temp = pd.DataFrame({"ticker" : [] , col : []}, index=[])
-        result2 = result2.merge(temp, how="left", on=["ticker"])
-    print(result2)
-    result2 = result2.drop_duplicates(subset=columns_list, keep="first")
-    print(result2)
-    result2.to_csv("/home/loratech/corporate_action.csv")
+    # columns_list = ["Capital Additive Adjustment Factor", "Capital Change Event Type", "Capital Change Event Type Description", 
+    #     "Capital Change Ex Date", "Dividend Ex Date", "Dividend Frequency", "Dividend Frequency Description", "Dividend Rate", 
+    #     "Earnings Announcement Date", "EPS Amount"]
+    # result2 = universe[["ticker"]]
+    # for col in columns_list:
+    #     temp = result[["ticker", col]].dropna()
+    #     if len(temp) <= 0:
+    #         temp = pd.DataFrame({"ticker" : [] , col : []}, index=[])
+    #     result2 = result2.merge(temp, how="left", on=["ticker"])
+    # print(result2)
+    # result2 = result2.drop_duplicates(subset=columns_list, keep="first")
+    # print(result2)
+    result.to_csv(f"/home/loratech/corporate_action-{dateNow()}.csv")
 
 if __name__ == "__main__":
     print("Start Process")
-    currencylist = pd.DataFrame({"index" : ["0#.HSLMI"]}, index=[0])
-    get_index_member(currencylist, manual=0)
-    currencylist = pd.DataFrame({"index" : ["0#.SPX", "0#.NDX"]}, index=[0, 1])
-    get_index_member(currencylist, isin=1)
-    currencylist = pd.DataFrame({"index" : ["0#.SXXE"]}, index=[0])
-    get_index_member(currencylist, isin=1)
-    
+    corporate_action()
+    report_to_slack("{} === CORPORATE ACTION INGESTED ===".format(datetimeNow()))
 
     

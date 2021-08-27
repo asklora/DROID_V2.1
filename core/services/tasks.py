@@ -753,6 +753,9 @@ def daily_hedge(currency=None, **options):
     hedge(currency=currency, **options)  # bot_advisor hanwha and fels
     hedge(currency=currency, bot_tester=True, **options)  # bot_tester
     daily_hedge_user(currency=currency,ingest=True)
+    
+    report_to_slack(f"===  HEDGE DAILY FOR {currency} DONE ===")
+
     return {"result": f"hedge {currency} done"}
 
 

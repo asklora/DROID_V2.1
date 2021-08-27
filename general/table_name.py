@@ -95,6 +95,21 @@ def get_data_macro_monthly_table_name():
 def get_data_worldscope_summary_table_name():
     return "data_worldscope_summary"
 
+def get_ai_value_pred_table_name():
+    return "ai_value_lgbm_pred_final_eps"
+
+def get_factor_calculation_table_name():
+    return "factor_formula_ratios_prod"
+
+def get_factor_rank_table_name():
+    return "factor_result_pred_prod"
+
+def get_top_stock_models_table_name():
+    return "top_stock_models"
+
+def get_top_stock_models_stock_table_name():
+    return "top_stock_models_stock"
+
 #Bot Backtest Table
 def get_bot_backtest_table_name():
     return "bot_backtest"
@@ -183,6 +198,9 @@ def get_user_core_table_name():
 def get_user_account_balance_table_name():
     return "user_account_balance"
 
+def get_user_profit_history_table_name():
+    return "user_profit_history"
+    
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 

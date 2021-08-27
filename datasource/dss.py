@@ -11,8 +11,10 @@ from general.date_process import datetimeNow
 from general.slack import report_to_slack
 from global_vars import (
     DSS_PASSWORD,
+    DSS_PASSWORD2,
     DSS_USERNAME,
-    REPORT_INTRADAY,
+    DSS_USERNAME2,
+    REPORT_CORPORATE_ACTION,
     REPORT_HISTORY,
     REPORT_INDEXMEMBER,
     REPORT_EOD,
@@ -24,7 +26,7 @@ from global_vars import (
 """ Getting market data from DSS """
 
 
-def getAuthToken():
+def getAuthToken(report=REPORT_HISTORY):
     """
     Step 1: getting authorization token to access the backend
     """
@@ -33,7 +35,10 @@ def getAuthToken():
     _header = {}
     _header["Prefer"] = "respond-async"
     _header["Content-Type"] = "application/json; odata.metadata=minimal"
-    _data = {"Credentials": {"Password": DSS_PASSWORD, "Username": DSS_USERNAME}}
+    if(report == REPORT_CORPORATE_ACTION):
+        _data = {"Credentials": {"Password": DSS_PASSWORD2, "Username": DSS_USERNAME2}}
+    else:
+        _data = {"Credentials": {"Password": DSS_PASSWORD, "Username": DSS_USERNAME}}
     resp = requests.post(URL_AuthToken, json=_data, headers=_header)
     if resp.status_code != 200:
         print(
@@ -73,10 +78,28 @@ def get_data_from_reuters(
         + "*** Step 3 Append each instrument to the InstrumentIdentifiers array"
     )
     for _inst in stocks:
-        if report == REPORT_INTRADAY:
+        if report == REPORT_CORPORATE_ACTION:
             _jReqBody["ExtractionRequest"]["IdentifierList"][
                 "InstrumentIdentifiers"
             ].append({"IdentifierType": "Ric", "Identifier": _inst})
+            _jReqBody["ExtractionRequest"]["Condition"] = {
+                "ReportDateRangeType": "Last",
+                "QueryStartDate": start_date + "T00:00:00.000Z",
+                "QueryEndDate": end_date + "T00:00:00.000Z",
+                "ExcludeDeletedEvents": True,
+                "IncludeCapitalChangeEvents": True,
+                "IncludeDividendEvents": True,
+                "IncludeEarningsEvents": True,
+                "IncludeMergersAndAcquisitionsEvents": True,
+                "IncludeNominalValueEvents": True,
+                "IncludePublicEquityOfferingsEvents": True,
+                "IncludeSharesOutstandingEvents": True,
+                "IncludeVotingRightsEvents": True,
+                "CorporateActionsCapitalChangeType": "CapitalChangeExDate",
+                "CorporateActionsDividendsType": "DividendPayDate",
+                "CorporateActionsEarningsType": "PeriodEndDate",
+                "ShareAmountTypes": []
+            }
         elif report == REPORT_HISTORY:
             _jReqBody["ExtractionRequest"]["IdentifierList"][
                 "InstrumentIdentifiers"
@@ -97,7 +120,6 @@ def get_data_from_reuters(
                 "QueryStartDate": start_date + "T00:00:00.000Z",
                 "QueryEndDate": end_date + "T00:00:00.000Z",
             }
-
     _extractReqHeader = makeExtractHeader(_token)
     # Step 4
     print(datetimeNow()+ " " + "*** Step 5 Post the T&C Request to DSS REST server and check response status")
@@ -173,13 +195,13 @@ def makeExtractHeader(token):
 
 
 def get_data_from_dss(
-    start_date, end_date, stocks, jsonFileName, report=REPORT_INTRADAY
+    start_date, end_date, stocks, jsonFileName, report=REPORT_CORPORATE_ACTION
 ):
     print(f"Data From {report} Report")
     try:
         # Step 1: Request Authorization Token
         try:
-            authToken = getAuthToken()
+            authToken = getAuthToken(report)
         except GetPassWarning as e:
             print(datetimeNow() + " " + e)
             report_to_slack(

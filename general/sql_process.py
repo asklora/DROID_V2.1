@@ -9,6 +9,7 @@ load_dotenv()
 db = DroidDb()
 
 debug=env.bool("DROID_DEBUG")
+
 if debug:
     read_endpoint, write_endpoint, port = db.test_url
 else:
