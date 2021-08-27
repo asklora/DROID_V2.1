@@ -45,15 +45,21 @@ from general.sql_query import (
     get_active_universe_consolidated_by_field, 
     get_all_universe, get_data_by_table_name,
     get_data_ibes_monthly,
-    get_data_macro_monthly, 
+    get_data_macro_monthly,
+    get_factor_calculation_formula,
+    get_factor_rank,
     get_fundamentals_score,
     get_ibes_new_ticker, 
     get_last_close_industry_code, 
     get_max_last_ingestion_from_universe, 
-    get_pred_mean, 
-    get_specific_tri, 
+    get_pred_mean,
+    get_ai_value_pred_final,
+    get_specific_tri,
+    get_specific_tri_avg,
+    get_specific_volume_avg,
     get_universe_rating, 
-    get_vix)
+    get_vix,
+    get_master_ohlcvtr_data)
 from general.date_process import (
     backdate_by_day, 
     backdate_by_month,
@@ -149,8 +155,8 @@ def update_ticker_name_from_dsws(ticker=None, currency_code=None):
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"WC06003": "ticker_name", "NAME" : "ticker_fullname", "index":"ticker"})
-        result["ticker_name"]=result["ticker_name"].str.replace("'", "", regex=True)
-        result["ticker_fullname"]=result["ticker_fullname"].str.replace("'", "", regex=True)
+        result["ticker_name"]=result["ticker_name"].str.replace(""", "", regex=True)
+        result["ticker_fullname"]=result["ticker_fullname"].str.replace(""", "", regex=True)
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
@@ -358,166 +364,319 @@ def check_trading_day(days = 0):
     else:
         return today.strftime("%Y-%m-%d")
 
-    
+def score_update_vol_rs(list_of_start_end, days_in_year=256):
+    """ Calculate roger satchell volatility:
+        daily = average over period from start to end: Log(High/Open)*Log(High/Close)+Log(Low/Open)*Log(Open/Close)
+        annualized = sqrt(daily*256)
+    """
+
+    # download past prices since 1 months before the earliest volitility calculation month i.e. end
+    tri = get_master_ohlcvtr_data(trading_day=backdate_by_month(list_of_start_end[-1][-1]+1))
+    tri["trading_day"] = pd.to_datetime(tri["trading_day"])
+    tri = tri.sort_values(by=["ticker", "trading_day"], ascending=[True, False]).reset_index(drop=True)
+    open_data, high_data, low_data, close_data = tri["open"].values, tri["high"].values, tri["low"].values, tri[
+        "close"].values
+
+    # Calculate daily volatility
+    hc_ratio = np.divide(high_data, close_data)
+    log_hc_ratio = np.log(hc_ratio.astype(float))
+    ho_ratio = np.divide(high_data, open_data)
+    log_ho_ratio = np.log(ho_ratio.astype(float))
+    lo_ratio = np.divide(low_data, open_data)
+    log_lo_ratio = np.log(lo_ratio.astype(float))
+    lc_ratio = np.divide(low_data, close_data)
+    log_lc_ratio = np.log(lc_ratio.astype(float))
+
+    input1 = np.multiply(log_hc_ratio, log_ho_ratio)
+    input2 = np.multiply(log_lo_ratio, log_lc_ratio)
+    sum_ = np.add(input1, input2)
+
+    # Calculate annualize volatility
+    vol_col = []
+    for l in list_of_start_end:
+        start, end = l[0]*30, l[1]*30
+        name_col = f"vol_{start}_{end}"
+        vol_col.append(name_col)
+        tri[name_col] = sum_
+        tri[name_col] = tri.groupby("ticker")[name_col].rolling(end - start, min_periods=1).mean().reset_index(drop=1)
+        tri[name_col] = tri[name_col].apply(lambda x: np.sqrt(x * days_in_year))
+        tri[name_col] = tri[name_col].shift(start)
+        nan_idx = tri.groupby("ticker")["trading_day"].nlargest(end - 1).index.get_level_values(1)
+        tri.loc[nan_idx, name_col] = np.nan  # y-1 ~ y0
+
+    # return tri on the most recent trading_day
+    final_tri = tri[["ticker"]+vol_col].dropna(how="any").groupby(["ticker"]).last().reset_index()
+
+    return final_tri
+
+def score_update_stock_return(list_of_start_end):
+    """ Calculate specific period stock return (months) """
+
+    df = pd.DataFrame(get_active_universe()["ticker"])
+
+    for l in list_of_start_end:
+        name_col = f"stock_return_{l[0]}_{l[1]}"
+        tri_start = get_specific_tri_avg(backdate_by_month(l[0]), avg_days=7, tri_name=f"tri_{l[0]}m")
+        tri_end = get_specific_tri_avg(backdate_by_month(l[1]), avg_days=7, tri_name=f"tri_{l[1]}m")
+        tri = tri_start.merge(tri_end, how="left", on="ticker")
+        tri[name_col] = tri[f"tri_{l[0]}m"] / tri[f"tri_{l[1]}m"]
+        df = df.merge(tri[["ticker", name_col]], how="left", on="ticker")
+        print(df)
+
+    return df
+
+def score_update_factor_ratios(df):
+    """ Calculate all factor used referring to DB ratio table """
+
+    formula = get_factor_calculation_formula()
+
+    print(df.columns)
+
+    # Prepare for field requires add/minus
+    add_minus_fields = formula[["field_num", "field_denom"]].dropna(how="any").to_numpy().flatten()
+    add_minus_fields = [i for i in list(set(add_minus_fields)) if any(["-" in i, "+" in i, "*" in i])]
+
+    for i in add_minus_fields:
+        x = [op.strip() for op in i.split()]
+        if x[0] in "*+-": raise Exception("Invalid formula")
+        temp = df[x[0]].copy()
+        n = 1
+        while n < len(x):
+            if x[n] == "+":
+                temp += np.nan_to_num(df[x[n + 1]],0)
+            elif x[n] == "-":
+                temp -= np.nan_to_num(df[x[n + 1]],0)
+            elif x[n] == "*":
+                temp *= df[x[n + 1]]
+            else:
+                raise Exception(f"Unexpected operand/operator: {x[n]}")
+            n += 2
+        df[i] = temp
+
+    # a) Keep original values
+    keep_original_mask = formula["field_denom"].isnull() & formula["field_num"].notnull()
+    new_name = formula.loc[keep_original_mask, "name"].to_list()
+    old_name = formula.loc[keep_original_mask, "field_num"].to_list()
+    df[new_name] = df[old_name]
+
+    # b) Time series ratios (Calculate 1m change first)
+    for r in formula.loc[formula["field_num"] == formula["field_denom"], ["name", "field_denom"]].to_dict(
+            orient="records"):  # minus calculation for ratios
+        if r["name"][-2:] == "yr":
+            df[r["name"]] = df[r["field_denom"]] / df[r["field_denom"]].shift(12) - 1
+            df.loc[df.groupby("ticker").head(12).index, r["name"]] = np.nan
+        elif r["name"][-1] == "q":
+            df[r["name"]] = df[r["field_denom"]] / df[r["field_denom"]].shift(3) - 1
+            df.loc[df.groupby("ticker").head(3).index, r["name"]] = np.nan
+
+    # c) Divide ratios
+    print(f"      ------------------------> Calculate dividing ratios ")
+    for r in formula.loc[(formula["field_denom"].notnull())&
+                         (formula["field_num"]!= formula["field_denom"])].to_dict(orient="records"):  # minus calculation for ratios
+        df[r["name"]] = df[r["field_num"]] / df[r["field_denom"]]
+
+    return df, formula.set_index(["name"])
+
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
+
     print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
     universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
     universe_rating = universe_rating[["ticker", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
+
     print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
-    calculate_column = ["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", "roic", "roe", "cf_to_price", "eps_growth", 
-                        "fwd_bps","fwd_ebitda_to_ev", "fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred", 
-                        "environment", "social", "goverment"]
     fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
     print(fundamentals_score)
 
+    # get last trading price for factor calculation
     close_price = get_last_close_industry_code(ticker=ticker, currency_code=currency_code)
     print(close_price)
 
-    pred_mean = get_pred_mean()
+    # get volatility
+    vol = score_update_vol_rs(list_of_start_end=[[0,1]])     # calculate RS volatility -> list_of_start_end in ascending sequence (start_month, end_month)
+    print(vol)
+
+    pred_mean = get_ai_value_pred_final()
     print(pred_mean)
 
-    tri_2m = get_specific_tri(backdate_by_month(2), tri_name="tri_2m")
-    tri_6m = get_specific_tri(backdate_by_month(6), tri_name="tri_6m")
-    tri_2m = tri_2m.merge(tri_6m, how="left", on="ticker")
-    tri_2m["tri"] = tri_2m["tri_2m"] / tri_2m["tri_6m"]
-    print(tri_2m)
-    
+    # get different period stock return
+    tri = score_update_stock_return(list_of_start_end=[[0,1],[2,6],[6,12]])
+    print(tri)
+
+    # get last week average volume
+    volume = get_specific_volume_avg(backdate_by_month(0), avg_days=7)
+    print(volume)
+
+    # merge scores used for calculation
     fundamentals_score = close_price.merge(fundamentals_score, how="left", on="ticker")
+    fundamentals_score = fundamentals_score.merge(vol, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(pred_mean, how="left", on="ticker")
-    fundamentals_score = fundamentals_score.merge(tri_2m[["ticker", "tri"]], how="left", on="ticker")
-    fundamentals_score["earnings_yield"] = fundamentals_score["eps"] / fundamentals_score["close"]
-    fundamentals_score["book_to_price"] = fundamentals_score["bps"] / fundamentals_score["close"]
-    fundamentals_score["ebitda_to_ev"] = fundamentals_score["ttm_ebitda"] / fundamentals_score["ev"]
-    fundamentals_score["sales_to_price"] = fundamentals_score["ttm_rev"] / fundamentals_score["mkt_cap"]
-    fundamentals_score["roic"] = (fundamentals_score["ttm_ebitda"] - fundamentals_score["ttm_capex"]) / (fundamentals_score["mkt_cap"] + fundamentals_score["net_debt"])
-    fundamentals_score["roe"] = fundamentals_score["roe"]
-    fundamentals_score["cf_to_price"] = fundamentals_score["cfps"] / fundamentals_score["close"]
-    fundamentals_score["eps_growth"] = fundamentals_score["peg"]
-    fundamentals_score["fwd_bps"] = fundamentals_score["bps1fd12"]  / fundamentals_score["close"]
-    fundamentals_score["fwd_ebitda_to_ev"] = fundamentals_score["ebd1fd12"]  / fundamentals_score["evt1fd12"]
-    fundamentals_score["fwd_ey"] = fundamentals_score["eps1fd12"]  / fundamentals_score["close"]
-    fundamentals_score["fwd_sales_to_price"] = fundamentals_score["sal1fd12"]  / fundamentals_score["mkt_cap"]
-    fundamentals_score["fwd_roic"] = (fundamentals_score["ebd1fd12"] - fundamentals_score["cap1fd12"]) / (fundamentals_score["mkt_cap"] + fundamentals_score["net_debt"])
-    fundamentals_score["earnings_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] - fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
-    fundamentals = fundamentals_score[["earnings_yield", "book_to_price", "ebitda_to_ev", "sales_to_price", 
-        "roic", "roe", "cf_to_price", "eps_growth", "currency_code", "ticker", "industry_code","fwd_bps",
-        "fwd_ebitda_to_ev","fwd_ey", "fwd_sales_to_price", "fwd_roic", "earnings_pred", 
-        "environment", "social", "goverment", "tri"]]
+    fundamentals_score = fundamentals_score.merge(tri, how="left", on="ticker")
+    fundamentals_score = fundamentals_score.merge(volume, how="left", on="ticker")
+
+    # calculate ratios refering to table X
+    fundamentals_score, factor_formula = score_update_factor_ratios(fundamentals_score)
+
+    # fundamentals_score["earnings_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
+    #                                        fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
+    # fundamentals_score["revenue_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
+    #                                        fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
+
+    factor_rank = get_factor_rank()
+    factor_rank = factor_rank.merge(factor_formula, left_on=["factor_name"], right_index=True, how="outer")
+    factor_rank["long_large"] = factor_rank["long_large"].fillna(True)
+    factor_rank = factor_rank.dropna(subset=["pillar"])
+    append_df = factor_rank.loc[factor_rank["keep"]]
+
+    for group in factor_rank["group"].dropna().unique():
+        # change ratio to negative if original factor calculation using reverse premiums
+        neg_factor = factor_rank.loc[(factor_rank["long_large"]==False)&(factor_rank["group"]==group), "factor_name"].to_list()
+        fundamentals_score.loc[fundamentals_score["currency_code"]==group, list(set(neg_factor) & set(fundamentals_score.columns))] *= -1
+
+        # for non calculating socre -> we add same for each one
+        append_df["group"] = group
+        factor_rank = factor_rank.append(append_df, ignore_index=True)
+
+    calculate_column = list(factor_formula.loc[factor_formula["scaler"].notnull()].index)
+    calculate_column = sorted(set(calculate_column))
+    calculate_column += ["environment", "social", "goverment"]
+
+    fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
+    fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
     print(fundamentals)
 
+    # trim outlier to +/- 2 std
     calculate_column_score = []
     for column in calculate_column:
-        column_score = column + "_score"
-        mean = np.nanmean(fundamentals[column])
-        std = np.nanstd(fundamentals[column])
-        upper = mean + (std * 2)
-        lower = mean - (std * 2)
-        fundamentals[column_score] = np.where(fundamentals[column] > upper, upper, fundamentals[column])
-        fundamentals[column_score] = np.where(fundamentals[column_score] < lower, lower, fundamentals[column_score])
-        calculate_column_score.append(column_score)
+        try:
+            if fundamentals[column].notnull().sum():
+                column_score = column + "_score"
+                fundamentals[column_score] = fundamentals.groupby("currency_code")[column].transform(
+                    lambda x: np.clip(x, np.nanmean(x)-2*np.nanstd(x), np.nanmean(x)+2*np.nanstd(x)))
+
+                calculate_column_score.append(column_score)
+        except Exception as e:
+            print(e)
+            continue
     print(calculate_column_score)
+
+    # apply robust scaler
     calculate_column_robust_score = []
     for column in calculate_column:
-        column_score = column + "_score"
-        column_robust_score = column + "_robust_score"
-        fundamentals[column_robust_score] = robust_scale(fundamentals[column_score])
-        calculate_column_robust_score.append(column_robust_score)
-        
+        try:
+            column_score = column + "_score"
+            column_robust_score = column + "_robust_score"
+            fundamentals[column_robust_score] = fundamentals.groupby("currency_code")[column_score].transform(lambda x: robust_scale(x))
+            calculate_column_robust_score.append(column_robust_score)
+        except Exception as e:
+            print(e)
+
+    # apply maxmin scaler on Currency / Industry
     minmax_column = ["uid", "ticker", "trading_day"]
     for column in calculate_column:
-        column_robust_score = column + "_robust_score"
-        column_minmax_currency_code = column + "_minmax_currency_code"
-        column_minmax_industry = column + "_minmax_industry"
-        df_currency_code = fundamentals[["currency_code", column_robust_score]]
-        df_currency_code = df_currency_code.rename(columns = {column_robust_score : "score"})
-        df_industry = fundamentals[["industry_code", column_robust_score]]
-        df_industry = df_industry.rename(columns = {column_robust_score : "score"})
-        fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)))
-        fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)))
-        if(column == "earnings_pred"):
-            fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0, fundamentals[column_minmax_currency_code])
-            fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0, fundamentals[column_minmax_industry])
-        else:
+        try:
+            column_robust_score = column + "_robust_score"
+            column_minmax_currency_code = column + "_minmax_currency_code"
+            column_minmax_industry = column + "_minmax_industry"
+            df_currency_code = fundamentals[["currency_code", column_robust_score]]
+            df_currency_code = df_currency_code.rename(columns = {column_robust_score : "score"})
+            df_industry = fundamentals[["industry_code", column_robust_score]]
+            df_industry = df_industry.rename(columns = {column_robust_score : "score"})
+            fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
+            fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
+            # if(column == "earnings_pred"):
+            #     fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0, fundamentals[column_minmax_currency_code])
+            #     fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0, fundamentals[column_minmax_industry])
+            # else:
             fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0.4, fundamentals[column_minmax_currency_code])
             fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
-        minmax_column.append(column_minmax_currency_code)
-        minmax_column.append(column_minmax_industry)
-    
+            minmax_column.append(column_minmax_currency_code)
+            minmax_column.append(column_minmax_industry)
+        except Exception as e:
+            print(e)
+
+    # apply quantile transformation on before scaling scores
+    try:
+        tmp = fundamentals.melt(["ticker", "currency_code", "industry_code"], calculate_column)
+        tmp["quantile_transformed"] = tmp.groupby(["currency_code", "variable"])["value"].transform(lambda x: quantile_transform(x.values.reshape(-1, 1), n_quantiles=4).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
+        tmp = tmp[["ticker", "variable", "quantile_transformed"]]
+        tmp["variable"] = tmp["variable"] + "_quantile_currency_code"
+        tmp = tmp.pivot(["ticker"], ["variable"]).droplevel(0, axis=1)
+        fundamentals = fundamentals.merge(tmp, how="left", on="ticker")
+    except Exception as e:
+        print(e)
+
+    # add DLPA scores
+    fundamentals = fundamentals.merge(universe_rating, on="ticker", how="left")
+
     fundamentals["trading_day"] = check_trading_day(days=6)
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
 
-    print("Calculate Fundamentals Value")
-    fundamentals["fundamentals_value"] = ((fundamentals["earnings_yield_minmax_currency_code"]) + 
-        fundamentals["earnings_yield_minmax_industry"] + 
-        fundamentals["book_to_price_minmax_currency_code"] + 
-        fundamentals["book_to_price_minmax_industry"] + 
-        fundamentals["ebitda_to_ev_minmax_currency_code"] + 
-        fundamentals["ebitda_to_ev_minmax_industry"] +
-        fundamentals["fwd_bps_minmax_currency_code"] +
-        fundamentals["fwd_bps_minmax_industry"] +
-        fundamentals["fwd_ebitda_to_ev_minmax_currency_code"] +
-        fundamentals["fwd_ebitda_to_ev_minmax_industry"] + 
-        fundamentals["roe_minmax_currency_code"]+
-        fundamentals["roe_minmax_industry"]).round(1)
+    # add column for 3 pillar score
+    fundamentals[[f"fundamentals_{name}" for name in factor_rank["pillar"].unique()]] = np.nan
 
-    print("Calculate Fundamentals Quality")
-    fundamentals["fundamentals_quality"] = ((fundamentals["roic_minmax_currency_code"]) + 
-        fundamentals["roic_minmax_industry"] +
-        fundamentals["cf_to_price_minmax_currency_code"] +
-        fundamentals["cf_to_price_minmax_industry"] +
-        fundamentals["eps_growth_minmax_currency_code"] + 
-        fundamentals["eps_growth_minmax_industry"] + 
-        fundamentals["fwd_ey_minmax_industry"] +
-        fundamentals["fwd_ey_minmax_currency_code"] +
-        fundamentals["fwd_sales_to_price_minmax_industry"]+ 
-        (fundamentals["fwd_roic_minmax_industry"]) +
-        fundamentals["earnings_pred_minmax_industry"] +
-        fundamentals["earnings_pred_minmax_currency_code"]).round(1)
+    # calculate ai_score by each currency_code (i.e. group) for each of 3 pillar
+    for (group, pillar_name), g in factor_rank.groupby(["group", "pillar"]):
+        print(f"Calculate Fundamentals [{pillar_name}] in group [{group}]")
+        sub_g = g.loc[(g["factor_weight"]==2)|(g["factor_weight"].isnull())]        # use all rank=2 (best class)
+        if len(sub_g) == 0:                         # if no factor rank=2, use the highest ranking one & DLPA/ai_value scores
+            sub_g = g.loc[g.nlargest(1, columns=["pred_z"]).index.union(g.loc[g["factor_weight"].isnull()].index)]
 
-    print("Calculate Momentum Value")
-    quantile = pd.DataFrame({"ticker" : [], "tri" : [], "tri_quantile":[]}, index=[])
-    for currency in fundamentals["currency_code"].unique():
-        data = fundamentals.loc[fundamentals["currency_code"] == currency]
-        data = data[["ticker", "tri"]]
-        quantile_data = data["tri"].to_numpy().reshape((len(data),1))
-        data["tri_quantile"] = quantile_transform(quantile_data, n_quantiles=4)
-        quantile = quantile.append(data)
-    fundamentals = fundamentals.merge(quantile[["ticker", "tri_quantile"]], how="left", on="ticker")
-    minmax_column.append("tri_quantile")
-    fundamentals["momentum"] = fundamentals["tri_quantile"] * 10
+        score_col = [f"{x}_{y}_currency_code" for x, y in sub_g.loc[sub_g["scaler"].notnull(), ["factor_name","scaler"]].to_numpy()]
+        score_col += [x for x in sub_g.loc[sub_g["scaler"].isnull(), "factor_name"]]
+        fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_{pillar_name}"] = fundamentals[score_col].mean(axis=1)
+    
+    for group, g in factor_rank.groupby("group"):
+        print(f"Calculate Fundamentals [extra] in group [{group}]")
+        sub_g = g.loc[(g["factor_weight"]==2) & (g["pred_z"] >= 1)]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
 
+        if len(sub_g) > 0:     # if no factor rank=2, don"t add any factor into extra pillar
+            score_col = [f"{x}_{y}_currency_code" for x, y in sub_g.loc[sub_g["scaler"].notnull(), ["factor_name", "scaler"]].to_numpy()]
+            fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = fundamentals[score_col].mean(axis=1)
+        else:
+            fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = 0.
+
+    fundamentals_factors_scores_col = fundamentals.filter(regex="^fundamentals_").columns
+    fundamentals[fundamentals_factors_scores_col] = (fundamentals[fundamentals_factors_scores_col]*10).round(1)
+
+    # from sqlalchemy import create_engine
+    # from global_vars import DB_URL_ALIBABA
+    # with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
+    #     extra = {"con": conn, "index": False, "if_exists": "replace", "method": "multi", "chunksize": 10000}
+    #     fundamentals.to_sql("test_fundamentals_clair", **extra)
+    
     print("Calculate ESG Value")
     fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
         fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
         fundamentals["goverment_minmax_currency_code"] + fundamentals["goverment_minmax_industry"]) / 6
 
-    print("Calculate Technical Value")
-    fundamentals = fundamentals.merge(universe_rating, how="left", on="ticker")
-    fundamentals["technical"] = (fundamentals["wts_rating"] + fundamentals["dlp_1m"]+ fundamentals["momentum"]) / 3
-
     print("Calculate AI Score")
     fundamentals["ai_score"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] + \
-        fundamentals["technical"] + fundamentals["technical"]) / 4
+        fundamentals["fundamentals_momentum"] + fundamentals["fundamentals_extra"]) / 4
 
     print("Calculate AI Score 2")
-    fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] + fundamentals["technical"] + fundamentals["esg"]) / 4
+    fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] +
+                                 fundamentals["fundamentals_momentum"] + fundamentals["esg"]) / 4
     
-    universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", 
-    "fundamentals_quality", "ai_score", "ai_score2", "esg", 
-    "momentum", "technical", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
+    universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
+                                            "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
+                                            "dlp_3m", "wts_rating2", "classic_vol"]]
 
     universe_rating_detail_history = fundamentals[minmax_column]
-    
+
     print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
-    
     if(len(fundamentals)) > 0 :
         print(fundamentals)
-        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
+        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum",
+                               "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
         result["updated"] = dateNow()
         print(result)
         print(universe_rating_history)
         print(universe_rating_detail_history)
-        
+        result.to_csv("/home/loratech/result.csv")
+        universe_rating_history.to_csv("/home/loratech/universe_rating_history.csv")
+        universe_rating_detail_history.to_csv("/home/loratech/universe_rating_detail_history.csv")
+        import sys
+        sys.exit(1)
         upsert_data_to_database(result, get_universe_rating_table_name(), "ticker", how="update", Text=True)
         upsert_data_to_database(universe_rating_history, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
         upsert_data_to_database(universe_rating_detail_history, get_universe_rating_detail_history_table_name(), "uid", how="update", Text=True)
