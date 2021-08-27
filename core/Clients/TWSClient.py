@@ -15,9 +15,10 @@ from multiprocessing import Process
 from gateway import *
 
 
-
 class TestApp(EWrapper, EClient):
-	def __init__(self):		
+	def __init__(self):
+		self.queue_id = None
+		self.queue_order = None
 		EClient.__init__(self, self)
 
 	def connect(self, host, port, clientId, queue):
@@ -25,7 +26,44 @@ class TestApp(EWrapper, EClient):
 		self.result_queue = queue
 
 	def error(self, reqId, errorCode, errorString):
+		super().error(reqId, errorCode, errorString)
 		print("Error: ", reqId, " ", errorCode, " ", errorString)
+
+	def reqIds(self, numIds, queue=None):
+		super().reqIds(numIds)
+		if queue:
+			self.queue_id = queue
+
+	def nextValidId(self, orderId):
+		super().nextValidId(orderId)
+		print(f"OrderId >> {orderId}")
+		if isinstance(orderId, int):
+			nextId = orderId+1
+		else:
+			nextId = int(orderId)+1
+
+		if self.queue_id:
+			messages = {}
+			messages['nextValidId'] = nextId
+			print(f"Next >> {nextId}")
+			self.queue_id.put(messages)
+			self.disconnect()
+
+	def reqAccountSummary(self, reqId, groupName, tags):
+		super().reqAccountSummary(reqId, groupName, tags)
+		self.messages = {}
+		self.messages['accountSummary'] = []
+
+	def accountSummary(self, reqId, account, tag, value, currency):
+		super().accountSummary(reqId, account, tag, value, currency)
+		self.messages["accountSummary"].append({account:value})
+		print(f"reqId:{reqId} \n account:{account} \n tag:{tag} \n value:{value} \n currency:{currency}")
+
+	def accountSummaryEnd(self, reqId):
+		super().accountSummaryEnd(reqId)
+		self.result_queue.put(self.messages)
+		self.messages = {}
+		self.disconnect()
 
 	def contractDetails(self, reqId, contractDetails):
 		super().contractDetails(reqId, contractDetails)
@@ -78,7 +116,8 @@ class TestApp(EWrapper, EClient):
 	def symbolSamples(self, reqId, contractDescriptions):
 		super().symbolSamples(reqId, contractDescriptions)
 		print("Symbol Samples. Request Id: ", reqId)
-		messages = []
+		messages = {}
+		messages['symbolSamples'] = []
 		contract = None
 
 		for contractDescription in contractDescriptions:
@@ -97,44 +136,100 @@ class TestApp(EWrapper, EClient):
 				# "derivSecTypes":derivSecTypes
 			}
 			# print(contract)
-			messages.append(contract)			
+			messages['symbolSamples'].append(contract)			
 			self.result_queue.put(messages)
 		self.disconnect()
 
+	def placeOrder(self, orderId , contract, order, queue=None):
+		super().placeOrder(orderId, contract, order)
+		if queue:
+			self.queue_order = queue
+
 	def openOrder(self, orderId, contract, order, orderState):
 		super().openOrder(orderId, contract, order, orderState)
-		print(f"orderId : {orderId}")
-		print(f"contract : {contract}")
-		print(f"order : {order}")
-		print(f"orderState : {orderState}")
+		response = {
+			"orderId":orderId,
+			"contract":contract,
+			"order":order,
+			"orderState":orderState,
+		}
+
+		if self.queue_order:
+			message = {}
+			message["openOrder"] = response
+			self.queue_order.put(message)
+		else:
+			pass
+		print(f"openOrder >> {response}")
 
 	def orderStatus(self, orderId , status, filled,remaining, avgFillPrice, permId,parentId, lastFillPrice, clientId,whyHeld, mktCapPrice):
 		super().orderStatus(orderId , status, filled,remaining, avgFillPrice, permId,parentId, lastFillPrice, clientId,whyHeld, mktCapPrice)
-		print(f"orderId{orderId}")
-		print(f"status{status}")
-		print(f"filled{filled}")
-		print(f"remaining{remaining}")
-		print(f"avgFillPrice{avgFillPrice}")
-		print(f"permId{permId,parentId}")
-		print(f"lastFillPrice{lastFillPrice}")
-		print(f"clientId{clientId}")
-		print(f"whyHeld{whyHeld}")
-		print(f"mktCapPrice{mktCapPrice}")
+		response = {
+			"orderId":orderId,
+			"status":status,
+			"filled":filled,
+			"remaining":remaining,
+			"avgFillPrice":avgFillPrice,
+			"permId":permId,
+			"lastFillPrice":lastFillPrice,
+			"clientId":clientId,
+			"whyHeld":whyHeld,
+			"mktCapPrice":mktCapPrice
+		}
+		print(f"orderStatus >> {response} \n")
+		if self.queue_order:
+			if not self.queue_order.empty():
+				res = self.queue_order.get(timeout=0.5)
+				print(f"res in orderStatus >> \n {res}")
+				res['orderStatus'] = response
+				self.queue_order.put(res)
+			else:
+				message = {}
+				message ['orderStatus'] = response
+				self.queue_order.put(message)
+			self.disconnect()
 
 
 class TWSClient():
 
 	def __init__(self):
-		self.host = "0.tcp.ngrok.io"
-		self.port = 10613
+		self.host = host.replace("https://","")
+		self.port = int(port)
 		self.result_queue = queue.Queue()
 		# self.result_queue = result_queue
 
+	def get_valid_id(self, numIds):
+		app = TestApp()
+		print("requesting id ...")
+		id_queue = queue.Queue()
+		app.connect(self.host, self.port, 0, self.result_queue)
+		app.reqIds(numIds=numIds, queue=id_queue)
+		app.run()
+
+		nexId = None
+		while True:
+			if id_queue.empty():
+				pass
+			else:
+				nexId = id_queue.get(timeout=0.5)
+				if "nextValidId" in nexId:
+					nexId  = nexId["nextValidId"]
+					print(f"Next valid ID == {nexId}")
+					break
+				else:
+					print(f"Next valid ID == {nexId}")
+					pass
+		return nexId
+
+
 	def get_contracts(self, ticker_symbol):
+		# ids = 2
+		nexId = 2
+		# nexId = self.get_valid_id(ids)
 		app = TestApp()
 		app.connect(self.host, self.port, 0, self.result_queue)
 		print("requesting symbols ...")
-		app.reqMatchingSymbols(2, ticker_symbol)
+		app.reqMatchingSymbols(nexId, ticker_symbol)
 		print("running WS")
 		app.run()
 
@@ -144,13 +239,19 @@ class TWSClient():
 		res_detail = None
 	
 		while True:
-			try:
-				res = self.result_queue.get(timeout=0.5)
-				# app.disconnect()
-				break
-			except queue.Empty:
+			if self.result_queue.empty():
 				print("Queue Empty")
-
+				pass
+			else:
+				res = self.result_queue.get(timeout=0.5)
+				if "symbolSamples" in res:
+					res = res['symbolSamples']
+					print(f"data in get_contracts >> {res}")
+					break
+				else:
+					print(f"data in get_contracts >> {res}")
+					pass
+			
 		for data in res:
 			if data['symbol'] == ticker_symbol:
 				if data['secType'] == 'STK':
@@ -159,36 +260,75 @@ class TWSClient():
 						contract.secType = data['secType']
 						contract.exchange = "SMART"
 						contract.currency = data['currency']
-						contract.primaryExchange = data['primaryExchange']
+						if "NASDAQ" in data['primaryExchange']:
+							contract.primaryExchange = "NASDAQ"
+						else:
+							contract.primaryExchange = data['primaryExchange']
 						res_detail = data
 
 		print(f"response = {res_detail}")
 		return contract
-
+	"""
 	def find_contract_detail(self, ticker_symbol):
+		ids = 3
+		nexId = self.get_valid_id(ids)
 		contract = self.get_contracts(ticker_symbol)
 		app = TestApp()
 		app.connect(self.host, self.port, 0, self.result_queue)
 		print("requesting contract ...")
-		app.reqContractDetails(3, contract)
+		app.reqContractDetails(nexId, contract)
 		print("running WS")
 		app.run()
+	"""
+	def request_account(self):
+		app = TestApp()
+		app.connect(self.host, self.port, 0, self.result_queue)
+		app.reqAccountSummary(6, "All", "AccountType")
+		app.run()
 
-	def order(self, ticker_symbol, side, qty, type_order, price=None):
+		while True:
+			if self.result_queue.empty():
+				print("queue empty")
+				pass
+			else:
+				response = self.result_queue.get(timeout=0.2)
+				print(f"result of func >> {response}")
+				break
+
+	def order(self, reqId, ticker_symbol, side, qty, type_order, price=None):
+		order_queue = queue.Queue()
+
 		contract = self.get_contracts(ticker_symbol)
+		ids = self.get_valid_id(reqId)
+		print(f"id for orders >> {ids}")
 
 		app = TestApp()
 		app.connect(self.host, self.port, 0, self.result_queue)
+		print("Preparing Order ...")
 		order = Order()
 		order.action = side
 		order.totalQuantity = qty
 		order.orderType = type_order
+		order.transmit = True
+		order.account = "DU2898617"
 
 		if type_order == "LMT":
 			order.lmtPrice = price
 
-		app.placeOrder(5, contract, order)
+		print("Placing Order ...")
+		app.placeOrder(ids, contract, order, order_queue)
 		app.run()
+		res  = None
+
+		while True:
+			if order_queue.empty():
+				print("empty")
+				pass
+			else:
+				res = order_queue.get(timeout=0.2)
+				print(f"response order >> \n {res}")
+				break
+		return res
 
 
 if __name__=="__main__":
@@ -197,7 +337,8 @@ if __name__=="__main__":
 
 	tws = TWSClient()
 	# tws.get_contracts(ticker_symbol="AAPL")
-	tws.order(ticker_symbol="AAPL", side="BUY", qty=5, type_order="MKT")
+	tws.order(reqId=3, ticker_symbol="AAPL", side="BUY", qty=5, type_order="MKT")
+	
 	# def find_detail_con(result_queue):
 	# 	tws = TWSClient()
 	# 	tws.find_detail(ticker_symbol="AAPL", args(result_queue,))
