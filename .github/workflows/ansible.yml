@@ -33,4 +33,4 @@ jobs:
         with:
           url: https://hooks.slack.com/services/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
           method: POST
-          data: '{"text": "dev just deployed by ${{ github.actor }}"}'
+          data: '{"text": "deployed by ${{ github.actor }}"}'
