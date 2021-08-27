@@ -83,7 +83,7 @@ def get_data_from_reuters(
                 "InstrumentIdentifiers"
             ].append({"IdentifierType": "Ric", "Identifier": _inst})
             _jReqBody["ExtractionRequest"]["Condition"] = {
-                "ReportDateRangeType": "Range",
+                "ReportDateRangeType": "Last",
                 "QueryStartDate": start_date + "T00:00:00.000Z",
                 "QueryEndDate": end_date + "T00:00:00.000Z",
                 "ExcludeDeletedEvents": True,

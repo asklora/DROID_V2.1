@@ -2,7 +2,12 @@ import pandas as pd
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general.sql_process import db_read, alibaba_db_url
-from general.date_process import backdate_by_day, dateNow, droid_start_date, str_to_date
+from general.date_process import (
+    backdate_by_day, 
+    dateNow, 
+    date_minus_day, 
+    droid_start_date, 
+    str_to_date)
 from general.data_process import tuple_data
 from general.table_name import (
     get_bot_backtest_table_name,
@@ -382,13 +387,13 @@ def get_specific_tri(trading_day, tri_name="tri"):
 
 def get_specific_tri_avg(trading_day, avg_days=7, tri_name="tri"):
     query = f"SELECT a.ticker, avg(a.tri) as {tri_name} FROM (SELECT ticker, total_return_index as tri FROM master_ohlcvtr "
-    query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{backdate_by_day(avg_days, trading_day)}') a GROUP BY ticker"
+    query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{date_minus_day(start_date=trading_day, days=avg_days)}') a GROUP BY ticker"
     data = read_query(query, table=get_master_ohlcvtr_table_name())
     return data
 
 def get_specific_volume_avg(trading_day, avg_days=7, volume_name="volume"):
     query = f"SELECT a.ticker, avg(a.volume) as {volume_name} FROM (SELECT ticker, volume FROM master_ohlcvtr "
-    query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{backdate_by_day(avg_days, trading_day)}') a GROUP BY ticker"
+    query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{date_minus_day(start_date=trading_day, days=avg_days)}') a GROUP BY ticker"
     data = read_query(query, table=get_master_ohlcvtr_table_name())
     return data
 

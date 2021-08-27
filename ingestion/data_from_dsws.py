@@ -155,8 +155,8 @@ def update_ticker_name_from_dsws(ticker=None, currency_code=None):
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"WC06003": "ticker_name", "NAME" : "ticker_fullname", "index":"ticker"})
-        result["ticker_name"]=result["ticker_name"].str.replace("'", "", regex=True)
-        result["ticker_fullname"]=result["ticker_fullname"].str.replace("'", "", regex=True)
+        result["ticker_name"]=result["ticker_name"].str.replace(""", "", regex=True)
+        result["ticker_fullname"]=result["ticker_fullname"].str.replace(""", "", regex=True)
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
@@ -365,17 +365,17 @@ def check_trading_day(days = 0):
         return today.strftime("%Y-%m-%d")
 
 def score_update_vol_rs(list_of_start_end, days_in_year=256):
-    ''' Calculate roger satchell volatility:
+    """ Calculate roger satchell volatility:
         daily = average over period from start to end: Log(High/Open)*Log(High/Close)+Log(Low/Open)*Log(Open/Close)
         annualized = sqrt(daily*256)
-    '''
+    """
 
     # download past prices since 1 months before the earliest volitility calculation month i.e. end
     tri = get_master_ohlcvtr_data(trading_day=backdate_by_month(list_of_start_end[-1][-1]+1))
-    tri['trading_day'] = pd.to_datetime(tri['trading_day'])
-    tri = tri.sort_values(by=['ticker', 'trading_day'], ascending=[True, False]).reset_index(drop=True)
-    open_data, high_data, low_data, close_data = tri['open'].values, tri['high'].values, tri['low'].values, tri[
-        'close'].values
+    tri["trading_day"] = pd.to_datetime(tri["trading_day"])
+    tri = tri.sort_values(by=["ticker", "trading_day"], ascending=[True, False]).reset_index(drop=True)
+    open_data, high_data, low_data, close_data = tri["open"].values, tri["high"].values, tri["low"].values, tri[
+        "close"].values
 
     # Calculate daily volatility
     hc_ratio = np.divide(high_data, close_data)
@@ -395,27 +395,27 @@ def score_update_vol_rs(list_of_start_end, days_in_year=256):
     vol_col = []
     for l in list_of_start_end:
         start, end = l[0]*30, l[1]*30
-        name_col = f'vol_{start}_{end}'
+        name_col = f"vol_{start}_{end}"
         vol_col.append(name_col)
         tri[name_col] = sum_
-        tri[name_col] = tri.groupby('ticker')[name_col].rolling(end - start, min_periods=1).mean().reset_index(drop=1)
+        tri[name_col] = tri.groupby("ticker")[name_col].rolling(end - start, min_periods=1).mean().reset_index(drop=1)
         tri[name_col] = tri[name_col].apply(lambda x: np.sqrt(x * days_in_year))
         tri[name_col] = tri[name_col].shift(start)
-        nan_idx = tri.groupby('ticker')['trading_day'].nlargest(end - 1).index.get_level_values(1)
+        nan_idx = tri.groupby("ticker")["trading_day"].nlargest(end - 1).index.get_level_values(1)
         tri.loc[nan_idx, name_col] = np.nan  # y-1 ~ y0
 
     # return tri on the most recent trading_day
-    final_tri = tri[['ticker']+vol_col].dropna(how='any').groupby(['ticker']).last().reset_index()
+    final_tri = tri[["ticker"]+vol_col].dropna(how="any").groupby(["ticker"]).last().reset_index()
 
     return final_tri
 
 def score_update_stock_return(list_of_start_end):
-    ''' Calculate specific period stock return (months) '''
+    """ Calculate specific period stock return (months) """
 
-    df = pd.DataFrame(get_active_universe()['ticker'])
+    df = pd.DataFrame(get_active_universe()["ticker"])
 
     for l in list_of_start_end:
-        name_col = f'stock_return_{l[0]}_{l[1]}'
+        name_col = f"stock_return_{l[0]}_{l[1]}"
         tri_start = get_specific_tri_avg(backdate_by_month(l[0]), avg_days=7, tri_name=f"tri_{l[0]}m")
         tri_end = get_specific_tri_avg(backdate_by_month(l[1]), avg_days=7, tri_name=f"tri_{l[1]}m")
         tri = tri_start.merge(tri_end, how="left", on="ticker")
@@ -426,15 +426,15 @@ def score_update_stock_return(list_of_start_end):
     return df
 
 def score_update_factor_ratios(df):
-    ''' Calculate all factor used referring to DB ratio table '''
+    """ Calculate all factor used referring to DB ratio table """
 
     formula = get_factor_calculation_formula()
 
     print(df.columns)
 
     # Prepare for field requires add/minus
-    add_minus_fields = formula[['field_num', 'field_denom']].dropna(how='any').to_numpy().flatten()
-    add_minus_fields = [i for i in list(set(add_minus_fields)) if any(['-' in i, '+' in i, '*' in i])]
+    add_minus_fields = formula[["field_num", "field_denom"]].dropna(how="any").to_numpy().flatten()
+    add_minus_fields = [i for i in list(set(add_minus_fields)) if any(["-" in i, "+" in i, "*" in i])]
 
     for i in add_minus_fields:
         x = [op.strip() for op in i.split()]
@@ -442,11 +442,11 @@ def score_update_factor_ratios(df):
         temp = df[x[0]].copy()
         n = 1
         while n < len(x):
-            if x[n] == '+':
+            if x[n] == "+":
                 temp += np.nan_to_num(df[x[n + 1]],0)
-            elif x[n] == '-':
+            elif x[n] == "-":
                 temp -= np.nan_to_num(df[x[n + 1]],0)
-            elif x[n] == '*':
+            elif x[n] == "*":
                 temp *= df[x[n + 1]]
             else:
                 raise Exception(f"Unexpected operand/operator: {x[n]}")
@@ -454,28 +454,28 @@ def score_update_factor_ratios(df):
         df[i] = temp
 
     # a) Keep original values
-    keep_original_mask = formula['field_denom'].isnull() & formula['field_num'].notnull()
-    new_name = formula.loc[keep_original_mask, 'name'].to_list()
-    old_name = formula.loc[keep_original_mask, 'field_num'].to_list()
+    keep_original_mask = formula["field_denom"].isnull() & formula["field_num"].notnull()
+    new_name = formula.loc[keep_original_mask, "name"].to_list()
+    old_name = formula.loc[keep_original_mask, "field_num"].to_list()
     df[new_name] = df[old_name]
 
     # b) Time series ratios (Calculate 1m change first)
-    for r in formula.loc[formula['field_num'] == formula['field_denom'], ['name', 'field_denom']].to_dict(
-            orient='records'):  # minus calculation for ratios
-        if r['name'][-2:] == 'yr':
-            df[r['name']] = df[r['field_denom']] / df[r['field_denom']].shift(12) - 1
-            df.loc[df.groupby('ticker').head(12).index, r['name']] = np.nan
-        elif r['name'][-1] == 'q':
-            df[r['name']] = df[r['field_denom']] / df[r['field_denom']].shift(3) - 1
-            df.loc[df.groupby('ticker').head(3).index, r['name']] = np.nan
+    for r in formula.loc[formula["field_num"] == formula["field_denom"], ["name", "field_denom"]].to_dict(
+            orient="records"):  # minus calculation for ratios
+        if r["name"][-2:] == "yr":
+            df[r["name"]] = df[r["field_denom"]] / df[r["field_denom"]].shift(12) - 1
+            df.loc[df.groupby("ticker").head(12).index, r["name"]] = np.nan
+        elif r["name"][-1] == "q":
+            df[r["name"]] = df[r["field_denom"]] / df[r["field_denom"]].shift(3) - 1
+            df.loc[df.groupby("ticker").head(3).index, r["name"]] = np.nan
 
     # c) Divide ratios
-    print(f'      ------------------------> Calculate dividing ratios ')
-    for r in formula.loc[(formula['field_denom'].notnull())&
-                         (formula['field_num']!= formula['field_denom'])].to_dict(orient='records'):  # minus calculation for ratios
-        df[r['name']] = df[r['field_num']] / df[r['field_denom']]
+    print(f"      ------------------------> Calculate dividing ratios ")
+    for r in formula.loc[(formula["field_denom"].notnull())&
+                         (formula["field_num"]!= formula["field_denom"])].to_dict(orient="records"):  # minus calculation for ratios
+        df[r["name"]] = df[r["field_num"]] / df[r["field_denom"]]
 
-    return df, formula.set_index(['name'])
+    return df, formula.set_index(["name"])
 
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
@@ -522,21 +522,21 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     #                                        fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
 
     factor_rank = get_factor_rank()
-    factor_rank = factor_rank.merge(factor_formula, left_on=['factor_name'], right_index=True, how='outer')
-    factor_rank['long_large'] = factor_rank['long_large'].fillna(True)
-    factor_rank = factor_rank.dropna(subset=['pillar'])
-    append_df = factor_rank.loc[factor_rank['keep']]
+    factor_rank = factor_rank.merge(factor_formula, left_on=["factor_name"], right_index=True, how="outer")
+    factor_rank["long_large"] = factor_rank["long_large"].fillna(True)
+    factor_rank = factor_rank.dropna(subset=["pillar"])
+    append_df = factor_rank.loc[factor_rank["keep"]]
 
-    for group in factor_rank['group'].dropna().unique():
+    for group in factor_rank["group"].dropna().unique():
         # change ratio to negative if original factor calculation using reverse premiums
-        neg_factor = factor_rank.loc[(factor_rank['long_large']==False)&(factor_rank['group']==group), 'factor_name'].to_list()
-        fundamentals_score.loc[fundamentals_score['currency_code']==group, list(set(neg_factor) & set(fundamentals_score.columns))] *= -1
+        neg_factor = factor_rank.loc[(factor_rank["long_large"]==False)&(factor_rank["group"]==group), "factor_name"].to_list()
+        fundamentals_score.loc[fundamentals_score["currency_code"]==group, list(set(neg_factor) & set(fundamentals_score.columns))] *= -1
 
         # for non calculating socre -> we add same for each one
-        append_df['group'] = group
+        append_df["group"] = group
         factor_rank = factor_rank.append(append_df, ignore_index=True)
 
-    calculate_column = list(factor_formula.loc[factor_formula['scaler'].notnull()].index)
+    calculate_column = list(factor_formula.loc[factor_formula["scaler"].notnull()].index)
     calculate_column = sorted(set(calculate_column))
     calculate_column += ["environment", "social", "goverment"]
 
@@ -596,53 +596,53 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     # apply quantile transformation on before scaling scores
     try:
-        tmp = fundamentals.melt(['ticker', 'currency_code', 'industry_code'], calculate_column)
-        tmp['quantile_transformed'] = tmp.groupby(['currency_code', 'variable'])['value'].transform(lambda x: quantile_transform(x.values.reshape(-1, 1), n_quantiles=4).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
-        tmp = tmp[['ticker', 'variable', 'quantile_transformed']]
-        tmp['variable'] = tmp['variable'] + '_quantile_currency_code'
-        tmp = tmp.pivot(['ticker'], ['variable']).droplevel(0, axis=1)
-        fundamentals = fundamentals.merge(tmp, how='left', on='ticker')
+        tmp = fundamentals.melt(["ticker", "currency_code", "industry_code"], calculate_column)
+        tmp["quantile_transformed"] = tmp.groupby(["currency_code", "variable"])["value"].transform(lambda x: quantile_transform(x.values.reshape(-1, 1), n_quantiles=4).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
+        tmp = tmp[["ticker", "variable", "quantile_transformed"]]
+        tmp["variable"] = tmp["variable"] + "_quantile_currency_code"
+        tmp = tmp.pivot(["ticker"], ["variable"]).droplevel(0, axis=1)
+        fundamentals = fundamentals.merge(tmp, how="left", on="ticker")
     except Exception as e:
         print(e)
 
     # add DLPA scores
-    fundamentals = fundamentals.merge(universe_rating, on='ticker', how='left')
+    fundamentals = fundamentals.merge(universe_rating, on="ticker", how="left")
 
     fundamentals["trading_day"] = check_trading_day(days=6)
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
 
     # add column for 3 pillar score
-    fundamentals[[f"fundamentals_{name}" for name in factor_rank['pillar'].unique()]] = np.nan
+    fundamentals[[f"fundamentals_{name}" for name in factor_rank["pillar"].unique()]] = np.nan
 
     # calculate ai_score by each currency_code (i.e. group) for each of 3 pillar
-    for (group, pillar_name), g in factor_rank.groupby(['group', 'pillar']):
+    for (group, pillar_name), g in factor_rank.groupby(["group", "pillar"]):
         print(f"Calculate Fundamentals [{pillar_name}] in group [{group}]")
-        sub_g = g.loc[(g['factor_weight']==2)|(g['factor_weight'].isnull())]        # use all rank=2 (best class)
+        sub_g = g.loc[(g["factor_weight"]==2)|(g["factor_weight"].isnull())]        # use all rank=2 (best class)
         if len(sub_g) == 0:                         # if no factor rank=2, use the highest ranking one & DLPA/ai_value scores
-            sub_g = g.loc[g.nlargest(1, columns=['pred_z']).index.union(g.loc[g['factor_weight'].isnull()].index)]
+            sub_g = g.loc[g.nlargest(1, columns=["pred_z"]).index.union(g.loc[g["factor_weight"].isnull()].index)]
 
-        score_col = [f'{x}_{y}_currency_code' for x, y in sub_g.loc[sub_g['scaler'].notnull(), ['factor_name','scaler']].to_numpy()]
-        score_col += [x for x in sub_g.loc[sub_g['scaler'].isnull(), 'factor_name']]
-        fundamentals.loc[fundamentals['currency_code'] == group, f"fundamentals_{pillar_name}"] = fundamentals[score_col].mean(axis=1)
+        score_col = [f"{x}_{y}_currency_code" for x, y in sub_g.loc[sub_g["scaler"].notnull(), ["factor_name","scaler"]].to_numpy()]
+        score_col += [x for x in sub_g.loc[sub_g["scaler"].isnull(), "factor_name"]]
+        fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_{pillar_name}"] = fundamentals[score_col].mean(axis=1)
     
-    for group, g in factor_rank.groupby('group'):
+    for group, g in factor_rank.groupby("group"):
         print(f"Calculate Fundamentals [extra] in group [{group}]")
-        sub_g = g.loc[(g['factor_weight']==2) & (g['pred_z'] >= 1)]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
+        sub_g = g.loc[(g["factor_weight"]==2) & (g["pred_z"] >= 1)]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
 
-        if len(sub_g) > 0:     # if no factor rank=2, don't add any factor into extra pillar
-            score_col = [f'{x}_{y}_currency_code' for x, y in sub_g.loc[sub_g['scaler'].notnull(), ['factor_name', 'scaler']].to_numpy()]
-            fundamentals.loc[fundamentals['currency_code'] == group, f'fundamentals_extra'] = fundamentals[score_col].mean(axis=1)
+        if len(sub_g) > 0:     # if no factor rank=2, don"t add any factor into extra pillar
+            score_col = [f"{x}_{y}_currency_code" for x, y in sub_g.loc[sub_g["scaler"].notnull(), ["factor_name", "scaler"]].to_numpy()]
+            fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = fundamentals[score_col].mean(axis=1)
         else:
-            fundamentals.loc[fundamentals['currency_code'] == group, f'fundamentals_extra'] = 0.
+            fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = 0.
 
-    fundamentals_factors_scores_col = fundamentals.filter(regex='^fundamentals_').columns
+    fundamentals_factors_scores_col = fundamentals.filter(regex="^fundamentals_").columns
     fundamentals[fundamentals_factors_scores_col] = (fundamentals[fundamentals_factors_scores_col]*10).round(1)
 
     # from sqlalchemy import create_engine
     # from global_vars import DB_URL_ALIBABA
     # with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
-    #     extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
-    #     fundamentals.to_sql('test_fundamentals_clair', **extra)
+    #     extra = {"con": conn, "index": False, "if_exists": "replace", "method": "multi", "chunksize": 10000}
+    #     fundamentals.to_sql("test_fundamentals_clair", **extra)
     
     print("Calculate ESG Value")
     fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
@@ -664,7 +664,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     universe_rating_detail_history = fundamentals[minmax_column]
 
     print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
-    
     if(len(fundamentals)) > 0 :
         print(fundamentals)
         result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum",
@@ -673,7 +672,11 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         print(result)
         print(universe_rating_history)
         print(universe_rating_detail_history)
-        
+        result.to_csv("/home/loratech/result.csv")
+        universe_rating_history.to_csv("/home/loratech/universe_rating_history.csv")
+        universe_rating_detail_history.to_csv("/home/loratech/universe_rating_detail_history.csv")
+        import sys
+        sys.exit(1)
         upsert_data_to_database(result, get_universe_rating_table_name(), "ticker", how="update", Text=True)
         upsert_data_to_database(universe_rating_history, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
         upsert_data_to_database(universe_rating_detail_history, get_universe_rating_detail_history_table_name(), "uid", how="update", Text=True)

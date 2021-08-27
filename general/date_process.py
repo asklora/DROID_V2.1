@@ -70,11 +70,8 @@ def timestampNow():
     return datetime.fromtimestamp(time.time())
 
 
-def backdate_by_day(day, start_day_str=None):
-    if type(start_day_str) != type(None):
-        return (str_to_date(start_day_str) - relativedelta(days=day)).strftime("%Y-%m-%d")
-    else:
-        return (datetime.now().date() - relativedelta(days=day)).strftime("%Y-%m-%d")
+def backdate_by_day(day):
+    return (datetime.now().date() - relativedelta(days=day)).strftime("%Y-%m-%d")
 
 
 def backdate_by_week(week):
@@ -118,6 +115,22 @@ def date_minus_bday(start_date, days=1):
         start_date = (str_to_date(start_date) - BDay(days)).strftime("%Y-%m-%d")
     else:
         start_date = ((start_date) - BDay(days)).strftime("%Y-%m-%d")
+    return start_date
+
+
+def date_plus_day(start_date, days=1):
+    if type(start_date) == str:
+        start_date = (str_to_date(start_date) + relativedelta(days=days)).strftime("%Y-%m-%d")
+    else:
+        start_date = ((start_date) + relativedelta(days=days)).strftime("%Y-%m-%d")
+    return start_date
+
+
+def date_minus_day(start_date=dateNow(), days=1):
+    if type(start_date) == str:
+        start_date = (str_to_date(start_date) - relativedelta(days=days)).strftime("%Y-%m-%d")
+    else:
+        start_date = ((start_date) - relativedelta(days=days)).strftime("%Y-%m-%d")
     return start_date
 
 
