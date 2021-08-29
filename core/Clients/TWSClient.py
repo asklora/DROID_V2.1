@@ -1,29 +1,52 @@
-import requests
 import json
 import time
-import websocket
-import ssl
 import queue
 
 from ibapi.client import EClient
 from ibapi.wrapper import EWrapper
 from ibapi.order import (OrderComboLeg, Order)
 from ibapi.contract import Contract
+import random
+from threading import Thread,Lock as LockThread
+import logging
 
-from threading import Thread
-from multiprocessing import Process
-from gateway import *
+
+
+logging.basicConfig(format="%(asctime)s - %(message)s",
+                    datefmt="%d-%b-%y %H:%M:%S")
+logging.getLogger().setLevel(logging.INFO)
+
+
+
+
+class ApiPool(type):
+	__lock = LockThread()
+	__instance =None
+	
+	def __new__(cls,*args, **kwargs):
+		with cls.__lock:
+			if not cls.__instance:
+				cls.__instance =super(ApiPool, cls).__new__(cls,*args, **kwargs)
+		return cls.__instance
+
+
+class ResponseHandler:
+	def __init__(self):
+		pass
+
+	@staticmethod
+	def handler(msg):
+		logging.info(msg)
 
 
 class TestApp(EWrapper, EClient):
-	def __init__(self):
-		self.queue_id = None
-		self.queue_order = None
+	def __init__(self,*args, **kwargs):
 		EClient.__init__(self, self)
-
-	def connect(self, host, port, clientId, queue):
+		self.nextId=random.randint(0,255)
+	
+	def connect(self, host, port, clientId):
 		super().connect(host, port, clientId)
-		self.result_queue = queue
+		# self.result_queue = queue
 
 	def error(self, reqId, errorCode, errorString):
 		super().error(reqId, errorCode, errorString)
@@ -34,20 +57,22 @@ class TestApp(EWrapper, EClient):
 		if queue:
 			self.queue_id = queue
 
-	def nextValidId(self, orderId):
+	def nextValidId(self, orderId:int):
 		super().nextValidId(orderId)
 		print(f"OrderId >> {orderId}")
-		if isinstance(orderId, int):
-			nextId = orderId+1
-		else:
-			nextId = int(orderId)+1
+		self.nextId = orderId+1
 
-		if self.queue_id:
-			messages = {}
-			messages['nextValidId'] = nextId
-			print(f"Next >> {nextId}")
-			self.queue_id.put(messages)
-			self.disconnect()
+		# if isinstance(orderId, int):
+		# 	nextId = orderId+1
+		# else:
+		# 	nextId = int(orderId)+1
+
+		# if self.queue_id:
+		# 	messages = {}
+		# 	messages['nextValidId'] = nextId
+		# 	print(f"Next >> {nextId}")
+		# 	self.queue_id.put(messages)
+		# 	self.disconnect()
 
 	def reqAccountSummary(self, reqId, groupName, tags):
 		super().reqAccountSummary(reqId, groupName, tags)
@@ -61,9 +86,9 @@ class TestApp(EWrapper, EClient):
 
 	def accountSummaryEnd(self, reqId):
 		super().accountSummaryEnd(reqId)
-		self.result_queue.put(self.messages)
+		# self.result_queue.put(self.messages)
 		self.messages = {}
-		self.disconnect()
+		# self.disconnect()
 
 	def contractDetails(self, reqId, contractDetails):
 		super().contractDetails(reqId, contractDetails)
@@ -111,7 +136,7 @@ class TestApp(EWrapper, EClient):
 
 	def contractDetailsEnd(self, reqId):
 		super().contractDetailsEnd(reqId)
-		self.disconnect()
+		# self.disconnect()
 
 	def symbolSamples(self, reqId, contractDescriptions):
 		super().symbolSamples(reqId, contractDescriptions)
@@ -137,8 +162,9 @@ class TestApp(EWrapper, EClient):
 			}
 			# print(contract)
 			messages['symbolSamples'].append(contract)			
-			self.result_queue.put(messages)
-		self.disconnect()
+		# 	self.result_queue.put(messages)
+		# self.disconnect()
+		ResponseHandler.handler(messages)
 
 	def placeOrder(self, orderId , contract, order, queue=None):
 		super().placeOrder(orderId, contract, order)
@@ -154,12 +180,12 @@ class TestApp(EWrapper, EClient):
 			"orderState":orderState,
 		}
 
-		if self.queue_order:
-			message = {}
-			message["openOrder"] = response
-			self.queue_order.put(message)
-		else:
-			pass
+		# if self.queue_order:
+		# 	message = {}
+		# 	message["openOrder"] = response
+		# 	self.queue_order.put(message)
+		# else:
+		# 	pass
 		print(f"openOrder >> {response}")
 
 	def orderStatus(self, orderId , status, filled,remaining, avgFillPrice, permId,parentId, lastFillPrice, clientId,whyHeld, mktCapPrice):
@@ -177,24 +203,72 @@ class TestApp(EWrapper, EClient):
 			"mktCapPrice":mktCapPrice
 		}
 		print(f"orderStatus >> {response} \n")
-		if self.queue_order:
-			if not self.queue_order.empty():
-				res = self.queue_order.get(timeout=0.5)
-				print(f"res in orderStatus >> \n {res}")
-				res['orderStatus'] = response
-				self.queue_order.put(res)
+		# if self.queue_order:
+		# 	if not self.queue_order.empty():
+		# 		res = self.queue_order.get(timeout=0.5)
+		# 		print(f"res in orderStatus >> \n {res}")
+		# 		res['orderStatus'] = response
+		# 		self.queue_order.put(res)
+		# 	else:
+		# 		message = {}
+		# 		message ['orderStatus'] = response
+		# 		self.queue_order.put(message)
+		# 	self.disconnect()
+
+class TwsContract(Contract):
+	def __init__(self):
+		super().__init__()
+
+	@classmethod
+	def make_contract(cls,*args,**kwargs):
+		contract =cls()
+		for key,value in kwargs.items():
+			if hasattr(contract,key):
+				setattr(contract,key,value)
 			else:
-				message = {}
-				message ['orderStatus'] = response
-				self.queue_order.put(message)
-			self.disconnect()
+				raise ValueError(f"object doesnt have {key} properties")
+		return contract
+			
+
+class TwsApi(metaclass=ApiPool):
+	tws_contract = TwsContract
 
 
-class TWSClient():
+	def __init__(self,Id,*args, **kwargs):
+		self.Id =Id
+		self.server= TestApp()
+		
+	
+	def run(self):
+		if not self.server.isConnected():
+			self.server.connect("localhost",4002,self.Id)
+			self.app_thread = Thread(target=self.server.run,daemon=True)
+			return self.app_thread.start()
+
+	def stop(self,signal=None,frame=None):
+		self.server.disconnect()
+		self.server.reset()
+		
+		if self.app_thread.isAlive():
+			self.app_thread.join()
+		if signal:
+			import sys
+			sys.exit(1)
+
+	def get_id(self):
+		return self.server.reqIds(0)
+
+	def get_contract(self,symbol:str,identifier:str='RIC'):
+		ids = self.server.nextId
+		self.server.reqMatchingSymbols(ids,symbol)
+		
+
+
+class TWSClient:
 
 	def __init__(self):
-		self.host = host.replace("https://","")
-		self.port = int(port)
+		self.host = "localhost"
+		self.port = 4002
 		self.result_queue = queue.Queue()
 		# self.result_queue = result_queue
 
@@ -286,14 +360,14 @@ class TWSClient():
 		app.reqAccountSummary(6, "All", "AccountType")
 		app.run()
 
-		while True:
-			if self.result_queue.empty():
-				print("queue empty")
-				pass
-			else:
-				response = self.result_queue.get(timeout=0.2)
-				print(f"result of func >> {response}")
-				break
+		# while True:
+		# 	if self.result_queue.empty():
+		# 		print("queue empty")
+		# 		pass
+		# 	else:
+		# 		response = self.result_queue.get(timeout=0.2)
+		# 		print(f"result of func >> {response}")
+		# 		break
 
 	def order(self, reqId, ticker_symbol, side, qty, type_order, price=None):
 		order_queue = queue.Queue()
@@ -331,18 +405,24 @@ class TWSClient():
 		return res
 
 
-if __name__=="__main__":
-	start = time.time()
-	result_queue = queue.Queue()
 
-	tws = TWSClient()
-	# tws.get_contracts(ticker_symbol="AAPL")
-	tws.order(reqId=3, ticker_symbol="AAPL", side="BUY", qty=5, type_order="MKT")
+
+# if __name__=="__main__":
+# 	start = time.time()
+# 	# result_queue = queue.Queue()
+
+# 	tws = TwsApi()
+# 	tws.run()
+# 	tws.get_contract('MSFT')
+# 	time.sleep(5)
+# 	tws.stop()
+# 	# tws.get_contracts(ticker_symbol="AAPL")
+# 	# tws.order(reqId=3, ticker_symbol="AAPL", side="BUY", qty=5, type_order="MKT")
 	
-	# def find_detail_con(result_queue):
-	# 	tws = TWSClient()
-	# 	tws.find_detail(ticker_symbol="AAPL", args(result_queue,))
+# 	# def find_detail_con(result_queue):
+# 	# 	tws = TWSClient()
+# 	# 	tws.find_detail(ticker_symbol="AAPL", args(result_queue,))
 
-	# proc = multiprocessing.Process(target=find_detail_con)
-	end = time.time()
-	print(f"time consumed : {end-start}")
+# 	# proc = multiprocessing.Process(target=find_detail_con)
+# 	end = time.time()
+# 	print(f"time consumed : {end-start}")

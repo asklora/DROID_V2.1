@@ -1,6 +1,7 @@
-from django.views.generic import TemplateView
+from django.http import HttpResponse
+from config.asgi import tws
 
 
-class IndexWs(TemplateView):
-    
-    template_name = 'index.html'
+def IndexWs(request):
+    tws.get_contract('MSFT')
+    return HttpResponse('ok')

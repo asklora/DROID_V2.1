@@ -22,7 +22,8 @@ from config.routing import websocket_urlpatterns
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from channels.sessions import SessionMiddlewareStack
-
+from core.Clients.TWSClient import TwsApi
+import signal
 application = ProtocolTypeRouter({
     # Django's ASGI application to handle traditional HTTP requests
     "http": ASGIStaticFilesHandler(get_asgi_application()),
@@ -31,3 +32,9 @@ application = ProtocolTypeRouter({
         URLRouter(websocket_urlpatterns)
     ),
 })
+print('sgi')
+if os.environ.get("RUN_MAIN",None):
+    tws = TwsApi(256)
+    tws.run()
+    signal.signal(signal.SIGINT, tws.stop)
+    print(tws)
