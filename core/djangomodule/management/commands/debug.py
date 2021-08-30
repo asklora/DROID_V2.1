@@ -17,13 +17,10 @@ from portfolio.daily_hedge_classic import classic_position_check
 from config.celery import app 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        bot_type = BotOptionType.objects.get(bot_id='UNO_OTM_003846').bot_type
-        bots = [bot['bot_id'] for bot in BotOptionType.objects.filter(bot_type=bot_type).values('bot_id')]
-        print(bots)
-        # contoh = datetimeNow()
-        # firebase_user_update()
-        # print(contoh)
-        # print(datetimeNow())
+        contoh = datetimeNow()
+        firebase_user_update(user_id=[108])
+        print(contoh)
+        print(datetimeNow())
         # c = IBClient()
         # c.get_position('DU2898616',0)
         # c.market_order(2,'DU2898616','order first',265598)
