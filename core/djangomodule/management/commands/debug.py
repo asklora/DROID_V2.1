@@ -1,4 +1,3 @@
-from bot.calculate_bot import populate_daily_profit
 from general.date_process import datetimeNow
 from ingestion.mongo_migration import firebase_user_update
 from core.djangomodule.management.commands.populate_ticker import populate_ticker_monthly
@@ -19,7 +18,7 @@ from config.celery import app
 class Command(BaseCommand):
     def handle(self, *args, **options):
         contoh = datetimeNow()
-        populate_daily_profit()
+        firebase_user_update()
         print(contoh)
         print(datetimeNow())
         # c = IBClient()

@@ -30,7 +30,8 @@ from general.sql_query import (
     get_bot_statistic_data, 
     get_latest_bot_update_data,
     get_user_account_balance,
-    get_user_core)
+    get_user_core,
+    get_user_profit_history)
 
 def NonetoZero(value):
     return value
@@ -315,8 +316,10 @@ def firebase_user_update(user_id=None, currency_code=None):
     currency = currency[["currency_code", "is_decimal"]]
 
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")
+    user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_profit, daily_profit_pct")
     user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, amount as balance, currency_code")
     user_core = user_core.merge(user_balance, how="left", on=["user_id"])
+    user_core = user_core.merge(user_daily_profit, how="left", on=["user_id"])
     user_core = user_core.merge(currency, how="left", on=["currency_code"])
     user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
     user_core.loc[user_core["is_decimal"] == True, "balance"] = round(user_core.loc[user_core["is_decimal"] == True, "balance"], 2)
