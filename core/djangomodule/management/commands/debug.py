@@ -17,7 +17,7 @@ from config.celery import app
 class Command(BaseCommand):
     def handle(self, *args, **options):
         contoh = datetimeNow()
-        firebase_user_update()
+        firebase_user_update(user_id=[108])
         print(contoh)
         print(datetimeNow())
         # c = IBClient()
