@@ -7,8 +7,9 @@ import os
 import signal
 from channels_presence.models import Room, Presence
 from channels_presence.decorators import touch_presence
-
-
+from core.user.models import User
+from asgiref.sync import sync_to_async
+import time
 class UniverseConsumer(WebsocketConsumer):
     room_id = None
 
@@ -215,6 +216,8 @@ class OrderConsumer(AsyncWebsocketConsumer):
 
 
 class TestConsumer(AsyncWebsocketConsumer):
+    
+    
     async def connect(self):
 
         await self.accept()
@@ -224,6 +227,8 @@ class TestConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
     
+
+
     async def receive(self, text_data):
         print(text_data)
         text_data_json = json.loads(text_data)
@@ -232,7 +237,30 @@ class TestConsumer(AsyncWebsocketConsumer):
                 self.channel_name,
                 text_data_json
             )
-    
+    @sync_to_async
+    def get_user(self, username):
+        try:
+            user = User.objects.get(username=username)
+            time.sleep(15)
+            asyncio.run(self.channel_layer.send(
+                self.channel_name,
+                {'type':'send_message','message':f'user {user.email} found'}
+            ))
+        except User.DoesNotExist:
+            asyncio.run(self.channel_layer.send(
+                self.channel_name,
+                {'type':'send_message','message':f'user {username} not found'}
+            ))
+
+
+    async def query_user(self,message):
+        asyncio.ensure_future(self.get_user(message['message']))
+        await self.channel_layer.send(
+                self.channel_name,
+                {'type':'send_message','message':'your task is executed please wait'}
+
+            )
+        
     async def send_message(self, event):
         event.pop('type')
 

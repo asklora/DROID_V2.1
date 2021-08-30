@@ -2,7 +2,12 @@ import pandas as pd
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general.sql_process import db_read, alibaba_db_url
-from general.date_process import backdate_by_day, dateNow, droid_start_date, str_to_date
+from general.date_process import (
+    backdate_by_day, 
+    dateNow, 
+    date_minus_day, 
+    droid_start_date, 
+    str_to_date)
 from general.data_process import tuple_data
 from general.table_name import (
     get_bot_backtest_table_name,
@@ -11,6 +16,7 @@ from general.table_name import (
     get_bot_type_table_name,
     get_data_ibes_monthly_table_name,
     get_data_macro_monthly_table_name,
+    get_ai_value_pred_table_name,
     get_industry_group_table_name,
     get_industry_table_name,
     get_latest_bot_update_table_name,
@@ -32,7 +38,10 @@ from general.table_name import (
     get_fundamental_score_table_name,
     get_master_ohlcvtr_table_name,
     get_report_datapoint_table_name,
-    get_universe_consolidated_table_name)
+    get_universe_consolidated_table_name,
+    get_factor_calculation_table_name,
+    get_factor_rank_table_name,
+)
 
 def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=True):
     """Base function for database query
@@ -360,6 +369,13 @@ def get_pred_mean():
     data = data.drop(columns=["update_time"])
     return data
 
+def get_ai_value_pred_final():
+    query = f"SELECT * FROM {get_ai_value_pred_table_name()}"
+    data = read_query(query, table=get_ai_value_pred_table_name(), alibaba=True)
+    data = pd.pivot_table(data, index=['ticker'], columns=['y_type'], values='final_pred')
+    data.columns = ['ai_value_'+x for x in data.columns]
+    return data.reset_index()
+
 
 def get_specific_tri(trading_day, tri_name="tri"):
     query = f"select price.ticker, price.total_return_index as {tri_name} from {get_master_ohlcvtr_table_name()} price "
@@ -369,6 +385,27 @@ def get_specific_tri(trading_day, tri_name="tri"):
     data = read_query(query, table=get_master_ohlcvtr_table_name())
     return data
 
+def get_specific_tri_avg(trading_day, avg_days=7, tri_name="tri"):
+    query = f"SELECT a.ticker, avg(a.tri) as {tri_name} FROM (SELECT ticker, total_return_index as tri FROM master_ohlcvtr "
+    query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{date_minus_day(start_date=trading_day, days=avg_days)}') a GROUP BY ticker"
+    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    return data
+
+def get_specific_volume_avg(trading_day, avg_days=7, volume_name="volume"):
+    query = f"SELECT a.ticker, avg(a.volume) as {volume_name} FROM (SELECT ticker, volume FROM master_ohlcvtr "
+    query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{date_minus_day(start_date=trading_day, days=avg_days)}') a GROUP BY ticker"
+    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    return data
+
+def get_factor_calculation_formula():
+    query = f"SELECT * FROM {get_factor_calculation_table_name()}"
+    data = read_query(query, table=get_factor_calculation_table_name(), alibaba=True)
+    return data
+
+def get_factor_rank():
+    query = f"SELECT * FROM {get_factor_rank_table_name()}"
+    data = read_query(query, table=get_factor_rank_table_name(), alibaba=True)
+    return data
 
 def get_yesterday_close_price(ticker=None, currency_code=None, active=True):
     query = f"select tac.ticker, tac.trading_day, tac.tri_adj_close as yesterday_close from {get_master_tac_table_name()} tac "

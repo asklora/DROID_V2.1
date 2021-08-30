@@ -599,7 +599,7 @@ class RkdStream(RkdData):
                 gc.collect()
             else:
                 break
-            time.sleep(6)
+            time.sleep(120)
         if self.is_thread:
                 sys.exit()
         

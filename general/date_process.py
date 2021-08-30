@@ -118,6 +118,22 @@ def date_minus_bday(start_date, days=1):
     return start_date
 
 
+def date_plus_day(start_date, days=1):
+    if type(start_date) == str:
+        start_date = (str_to_date(start_date) + relativedelta(days=days)).strftime("%Y-%m-%d")
+    else:
+        start_date = ((start_date) + relativedelta(days=days)).strftime("%Y-%m-%d")
+    return start_date
+
+
+def date_minus_day(start_date=dateNow(), days=1):
+    if type(start_date) == str:
+        start_date = (str_to_date(start_date) - relativedelta(days=days)).strftime("%Y-%m-%d")
+    else:
+        start_date = ((start_date) - relativedelta(days=days)).strftime("%Y-%m-%d")
+    return start_date
+
+
 def BackTimeFormat(days, strip=None):
     time = date.today() - timedelta(days=days)
     if strip:

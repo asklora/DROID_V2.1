@@ -19,7 +19,7 @@ from general.table_name import (
     get_user_profit_history_table_name)
 from datasource.dsws import get_data_static_from_dsws
 from bot import uno
-from global_vars import large_hedge, small_hedge, buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem, max_vol, min_vol, default_vol, REPORT_INTRADAY
+from global_vars import large_hedge, small_hedge, buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem, max_vol, min_vol, default_vol
 import pandas as pd
 
 def check_date(dates):
