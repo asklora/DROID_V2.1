@@ -90,7 +90,6 @@ def check_start_end_date(start_date, end_date):
 
 
 def check_ticker_currency_code_query(ticker=None, currency_code=None, active=True):
-    print(type(ticker))
     query = ""
     if active:
         if type(ticker) != type(None):

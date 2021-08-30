@@ -344,12 +344,13 @@ def firebase_user_update(user_id=None, currency_code=None):
     active_portfolio = pd.DataFrame({"user_id":[], "total_invested_amount":[], "total_bot_invested_amount":[], "total_user_invested_amount":[], 
         "pct_total_bot_invested_amount":[], "pct_total_user_invested_amount":[], "total_profit_amount":[], "active_portfolio":[]}, index=[])
     for user in user_core["user_id"].unique():
+        print(user)
         orders_position = position_data.loc[position_data["user_id"] == user]
+        orders_position = orders_position.reset_index(inplace=False)
         #TOP LEVEL
         orders_position["status"] = "LIVE"
         orders_position["current_values"] = (orders_position["bot_cash_balance"] + (orders_position["share_num"] * orders_position["price"]))
         orders_position["current_ivt_amt"] = (orders_position["share_num"] * orders_position["price"])
-        print(orders_position)
         #MARGIN
         # orders_position["margin_amount"] = (orders_position["margin"] * orders_position["investment_amount"]) - orders_position["investment_amount"]
         orders_position["margin_amount"] = (orders_position["margin"] - 1) * orders_position["investment_amount"]
@@ -387,7 +388,6 @@ def firebase_user_update(user_id=None, currency_code=None):
         # orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
         # orders_position = get_orders_position(user_id=[user], active=False, field=orders_position_field)
         orders_position = orders_position.sort_values(by=["profit"])
-        print(orders_position)
         for index, row in orders_position.iterrows():
             act_df = orders_position.loc[orders_position["position_uid"] == row["position_uid"]]
             bot = bot_option_type.loc[bot_option_type["bot_id"] == row["bot_id"]][["bot_id", "bot_option_type", "bot_apps_name", "bot_apps_description", "duration"]]
