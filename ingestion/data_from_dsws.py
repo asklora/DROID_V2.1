@@ -516,12 +516,13 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # calculate ratios refering to table X
     fundamentals_score, factor_formula = score_update_factor_ratios(fundamentals_score)
 
-    # fundamentals_score["earnings_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
-    #                                        fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
-    # fundamentals_score["revenue_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
-    #                                        fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
-
     factor_rank = get_factor_rank()
+    universe_currency_code = get_active_universe()['currency_code'].unique()
+    for i in set(universe_currency_code) - set(factor_rank['group'].unique()):
+        replace_rank = factor_rank.loc[factor_rank['group']=='USD'].copy()
+        replace_rank['group'] = i
+        factor_rank.append(replace_rank)
+
     factor_rank = factor_rank.merge(factor_formula, left_on=['factor_name'], right_index=True, how='outer')
     factor_rank['long_large'] = factor_rank['long_large'].fillna(True)
     factor_rank = factor_rank.dropna(subset=['pillar'])
