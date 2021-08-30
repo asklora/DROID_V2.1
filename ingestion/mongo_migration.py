@@ -338,7 +338,7 @@ def firebase_user_update(user_id=None, currency_code=None):
             orders_position = orders_position.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
         #TOP LEVEL
         orders_position["status"] = "LIVE"
-        orders_position["current_inv_amt"] = (orders_position["bot_cash_balance"] + (orders_position["share_num"] * orders_position["price"]))
+        orders_position["current_values"] = (orders_position["bot_cash_balance"] + (orders_position["share_num"] * orders_position["price"]))
         print(orders_position)
         #MARGIN
         # orders_position["margin_amount"] = (orders_position["margin"] * orders_position["investment_amount"]) - orders_position["investment_amount"]
@@ -347,15 +347,15 @@ def firebase_user_update(user_id=None, currency_code=None):
         orders_position["threshold"] = (orders_position["margin_amount"] + orders_position["investment_amount"]) - orders_position["bot_cash_balance"]
 
         #PROFIT
-        # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_inv_amt"]
+        # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_values"]
         # orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"]
-        orders_position["profit"] =orders_position["current_inv_amt"] - orders_position["investment_amount"]
+        orders_position["profit"] =orders_position["current_values"] - orders_position["investment_amount"]
         orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"] 
 
         #BOT POSITION
         # orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["investment_amount"] * 100).round(0)
         # orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
-        orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["current_inv_amt"] * 100).round(0)
+        orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["current_values"] * 100).round(0)
         orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
 
         #USER POSITION
@@ -365,9 +365,9 @@ def firebase_user_update(user_id=None, currency_code=None):
         # pct_total_bot_invested_amount = int(round(total_bot_invested_amount / total_invested_amount, 0) * 100)
         # pct_total_user_invested_amount = int(round(total_user_invested_amount / total_invested_amount, 0) * 100)
         # total_profit_amount = sum(orders_position["profit"].to_list())
-        total_invested_amount = NonetoZero(sum(orders_position["current_inv_amt"].to_list()))
-        total_bot_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_inv_amt"].to_list()))
-        total_user_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["current_inv_amt"].to_list()))
+        total_invested_amount = NonetoZero(sum(orders_position["current_values"].to_list()))
+        total_bot_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_values"].to_list()))
+        total_user_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["current_values"].to_list()))
         pct_total_bot_invested_amount = NonetoZero(int(round(total_bot_invested_amount / total_invested_amount, 0) * 100))
         pct_total_user_invested_amount = NonetoZero(int(round(total_user_invested_amount / total_invested_amount, 0) * 100))
         total_profit_amount = NonetoZero(sum(orders_position["profit"].to_list()))

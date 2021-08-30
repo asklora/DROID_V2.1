@@ -220,11 +220,12 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     qty = serializers.FloatField(read_only=True)
     setup = serializers.JSONField(required=False)
     created = serializers.DateTimeField(required=False, read_only=True)
+    margin = serializers.IntegerField(required=False)
 
     class Meta:
         model = Order
         fields = ["ticker", "price", "bot_id", "amount", "user",
-                  "side", "status", "order_uid", "qty", "setup", "created"]
+                  "side", "status", "order_uid", "qty", "setup", "created","margin"]
     
     
     def to_internal_value(self, data):
@@ -258,6 +259,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 raise exceptions.NotAcceptable({"detail": f"user already has position for {validated_data['ticker']} in current options"})
 
         return init
+    
 
     def create(self, validated_data):
         if not "user" in validated_data:
@@ -284,7 +286,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             df["latest_price"] = df["latest_price"].astype(float)
             ticker = df.loc[df["ticker"] == validated_data["ticker"].ticker]
             validated_data["price"] = ticker.iloc[0]["latest_price"]
-        
         
         order_type = "apps"
         if user.id == 135:
