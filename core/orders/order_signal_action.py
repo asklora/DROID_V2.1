@@ -7,6 +7,8 @@ from core.Clients.models import UserClient
 from django.db import transaction as db_transaction
 from config.celery import app as worker
 from core.Clients.IBClientModule import IBClient 
+from config.asgi import tws
+
 """
 user/bot
 broker/simulation
@@ -419,11 +421,11 @@ class LiveOrderConnector(BaseOrderConnector):
     # TODO: #51 INTERACTIVE BROKER ORDER REQUEST
     def on_buy_placed(self):
         if self.instance.ticker.currency_code == "USD":
-            contract = IBClient.find_contract(self.instance.ticker.ticker_symbol)
+            contract = tws.find_contract(self.instance.ticker.ticker_symbol)
             if not contract:
                 self.cancel_order()
             else:
-                order = IBClient.market_order(qty=self.instance.qty, 
+                order = tws.market_order(qty=self.instance.qty, 
                     account_id="DU2898614",
                     side=self.instance.side.upper(),
                     con_order_id=self.instance.order_uid)

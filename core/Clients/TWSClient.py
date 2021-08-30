@@ -29,8 +29,20 @@ class ApiPool(type):
 				cls.__instance =super(ApiPool, cls).__new__(cls,*args, **kwargs)
 		return cls.__instance
 
+class ResponsePool(type):
+	__lock = LockThread()
+	__instance =None
+	
+	def __new__(cls,*args, **kwargs):
+		with cls.__lock:
+			if not cls.__instance:
+				cls.__instance =super(ApiPool, cls).__new__(cls,*args, **kwargs)
+		return cls.__instance
 
-class ResponseHandler:
+
+class ResponseHandler(metaclass=ResponsePool):
+	contract = []
+
 	def __init__(self):
 		pass
 
@@ -261,6 +273,44 @@ class TwsApi(metaclass=ApiPool):
 	def get_contract(self,symbol:str,identifier:str='RIC'):
 		ids = self.server.nextId
 		self.server.reqMatchingSymbols(ids,symbol)
+"""
+	def order(self, reqId, ticker_symbol, side, qty, type_order, price=None):
+		# order_queue = queue.Queue()
+
+		contract = self.server.get_contract(ticker_symbol)
+		ids = self.get_valid_id(reqId)
+		# print(f"id for orders >> {ids}")
+
+		# app = TestApp()
+		# app.connect(self.host, self.port, 0, self.result_queue)
+		# print("Preparing Order ...")
+		order = Order()
+		order.action = side
+		order.totalQuantity = qty
+		order.orderType = type_order
+		order.transmit = True
+		order.account = "DU2898617"
+
+		if type_order == "LMT":
+			order.lmtPrice = price
+
+		# print("Placing Order ...")
+		self.server.placeOrder(ids, contract, order, order_queue)
+		# app.run()
+		res  = None
+
+		while True:
+			if order_queue.empty():
+				print("empty")
+				pass
+			else:
+				res = order_queue.get(timeout=0.2)
+				print(f"response order >> \n {res}")
+				break
+		return res
+"""
+
+
 		
 
 
