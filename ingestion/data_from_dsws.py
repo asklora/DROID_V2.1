@@ -786,7 +786,7 @@ def populate_ibes_table():
 def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=False):
     end_date = dateNow()
     start_date = backdate_by_month(1)
-    filter_field = ["EPS1TR12", "EPS1FD12", "EBD1FD12", "CAP1FD12", "I0EPS", "EPSI1MD"]
+    filter_field = ["EPS1TR12", "EPS1FD12", "EBD1FD12", "CAP1FD12", "I0EPS", "EPSI1MD", "SAL1FD12"]
 
     if(history):
         universe = get_ibes_new_ticker()
@@ -821,7 +821,8 @@ def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=
             "EPS1FD12": "eps1fd12",
             "EPS1TR12": "eps1tr12",
             "EPSI1MD": "epsi1md",
-            "I0EPS" : "i0eps",
+            "SAL1FD12" : "sal1fd12",
+            "I0EPS" : "i0eps", 
             "index" : "trading_day"
         })
         result = uid_maker(result)
@@ -878,13 +879,49 @@ def update_macro_data_monthly_from_dsws():
     start_date_quarter = backdate_by_month(6)
     ticker_quarterly_field = ["CHGDP...C", "JPGDP...D", "USGDP...D", "EMGDP...D"]
     ticker_monthly_field = ["USINTER3", "USGBILL3", "EMIBOR3.", "JPMSHORT", "EMGBOND.", "CHGBOND."]
-    ticker_field = ["EMIBOR3.", "USGBILL3", "CHGDP...C", "EMGDP...D", "USGDP...D", "USINTER3", "EMGBOND.", "JPMSHORT", "CHGBOND.", "JPGDP...D"]
+    ticker_field = ["EMIBOR3.", "USGBILL3", "CHGDP...C", "EMGDP...D", "USGDP...D", "USINTER3", "EMGBOND.", 
+        "JPMSHORT", "CHGBOND.", "JPGDP...D"]
+    ticker_vix = ["CBOEVIX", "VHSIVOL", "VSTOXXI", "VKOSPIX"]
+    filter_field_vix = ["PI"]
     filter_field = ["ESA"]
     identifier="ticker"
+    result_monthly_vix, except_field = get_data_history_frequently_from_dsws(start_date_month, end_date, ticker_vix, identifier, filter_field_vix, use_ticker=False, split_number=1, monthly=True)
     result_monthly, except_field = get_data_history_frequently_from_dsws(start_date_month, end_date, ticker_monthly_field, identifier, filter_field, use_ticker=False, split_number=1, monthly=True)
     result_quarterly, except_field = get_data_history_frequently_from_dsws(start_date_quarter, end_date, ticker_quarterly_field, identifier, filter_field, use_ticker=False, split_number=1, quarterly=True)
     print(result_monthly)
     print(result_quarterly)
+    if(len(result_monthly_vix)) > 0 :
+        result_monthly_vix = result_monthly_vix.reset_index(drop=True)
+        result_monthly_vix = result_monthly_vix.rename(columns={"index" : "trading_day"})
+        result_monthly_vix["year"] = pd.DatetimeIndex(result_monthly_vix["trading_day"]).year
+        result_monthly_vix["month"] = pd.DatetimeIndex(result_monthly_vix["trading_day"]).month
+        data_monthly_vix = result_monthly_vix.loc[result_monthly_vix["ticker"] == "CBOEVIX"][["trading_day"]]
+        data_monthly_vix["year"] = pd.DatetimeIndex(data_monthly_vix["trading_day"]).year
+        data_monthly_vix["month"] = pd.DatetimeIndex(data_monthly_vix["trading_day"]).month
+        data_monthly_vix = data_monthly_vix.drop_duplicates(subset=["month"], keep="first", inplace=False)
+        data_monthly_vix = data_monthly_vix.set_index("month")
+        for index, row in result_monthly_vix.iterrows():
+            ticker_field = row["ticker"]
+            month = row["month"]
+            if (row["ticker"] == "CBOEVIX") :
+                    ticker_field = "cboevix"
+            elif (row["ticker"] == "VHSIVOL") :
+                    ticker_field = "vhsivol"
+            elif (row["ticker"] == "VSTOXXI") :
+                    ticker_field = "vstoxxi"
+            elif (row["ticker"] == "VKOSPIX.") :
+                    ticker_field = "vkospix"
+            data_field = row["PI"]
+            data_monthly_vix.loc[month, ticker_field] = data_field
+        data_monthly_vix = data_monthly_vix.reset_index(inplace=False)
+        data_monthly_vix = data_monthly_vix.sort_values(by="trading_day", ascending=False)
+        data_monthly_vix.loc[data_monthly_vix["month"].isin([12, 1, 2]), "quarter"] = 1
+        data_monthly_vix.loc[data_monthly_vix["month"].isin([3, 4, 5]), "quarter"] = 2
+        data_monthly_vix.loc[data_monthly_vix["month"].isin([6, 7, 8]), "quarter"] = 3
+        data_monthly_vix.loc[data_monthly_vix["month"].isin([9, 10, 11]), "quarter"] = 4
+        data_monthly_vix["year"] = np.where(data_monthly_vix["month"] == 12, data_monthly_vix["year"] + 1, data_monthly_vix["year"])
+        print(data_monthly_vix)
+
     if(len(result_monthly)) > 0 :
         result_monthly = result_monthly.reset_index()
         result_monthly = result_monthly.drop(columns=["level_0"])
@@ -923,6 +960,7 @@ def update_macro_data_monthly_from_dsws():
         data_monthly.loc[data_monthly["month"].isin([9, 10, 11]), "quarter"] = 4
         data_monthly["year"] = np.where(data_monthly["month"] == 12, data_monthly["year"] + 1, data_monthly["year"])
         print(data_monthly)
+
     if(len(result_quarterly)) > 0 :
         result_quarterly = result_quarterly.rename(columns={"index": "trading_day"})
         data_quarterly = result_quarterly.loc[result_quarterly["ticker"] == "CHGDP...C"][["trading_day"]]
@@ -966,10 +1004,12 @@ def update_macro_data_monthly_from_dsws():
         data_quarterly["year"] = np.where(data_quarterly["month"] == 12, data_quarterly["year"] + 1, data_quarterly["year"])
         data_quarterly = data_quarterly.drop(columns=["month", "trading_day"])
         print(data_quarterly)
+        
     result = data_monthly.merge(data_quarterly, how="left", on=["year", "quarter"])
+    result = result.merge(data_monthly_vix, how="left", on=["year", "quarter"])
     result = result.drop(columns=["month", "year", "quarter"])
-    print(result)
     result = result.dropna(subset=["period_end"])
+    print(result)
     upsert_data_to_database(result, get_data_macro_monthly_table_name(), "trading_day", how="update", Text=True)
     report_to_slack("{} : === Data MACRO Monthly Update Updated ===".format(datetimeNow()))
     populate_macro_table()
@@ -980,7 +1020,7 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
         "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
         "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
         "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
-        "WC02001A", "WC05575A", "WC01451A", "WC18810A", "WC02401A", "WC18274A"]
+        "WC02001A", "WC05575A", "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A"]
     for field in filter_field:
         worldscope_quarter_summary_from_dsws(ticker=ticker, currency_code=currency_code, filter_field=[field], history=history)
     report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
@@ -1039,11 +1079,12 @@ def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filt
             "WC02001A" : "fn_2001",
             "WC05575A" : "fn_5575",
             "index" : "period_end",
-            # "WC01451A", "WC18810A", "WC02401A", "WC18274A"
+            # "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A"
             "WC01451A" : "fn_1451",
             "WC18810A" : "fn_18810",
             "WC02401A" : "fn_2401",
             "WC18274A" : "fn_18274",
+            "WC03040A" : "fn_3040"
         })
         result = result.reset_index(inplace=False)
         # print(result)

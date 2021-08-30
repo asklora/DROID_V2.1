@@ -415,7 +415,6 @@ class DataVix(models.Model):
     def __str__(self):
         return self.uid
 
-
 class Macro(models.Model):
     """
     Data used for AI
@@ -432,6 +431,10 @@ class Macro(models.Model):
     usgbill3 = models.FloatField(blank=True, null=True)
     jpmshort = models.FloatField(blank=True, null=True)
     fred_data = models.FloatField(blank=True, null=True)
+    cboevix = models.FloatField(blank=True, null=True)
+    vhsivol = models.FloatField(blank=True, null=True)
+    vstoxxi = models.FloatField(blank=True, null=True)
+    vkospix = models.FloatField(blank=True, null=True)
 
     class Meta:
         managed = True
@@ -458,6 +461,11 @@ class MacroMonthly(models.Model):
     usgbill3 = models.FloatField(blank=True, null=True)
     jpmshort = models.FloatField(blank=True, null=True)
     fred_data = models.FloatField(blank=True, null=True)
+    cboevix = models.FloatField(blank=True, null=True)
+    vhsivol = models.FloatField(blank=True, null=True)
+    vstoxxi = models.FloatField(blank=True, null=True)
+    vkospix = models.FloatField(blank=True, null=True)
+
 
     class Meta:
         managed = True
@@ -485,6 +493,7 @@ class Ibes(models.Model):
     ebd1fd12 = models.FloatField(blank=True, null=True)
     eps1fd12 = models.FloatField(blank=True, null=True)
     eps1tr12 = models.FloatField(blank=True, null=True)
+    sal1fd12  = models.FloatField(blank=True, null=True)
 
     class Meta:
         managed = True
@@ -513,6 +522,7 @@ class IbesMonthly(models.Model):
     epsi1md = models.FloatField(blank=True, null=True)
     i0eps = models.FloatField(blank=True, null=True)
     ebd1fd12 = models.FloatField(blank=True, null=True)
+    sal1fd12  = models.FloatField(blank=True, null=True)
 
     class Meta:
         managed = True
@@ -585,6 +595,7 @@ class WorldscopeSummary(models.Model):
     fn_18810 = models.FloatField(blank=True, null=True)
     fn_2401 = models.FloatField(blank=True, null=True)
     fn_18274 = models.FloatField(blank=True, null=True)
+    fn_3040 = models.FloatField(blank=True, null=True)
 
 
     class Meta:
