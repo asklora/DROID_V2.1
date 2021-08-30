@@ -1,17 +1,40 @@
-from core.master.models import MasterOhlcvtr
 from datetime import datetime
 
 import pytest
 from core.djangomodule.network.cloud import DroidDb
+from core.master.models import MasterOhlcvtr
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.orders.serializers import OrderCreateSerializer
 from core.orders.services import sell_position_service
 from core.user.models import Accountbalance, TransactionHistory, User
-from dateutil.relativedelta import relativedelta
-from django import setup
 from django.conf import settings
-from portfolio import classic_position_check, uno_position_check, ucdc_position_check
+from portfolio import (
+    classic_position_check,
+    ucdc_position_check,
+    uno_position_check,
+)
 from rest_framework import exceptions
+
+
+def create_buy_order(
+    price: float,
+    ticker: str,
+    bot_id: str = "STOCK_stock_0",
+    qty: int = 100,
+    user_id: int = None,
+    user: User = None,
+) -> Order:
+    return Order.objects.create(
+        amount=price * qty,
+        bot_id=bot_id,
+        order_type="apps",  # to differentiate itself from FELS's orders
+        price=price,
+        qty=qty,
+        side="buy",
+        ticker_id=ticker,
+        user_id_id=user_id,
+        user_id=user,
+    )
 
 
 class TestBuy:
@@ -37,19 +60,11 @@ class TestBuy:
         A new order should be created with default values for is_init, placed, status, dates, etc.
         """
 
-        side = "buy"
-        ticker = "0780.HK"
-        price = 1317
-        user_id = 135
-        bot_id = "STOCK_stock_0"
-
-        order = Order.objects.create(
-            amount=1317,
-            bot_id=bot_id,
-            price=price,
-            side=side,
-            ticker_id=ticker,
-            user_id_id=user_id,
+        order = create_buy_order(
+            user_id=135,
+            ticker="0780.HK",
+            price=1317,
+            qty=1,
         )
 
         assert order.is_init == True
@@ -67,22 +82,11 @@ class TestBuy:
         A new BUY order should be created with empty setup
         """
 
-        side = "buy"
-        ticker = "3377.HK"
-        qty = 1
-        price = 1317
-        user_id = 197
-        bot_id = "STOCK_stock_0"
-
-        order = Order.objects.create(
-            amount=price * qty,
-            bot_id=bot_id,
-            order_type="apps",
-            price=price,
-            qty=qty,
-            side=side,
-            ticker_id=ticker,
-            user_id_id=user_id,
+        order = create_buy_order(
+            ticker="3377.HK",
+            price=1317,
+            user_id=197,
+            bot_id="STOCK_stock_0",
         )
 
         assert order.side == "buy"
@@ -170,22 +174,13 @@ class TestBuy:
         A new BUY order should be created with non-empty setup
         """
 
-        side = "buy"
-        ticker = "3377.HK"
-        qty = 1
-        price = 1317
-        user_id = 197
         bot_id = "CLASSIC_classic_007692"
 
-        order = Order.objects.create(
-            amount=price * qty,
+        order = create_buy_order(
             bot_id=bot_id,
-            order_type="apps",
-            price=price,
-            qty=qty,
-            side=side,
-            ticker_id=ticker,
-            user_id_id=user_id,
+            price=1317,
+            ticker="3377.HK",
+            user_id=197,
         )
 
         assert order.side == "buy"
@@ -197,22 +192,13 @@ class TestBuy:
         A new BUY order should be created with non-empty setup
         """
 
-        side = "buy"
-        ticker = "3377.HK"
-        qty = 1
-        price = 1317
-        user_id = 197
         bot_id = "UNO_OTM_007692"
 
-        order = Order.objects.create(
-            amount=price * qty,
+        order = create_buy_order(
             bot_id=bot_id,
-            order_type="apps",
-            price=price,
-            qty=qty,
-            side=side,
-            ticker_id=ticker,
-            user_id_id=user_id,
+            price=1317,
+            ticker="3377.HK",
+            user_id=197,
         )
 
         assert order.side == "buy"
@@ -224,22 +210,13 @@ class TestBuy:
         A new BUY order should be created with non-empty setup
         """
 
-        side = "buy"
-        ticker = "3377.HK"
-        qty = 1
-        price = 1317
-        user_id = 197
         bot_id = "UCDC_ATM_007692"
 
-        order = Order.objects.create(
-            amount=price * qty,
+        order = create_buy_order(
             bot_id=bot_id,
-            order_type="apps",
-            price=price,
-            qty=qty,
-            side=side,
-            ticker_id=ticker,
-            user_id_id=user_id,
+            price=1317,
+            ticker="3377.HK",
+            user_id=197,
         )
 
         assert order.side == "buy"
@@ -270,22 +247,14 @@ class TestSell:
         A new SELL order should be created from a buy order
         """
 
-        ticker = "6606.HK"
-        qty = 1
         price = 1317
         user_id = 198
-        bot_id = "STOCK_stock_0"
 
         # We create an order
-        buy_order = Order.objects.create(
-            amount=price * qty,
-            bot_id=bot_id,
-            order_type="apps",
+        buy_order = create_buy_order(
+            ticker="6606.HK",
             price=price,
-            qty=qty,
-            side="buy",
-            ticker_id=ticker,
-            user_id_id=user_id,
+            user_id=user_id,
         )
 
         # We set it as filled
@@ -322,7 +291,9 @@ class TestSell:
 
         # We create the sell order
         sellPosition, sell_order = sell_position_service(
-            price + 13, datetime.now(), position.position_uid
+            price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
+            datetime.now(),
+            position.position_uid,
         )
 
         confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
@@ -347,22 +318,15 @@ class TestSell:
         assert user_balance != previous_user_balance
 
     def test_should_create_new_sell_order_for_user_with_classic_bot(self) -> None:
-        ticker = "6606.HK"
-        qty = 1
         price = 1317
         user_id = 198
-        bot_id = "CLASSIC_classic_007692"
 
         # We create an order
-        buy_order = Order.objects.create(
-            amount=price * qty,
-            bot_id=bot_id,
-            order_type="apps",
+        buy_order = create_buy_order(
+            ticker="6606.HK",
             price=price,
-            qty=qty,
-            side="buy",
-            ticker_id=ticker,
-            user_id_id=user_id,
+            user_id=user_id,
+            bot_id="CLASSIC_classic_007692",
         )
 
         buy_order.status = "placed"
@@ -385,7 +349,9 @@ class TestSell:
         )
 
         sellPosition, sell_order = sell_position_service(
-            price + 13, datetime.now(), position.position_uid
+            price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
+            datetime.now(),
+            position.position_uid,
         )
 
         confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
@@ -406,22 +372,15 @@ class TestSell:
         confirmed_sell_order.save()
 
     def test_should_create_new_sell_order_for_user_with_uno_bot(self) -> None:
-        ticker = "6606.HK"
-        qty = 1
         price = 1317
         user_id = 198
-        bot_id = "UNO_OTM_007692"
 
         # We create an order
-        buy_order = Order.objects.create(
-            amount=price * qty,
-            bot_id=bot_id,
-            order_type="apps",
+        buy_order = create_buy_order(
+            ticker="6606.HK",
             price=price,
-            qty=qty,
-            side="buy",
-            ticker_id=ticker,
-            user_id_id=user_id,
+            user_id=user_id,
+            bot_id="UNO_OTM_007692",
         )
 
         buy_order.status = "placed"
@@ -444,7 +403,9 @@ class TestSell:
         )
 
         sellPosition, sell_order = sell_position_service(
-            price + 13, datetime.now(), position.position_uid
+            price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
+            datetime.now(),
+            position.position_uid,
         )
 
         confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
@@ -465,22 +426,15 @@ class TestSell:
         confirmed_sell_order.save()
 
     def test_should_create_new_sell_order_for_user_with_ucdc_bot(self) -> None:
-        ticker = "6606.HK"
-        qty = 1
         price = 1317
         user_id = 198
-        bot_id = "UCDC_ATM_007692"
 
         # We create an order
-        buy_order = Order.objects.create(
-            amount=price * qty,
-            bot_id=bot_id,
-            order_type="apps",
+        buy_order = create_buy_order(
+            ticker="6606.HK",
             price=price,
-            qty=qty,
-            side="buy",
-            ticker_id=ticker,
-            user_id_id=user_id,
+            user_id=user_id,
+            bot_id="UCDC_ATM_007692",
         )
 
         buy_order.status = "placed"
@@ -503,7 +457,9 @@ class TestSell:
         )
 
         sellPosition, sell_order = sell_position_service(
-            price + 13, datetime.now(), position.position_uid
+            price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
+            datetime.now(),
+            position.position_uid,
         )
 
         confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
@@ -545,26 +501,19 @@ class TestHedge:
     def test_should_create_hedge_order_for_classic_bot(self) -> None:
         # step 1: create a new order
         ticker = "6606.HK"
-        qty = 1
         user_id = 198
-        bot_id = "CLASSIC_classic_007692"
         master = MasterOhlcvtr.objects.get(
             ticker=ticker,
-            trading_day='2021-06-01',
+            trading_day="2021-06-01",
         )
         price = master.close
         log_time = datetime.combine(master.trading_day, datetime.min.time())
 
-        buy_order = Order.objects.create(
-            amount=price * qty,
-            bot_id=bot_id,
-            created=log_time,
-            order_type="apps",
+        buy_order = create_buy_order(
+            ticker=ticker,
             price=price,
-            qty=qty,
-            side="buy",
-            ticker_id=ticker,
-            user_id_id=user_id,
+            user_id=user_id,
+            bot_id="CLASSIC_classic_007692",
         )
 
         buy_order.status = "placed"
@@ -603,27 +552,20 @@ class TestHedge:
 
     def test_should_create_hedge_order_for_uno_bot(self) -> None:
         # step 1: create a new order
-        ticker = "6606.HK"
-        qty = 1
+        ticker = "3690.HK"
         user_id = 198
-        bot_id = "UNO_OTM_007692"
         master = MasterOhlcvtr.objects.get(
             ticker=ticker,
-            trading_day='2021-06-01',
+            trading_day="2021-06-01",
         )
         price = master.close
         log_time = datetime.combine(master.trading_day, datetime.min.time())
 
-        buy_order = Order.objects.create(
-            amount=price * qty,
-            bot_id=bot_id,
-            created=log_time,
-            order_type="apps",
+        buy_order = create_buy_order(
+            ticker=ticker,
             price=price,
-            qty=qty,
-            side="buy",
-            ticker_id=ticker,
-            user_id_id=user_id,
+            user_id=user_id,
+            bot_id="UNO_OTM_007692",
         )
 
         buy_order.status = "placed"
@@ -659,30 +601,23 @@ class TestHedge:
 
         assert performance.exists() == True
         assert performance.count() > 1
-    
+
     def test_should_create_hedge_order_for_ucdc_bot(self) -> None:
         # step 1: create a new order
-        ticker = "6606.HK"
-        qty = 1
+        ticker = "2282.HK"
         user_id = 198
-        bot_id = "UCDC_ATM_007692"
         master = MasterOhlcvtr.objects.get(
             ticker=ticker,
-            trading_day='2021-06-01',
+            trading_day="2021-06-01",
         )
         price = master.close
         log_time = datetime.combine(master.trading_day, datetime.min.time())
 
-        buy_order = Order.objects.create(
-            amount=price * qty,
-            bot_id=bot_id,
-            created=log_time,
-            order_type="apps",
+        buy_order = create_buy_order(
+            ticker=ticker,
             price=price,
-            qty=qty,
-            side="buy",
-            ticker_id=ticker,
-            user_id_id=user_id,
+            user_id=user_id,
+            bot_id="UCDC_ATM_007692",
         )
 
         buy_order.status = "placed"
@@ -719,6 +654,7 @@ class TestHedge:
         assert performance.exists() == True
         assert performance.count() > 1
 
+
 class TestSerializer:
     pytestmark = pytest.mark.django_db
 
@@ -739,8 +675,8 @@ class TestSerializer:
 
     def test_should_create_new_buy_order_from_API(self) -> None:
         side = "buy"
-        ticker = "6606.HK"
-        qty = 1
+        ticker = "0008.HK"
+        qty = 2
         price = 1317
         user_id = 198
         bot_id = "STOCK_stock_0"
@@ -749,9 +685,10 @@ class TestSerializer:
 
         # We create an order
         order_request = {
-            "amount": qty * price,
+            "amount": price * qty,
             "bot_id": bot_id,
             "price": price,
+            "qty": qty,
             "side": side,
             "ticker": ticker,
             "user": user_id,
