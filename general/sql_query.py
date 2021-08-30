@@ -31,6 +31,7 @@ from general.table_name import (
     get_universe_rating_history_table_name,
     get_user_account_balance_table_name,
     get_user_core_table_name,
+    get_user_profit_history_table_name,
     get_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
@@ -652,6 +653,17 @@ def get_data_from_table_name(table_name, ticker=None, currency_code=None, active
 
 def get_user_core(currency_code=None, user_id=None, field="*"):
     table_name = get_user_core_table_name()
+    query = f"select {field} from {table_name} where is_active=True and is_superuser=False "
+    if type(user_id) != type(None):
+        query += f"and id in {tuple_data(user_id)}  "
+    elif type(currency_code) != type(None):
+        query += f"and id in (select user_id as id from {get_user_account_balance_table_name()} where currency_code in {tuple_data(currency_code)}) "
+    query += "order by id "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_user_profit_history(currency_code=None, user_id=None, field="*"):
+    table_name = get_user_profit_history_table_name()
     query = f"select {field} from {table_name} where is_active=True and is_superuser=False "
     if type(user_id) != type(None):
         query += f"and id in {tuple_data(user_id)}  "
