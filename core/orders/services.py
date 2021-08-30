@@ -1,4 +1,5 @@
 from .models import OrderPosition
+from core.bot.models import BotOptionType,BotType
 from portfolio import (
     classic_sell_position,
     ucdc_sell_position,
@@ -7,7 +8,9 @@ from portfolio import (
     )
 
 def is_portfolio_exist(ticker,bot_id,user_id):
-    portfolios = OrderPosition.objects.filter(user_id=user_id,ticker=ticker,bot_id=bot_id,is_live=True).prefetch_related('ticker')
+    bot_type = BotOptionType.objects.get(bot_id=bot_id).bot_type
+    bots = [bot['bot_id'] for bot in BotOptionType.objects.filter(bot_type=bot_type).values('bot_id')]
+    portfolios = OrderPosition.objects.filter(user_id=user_id,ticker=ticker,bot_id__in=bots,is_live=True).prefetch_related('ticker')
     if portfolios.exists():
         portfolio = portfolios.latest('created')
         return portfolio
