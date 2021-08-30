@@ -615,7 +615,7 @@ class RkdStream(RkdData):
         return threads
 
     def stream(self):
-        print("Connecting to WebSocket " + self.ws_address + " ...")
+        # print("Connecting to WebSocket " + self.ws_address + " ...")
         try:
             self.web_socket_app.run_forever()
         except KeyboardInterrupt as e:
