@@ -326,7 +326,6 @@ def firebase_user_update(user_id=None, currency_code=None):
     orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
     position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
     
-    print(position_data["ticker"].unique())
     universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name"]]
     latest_price = get_latest_price_data(ticker = position_data["ticker"].unique())[["ticker", "last_date", "latest_price"]]
     latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})
@@ -341,7 +340,7 @@ def firebase_user_update(user_id=None, currency_code=None):
     position_data = position_data.merge(performance_data, how="left", on=["position_uid"])
     position_data = position_data.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
 
-
+    print(position_data)
     active_portfolio = pd.DataFrame({"user_id":[], "total_invested_amount":[], "total_bot_invested_amount":[], "total_user_invested_amount":[], 
         "pct_total_bot_invested_amount":[], "pct_total_user_invested_amount":[], "total_profit_amount":[], "active_portfolio":[]}, index=[])
     for user in user_core["user_id"].unique():

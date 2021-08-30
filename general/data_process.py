@@ -1,4 +1,4 @@
-import pandas as pd
+import numpy as pd
 from pandas.core.series import Series
 
 def nonetozero(value):
@@ -26,6 +26,8 @@ def remove_null(data, field):
 def tuple_data(data):
     if(type(data) == Series):
         data = tuple(data.to_list())
+    elif(type(data) == pd.ndarray):
+        data = tuple(data.tolist())
     elif(type(data) == list):
         data = tuple(data)
     elif(type(data) == str):
