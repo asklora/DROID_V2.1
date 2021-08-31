@@ -260,7 +260,6 @@ def ucdc_position_check(position_uid, to_date=None, tac=False, hedge=False, late
                         order.save()
                         
                         print(f"Position event: {OrderPosition.objects.get(position_uid=position.position_uid).event}")
-                        print(f"Position amt: {OrderPosition.objects.get(position_uid=position.position_uid).current_inv_amt}")
                 print(f"trading_day {trading_day}-{hedge_price.ticker} done")
                 if status:
                     break
@@ -277,6 +276,10 @@ def ucdc_position_check(position_uid, to_date=None, tac=False, hedge=False, late
                         order.status = "filled"
                         order.filled_at = log_time
                         order.save()
+                print("\n")
+                print(f"Bot cash balance: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_bot_cash_balance}")
+                print(f"Share num: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').share_num}")
+                print(f"PnL amount: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_pnl_amt}")
                 print(f"trading_day {trading_day}-{tac_price.ticker} done")
                 if status:
                     break

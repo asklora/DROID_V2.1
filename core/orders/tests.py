@@ -1,6 +1,12 @@
+from bot.calculate_bot import check_date, get_expiry_date
+from core.bot.models import BotOptionType
 from datetime import datetime
+from typing import List, Union
+from boto3 import client
+from django.test.client import Client
 
 import pytest
+import requests
 from core.djangomodule.network.cloud import DroidDb
 from core.master.models import MasterOhlcvtr
 from core.orders.models import Order, OrderPosition, PositionPerformance
@@ -19,14 +25,17 @@ from rest_framework import exceptions
 def create_buy_order(
     price: float,
     ticker: str,
+    amount: float = None,
     bot_id: str = "STOCK_stock_0",
+    margin: int = 1,
     qty: int = 100,
     user_id: int = None,
     user: User = None,
 ) -> Order:
     return Order.objects.create(
-        amount=price * qty,
+        amount=amount if amount != None else price * qty,
         bot_id=bot_id,
+        margin=margin,
         order_type="apps",  # to differentiate itself from FELS's orders
         price=price,
         qty=qty,
@@ -64,7 +73,6 @@ class TestBuy:
             user_id=135,
             ticker="0780.HK",
             price=1317,
-            qty=1,
         )
 
         assert order.is_init == True
@@ -73,9 +81,9 @@ class TestBuy:
         assert order.placed_at == None
         assert order.filled_at == None
         assert order.canceled_at == None
-        assert order.amount == 1317
+        assert order.amount == 131700
         assert order.price == 1317
-        assert order.qty == 1  # from order.amount divided by order.price
+        assert order.qty == 100  # from order.amount divided by order.price
 
     def test_should_create_new_buy_order_for_user(self) -> None:
         """
@@ -169,6 +177,108 @@ class TestBuy:
         assert order.amount == price * qty
         assert user_balance.amount == saldo_blm_terpotong - order.amount
 
+    def test_should_create_new_buy_order_for_user_with_margin(self) -> None:
+        """
+        A new order should be created for user with margin applied to the amount
+        """
+
+        order = create_buy_order(
+            user_id=198,
+            ticker="0535.HK",
+            amount=85,
+            price=0.85,
+            margin=2,
+            qty=None,
+        )
+
+        assert (
+            order.qty == 200
+        )  # order.qty (default to 100 for this test) multiplied by margin
+        assert (
+            order.amount != 170
+        )  # from order.price times order.qty, excluding margin calculation
+        assert order.amount == 85  # the correct amount
+
+    def test_should_check_if_user_balance_is_cut_accordingly_with_margin(self) -> None:
+        """
+        A new buy order will be created and filled, and user balance is deducted buy the order amount.
+        Margin calculation should not cut the user balance.
+        """
+
+        side = "buy"
+        ticker = "3377.HK"
+        amount = 131700
+        price = 1317
+        margin = 2
+        bot_id = "STOCK_stock_0"
+
+        # Create sample user
+        user = User.objects.create_user(
+            email="pytest@tests.com",
+            username="pikachu_icikiwiw",
+            password="helloworld",
+            is_active=True,
+            current_status="verified",
+        )
+
+        # Create user wallet
+        user_balance = Accountbalance.objects.create(
+            user=user,
+            amount=0,
+            currency_code_id="HKD",
+        )
+
+        # Add balance
+        trans = TransactionHistory.objects.create(
+            balance_uid=user_balance,
+            side="credit",
+            amount=200000,
+            transaction_detail={"event": "first deposit"},
+        )
+
+        # Save initial user balance
+        user_balance = Accountbalance.objects.get(user=user)
+        initial_user_balance = user_balance.amount
+
+        # Create the order
+        order = Order.objects.create(
+            amount=amount,
+            bot_id=bot_id,
+            margin=2,
+            order_type="apps",
+            price=price,
+            side=side,
+            ticker_id=ticker,
+            user_id=user,
+        )
+
+        # The amount and qty should be calculated correctly
+        print(f"Ordered amount: {amount}")
+        print(f"Calculated amount: {order.amount}")
+        print(f"Ordered qty: {amount / price}")
+        print(f"Calculated qty: {order.qty}")
+
+        # The user balance should be untouched
+        user_balance = Accountbalance.objects.get(user=user)
+        print("User balance before order is filled: ", user_balance.amount)
+
+        # We place the order, deducting the amount from user's balance
+        order.status = "placed"
+        order.placed = True
+        order.placed_at = datetime.now()
+        order.save()
+
+        # Let's confirm this
+        user_balance = Accountbalance.objects.get(user=user)
+        print("User balance after order is filled: ", user_balance.amount)
+
+        order = Order.objects.get(pk=order.order_uid)
+
+        assert (
+            order.qty == 200
+        )  # order.qty (default to 100 for this test) multiplied by margin
+        assert user_balance.amount == initial_user_balance - order.amount
+
     def test_should_create_new_buy_order_for_classic_bot(self) -> None:
         """
         A new BUY order should be created with non-empty setup
@@ -182,6 +292,8 @@ class TestBuy:
             ticker="3377.HK",
             user_id=197,
         )
+
+        print(order.setup)
 
         assert order.side == "buy"
         assert order.setup != None  # Setup will be populated with bot information
@@ -650,9 +762,163 @@ class TestHedge:
         )
 
         print(performance.count())
+        print(performance[-1].expiry)
 
         assert performance.exists() == True
         assert performance.count() > 1
+
+    def test_should_create_hedge_order_for_ucdc_bot_with_margin(self) -> None:
+        # step 1: create a new order
+        ticker = "2282.HK"
+        user_id = 198
+        master = MasterOhlcvtr.objects.get(
+            ticker=ticker,
+            trading_day="2021-06-01",
+        )
+        price = master.close
+        log_time = datetime.combine(master.trading_day, datetime.min.time())
+
+        buy_order = create_buy_order(
+            ticker=ticker,
+            price=price,
+            user_id=user_id,
+            margin=2,
+            bot_id="UCDC_ATM_007692",
+        )
+
+        buy_order.status = "placed"
+        buy_order.placed = True
+        buy_order.placed_at = log_time
+        buy_order.save()
+
+        buy_order.status = "filled"
+        buy_order.filled_at = log_time
+        buy_order.save()
+
+        confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
+
+        performance = PositionPerformance.objects.get(
+            order_uid_id=confirmed_buy_order.order_uid
+        )
+
+        position: OrderPosition = OrderPosition.objects.get(
+            pk=performance.position_uid_id
+        )
+
+        # step 2: setup hedge
+        ucdc_position_check(
+            position_uid=position.position_uid,
+            tac=True,
+        )
+        # step 3: get hedge positions
+        performance = PositionPerformance.objects.filter(
+            position_uid=position.position_uid
+        )
+
+        print(performance.count())
+
+        assert performance.exists() == True
+        assert performance.count() > 1
+
+
+class TestBotExpiry:
+    pytestmark = pytest.mark.django_db
+
+    @pytest.fixture(scope="class")
+    def django_db_setup(self):
+        db = DroidDb()
+        read_endpoint, write_endpoint, port = db.test_url
+
+        DB_ENGINE = "psqlextra.backend"
+        settings.DATABASES["default"] = {
+            "ENGINE": DB_ENGINE,
+            "HOST": write_endpoint,
+            "NAME": "postgres",
+            "USER": "postgres",
+            "PASSWORD": "ml2021#LORA",
+            "PORT": port,
+        }
+
+    def test_should_confirm_bot_expiry_for_classic(self) -> None:
+        bot_types: List[BotOptionType] = BotOptionType.objects.filter(
+            bot_type="CLASSIC"
+        ).order_by("time_to_exp")
+
+        for bot_type in bot_types:
+            order = create_buy_order(
+                bot_id=bot_type.bot_id,
+                price=1317,
+                ticker="3377.HK",
+                user_id=197,
+            )
+
+            expiry = get_expiry_date(
+                bot_type.time_to_exp,
+                order.created,
+                order.ticker.currency_code.currency_code,
+            )
+            expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
+
+            print("\nCreated date: " + order.created.date().strftime("%Y-%m-%d"))
+            print("Expiry date: " + order.setup["position"]["expiry"])
+            print("Calculated expiry date: " + expiry_date)
+            print("Duration: " + bot_type.duration)
+
+            assert order.setup["position"]["expiry"] == expiry_date
+
+    def test_should_confirm_bot_expiry_for_uno(self) -> None:
+        bot_types: List[BotOptionType] = BotOptionType.objects.filter(
+            bot_type="UNO"
+        ).order_by("time_to_exp")
+
+        for bot_type in bot_types:
+            order = create_buy_order(
+                bot_id=bot_type.bot_id,
+                price=1317,
+                ticker="3377.HK",
+                user_id=197,
+            )
+
+            expiry = get_expiry_date(
+                bot_type.time_to_exp,
+                order.created,
+                order.ticker.currency_code.currency_code,
+            )
+            expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
+
+            print("\nCreated date: " + order.created.date().strftime("%Y-%m-%d"))
+            print("Expiry date: " + order.setup["position"]["expiry"])
+            print("Calculated expiry date: " + expiry_date)
+            print("Duration: " + bot_type.duration)
+
+            assert order.setup["position"]["expiry"] == expiry_date
+
+    def test_should_confirm_bot_expiry_for_ucdc(self) -> None:
+        bot_types: List[BotOptionType] = BotOptionType.objects.filter(
+            bot_type="UCDC"
+        ).order_by("time_to_exp")
+
+        for bot_type in bot_types:
+            order = create_buy_order(
+                bot_id=bot_type.bot_id,
+                price=1317,
+                ticker="3377.HK",
+                user_id=197,
+            )
+
+            expiry = get_expiry_date(
+                bot_type.time_to_exp,
+                order.created,
+                order.ticker.currency_code.currency_code,
+            )
+            expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
+
+            print("\nCreated date: " + order.created.date().strftime("%Y-%m-%d"))
+            print("Expiry date: " + order.setup["position"]["expiry"])
+            print("Calculated expiry date: " + expiry_date)
+            print("Duration: " + bot_type.duration)
+
+            assert order.setup["position"]["expiry"] == expiry_date
 
 
 class TestSerializer:
@@ -721,3 +987,92 @@ class TestSerializer:
             serializer = OrderCreateSerializer(data=order_request)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
+
+
+class TestAPI:
+    """
+    Unfinished
+    """
+
+    pytestmark = pytest.mark.django_db
+
+    @pytest.fixture(scope="class")
+    def django_db_setup(self):
+        db = DroidDb()
+        read_endpoint, write_endpoint, port = db.test_url
+
+        DB_ENGINE = "psqlextra.backend"
+        settings.DATABASES["default"] = {
+            "ENGINE": DB_ENGINE,
+            "HOST": write_endpoint,
+            "NAME": "postgres",
+            "USER": "postgres",
+            "PASSWORD": "ml2021#LORA",
+            "PORT": port,
+        }
+
+    def build_url(
+        self,
+        url: str = "http://0.0.0.0:8000",
+        path: str = "/api/order/create/",
+    ) -> str:
+        return f"{url}{path}"
+
+    def log_in(
+        self,
+        email: str,
+        password: str,
+    ) -> Union[str, None]:
+
+        return
+
+    def authenticate(
+        self,
+        email: str = "aga",
+        password: str = "123",
+    ) -> Union[dict, None]:
+        url = self.build_url(path="/api/auth/")
+        response = requests.post(
+            url=url,
+            data={
+                "email": email,
+                "password": password,
+            },
+        )
+
+        if (
+            response.status_code != 200
+            or response.headers["Content-Type"] != "application/json"
+        ):
+            return None
+
+        response_body = response.json()
+        return {"Authorization": "Bearer " + response_body["access"]}
+
+    def test_should_get_user_data(self) -> None:
+        headers = self.authenticate()
+
+        url = self.build_url(path="/api/user/me/")
+        response = requests.get(url, **headers)
+
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] == "application/json"
+
+        response_body = response.json()
+        assert response_body["email"] != None
+
+    def test_with_authenticated_client(self):
+        client = Client(raise_request_exception=True)
+        username = "aga"
+        password = "123"
+        status = client.login(username=username, password=password)
+        print(status)
+        response = client.get("/api/user/me/")
+        print(response)
+        if (
+            response.status_code != 200
+            or response.headers["Content-Type"] != "application/json"
+        ):
+            assert False
+        response_body = response.json()
+        assert response_body["email"] != None
