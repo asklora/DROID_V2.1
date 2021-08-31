@@ -1,3 +1,4 @@
+from general.sql_query import get_active_universe
 from core.orders.models import OrderPosition
 import numpy as np
 import pandas as pd
@@ -19,7 +20,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # ticker = [ticker.ticker.ticker for ticker in OrderPosition.objects.prefetch_related('ticker').filter(is_live=True,ticker__currency_code__in=["HKD"]).distinct('ticker')]
         # get_price_data_firebase(ticker)
-        users = [user['id'] for user in User.objects.filter(is_superuser=False).values('id')]
+        # users = [user['id'] for user in User.objects.filter(is_superuser=False).values('id')]
+        ticker = get_active_universe(currency_code=["HKD"])["ticker"].to_list()
+        get_price_data_firebase(ticker)
         # firebase_user_update(user_id=users)
         # contoh = datetimeNow()
         # firebase_user_update()
