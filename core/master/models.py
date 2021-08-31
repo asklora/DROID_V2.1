@@ -343,13 +343,7 @@ class DataSplit(models.Model):
 
 
 class DataFundamentalScore(models.Model):
-    ticker = models.OneToOneField(
-        Universe,
-        on_delete=models.CASCADE,
-        db_column="ticker",
-        related_name="data_fundamental_score_ticker",
-        primary_key=True,
-    )
+    ticker = models.OneToOneField(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="data_fundamental_score_ticker", primary_key=True)
     eps = models.FloatField(blank=True, null=True)
     bps = models.FloatField(blank=True, null=True)
     ev = models.FloatField(blank=True, null=True)
@@ -393,6 +387,52 @@ class DataFundamentalScore(models.Model):
     def __str__(self):
         return self.ticker.ticker
 
+class DataFundamentalScoreHistory(models.Model):
+    uid = models.TextField(primary_key=True)
+    ticker = models.ForeignKey(Universe, on_delete=models.CASCADE, db_column="ticker", related_name="data_fundamental_score_history_ticker")
+    trading_day = models.DateField(blank=True, null=True)
+    eps = models.FloatField(blank=True, null=True)
+    bps = models.FloatField(blank=True, null=True)
+    ev = models.FloatField(blank=True, null=True)
+    ttm_rev = models.FloatField(blank=True, null=True)
+    mkt_cap = models.FloatField(blank=True, null=True)
+    ttm_ebitda = models.FloatField(blank=True, null=True)
+    ttm_capex = models.FloatField(blank=True, null=True)
+    net_debt = models.FloatField(blank=True, null=True)
+    roe = models.FloatField(blank=True, null=True)
+    cfps = models.FloatField(blank=True, null=True)
+    peg = models.FloatField(blank=True, null=True)
+    bps1fd12 = models.FloatField(blank=True, null=True)
+    ebd1fd12 = models.FloatField(blank=True, null=True)
+    evt1fd12 = models.FloatField(blank=True, null=True)
+    eps1fd12 = models.FloatField(blank=True, null=True)
+    sal1fd12 = models.FloatField(blank=True, null=True)
+    cap1fd12 = models.FloatField(blank=True, null=True)
+    environment = models.FloatField(blank=True, null=True)
+    social = models.FloatField(blank=True, null=True)
+    goverment = models.FloatField(blank=True, null=True)
+    assets_1yr = models.FloatField(blank=True, null=True)
+    cash = models.FloatField(blank=True, null=True)
+    current_asset = models.FloatField(blank=True, null=True)
+    equity = models.FloatField(blank=True, null=True)
+    ttm_cogs = models.FloatField(blank=True, null=True)
+    inventory = models.FloatField(blank=True, null=True)
+    ttm_eps = models.FloatField(blank=True, null=True)
+    ttm_gm = models.FloatField(blank=True, null=True)
+    income_tax = models.FloatField(blank=True, null=True)
+    pension_exp = models.FloatField(blank=True, null=True)
+    ppe_depreciation = models.FloatField(blank=True, null=True)
+    ppe_impairment = models.FloatField(blank=True, null=True)
+    mkt_cap_usd = models.FloatField(blank=True, null=True)
+    eps_lastq = models.FloatField(blank=True, null=True)
+    mkt_cap_ye = models.FloatField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = "data_fundamental_score_history"
+
+    def __str__(self):
+        return self.ticker.ticker
 
 class DataVix(models.Model):
     """
