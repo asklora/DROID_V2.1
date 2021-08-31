@@ -307,8 +307,6 @@ def mongo_universe_update(ticker=None, currency_code=None):
 
 
 
-
-
 def firebase_user_update(user_id=None, currency_code=None):
     print("Start User Populate")
 
