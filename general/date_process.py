@@ -142,6 +142,21 @@ def BackTimeFormat(days, strip=None):
         timeformat = time.strftime("%Y%m%d")
     return timeformat
 
+def find_nearest_specific_days(days=0):
+    today = datetime.now().date()
+    count = 0
+    today2 = datetime.now().date()
+    count2 = 0
+    while (today.weekday() != days):
+        today =  today - relativedelta(days=1)
+        count = count + 1
+    while (today2.weekday() != days):
+        today2 =  today2 + relativedelta(days=1)
+        count2 = count2 + 1
+    if(count > count2):
+        return today2.strftime("%Y-%m-%d")
+    else:
+        return today.strftime("%Y-%m-%d")
 
 def count_date_range_by_month(start, end, month, ascending=False):
     start_date = datetime.strptime(start, "%Y-%m-%d")
