@@ -1,13 +1,15 @@
 from config.celery import app
 from django.apps import apps
 from core.djangomodule.calendar import TradingHours
+from core.user.models import User
+from core.services.models import ErrorLog
 from django.db import transaction
 from firebase_admin import messaging
 from datetime import datetime
 from rest_framework import serializers
 from channels.layers import get_channel_layer
 from ingestion import firebase_user_update
-from datasource.rkd import RkdData
+from datasource import rkd as trkd
 import time
 import json
 import asyncio
@@ -37,7 +39,7 @@ def order_executor(self, payload, recall=False):
         return {'err':f"{payload['order_uid']} doesnt exists"}
 
     if recall:
-        rkd = RkdData()
+        rkd = trkd.RkdData()
         # getting new price
         df = rkd.get_quote([order.ticker.ticker], df=True)
         df['latest_price'] = df['latest_price'].astype(float)
@@ -133,3 +135,17 @@ def order_executor(self, payload, recall=False):
                                              'status_code': 200
                                          }))
     return payload_serializer
+
+
+
+@app.task
+def update_rtdb_user_porfolio():
+    users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
+    try:
+        firebase_user_update(user_id=users)
+    except Exception as e:
+        err = ErrorLog.objects.create_log(
+        error_description=f"===  ERROR IN POPULATE UNIVERSER FIREBASE ===", error_message=str(e))
+        err.send_report_error()
+        return {'error':str(e)}
+    return {'status':'updated firebase portfolio'}
