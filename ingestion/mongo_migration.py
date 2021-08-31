@@ -1,5 +1,6 @@
 from bot.data_download import get_currency_data
 import json
+from asgiref.sync import sync_to_async
 import numpy as np
 import pandas as pd
 from general.date_process import backdate_by_month
@@ -8,7 +9,9 @@ from general.mongo_query import (
     create_collection, 
     update_to_mongo, 
     change_date_to_str, 
-    update_specific_to_mongo)
+    update_specific_to_mongo,
+    get_price_data_firebase
+    )
 from general.sql_query import (
     get_active_currency, 
     get_active_universe,
@@ -30,7 +33,13 @@ from general.sql_query import (
     get_bot_statistic_data, 
     get_latest_bot_update_data,
     get_user_account_balance,
-    get_user_core)
+    get_user_core,
+    get_user_profit_history)
+import asyncio
+from asgiref.sync import sync_to_async
+from typing import List
+
+
 
 def NonetoZero(value):
     return value
@@ -304,42 +313,28 @@ def mongo_universe_update(ticker=None, currency_code=None):
     print(universe)
     update_to_mongo(data=universe, index="ticker", table="universe", dict=False)
 
-def firebase_user_update(user_id=None, currency_code=None):
-    print("Start User Populate")
-    latest_price = get_latest_price_data()[["ticker", "last_date", "latest_price"]]
-    universe = get_active_universe()[["ticker", "ticker_name"]]
-    latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})
-    bot_type = get_bot_type()
-    bot_option_type = get_bot_option_type()
-    bot_option_type = bot_option_type.merge(bot_type, how="left", on=["bot_type"])
-    currency = get_currency_data(currency_code=currency_code)
-    currency = currency[["currency_code", "is_decimal"]]
-    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")
-    user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, amount as balance, currency_code")
-    user_core = user_core.merge(user_balance, how="left", on=["user_id"])
-    user_core = user_core.merge(currency, how="left", on=["currency_code"])
-    user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
-    user_core.loc[user_core["is_decimal"] == True, "balance"] = round(user_core.loc[user_core["is_decimal"] == True, "balance"], 2)
-    user_core.loc[user_core["is_decimal"] == False, "balance"] = round(user_core.loc[user_core["is_decimal"] == False, "balance"], 0)
-    print(user_core)
-    active_portfolio = pd.DataFrame({"user_id":[], "total_invested_amount":[], "total_bot_invested_amount":[], "total_user_invested_amount":[], 
-        "pct_total_bot_invested_amount":[], "pct_total_user_invested_amount":[], "total_profit_amount":[], "active_portfolio":[]}, index=[])
-    for user in user_core["user_id"].unique():
-        orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
-        orders_position = get_orders_position(user_id=[user], active=True, field=orders_position_field)
-        orders_performance_field = "position_uid, share_num, order_uid"
-        orders_position = orders_position.merge(latest_price, how="left", on=["ticker"])
-        orders_position["price"] = np.where(orders_position["price"].isnull(), orders_position["entry_price"], orders_position["price"])
-        orders_position["trading_day"] = np.where(orders_position["trading_day"].isnull(), orders_position["spot_date"], orders_position["trading_day"])
-        orders_position = orders_position.merge(universe, how="left", on=["ticker"])
-        if(len(orders_position)):
-            orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)
-            orders_position = orders_position.merge(orders_performance, how="left", on=["position_uid"])
-            orders_position = orders_position.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
+
+async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,user_core:pd.DataFrame)-> List[pd.DataFrame]:
+    tasks=[]
+    users= user_core["user_id"].unique().tolist()
+    for user in users:
+        tasks.append(asyncio.ensure_future(do_task(
+            position_data,bot_option_type,user,user_core
+        )))
+    active_portfolio = await asyncio.gather(*tasks)
+    return active_portfolio
+        
+
+async def do_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,user:str,user_core:pd.DataFrame)->pd.DataFrame:
+        user_core =  user_core.loc[user_core["user_id"] == user]
+        
+        orders_position = position_data.loc[position_data["user_id"] == user]
+
+        orders_position = orders_position.reset_index(inplace=False)
         #TOP LEVEL
         orders_position["status"] = "LIVE"
-        orders_position["current_inv_amt"] = (orders_position["bot_cash_balance"] + (orders_position["share_num"] * orders_position["price"]))
-        print(orders_position)
+        orders_position["current_values"] = (orders_position["bot_cash_balance"] + (orders_position["share_num"] * orders_position["price"]))
+        orders_position["current_ivt_amt"] = (orders_position["share_num"] * orders_position["price"])
         #MARGIN
         # orders_position["margin_amount"] = (orders_position["margin"] * orders_position["investment_amount"]) - orders_position["investment_amount"]
         orders_position["margin_amount"] = (orders_position["margin"] - 1) * orders_position["investment_amount"]
@@ -347,15 +342,15 @@ def firebase_user_update(user_id=None, currency_code=None):
         orders_position["threshold"] = (orders_position["margin_amount"] + orders_position["investment_amount"]) - orders_position["bot_cash_balance"]
 
         #PROFIT
-        # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_inv_amt"]
+        # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_values"]
         # orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"]
-        orders_position["profit"] =orders_position["current_inv_amt"] - orders_position["investment_amount"]
+        orders_position["profit"] =orders_position["current_values"] - orders_position["investment_amount"]
         orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"] 
 
         #BOT POSITION
         # orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["investment_amount"] * 100).round(0)
         # orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
-        orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["current_inv_amt"] * 100).round(0)
+        orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["current_values"] * 100).round(0)
         orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
 
         #USER POSITION
@@ -365,9 +360,9 @@ def firebase_user_update(user_id=None, currency_code=None):
         # pct_total_bot_invested_amount = int(round(total_bot_invested_amount / total_invested_amount, 0) * 100)
         # pct_total_user_invested_amount = int(round(total_user_invested_amount / total_invested_amount, 0) * 100)
         # total_profit_amount = sum(orders_position["profit"].to_list())
-        total_invested_amount = NonetoZero(sum(orders_position["current_inv_amt"].to_list()))
-        total_bot_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_inv_amt"].to_list()))
-        total_user_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["current_inv_amt"].to_list()))
+        total_invested_amount = NonetoZero(sum(orders_position["current_values"].to_list()))
+        total_bot_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_values"].to_list()))
+        total_user_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["current_values"].to_list()))
         pct_total_bot_invested_amount = NonetoZero(int(round(total_bot_invested_amount / total_invested_amount, 0) * 100))
         pct_total_user_invested_amount = NonetoZero(int(round(total_user_invested_amount / total_invested_amount, 0) * 100))
         total_profit_amount = NonetoZero(sum(orders_position["profit"].to_list()))
@@ -377,7 +372,6 @@ def firebase_user_update(user_id=None, currency_code=None):
         # orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
         # orders_position = get_orders_position(user_id=[user], active=False, field=orders_position_field)
         orders_position = orders_position.sort_values(by=["profit"])
-        print(orders_position)
         for index, row in orders_position.iterrows():
             act_df = orders_position.loc[orders_position["position_uid"] == row["position_uid"]]
             bot = bot_option_type.loc[bot_option_type["bot_id"] == row["bot_id"]][["bot_id", "bot_option_type", "bot_apps_name", "bot_apps_description", "duration"]]
@@ -391,12 +385,84 @@ def firebase_user_update(user_id=None, currency_code=None):
         active = pd.DataFrame({"user_id":[user], "total_invested_amount":[total_invested_amount], "total_bot_invested_amount":[total_bot_invested_amount], 
             "total_user_invested_amount":[total_user_invested_amount], "pct_total_bot_invested_amount":[pct_total_bot_invested_amount], "pct_total_user_invested_amount":[pct_total_user_invested_amount], 
             "total_profit_amount":[total_profit_amount], "active_portfolio":[active_df]}, index=[0])
-        active_portfolio = active_portfolio.append(active)
-        print(active_portfolio)
-    active_portfolio = active_portfolio.reset_index(inplace=False, drop=True)
-    result = user_core.merge(active_portfolio, how="left", on=["user_id"])
-    result = result.rename(columns={"currency_code" : "currency"})
-    update_to_mongo(data=result, index="user_id", table="portfolio", dict=False)
+        result = user_core.merge(active, how="left", on=["user_id"])
+        result = result.rename(columns={"currency_code" : "currency"})
+        
+        await sync_to_async(update_to_mongo)(data=result, index="user_id", table="portfolio", dict=False)
+
+        return active
+
+
+def firebase_user_update(user_id=None, currency_code=None):
+    # import time
+    # start = time.time()
+
+    print("Start User Populate")
+    bot_type = get_bot_type()
+    bot_option_type = get_bot_option_type()
+    bot_option_type = bot_option_type.merge(bot_type, how="left", on=["bot_type"])
+    currency = get_currency_data(currency_code=currency_code)
+    currency = currency[["currency_code", "is_decimal"]]
+
+    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")
+    user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_profit, daily_profit_pct")
+    user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, amount as balance, currency_code")
+    user_core = user_core.merge(user_balance, how="left", on=["user_id"])
+    user_core = user_core.merge(user_daily_profit, how="left", on=["user_id"])
+    user_core = user_core.merge(currency, how="left", on=["currency_code"])
+    user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
+    user_core.loc[user_core["is_decimal"] == True, "balance"] = round(user_core.loc[user_core["is_decimal"] == True, "balance"], 2)
+    user_core.loc[user_core["is_decimal"] == False, "balance"] = round(user_core.loc[user_core["is_decimal"] == False, "balance"], 0)
+    print(user_core)
+
+    orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
+    position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
+    
+    universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name"]]
+    latest_price = get_price_data_firebase(position_data["ticker"].unique().tolist())
+    print(latest_price)
+    latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})
+
+    position_data = position_data.merge(latest_price, how="left", on=["ticker"])
+    position_data["price"] = np.where(position_data["price"].isnull(), position_data["entry_price"], position_data["price"])
+    position_data["trading_day"] = np.where(position_data["trading_day"].isnull(), position_data["spot_date"], position_data["trading_day"])
+    position_data = position_data.merge(universe, how="left", on=["ticker"])
+
+    orders_performance_field = "position_uid, share_num, order_uid"
+    performance_data = get_orders_position_performance(position_uid=position_data["position_uid"].to_list(), field=orders_performance_field, latest=True)
+    position_data = position_data.merge(performance_data, how="left", on=["position_uid"])
+    position_data = position_data.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
+
+    # print(position_data)
+    active_portfolio = pd.DataFrame({"user_id":[], "total_invested_amount":[], "total_bot_invested_amount":[], "total_user_invested_amount":[], 
+        "pct_total_bot_invested_amount":[], "pct_total_user_invested_amount":[], "total_profit_amount":[], "active_portfolio":[]}, index=[])
+    
+    
+    # concurent calculation
+    gather_active_portfolios = asyncio.run(gather_task(
+        position_data,bot_option_type ,user_core
+        ))
+    # end = time.time()
+    # print(f"time consumed : {end-start}")
+
+
+    # active_portfolio = pd.concat(gather_active_portfolios)
+    # active_portfolio = active_portfolio.reset_index(inplace=False, drop=True)
+    # result = user_core.merge(active_portfolio, how="left", on=["user_id"])
+    # result = result.rename(columns={"currency_code" : "currency"})
+    # print(result)
+    # update_to_mongo(data=result, index="user_id", table="portfolio", dict=False)
+
+
+
+
+
+
+
+
+
+
+    
 
 # def mongo_create_currency():
 #     collection = json.load(open("files/file_json/validator_currency.json"))

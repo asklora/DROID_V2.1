@@ -1,3 +1,4 @@
+from ingestion.data_from_dsws import update_data_dsws_from_dsws, update_fundamentals_quality_value
 from general.date_process import dateNow
 from general.sql_query import read_query
 from general.sql_process import do_function
@@ -50,3 +51,6 @@ def dlpa_weekly():
 # Main Process
 if __name__ == "__main__":
     print("Start Process")
+    # update_fundamentals_quality_value(currency_code=["USD"])
+    ticker = ["AG1G.F", "MSFT.O", "FPE3_p.F", "MXIM.O"]
+    update_data_dsws_from_dsws(ticker=ticker)

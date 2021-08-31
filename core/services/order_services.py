@@ -1,12 +1,16 @@
 from config.celery import app
 from django.apps import apps
 from core.djangomodule.calendar import TradingHours
+from core.user.models import User
+from core.services.models import ErrorLog
+from core.universe.models  import ExchangeMarket
 from django.db import transaction
 from firebase_admin import messaging
 from datetime import datetime
 from rest_framework import serializers
 from channels.layers import get_channel_layer
-from datasource.rkd import RkdData
+from ingestion import firebase_user_update
+from datasource import rkd as trkd
 import time
 import json
 import asyncio
@@ -23,6 +27,10 @@ class OrderDetailsServicesSerializers(serializers.ModelSerializer):
 
 @app.task(bind=True)
 def order_executor(self, payload, recall=False):
+    """
+    #TODO: ERROR HANDLING HERE AND RETURN MESSAGE TO USER AND SOCKET
+    
+    """
     payload = json.loads(payload)
     Model = apps.get_model('orders', 'Order')
     Exchange = apps.get_model('universe', 'ExchangeMarket')
@@ -32,7 +40,7 @@ def order_executor(self, payload, recall=False):
         return {'err':f"{payload['order_uid']} doesnt exists"}
 
     if recall:
-        rkd = RkdData()
+        rkd = trkd.RkdData()
         # getting new price
         df = rkd.get_quote([order.ticker.ticker], df=True)
         df['latest_price'] = df['latest_price'].astype(float)
@@ -90,6 +98,7 @@ def order_executor(self, payload, recall=False):
             print('open')
             messages = 'order accepted'
             message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status filled'
+            firebase_user_update(user_id=[order.user_id.id])
         else:
             print('close')
             messages = 'order pending'
@@ -127,3 +136,19 @@ def order_executor(self, payload, recall=False):
                                              'status_code': 200
                                          }))
     return payload_serializer
+
+
+
+@app.task
+def update_rtdb_user_porfolio():
+    try:
+        hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
+        if hkd_exchange.is_open:
+            users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
+            firebase_user_update(user_id=users)
+    except Exception as e:
+        err = ErrorLog.objects.create_log(
+        error_description=f"===  ERROR IN POPULATE UNIVERSER FIREBASE ===", error_message=str(e))
+        err.send_report_error()
+        return {'error':str(e)}
+    return {'status':'updated firebase portfolio'}

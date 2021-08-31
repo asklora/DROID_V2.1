@@ -8,6 +8,7 @@ from typing import List,Optional,Union
 from core.services.models import ThirdpartyCredentials,ErrorLog
 from core.universe.models import ExchangeMarket,Universe
 from core.djangomodule.calendar import TradingHours
+from core.services.order_services import update_rtdb_user_porfolio
 import sys
 import logging
 import websocket
@@ -15,7 +16,6 @@ import aiohttp
 import asyncio
 import socket
 import time
-# from channels.layers import get_channel_layer
 from config.celery import app
 import numpy as np
 from firebase_admin import firestore
@@ -587,6 +587,7 @@ class RkdStream(RkdData):
 
     def stream_quote(self):
         # FOR NOW ONLY HKD
+        # 
         # TODO: Need to enhance this
         while True:
             hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
@@ -595,11 +596,12 @@ class RkdStream(RkdData):
                 for index in data.index:
                     split_data = data.iloc[[index]]
                     self.update_rtdb.apply_async(args=(split_data.to_dict("records"),),queue="broadcaster")
+                    # update_rtdb_user_porfolio.delay()
                 del data
                 gc.collect()
             else:
                 break
-            time.sleep(6)
+            time.sleep(120)
         if self.is_thread:
                 sys.exit()
         
@@ -615,7 +617,7 @@ class RkdStream(RkdData):
         return threads
 
     def stream(self):
-        print("Connecting to WebSocket " + self.ws_address + " ...")
+        # print("Connecting to WebSocket " + self.ws_address + " ...")
         try:
             self.web_socket_app.run_forever()
         except KeyboardInterrupt as e:

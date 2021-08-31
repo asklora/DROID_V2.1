@@ -2,7 +2,13 @@ import pandas as pd
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general.sql_process import db_read, alibaba_db_url
-from general.date_process import backdate_by_day, backdate_by_year, dateNow, droid_start_date, str_to_date
+from general.date_process import (
+    backdate_by_day,
+    backdate_by_year,
+    dateNow,
+    date_minus_day,
+    droid_start_date,
+    str_to_date)
 from general.data_process import tuple_data
 from general.table_name import (
     get_bot_backtest_table_name,
@@ -26,6 +32,7 @@ from general.table_name import (
     get_universe_rating_history_table_name,
     get_user_account_balance_table_name,
     get_user_core_table_name,
+    get_user_profit_history_table_name,
     get_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
@@ -352,6 +359,7 @@ def get_last_close_industry_code(ticker=None, currency_code=None):
     data = read_query(query, table=get_master_ohlcvtr_table_name())
     return data
 
+
 def get_pred_mean():
     query = f"select distinct avlpf.ticker, avlpf.pred_mean, avlpf.testing_period::date, avlpf.update_time from ai_value_lgbm_pred_final avlpf, "
     query += f"(select ticker, max(testing_period::date) as max_date from ai_value_lgbm_pred_final group by ticker) filter "
@@ -382,13 +390,13 @@ def get_specific_tri(trading_day, tri_name="tri"):
 
 def get_specific_tri_avg(trading_day, avg_days=7, tri_name="tri"):
     query = f"SELECT a.ticker, avg(a.tri) as {tri_name} FROM (SELECT ticker, total_return_index as tri FROM master_ohlcvtr "
-    query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{backdate_by_day(avg_days, trading_day)}') a GROUP BY ticker"
+    query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{date_minus_day(start_date=trading_day, days=avg_days)}') a GROUP BY ticker"
     data = read_query(query, table=get_master_ohlcvtr_table_name())
     return data
 
 def get_specific_volume_avg(trading_day, avg_days=7, volume_name="volume"):
     query = f"SELECT a.ticker, avg(a.volume) as {volume_name} FROM (SELECT ticker, volume FROM master_ohlcvtr "
-    query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{backdate_by_day(avg_days, trading_day)}') a GROUP BY ticker"
+    query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{date_minus_day(start_date=trading_day, days=avg_days)}') a GROUP BY ticker"
     data = read_query(query, table=get_master_ohlcvtr_table_name())
     return data
 
@@ -660,6 +668,18 @@ def get_user_core(currency_code=None, user_id=None, field="*"):
     elif type(currency_code) != type(None):
         query += f"and id in (select user_id as id from {get_user_account_balance_table_name()} where currency_code in {tuple_data(currency_code)}) "
     query += "order by id "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_user_profit_history(user_id=None, field="*"):
+    table_name = get_user_profit_history_table_name()
+    query = f"select {field} from {table_name} uph "
+    query += f"where exists (select 1 from (select filters.user_id, max(filters.trading_day) max_date "
+    query += f"from {table_name} as filters group by filters.user_id) result "
+    query += f"where result.user_id=uph.user_id and result.max_date=uph.trading_day) "
+    if type(user_id) != type(None):
+        query += f"and user_id in {tuple_data(user_id)}  "
+    query += "order by user_id "
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
