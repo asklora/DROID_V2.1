@@ -13,7 +13,10 @@ def is_portfolio_exist(ticker,bot_id,user_id):
     bots = [bot['bot_id'] for bot in BotOptionType.objects.filter(bot_type=bot_type).values('bot_id')]
     portfolios = OrderPosition.objects.filter(user_id=user_id,ticker=ticker,bot_id__in=bots,is_live=True).prefetch_related('ticker')
     if portfolios.exists():
-        portfolio = portfolios.latest('created')
+        try:
+            portfolio = portfolios.latest('created')
+        except OrderPosition.MultipleObjectsReturned:
+            portfolio = portfolios[0]
         return portfolio
     return None
 
