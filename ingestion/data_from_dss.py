@@ -88,6 +88,7 @@ def update_data_dss_from_dss(ticker=None, currency_code=None, history=False, man
             "Accumulated Volume Unscaled": "volume"
         })
         result = uid_maker(result, uid="dss_id", ticker="ticker", trading_day="trading_day")
+        result = result.dropna(subset=["ticker"])
         print(result)
         upsert_data_to_database(result, get_data_dss_table_name(), "dss_id", how="update", Text=True)
         report_to_slack("{} : === DSS Updated ===".format(datetimeNow()))
