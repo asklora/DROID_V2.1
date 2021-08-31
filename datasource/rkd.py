@@ -16,7 +16,6 @@ import aiohttp
 import asyncio
 import socket
 import time
-# from channels.layers import get_channel_layer
 from config.celery import app
 import numpy as np
 from firebase_admin import firestore
