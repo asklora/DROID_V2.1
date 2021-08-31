@@ -419,7 +419,7 @@ def firebase_user_update(user_id=None, currency_code=None):
     position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
     
     universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name"]]
-    latest_price = get_price_data_firebase(position_data["ticker"].unique())
+    latest_price = get_price_data_firebase(position_data["ticker"].unique().tolist())
     print(latest_price)
     latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})
 
