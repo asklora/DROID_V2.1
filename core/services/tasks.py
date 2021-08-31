@@ -305,6 +305,9 @@ def weekly_universe_firebase_update(currency_code:list) -> dict:
     try:
         mongo_universe_update(currency_code=currency_code)
     except Exception as e:
+        err = ErrorLog.objects.create_log(
+        error_description=f"===  ERROR IN POPULATE UNIVERSER FIREBASE ===", error_message=str(e))
+        err.send_report_error()
         return {'error':str(e)}
     return {'status':'updated firebase update'}
 
