@@ -40,9 +40,10 @@ from portfolio.daily_hedge_user import user_position_check
 from portfolio.daily_hedge_classic import classic_position_check
 from portfolio.daily_hedge_ucdc import ucdc_position_check
 from portfolio.daily_hedge_uno import uno_position_check
-from ingestion.data_from_quandl import update_quandl_orats_from_quandl
-from ingestion.data_from_dss import update_data_dss_from_dss, update_ticker_symbol_from_dss
-from ingestion.data_from_dsws import (
+from ingestion import (
+    update_quandl_orats_from_quandl,
+    update_data_dss_from_dss, 
+    update_ticker_symbol_from_dss,
     dividend_updated_from_dsws,
     update_company_desc_from_dsws,
     update_currency_code_from_dsws,
@@ -52,7 +53,9 @@ from ingestion.data_from_dsws import (
     update_lot_size_from_dsws,
     update_mic_from_dsws,
     update_ticker_name_from_dsws,
-    update_worldscope_identifier_from_dsws)
+    update_worldscope_identifier_from_dsws,
+    firebase_user_update
+    )
 
 
 USD_CUR = Currency.objects.get(currency_code="USD")
@@ -238,6 +241,7 @@ def export_csv(df):
 # END FILE BUFFER
 
 
+
 # TASK TO PING EXISTING CONNECTION THAT CONNECTED TO WEBSOCKET
 def get_presence():
     channels = [c["channel_name"]
@@ -261,7 +265,17 @@ async def gather_ping_presence():
             ))
         await asyncio.gather(*tasks)
 
-
+@app.task
+def update_rtdb_user_porfolio():
+    users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
+    try:
+        firebase_user_update(user_id=users)
+    except Exception as e:
+        err = ErrorLog.objects.create_log(
+        error_description=f"===  ERROR IN POPULATE UNIVERSER FIREBASE ===", error_message=str(e))
+        err.send_report_error()
+        return {'error':str(e)}
+    return {'status':'updated firebase portfolio'}
 @app.task(ignore_result=True)
 def ping_available_presence():
     asyncio.run(gather_ping_presence())
@@ -305,6 +319,9 @@ def weekly_universe_firebase_update(currency_code:list) -> dict:
     try:
         mongo_universe_update(currency_code=currency_code)
     except Exception as e:
+        err = ErrorLog.objects.create_log(
+        error_description=f"===  ERROR IN POPULATE UNIVERSER FIREBASE ===", error_message=str(e))
+        err.send_report_error()
         return {'error':str(e)}
     return {'status':'updated firebase update'}
 

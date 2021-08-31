@@ -1,25 +1,35 @@
-from general.date_process import datetimeNow
+from general.sql_query import get_active_universe
+from core.orders.models import OrderPosition
+import numpy as np
+import pandas as pd
+from general.mongo_query import get_price_data_firebase
 from ingestion.mongo_migration import firebase_user_update
 from core.djangomodule.management.commands.populate_ticker import populate_ticker_monthly
+from core.bot.models import BotOptionType,BotType
 from core.user.models import User
 from requests.api import get
 from django.core.management.base import BaseCommand
-from core.universe.models import ExchangeMarket, Universe
-from core.Clients.models import UserClient
-from core.Clients.IBClientModule import IBClient
-from core.orders.models import OrderPosition, PositionPerformance
 from core.services.tasks import populate_client_top_stock_weekly, order_client_topstock, daily_hedge, send_csv_hanwha, hedge
 from datasource.rkd import RkdData
 from datetime import datetime
 from core.djangomodule.calendar import TradingHours
 from portfolio.daily_hedge_classic import classic_position_check
 from config.celery import app 
+import asyncio
+import time
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        contoh = datetimeNow()
-        firebase_user_update()
-        print(contoh)
-        print(datetimeNow())
+        # ticker = [ticker.ticker.ticker for ticker in OrderPosition.objects.prefetch_related('ticker').filter(is_live=True,ticker__currency_code__in=["HKD"]).distinct('ticker')]
+        # get_price_data_firebase(ticker)
+        # users = [user['id'] for user in User.objects.filter(is_superuser=False).values('id')]
+        # ticker = get_active_universe(currency_code=["HKD"])["ticker"].to_list()
+        # get_price_data_firebase(ticker)
+        # firebase_user_update(user_id=users)
+        # contoh = datetimeNow()
+        # firebase_user_update()
+        # print(contoh)
+        # print(datetimeNow())
+
         # c = IBClient()
         # c.get_position('DU2898616',0)
         # c.market_order(2,'DU2898616','order first',265598)
@@ -52,7 +62,7 @@ class Command(BaseCommand):
         # for p in PositionPerformance.objects.filter(position_uid__ticker__currency_code='USD',updated__gte='2021-07-28 16:21:39.063962'):
         #     p.delete()
 
-        daily_hedge(currency="HKD")
+        # daily_hedge(currency="HKD")
         # serv =['bot_tester','bot_advisor']
         # for a in serv:
         #     hanwha = [user["user"] for user in UserClient.objects.filter(client__client_name="HANWHA",

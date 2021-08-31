@@ -10,8 +10,11 @@ from django.apps import apps
 from datasource.rkd import RkdData
 from django.db import transaction as db_transaction
 import json
-from .services import is_portfolio_exist, sell_position_service
-from portfolio import classic_sell_position
+from .services import (
+    is_portfolio_exist, 
+    sell_position_service,
+    side_validation
+    )
 from datetime import datetime
 
 @extend_schema_serializer(
@@ -189,12 +192,13 @@ class PositionSerializer(serializers.ModelSerializer):
             'Create new buy order',
             description='Create new buy order',
             value={
-                "ticker": "string",
-                "price": 0,
+                "ticker": "0005.HKD",
+                "price": 2.1,
                 "bot_id": "string",
-                "amount": 0,
-                "user": "string",
-                "side": "string",
+                "amount": 10000,
+                "user": "198",
+                "side": "buy",
+                "margin":1
             },
             request_only=True,
         ),
@@ -202,11 +206,11 @@ class PositionSerializer(serializers.ModelSerializer):
             'Create new sell order',
             description='Create new sell order',
             value={
-                "user": "string",
-                "side": "string",
-                "ticker":"string",
+                "user": "198",
+                "side": "sell",
+                "ticker":"0005.HKD",
                 "setup": {
-                    "position":"string"
+                    "position":"40fd100387464d1892dabdde291aa2cb"
                 }
             },
             request_only=True,
@@ -220,11 +224,12 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     qty = serializers.FloatField(read_only=True)
     setup = serializers.JSONField(required=False)
     created = serializers.DateTimeField(required=False, read_only=True)
+    margin = serializers.IntegerField(required=False)
 
     class Meta:
         model = Order
         fields = ["ticker", "price", "bot_id", "amount", "user",
-                  "side", "status", "order_uid", "qty", "setup", "created"]
+                  "side", "status", "order_uid", "qty", "setup", "created","margin"]
     
     
     def to_internal_value(self, data):
@@ -242,22 +247,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
    
         
 
-    def side_validation(self,validated_data):
-        if validated_data["side"] == "sell":
-            init = False
-            position = validated_data.get("setup",{}).get("position",None)
-            if not position:
-                raise exceptions.NotAcceptable({"detail":"must provided the position uid for sell side"})
-        else:
-            init = True
-            if validated_data["amount"] > validated_data["user_id"].user_balance.amount:
-                raise exceptions.NotAcceptable({"detail": "insuficent balance"})
-            if validated_data["amount"] <= 0:
-                raise exceptions.NotAcceptable({"detail": "amount should not 0"})
-            if is_portfolio_exist(validated_data["ticker"],validated_data["bot_id"],validated_data["user_id"].id):
-                raise exceptions.NotAcceptable({"detail": f"user already has position for {validated_data['ticker']} in current options"})
-
-        return init
 
     def create(self, validated_data):
         if not "user" in validated_data:
@@ -285,12 +274,11 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             ticker = df.loc[df["ticker"] == validated_data["ticker"].ticker]
             validated_data["price"] = ticker.iloc[0]["latest_price"]
         
-        
         order_type = "apps"
         if user.id == 135:
             order_type = None
         
-        init = self.side_validation(validated_data)
+        init = side_validation(validated_data)
         
         with db_transaction.atomic():
             if validated_data["side"]=="buy":
@@ -368,12 +356,8 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
             user = usermodel.objects.get(id=validated_data.pop("user"))
         else:
             user = request.user
-
-        if validated_data["amount"] > user.user_balance.amount:
-            raise exceptions.NotAcceptable({"detail": "insuficent balance"})
-        if validated_data["amount"] <= 0:
-            raise exceptions.NotAcceptable({"detail": "amount should not 0"})
-
+        validated_data["side"] = instance.side
+        valid = side_validation(validated_data)
             
         for keys, value in validated_data.items():
             setattr(instance, keys, value)
