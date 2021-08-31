@@ -77,6 +77,9 @@ def get_quandl_table_name():
 def get_fundamental_score_table_name():
     return "data_fundamental_score"
 
+def get_data_fundamental_score_history_table_name():
+    return "data_fundamental_score_history"
+
 def get_data_fred_table_name():
     return "data_fred"
 
