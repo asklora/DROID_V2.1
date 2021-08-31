@@ -221,7 +221,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     user = serializers.CharField(required=False)
     price = serializers.FloatField(required=False)
     status = serializers.CharField(read_only=True)
-    qty = serializers.FloatField()
+    qty = serializers.FloatField(read_only=True)
     setup = serializers.JSONField(required=False)
     created = serializers.DateTimeField(required=False, read_only=True)
     margin = serializers.IntegerField(required=False)
