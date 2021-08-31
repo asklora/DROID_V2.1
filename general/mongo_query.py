@@ -57,9 +57,10 @@ def get_price_data_firebase(ticker:list) -> pd.DataFrame:
     db = firestore.client()
     object_list = []
     # here loop numpy split
-    split = len(ticker)/10
+    split = len(ticker)/9
     splitting_df = np.array_split(ticker, split)
     for univ in splitting_df:
+        univ = univ.tolist()
         doc_ref = db.collection(u"universe").where("ticker","in", univ).get()
         for data in doc_ref:
             format_data = {}
@@ -68,18 +69,8 @@ def get_price_data_firebase(ticker:list) -> pd.DataFrame:
             format_data['last_date'] = data.get('price',{}).get('last_date',0)
             format_data['latest_price'] = data.get('price',{}).get('latest_price',0)
             object_list.append(format_data)
-    
-    data = []
-    for frame in object_list:
-        df = frame.reset_index()
-        print(df)
-        data.append(df)
-    if(len(data)) > 0 :
-        data = pd.concat(data)
-    print(data)
-    # to df
-    df = pd.DataFrame(data)
-    return df
+    result = pd.DataFrame(object_list)
+    return result
     
 def update_to_mongo(data, index, table, dict=False):
     data = change_date_to_str(data)

@@ -24,6 +24,8 @@ class Command(BaseCommand):
         ticker = get_active_universe(currency_code=["HKD"])["ticker"].to_list()
         get_price_data_firebase(ticker)
         # firebase_user_update(user_id=users)
+        # users = [user['id'] for user in User.objects.filter(is_superuser=False).values('id')]
+        # firebase_user_update(user_id=users)
         # contoh = datetimeNow()
         # firebase_user_update()
         # print(contoh)
