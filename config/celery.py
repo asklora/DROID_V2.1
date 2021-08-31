@@ -20,8 +20,8 @@ dbdebug = env.bool("DROID_DEBUG")
 
 app = Celery('core.services')
 app_dev=Celery('core.services',broker='amqp://rabbitmq:rabbitmq@16.162.110.123:5672')
+app_dev.conf.task_default_queue = 'droid_dev'
 app_dev.config_from_object('django.conf:settings', namespace='CELERY')
-
 # Load task modules from all registered Django app configs.
 app_dev.autodiscover_tasks()
 
