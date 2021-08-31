@@ -34,6 +34,7 @@ from general.table_name import (
     get_universe_rating_table_name, 
     get_universe_table_name)
 from datasource.dsws import (
+    get_data_history_by_field_from_dsws,
     get_data_history_frequently_by_field_from_dsws, 
     get_data_history_frequently_from_dsws, 
     get_data_history_from_dsws, 
@@ -261,14 +262,31 @@ def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, m
     universe = universe[["ticker"]]
     identifier="ticker"
     filter_field = ["RI"]
-    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 20))
+    print(result)
+    print(error_ticker)
+    if len(error_ticker) == 0 :
+        second_result = []
+    else:
+        second_result, error_ticker = get_data_history_by_field_from_dsws(start_date, end_date, error_ticker, identifier, filter_field, use_ticker=True, split_number=1)
+        if(len(error_ticker) > 0):
+            report_to_slack("{} : === DSWS TICKER ERROR {} ===".format(datetimeNow(), error_ticker))
+    try:
+        if(len(result) == 0):
+            result = second_result
+        elif(len(second_result) == 0):
+            result = result
+        else :
+            result = result.append(second_result)
+    except Exception as e:
+        result = second_result
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"RI": "total_return_index", "level_1" : "trading_day"})
         result = uid_maker(result, uid="dsws_id", ticker="ticker", trading_day="trading_day")
         result = result.dropna(subset=["ticker"])
-        print(result)
         result = result[["dsws_id", "ticker", "trading_day", "total_return_index"]]
+        print(result)
         upsert_data_to_database(result, get_data_dsws_table_name(), "dsws_id", how="update", Text=True)
         report_to_slack("{} : === DSWS Updated ===".format(datetimeNow()))
 
@@ -509,16 +527,26 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # calculate ratios refering to table X
     fundamentals_score, factor_formula = score_update_factor_ratios(fundamentals_score)
 
-    # fundamentals_score["earnings_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
-    #                                        fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
-    # fundamentals_score["revenue_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
-    #                                        fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
-
     factor_rank = get_factor_rank()
+<<<<<<< HEAD
     factor_rank = factor_rank.merge(factor_formula, left_on=["factor_name"], right_index=True, how="outer")
     factor_rank["long_large"] = factor_rank["long_large"].fillna(True)
     factor_rank = factor_rank.dropna(subset=["pillar"])
     append_df = factor_rank.loc[factor_rank["keep"]]
+=======
+
+    # for currency not predicted by Factor Model -> Use factor of USD
+    universe_currency_code = get_active_universe()['currency_code'].unique()
+    for i in set(universe_currency_code) - set(factor_rank['group'].unique()):
+        replace_rank = factor_rank.loc[factor_rank['group']=='USD'].copy()
+        replace_rank['group'] = i
+        factor_rank = factor_rank.append(replace_rank, ignore_index=True)
+
+    factor_rank = factor_rank.merge(factor_formula, left_on=['factor_name'], right_index=True, how='outer')
+    factor_rank['long_large'] = factor_rank['long_large'].fillna(True)
+    factor_rank = factor_rank.dropna(subset=['pillar'])
+    append_df = factor_rank.loc[factor_rank['keep']]
+>>>>>>> b6b3ddb6c2e571d5869b132e2c0b245a529109d0
 
     for group in factor_rank["group"].dropna().unique():
         # change ratio to negative if original factor calculation using reverse premiums
@@ -605,7 +633,12 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
 
     # add column for 3 pillar score
+<<<<<<< HEAD
     fundamentals[[f"fundamentals_{name}" for name in factor_rank["pillar"].unique()]] = np.nan
+=======
+    fundamentals[[f"fundamentals_{name}" for name in factor_rank['pillar'].unique()]] = np.nan
+    fundamentals[['dlp_1m','wts_rating']] = fundamentals[['dlp_1m','wts_rating']]/10    # adjust dlp score to 0 ~ 1 (originally 0 ~ 10)
+>>>>>>> b6b3ddb6c2e571d5869b132e2c0b245a529109d0
 
     # calculate ai_score by each currency_code (i.e. group) for each of 3 pillar
     for (group, pillar_name), g in factor_rank.groupby(["group", "pillar"]):

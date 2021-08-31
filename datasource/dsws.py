@@ -63,7 +63,7 @@ def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, spl
         data = data.drop(columns="level_0")
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
-
+        
 def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, dividend=False, split_number=40):
     DS = setDataStream()
     print("== Getting Data From DSWS ==")
@@ -89,7 +89,16 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
             if use_ticker:
                 universelist = universelist.replace("<", "").replace(">", "")
                 universelist = universelist.strip()
-            error_universe.append(universelist)
+            if(split_number > 1):
+                universelist = universelist.split(",")
+            if(type(universelist) == list):
+                if(len(universelist) > 1):
+                    for tick in universelist:
+                        error_universe.append(tick)
+                else:
+                    error_universe.append(universelist[0])
+            else:
+                error_universe.append(universelist)
             print(e)
     data = []
     for frame in chunk_data:
@@ -103,6 +112,10 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
                 if(len(universe) == 1):
                     df["level_1"] = df["index"]
                     df[identifier] = universe[0].replace("<", "").replace(">", "")
+                elif(split_number == 1):
+                    df["level_1"] = df["index"]
+                    df[identifier] = df[identifier].str.replace("<", "").str.replace(">", "")
+                    df[identifier] = df[identifier].str.strip()
                 else:
                     df = df.reset_index()
                     df[identifier] = df["level_0"]
@@ -121,6 +134,44 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
     if(len(data)) > 0 :
         data = pd.concat(data)
     print("== Getting Data From DSWS Done ==")
+    return data, error_universe
+
+def get_data_history_by_field_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, dividend=False, split_number=40):
+    DS = setDataStream()
+    chunk_data = []
+    print(universe)
+    error_universe = []
+    for ticker in universe:
+        chunck_field = []
+        for by_field in field:
+            try :
+                result = DS.fetch("<"+ticker+">", *[by_field], date_from=start_date, date_to=end_date)
+                print(result)
+                result[identifier] = ticker
+                result.reset_index(inplace=True)
+                if (len(chunck_field) == 0) :
+                    chunck_field = result
+                else:
+                    chunck_field = pd.merge(chunck_field, result, how="inner", on=[identifier, "index"])
+            except Exception as e:
+                error_universe.append(ticker)
+                print(e)
+        print(chunck_field)
+        if(len(chunck_field) > 0):
+            chunk_data.append(chunck_field)
+    print(chunk_data)
+    data = []
+    for frame in chunk_data:
+        df = frame.reset_index()
+        if use_ticker:
+            df[identifier] = df[identifier].replace("<", "").replace(">", "")
+        data.append(df)
+    if(len(data)) > 0 :
+        data = pd.concat(data)
+        data = data.drop(columns="level_0")
+    data["level_1"] = data["index"]
+    print("== Getting Data From DSWS Done ==")
+    print(data)
     return data, error_universe
 
 def get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False):
