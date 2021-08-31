@@ -17,6 +17,7 @@ from general.table_name import (
     get_data_dividend_table_name, 
     get_data_dsws_table_name,
     get_data_fred_table_name,
+    get_data_fundamental_score_history_table_name,
     get_data_ibes_monthly_table_name,
     get_data_ibes_table_name, 
     get_data_interest_table_name,
@@ -67,7 +68,8 @@ from general.date_process import (
     dateNow, 
     datetimeNow, 
     dlp_start_date, 
-    droid_start_date, 
+    droid_start_date,
+    find_nearest_specific_days, 
     forwarddate_by_day)
 from datasource.fred import read_fred_csv
 
@@ -346,23 +348,13 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
         print(result)
         if(len(universe)) > 0 :
             upsert_data_to_database(result, get_fundamental_score_table_name(), "ticker", how="update", Text=True)
+
+            result["trading_day"] = find_nearest_specific_days(days=0)
+            result = uid_maker(result, uid="uid", ticker="ticker", trading_day="trading_day", date=True)
+            upsert_data_to_database(result, get_data_fundamental_score_history_table_name(), "uid", how="update", Text=True)
             report_to_slack("{} : === Fundamentals Score Updated ===".format(datetimeNow()))
 
-def check_trading_day(days = 0):
-    today = datetime.now().date()
-    count = 0
-    today2 = datetime.now().date()
-    count2 = 0
-    while (today.weekday() != days):
-        today =  today - relativedelta(days=1)
-        count = count + 1
-    while (today2.weekday() != days):
-        today2 =  today2 + relativedelta(days=1)
-        count2 = count2 + 1
-    if(count > count2):
-        return today2.strftime("%Y-%m-%d")
-    else:
-        return today.strftime("%Y-%m-%d")
+
 
 def score_update_vol_rs(list_of_start_end, days_in_year=256):
     """ Calculate roger satchell volatility:
@@ -608,7 +600,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # add DLPA scores
     fundamentals = fundamentals.merge(universe_rating, on="ticker", how="left")
 
-    fundamentals["trading_day"] = check_trading_day(days=6)
+    fundamentals["trading_day"] = find_nearest_specific_days(days=6)
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
 
     # add column for 3 pillar score
@@ -1130,7 +1122,7 @@ def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"RECSELL": "recsell", "RECBUY" : "recbuy", "index":"ticker"})
-        result["trading_day"] = check_trading_day(days=6)
+        result["trading_day"] = find_nearest_specific_days(days=6)
         result = uid_maker(result, uid="uid", ticker="ticker", trading_day="trading_day")
         result1 = result.loc[result["recsell"] != "NA"][["uid", "trading_day", "ticker", "recsell"]]
         result2 = result.loc[result["recsell"] != "NA"][["uid", "trading_day", "ticker", "recbuy"]]
