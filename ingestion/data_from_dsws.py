@@ -782,7 +782,7 @@ def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=
 
     if(history):
         start_date = "2000-01-01"
-        
+
     identifier = "ticker"
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
     print(universe)
@@ -820,12 +820,17 @@ def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=
         result["year"] = pd.DatetimeIndex(result["trading_day"]).year
         result["month"] = pd.DatetimeIndex(result["trading_day"]).month
 
-        result["year"] = np.where(result["month"].isin([1, 2]), result["year"] - 1, result["year"])
-        result.loc[result["month"].isin([12, 1, 2]), "period_end"] = result["year"].astype(str) + "-" + "12-31"
-        result.loc[result["month"].isin([3, 4, 5]), "period_end"] = result["year"].astype(str) + "-" + "03-31"
-        result.loc[result["month"].isin([6, 7, 8]), "period_end"] = result["year"].astype(str) + "-" + "06-30"
-        result.loc[result["month"].isin([9, 10, 11]), "period_end"] = result["year"].astype(str) + "-" + "09-30"
-        result["year"] = np.where(result["month"].isin([1, 2]), result["year"] + 1, result["year"])
+        result.loc[result["month"].isin([1, 2, 3]), "period_end"] = result["year"].astype(str) + "-" + "03-31"
+        result.loc[result["month"].isin([4, 5, 6]), "period_end"] = result["year"].astype(str) + "-" + "06-30"
+        result.loc[result["month"].isin([7, 8, 9]), "period_end"] = result["year"].astype(str) + "-" + "09-30"
+        result.loc[result["month"].isin([10, 11, 12]), "period_end"] = result["year"].astype(str) + "-" + "12-31"
+
+        # result["year"] = np.where(result["month"].isin([1, 2]), result["year"] - 1, result["year"])
+        # result.loc[result["month"].isin([12, 1, 2]), "period_end"] = result["year"].astype(str) + "-" + "12-31"
+        # result.loc[result["month"].isin([3, 4, 5]), "period_end"] = result["year"].astype(str) + "-" + "03-31"
+        # result.loc[result["month"].isin([6, 7, 8]), "period_end"] = result["year"].astype(str) + "-" + "06-30"
+        # result.loc[result["month"].isin([9, 10, 11]), "period_end"] = result["year"].astype(str) + "-" + "09-30"
+        # result["year"] = np.where(result["month"].isin([1, 2]), result["year"] + 1, result["year"])
         result = result.drop(columns=["month", "year"])
         print(result)
         upsert_data_to_database(result, get_data_ibes_monthly_table_name(), "uid", how="update", Text=True)
