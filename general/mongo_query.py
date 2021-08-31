@@ -1,6 +1,7 @@
 import numpy as np
 from pymongo import MongoClient
 from global_vars import MONGO_URL
+import pandas as pd
 from firebase_admin import firestore
 
 def change_null_to_zero(data):
@@ -18,10 +19,10 @@ def change_date_to_str(data):
         if (str(type(data.loc[0, col])) == "<class 'datetime.date'>" or 
             str(type(data.loc[0, col])) == "<class 'pandas._libs.tslibs.timestamps.Timestamp'>" or 
             str(type(data.loc[0, col])) == "<class 'datetime.time'>") :
-            print(f"Change DATE columns {col} to string")
+            # print(f"Change DATE columns {col} to string")
             data[col] = data[col].astype(str)
         elif(str(type(data.loc[0, col])) == "<class 'uuid.UUID'>"):
-            print(f"Change UUID columns {col} to string")
+            # print(f"Change UUID columns {col} to string")
             data[col] = data[col].astype(str)
         elif(type(data.loc[0, col]) == str):
             data[col] = np.where(data[col].isnull(), "", data[col])
@@ -49,6 +50,29 @@ def insert_to_mongo(data, index, table, dict=False):
         data_dict = data.to_dict("records")
     db_connect.insert_many(data_dict)
 
+
+def get_price_data_firebase(ticker:list) -> pd.DataFrame:
+    # firebase have limitation query max 10 list
+    # we need to split in here
+    db = firestore.client()
+    object_list = []
+    # here loop numpy split
+    doc_ref = db.collection(u"universe").where("ticker","in",ticker).get()
+    for data in doc_ref:
+        format_data = {}
+        data = data.to_dict()
+        format_data['ticker'] = data.get('ticker')
+        format_data['last_date'] = data.get('price',{}).get('last_date',0)
+        format_data['latest_price'] = data.get('price',{}).get('latest_price',0)
+        object_list.append(format_data)
+    
+    # to df
+    df = pd.DataFrame(object_list)
+    return df
+
+
+
+    
 def update_to_mongo(data, index, table, dict=False):
     data = change_date_to_str(data)
     data["indexes"] = data[index]

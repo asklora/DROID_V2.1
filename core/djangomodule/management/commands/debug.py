@@ -1,5 +1,7 @@
+from core.orders.models import OrderPosition
 import numpy as np
 import pandas as pd
+from general.mongo_query import get_price_data_firebase
 from ingestion.mongo_migration import firebase_user_update
 from core.djangomodule.management.commands.populate_ticker import populate_ticker_monthly
 from core.bot.models import BotOptionType,BotType
@@ -12,8 +14,13 @@ from datetime import datetime
 from core.djangomodule.calendar import TradingHours
 from portfolio.daily_hedge_classic import classic_position_check
 from config.celery import app 
+import asyncio
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        # ticker = [ticker.ticker.ticker for ticker in OrderPosition.objects.prefetch_related('ticker').filter(is_live=True,ticker__currency_code__in=["HKD"]).distinct('ticker')]
+        # get_price_data_firebase(ticker)
+        users = [user['id'] for user in User.objects.filter(is_superuser=False).values('id')]
+        # firebase_user_update(user_id=users)
         # contoh = datetimeNow()
         # firebase_user_update()
         # print(contoh)
