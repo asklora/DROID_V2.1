@@ -45,6 +45,7 @@ def insert_data_to_database(data, table, how="append"):
 def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=False, Text=False, Date=False, Int=False, Bigint=False, Bool=False, debug=False):
     print(f"=== Upsert Data to Database on Table {table} ===")
     data = data.drop_duplicates(subset=[primary_key], keep="first", inplace=False)
+    data = data.dropna(subset=[primary_key])
     data = data.set_index(primary_key)
     if(Text):
         data_type={primary_key:TEXT}
