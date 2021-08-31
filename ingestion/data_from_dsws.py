@@ -88,14 +88,14 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None, manual_u
         print(universe)
         identifier="origin_ticker"
         filter_field = ["ISIN", "SECD", "WC06004", "IPID"]
-        result, error_ticker = get_data_static_from_dsws(universe[["origin_ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 20))
+        result, error_ticker = get_data_static_from_dsws(universe[["origin_ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
         result = result.rename(columns={"ISIN": "isin", "index":"origin_ticker", "SECD": "sedol", "WC06004": "cusip", "IPID": "permid"})
         
         print(result)
 
         isin_list = result[["isin"]]
         isin_list = isin_list.drop_duplicates(keep="first", inplace=False)
-        result2, error_ticker = get_data_static_from_dsws(isin_list, "isin", ["RIC", "SECD"], use_ticker=False, split_number=min(len(isin_list), 20))
+        result2, error_ticker = get_data_static_from_dsws(isin_list, "isin", ["RIC", "SECD"], use_ticker=False, split_number=min(len(isin_list), 1))
         result2 = result2.rename(columns={"RIC": "consolidated_ticker", "index":"isin", "SECD": "sedol"})
         print(result2)
         result = result.merge(result2, how="left", on=["isin", "sedol"])
@@ -153,7 +153,7 @@ def update_ticker_name_from_dsws(ticker=None, currency_code=None):
     print(universe)
     filter_field = ["WC06003", "NAME"]
     identifier="ticker"
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"WC06003": "ticker_name", "NAME" : "ticker_fullname", "index":"ticker"})
@@ -171,7 +171,7 @@ def update_entity_type_from_dsws(ticker=None, currency_code=None):
     universe = universe.drop(columns=["entity_type"])
     filter_field = ["WC06100"]
     identifier="ticker"
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
     result = result.rename(columns={"WC06100": "entity_type", "index":"ticker"})
     result = remove_null(result, "entity_type")
     print(result)
@@ -204,7 +204,7 @@ def update_industry_from_dsws(ticker=None, currency_code=None):
     universe = universe.drop(columns=["industry_code", "wc_industry_code"])
     identifier="ticker"
     filter_field = ["WC07040", "WC06011"]
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
     print(result)
     if(len(result)>0):
         result = result.rename(columns={
@@ -234,7 +234,7 @@ def update_worldscope_identifier_from_dsws(ticker=None, currency_code=None):
     universe = universe.drop(columns=["worldscope_identifier", "icb_code", "fiscal_year_end"])
     identifier="ticker"
     filter_field = ["WC06035", "WC07040", "WC05352"]
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 10))
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
     print(result)
     if (len(result) > 0):
         result = result.rename(columns={"WC06035": "worldscope_identifier", "WC07040": "icb_code", "WC05352": "fiscal_year_end", "index" : "ticker"})
@@ -261,7 +261,7 @@ def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, m
     universe = universe[["ticker"]]
     identifier="ticker"
     filter_field = ["RI"]
-    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"RI": "total_return_index", "level_1" : "trading_day"})
@@ -1117,7 +1117,7 @@ def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
     universe = get_all_universe(ticker=ticker, currency_code=currency_code)
     print(universe)
     filter_field = ["RECSELL", "RECBUY"]
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], "ticker", filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], "ticker", filter_field, use_ticker=True, split_number=min(len(universe), 1))
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"RECSELL": "recsell", "RECBUY" : "recbuy", "index":"ticker"})
@@ -1136,7 +1136,7 @@ def update_currency_code_from_dsws(ticker=None, currency_code=None):
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe.drop(columns=["currency_code"])
     filter_field = ["NPCUR"]
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], "ticker", filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], "ticker", filter_field, use_ticker=True, split_number=min(len(universe), 1))
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"NPCUR": "currency_code", "index":"ticker"})
@@ -1153,7 +1153,7 @@ def update_lot_size_from_dsws(ticker=None, currency_code=None):
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe.drop(columns=["lot_size"])
     filter_field = ["LSZ"]
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], "ticker", filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], "ticker", filter_field, use_ticker=True, split_number=min(len(universe), 1))
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"LSZ": "lot_size", "index":"ticker"})
@@ -1168,7 +1168,7 @@ def update_mic_from_dsws(ticker=None, currency_code=None):
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe.drop(columns=["mic"])
     filter_field = ["SEGM"]
-    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], "ticker", filter_field, use_ticker=True, split_number=min(len(universe), 40))
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], "ticker", filter_field, use_ticker=True, split_number=min(len(universe), 1))
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"SEGM": "mic", "index":"ticker"})
