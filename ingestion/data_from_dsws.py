@@ -527,16 +527,26 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # calculate ratios refering to table X
     fundamentals_score, factor_formula = score_update_factor_ratios(fundamentals_score)
 
-    # fundamentals_score["earnings_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
-    #                                        fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
-    # fundamentals_score["revenue_pred"] = ((1 + fundamentals_score["pred_mean"]) * fundamentals_score["eps"] -
-    #                                        fundamentals_score["eps1fd12"]) / fundamentals_score["close"]
-
     factor_rank = get_factor_rank()
+<<<<<<< HEAD
     factor_rank = factor_rank.merge(factor_formula, left_on=["factor_name"], right_index=True, how="outer")
     factor_rank["long_large"] = factor_rank["long_large"].fillna(True)
     factor_rank = factor_rank.dropna(subset=["pillar"])
     append_df = factor_rank.loc[factor_rank["keep"]]
+=======
+
+    # for currency not predicted by Factor Model -> Use factor of USD
+    universe_currency_code = get_active_universe()['currency_code'].unique()
+    for i in set(universe_currency_code) - set(factor_rank['group'].unique()):
+        replace_rank = factor_rank.loc[factor_rank['group']=='USD'].copy()
+        replace_rank['group'] = i
+        factor_rank = factor_rank.append(replace_rank, ignore_index=True)
+
+    factor_rank = factor_rank.merge(factor_formula, left_on=['factor_name'], right_index=True, how='outer')
+    factor_rank['long_large'] = factor_rank['long_large'].fillna(True)
+    factor_rank = factor_rank.dropna(subset=['pillar'])
+    append_df = factor_rank.loc[factor_rank['keep']]
+>>>>>>> b6b3ddb6c2e571d5869b132e2c0b245a529109d0
 
     for group in factor_rank["group"].dropna().unique():
         # change ratio to negative if original factor calculation using reverse premiums
@@ -623,7 +633,12 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
 
     # add column for 3 pillar score
+<<<<<<< HEAD
     fundamentals[[f"fundamentals_{name}" for name in factor_rank["pillar"].unique()]] = np.nan
+=======
+    fundamentals[[f"fundamentals_{name}" for name in factor_rank['pillar'].unique()]] = np.nan
+    fundamentals[['dlp_1m','wts_rating']] = fundamentals[['dlp_1m','wts_rating']]/10    # adjust dlp score to 0 ~ 1 (originally 0 ~ 10)
+>>>>>>> b6b3ddb6c2e571d5869b132e2c0b245a529109d0
 
     # calculate ai_score by each currency_code (i.e. group) for each of 3 pillar
     for (group, pillar_name), g in factor_rank.groupby(["group", "pillar"]):
