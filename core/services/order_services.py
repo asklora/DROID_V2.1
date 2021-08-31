@@ -1,4 +1,4 @@
-from config.celery import app
+from config.celery import app,app_dev
 from django.apps import apps
 from core.djangomodule.calendar import TradingHours
 from core.user.models import User
@@ -138,7 +138,7 @@ def order_executor(self, payload, recall=False):
 
 
 
-@app.task
+@app_dev.task
 def update_rtdb_user_porfolio():
     users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
     try:
