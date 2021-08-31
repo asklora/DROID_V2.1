@@ -616,6 +616,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     # add column for 3 pillar score
     fundamentals[[f"fundamentals_{name}" for name in factor_rank['pillar'].unique()]] = np.nan
+    fundamentals[['dlp_1m','wts_rating']] = fundamentals[['dlp_1m','wts_rating']]/10    # adjust dlp score to 0 ~ 1 (originally 0 ~ 10)
 
     # calculate ai_score by each currency_code (i.e. group) for each of 3 pillar
     for (group, pillar_name), g in factor_rank.groupby(['group', 'pillar']):
