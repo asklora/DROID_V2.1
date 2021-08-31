@@ -781,10 +781,8 @@ def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=
     filter_field = ["EPS1TR12", "EPS1FD12", "EBD1FD12", "CAP1FD12", "I0EPS", "EPSI1MD", "SAL1FD12"]
 
     if(history):
-        universe = get_ibes_new_ticker()
-        start_date = backdate_by_year(4)
-        filter_field = ["EPS1TR12", "EPS1FD12"]
-    
+        start_date = "2000-01-01"
+        
     identifier = "ticker"
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
     print(universe)
