@@ -100,15 +100,19 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
                 df[identifier] = df[identifier].str.replace("<", "").str.replace(">", "")
                 df[identifier] = df[identifier].str.strip()
             else:
-                if(len(universelist) == 1):
+                if(len(universe) == 1):
                     df["level_1"] = df["index"]
                     df[identifier] = universe[0].replace("<", "").replace(">", "")
-                else:
-                    # df = df.reset_index()
+                elif(split_number == 1):
                     df["level_1"] = df["index"]
                     df[identifier] = df[identifier].str.replace("<", "").str.replace(">", "")
                     df[identifier] = df[identifier].str.strip()
-                # df = df.drop(columns="index")
+                else:
+                    df = df.reset_index()
+                    df[identifier] = df["level_0"]
+                    df[identifier] = df[identifier].str.replace("<", "").str.replace(">", "")
+                    df[identifier] = df[identifier].str.strip()
+                df = df.drop(columns="index")
         else:
             if(len(universe) == 1):
                 df["level_1"] = df["index"]
