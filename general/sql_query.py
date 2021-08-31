@@ -2,7 +2,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general.sql_process import db_read, alibaba_db_url
-from general.date_process import backdate_by_day, dateNow, droid_start_date, str_to_date
+from general.date_process import backdate_by_day, backdate_by_year, dateNow, droid_start_date, str_to_date
 from general.data_process import tuple_data
 from general.table_name import (
     get_bot_backtest_table_name,
@@ -36,6 +36,7 @@ from general.table_name import (
     get_universe_consolidated_table_name,
     get_factor_calculation_table_name,
     get_factor_rank_table_name,
+    get_ai_score_history_testing_table_name,
 )
 
 def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=True):
@@ -351,7 +352,6 @@ def get_last_close_industry_code(ticker=None, currency_code=None):
     data = read_query(query, table=get_master_ohlcvtr_table_name())
     return data
 
-
 def get_pred_mean():
     query = f"select distinct avlpf.ticker, avlpf.pred_mean, avlpf.testing_period::date, avlpf.update_time from ai_value_lgbm_pred_final avlpf, "
     query += f"(select ticker, max(testing_period::date) as max_date from ai_value_lgbm_pred_final group by ticker) filter "
@@ -512,6 +512,13 @@ def get_consolidated_data(column, condition, group_field=None):
     if type(group_field) != type(None):
         query += f"group by {group_field} "
     data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_ai_score_testing_history():
+    query = f"SELECT currency_code, 10 / (max(ai_score) - min(ai_score)) as score_multi, avg(ai_score) as score_mean " \
+            f"FROM {get_ai_score_history_testing_table_name()} " \
+            f"WHERE period_end > {backdate_by_year(3)} GROUP BY currency_code"
+    data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
     return data
 
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):

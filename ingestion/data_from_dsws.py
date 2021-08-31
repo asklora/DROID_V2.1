@@ -55,6 +55,7 @@ from general.sql_query import (
     get_pred_mean,
     get_ai_value_pred_final,
     get_specific_tri,
+    get_ai_score_testing_history,
     get_specific_tri_avg,
     get_specific_volume_avg,
     get_universe_rating, 
@@ -586,10 +587,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             df_industry = df_industry.rename(columns = {column_robust_score : "score"})
             fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
             fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
-            # if(column == "earnings_pred"):
-            #     fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0, fundamentals[column_minmax_currency_code])
-            #     fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0, fundamentals[column_minmax_industry])
-            # else:
             fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0.4, fundamentals[column_minmax_currency_code])
             fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
             minmax_column.append(column_minmax_currency_code)
@@ -647,7 +644,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
     #     extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
     #     fundamentals.to_sql('test_fundamentals_clair', **extra)
-    
+
     print("Calculate ESG Value")
     fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
         fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
@@ -660,7 +657,12 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("Calculate AI Score 2")
     fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] +
                                  fundamentals["fundamentals_momentum"] + fundamentals["esg"]) / 4
-    
+
+    score_history = get_ai_score_testing_history()
+    fundamentals = fundamentals.merge(score_history, on=['currency_code'], how='left')
+    fundamentals[["ai_score","ai_score2"]] = fundamentals[["ai_score","ai_score2"]]*fundamentals['score_multi'].values + 5 - fundamentals['score_mean']
+    fundamentals[["ai_score","ai_score2"]] = fundamentals[["ai_score","ai_score2"]].clip(0, 10)
+
     universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
                                             "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
                                             "dlp_3m", "wts_rating2", "classic_vol"]]
