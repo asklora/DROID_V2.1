@@ -1,12 +1,11 @@
 import math
-from core.Clients.models import UserClient
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from .models import Order, OrderFee, OrderPosition, PositionPerformance
 from core.bot.models import BotOptionType
 from bot.calculate_bot import get_classic, get_expiry_date, get_uno, get_ucdc
 from core.djangomodule.general import formatdigit
-from core.user.models import TransactionHistory, Accountbalance
+from core.user.models import TransactionHistory
 from .order_signal_action import OrderServices
 
 
@@ -30,7 +29,7 @@ def generate_hedge_setup(instance: Order,margin:int) -> dict:
 
 @receiver(pre_save, sender=Order)
 def order_signal_check(sender, instance, **kwargs):
-    
+    currency_decimal =instance.user_id.user_balance.currency_code.is_decimal
     # this for locking balance before order is filled
     if instance.placed and instance.status == 'placed':
         if instance.status != "filled":
@@ -43,12 +42,13 @@ def order_signal_check(sender, instance, **kwargs):
             setup = generate_hedge_setup(instance,instance.margin)
             instance.setup = setup
             instance.qty = setup['performance']["share_num"]
-            instance.amount = formatdigit(setup['performance']["share_num"] * setup['price'])
+            instance.amount = formatdigit(setup['performance']["share_num"] * setup['price'],currency_decimal)
         else:
             instance.setup = None
-            # amount should still 
-            instance.amount = round(instance.qty * instance.price,2)
-            instance.qty = math.floor((instance.amount / instance.price) * instance.margin) 
+            # amount should still
+            if not instance.qty:
+                instance.qty = math.floor((instance.amount / instance.price) * instance.margin) 
+            instance.amount = formatdigit((instance.qty * instance.price) / instance.margin,currency_decimal)
 
 
 @receiver(post_save, sender=Order)
