@@ -8,6 +8,7 @@ from typing import List,Optional,Union
 from core.services.models import ThirdpartyCredentials,ErrorLog
 from core.universe.models import ExchangeMarket,Universe
 from core.djangomodule.calendar import TradingHours
+from core.services.tasks import update_rtdb_user_porfolio
 import sys
 import logging
 import websocket
@@ -595,6 +596,7 @@ class RkdStream(RkdData):
                 for index in data.index:
                     split_data = data.iloc[[index]]
                     self.update_rtdb.apply_async(args=(split_data.to_dict("records"),),queue="broadcaster")
+                    update_rtdb_user_porfolio.delay()
                 del data
                 gc.collect()
             else:

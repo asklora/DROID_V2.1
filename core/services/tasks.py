@@ -53,7 +53,8 @@ from ingestion import (
     update_lot_size_from_dsws,
     update_mic_from_dsws,
     update_ticker_name_from_dsws,
-    update_worldscope_identifier_from_dsws
+    update_worldscope_identifier_from_dsws,
+    firebase_user_update
     )
 
 
@@ -264,7 +265,17 @@ async def gather_ping_presence():
             ))
         await asyncio.gather(*tasks)
 
-
+@app.task
+def update_rtdb_user_porfolio():
+    users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
+    try:
+        firebase_user_update(user_id=users)
+    except Exception as e:
+        err = ErrorLog.objects.create_log(
+        error_description=f"===  ERROR IN POPULATE UNIVERSER FIREBASE ===", error_message=str(e))
+        err.send_report_error()
+        return {'error':str(e)}
+    return {'status':'updated firebase portfolio'}
 @app.task(ignore_result=True)
 def ping_available_presence():
     asyncio.run(gather_ping_presence())

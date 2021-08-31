@@ -6,6 +6,7 @@ from firebase_admin import messaging
 from datetime import datetime
 from rest_framework import serializers
 from channels.layers import get_channel_layer
+from ingestion import firebase_user_update
 from datasource.rkd import RkdData
 import time
 import json
@@ -23,6 +24,10 @@ class OrderDetailsServicesSerializers(serializers.ModelSerializer):
 
 @app.task(bind=True)
 def order_executor(self, payload, recall=False):
+    """
+    #TODO: ERROR HANDLING HERE AND RETURN MESSAGE TO USER AND SOCKET
+    
+    """
     payload = json.loads(payload)
     Model = apps.get_model('orders', 'Order')
     Exchange = apps.get_model('universe', 'ExchangeMarket')
@@ -90,6 +95,7 @@ def order_executor(self, payload, recall=False):
             print('open')
             messages = 'order accepted'
             message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status filled'
+            firebase_user_update(user_id=[order.user_id.id])
         else:
             print('close')
             messages = 'order pending'
