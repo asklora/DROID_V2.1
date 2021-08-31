@@ -34,6 +34,7 @@ from general.table_name import (
     get_universe_rating_table_name, 
     get_universe_table_name)
 from datasource.dsws import (
+    get_data_history_by_field_from_dsws,
     get_data_history_frequently_by_field_from_dsws, 
     get_data_history_frequently_from_dsws, 
     get_data_history_from_dsws, 
@@ -261,14 +262,31 @@ def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, m
     universe = universe[["ticker"]]
     identifier="ticker"
     filter_field = ["RI"]
-    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
+    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 20))
+    print(result)
+    print(error_ticker)
+    if len(error_ticker) == 0 :
+        second_result = []
+    else:
+        second_result, error_ticker = get_data_history_by_field_from_dsws(start_date, end_date, error_ticker, identifier, filter_field, use_ticker=True, split_number=1)
+        if(len(error_ticker) > 0):
+            report_to_slack("{} : === DSWS TICKER ERROR {} ===".format(datetimeNow(), error_ticker))
+    try:
+        if(len(result) == 0):
+            result = second_result
+        elif(len(second_result) == 0):
+            result = result
+        else :
+            result = result.append(second_result)
+    except Exception as e:
+        result = second_result
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"RI": "total_return_index", "level_1" : "trading_day"})
         result = uid_maker(result, uid="dsws_id", ticker="ticker", trading_day="trading_day")
         result = result.dropna(subset=["ticker"])
-        print(result)
         result = result[["dsws_id", "ticker", "trading_day", "total_return_index"]]
+        print(result)
         upsert_data_to_database(result, get_data_dsws_table_name(), "dsws_id", how="update", Text=True)
         report_to_slack("{} : === DSWS Updated ===".format(datetimeNow()))
 
