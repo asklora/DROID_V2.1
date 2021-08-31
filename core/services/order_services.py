@@ -1,8 +1,9 @@
-from config.celery import app,app_dev
+from config.celery import app
 from django.apps import apps
 from core.djangomodule.calendar import TradingHours
 from core.user.models import User
 from core.services.models import ErrorLog
+from core.universe.models  import ExchangeMarket
 from django.db import transaction
 from firebase_admin import messaging
 from datetime import datetime
@@ -138,11 +139,13 @@ def order_executor(self, payload, recall=False):
 
 
 
-@app_dev.task
+@app.task
 def update_rtdb_user_porfolio():
     users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
     try:
-        firebase_user_update(user_id=users)
+        hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
+        if hkd_exchange.is_open:
+            firebase_user_update(user_id=users)
     except Exception as e:
         err = ErrorLog.objects.create_log(
         error_description=f"===  ERROR IN POPULATE UNIVERSER FIREBASE ===", error_message=str(e))

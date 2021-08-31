@@ -596,7 +596,7 @@ class RkdStream(RkdData):
                 for index in data.index:
                     split_data = data.iloc[[index]]
                     self.update_rtdb.apply_async(args=(split_data.to_dict("records"),),queue="broadcaster")
-                    update_rtdb_user_porfolio.delay()
+                    # update_rtdb_user_porfolio.delay()
                 del data
                 gc.collect()
             else:
