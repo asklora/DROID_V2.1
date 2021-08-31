@@ -266,6 +266,7 @@ def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, m
     if(len(result)) > 0 :
         result = result.rename(columns={"RI": "total_return_index", "level_1" : "trading_day"})
         result = uid_maker(result, uid="dsws_id", ticker="ticker", trading_day="trading_day")
+        result = result.dropna(subset=["ticker"])
         print(result)
         result = result[["dsws_id", "ticker", "trading_day", "total_return_index"]]
         upsert_data_to_database(result, get_data_dsws_table_name(), "dsws_id", how="update", Text=True)
