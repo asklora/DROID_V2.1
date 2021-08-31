@@ -141,10 +141,10 @@ def order_executor(self, payload, recall=False):
 
 @app.task
 def update_rtdb_user_porfolio():
-    users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
     try:
         hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
         if hkd_exchange.is_open:
+            users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
             firebase_user_update(user_id=users)
     except Exception as e:
         err = ErrorLog.objects.create_log(
