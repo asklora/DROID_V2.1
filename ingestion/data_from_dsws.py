@@ -545,6 +545,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     calculate_column += ["environment", "social", "goverment"]
 
     fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
+    # fundamentals = fundamentals.loc[fundamentals['industry_code']!='NA']
     fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
     print(fundamentals)
 
@@ -573,6 +574,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             calculate_column_robust_score.append(column_robust_score)
         except Exception as e:
             print(e)
+    print(calculate_column_robust_score)
 
     # apply maxmin scaler on Currency / Industry
     minmax_column = ["uid", "ticker", "trading_day"]
@@ -580,19 +582,20 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         try:
             column_robust_score = column + "_robust_score"
             column_minmax_currency_code = column + "_minmax_currency_code"
-            column_minmax_industry = column + "_minmax_industry"
+            # column_minmax_industry = column + "_minmax_industry"
             df_currency_code = fundamentals[["currency_code", column_robust_score]]
             df_currency_code = df_currency_code.rename(columns = {column_robust_score : "score"})
-            df_industry = fundamentals[["industry_code", column_robust_score]]
-            df_industry = df_industry.rename(columns = {column_robust_score : "score"})
+            # df_industry = fundamentals[["industry_code", column_robust_score]]
+            # df_industry = df_industry.rename(columns = {column_robust_score : "score"})
             fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
-            fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
+            # fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
             fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0.4, fundamentals[column_minmax_currency_code])
-            fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
+            # fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
             minmax_column.append(column_minmax_currency_code)
-            minmax_column.append(column_minmax_industry)
+            # minmax_column.append(column_minmax_industry)
         except Exception as e:
             print(e)
+    print(minmax_column)
 
     # apply quantile transformation on before scaling scores
     try:
@@ -646,9 +649,11 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     #     fundamentals.to_sql('test_fundamentals_clair', **extra)
 
     print("Calculate ESG Value")
-    fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
-        fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
-        fundamentals["goverment_minmax_currency_code"] + fundamentals["goverment_minmax_industry"]) / 6
+    # fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
+    #     fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
+    #     fundamentals["goverment_minmax_currency_code"] + fundamentals["goverment_minmax_industry"]) / 6
+    fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] +
+        fundamentals["social_minmax_currency_code"] + fundamentals["goverment_minmax_currency_code"]) / 3
 
     print("Calculate AI Score")
     fundamentals["ai_score"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] + \
@@ -658,10 +663,16 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] +
                                  fundamentals["fundamentals_momentum"] + fundamentals["esg"]) / 4
 
+    # scale ai_score with history min / max
     score_history = get_ai_score_testing_history()
     fundamentals = fundamentals.merge(score_history, on=['currency_code'], how='left')
-    fundamentals[["ai_score","ai_score2"]] = fundamentals[["ai_score","ai_score2"]]*fundamentals['score_multi'].values + 5 - fundamentals['score_mean']
-    fundamentals[["ai_score","ai_score2"]] = fundamentals[["ai_score","ai_score2"]].clip(0, 10)
+    print(fundamentals[["ai_score","ai_score2"]].describe())
+    for col in ["ai_score","ai_score2"]:
+        fundamentals[['min']] = fundamentals.groupby(['currency_code'])[col].transform('min')
+        fundamentals[['max']] = fundamentals.groupby(['currency_code'])[col].transform('max')
+        fundamentals[col] = (fundamentals[col] - fundamentals['min'])/(fundamentals['max']-fundamentals['min'])*(fundamentals['score_max']-fundamentals['score_min']) + fundamentals['score_min']
+        fundamentals[col] = fundamentals[col].clip(0, 10)
+    print(fundamentals[["ai_score","ai_score2"]].describe())
 
     universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
                                             "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",

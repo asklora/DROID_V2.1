@@ -515,9 +515,9 @@ def get_consolidated_data(column, condition, group_field=None):
     return data
 
 def get_ai_score_testing_history():
-    query = f"SELECT currency_code, 10 / (max(ai_score) - min(ai_score)) as score_multi, avg(ai_score) as score_mean " \
+    query = f"SELECT currency_code, max(ai_score) as score_max, min(ai_score) as score_min " \
             f"FROM {get_ai_score_history_testing_table_name()} " \
-            f"WHERE period_end > {backdate_by_year(3)} GROUP BY currency_code"
+            f"WHERE period_end > '{backdate_by_year(3)}' GROUP BY currency_code"
     data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
     return data
 
