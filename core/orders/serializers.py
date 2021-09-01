@@ -356,7 +356,10 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
         else:
             user = request.user
         validated_data["side"] = instance.side
-        valid = side_validation(validated_data)
+        if not validated_data.get("bot_id",None):
+            validated_data["bot_id"] = instance.bot_id
+        
+        side_validation(validated_data)
             
         for keys, value in validated_data.items():
             setattr(instance, keys, value)
