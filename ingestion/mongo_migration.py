@@ -343,7 +343,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_values"]
             # orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"]
             orders_position["profit"] =orders_position["current_values"] - orders_position["investment_amount"]
-            orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"] 
+            orders_position["pct_profit"] =  (orders_position["profit"] / orders_position["investment_amount"]  * 100).round(2)
 
             #BOT POSITION
             # orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["investment_amount"] * 100).round(0)
@@ -373,7 +373,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             for index, row in orders_position.iterrows():
                 act_df = orders_position.loc[orders_position["position_uid"] == row["position_uid"]]
                 bot = bot_option_type.loc[bot_option_type["bot_id"] == row["bot_id"]][["bot_id", "bot_option_type", "bot_apps_name", "bot_apps_description", "duration"]]
-                act_df = act_df.reset_index(inplace=False)
+                act_df = act_df.reset_index(inplace=False, drop=True)
                 act_df.loc[0, "bot_details"] = bot.to_dict("records")
                 act_df["position_uid"] = act_df["position_uid"].astype(str)
                 act_df["order_uid"] = act_df["order_uid"].astype(str)
