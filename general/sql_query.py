@@ -695,7 +695,7 @@ def get_orders_position(user_id=None, ticker=None, currency_code=None, position_
     if type(user_id) != type(None):
         query += f"and user_id in {tuple_data(user_id)}  "
     elif type(position_uid) != type(None):
-        query += f"where position_uid in {position_uid} "
+        query += f"where position_uid in {tuple_data(position_uid)} "
     elif type(ticker) != type(None):
         query += f"and ticker in {tuple_data(ticker)} "
     elif type(currency_code) != type(None):
