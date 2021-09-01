@@ -325,6 +325,7 @@ async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,us
 
 async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user:str, user_core:pd.DataFrame)->pd.DataFrame:
         user_core =  user_core.loc[user_core["user_id"] == user]
+        user_core = user_core.reset_index(inplace=False, drop=True)
         if(len(position_data) > 0):
             orders_position = position_data.loc[position_data["user_id"] == user]
 
@@ -359,6 +360,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             # pct_total_user_invested_amount = int(round(total_user_invested_amount / total_invested_amount, 0) * 100)
             # total_profit_amount = sum(orders_position["profit"].to_list())
             total_invested_amount = NonetoZero(sum(orders_position["current_values"].to_list()))
+            daily_live_profit = total_invested_amount - user_core.loc[0, "daily_invested_amount"]
             total_bot_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_values"].to_list()))
             total_user_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["current_values"].to_list()))
             pct_total_bot_invested_amount = NonetoZero(int(round(total_bot_invested_amount / total_invested_amount, 0) * 100))
@@ -382,11 +384,11 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
                 active_df.append(act_df)
             active = pd.DataFrame({"user_id":[user], "total_invested_amount":[total_invested_amount], "total_bot_invested_amount":[total_bot_invested_amount], 
                 "total_user_invested_amount":[total_user_invested_amount], "pct_total_bot_invested_amount":[pct_total_bot_invested_amount], "pct_total_user_invested_amount":[pct_total_user_invested_amount], 
-                "total_profit_amount":[total_profit_amount], "active_portfolio":[[active_df]]}, index=[0])
+                "total_profit_amount":[total_profit_amount], "daily_live_profit":[daily_live_profit], "active_portfolio":[[active_df]]}, index=[0])
         else:
             active = pd.DataFrame({"user_id":[user], "total_invested_amount":[0], "total_bot_invested_amount":[0], 
                 "total_user_invested_amount":[0], "pct_total_bot_invested_amount":[0], "pct_total_user_invested_amount":[0], 
-                "total_profit_amount":[0], "active_portfolio":[[None]]}, index=[0])
+                "total_profit_amount":[0], "daily_live_profit":[0], "active_portfolio":[[None]]}, index=[0])
         result = user_core.merge(active, how="left", on=["user_id"])
         result = result.rename(columns={"currency_code" : "currency"})
         await sync_to_async(update_to_mongo)(data=result, index="user_id", table="portfolio", dict=False)
