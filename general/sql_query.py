@@ -195,6 +195,12 @@ def get_active_universe(ticker=None, currency_code=None, active=True):
     data = read_query(query, table=get_universe_table_name())
     return data
 
+def get_consolidated_universe_data():
+    table_name = get_universe_consolidated_table_name()
+    query = f"select * from {table_name} "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+    
 def get_active_universe_by_created(created=dateNow()):
     query = f"select * from {get_universe_table_name()} where is_active=True and created='{created}' order by ticker"
     data = read_query(query, table=get_universe_table_name())
