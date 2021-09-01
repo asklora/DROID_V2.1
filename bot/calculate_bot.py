@@ -587,7 +587,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
             daily_profit_pct = round(profit / NoneToZero(sum(orders_position["investment_amount"].to_list())) * 100, 2)
         else:
             profit = 0
-            profit_pct = 0
+            daily_profit_pct = 0
         user_core.loc[index, "daily_profit"] = profit
         user_core.loc[index, "daily_profit_pct"] = daily_profit_pct
     user_core["trading_day"] =  str_to_date(dateNow())

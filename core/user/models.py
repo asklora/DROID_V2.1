@@ -334,6 +334,7 @@ class UserProfitHistory(models.Model):
     trading_day = models.DateField(null=True, blank=True)
     daily_profit = models.FloatField(default=0)
     daily_profit_pct = models.FloatField(default=0)
+    total_invested_amount = models.FloatField(default=0)
 
     def __str__(self):
         return self.user_id.email
