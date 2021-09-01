@@ -327,69 +327,71 @@ async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,us
 
 async def do_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,user:str,user_core:pd.DataFrame)->pd.DataFrame:
         user_core =  user_core.loc[user_core["user_id"] == user]
-        
-        orders_position = position_data.loc[position_data["user_id"] == user]
+        if(len(position_data) > 0):
+            orders_position = position_data.loc[position_data["user_id"] == user]
 
-        orders_position = orders_position.reset_index(inplace=False)
-        #TOP LEVEL
-        orders_position["status"] = "LIVE"
-        orders_position["current_values"] = (orders_position["bot_cash_balance"] + (orders_position["share_num"] * orders_position["price"]))
-        orders_position["current_ivt_amt"] = (orders_position["share_num"] * orders_position["price"])
-        #MARGIN
-        # orders_position["margin_amount"] = (orders_position["margin"] * orders_position["investment_amount"]) - orders_position["investment_amount"]
-        orders_position["margin_amount"] = (orders_position["margin"] - 1) * orders_position["investment_amount"]
-        orders_position["bot_cash_balance"] = orders_position["bot_cash_balance"] + orders_position["margin_amount"]
-        orders_position["threshold"] = (orders_position["margin_amount"] + orders_position["investment_amount"]) - orders_position["bot_cash_balance"]
+            orders_position = orders_position.reset_index(inplace=False)
+            #TOP LEVEL
+            orders_position["status"] = "LIVE"
+            orders_position["current_values"] = (orders_position["bot_cash_balance"] + (orders_position["share_num"] * orders_position["price"]))
+            orders_position["current_ivt_amt"] = (orders_position["share_num"] * orders_position["price"])
+            #MARGIN
+            # orders_position["margin_amount"] = (orders_position["margin"] * orders_position["investment_amount"]) - orders_position["investment_amount"]
+            orders_position["margin_amount"] = (orders_position["margin"] - 1) * orders_position["investment_amount"]
+            orders_position["bot_cash_balance"] = orders_position["bot_cash_balance"] + orders_position["margin_amount"]
+            orders_position["threshold"] = (orders_position["margin_amount"] + orders_position["investment_amount"]) - orders_position["bot_cash_balance"]
 
-        #PROFIT
-        # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_values"]
-        # orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"]
-        orders_position["profit"] =orders_position["current_values"] - orders_position["investment_amount"]
-        orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"] 
+            #PROFIT
+            # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_values"]
+            # orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"]
+            orders_position["profit"] =orders_position["current_values"] - orders_position["investment_amount"]
+            orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"] 
 
-        #BOT POSITION
-        # orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["investment_amount"] * 100).round(0)
-        # orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
-        orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["current_values"] * 100).round(0)
-        orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
+            #BOT POSITION
+            # orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["investment_amount"] * 100).round(0)
+            # orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
+            orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["current_values"] * 100).round(0)
+            orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
 
-        #USER POSITION
-        # total_invested_amount = sum(orders_position["investment_amount"].to_list())
-        # total_bot_invested_amount	= sum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["investment_amount"].to_list())
-        # total_user_invested_amount = sum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["investment_amount"].to_list())
-        # pct_total_bot_invested_amount = int(round(total_bot_invested_amount / total_invested_amount, 0) * 100)
-        # pct_total_user_invested_amount = int(round(total_user_invested_amount / total_invested_amount, 0) * 100)
-        # total_profit_amount = sum(orders_position["profit"].to_list())
-        total_invested_amount = NonetoZero(sum(orders_position["current_values"].to_list()))
-        total_bot_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_values"].to_list()))
-        total_user_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["current_values"].to_list()))
-        pct_total_bot_invested_amount = NonetoZero(int(round(total_bot_invested_amount / total_invested_amount, 0) * 100))
-        pct_total_user_invested_amount = NonetoZero(int(round(total_user_invested_amount / total_invested_amount, 0) * 100))
-        total_profit_amount = NonetoZero(sum(orders_position["profit"].to_list()))
+            #USER POSITION
+            # total_invested_amount = sum(orders_position["investment_amount"].to_list())
+            # total_bot_invested_amount	= sum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["investment_amount"].to_list())
+            # total_user_invested_amount = sum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["investment_amount"].to_list())
+            # pct_total_bot_invested_amount = int(round(total_bot_invested_amount / total_invested_amount, 0) * 100)
+            # pct_total_user_invested_amount = int(round(total_user_invested_amount / total_invested_amount, 0) * 100)
+            # total_profit_amount = sum(orders_position["profit"].to_list())
+            total_invested_amount = NonetoZero(sum(orders_position["current_values"].to_list()))
+            total_bot_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_values"].to_list()))
+            total_user_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["current_values"].to_list()))
+            pct_total_bot_invested_amount = NonetoZero(int(round(total_bot_invested_amount / total_invested_amount, 0) * 100))
+            pct_total_user_invested_amount = NonetoZero(int(round(total_user_invested_amount / total_invested_amount, 0) * 100))
+            total_profit_amount = NonetoZero(sum(orders_position["profit"].to_list()))
 
-        active_df = []
-        orders_position = change_date_to_str(orders_position)
-        # orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
-        # orders_position = get_orders_position(user_id=[user], active=False, field=orders_position_field)
-        orders_position = orders_position.sort_values(by=["profit"])
-        for index, row in orders_position.iterrows():
-            act_df = orders_position.loc[orders_position["position_uid"] == row["position_uid"]]
-            bot = bot_option_type.loc[bot_option_type["bot_id"] == row["bot_id"]][["bot_id", "bot_option_type", "bot_apps_name", "bot_apps_description", "duration"]]
-            act_df = act_df.reset_index(inplace=False)
-            act_df.loc[0, "bot_details"] = bot.to_dict("records")
-            act_df["position_uid"] = act_df["position_uid"].astype(str)
-            act_df["order_uid"] = act_df["order_uid"].astype(str)
-            act_df = act_df.drop(columns=["bot_id", "bot_apps_name", "duration"])
-            act_df = act_df.to_dict("records")[0]
-            active_df.append(act_df)
-        active = pd.DataFrame({"user_id":[user], "total_invested_amount":[total_invested_amount], "total_bot_invested_amount":[total_bot_invested_amount], 
-            "total_user_invested_amount":[total_user_invested_amount], "pct_total_bot_invested_amount":[pct_total_bot_invested_amount], "pct_total_user_invested_amount":[pct_total_user_invested_amount], 
-            "total_profit_amount":[total_profit_amount], "active_portfolio":[active_df]}, index=[0])
+            active_df = []
+            orders_position = change_date_to_str(orders_position)
+            # orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
+            # orders_position = get_orders_position(user_id=[user], active=False, field=orders_position_field)
+            orders_position = orders_position.sort_values(by=["profit"])
+            for index, row in orders_position.iterrows():
+                act_df = orders_position.loc[orders_position["position_uid"] == row["position_uid"]]
+                bot = bot_option_type.loc[bot_option_type["bot_id"] == row["bot_id"]][["bot_id", "bot_option_type", "bot_apps_name", "bot_apps_description", "duration"]]
+                act_df = act_df.reset_index(inplace=False)
+                act_df.loc[0, "bot_details"] = bot.to_dict("records")
+                act_df["position_uid"] = act_df["position_uid"].astype(str)
+                act_df["order_uid"] = act_df["order_uid"].astype(str)
+                act_df = act_df.drop(columns=["bot_id", "bot_apps_name", "duration"])
+                act_df = act_df.to_dict("records")[0]
+                active_df.append(act_df)
+            active = pd.DataFrame({"user_id":[user], "total_invested_amount":[total_invested_amount], "total_bot_invested_amount":[total_bot_invested_amount], 
+                "total_user_invested_amount":[total_user_invested_amount], "pct_total_bot_invested_amount":[pct_total_bot_invested_amount], "pct_total_user_invested_amount":[pct_total_user_invested_amount], 
+                "total_profit_amount":[total_profit_amount], "active_portfolio":[active_df]}, index=[0])
+        else:
+            active = pd.DataFrame({"user_id":[user], "total_invested_amount":[0], "total_bot_invested_amount":[0], 
+                "total_user_invested_amount":[0], "pct_total_bot_invested_amount":[0], "pct_total_user_invested_amount":[0], 
+                "total_profit_amount":[0], "active_portfolio":[None]}, index=[0])
         result = user_core.merge(active, how="left", on=["user_id"])
         result = result.rename(columns={"currency_code" : "currency"})
-        
         await sync_to_async(update_to_mongo)(data=result, index="user_id", table="portfolio", dict=False)
-
         return active
 
 
