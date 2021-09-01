@@ -1,4 +1,4 @@
-from .models import OrderPosition
+from .models import OrderPosition,Order
 from rest_framework import exceptions
 from core.bot.models import BotOptionType
 from portfolio import (
@@ -7,6 +7,11 @@ from portfolio import (
     uno_sell_position,
     user_sell_position
     )
+
+
+def is_order_exist(ticker:str,bot_id:list,user_id:any) -> bool:
+    order = Order.objects.filter(user_id=user_id,ticker=ticker,bot_id__in=bot_id,status='pending')
+
 
 def is_portfolio_exist(ticker,bot_id,user_id):
     bot_type = BotOptionType.objects.get(bot_id=bot_id).bot_type
