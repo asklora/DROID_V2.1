@@ -241,7 +241,7 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
 
 @app.task
 def uno_position_check(position_uid, to_date=None, tac=False, hedge=False, latest=False):
-    # transaction.set_autocommit(False) # For test
+    transaction.set_autocommit(False) # For test
     try:
         position = OrderPosition.objects.get(
             position_uid=position_uid, is_live=True)
@@ -336,8 +336,8 @@ def uno_position_check(position_uid, to_date=None, tac=False, hedge=False, lates
                         order.save()
                 if status:
                     print(f"position end")
-        # transaction.commit() # For test
-        # print("transaction committed")
+        transaction.commit() # For test
+        print("transaction committed")
         return True
     except OrderPosition.DoesNotExist as e:
         err = ErrorLog.objects.create_log(
