@@ -63,7 +63,7 @@ def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, spl
         data = data.drop(columns="level_0")
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
-
+        
 def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, dividend=False, split_number=40):
     DS = setDataStream()
     print("== Getting Data From DSWS ==")

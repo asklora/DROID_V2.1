@@ -11,8 +11,8 @@ import random
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        firebase_user_update(user_id=[119])
-        # mongo_universe_update(currency_code=["HKD"])
+        # firebase_user_update(user_id=[119])
+        mongo_universe_update(currency_code=["HKD"])
         # db = firestore.client()
         # ticker = ['0998.HK','0267.HK','0883.HK']
         # while True:
