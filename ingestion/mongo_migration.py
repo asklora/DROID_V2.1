@@ -384,13 +384,15 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
                 active_df.append(act_df)
             active = pd.DataFrame({"user_id":[user], "total_invested_amount":[total_invested_amount], "total_bot_invested_amount":[total_bot_invested_amount], 
                 "total_user_invested_amount":[total_user_invested_amount], "pct_total_bot_invested_amount":[pct_total_bot_invested_amount], "pct_total_user_invested_amount":[pct_total_user_invested_amount], 
-                "total_profit_amount":[total_profit_amount], "daily_live_profit":[daily_live_profit], "active_portfolio":[[active_df]]}, index=[0])
+                "total_profit_amount":[total_profit_amount], "daily_live_profit":[daily_live_profit], "active_portfolio":[active_df]}, index=[0])
         else:
             active = pd.DataFrame({"user_id":[user], "total_invested_amount":[0], "total_bot_invested_amount":[0], 
                 "total_user_invested_amount":[0], "pct_total_bot_invested_amount":[0], "pct_total_user_invested_amount":[0], 
-                "total_profit_amount":[0], "daily_live_profit":[0], "active_portfolio":[[None]]}, index=[0])
+                "total_profit_amount":[0], "daily_live_profit":[0], "active_portfolio":[None]}, index=[0])
+        print(active)
         result = user_core.merge(active, how="left", on=["user_id"])
         result = result.rename(columns={"currency_code" : "currency"})
+        print(result)
         await sync_to_async(update_to_mongo)(data=result, index="user_id", table="portfolio", dict=False)
         return active
 
@@ -407,7 +409,7 @@ def firebase_user_update(user_id=None, currency_code=None):
     currency = currency[["currency_code", "is_decimal"]]
 
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")
-    user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_profit, daily_profit_pct")
+    user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_profit, daily_profit_pct, daily_invested_amount")
     user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, amount as balance, currency_code")
     user_core = user_core.merge(user_balance, how="left", on=["user_id"])
     user_core = user_core.merge(user_daily_profit, how="left", on=["user_id"])
@@ -421,7 +423,7 @@ def firebase_user_update(user_id=None, currency_code=None):
     position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
     print(position_data)
     if(len(position_data) > 0):
-        universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name"]]
+        universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "currency_code"]]
         latest_price = get_price_data_firebase(position_data["ticker"].unique().tolist())
         print(latest_price)
         latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})

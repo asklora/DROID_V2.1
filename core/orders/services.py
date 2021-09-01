@@ -48,6 +48,9 @@ class OrderPositionValidation:
             return {"position":f"{valid_order.order_uid}"}
         else:
             return None
+
+
+
 def sell_position_service(price, trading_day, position_uid):
     position  = OrderPosition.objects.get(position_uid=position_uid)
     bot = position.bot
@@ -63,13 +66,14 @@ def sell_position_service(price, trading_day, position_uid):
 
 
 def side_validation(validated_data):
-    validation=OrderPositionValidation(validated_data["ticker"],validated_data["bot_id"],validated_data["user_id"].id)
+    
     if validated_data["side"] == "sell":
         init = False
         position = validated_data.get("setup",{}).get("position",None)
         if not position:
             raise exceptions.NotAcceptable({"detail":"must provided the position uid for sell side"})
     else:
+        validation=OrderPositionValidation(validated_data["ticker"],validated_data["bot_id"],validated_data["user_id"].id)
         init = True
         if validated_data["amount"] > validated_data["user_id"].user_balance.amount:
             raise exceptions.NotAcceptable({"detail": "insuficent balance"})
