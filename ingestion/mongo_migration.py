@@ -434,12 +434,12 @@ def firebase_user_update(user_id=None, currency_code=None):
     position_data = position_data.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
 
     # print(position_data)
-    active_portfolio = pd.DataFrame({"user_id":[], "total_invested_amount":[], "total_bot_invested_amount":[], "total_user_invested_amount":[], 
-        "pct_total_bot_invested_amount":[], "pct_total_user_invested_amount":[], "total_profit_amount":[], "active_portfolio":[]}, index=[])
+    # active_portfolio = pd.DataFrame({"user_id":[], "total_invested_amount":[], "total_bot_invested_amount":[], "total_user_invested_amount":[], 
+    #     "pct_total_bot_invested_amount":[], "pct_total_user_invested_amount":[], "total_profit_amount":[], "active_portfolio":[]}, index=[])
     
     
     # concurent calculation
-    gather_active_portfolios = asyncio.run(gather_task(
+    asyncio.run(gather_task(
         position_data,bot_option_type ,user_core
         ))
     # end = time.time()
