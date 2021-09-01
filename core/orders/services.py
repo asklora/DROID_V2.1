@@ -48,6 +48,9 @@ class OrderPositionValidation:
             return {"position":f"{valid_order.order_uid}"}
         else:
             return None
+
+
+            
 def sell_position_service(price, trading_day, position_uid):
     position  = OrderPosition.objects.get(position_uid=position_uid)
     bot = position.bot
