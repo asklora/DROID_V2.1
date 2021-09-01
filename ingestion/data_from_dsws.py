@@ -159,7 +159,7 @@ def update_ticker_name_from_dsws(ticker=None, currency_code=None):
     if(len(result)) > 0 :
         result = result.rename(columns={"WC06003": "ticker_name", "NAME" : "ticker_fullname", "index":"ticker"})
         result["ticker_name"]=result["ticker_name"].str.replace("'", "", regex=True)
-        result["ticker_fullname"]=result["ticker_fullname"].str.replace(",", "", regex=True)
+        result["ticker_fullname"]=result["ticker_fullname"].str.replace("'", "", regex=True)
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
