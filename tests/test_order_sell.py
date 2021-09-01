@@ -11,19 +11,18 @@ from utils import create_buy_order
 class TestSell:
     pytestmark = pytest.mark.django_db
 
-    def test_should_create_new_sell_order_for_user(self) -> None:
+    def test_should_create_new_sell_order_for_user(self, user) -> None:
         """
         A new SELL order should be created from a buy order
         """
 
         price = 1317
-        user_id = 198
 
         # We create an order
         buy_order = create_buy_order(
             ticker="6606.HK",
             price=price,
-            user_id=user_id,
+            user_id=user.id,
         )
 
         # We set it as filled
@@ -74,7 +73,7 @@ class TestSell:
         confirmed_sell_order.save()
 
         # We get previous user balance
-        user = User.objects.get(pk=user_id)
+        user = User.objects.get(pk=user.id)
         previous_user_balance = Accountbalance.objects.get(user=user).amount
 
         # We accept the order and set it as filled
@@ -86,15 +85,14 @@ class TestSell:
         user_balance = Accountbalance.objects.get(user=user).amount
         assert user_balance != previous_user_balance
 
-    def test_should_create_new_sell_order_for_user_with_classic_bot(self) -> None:
+    def test_should_create_new_sell_order_for_user_with_classic_bot(self, user) -> None:
         price = 1317
-        user_id = 198
 
         # We create an order
         buy_order = create_buy_order(
             ticker="6606.HK",
             price=price,
-            user_id=user_id,
+            user_id=user.id,
             bot_id="CLASSIC_classic_007692",
         )
 
@@ -132,7 +130,7 @@ class TestSell:
         confirmed_sell_order.save()
 
         # We get previous user balance
-        user = User.objects.get(pk=user_id)
+        user = User.objects.get(pk=user.id)
         previous_user_balance = Accountbalance.objects.get(user=user).amount
 
         # We accept the order and set it as filled
@@ -140,15 +138,14 @@ class TestSell:
         confirmed_sell_order.filled_at = datetime.now()
         confirmed_sell_order.save()
 
-    def test_should_create_new_sell_order_for_user_with_uno_bot(self) -> None:
+    def test_should_create_new_sell_order_for_user_with_uno_bot(self, user) -> None:
         price = 1317
-        user_id = 198
 
         # We create an order
         buy_order = create_buy_order(
             ticker="6606.HK",
             price=price,
-            user_id=user_id,
+            user_id=user.id,
             bot_id="UNO_OTM_007692",
         )
 
@@ -186,7 +183,7 @@ class TestSell:
         confirmed_sell_order.save()
 
         # We get previous user balance
-        user = User.objects.get(pk=user_id)
+        user = User.objects.get(pk=user.id)
         previous_user_balance = Accountbalance.objects.get(user=user).amount
 
         # We accept the order and set it as filled
@@ -194,15 +191,14 @@ class TestSell:
         confirmed_sell_order.filled_at = datetime.now()
         confirmed_sell_order.save()
 
-    def test_should_create_new_sell_order_for_user_with_ucdc_bot(self) -> None:
+    def test_should_create_new_sell_order_for_user_with_ucdc_bot(self, user) -> None:
         price = 1317
-        user_id = 198
 
         # We create an order
         buy_order = create_buy_order(
             ticker="6606.HK",
             price=price,
-            user_id=user_id,
+            user_id=user.id,
             bot_id="UCDC_ATM_007692",
         )
 
@@ -240,7 +236,7 @@ class TestSell:
         confirmed_sell_order.save()
 
         # We get previous user balance
-        user = User.objects.get(pk=user_id)
+        user = User.objects.get(pk=user.id)
         previous_user_balance = Accountbalance.objects.get(user=user).amount
 
         # We accept the order and set it as filled

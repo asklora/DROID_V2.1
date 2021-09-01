@@ -3,9 +3,9 @@ import requests
 
 
 class TestAPI:
-
     pytestmark = pytest.mark.django_db
 
+    tokens = None
     headers = None
 
     def build_url(
@@ -15,30 +15,56 @@ class TestAPI:
     ) -> str:
         return f"{url}{path}"
 
-    def authenticate(
-        self,
-        email: str = "ata",
-        password: str = "123",
-    ) -> None:
+    def authenticate(self) -> bool:
         url = self.build_url(path="/api/auth/")
-        response = requests.post(
-            url=url,
-            data={
-                "email": email,
-                "password": password,
-            },
-        )
+        data = {
+            "email": "pytest@tests.com",
+            "password": "helloworld",
+        }
+
+        response = requests.post(url=url, data=data)
 
         if (
-            response.status_code == 200
-            and response.headers["Content-Type"] == "application/json"
+            response.status_code != 200
+            or response.headers["Content-Type"] != "application/json"
         ):
-            response_body = response.json()
-            self.headers = {"Authorization": "Bearer " + response_body["access"]}
+            return False
 
-    def test_should_get_user_data(self) -> None:
+        response_body = response.json()
+        self.tokens = response_body
+        self.headers = {"Authorization": "Bearer " + response_body["access"]}
+        return True
+
+    def test_api_token_verify(self, user) -> None:
         if self.headers is None:
-            self.authenticate()
+            assert self.authenticate()
+
+        token = self.headers["Authorization"].split("Bearer ")[1]
+
+        url = self.build_url(path="/api/auth/verify/")
+        response = requests.post(url, data={"token": token})
+
+        # API only returns the status code with empty body
+        assert response.status_code == 200
+
+    def test_api_token_revoke(self, user) -> None:
+        assert self.authenticate()
+
+        token = self.tokens["refresh"]
+        print(token)
+
+        url = self.build_url(path="/api/auth/revoke/")
+        response = requests.post(url, data={"token": token}, headers=self.headers)
+
+        assert response.status_code == 205
+        assert response.headers["Content-Type"] == "application/json"
+
+        response_body = response.json()
+        assert response_body["message"] == "token revoked"
+
+    def test_api_get_user_data(self, user) -> None:
+        if self.headers is None:
+            assert self.authenticate()
 
         url = self.build_url(path="/api/user/me/")
         response = requests.get(url, headers=self.headers)
@@ -49,9 +75,9 @@ class TestAPI:
         response_body = response.json()
         assert response_body["email"] != None
 
-    def test_should_create_order(self) -> None:
+    def test_api_create_order(self, user) -> None:
         if self.headers is None:
-            self.authenticate()
+            assert self.authenticate()
 
         url = self.build_url(path="/api/order/create/")
         data = {
@@ -59,7 +85,7 @@ class TestAPI:
             "price": 1.63,
             "bot_id": "STOCK_stock_0",
             "amount": 100,
-            "user": "198",
+            "user": user.id,
             "side": "buy",
             "margin": 2,
         }
