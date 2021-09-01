@@ -11,7 +11,7 @@ from datasource.rkd import RkdData
 from django.db import transaction as db_transaction
 import json
 from .services import (
-    is_portfolio_exist, 
+    OrderPositionValidation, 
     sell_position_service,
     side_validation
     )
@@ -321,16 +321,15 @@ class OrderPortfolioCheckSerializer(serializers.Serializer):
                 user_id = user.id
             else:
                 raise exceptions.NotAcceptable()
-        portfolio = is_portfolio_exist(
+        validation = OrderPositionValidation(
                                         validated_data["ticker"],
                                         validated_data["bot_id"],
                                         user_id)
-        
-        
-        if portfolio:
-            return {"position":f"{portfolio.position_uid}"}
+        data = validation.validate()
+        if data:
+            return data
         else:
-            raise exceptions.NotFound({"detail":"no position exist"})
+            raise exceptions.NotFound({"detail":"no position / order exist"})
 
 
 
