@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from django.utils import timezone
+from django.core.management.base import BaseCommand
 from core.djangomodule.general import generate_id
 from ingestion.master_multiple import master_multiple_update
 from ingestion.master_tac import master_tac_update
@@ -108,3 +109,7 @@ def populate_ticker_monthly(client=None):
     print(new_universe_client)
     insert_data_to_database(new_universe_client, get_universe_client_table_name(), how="append")
     new_ticker_ingestion(ticker["ticker"].to_list())
+
+class Command(BaseCommand):
+    def add_arguments(self, parser):
+        populate_ticker_monthly(client=None)
