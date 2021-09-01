@@ -200,6 +200,11 @@ def get_active_universe_by_created(created=dateNow()):
     data = read_query(query, table=get_universe_table_name())
     return data
 
+def get_active_position_ticker():
+    query = f"select distinct ticker from {get_orders_position_table_name()} where is_live=True"
+    data = read_query(query, table=get_orders_position_table_name())
+    return data
+
 def get_universe_rating(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_table_name()
     query = f"select * from {table_name} "

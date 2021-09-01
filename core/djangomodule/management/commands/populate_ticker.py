@@ -8,10 +8,12 @@ from ingestion.master_tac import master_tac_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
 from ingestion.data_from_quandl import update_quandl_orats_from_quandl
 from general.table_name import get_universe_client_table_name
-from general.sql_output import fill_null_quandl_symbol, insert_data_to_database
+from general.sql_output import fill_null_quandl_symbol, insert_data_to_database, update_consolidated_activation_by_ticker
 from general.date_process import dateNow
 from general.sql_process import do_function
 from general.sql_query import (
+    get_active_position_ticker,
+    get_active_universe,
     get_active_universe_by_created, 
     get_consolidated_universe_data, 
     get_universe_client)
@@ -70,12 +72,23 @@ def populate_ticker_monthly(client=None):
     new_universe1 = populate_ticker_from_dss(index_list=["0#.HSLMI"], manual=1)
     new_universe2 =  populate_ticker_from_dss(index_list=["0#.SPX", "0#.NDX"], isin=1)
     new_universe3 = populate_ticker_from_dss(index_list=["0#.SXXE"], isin=1)
-
     new_universe = new_universe1.append(new_universe2)
     new_universe = new_universe.append(new_universe3)
+
     new_universe.to_csv("/home/loratech/all_universe.csv")
     new_universe = new_universe.loc[~new_universe["origin_ticker"].isin(universe_consolidated["origin_ticker"].to_list())]
     new_universe.to_csv("/home/loratech/new_universe.csv")
+
+    do_function("universe_populate")
+    old_ticker = get_active_universe(currency_code=["HKD", "USD", "EUR"])
+    consolidated = get_consolidated_universe_data()
+    consolidated = consolidated.loc[consolidated["consolidated_ticker"].isin(old_ticker["ticker"].to_list())]
+    new_ticker = pd.read_csv("/home/loratech/all_universe.csv")
+    delete_ticker = consolidated.loc[~consolidated["origin_ticker"].isin(new_ticker["origin_ticker"].to_list())]
+    active_ticker = consolidated.loc[consolidated["origin_ticker"].isin(new_ticker["origin_ticker"].to_list())]
+    update_consolidated_activation_by_ticker(ticker=delete_ticker["origin_ticker"].to_list(), is_active=False)
+    update_consolidated_activation_by_ticker(ticker=active_ticker["origin_ticker"].to_list(), is_active=True)
+    do_function("universe_populate")
 
     new_universe = pd.read_csv("/home/loratech/new_universe.csv")
     new_universe = new_universe[["origin_ticker", "source_id", "use_isin", "use_manual"]]

@@ -1,3 +1,4 @@
+from general.data_process import tuple_data
 from general.slack import report_to_slack
 import pandas as pd
 import sqlalchemy as db
@@ -10,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
 from general.date_process import dateNow
 from general.sql_query import get_order_performance_by_ticker
-from general.table_name import get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_table_name
+from general.table_name import get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_consolidated_table_name, get_universe_table_name
 
 def execute_query(query, table=None):
     print(f"Execute Query to Table {table}")
@@ -140,6 +141,12 @@ def fill_null_quandl_symbol():
     query = f"update {get_universe_table_name()} set quandl_symbol=split_part(ticker, '.', 1) "
     query += f"WHERE is_active=True and quandl_symbol is null and currency_code = 'USD'"
     data = execute_query(query, table=get_universe_table_name())
+    return data
+
+def update_consolidated_activation_by_ticker(ticker=None, is_active=True):
+    query = f"update {get_universe_consolidated_table_name()} set is_active={is_active} "
+    query += f"WHERE origin_ticker in {tuple_data(ticker)}"
+    data = execute_query(query, table=get_universe_consolidated_table_name())
     return data
 
 def delete_data_on_database(table, condition, delete_ticker=False):
