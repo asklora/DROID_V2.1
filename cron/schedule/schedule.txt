@@ -76,7 +76,7 @@ BOT SCHEDULE IN HK TIME
 
 00 04 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/weekly.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/weekly.log 2>&1
 
-
+30 05 1 * * /home/loratech/PycharmProjects/DROID_V2.1/cron/populate_ticker.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/populate_ticker.log 2>&1
 
 
 
