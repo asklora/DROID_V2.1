@@ -768,7 +768,12 @@ def daily_hedge(currency=None, **options):
     hedge(currency=currency, **options)  # bot_advisor hanwha and fels
     hedge(currency=currency, bot_tester=True, **options)  # bot_tester
     daily_hedge_user(currency=currency,ingest=True)
-    populate_daily_profit(currency_code=currency)
+    try:
+        populate_daily_profit(currency_code=currency)
+    except Exception as e:
+        err = ErrorLog.objects.create_log(
+            error_description=f"===  ERROR IN DAILY profit Function {currency} ===", error_message=str(e))
+        err.send_report_error()
     report_to_slack(f"===  HEDGE DAILY FOR {currency} DONE ===")
 
     return {"result": f"hedge {currency} done"}
