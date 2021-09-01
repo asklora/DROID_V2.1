@@ -111,7 +111,7 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
             else:
                 if(len(universe) == 1):
                     df["level_1"] = df["index"]
-                    df[identifier] = universe[0].replace("<", "").replace(">", "")
+                    df[identifier] = df[identifier].replace("<", "").replace(">", "")
                 elif(split_number == 1):
                     df["level_1"] = df["index"]
                     df[identifier] = df[identifier].str.replace("<", "").str.replace(">", "")
