@@ -1,3 +1,4 @@
+from general.data_process import DivByZero, NoneToZero
 from bot.data_download import get_currency_data
 import json
 from asgiref.sync import sync_to_async
@@ -38,15 +39,6 @@ from general.sql_query import (
 import asyncio
 from asgiref.sync import sync_to_async
 from typing import List
-
-
-
-def NonetoZero(value):
-    return value
-    if value is None or value == np.nan:
-        return 0
-    else:
-        return value
 
 def factor_column_name():
     return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry", 
@@ -326,10 +318,9 @@ async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,us
 async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user:str, user_core:pd.DataFrame)->pd.DataFrame:
         user_core =  user_core.loc[user_core["user_id"] == user]
         user_core = user_core.reset_index(inplace=False, drop=True)
-        if(len(position_data) > 0):
-            orders_position = position_data.loc[position_data["user_id"] == user]
-
-            orders_position = orders_position.reset_index(inplace=False)
+        orders_position = position_data.loc[position_data["user_id"] == user]
+        if(len(orders_position) > 0):
+            orders_position = orders_position.reset_index(inplace=False, drop=True)
             #TOP LEVEL
             orders_position["status"] = "LIVE"
             orders_position["current_values"] = (orders_position["bot_cash_balance"] + (orders_position["share_num"] * orders_position["price"]))
@@ -359,15 +350,16 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             # pct_total_bot_invested_amount = int(round(total_bot_invested_amount / total_invested_amount, 0) * 100)
             # pct_total_user_invested_amount = int(round(total_user_invested_amount / total_invested_amount, 0) * 100)
             # total_profit_amount = sum(orders_position["profit"].to_list())
-            total_invested_amount = NonetoZero(sum(orders_position["current_values"].to_list()))
+            total_invested_amount = NoneToZero(sum(orders_position["current_values"].to_list()))
             daily_live_profit = total_invested_amount - user_core.loc[0, "daily_invested_amount"]
-            total_bot_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_values"].to_list()))
-            total_user_invested_amount = NonetoZero(sum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["current_values"].to_list()))
-            pct_total_bot_invested_amount = NonetoZero(int(round(total_bot_invested_amount / total_invested_amount, 0) * 100))
-            pct_total_user_invested_amount = NonetoZero(int(round(total_user_invested_amount / total_invested_amount, 0) * 100))
-            total_profit_amount = NonetoZero(sum(orders_position["profit"].to_list()))
+            total_bot_invested_amount = NoneToZero(sum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_values"].to_list()))
+            total_user_invested_amount = NoneToZero(sum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["current_values"].to_list()))
+            pct_total_bot_invested_amount = NoneToZero(int(round(total_bot_invested_amount / total_invested_amount, 0) * 100))
+            pct_total_user_invested_amount = NoneToZero(int(round(total_user_invested_amount / total_invested_amount, 0) * 100))
+            total_profit_amount = NoneToZero(sum(orders_position["profit"].to_list()))
 
             active_df = []
+            orders_position = orders_position.reset_index(inplace=False, drop=True)
             orders_position = change_date_to_str(orders_position)
             # orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
             # orders_position = get_orders_position(user_id=[user], active=False, field=orders_position_field)

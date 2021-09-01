@@ -39,6 +39,13 @@ def tuple_data(data):
     data = data.replace(",)", ")")
     return data
 
+
+def DivByZero(value1, value2):
+    try:
+        return value1 / value2
+    except ZeroDivisionError:
+        return 0
+
 def NoneToZero(value):
     if value:
         return value
