@@ -265,6 +265,10 @@ async def gather_ping_presence():
         await asyncio.gather(*tasks)
 
 
+
+
+
+
 @app.task(ignore_result=True)
 def ping_available_presence():
     asyncio.run(gather_ping_presence())
