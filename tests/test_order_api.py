@@ -153,8 +153,8 @@ class TestAPI:
         assert response_body["ticker"] == "3377.HK"
         assert response_body["price"] == 1.63
         assert (
-            response_body["amount"] != 100
-        )  # Amount was cut to fit maximum share number
+            response_body["amount"] != 100  # Amount was cut to fit maximum share number
+        )
 
     def test_api_get_user_orders(self, user, client) -> None:
         if self.headers is None:
@@ -213,8 +213,53 @@ class TestAPI:
         assert response.headers["Content-Type"] == "application/json"
 
         response_body = response.json()
+
         assert response_body["count"] > 0
         assert len(response_body["results"]) == response_body["count"]
+
+    def test_api_get_order_position_details(self, user, client) -> None:
+        if self.headers is None:
+            assert self.authenticate(client)
+
+        # We create the order
+        order = self.create_order(user, client)
+
+        assert order != None
+
+        currentOrder = Order.objects.get(pk=order["order_uid"])
+
+        assert currentOrder != None
+
+        currentOrder.placed = True
+        currentOrder.status = "filled"
+        currentOrder.placed_at = datetime.now()
+        currentOrder.filled_at = datetime.now()
+        currentOrder.save()
+
+        response = client.get(
+            path=f"/api/order/position/{user.id}/",
+            **self.headers,
+        )
+
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] == "application/json"
+
+        # We take the first (and only) position record for this user
+        position = response.json()["results"][0]
+
+        # We request this position details
+        response = client.get(
+            path=f"/api/order/position/{position['position_uid']}/details/",
+            **self.headers,
+        )
+
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] == "application/json"
+
+        response_body = response.json()
+
+        assert response_body != None
+        assert response_body["entry_price"] == order["price"]
 
     def test_api_get_order_performance(self, user, client) -> None:
         if self.headers is None:
@@ -246,54 +291,14 @@ class TestAPI:
         position = response.json()["results"][0]
 
         response = client.get(
-            path=f"/api/order/position/{position['position_uid']}/details/",
+            path=f"/api/order/performance/{position['position_uid']}/",
             **self.headers,
         )
 
         assert response.status_code == 200
         assert response.headers["Content-Type"] == "application/json"
 
-        response_body = response.json()
+        response_body = response.json()[0]  # We get the first performance record
+
         assert response_body != None
-        assert response_body["entry_price"] == order["price"]
-
-    def test_api_get_order_position_details(self, user, client) -> None:
-        if self.headers is None:
-            assert self.authenticate(client)
-
-        # We create the order
-        order = self.create_order(user, client)
-
-        assert order != None
-
-        currentOrder = Order.objects.get(pk=order["order_uid"])
-
-        assert currentOrder != None
-
-        currentOrder.placed = True
-        currentOrder.status = "filled"
-        currentOrder.placed_at = datetime.now()
-        currentOrder.filled_at = datetime.now()
-        currentOrder.save()
-
-        response = client.get(
-            path=f"/api/order/position/{user.id}/",
-            **self.headers,
-        )
-
-        assert response.status_code == 200
-        assert response.headers["Content-Type"] == "application/json"
-
-        position = response.json()["results"][0]
-
-        response = client.get(
-            path=f"/api/order/position/{position['position_uid']}/details/",
-            **self.headers,
-        )
-
-        assert response.status_code == 200
-        assert response.headers["Content-Type"] == "application/json"
-
-        response_body = response.json()
-        assert response_body != None
-        assert response_body["entry_price"] == order["price"]
+        assert response_body["initial_investment_amt"] == order["amount"]
