@@ -1,0 +1,40 @@
+version: '2.1'
+services:
+  celery-broadcaster:
+    container_name: CeleryBroadcaster
+    image: 736885973837.dkr.ecr.ap-northeast-2.amazonaws.com/celery-portfolio-job
+    command: bash -c "export DJANGO_SETTINGS_MODULE=config.production && celery -A core.services worker -l  INFO --hostname=broadcaster@%h --concurrency=10 -Q broadcaster"
+    restart: always
+    depends_on:
+      - redis
+  celery-hedger:
+    container_name: CeleryHedger
+    image: 736885973837.dkr.ecr.ap-northeast-2.amazonaws.com/celery-portfolio-job
+    command: bash -c "export DJANGO_SETTINGS_MODULE=config.production && celery -A core.services worker -l  INFO --hostname=hedger@%h --concurrency=10 -Q hedger"
+    restart: always
+    depends_on:
+      - redis
+  celery-portofolio:
+    container_name: CeleryPortofolio
+    image: 736885973837.dkr.ecr.ap-northeast-2.amazonaws.com/celery-portfolio-job
+    command: bash -c "export DJANGO_SETTINGS_MODULE=config.production && celery -A core.services worker -l  INFO --hostname=portofolio@%h --concurrency=10 -Q portofolio"
+    restart: always
+    depends_on:
+      - redis
+  celery-utils:
+    container_name: CeleryUtils
+    image: 736885973837.dkr.ecr.ap-northeast-2.amazonaws.com/celery-portfolio-job
+    command: bash -c "export DJANGO_SETTINGS_MODULE=config.production && celery -A core.services worker --beat -l  INFO --hostname=utils@%h --concurrency=10 -Q utils"
+    restart: always
+    depends_on:
+      - redis
+  redis:
+    container_name: redis
+    restart: always
+    image: redis:latest
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+volumes:
+  redis_data:
