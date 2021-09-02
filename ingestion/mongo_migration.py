@@ -1,6 +1,6 @@
 from general.data_process import DivByZero, NoneToZero
 from bot.data_download import get_currency_data
-import json
+import random
 from asgiref.sync import sync_to_async
 import numpy as np
 import pandas as pd
@@ -334,7 +334,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             #PROFIT
             # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_values"]
             # orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"]
-            orders_position["profit"] =orders_position["current_values"] - orders_position["investment_amount"]
+            orders_position["profit"] =orders_position["current_values"] - orders_position["investment_amount"] 
             orders_position["pct_profit"] =  (orders_position["profit"] / orders_position["investment_amount"]  * 100).round(2)
 
             #BOT POSITION
@@ -381,10 +381,10 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             active = pd.DataFrame({"user_id":[user], "total_invested_amount":[0], "total_bot_invested_amount":[0], 
                 "total_user_invested_amount":[0], "pct_total_bot_invested_amount":[0], "pct_total_user_invested_amount":[0], 
                 "total_profit_amount":[0], "daily_live_profit":[0], "active_portfolio":[[]]}, index=[0])
-        print(active)
+        # print(active)
         result = user_core.merge(active, how="left", on=["user_id"])
         result = result.rename(columns={"currency_code" : "currency"})
-        print(result)
+        # print(result)
         await sync_to_async(update_to_mongo)(data=result, index="user_id", table="portfolio", dict=False)
         return active
 
@@ -435,7 +435,7 @@ def firebase_user_update(user_id=None, currency_code=None):
             "pct_total_bot_invested_amount":[], "pct_total_user_invested_amount":[], "total_profit_amount":[], "active_portfolio":[]}, index=[])
         
         # concurent calculation
-    gather_active_portfolios = asyncio.run(gather_task(position_data, bot_option_type, user_core))
+    asyncio.run(gather_task(position_data, bot_option_type, user_core))
     # end = time.time()
     # print(f"time consumed : {end-start}")
 

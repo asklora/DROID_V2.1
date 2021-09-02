@@ -1,4 +1,5 @@
 import pandas as pd
+from core.djangomodule.general import get_cached_data,set_cache_data
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general.sql_process import db_read, alibaba_db_url
@@ -43,6 +44,11 @@ from general.table_name import (
     get_factor_calculation_table_name,
     get_factor_rank_table_name,
 )
+
+
+
+
+
 
 def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=True):
     """Base function for database query
@@ -554,8 +560,12 @@ def get_bot_type(condition=None):
     query = f"select * from {table_name} "
     if type(condition) != type(None):
         query += f" where {condition}"
-    data = read_query(query, table_name, cpu_counts=True)
-    return data
+    cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
+    if  not isinstance(cached_data,pd.DataFrame) :
+        data = read_query(query, table_name, cpu_counts=True)
+        set_cache_data(table_name,data.to_dict('records'))
+        return data
+    return cached_data
 
 
 def get_latest_bot_update_data(ticker=None, currency_code=None):
@@ -600,8 +610,12 @@ def get_bot_option_type(condition=None):
     query = f"select * from {table_name} "
     if type(condition) != type(None):
         query += f" where {condition}"
-    data = read_query(query, table_name, cpu_counts=True)
-    return data
+    cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
+    if  not isinstance(cached_data,pd.DataFrame) :
+        data = read_query(query, table_name, cpu_counts=True)
+        set_cache_data(table_name,data.to_dict('records'))
+        return data
+    return cached_data
 
 
 def get_latest_ranking(ticker=None, currency_code=None, active=True):
