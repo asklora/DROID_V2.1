@@ -12,6 +12,10 @@ from sqlalchemy.sql.expression import bindparam
 from general.date_process import dateNow
 from general.sql_query import get_order_performance_by_ticker
 from general.table_name import get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_consolidated_table_name, get_universe_table_name
+<<<<<<< HEAD
+=======
+from general.data_process import tuple_data
+>>>>>>> 3b5840840b98b8f6c7cb7d9716c9acfd2f70154f
 
 def execute_query(query, table=None):
     print(f"Execute Query to Table {table}")
@@ -148,7 +152,11 @@ def update_consolidated_activation_by_ticker(ticker=None, is_active=True):
     query += f"WHERE origin_ticker in {tuple_data(ticker)}"
     data = execute_query(query, table=get_universe_consolidated_table_name())
     return data
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 3b5840840b98b8f6c7cb7d9716c9acfd2f70154f
 def delete_data_on_database(table, condition, delete_ticker=False):
     old_date = dateNow()
     query = f"delete from {table} where {condition} "

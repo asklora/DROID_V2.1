@@ -319,7 +319,6 @@ class TransactionHistory(BaseTimeStampModel):
     side = models.CharField(max_length=100, choices=type_choice)
     amount = models.FloatField(default=0)
     transaction_detail = models.JSONField(default=dict, null=True, blank=True)
-
     def __str__(self):
         if self.balance_uid.user.email:
             return f"{self.side} - {self.balance_uid.user.email}"
@@ -334,6 +333,7 @@ class UserProfitHistory(models.Model):
     trading_day = models.DateField(null=True, blank=True)
     daily_profit = models.FloatField(default=0)
     daily_profit_pct = models.FloatField(default=0)
+    daily_invested_amount = models.FloatField(default=0)
 
     def __str__(self):
         return self.user_id.email

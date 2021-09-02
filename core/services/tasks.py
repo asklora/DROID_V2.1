@@ -27,6 +27,7 @@ from channels_presence.models import Presence
 from django.core.mail import EmailMessage
 from config.settings import db_debug
 from datasource.rkd import RkdData
+from bot.calculate_bot import populate_daily_profit
 # RAW SQL QUERY MODULE
 from general.sql_process import do_function
 # SLACK REPORT
@@ -607,6 +608,10 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False,
                     pos_list.append(str(order.order_uid))
                     report_to_slack(
                         f"=== {client_name} ORDER {queue.ticker} - {queue.service_type} - {queue.capital} IS CREATED ===")
+                
+                
+                populate_daily_profit(currency_code=currency)
+                
             else:
                 report_to_slack(
                     f"=== {client_name} MARKET {queue.ticker} IS CLOSE SKIPPING INITIAL ORDER ===")
@@ -763,7 +768,12 @@ def daily_hedge(currency=None, **options):
     hedge(currency=currency, **options)  # bot_advisor hanwha and fels
     hedge(currency=currency, bot_tester=True, **options)  # bot_tester
     daily_hedge_user(currency=currency,ingest=True)
-    
+    try:
+        populate_daily_profit(currency_code=currency)
+    except Exception as e:
+        err = ErrorLog.objects.create_log(
+            error_description=f"===  ERROR IN DAILY profit Function {currency} ===", error_message=str(e))
+        err.send_report_error()
     report_to_slack(f"===  HEDGE DAILY FOR {currency} DONE ===")
 
     return {"result": f"hedge {currency} done"}

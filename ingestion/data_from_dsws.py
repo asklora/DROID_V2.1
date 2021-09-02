@@ -35,7 +35,7 @@ from general.table_name import (
     get_universe_table_name)
 from datasource.dsws import (
     get_data_history_by_field_from_dsws,
-    get_data_history_frequently_by_field_from_dsws, 
+    get_data_history_frequently_by_field_from_dsws,
     get_data_history_frequently_from_dsws, 
     get_data_history_from_dsws, 
     get_data_static_from_dsws, 
@@ -57,6 +57,7 @@ from general.sql_query import (
     get_pred_mean,
     get_ai_value_pred_final,
     get_specific_tri,
+    get_ai_score_testing_history,
     get_specific_tri_avg,
     get_specific_volume_avg,
     get_universe_rating, 
@@ -70,7 +71,7 @@ from general.date_process import (
     datetimeNow, 
     dlp_start_date, 
     droid_start_date,
-    find_nearest_specific_days, 
+    find_nearest_specific_days,
     forwarddate_by_day)
 from datasource.fred import read_fred_csv
 
@@ -454,9 +455,9 @@ def score_update_factor_ratios(df):
         n = 1
         while n < len(x):
             if x[n] == "+":
-                temp += np.nan_to_num(df[x[n + 1]],0)
+                temp += df[x[n + 1]].replace(np.nan, 0)
             elif x[n] == "-":
-                temp -= np.nan_to_num(df[x[n + 1]],0)
+                temp -= df[x[n + 1]].replace(np.nan, 0)
             elif x[n] == "*":
                 temp *= df[x[n + 1]]
             else:
@@ -555,6 +556,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     calculate_column += ["environment", "social", "goverment"]
 
     fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
+    # fundamentals = fundamentals.loc[fundamentals['industry_code']!='NA']
     fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
     print(fundamentals)
 
@@ -583,6 +585,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             calculate_column_robust_score.append(column_robust_score)
         except Exception as e:
             print(e)
+    print(calculate_column_robust_score)
 
     # apply maxmin scaler on Currency / Industry
     minmax_column = ["uid", "ticker", "trading_day"]
@@ -590,23 +593,20 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         try:
             column_robust_score = column + "_robust_score"
             column_minmax_currency_code = column + "_minmax_currency_code"
-            column_minmax_industry = column + "_minmax_industry"
+            # column_minmax_industry = column + "_minmax_industry"
             df_currency_code = fundamentals[["currency_code", column_robust_score]]
             df_currency_code = df_currency_code.rename(columns = {column_robust_score : "score"})
-            df_industry = fundamentals[["industry_code", column_robust_score]]
-            df_industry = df_industry.rename(columns = {column_robust_score : "score"})
+            # df_industry = fundamentals[["industry_code", column_robust_score]]
+            # df_industry = df_industry.rename(columns = {column_robust_score : "score"})
             fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
-            fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
-            # if(column == "earnings_pred"):
-            #     fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0, fundamentals[column_minmax_currency_code])
-            #     fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0, fundamentals[column_minmax_industry])
-            # else:
+            # fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
             fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0.4, fundamentals[column_minmax_currency_code])
-            fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
+            # fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
             minmax_column.append(column_minmax_currency_code)
-            minmax_column.append(column_minmax_industry)
+            # minmax_column.append(column_minmax_industry)
         except Exception as e:
             print(e)
+    print(minmax_column)
 
     # apply quantile transformation on before scaling scores
     try:
@@ -656,13 +656,15 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # from sqlalchemy import create_engine
     # from global_vars import DB_URL_ALIBABA
     # with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
-    #     extra = {"con": conn, "index": False, "if_exists": "replace", "method": "multi", "chunksize": 10000}
-    #     fundamentals.to_sql("test_fundamentals_clair", **extra)
-    
+    #     extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
+    #     fundamentals.to_sql('test_fundamentals_clair', **extra)
+
     print("Calculate ESG Value")
-    fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
-        fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
-        fundamentals["goverment_minmax_currency_code"] + fundamentals["goverment_minmax_industry"]) / 6
+    # fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
+    #     fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
+    #     fundamentals["goverment_minmax_currency_code"] + fundamentals["goverment_minmax_industry"]) / 6
+    fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] +
+        fundamentals["social_minmax_currency_code"] + fundamentals["goverment_minmax_currency_code"]) / 3
 
     print("Calculate AI Score")
     fundamentals["ai_score"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] + \
@@ -671,7 +673,18 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("Calculate AI Score 2")
     fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] +
                                  fundamentals["fundamentals_momentum"] + fundamentals["esg"]) / 4
-    
+
+    # scale ai_score with history min / max
+    score_history = get_ai_score_testing_history()
+    fundamentals = fundamentals.merge(score_history, on=['currency_code'], how='left')
+    print(fundamentals[["ai_score","ai_score2"]].describe())
+    for col in ["ai_score","ai_score2"]:
+        fundamentals[['min']] = fundamentals.groupby(['currency_code'])[col].transform('min')
+        fundamentals[['max']] = fundamentals.groupby(['currency_code'])[col].transform('max')
+        fundamentals[col] = (fundamentals[col] - fundamentals['min'])/(fundamentals['max']-fundamentals['min'])*(fundamentals['score_max']-fundamentals['score_min']) + fundamentals['score_min']
+        fundamentals[col] = fundamentals[col].clip(0, 10)
+    print(fundamentals[["ai_score","ai_score2"]].describe())
+
     universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
                                             "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
                                             "dlp_3m", "wts_rating2", "classic_vol"]]
@@ -835,7 +848,7 @@ def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=
             "EPS1TR12": "eps1tr12",
             "EPSI1MD": "epsi1md",
             "SAL1FD12" : "sal1fd12",
-            "I0EPS" : "i0eps", 
+            "I0EPS" : "i0eps",
             "index" : "trading_day"
         })
         result = uid_maker(result)
@@ -896,7 +909,7 @@ def update_macro_data_monthly_from_dsws():
     start_date_quarter = backdate_by_month(6)
     ticker_quarterly_field = ["CHGDP...C", "JPGDP...D", "USGDP...D", "EMGDP...D"]
     ticker_monthly_field = ["USINTER3", "USGBILL3", "EMIBOR3.", "JPMSHORT", "EMGBOND.", "CHGBOND."]
-    ticker_field = ["EMIBOR3.", "USGBILL3", "CHGDP...C", "EMGDP...D", "USGDP...D", "USINTER3", "EMGBOND.", 
+    ticker_field = ["EMIBOR3.", "USGBILL3", "CHGDP...C", "EMGDP...D", "USGDP...D", "USINTER3", "EMGBOND.",
         "JPMSHORT", "CHGBOND.", "JPGDP...D"]
     ticker_vix = ["CBOEVIX", "VHSIVOL", "VSTOXXI", "VKOSPIX"]
     filter_field_vix = ["PI"]
@@ -931,7 +944,7 @@ def update_macro_data_monthly_from_dsws():
             data_monthly_vix.loc[year_month, ticker_field] = data_field
         data_monthly_vix = data_monthly_vix.reset_index(inplace=False)
         print(data_monthly_vix)
-    
+
     if(len(result_monthly)) > 0 :
         result_monthly = result_monthly.reset_index()
         result_monthly = result_monthly.drop(columns=["level_0"])
@@ -975,7 +988,7 @@ def update_macro_data_monthly_from_dsws():
         data_monthly.loc[data_monthly["month"].isin([7, 8, 9]), "quarter"] = 3
         data_monthly.loc[data_monthly["month"].isin([10, 11, 12]), "quarter"] = 4
         print(data_monthly)
-    
+
     if(len(result_quarterly)) > 0 :
         result_quarterly = result_quarterly.rename(columns={"index": "trading_day"})
         data_quarterly = result_quarterly.loc[result_quarterly["ticker"] == "CHGDP...C"][["trading_day"]]

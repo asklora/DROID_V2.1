@@ -75,7 +75,6 @@ def order_executor(self, payload, recall=False):
             order.placed_at = datetime.now()
             order.save()
 
-    # debug only
     # time.sleep(10)
     if not order.canceled_at:
         """
