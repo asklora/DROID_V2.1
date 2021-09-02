@@ -874,4 +874,4 @@ class RkdStream(RkdData):
             return f" error : \n {err}"
         del ref
         gc.collect()
-        return 'ticker bulk'
+        return 'ticker bulk updated'
