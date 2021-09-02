@@ -172,7 +172,7 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
 
 @app.task
 def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, latest=False):
-    transaction.set_autocommit(False)
+    transaction.set_autocommit(False) # For test
     try:
         position = OrderPosition.objects.get(
             position_uid=position_uid, is_live=True)
@@ -221,6 +221,12 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
                         order.status = "filled"
                         order.filled_at = log_time
                         order.save()
+                    
+                        print(f"Position event: {OrderPosition.objects.get(position_uid=position.position_uid).event}")
+                print("\n")
+                print(f"Bot cash balance: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_bot_cash_balance}")
+                print(f"Share num: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').share_num}")
+                print(f"PnL amount: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_pnl_amt}")
                 print(f"trading_day {trading_day}-{tac_price.ticker} done")
                 if status:
                     break
@@ -261,7 +267,7 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
                         order.save()
                 if status:
                     print(f"position end")
-        transaction.commit()
+        transaction.commit() # For test
         print("transaction committed")
         return True
     except OrderPosition.DoesNotExist as e:

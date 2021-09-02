@@ -170,6 +170,6 @@ weekly:
 
 monthly:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.production --monthly True
-
+	
 populate_ticker:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py populate_ticker --settings=config.production
