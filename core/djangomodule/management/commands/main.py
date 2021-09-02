@@ -72,6 +72,7 @@ class Command(BaseCommand):
         parser.add_argument("-ws", "--ws", type=bool, help="ws", default=False)
         parser.add_argument("-worldscope", "--worldscope", type=bool, help="worldscope", default=False)
         parser.add_argument("-fundamentals_score", "--fundamentals_score", type=bool, help="fundamentals_score", default=False)
+        parser.add_argument("-fundamentals_rating", "--fundamentals_rating", type=bool, help="fundamentals_rating", default=False)
         parser.add_argument("-quandl", "--quandl", type=bool, help="quandl", default=False)
         parser.add_argument("-vix", "--vix", type=bool, help="vix", default=False)
         parser.add_argument("-interest", "--interest", type=bool, help="interest", default=False)
@@ -145,6 +146,10 @@ class Command(BaseCommand):
                 ticker = split_ticker(options["currency_code"], split=options["split"])
                 print(ticker)
                 update_fundamentals_score_from_dsws(ticker=ticker)
+                status = "Fundamentals Quality Update"
+                update_fundamentals_quality_value()
+            
+            if(options["fundamentals_rating"]):
                 status = "Fundamentals Quality Update"
                 update_fundamentals_quality_value()
 
