@@ -514,6 +514,7 @@ def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
 
 def get_hedge_detail(live_price, bot_cash_balance, ask_price, bid_price, last_share_num, bot_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False, margin=False):
     if(margin):
+        #TODO: need to change
         bot_share_num = bot_share_num * 1.5
     #err
     if(hedge):
