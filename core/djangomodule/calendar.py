@@ -10,6 +10,7 @@ import pandas as pd
 class TradingHours:
     next_bell = None
     until = None
+    # TODO: move this token somewhere safe
     token = "1M1a35Qhk8gUbCsOSl6XRY2z3Qjj0of7y5ZEfE5MasUYm5b9YsoooA7RSxW7"
     market_timezone = None
     time_to_check =None
