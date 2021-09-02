@@ -36,6 +36,36 @@ from ingestion.data_from_dsws import (
     update_lot_size_from_dsws,
     update_mic_from_dsws)
 
+def split_ticker(currency_code, split=1):
+    from general.sql_query import get_active_universe
+
+    ticker = get_active_universe(currency_code=currency_code)["ticker"].to_list()
+    if(len(ticker) > 400):
+        ticker1 = ticker[0:100]
+        ticker2 = ticker[100:200]
+        ticker3 = ticker[200:300]
+        ticker4 = ticker[300:400]
+        ticker5 = ticker[400:]
+    elif(len(ticker) > 200):
+        ticker1 = ticker[0:100]
+        ticker2 = ticker[100:200]
+        ticker3 = ticker[200:]
+    else:
+        ticker1 = ticker[0:]
+    try:
+        if(split == 1):
+            return ticker1
+        elif(split == 2):
+            return ticker2
+        elif(split == 3):
+            return ticker3
+        elif(split == 4):
+            return ticker4
+        else:
+            return ticker5
+    except Exception as e:
+        return ticker
+
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("-na", "--na", type=bool, help="na", default=False)
@@ -49,6 +79,7 @@ class Command(BaseCommand):
         parser.add_argument("-utc_offset", "--utc_offset", type=bool, help="utc_offset", default=False)
         parser.add_argument("-weekly", "--weekly", type=bool, help="weekly", default=False)
         parser.add_argument("-monthly", "--monthly", type=bool, help="monthly", default=False)
+        parser.add_argument("-split", "--split", type=int, help="split", default=1)
         parser.add_argument("-currency_code", "--currency_code", nargs="+", help="currency_code", default=None)
 
     def handle(self, *args, **options):
@@ -101,7 +132,9 @@ class Command(BaseCommand):
             if(options["worldscope"]):
                 if(d in ["1", "2", "3", "4", "5", "6", "7"]):
                     status = "Worldscope Ingestion"
-                    update_worldscope_quarter_summary_from_dsws(currency_code=options["currency_code"])
+                    ticker = split_ticker(options["currency_code"], split=options["split"])
+                    print(ticker)
+                    update_worldscope_quarter_summary_from_dsws(ticker=ticker)
                 else:
                     print(dateNow())
                     print(d)
@@ -109,7 +142,9 @@ class Command(BaseCommand):
 
             if(options["fundamentals_score"]):
                 status = "Fundamentals Score Ingestion"
-                update_fundamentals_score_from_dsws(currency_code=options["currency_code"])
+                ticker = split_ticker(options["currency_code"], split=options["split"])
+                print(ticker)
+                update_fundamentals_score_from_dsws(ticker=ticker)
                 status = "Fundamentals Quality Update"
                 update_fundamentals_quality_value()
 

@@ -587,7 +587,6 @@ class RkdStream(RkdData):
 
     def stream_quote(self):
         # FOR NOW ONLY HKD
-        # 
         # TODO: Need to enhance this
         while True:
             hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
@@ -605,7 +604,7 @@ class RkdStream(RkdData):
                 gc.collect()
             else:
                 break
-            time.sleep(120)
+            time.sleep(15)
         if self.is_thread:
                 sys.exit()
         
