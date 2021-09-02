@@ -3,10 +3,8 @@ from core.orders.serializers import OrderCreateSerializer
 from core.user.models import User
 from rest_framework import exceptions
 
-
+@pytest.mark.django_db
 class TestSerializer:
-    pytestmark = pytest.mark.django_db
-
     def test_should_create_new_buy_order_from_API(self, user) -> None:
         side = "buy"
         ticker = "0008.HK"

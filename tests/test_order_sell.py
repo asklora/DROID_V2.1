@@ -7,10 +7,8 @@ from core.user.models import Accountbalance, User
 
 from utils import create_buy_order
 
-
+@pytest.mark.django_db
 class TestSell:
-    pytestmark = pytest.mark.django_db
-
     def test_should_create_new_sell_order_for_user(self, user) -> None:
         """
         A new SELL order should be created from a buy order

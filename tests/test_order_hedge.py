@@ -8,10 +8,8 @@ from portfolio import (classic_position_check, ucdc_position_check,
 
 from utils import create_buy_order
 
-
+@pytest.mark.django_db
 class TestHedge:
-    pytestmark = pytest.mark.django_db
-
     def test_should_create_hedge_order_for_classic_bot(self, user) -> None:
         # step 1: create a new order
         ticker = "6606.HK"

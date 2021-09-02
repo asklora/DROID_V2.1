@@ -1,10 +1,8 @@
 import pytest
 import requests
 
-
+@pytest.mark.django_db
 class TestAPI:
-    pytestmark = pytest.mark.django_db
-
     tokens = None
     headers = None
 

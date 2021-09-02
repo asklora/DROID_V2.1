@@ -6,10 +6,8 @@ from core.user.models import Accountbalance, TransactionHistory, User
 
 from utils import create_buy_order
 
-
+@pytest.mark.django_db
 class TestBuy:
-    pytestmark = pytest.mark.django_db
-
     def test_should_create_order(self, user) -> None:
         """
         A new order should be created with default values for is_init, placed, status, dates, etc.
