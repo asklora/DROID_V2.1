@@ -322,7 +322,7 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
         filter_field = ["EPS1TR12","WC05480","WC18100A","WC18262A","WC08005",
             "WC18309A","WC18311A","WC18199A","WC08372","WC05510","WC08636A",
             "BPS1FD12","EBD1FD12","EVT1FD12","EPS1FD12","SAL1FD12","CAP1FD12",
-            "WC02999", "WC02001", "WC03101", "WC03501", "WC18312", "WC02101", 
+            "WC02999", "WC02001", "WC03101", "WC03501", "WC18312A", "WC02101", 
             "WC18264", "WC18267", "WC01451", "WC18810", "WC02401", "WC18274", 
             "WC07211", "i0eps"]
 
@@ -337,7 +337,7 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
             "CGSCORE" : "goverment", 
             "WC02999" : "total_asset", "WC02001" : "cash", 
             "WC03101" : "current_asset", "WC03501" : "equity", 
-            "WC18312" : "ttm_cogs", "WC02101" : "inventory", 
+            "WC18312A" : "ttm_cogs", "WC02101" : "inventory", 
             "WC18264" : "ttm_eps", "WC18267" : "ttm_gm", 
             "WC01451" : "income_tax", "WC18810" : "pension_exp", 
             "WC02401" : "ppe_depreciation", "WC18274" : "ppe_impairment", 
