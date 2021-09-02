@@ -1,12 +1,14 @@
 import pandas as pd
+from core.djangomodule.general import get_cached_data,set_cache_data
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general.sql_process import db_read, alibaba_db_url
 from general.date_process import (
-    backdate_by_day, 
-    dateNow, 
-    date_minus_day, 
-    droid_start_date, 
+    backdate_by_day,
+    backdate_by_year,
+    dateNow,
+    date_minus_day,
+    droid_start_date,
     str_to_date)
 from general.data_process import tuple_data
 from general.table_name import (
@@ -42,7 +44,13 @@ from general.table_name import (
     get_universe_consolidated_table_name,
     get_factor_calculation_table_name,
     get_factor_rank_table_name,
+    get_ai_score_history_testing_table_name,
 )
+
+
+
+
+
 
 def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=True):
     """Base function for database query
@@ -525,6 +533,13 @@ def get_consolidated_data(column, condition, group_field=None):
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+def get_ai_score_testing_history():
+    query = f"SELECT currency_code, max(ai_score) as score_max, min(ai_score) as score_min " 
+    query += f"FROM {get_ai_score_history_testing_table_name()} " 
+    query += f"WHERE period_end > '{backdate_by_year(3)}' GROUP BY currency_code"
+    data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
+    return data
+
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_history_table_name()
     query = f"select * from {table_name} where trading_day=(select max(urh.trading_day) from {table_name} urh) "
@@ -554,8 +569,12 @@ def get_bot_type(condition=None):
     query = f"select * from {table_name} "
     if type(condition) != type(None):
         query += f" where {condition}"
-    data = read_query(query, table_name, cpu_counts=True)
-    return data
+    cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
+    if  not isinstance(cached_data,pd.DataFrame) :
+        data = read_query(query, table_name, cpu_counts=True)
+        set_cache_data(table_name,data.to_dict('records'))
+        return data
+    return cached_data
 
 
 def get_latest_bot_update_data(ticker=None, currency_code=None):
@@ -600,8 +619,12 @@ def get_bot_option_type(condition=None):
     query = f"select * from {table_name} "
     if type(condition) != type(None):
         query += f" where {condition}"
-    data = read_query(query, table_name, cpu_counts=True)
-    return data
+    cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
+    if  not isinstance(cached_data,pd.DataFrame) :
+        data = read_query(query, table_name, cpu_counts=True)
+        set_cache_data(table_name,data.to_dict('records'))
+        return data
+    return cached_data
 
 
 def get_latest_ranking(ticker=None, currency_code=None, active=True):
@@ -695,7 +718,7 @@ def get_orders_position(user_id=None, ticker=None, currency_code=None, position_
     if type(user_id) != type(None):
         query += f"and user_id in {tuple_data(user_id)}  "
     elif type(position_uid) != type(None):
-        query += f"where position_uid in {position_uid} "
+        query += f"where position_uid in {tuple_data(position_uid)} "
     elif type(ticker) != type(None):
         query += f"and ticker in {tuple_data(ticker)} "
     elif type(currency_code) != type(None):

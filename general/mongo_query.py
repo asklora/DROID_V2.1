@@ -57,7 +57,7 @@ def get_price_data_firebase(ticker:list) -> pd.DataFrame:
     db = firestore.client()
     object_list = []
     # here loop numpy split
-    split = len(ticker)/9
+    split = len(ticker) / min(len(ticker), 9)
     splitting_df = np.array_split(ticker, split)
     for univ in splitting_df:
         univ = univ.tolist()
@@ -77,6 +77,8 @@ def update_to_mongo(data, index, table, dict=False):
     data["indexes"] = data[index]
     data = data.set_index("indexes")
     df = data.to_dict("index")
+
+
     del data
     db = firestore.client()
     for key,val in df.items():

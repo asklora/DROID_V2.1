@@ -270,7 +270,7 @@ class Universe(models.Model):
     class Meta:
         managed = True
         db_table = "universe"
-        indexes = [models.Index(fields=['ticker_symbol','currency_code','mic'])]
+        indexes = [models.Index(fields=["ticker_symbol","currency_code","mic"])]
         
 #test
 
