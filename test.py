@@ -41,4 +41,3 @@ if __name__ == "__main__":
     contoh = datetimeNow()
     firebase_user_update(user_id=[119])
     # ticker = ["1179.HK", "9868.HK"]
-    # update_currency_code_from_dsws(ticker = ticker)
