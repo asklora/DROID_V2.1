@@ -415,32 +415,31 @@ def firebase_user_update(user_id=None, currency_code=None):
     # print(user_core)
 
     orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
-    position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
-    # print(position_data)
-    if(len(position_data) > 0):
-        universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "currency_code"]]
-        latest_price = get_price_data_firebase(position_data["ticker"].unique().tolist())
-        # print(latest_price)
-        latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})
-
-        position_data = position_data.merge(latest_price, how="left", on=["ticker"])
-        position_data["price"] = np.where(position_data["price"].isnull(), position_data["entry_price"], position_data["price"])
-        position_data["trading_day"] = np.where(position_data["trading_day"].isnull(), position_data["spot_date"], position_data["trading_day"])
-        position_data = position_data.merge(universe, how="left", on=["ticker"])
-
-        orders_performance_field = "position_uid, share_num, order_uid"
-        performance_data = get_orders_position_performance(position_uid=position_data["position_uid"].to_list(), field=orders_performance_field, latest=True)
-        position_data = position_data.merge(performance_data, how="left", on=["position_uid"])
-        position_data = position_data.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
-
+    if(len(user_core["user_id"].to_list()) > 1):
+        position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
         # print(position_data)
-        active_portfolio = pd.DataFrame({"user_id":[], "total_invested_amount":[], "total_bot_invested_amount":[], "total_user_invested_amount":[], 
-            "pct_total_bot_invested_amount":[], "pct_total_user_invested_amount":[], "total_profit_amount":[], "active_portfolio":[]}, index=[])
-        
-    # concurent calculation
-    asyncio.run(
-        gather_task(position_data, bot_option_type, user_core)
-        )
+        if(len(position_data) > 0):
+            universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "currency_code"]]
+            latest_price = get_price_data_firebase(position_data["ticker"].unique().tolist())
+            # print(latest_price)
+            latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})
+
+            position_data = position_data.merge(latest_price, how="left", on=["ticker"])
+            position_data["price"] = np.where(position_data["price"].isnull(), position_data["entry_price"], position_data["price"])
+            position_data["trading_day"] = np.where(position_data["trading_day"].isnull(), position_data["spot_date"], position_data["trading_day"])
+            position_data = position_data.merge(universe, how="left", on=["ticker"])
+
+            orders_performance_field = "position_uid, share_num, order_uid"
+            performance_data = get_orders_position_performance(position_uid=position_data["position_uid"].to_list(), field=orders_performance_field, latest=True)
+            position_data = position_data.merge(performance_data, how="left", on=["position_uid"])
+            position_data = position_data.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
+
+            # print(position_data)
+            active_portfolio = pd.DataFrame({"user_id":[], "total_invested_amount":[], "total_bot_invested_amount":[], "total_user_invested_amount":[], 
+                "pct_total_bot_invested_amount":[], "pct_total_user_invested_amount":[], "total_profit_amount":[], "active_portfolio":[]}, index=[])
+            
+        # concurent calculation
+        asyncio.run(gather_task(position_data, bot_option_type, user_core))
     # end = time.time()
     # print(f"time consumed : {end-start}")
 
