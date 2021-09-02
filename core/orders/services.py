@@ -28,6 +28,7 @@ class OrderPositionValidation:
             return order
         return None
 
+        
 
     def is_portfolio_exist(self):
         portfolios = OrderPosition.objects.filter(user_id=self.user_id,ticker=self.ticker,bot_id__in=self.bots,is_live=True).prefetch_related('ticker')
