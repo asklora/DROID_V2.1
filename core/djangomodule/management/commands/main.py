@@ -193,8 +193,8 @@ class Command(BaseCommand):
                 update_ibes_data_monthly_from_dsws()
                 status = "Macro Ingestion"
                 update_macro_data_monthly_from_dsws()
-                status = "Universe hotness Ingestion"
-                do_function("universe_hotness_update")
+                status = "Universe hotness Ingestion" 
+                do_function("universe_hotness_update") 
 
             if(options["monthly"]):
                 if(d in ["1", "2", "3", "4", "5", "6", "7"]):
