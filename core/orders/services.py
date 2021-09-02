@@ -18,6 +18,7 @@ class OrderPositionValidation:
         bot_type = BotOptionType.objects.get(bot_id=bot_id).bot_type
         self.bots = [bot['bot_id'] for bot in BotOptionType.objects.filter(bot_type=bot_type).values('bot_id')]
 
+
     def is_order_exist(self):
         orders = Order.objects.filter(user_id=self.user_id,ticker=self.ticker,bot_id__in=self.bots,status='pending')
         if orders.exists():
