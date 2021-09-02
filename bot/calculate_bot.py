@@ -587,9 +587,9 @@ def populate_daily_profit(currency_code=None, user_id=None):
         position = orders_position.loc[orders_position["user_id"] == user]
         if(len(position)):
             position["daily_profit"] = position["investment_amount"] - (position["current_investment_amount"] + position["current_bot_cash_balance"])
-            profit = NoneToZero(sum(position["daily_profit"].to_list()))
-            daily_profit_pct = round(profit / NoneToZero(sum(position["investment_amount"].to_list())) * 100, 2)
-            daily_invested_amount = NoneToZero(sum(position["investment_amount"].to_list()))
+            profit = NoneToZero(np.nansum(position["daily_profit"].to_list()))
+            daily_profit_pct = round(profit / NoneToZero(np.nansum(position["investment_amount"].to_list())) * 100, 2)
+            daily_invested_amount = NoneToZero(np.nansum(position["investment_amount"].to_list()))
         else:
             profit = 0
             daily_profit_pct = 0
