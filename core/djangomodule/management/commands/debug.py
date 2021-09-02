@@ -105,19 +105,20 @@ class Command(BaseCommand):
 #             else:
 #                 print(ticker)
 #         print(len(HKD_universe))
-        HKD_universe = [ticker['ticker'] for ticker in Universe.objects.prefetch_related('currency_code').filter(currency_code__in=['HKD'],is_active=True).values('ticker')][5:15]
+        # HKD_universe = [ticker['ticker'] for ticker in Universe.objects.prefetch_related('currency_code').filter(currency_code__in=['HKD'],is_active=True).values('ticker')][5:15]
         rkd = RkdStream()
         now = datetime.now().date()
-        data =rkd.bulk_get_quote(HKD_universe,df=True)
-        df = data.copy()
-        data['price'] = df.drop(columns=['ticker']).to_dict("records")
-        del df
-        data = data[['ticker','price']]
-        data = data.set_index('ticker')
-        record = data.to_dict('index')
-        # for p,val in data.items():
-        #         print(p,val)
-        rkd.bulk_update_rtdb(record)
+        data =rkd.bulk_get_quote(["1929.HK"],df=True)
+        print(data)
+        # df = data.copy()
+        # data['price'] = df.drop(columns=['ticker']).to_dict("records")
+        # del df
+        # data = data[['ticker','price']]
+        # data = data.set_index('ticker')
+        # record = data.to_dict('index')
+        # # for p,val in data.items():
+        # #         print(p,val)
+        # rkd.bulk_update_rtdb(record)
         # print(data.to_dict('index'))
         # print(data.iloc[[0]])
         # for index in data.index:
