@@ -27,6 +27,7 @@ from general.table_name import (
     get_master_tac_table_name,
     get_orders_position_performance_table_name,
     get_orders_position_table_name,
+    get_orders_table_name,
     get_region_table_name,
     get_universe_client_table_name,
     get_universe_rating_detail_history_table_name,
@@ -716,13 +717,26 @@ def get_orders_position(user_id=None, ticker=None, currency_code=None, position_
     table_name = get_orders_position_table_name()
     query = f"select {field} from {table_name} where is_live={active} "
     if type(user_id) != type(None):
-        query += f"and user_id in {tuple_data(user_id)}  "
+        query += f"and user_id in {tuple_data(user_id)} "
     elif type(position_uid) != type(None):
         query += f"where position_uid in {tuple_data(position_uid)} "
     elif type(ticker) != type(None):
         query += f"and ticker in {tuple_data(ticker)} "
     elif type(currency_code) != type(None):
         query += f"and ticker in (select ticker from universe where currency_code in {tuple_data(currency_code)}) "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_orders_position_group_by_user_id(user_id=None, ticker=None, currency_code=None):
+    table_name = get_orders_table_name()
+    query = f"select user_id, sum(amount) as pending_amount from {table_name} where status='pending' and canceled_at is null "
+    if type(user_id) != type(None):
+        query += f"and user_id in {tuple_data(user_id)} "
+    elif type(ticker) != type(None):
+        query += f"and ticker in {tuple_data(ticker)} "
+    elif type(currency_code) != type(None):
+        query += f"and ticker in (select ticker from universe where currency_code in {tuple_data(currency_code)}) "
+    query += f" group by user_id;"
     data = read_query(query, table_name, cpu_counts=True)
     return data
 

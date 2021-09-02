@@ -1,16 +1,13 @@
-from general.data_process import DivByZero, NoneToZero
+from general.data_process import NoneToZero
 from bot.data_download import get_currency_data
 import random
 from asgiref.sync import sync_to_async
 import numpy as np
 import pandas as pd
-from general.date_process import backdate_by_month
 from general.mongo_query import (
     change_null_to_zero, 
-    create_collection, 
     update_to_mongo, 
     change_date_to_str, 
-    update_specific_to_mongo,
     get_price_data_firebase
     )
 from general.sql_query import (
@@ -23,6 +20,7 @@ from general.sql_query import (
     get_latest_ranking,
     get_latest_ranking_rank_1, 
     get_master_tac_data,
+    get_orders_position_group_by_user_id,
     get_orders_position,
     get_orders_position_performance, 
     get_region, 
@@ -387,7 +385,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         # print(active)
         result = user_core.merge(active, how="left", on=["user_id"])
         result = result.rename(columns={"currency_code" : "currency"})
-        # print(result)
+        result["current_asset"] = result["balance"] + result["total_invested_amount"] + result["pending_amount"]
         await sync_to_async(update_to_mongo)(data=result, index="user_id", table="portfolio", dict=False)
         return active
 
@@ -413,9 +411,11 @@ def firebase_user_update(user_id=None, currency_code=None):
     user_core.loc[user_core["is_decimal"] == True, "balance"] = round(user_core.loc[user_core["is_decimal"] == True, "balance"], 2)
     user_core.loc[user_core["is_decimal"] == False, "balance"] = round(user_core.loc[user_core["is_decimal"] == False, "balance"], 0)
     # print(user_core)
-
-    orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
     if(len(user_core["user_id"].to_list()) > 1):
+        order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list())
+        user_core = user_core.merge(order_pending, how="left", on=["user_id"])
+        user_core["pending_amount"] = np.where(user_core["pending_amount"].isnull(), 0, user_core["pending_amount"])
+        orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
         position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
         # print(position_data)
         if(len(position_data) > 0):
