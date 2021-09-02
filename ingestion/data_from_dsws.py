@@ -337,7 +337,7 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
             "CGSCORE" : "goverment", 
             "WC02999" : "total_asset", "WC02001" : "cash", 
             "WC03101" : "current_asset", "WC03501" : "equity", 
-            "WC18312" : "ttm_cogs", "WC02101" : "inventory", 
+            "WC18312A" : "ttm_cogs", "WC02101" : "inventory", 
             "WC18264" : "ttm_eps", "WC18267" : "ttm_gm", 
             "WC01451" : "income_tax", "WC18810" : "pension_exp", 
             "WC02401" : "ppe_depreciation", "WC18274" : "ppe_impairment", 
