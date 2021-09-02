@@ -455,9 +455,9 @@ def score_update_factor_ratios(df):
         n = 1
         while n < len(x):
             if x[n] == "+":
-                temp += np.nan_to_num(df[x[n + 1]],0)
+                temp += df[x[n + 1]].replace(np.nan, 0)
             elif x[n] == "-":
-                temp -= np.nan_to_num(df[x[n + 1]],0)
+                temp -= df[x[n + 1]].replace(np.nan, 0)
             elif x[n] == "*":
                 temp *= df[x[n + 1]]
             else:
