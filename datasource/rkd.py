@@ -598,7 +598,7 @@ class RkdStream(RkdData):
                 del df
                 data = data[['ticker','price']]
                 data = data.set_index('ticker')
-                records = data.to_dict("records")
+                records = data.to_dict("index")
                 self.bulk_update_rtdb.apply_async(args=(records,),queue="broadcaster")
                 del records
                 del data
