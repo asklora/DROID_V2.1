@@ -97,15 +97,15 @@ class TradingHours:
             resp = req.json()
             now = datetime.now()
             message_debug = f'{now} || market check for {self.fin_id}'
-            print(message_debug)
-            print(resp['data'])
+            # print(message_debug)
+            # print(resp['data'])
             if resp['data'][self.fin_id]['status'] == "Closed":
                 market_status =  False
             else:
                 market_status =  True
             try:
                 until_time = self.normalize_datetime(resp['data'][self.fin_id]['until'])
-                local_time_extend = self.normalize_datetime(resp['data'][self.fin_id]['next_bell']) + timedelta(minutes=30)
+                local_time_extend = self.normalize_datetime(resp['data'][self.fin_id]['next_bell'])
                 self.next_bell = self.timezone_to_utc(local_time_extend, self.market_timezone)
                 self.until = self.timezone_to_utc(until_time, self.market_timezone)
             except Exception as e:
