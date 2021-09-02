@@ -21,7 +21,6 @@ class OrderPositionValidation:
     def is_order_exist(self):
         orders = Order.objects.filter(user_id=self.user_id,ticker=self.ticker,bot_id__in=self.bots,status='pending')
         if orders.exists():
-            print('order')
             try:
                 order = orders.latest('created')
             except OrderPosition.MultipleObjectsReturned:
@@ -33,8 +32,6 @@ class OrderPositionValidation:
     def is_portfolio_exist(self):
         portfolios = OrderPosition.objects.filter(user_id=self.user_id,ticker=self.ticker,bot_id__in=self.bots).prefetch_related('ticker')
         if portfolios.exists():
-            print('portfolio')
-
             try:
                 portfolio = portfolios.latest('created')
             except OrderPosition.MultipleObjectsReturned:

@@ -77,6 +77,8 @@ def update_to_mongo(data, index, table, dict=False):
     data["indexes"] = data[index]
     data = data.set_index("indexes")
     df = data.to_dict("index")
+
+
     del data
     db = firestore.client()
     for key,val in df.items():

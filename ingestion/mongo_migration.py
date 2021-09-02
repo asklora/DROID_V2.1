@@ -380,7 +380,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         else:
             active = pd.DataFrame({"user_id":[user], "total_invested_amount":[0], "total_bot_invested_amount":[0], 
                 "total_user_invested_amount":[0], "pct_total_bot_invested_amount":[0], "pct_total_user_invested_amount":[0], 
-                "total_profit_amount":[0], "daily_live_profit":[0], "active_portfolio":[None]}, index=[0])
+                "total_profit_amount":[0], "daily_live_profit":[0], "active_portfolio":[[]]}, index=[0])
         print(active)
         result = user_core.merge(active, how="left", on=["user_id"])
         result = result.rename(columns={"currency_code" : "currency"})
