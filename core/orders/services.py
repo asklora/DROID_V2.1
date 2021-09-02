@@ -20,7 +20,7 @@ class OrderPositionValidation:
 
 
     def is_order_exist(self):
-        orders = Order.objects.filter(user_id=self.user_id,ticker=self.ticker,bot_id__in=self.bots,status='pending')
+        orders = Order.objects.filter(user_id=self.user_id,ticker=self.ticker,bot_id__in=self.bots,status='pending',side='buy')
         if orders.exists():
             try:
                 order = orders.latest('created')
@@ -45,7 +45,6 @@ class OrderPositionValidation:
     def validate(self):
         valid_position = self.is_portfolio_exist()
         valid_order = self.is_order_exist()
-        print(valid_position,valid_order)
         if valid_position or valid_order:
             
             if valid_position:
