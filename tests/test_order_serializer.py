@@ -22,7 +22,7 @@ class TestSerializer:
             "qty": qty,
             "side": side,
             "ticker": ticker,
-            "user": user,
+            "user": user.id,
         }
         serializer = OrderCreateSerializer(data=order_request)
         if serializer.is_valid(raise_exception=True):
@@ -46,7 +46,7 @@ class TestSerializer:
                 "price": price,
                 "side": side,
                 "ticker": ticker,
-                "user": user,
+                "user": user.id,
             }
             serializer = OrderCreateSerializer(data=order_request)
             if serializer.is_valid(raise_exception=True):

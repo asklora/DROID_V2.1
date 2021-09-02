@@ -65,7 +65,7 @@ class TestBuy:
             qty=qty,
             side=side,
             ticker_id=ticker,
-            user_id=user.id,
+            user_id=user,
         )
 
         previous_user_balance = Accountbalance.objects.get(user=user)
@@ -84,7 +84,7 @@ class TestBuy:
         order = Order.objects.get(pk=order.order_uid)
 
         assert order.amount == price * qty
-        assert user_balance.amount == previous_user_balance - order.amount
+        assert user_balance.amount == previous_user_balance.amount - order.amount
 
     def test_should_create_new_buy_order_for_user_with_margin(self, user) -> None:
         """
@@ -134,7 +134,7 @@ class TestBuy:
             price=price,
             side=side,
             ticker_id=ticker,
-            user_id=user.id,
+            user_id=user,
         )
 
         # The amount and qty should be calculated correctly
