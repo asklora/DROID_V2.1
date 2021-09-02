@@ -3,10 +3,11 @@ from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general.sql_process import db_read, alibaba_db_url
 from general.date_process import (
-    backdate_by_day, 
-    dateNow, 
-    date_minus_day, 
-    droid_start_date, 
+    backdate_by_day,
+    backdate_by_year,
+    dateNow,
+    date_minus_day,
+    droid_start_date,
     str_to_date)
 from general.data_process import tuple_data
 from general.table_name import (
@@ -42,6 +43,7 @@ from general.table_name import (
     get_universe_consolidated_table_name,
     get_factor_calculation_table_name,
     get_factor_rank_table_name,
+    get_ai_score_history_testing_table_name,
 )
 
 def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=True):
@@ -523,6 +525,13 @@ def get_consolidated_data(column, condition, group_field=None):
     if type(group_field) != type(None):
         query += f"group by {group_field} "
     data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_ai_score_testing_history():
+    query = f"SELECT currency_code, max(ai_score) as score_max, min(ai_score) as score_min " \
+            f"FROM {get_ai_score_history_testing_table_name()} " \
+            f"WHERE period_end > '{backdate_by_year(3)}' GROUP BY currency_code"
+    data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
     return data
 
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):
