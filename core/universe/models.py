@@ -270,7 +270,7 @@ class Universe(models.Model):
     class Meta:
         managed = True
         db_table = "universe"
-        indexes = [models.Index(fields=['ticker_symbol','currency_code','mic'])]
+        indexes = [models.Index(fields=["ticker_symbol","currency_code","mic"])]
         
 #test
 
@@ -416,7 +416,7 @@ class ExchangeMarket(BaseTimeStampModel):
         return self.mic
 
 class UniverseHotness(models.Model):
-    '''
+    """
     Schema
     ------
     create table universe_hotness
@@ -425,14 +425,14 @@ class UniverseHotness(models.Model):
         ticker        text,
         volume_rate_z double precision
     );
-    '''
-    ticker = models.OneToOneField(Universe, primary_key=True, on_delete=models.CASCADE,
-                                  db_column="ticker", related_name="universe_hotness_ticker")
+    """
+    ticker = models.OneToOneField(Universe, primary_key=True, on_delete=models.CASCADE, db_column="ticker", related_name="universe_hotness_ticker")
     trading_day = models.DateField(null=False)
     volume_rate_z = models.FloatField(null=False)
+
     class Meta:
         managed = True
         db_table = "universe_hotness"
 
     def __str__(self):
-        return f'UniverseHotness(trading_day={self.trading_day}, ticker={self.ticker})'
+        return f"UniverseHotness(trading_day={self.trading_day}, ticker={self.ticker})"

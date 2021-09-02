@@ -528,9 +528,9 @@ def get_consolidated_data(column, condition, group_field=None):
     return data
 
 def get_ai_score_testing_history():
-    query = f"SELECT currency_code, max(ai_score) as score_max, min(ai_score) as score_min " \
-            f"FROM {get_ai_score_history_testing_table_name()} " \
-            f"WHERE period_end > '{backdate_by_year(3)}' GROUP BY currency_code"
+    query = f"SELECT currency_code, max(ai_score) as score_max, min(ai_score) as score_min " 
+    query += f"FROM {get_ai_score_history_testing_table_name()} " 
+    query += f"WHERE period_end > '{backdate_by_year(3)}' GROUP BY currency_code"
     data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
     return data
 
