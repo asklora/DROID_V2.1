@@ -865,7 +865,7 @@ class RkdStream(RkdData):
         for ticker,val in data.items():
             if not ticker == 'price':
                 ref = db.collection("universe").document(ticker)
-                batch.set(ref,{"price":val},merge=True)
+                batch.set(ref,val,merge=True)
         try:
             batch.commit()
         except Exception as e:
