@@ -1,6 +1,6 @@
 from general.data_process import DivByZero, NoneToZero
 from bot.data_download import get_currency_data
-import json
+import random
 from asgiref.sync import sync_to_async
 import numpy as np
 import pandas as pd
@@ -310,7 +310,10 @@ async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,us
     tasks=[]
     users= user_core["user_id"].unique().tolist()
     for user in users:
-        tasks.append(asyncio.ensure_future(do_task(position_data, bot_option_type, user, user_core)))
+        tasks.append(
+            asyncio.ensure_future(
+            do_task(position_data, bot_option_type, user, user_core)
+            ))
     active_portfolio = await asyncio.gather(*tasks)
     return active_portfolio
         
@@ -334,7 +337,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             #PROFIT
             # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_values"]
             # orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"]
-            orders_position["profit"] =orders_position["current_values"] - orders_position["investment_amount"]
+            orders_position["profit"] =orders_position["current_values"] - orders_position["investment_amount"] 
             orders_position["pct_profit"] =  (orders_position["profit"] / orders_position["investment_amount"]  * 100).round(2)
 
             #BOT POSITION
@@ -381,10 +384,10 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             active = pd.DataFrame({"user_id":[user], "total_invested_amount":[0], "total_bot_invested_amount":[0], 
                 "total_user_invested_amount":[0], "pct_total_bot_invested_amount":[0], "pct_total_user_invested_amount":[0], 
                 "total_profit_amount":[0], "daily_live_profit":[0], "active_portfolio":[[]]}, index=[0])
-        print(active)
+        # print(active)
         result = user_core.merge(active, how="left", on=["user_id"])
         result = result.rename(columns={"currency_code" : "currency"})
-        print(result)
+        # print(result)
         await sync_to_async(update_to_mongo)(data=result, index="user_id", table="portfolio", dict=False)
         return active
 
@@ -409,15 +412,15 @@ def firebase_user_update(user_id=None, currency_code=None):
     user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
     user_core.loc[user_core["is_decimal"] == True, "balance"] = round(user_core.loc[user_core["is_decimal"] == True, "balance"], 2)
     user_core.loc[user_core["is_decimal"] == False, "balance"] = round(user_core.loc[user_core["is_decimal"] == False, "balance"], 0)
-    print(user_core)
+    # print(user_core)
 
     orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
     position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
-    print(position_data)
+    # print(position_data)
     if(len(position_data) > 0):
         universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "currency_code"]]
         latest_price = get_price_data_firebase(position_data["ticker"].unique().tolist())
-        print(latest_price)
+        # print(latest_price)
         latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})
 
         position_data = position_data.merge(latest_price, how="left", on=["ticker"])
@@ -434,8 +437,10 @@ def firebase_user_update(user_id=None, currency_code=None):
         active_portfolio = pd.DataFrame({"user_id":[], "total_invested_amount":[], "total_bot_invested_amount":[], "total_user_invested_amount":[], 
             "pct_total_bot_invested_amount":[], "pct_total_user_invested_amount":[], "total_profit_amount":[], "active_portfolio":[]}, index=[])
         
-        # concurent calculation
-    gather_active_portfolios = asyncio.run(gather_task(position_data, bot_option_type, user_core))
+    # concurent calculation
+    asyncio.run(
+        gather_task(position_data, bot_option_type, user_core)
+        )
     # end = time.time()
     # print(f"time consumed : {end-start}")
 
