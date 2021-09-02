@@ -55,6 +55,10 @@ class TestApp(EWrapper, EClient):
 	def __init__(self,*args, **kwargs):
 		EClient.__init__(self, self)
 		self.nextId=random.randint(0,255)
+	def placeOrder(self, ids, contract, order, order_id):
+		super().placeOrder(ids, contract, order)
+		
+
 	
 	def connect(self, host, port, clientId):
 		super().connect(host, port, clientId)
@@ -191,6 +195,9 @@ class TestApp(EWrapper, EClient):
 			"order":order,
 			"orderState":orderState,
 		}
+
+	    # run_ws("DU2898614", order_id) ditambahin ws connection buat callback
+
 
 		# if self.queue_order:
 		# 	message = {}
