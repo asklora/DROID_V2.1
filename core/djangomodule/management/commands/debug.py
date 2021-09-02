@@ -12,9 +12,10 @@ from core.user.models import User
 from requests.api import get
 from django.core.management.base import BaseCommand
 from core.services.tasks import populate_client_top_stock_weekly, order_client_topstock, daily_hedge, send_csv_hanwha, hedge
-from datasource.rkd import RkdData
+from datasource.rkd import RkdData,RkdStream
 from datetime import datetime
 from core.djangomodule.calendar import TradingHours
+from core.universe.models import Universe
 from portfolio.daily_hedge_classic import classic_position_check
 from config.celery import app 
 import asyncio
@@ -26,13 +27,13 @@ class Command(BaseCommand):
         # firebase_user_update(currency_code=["HKD"])
         # ticker = [ticker.ticker.ticker for ticker in OrderPosition.objects.prefetch_related('ticker').filter(is_live=True,ticker__currency_code__in=["HKD"]).distinct('ticker')]
         # get_price_data_firebase(ticker)
-        users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
-        while True:
-                try:
-                        firebase_user_update(user_id=users)
-                except KeyboardInterrupt:
-                        break
-                time.sleep(9)
+        # users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
+        # while True:
+        #         try:
+        #                 firebase_user_update(user_id=users)
+        #         except KeyboardInterrupt:
+        #                 break
+        #         time.sleep(9)
         # ticker = get_active_universe(currency_code=["HKD"])["ticker"].to_list()
         # get_price_data_firebase(ticker)
         # contoh = datetimeNow()
@@ -104,10 +105,20 @@ class Command(BaseCommand):
 #             else:
 #                 print(ticker)
 #         print(len(HKD_universe))
-        # HKD_universe = [ticker['ticker'] for ticker in Universe.objects.prefetch_related('currency_code').filter(currency_code__in=['HKD'],is_active=True).values('ticker')]
-        # rkd = RkdData()
-#         now = datetime.now().date()
-        # data =rkd.bulk_get_quote(HKD_universe,df=True)
+        HKD_universe = [ticker['ticker'] for ticker in Universe.objects.prefetch_related('currency_code').filter(currency_code__in=['HKD'],is_active=True).values('ticker')][5:15]
+        rkd = RkdStream()
+        now = datetime.now().date()
+        data =rkd.bulk_get_quote(HKD_universe,df=True)
+        df = data.copy()
+        data['price'] = df.drop(columns=['ticker']).to_dict("records")
+        del df
+        data = data[['ticker','price']]
+        data = data.set_index('ticker')
+        record = data.to_dict('index')
+        # for p,val in data.items():
+        #         print(p,val)
+        rkd.bulk_update_rtdb(record)
+        # print(data.to_dict('index'))
         # print(data.iloc[[0]])
         # for index in data.index:
         #     r =data.loc[index]

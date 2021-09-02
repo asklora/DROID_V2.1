@@ -30,7 +30,7 @@ class OrderPositionValidation:
 
 
     def is_portfolio_exist(self):
-        portfolios = OrderPosition.objects.filter(user_id=self.user_id,ticker=self.ticker,bot_id__in=self.bots).prefetch_related('ticker')
+        portfolios = OrderPosition.objects.filter(user_id=self.user_id,ticker=self.ticker,bot_id__in=self.bots,is_live=True).prefetch_related('ticker')
         if portfolios.exists():
             try:
                 portfolio = portfolios.latest('created')

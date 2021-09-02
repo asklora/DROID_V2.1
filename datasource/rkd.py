@@ -363,7 +363,7 @@ class RkdData(Rkd):
                 "CF_LAST": "latest_price",
                 "CF_NETCHNG": "latest_net_change"
                 })
-        df_data["last_date"] = datetime.now().date()
+        df_data["last_date"] = str(datetime.now().date())
         df_data["intraday_time"] = str(datetime.now())
         df_data =df_data.astype(
             {
@@ -593,10 +593,14 @@ class RkdStream(RkdData):
             hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
             if hkd_exchange.is_open:
                 data =self.bulk_get_quote(self.ticker_data,df=True)
-                for index in data.index:
-                    split_data = data.iloc[[index]]
-                    self.update_rtdb.apply_async(args=(split_data.to_dict("records"),),queue="broadcaster")
-                    # update_rtdb_user_porfolio.delay()
+                df = data.copy()
+                data['price'] = df.drop(columns=['ticker']).to_dict("records")
+                del df
+                data = data[['ticker','price']]
+                data = data.set_index('ticker')
+                records = data.to_dict("records")
+                self.bulk_update_rtdb.apply_async(args=(records,),queue="broadcaster")
+                del records
                 del data
                 gc.collect()
             else:
@@ -855,3 +859,20 @@ class RkdStream(RkdData):
         del ref
         gc.collect()
         return ticker
+    
+    @app.task(bind=True,ignore_result=True)
+    def bulk_update_rtdb(self,data):
+        batch = db.batch()
+        for ticker,val in data.items():
+            if not ticker == 'price':
+                ref = db.collection("universe").document(ticker)
+                batch.set(ref,{"price":val},merge=True)
+        try:
+            batch.commit()
+        except Exception as e:
+            err = str(e)
+            print(err)
+            return f" error : \n {err}"
+        del ref
+        gc.collect()
+        return 'ticker bulk'
