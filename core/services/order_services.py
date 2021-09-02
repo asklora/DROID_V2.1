@@ -147,7 +147,7 @@ def update_rtdb_user_porfolio():
             firebase_user_update(user_id=users)
     except Exception as e:
         err = ErrorLog.objects.create_log(
-        error_description=f"===  ERROR IN POPULATE UNIVERSER FIREBASE ===", error_message=str(e))
+        error_description=f"===  ERROR IN UPDATE REALTIME PORTFOLIO FIREBASE ===", error_message=str(e))
         err.send_report_error()
         return {'error':str(e)}
     return {'status':'updated firebase portfolio'}

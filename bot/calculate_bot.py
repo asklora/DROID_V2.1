@@ -580,11 +580,11 @@ def populate_daily_profit(currency_code=None, user_id=None):
         orders_performance_field = "position_uid, current_bot_cash_balance, current_investment_amount"
         orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)
         orders_position = orders_position.merge(orders_performance, how="left", on=["position_uid"])
-    print(user_core)
-    print(orders_position)
+    # print(user_core)
+    # print(orders_position)
     for index, row in user_core.iterrows():
         user = row["user_id"]
-        print(user)
+        # print(user)
         position = orders_position.loc[orders_position["user_id"] == user]
         if(len(position)):
             position["daily_profit"] = position["investment_amount"] - (position["current_investment_amount"] + position["current_bot_cash_balance"])
@@ -602,5 +602,5 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core["user_id"] = user_core["user_id"].astype(str)
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
     user_core["user_id"] = user_core["user_id"].astype(int)
-    print(user_core)
+    # print(user_core)
     upsert_data_to_database(user_core, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
