@@ -3,19 +3,16 @@ from core.orders.serializers import OrderCreateSerializer
 from core.user.models import User
 from rest_framework import exceptions
 
-
+@pytest.mark.django_db
 class TestSerializer:
-    pytestmark = pytest.mark.django_db
-
-    def test_should_create_new_buy_order_from_API(self) -> None:
+    def test_should_create_new_buy_order_from_API(self, user) -> None:
         side = "buy"
         ticker = "0008.HK"
         qty = 2
         price = 1317
-        user_id = 198
         bot_id = "STOCK_stock_0"
 
-        user = User.objects.get(pk=user_id)
+        user = User.objects.get(pk=user.id)
 
         # We create an order
         order_request = {
@@ -25,7 +22,7 @@ class TestSerializer:
             "qty": qty,
             "side": side,
             "ticker": ticker,
-            "user": user_id,
+            "user": user.id,
         }
         serializer = OrderCreateSerializer(data=order_request)
         if serializer.is_valid(raise_exception=True):
@@ -33,15 +30,14 @@ class TestSerializer:
 
         assert buy_order.order_uid != None
 
-    def test_should_fail_on_new_buy_order_from_API(self) -> None:
+    def test_should_fail_on_new_buy_order_from_API(self, user) -> None:
         with pytest.raises(exceptions.NotAcceptable):
             side = "buy"
             ticker = "0780.HK"
             price = 1317
-            user_id = 198
             bot_id = "STOCK_stock_0"
 
-            user = User.objects.get(pk=user_id)
+            user = User.objects.get(pk=user.id)
 
             # We create an order
             order_request = {
@@ -50,7 +46,7 @@ class TestSerializer:
                 "price": price,
                 "side": side,
                 "ticker": ticker,
-                "user": user_id,
+                "user": user.id,
             }
             serializer = OrderCreateSerializer(data=order_request)
             if serializer.is_valid(raise_exception=True):

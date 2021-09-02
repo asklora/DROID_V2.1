@@ -29,6 +29,8 @@ django_debug = env.bool("DEBUG")
 
 DEBUG = django_debug
 
+TESTDEBUG=False # for tests
+
 ALLOWED_HOSTS = [
     "18.167.118.164",
     "127.0.0.1",

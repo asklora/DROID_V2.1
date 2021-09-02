@@ -8,14 +8,11 @@ from portfolio import (classic_position_check, ucdc_position_check,
 
 from utils import create_buy_order
 
-
+@pytest.mark.django_db
 class TestHedge:
-    pytestmark = pytest.mark.django_db
-
-    def test_should_create_hedge_order_for_classic_bot(self) -> None:
+    def test_should_create_hedge_order_for_classic_bot(self, user) -> None:
         # step 1: create a new order
         ticker = "6606.HK"
-        user_id = 198
         master = MasterOhlcvtr.objects.get(
             ticker=ticker,
             trading_day="2021-06-01",
@@ -26,7 +23,7 @@ class TestHedge:
         buy_order = create_buy_order(
             ticker=ticker,
             price=price,
-            user_id=user_id,
+            user_id=user.id,
             bot_id="CLASSIC_classic_007692",
         )
 
@@ -64,10 +61,9 @@ class TestHedge:
         assert performance.exists() == True
         assert performance.count() > 1
 
-    def test_should_create_hedge_order_for_uno_bot(self) -> None:
+    def test_should_create_hedge_order_for_uno_bot(self, user) -> None:
         # step 1: create a new order
         ticker = "3690.HK"
-        user_id = 198
         master = MasterOhlcvtr.objects.get(
             ticker=ticker,
             trading_day="2021-06-01",
@@ -78,7 +74,7 @@ class TestHedge:
         buy_order = create_buy_order(
             ticker=ticker,
             price=price,
-            user_id=user_id,
+            user_id=user.id,
             bot_id="UNO_OTM_007692",
         )
 
@@ -116,10 +112,9 @@ class TestHedge:
         assert performance.exists() == True
         assert performance.count() > 1
 
-    def test_should_create_hedge_order_for_ucdc_bot(self) -> None:
+    def test_should_create_hedge_order_for_ucdc_bot(self, user) -> None:
         # step 1: create a new order
         ticker = "2282.HK"
-        user_id = 198
         master = MasterOhlcvtr.objects.get(
             ticker=ticker,
             trading_day="2021-06-01",
@@ -130,7 +125,7 @@ class TestHedge:
         buy_order = create_buy_order(
             ticker=ticker,
             price=price,
-            user_id=user_id,
+            user_id=user.id,
             bot_id="UCDC_ATM_007692",
         )
 
@@ -168,10 +163,9 @@ class TestHedge:
         assert performance.exists() == True
         assert performance.count() > 1
 
-    def test_should_create_hedge_order_for_ucdc_bot_with_margin(self) -> None:
+    def test_should_create_hedge_order_for_ucdc_bot_with_margin(self, user) -> None:
         # step 1: create a new order
         ticker = "2282.HK"
-        user_id = 198
         master = MasterOhlcvtr.objects.get(
             ticker=ticker,
             trading_day="2021-06-01",
@@ -182,7 +176,7 @@ class TestHedge:
         buy_order = create_buy_order(
             ticker=ticker,
             price=price,
-            user_id=user_id,
+            user_id=user.id,
             margin=2,
             bot_id="UCDC_ATM_007692",
         )
