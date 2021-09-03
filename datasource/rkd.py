@@ -862,6 +862,7 @@ class RkdStream(RkdData):
     @app.task(bind=True,ignore_result=True)
     def bulk_update_rtdb(self,data):
         batch = db.batch()
+        
         for ticker,val in data.items():
             if not ticker == 'price':
                 ref = db.collection("universe").document(ticker)
