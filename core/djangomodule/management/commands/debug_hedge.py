@@ -10,6 +10,7 @@ import pandas as pd
 
 
 def create_buy_order(
+    created:datetime,
     price: float,
     ticker: str,
     amount: float = None,
@@ -20,6 +21,7 @@ def create_buy_order(
     user: User = None,
 ) -> Order:
     return Order.objects.create(
+        created=created,
         amount=amount if amount != None else price * qty,
         bot_id=bot_id,
         margin=margin,
@@ -48,6 +50,7 @@ class Command(BaseCommand):
         # log_time = datetime.combine(master.trading_day, datetime.min.time())
 
         # buy_order = create_buy_order(
+        #     created=log_time,
         #     ticker=ticker,
         #     price=price,
         #     user_id=user.id,
@@ -76,9 +79,9 @@ class Command(BaseCommand):
 
         # # step 2: setup hedge
         ucdc_position_check(
-            position_uid='86b3449e88034b0e94a5f73a8bf5d4b0',
+            position_uid='4109cbda393244c489d4ee8c82b9a42a',
             tac=True,
-            to_date='2021-07-25'
+            to_date='2021-07-23'
         )
         # # step 3: get hedge positions
         # performance = PositionPerformance.objects.filter(
