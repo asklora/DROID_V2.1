@@ -49,15 +49,15 @@ class TestAPIAuth:
 
 @pytest.mark.django_db
 class TestAPIUser:
-    def test_api_get_user_data(self, client, authentication) -> None:
+    def test_api_get_user_data(self, authentication, client, user) -> None:
         response = client.get(path="/api/user/me/", **authentication)
 
         assert response.status_code == 200
         assert response.headers["Content-Type"] == "application/json"
 
         response_body = response.json()
-        assert response_body["email"] == "pytest@tests.com"
-        assert response_body["username"] == "pikachu_icikiwiw"
+        assert response_body["email"] == user.email
+        assert response_body["username"] == user.username
         assert response_body["is_active"] == True
 
 
@@ -87,6 +87,46 @@ class TestAPIOrder:
         assert order != None
         assert order["order_uid"] != None
         assert order["price"] == 1.63
+    
+    def test_api_create_duplicated_orders(self, authentication, client, user) -> None:
+        def create_order() -> Union[dict, None]:
+            response = client.post(path="/api/order/create/", data={
+                "ticker": "3377.HK",
+                "price": 1.63,
+                "bot_id": "STOCK_stock_0",
+                "amount": 100,
+                "user": user.id,
+                "side": "buy",
+                "margin": 2,
+            }, **authentication)
+
+            if (
+                response.status_code != 201
+                or response.headers["Content-Type"] != "application/json"
+            ):
+                return None
+
+            return response.json()
+        
+        order1 = create_order()
+        assert order1 != None
+
+        # We then set it to filled
+
+        # First, let's find the order
+        currentOrder = Order.objects.get(pk=order1["order_uid"])
+        assert currentOrder != None
+
+        # And we set it
+        currentOrder.placed = True
+        currentOrder.status = "filled"
+        currentOrder.placed_at = datetime.now()
+        currentOrder.filled_at = datetime.now()
+        currentOrder.save()
+
+        # This should fail and return None
+        order2 = create_order()
+        assert order2 == None
 
     def test_api_edit_order_status(self, authentication, client, order) -> None:
         """Order is taken from the fixture so we dont have to create another"""

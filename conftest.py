@@ -1,4 +1,7 @@
+import socket
+import time
 from typing import Union
+
 import pytest
 from django.conf import settings
 from django.test.client import Client
@@ -24,12 +27,17 @@ def django_db_setup():
 
 
 @pytest.fixture(scope="session")
-def user(django_db_setup, django_db_blocker):
+def user(django_db_setup, django_db_blocker, worker_id):
+    # Creating unique user for each computer and invocation
+    # FIXME: Possible fix to make parallel tests possible
+    computer_name = socket.gethostname()
+    unique_email = f"{computer_name}-{worker_id}@tests.com"
+
     with django_db_blocker.unblock():
         user = User.objects.create_user(
-            email="pytest@tests.com",
-            username="pikachu_icikiwiw",
-            password="helloworld",
+            email=unique_email,
+            username=computer_name,
+            password="everything_is_but_a_test",
             is_active=True,
             current_status="verified",
         )
@@ -58,8 +66,8 @@ def authentication(client, user) -> Union[dict, None]:
     response = client.post(
         path="/api/auth/",
         data={
-            "email": "pytest@tests.com",
-            "password": "helloworld",
+            "email": user.email,
+            "password": "everything_is_but_a_test",
         },
     )
 
@@ -71,6 +79,7 @@ def authentication(client, user) -> Union[dict, None]:
 
     response_body = response.json()
     return {"HTTP_AUTHORIZATION": "Bearer " + response_body["access"]}
+
 
 @pytest.fixture
 def order(authentication, client, user) -> Union[dict, None]:
