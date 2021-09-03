@@ -6,30 +6,64 @@ from core.orders.models import Order
 
 
 @pytest.mark.django_db
-class TestAPI:
-    tokens = None
-    headers = None
+class TestAPIAuth:
+    def test_api_token_verify(self, client, authentication) -> None:
+        token = authentication["HTTP_AUTHORIZATION"].split("Bearer ")[1]
 
-    def authenticate(self, client) -> bool:
-        data = {
-            "email": "pytest@tests.com",
-            "password": "helloworld",
-        }
+        response = client.post(path="/api/auth/verify/", data={"token": token})
 
-        response = client.post(path="/api/auth/", data=data)
+        # API only returns the status code with empty body
+        assert response.status_code == 200
+
+    def test_api_token_revoke(self, client) -> None:
+        response = client.post(
+            path="/api/auth/",
+            data={
+                "email": "pytest@tests.com",
+                "password": "helloworld",
+            },
+        )
 
         if (
             response.status_code != 200
             or response.headers["Content-Type"] != "application/json"
         ):
-            return False
+            return None
 
         response_body = response.json()
-        self.tokens = response_body
-        self.headers = {"HTTP_AUTHORIZATION": "Bearer " + response_body["access"]}
-        return True
+        refresh_token = response_body["refresh"]
+        headers = {"HTTP_AUTHORIZATION": "Bearer " + response_body["access"]}
 
-    def create_order(self, user, client) -> Union[Order, None]:
+        response = client.post(
+            path="/api/auth/revoke/",
+            data={"token": refresh_token},
+            **headers,
+        )
+
+        assert response.status_code == 205
+        assert response.headers["Content-Type"] == "application/json"
+
+        response_body = response.json()
+        assert response_body["message"] == "token revoked"
+
+
+@pytest.mark.django_db
+class TestAPIUser:
+    def test_api_get_user_data(self, client, authentication) -> None:
+        response = client.get(path="/api/user/me/", **authentication)
+
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] == "application/json"
+
+        response_body = response.json()
+        assert response_body["email"] == "pytest@tests.com"
+        assert response_body["username"] == "pikachu_icikiwiw"
+        assert response_body["is_active"] == True
+
+
+@pytest.mark.django_db
+class TestAPIOrder:
+    def test_api_create_order(self, authentication, client, user) -> None:
         data = {
             "ticker": "3377.HK",
             "price": 1.63,
@@ -40,75 +74,22 @@ class TestAPI:
             "margin": 2,
         }
 
-        response = client.post(path="/api/order/create/", data=data, **self.headers)
+        response = client.post(path="/api/order/create/", data=data, **authentication)
 
         if (
             response.status_code != 201
             or response.headers["Content-Type"] != "application/json"
         ):
-            return None
+            assert False
 
-        return response.json()
-
-    def test_api_token_verify(self, user, client) -> None:
-        if self.headers is None:
-            assert self.authenticate(client)
-
-        token = self.headers["HTTP_AUTHORIZATION"].split("Bearer ")[1]
-
-        response = client.post(path="/api/auth/verify/", data={"token": token})
-
-        # API only returns the status code with empty body
-        assert response.status_code == 200
-
-    def test_api_token_revoke(self, user, client) -> None:
-        assert self.authenticate(client)
-
-        token = self.tokens["refresh"]
-        print(token)
-
-        response = client.post(
-            path="/api/auth/revoke/",
-            data={"token": token},
-            **self.headers,
-        )
-
-        assert response.status_code == 205
-        assert response.headers["Content-Type"] == "application/json"
-
-        response_body = response.json()
-        assert response_body["message"] == "token revoked"
-
-    def test_api_get_user_data(self, user, client) -> None:
-        if self.headers is None:
-            assert self.authenticate(client)
-
-        response = client.get(path="/api/user/me/", **self.headers)
-
-        assert response.status_code == 200
-        assert response.headers["Content-Type"] == "application/json"
-
-        response_body = response.json()
-        assert response_body["email"] != None
-
-    def test_api_create_order(self, user, client) -> None:
-        if self.headers is None:
-            assert self.authenticate(client)
-
-        order = self.create_order(user, client)
+        order = response.json()
 
         assert order != None
         assert order["order_uid"] != None
         assert order["price"] == 1.63
 
-    def test_api_edit_order_status(self, user, client) -> None:
-        if self.headers is None:
-            assert self.authenticate(client)
-
-        # We create the order first
-        order = self.create_order(user, client)
-
-        assert order != None
+    def test_api_edit_order_status(self, authentication, client, order) -> None:
+        """Order is taken from the fixture so we dont have to create another"""
 
         data = {
             "order_uid": order["order_uid"],
@@ -119,7 +100,7 @@ class TestAPI:
         response = client.post(
             path="/api/order/action/",
             data=data,
-            **self.headers,
+            **authentication,
         )
 
         assert response.status_code == 200
@@ -131,18 +112,12 @@ class TestAPI:
             response_body["status"] == "executed"
         )  # The modification has been... executed
 
-    def test_api_get_order_detail(self, user, client) -> None:
-        if self.headers is None:
-            assert self.authenticate(client)
-
-        # We create the order
-        order = self.create_order(user, client)
-
-        assert order != None
+    def test_api_get_order_detail(self, authentication, client, order) -> None:
+        """Order is taken from the fixture so we dont have to create another"""
 
         response = client.get(
             path=f"/api/order/get/{order['order_uid']}/",
-            **self.headers,
+            **authentication,
         )
 
         assert response.status_code == 200
@@ -156,14 +131,8 @@ class TestAPI:
             response_body["amount"] != 100  # Amount was cut to fit maximum share number
         )
 
-    def test_api_get_user_orders(self, user, client) -> None:
-        if self.headers is None:
-            assert self.authenticate(client)
-
-        # We create the order
-        order = self.create_order(user, client)
-
-        assert order != None
+    def test_api_get_user_orders(self, authentication, client, order) -> None:
+        """Order is taken from the fixture so we dont have to create another"""
 
         currentOrder = Order.objects.get(pk=order["order_uid"])
 
@@ -176,7 +145,7 @@ class TestAPI:
 
         response = client.get(
             path="/api/order/getall/",
-            **self.headers,
+            **authentication,
         )
 
         assert response.status_code == 200
@@ -185,14 +154,8 @@ class TestAPI:
         response_body = response.json()
         assert len(response_body) > 0
 
-    def test_api_get_user_positions(self, user, client) -> None:
-        if self.headers is None:
-            assert self.authenticate(client)
-
-        # We create the order
-        order = self.create_order(user, client)
-
-        assert order != None
+    def test_api_get_user_positions(self, authentication, client, order, user) -> None:
+        """Order is taken from the fixture so we dont have to create another"""
 
         currentOrder = Order.objects.get(pk=order["order_uid"])
 
@@ -206,7 +169,7 @@ class TestAPI:
 
         response = client.get(
             path=f"/api/order/position/{user.id}/",
-            **self.headers,
+            **authentication,
         )
 
         assert response.status_code == 200
@@ -217,14 +180,10 @@ class TestAPI:
         assert response_body["count"] > 0
         assert len(response_body["results"]) == response_body["count"]
 
-    def test_api_get_order_position_details(self, user, client) -> None:
-        if self.headers is None:
-            assert self.authenticate(client)
-
-        # We create the order
-        order = self.create_order(user, client)
-
-        assert order != None
+    def test_api_get_order_position_details(
+        self, authentication, client, order, user
+    ) -> None:
+        """Order is taken from the fixture so we dont have to create another"""
 
         currentOrder = Order.objects.get(pk=order["order_uid"])
 
@@ -238,7 +197,7 @@ class TestAPI:
 
         response = client.get(
             path=f"/api/order/position/{user.id}/",
-            **self.headers,
+            **authentication,
         )
 
         assert response.status_code == 200
@@ -250,7 +209,7 @@ class TestAPI:
         # We request this position details
         response = client.get(
             path=f"/api/order/position/{position['position_uid']}/details/",
-            **self.headers,
+            **authentication,
         )
 
         assert response.status_code == 200
@@ -261,14 +220,10 @@ class TestAPI:
         assert response_body != None
         assert response_body["entry_price"] == order["price"]
 
-    def test_api_get_order_performance(self, user, client) -> None:
-        if self.headers is None:
-            assert self.authenticate(client)
-
-        # We create the order
-        order = self.create_order(user, client)
-
-        assert order != None
+    def test_api_get_order_performance(
+        self, authentication, client, order, user
+    ) -> None:
+        """Order is taken from the fixture so we dont have to create another"""
 
         currentOrder = Order.objects.get(pk=order["order_uid"])
 
@@ -282,7 +237,7 @@ class TestAPI:
 
         response = client.get(
             path=f"/api/order/position/{user.id}/",
-            **self.headers,
+            **authentication,
         )
 
         assert response.status_code == 200
@@ -292,7 +247,7 @@ class TestAPI:
 
         response = client.get(
             path=f"/api/order/performance/{position['position_uid']}/",
-            **self.headers,
+            **authentication,
         )
 
         assert response.status_code == 200

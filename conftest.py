@@ -1,3 +1,4 @@
+from typing import Union
 import pytest
 from django.conf import settings
 from django.test.client import Client
@@ -47,6 +48,47 @@ def user(django_db_setup, django_db_blocker):
         user.delete()
 
 
-@pytest.fixture
-def client():
+@pytest.fixture(scope="session")
+def client() -> Client:
     return Client(raise_request_exception=True)
+
+
+@pytest.fixture(scope="session")
+def authentication(client, user) -> Union[dict, None]:
+    response = client.post(
+        path="/api/auth/",
+        data={
+            "email": "pytest@tests.com",
+            "password": "helloworld",
+        },
+    )
+
+    if (
+        response.status_code != 200
+        or response.headers["Content-Type"] != "application/json"
+    ):
+        return None
+
+    response_body = response.json()
+    return {"HTTP_AUTHORIZATION": "Bearer " + response_body["access"]}
+
+@pytest.fixture
+def order(authentication, client, user) -> Union[dict, None]:
+    data = {
+        "ticker": "3377.HK",
+        "price": 1.63,
+        "bot_id": "STOCK_stock_0",
+        "amount": 100,
+        "user": user.id,
+        "side": "buy",
+    }
+
+    response = client.post(path="/api/order/create/", data=data, **authentication)
+
+    if (
+        response.status_code != 201
+        or response.headers["Content-Type"] != "application/json"
+    ):
+        return None
+
+    return response.json()
