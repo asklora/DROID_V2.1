@@ -104,6 +104,7 @@ def order_executor(self, payload, recall=False):
             message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status pending'
             # create schedule to next bell and will recrusive until market status open
             # still keep sending message. need to improve
+            
             eta_debug=datetime.now()+timedelta(minutes=2)
             order_executor.apply_async(args=(json.dumps(payload),), kwargs={
                                     'recall': True}, eta=eta_debug,task_id=str(order.order_uid))
