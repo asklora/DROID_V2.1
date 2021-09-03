@@ -87,6 +87,7 @@ def update_to_mongo(data, index, table, dict=False):
         else:
             doc_ref = db.collection(u"universe").document(f"{key}")
         doc_ref.set(val)
+   
     # db_connect = connects(table)
     # if(dict):
     #     data_dict = data
