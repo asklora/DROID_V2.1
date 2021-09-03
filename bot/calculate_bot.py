@@ -512,13 +512,10 @@ def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
     return delta, hedge
 
 
-def get_hedge_detail(live_price, bot_cash_balance, ask_price, bid_price, last_share_num, bot_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False, margin=False):
-    if(margin):
-        bot_share_num = bot_share_num * 1.5
+def get_hedge_detail(live_price, bot_cash_balance, ask_price, bid_price, last_share_num, bot_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False, margin=1):
     #err
     if(hedge):
         hedge_shares = round((delta - last_hedge_delta) * bot_share_num, 0)
-        
         if(hedge_shares > 0):
             hedge_shares = min(hedge_shares, math.floor(bot_cash_balance/live_price))
         if(hedge_shares < 0):
@@ -573,7 +570,7 @@ def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
 
 def populate_daily_profit(currency_code=None, user_id=None):
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")[["user_id"]]
-    orders_position_field = "position_uid, user_id, investment_amount"
+    orders_position_field = "position_uid, user_id, investment_amount, margin"
     orders_position = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
     if(len(orders_position)):
         orders_performance_field = "position_uid, current_bot_cash_balance, current_investment_amount"
@@ -586,6 +583,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
         print(user)
         position = orders_position.loc[orders_position["user_id"] == user]
         if(len(position)):
+            position["margin_invested_amount"] = position["investment_amount"] * position["margin"]
             position["daily_profit"] = position["investment_amount"] - (position["current_investment_amount"] + position["current_bot_cash_balance"])
             profit = NoneToZero(np.nansum(position["daily_profit"].to_list()))
             daily_profit_pct = round(profit / NoneToZero(np.nansum(position["investment_amount"].to_list())) * 100, 2)

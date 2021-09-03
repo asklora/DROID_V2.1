@@ -121,11 +121,15 @@ def populate_performance(live_price, ask_price, bid_price, trading_day, log_time
         else:
             delta = uno.deltaUnOC(live_price, strike, barrier, rebate, t/365, r, q, v1, v2)
             delta, hedge = get_uno_hedge(live_price, strike, delta, last_performance.last_hedge_delta)
-            share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, last_performance.current_bot_cash_balance, 
+
+            margin_amount = (position.margin - 1) * position.investment_amount
+            available_balance = min(last_performance.current_bot_cash_balance + margin_amount, 0)
+
+            share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, available_balance, 
                 ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta, 
                 hedge=hedge, uno=True)
 
-        bot_cash_balance = formatdigit(last_performance.current_bot_cash_balance - (share_num - last_performance.share_num) * live_price)
+        bot_cash_balance = formatdigit(last_performance.current_bot_cash_balance - ((share_num-last_performance.share_num) * live_price))
         current_pnl_amt = last_performance.current_pnl_amt + (live_price - last_performance.last_live_price) * last_performance.share_num
     else:
         current_pnl_amt = 0  # initial value
