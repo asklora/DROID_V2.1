@@ -98,13 +98,13 @@ def populate_performance(live_price, ask_price, bid_price, trading_day, log_time
         last_performance = False
 
     t, r, q = get_trq(position.ticker, position.expiry, trading_day,position.ticker.currency_code)
+    margin_amount = position.margin * position.investment_amount
     if last_performance:
         currency_code = str(position.ticker.currency_code)
         strike = last_performance.strike
         strike_2 = last_performance.strike_2
         option_price = last_performance.option_price
         current_pnl_amt = last_performance.current_pnl_amt + (live_price - last_performance.last_live_price) * last_performance.share_num
-
         v1, v2 = get_v1_v2(position.ticker, live_price,trading_day, t, r, q, strike, strike_2)
         if(expiry):
             delta = last_performance.last_hedge_delta
@@ -116,10 +116,14 @@ def populate_performance(live_price, ask_price, bid_price, trading_day, log_time
         else:
             delta = uno.deltaRC(live_price, strike,strike_2, t/365, r, q, v1, v2)
             delta, hedge = get_ucdc_hedge(currency_code, delta, last_performance.last_hedge_delta)
-            share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, last_performance.current_bot_cash_balance, 
+
+            margin_amount = (position.margin - 1) * position.investment_amount
+            available_balance = min(last_performance.current_bot_cash_balance + margin_amount, 0)
+
+            share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, available_balance, 
                 ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta,
                 hedge=hedge, ucdc=True)
-            bot_cash_balance = formatdigit(last_performance.current_bot_cash_balance-(share_num-last_performance.share_num)*live_price)
+            bot_cash_balance = formatdigit(last_performance.current_bot_cash_balance - ((share_num-last_performance.share_num) * live_price))
     else:
         current_pnl_amt = 0  # initial value
         vol = get_vol(position.ticker, trading_day, t, r, q, bot.time_to_exp)

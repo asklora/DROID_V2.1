@@ -411,8 +411,7 @@ def firebase_user_update(user_id=None, currency_code=None):
     user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
     user_core.loc[user_core["is_decimal"] == True, "balance"] = round(user_core.loc[user_core["is_decimal"] == True, "balance"], 2)
     user_core.loc[user_core["is_decimal"] == False, "balance"] = round(user_core.loc[user_core["is_decimal"] == False, "balance"], 0)
-    # print(user_core)
-    if(len(user_core["user_id"].to_list()) > 1):
+    if(len(user_core["user_id"].to_list()) > 0):
         order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list())
         user_core = user_core.merge(order_pending, how="left", on=["user_id"])
         user_core["pending_amount"] = np.where(user_core["pending_amount"].isnull(), 0, user_core["pending_amount"])
