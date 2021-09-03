@@ -11,6 +11,7 @@ from rest_framework import serializers
 from channels.layers import get_channel_layer
 from ingestion import firebase_user_update
 from datasource import rkd as trkd
+from dateutil.relativedelta import relativedelta
 import time
 import json
 import asyncio
@@ -104,8 +105,11 @@ def order_executor(self, payload, recall=False):
             message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status pending'
             # create schedule to next bell and will recrusive until market status open
             # still keep sending message. need to improve
+            eta_debug=relativedelta(minutes=5)
             order_executor.apply_async(args=(json.dumps(payload),), kwargs={
-                                    'recall': True}, eta=market.next_bell,task_id=str(order.order_uid))
+                                    'recall': True}, eta=eta_debug,task_id=str(order.order_uid))
+            # order_executor.apply_async(args=(json.dumps(payload),), kwargs={
+            #                         'recall': True}, eta=market.next_bell,task_id=str(order.order_uid))
     else:
         """
         we need message if order is cancel
@@ -147,7 +151,7 @@ def update_rtdb_user_porfolio():
             firebase_user_update(user_id=users)
     except Exception as e:
         err = ErrorLog.objects.create_log(
-        error_description=f"===  ERROR IN POPULATE UNIVERSER FIREBASE ===", error_message=str(e))
+        error_description=f"===  ERROR IN UPDATE REALTIME PORTFOLIO FIREBASE ===", error_message=str(e))
         err.send_report_error()
         return {'error':str(e)}
     return {'status':'updated firebase portfolio'}

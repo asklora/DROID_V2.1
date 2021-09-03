@@ -6,10 +6,8 @@ from core.bot.models import BotOptionType
 
 from utils import create_buy_order
 
-
+@pytest.mark.django_db
 class TestBotExpiry:
-    pytestmark = pytest.mark.django_db
-
     def test_should_confirm_bot_expiry_for_classic(self) -> None:
         bot_types: List[BotOptionType] = BotOptionType.objects.filter(
             bot_type="CLASSIC"

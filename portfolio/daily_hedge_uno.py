@@ -20,6 +20,8 @@ from core.djangomodule.serializers import OrderPositionSerializer
 from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
+from django.conf import settings
+
 
 def uno_sell_position(live_price, trading_day, position_uid, apps=False):
     position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
@@ -245,7 +247,9 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
 
 @app.task
 def uno_position_check(position_uid, to_date=None, tac=False, hedge=False, latest=False):
-    transaction.set_autocommit(False) # For test
+    if not settings.TESTDEBUG:
+        transaction.set_autocommit(False)
+
     try:
         position = OrderPosition.objects.get(
             position_uid=position_uid, is_live=True)
@@ -340,8 +344,11 @@ def uno_position_check(position_uid, to_date=None, tac=False, hedge=False, lates
                         order.save()
                 if status:
                     print(f"position end")
-        transaction.commit() # For test
-        print("transaction committed")
+
+        if not settings.TESTDEBUG:
+            transaction.commit()
+            print("transaction committed")
+
         return True
     except OrderPosition.DoesNotExist as e:
         err = ErrorLog.objects.create_log(
