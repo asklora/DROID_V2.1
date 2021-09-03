@@ -6,7 +6,9 @@ from core.djangomodule.general import formatdigit
 from core.Clients.models import UserClient
 from django.db import transaction as db_transaction
 from config.celery import app as worker
-from core.Clients.IBClientModule import IBClient 
+from core.Clients.IBClientModule import IBClient
+from ingestion import firebase_user_update
+
 """
 user/bot
 broker/simulation
@@ -143,7 +145,8 @@ class BaseOrderConnector(AbstracOrderConnector):
             
         # update last pending transaction 
         self.update_initial_transaction_position(position.position_uid)
-
+        # update firebase
+        firebase_user_update(user_id=[self.instance.user_id.id])
         # update to connect performance and prevent triger signal
         Order.objects.filter(pk=self.instance.order_uid).update(performance_uid=performance.performance_uid)
     
@@ -488,7 +491,7 @@ class SimulationOrderConnector(BaseOrderConnector):
                 self.create_fee(position.position_uid)
         # update to connect performance and prevent triger signal
         Order.objects.filter(pk=self.instance.order_uid).update(performance_uid=performance.performance_uid)
-        
+        firebase_user_update(user_id=[self.instance.user_id.id])
         
     
 
