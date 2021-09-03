@@ -411,13 +411,13 @@ def firebase_user_update(user_id=None, currency_code=None):
     user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
     user_core.loc[user_core["is_decimal"] == True, "balance"] = round(user_core.loc[user_core["is_decimal"] == True, "balance"], 2)
     user_core.loc[user_core["is_decimal"] == False, "balance"] = round(user_core.loc[user_core["is_decimal"] == False, "balance"], 0)
-    # print(user_core)
-    if(len(user_core["user_id"].to_list()) > 1):
+    if(len(user_core["user_id"].to_list()) > 0):
         order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list())
         user_core = user_core.merge(order_pending, how="left", on=["user_id"])
         user_core["pending_amount"] = np.where(user_core["pending_amount"].isnull(), 0, user_core["pending_amount"])
         orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
         position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
+        position_data['expiry']=position_data['expiry'].astype(str)
         # print(position_data)
         if(len(position_data) > 0):
             universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "currency_code"]]
