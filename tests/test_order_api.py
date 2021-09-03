@@ -4,8 +4,9 @@ from typing import Union
 import pytest
 from core.orders.models import Order
 
+pytestmark = pytest.mark.django_db
 
-@pytest.mark.django_db
+
 class TestAPIAuth:
     def test_api_token_verify(self, client, authentication) -> None:
         token = authentication["HTTP_AUTHORIZATION"].split("Bearer ")[1]
@@ -47,7 +48,6 @@ class TestAPIAuth:
         assert response_body["message"] == "token revoked"
 
 
-@pytest.mark.django_db
 class TestAPIUser:
     def test_api_get_user_data(self, authentication, client, user) -> None:
         response = client.get(path="/api/user/me/", **authentication)
@@ -61,7 +61,6 @@ class TestAPIUser:
         assert response_body["is_active"] == True
 
 
-@pytest.mark.django_db
 class TestAPIOrder:
     def test_api_create_order(self, authentication, client, user) -> None:
         data = {
@@ -87,18 +86,22 @@ class TestAPIOrder:
         assert order != None
         assert order["order_uid"] != None
         assert order["price"] == 1.63
-    
+
     def test_api_create_duplicated_orders(self, authentication, client, user) -> None:
         def create_order() -> Union[dict, None]:
-            response = client.post(path="/api/order/create/", data={
-                "ticker": "3377.HK",
-                "price": 1.63,
-                "bot_id": "STOCK_stock_0",
-                "amount": 100,
-                "user": user.id,
-                "side": "buy",
-                "margin": 2,
-            }, **authentication)
+            response = client.post(
+                path="/api/order/create/",
+                data={
+                    "ticker": "3377.HK",
+                    "price": 1.63,
+                    "bot_id": "STOCK_stock_0",
+                    "amount": 100,
+                    "user": user.id,
+                    "side": "buy",
+                    "margin": 2,
+                },
+                **authentication,
+            )
 
             if (
                 response.status_code != 201
@@ -107,7 +110,7 @@ class TestAPIOrder:
                 return None
 
             return response.json()
-        
+
         order1 = create_order()
         assert order1 != None
 
