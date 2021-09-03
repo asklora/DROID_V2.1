@@ -1,3 +1,5 @@
+from bot.data_download import get_currency_data
+from core.djangomodule.general import formatdigit
 from general.sql_output import upsert_data_to_database
 from general.date_process import dateNow, str_to_date
 import math
@@ -6,7 +8,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
 from general.data_process import tuple_data, NoneToZero, uid_maker
-from general.sql_query import get_active_universe, get_orders_position, get_orders_position_performance, get_user_core, read_query
+from general.sql_query import get_active_universe, get_orders_position, get_orders_position_performance, get_user_account_balance, get_user_core, read_query
 from general.table_name import (
     get_currency_calendar_table_name,
     get_data_dividend_daily_rates_table_name,
@@ -571,6 +573,12 @@ def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
 
 def populate_daily_profit(currency_code=None, user_id=None):
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")[["user_id"]]
+    user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, currency_code")
+    currency = get_currency_data(currency_code=currency_code)
+    currency = currency[["currency_code", "is_decimal"]]
+    user_core = user_core.merge(user_balance, how="left", on=["user_id"])
+    user_core = user_core.merge(currency, how="left", on=["currency_code"])
+
     orders_position_field = "position_uid, user_id, investment_amount, margin"
     orders_position = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
     if(len(orders_position)):
@@ -585,10 +593,11 @@ def populate_daily_profit(currency_code=None, user_id=None):
         position = orders_position.loc[orders_position["user_id"] == user]
         if(len(position)):
             position["margin_invested_amount"] = position["investment_amount"] * position["margin"]
-            position["daily_profit"] = position["investment_amount"] - (position["current_investment_amount"] + position["current_bot_cash_balance"])
-            profit = NoneToZero(np.nansum(position["daily_profit"].to_list()))
-            daily_profit_pct = round(profit / NoneToZero(np.nansum(position["investment_amount"].to_list())) * 100, 2)
-            daily_invested_amount = NoneToZero(np.nansum(position["investment_amount"].to_list()))
+            position["crr_ivt_amt"] = (position["current_investment_amount"] + position["current_bot_cash_balance"])
+            position["daily_profit"] = position["investment_amount"] - position["crr_ivt_amt"]
+            profit = formatdigit(NoneToZero(np.nansum(position["daily_profit"].to_list())), currency_decimal=row["is_decimal"])
+            daily_profit_pct = round(profit / NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) * 100, 2)
+            daily_invested_amount = formatdigit(NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())), currency_decimal=row["is_decimal"])
         else:
             profit = 0
             daily_profit_pct = 0
@@ -600,5 +609,6 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core["user_id"] = user_core["user_id"].astype(str)
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
     user_core["user_id"] = user_core["user_id"].astype(int)
+    user_core = user_core.drop(columns=["currency_code", "is_decimal"])
     # print(user_core)
     upsert_data_to_database(user_core, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)

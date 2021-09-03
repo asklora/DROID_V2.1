@@ -727,16 +727,23 @@ def get_orders_position(user_id=None, ticker=None, currency_code=None, position_
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
-def get_orders_position_group_by_user_id(user_id=None, ticker=None, currency_code=None):
-    table_name = get_orders_table_name()
-    query = f"select user_id, sum(amount) as pending_amount from {table_name} where status='pending' and canceled_at is null "
+def get_orders_position_group_by_user_id(user_id=None, ticker=None, currency_code=None, stock=False):
+    filter = ""
     if type(user_id) != type(None):
-        query += f"and user_id in {tuple_data(user_id)} "
+        filter = f"and user_id in {tuple_data(user_id)} "
     elif type(ticker) != type(None):
-        query += f"and ticker in {tuple_data(ticker)} "
+        filter = f"and ticker in {tuple_data(ticker)} "
     elif type(currency_code) != type(None):
-        query += f"and ticker in (select ticker from universe where currency_code in {tuple_data(currency_code)}) "
-    query += f" group by user_id;"
+        filter = f"and ticker in (select ticker from universe where currency_code in {tuple_data(currency_code)}) "
+
+    table_name = get_orders_table_name()
+    if(stock):
+        query = f"select user_id, sum(amount) as stock_pending_amount from orders where status='pending' and canceled_at is null and bot_id = 'STOCK_stock_0' {filter} group by user_id"
+    else:
+        query = f"select user_id, sum((performance ->> 'current_bot_cash_balance')::double precision) as bot_pending_amount from ( "
+        query += f"select user_id, (setup ->> 'performance')::json as performance "
+        query += f"from orders where status='pending' and canceled_at is null and bot_id != 'STOCK_stock_0' {filter}) as result "
+        query += f"group by user_id; "
     data = read_query(query, table_name, cpu_counts=True)
     return data
 

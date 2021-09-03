@@ -1,3 +1,4 @@
+from core.djangomodule.general import formatdigit
 from general.data_process import NoneToZero
 from bot.data_download import get_currency_data
 import random
@@ -319,13 +320,16 @@ async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,us
 async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user:str, user_core:pd.DataFrame)->pd.DataFrame:
         user_core =  user_core.loc[user_core["user_id"] == user]
         user_core = user_core.reset_index(inplace=False, drop=True)
+        rounded = 0
+        if(user_core.loc[0, "is_decimal"]):
+            rounded = 2
         orders_position = position_data.loc[position_data["user_id"] == user]
         if(len(orders_position) > 0):
             orders_position = orders_position.reset_index(inplace=False, drop=True)
             #TOP LEVEL
             orders_position["status"] = "LIVE"
-            orders_position["current_values"] = (orders_position["bot_cash_balance"] + (orders_position["share_num"] * orders_position["price"]))
-            orders_position["current_ivt_amt"] = (orders_position["share_num"] * orders_position["price"])
+            orders_position["current_values"] = (orders_position["bot_cash_balance"] + (orders_position["share_num"] * orders_position["price"])).round(rounded)
+            orders_position["current_ivt_amt"] = (orders_position["share_num"] * orders_position["price"]).round(rounded)
             #MARGIN
             # orders_position["margin_amount"] = (orders_position["margin"] * orders_position["investment_amount"]) - orders_position["investment_amount"]
             orders_position["margin_amount"] = (orders_position["margin"] - 1) * orders_position["investment_amount"]
@@ -335,13 +339,13 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             #PROFIT
             # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_values"]
             # orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"]
-            orders_position["profit"] =orders_position["current_values"] - orders_position["investment_amount"] 
+            orders_position["profit"] = (orders_position["current_values"] - orders_position["investment_amount"]).round(rounded)
             orders_position["pct_profit"] =  (orders_position["profit"] / orders_position["investment_amount"]  * 100).round(2)
 
             #BOT POSITION
             # orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["investment_amount"] * 100).round(0)
             # orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
-            orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["current_values"] * 100).round(0)
+            orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / (orders_position["current_values"] / orders_position["margin"]) * 100).round(0)
             orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
 
             #USER POSITION
@@ -375,17 +379,25 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
                 act_df = act_df.drop(columns=["bot_id", "bot_apps_name", "duration"])
                 act_df = act_df.to_dict("records")[0]
                 active_df.append(act_df)
+            total_invested_amount = formatdigit(total_invested_amount, user_core.loc[0, "is_decimal"])
+            total_bot_invested_amount = formatdigit(total_bot_invested_amount, user_core.loc[0, "is_decimal"])
+            total_user_invested_amount = formatdigit(total_user_invested_amount, user_core.loc[0, "is_decimal"])
+            pct_total_bot_invested_amount = formatdigit(pct_total_bot_invested_amount, user_core.loc[0, "is_decimal"])
+            daily_live_profit = formatdigit(daily_live_profit, user_core.loc[0, "is_decimal"])
+            total_profit_amount = formatdigit(total_profit_amount, user_core.loc[0, "is_decimal"])
+            total_portfolio = formatdigit(total_invested_amount, user_core.loc[0, "is_decimal"]) - user_core.loc[0, "pending_amount"]
             active = pd.DataFrame({"user_id":[user], "total_invested_amount":[total_invested_amount], "total_bot_invested_amount":[total_bot_invested_amount], 
                 "total_user_invested_amount":[total_user_invested_amount], "pct_total_bot_invested_amount":[pct_total_bot_invested_amount], "pct_total_user_invested_amount":[pct_total_user_invested_amount], 
-                "total_profit_amount":[total_profit_amount], "daily_live_profit":[daily_live_profit], "active_portfolio":[active_df]}, index=[0])
+                "total_profit_amount":[total_profit_amount], "daily_live_profit":[daily_live_profit], "total_portfolio":[total_portfolio], 
+                "active_portfolio":[active_df]}, index=[0])
         else:
             active = pd.DataFrame({"user_id":[user], "total_invested_amount":[0], "total_bot_invested_amount":[0], 
                 "total_user_invested_amount":[0], "pct_total_bot_invested_amount":[0], "pct_total_user_invested_amount":[0], 
-                "total_profit_amount":[0], "daily_live_profit":[0], "active_portfolio":[[]]}, index=[0])
+                "total_profit_amount":[0], "daily_live_profit":[0], "total_portfolio":[0], "active_portfolio":[[]]}, index=[0])
         # print(active)
         result = user_core.merge(active, how="left", on=["user_id"])
         result = result.rename(columns={"currency_code" : "currency"})
-        result["current_asset"] = result["balance"] + result["total_invested_amount"] + result["pending_amount"]
+        result["current_asset"] = result["balance"] + result["total_portfolio"] + result["pending_amount"]
         print(result)
         await sync_to_async(update_to_mongo)(data=result, index="user_id", table="portfolio", dict=False)
         return active
@@ -412,9 +424,16 @@ def firebase_user_update(user_id=None, currency_code=None):
     user_core.loc[user_core["is_decimal"] == True, "balance"] = round(user_core.loc[user_core["is_decimal"] == True, "balance"], 2)
     user_core.loc[user_core["is_decimal"] == False, "balance"] = round(user_core.loc[user_core["is_decimal"] == False, "balance"], 0)
     if(len(user_core["user_id"].to_list()) > 0):
-        order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list())
-        user_core = user_core.merge(order_pending, how="left", on=["user_id"])
-        user_core["pending_amount"] = np.where(user_core["pending_amount"].isnull(), 0, user_core["pending_amount"])
+        bot_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
+        user_core = user_core.merge(bot_order_pending, how="left", on=["user_id"])
+        user_core["bot_pending_amount"] = np.where(user_core["bot_pending_amount"].isnull(), 0, user_core["bot_pending_amount"])
+
+        stock_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=True)
+        user_core = user_core.merge(stock_order_pending, how="left", on=["user_id"])
+        user_core["stock_pending_amount"] = np.where(user_core["stock_pending_amount"].isnull(), 0, user_core["stock_pending_amount"])
+
+        user_core["pending_amount"] = user_core["stock_pending_amount"] + user_core["bot_pending_amount"]
+
         orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
         position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
         position_data['expiry']=position_data['expiry'].astype(str)
