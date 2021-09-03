@@ -6,12 +6,11 @@ from core.services.models import ErrorLog
 from core.universe.models  import ExchangeMarket
 from django.db import transaction
 from firebase_admin import messaging
-from datetime import datetime
+from datetime import datetime,timedelta
 from rest_framework import serializers
 from channels.layers import get_channel_layer
 from ingestion import firebase_user_update
 from datasource import rkd as trkd
-from dateutil.relativedelta import relativedelta
 import time
 import json
 import asyncio
@@ -105,7 +104,7 @@ def order_executor(self, payload, recall=False):
             message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status pending'
             # create schedule to next bell and will recrusive until market status open
             # still keep sending message. need to improve
-            eta_debug=relativedelta(minutes=5)
+            eta_debug=datetime.now()+timedelta(minutes=2)
             order_executor.apply_async(args=(json.dumps(payload),), kwargs={
                                     'recall': True}, eta=eta_debug,task_id=str(order.order_uid))
             # order_executor.apply_async(args=(json.dumps(payload),), kwargs={

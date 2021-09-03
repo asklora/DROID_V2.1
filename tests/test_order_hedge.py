@@ -5,7 +5,7 @@ from core.master.models import MasterOhlcvtr
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from portfolio import (classic_position_check, ucdc_position_check,
                        uno_position_check)
-
+from django_pandas.io import read_frame
 from utils import create_buy_order
 
 @pytest.mark.django_db
@@ -209,7 +209,8 @@ class TestHedge:
         performance = PositionPerformance.objects.filter(
             position_uid=position.position_uid
         )
-
+        df =read_frame(performance)
+        df.to_csv('hedge_margin.csv')
         print(performance.count())
 
         assert performance.exists() == True
