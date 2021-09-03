@@ -341,7 +341,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             #BOT POSITION
             # orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["investment_amount"] * 100).round(0)
             # orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
-            orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["current_values"] * 100).round(0)
+            orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / (orders_position["current_values"] / orders_position["margin"]) * 100).round(0)
             orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
 
             #USER POSITION
