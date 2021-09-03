@@ -562,7 +562,8 @@ def get_dividend_paid_date(ticker=None, currency_code=None):
     result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
     result = result.rename(columns={"IDTDDXDDE": "dividend_ex_date", "index":"ticker", "DPS" : "dividend_per_share"})
     return result
-        
+
+
 def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
     result = get_dividend_paid_date(ticker=[ticker])
     if(len(result) > 0):
