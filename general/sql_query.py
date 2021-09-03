@@ -1,4 +1,5 @@
 import pandas as pd
+from django.conf import settings
 from core.djangomodule.general import get_cached_data,set_cache_data
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
@@ -53,7 +54,7 @@ from general.table_name import (
 
 
 
-def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=True):
+def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=settings.SQLPRINT):
     """Base function for database query
 
     Args:
