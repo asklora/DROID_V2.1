@@ -24,7 +24,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Something")
         # populate_daily_profit()
-        firebase_user_update(user_id=[197])
+        firebase_user_update(user_id=[198])
         # ticker = [ticker.ticker.ticker for ticker in OrderPosition.objects.prefetch_related('ticker').filter(is_live=True,ticker__currency_code__in=["HKD"]).distinct('ticker')]
         # get_price_data_firebase(ticker)
         # users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]

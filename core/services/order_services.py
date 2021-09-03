@@ -9,7 +9,6 @@ from firebase_admin import messaging
 from datetime import datetime,timedelta
 from rest_framework import serializers
 from channels.layers import get_channel_layer
-from ingestion import firebase_user_update
 from datasource import rkd as trkd
 import time
 import json
@@ -53,7 +52,7 @@ def order_executor(self, payload, recall=False):
             in_wallet_transactions.get().delete()
         
         # for apps, need to change later with better logic
-        if order.order_type=='apps':
+        if order.side == 'buy' and order.order_type=='apps' and order.is_init:
             if order.amount > 10000:
                 order.amount = 20000
             else:
@@ -97,7 +96,6 @@ def order_executor(self, payload, recall=False):
             print('open')
             messages = 'order accepted'
             message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status filled'
-            firebase_user_update(user_id=[order.user_id.id])
         else:
             print('close')
             messages = 'order pending'
