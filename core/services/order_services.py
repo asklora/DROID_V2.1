@@ -104,11 +104,11 @@ def order_executor(self, payload, recall=False):
             # create schedule to next bell and will recrusive until market status open
             # still keep sending message. need to improve
             
-            eta_debug=datetime.now()+timedelta(minutes=2)
-            order_executor.apply_async(args=(json.dumps(payload),), kwargs={
-                                    'recall': True}, eta=eta_debug,task_id=str(order.order_uid))
+            # eta_debug=datetime.now()+timedelta(minutes=2)
             # order_executor.apply_async(args=(json.dumps(payload),), kwargs={
-            #                         'recall': True}, eta=market.next_bell,task_id=str(order.order_uid))
+            #                         'recall': True}, eta=eta_debug,task_id=str(order.order_uid))
+            order_executor.apply_async(args=(json.dumps(payload),), kwargs={
+                                    'recall': True}, eta=market.next_bell,task_id=str(order.order_uid))
     else:
         """
         we need message if order is cancel
