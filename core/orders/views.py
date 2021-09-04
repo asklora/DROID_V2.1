@@ -209,7 +209,7 @@ class OrderPortfolioCheckView(views.APIView):
     """
 
     serializer_class = OrderPortfolioCheckSerializer
-    permission_classes = (IsRegisteredUser,)
+    # permission_classes = (IsRegisteredUser,)
 
     @extend_schema(
         operation_id="check positions",
