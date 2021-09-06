@@ -29,7 +29,6 @@ def django_db_setup():
 @pytest.fixture(scope="session")
 def user(django_db_setup, django_db_blocker, worker_id):
     # Creating unique user for each computer and invocation
-    # FIXME: Possible fix to make parallel tests possible
     computer_name = socket.gethostname()
     unique_email = f"{computer_name}-{worker_id}@tests.com"
 
