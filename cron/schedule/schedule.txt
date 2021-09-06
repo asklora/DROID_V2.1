@@ -96,6 +96,7 @@ BOT SCHEDULE IN HK TIME
 
 30 05 1 * * /home/loratech/PycharmProjects/DROID_V2.1/cron/populate_ticker.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/populate_ticker.log 2>&1
 
+00 08 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_monthly_factor.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_monthly_factor.log 2>&1
 
 
 
