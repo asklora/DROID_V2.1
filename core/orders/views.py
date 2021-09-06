@@ -187,7 +187,7 @@ class OrderViews(views.APIView):
         responses={
             201: OpenApiResponse(response=OrderCreateSerializer),
             404: OpenApiResponse(description="User not found", response=errserializer),
-            406: OpenApiResponse(
+            400: OpenApiResponse(
                 description="Bad request (check your parameters)",
                 response=errserializer,
             ),
@@ -209,7 +209,7 @@ class OrderPortfolioCheckView(views.APIView):
     """
 
     serializer_class = OrderPortfolioCheckSerializer
-    permission_classes = (IsRegisteredUser,)
+    # permission_classes = (IsRegisteredUser,)
 
     @extend_schema(
         operation_id="check positions",
@@ -220,7 +220,7 @@ class OrderPortfolioCheckView(views.APIView):
             404: OpenApiResponse(
                 description="Bad request (position not found)", response=errserializer
             ),
-            401: OpenApiResponse(
+            403: OpenApiResponse(
                 description="Unauthorized request", response=errserializer
             ),
         },

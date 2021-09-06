@@ -30,6 +30,7 @@ django_debug = env.bool("DEBUG")
 DEBUG = django_debug
 
 TESTDEBUG=False # for tests
+SQLPRINT=True # for tests
 
 ALLOWED_HOSTS = [
     "18.167.118.164",
