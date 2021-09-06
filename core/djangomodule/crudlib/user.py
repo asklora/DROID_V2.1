@@ -1,6 +1,7 @@
 from core.user.models import User,Accountbalance,TransactionHistory
 from ..general import is_hashed
 from django.contrib.auth.hashers import make_password
+from ingestion import firebase_user_update
 
 
 def sync_user(payload):
@@ -29,7 +30,7 @@ def sync_user(payload):
         user.save()
         for key in unused_key:
             payload.pop(key)
-
+        firebase_user_update([user.id])
         return payload
 
 
@@ -50,6 +51,7 @@ def sync_user(payload):
             'event':'first deposit'
         })
         parsed_payload['balance_info'] = { 'balance_uid':wallet.balance_uid,'currency_code':'HKD','transaction_id':transaction.id,'transaction_amount':transaction.amount}
+        firebase_user_update([user.id])
         return parsed_payload
 
 
