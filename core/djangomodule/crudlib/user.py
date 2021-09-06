@@ -4,7 +4,6 @@ from django.contrib.auth.hashers import make_password
 from ingestion import firebase_user_update
 
 
-
 def sync_user(payload):
     create=False
     try:
