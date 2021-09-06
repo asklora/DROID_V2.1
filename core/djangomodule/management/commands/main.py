@@ -150,8 +150,9 @@ class Command(BaseCommand):
                 update_fundamentals_quality_value()
             
             if(options["fundamentals_rating"]):
-                status = "Fundamentals Quality Update"
-                update_fundamentals_quality_value()
+                if(d in ["1", "2", "3", "4", "5", "6", "7"]):
+                    status = "Fundamentals Quality Update"
+                    update_fundamentals_quality_value()
 
             if(options["quandl"]):
                 status = "Quandl Ingestion"

@@ -13,21 +13,21 @@ def create_buy_order(
     created:datetime,
     price: float,
     ticker: str,
-    amount: float = None,
+    amount: float = 10000,
     bot_id: str = "STOCK_stock_0",
     margin: int = 1,
-    qty: int = 100,
+    # qty: int = 100,
     user_id: int = None,
     user: User = None,
 ) -> Order:
     return Order.objects.create(
         created=created,
-        amount=amount if amount != None else price * qty,
+        amount=amount,
         bot_id=bot_id,
         margin=margin,
         order_type="apps",  # to differentiate itself from FELS's orders
         price=price,
-        qty=qty,
+        # qty=qty,
         side="buy",
         ticker_id=ticker,
         user_id_id=user_id,
@@ -55,7 +55,7 @@ class Command(BaseCommand):
         #     price=price,
         #     user_id=user.id,
         #     margin=2,
-        #     bot_id="UCDC_ATM_007692",
+        #     bot_id="UCDC_ATM_015384",
         # )
 
         # buy_order.status = "placed"
@@ -77,11 +77,11 @@ class Command(BaseCommand):
         #     pk=performance.position_uid_id
         # )
 
-        # # step 2: setup hedge
+        # step 2: setup hedge
         ucdc_position_check(
-            position_uid='4109cbda393244c489d4ee8c82b9a42a',
+            position_uid='6e6044b2c1d44540b24b47f1b0ed49bb',
             tac=True,
-            to_date='2021-07-23'
+            to_date='2021-07-05'
         )
         # # step 3: get hedge positions
         # performance = PositionPerformance.objects.filter(
