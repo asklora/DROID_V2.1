@@ -34,7 +34,8 @@ from ingestion.data_from_dsws import (
     update_worldscope_quarter_summary_from_dsws,
     update_currency_code_from_dsws,
     update_lot_size_from_dsws,
-    update_mic_from_dsws)
+    update_mic_from_dsws,
+    worldscope_quarter_report_date_from_dsws)
 
 def split_ticker(currency_code, split=1):
     from general.sql_query import get_active_universe
@@ -136,6 +137,8 @@ class Command(BaseCommand):
                     ticker = split_ticker(options["currency_code"], split=options["split"])
                     print(ticker)
                     update_worldscope_quarter_summary_from_dsws(ticker=ticker)
+                    status = "Worldscope Report Date Ingestion"
+                    worldscope_quarter_report_date_from_dsws(ticker = ticker)
                 else:
                     print(dateNow())
                     print(d)
