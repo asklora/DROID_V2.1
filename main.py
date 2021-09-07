@@ -1,7 +1,7 @@
+from ingestion.data_from_dsws import worldscope_quarter_report_date_from_dsws
 from general.date_process import dateNow
 from general.sql_query import read_query
 from general.sql_process import do_function
-
 
 def dlpa_weekly():
     print("Run DLPA")
@@ -50,4 +50,4 @@ def dlpa_weekly():
 # Main Process
 if __name__ == "__main__":
     print("Start Process")
-    ticker = ["005930.KS", "MSFT.O", "AAPL.O", "0992.HK"]
+    # worldscope_quarter_report_date_from_dsws(history=True)

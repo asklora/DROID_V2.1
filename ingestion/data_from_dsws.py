@@ -1065,8 +1065,23 @@ def worldscope_quarter_report_date_from_dsws(ticker = None, currency_code=None, 
     period_end_list = get_worldscope_period_end_list(start_date=start_date, end_date=end_date)
     data = []
     for period_end in period_end_list:
-        result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 40))
-        result = result.dropna()
+        result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 20))
+        print(result)
+        print(error_ticker)
+        if len(error_ticker) == 0 :
+            second_result = []
+        else:
+            second_result, error_ticker = get_data_history_by_field_from_dsws(period_end, period_end, error_ticker, identifier, filter_field, use_ticker=True, split_number=1)
+        try:
+            if(len(result) == 0):
+                result = second_result
+            elif(len(second_result) == 0):
+                result = result
+            else :
+                result = result.append(second_result)
+        except Exception as e:
+            result = second_result
+        print(result)
         data.append(result)
     if(len(data)) > 0 :
         data = pd.concat(data)
@@ -1084,17 +1099,39 @@ def worldscope_quarter_report_date_from_dsws(ticker = None, currency_code=None, 
     data["WC05905A"] = data["WC05905A"].astype(float)
     data = data.dropna(subset=["WC05905A"], inplace=False)
     data["WC05905A"] = data["WC05905A"].astype(int)
+    data["WC05905A"] = np.where(data["WC05905A"] > 9000000000, data["WC05905A"]/10, data["WC05905A"])
     data["report_date"] = datetime.strptime(dateNow(), "%Y-%m-%d")
-    print(data)
     data = data.reset_index(inplace=False, drop=True)
     for index, row in data.iterrows():
         WC05905A = row["WC05905A"]
         report_date = datetime.fromtimestamp(WC05905A)
         data.loc[index, "report_date"] = report_date
     data["report_date"] = pd.to_datetime(data["report_date"])
-    print(data)
+    data["period_end"] = pd.to_datetime(data["period_end"])
+    data["year"] = pd.DatetimeIndex(data["period_end"]).year
+    data["month"] = pd.DatetimeIndex(data["period_end"]).month
+    data["day"] = pd.DatetimeIndex(data["period_end"]).day
+    # print(data)
+    for index, row in data.iterrows():
+        if (data.loc[index, "month"] <= 3) and (data.loc[index, "day"] <= 31) :
+            data.loc[index, "month"] = 3
+            data.loc[index, "frequency_number"] = int(1)
+        elif (data.loc[index, "month"] <= 6) and (data.loc[index, "day"] <= 31) :
+            data.loc[index, "month"] = 6
+            data.loc[index, "frequency_number"] = int(2)
+        elif (data.loc[index, "month"] <= 9) and (data.loc[index, "day"] <= 31) :
+            data.loc[index, "month"] = 9
+            data.loc[index, "frequency_number"] = int(3)
+        else:
+            data.loc[index, "month"] = 12
+            data.loc[index, "frequency_number"] = int(4)
+
+        data.loc[index, "period_end"] = datetime(data.loc[index, "year"], data.loc[index, "month"], 1)
+    data["period_end"] = data["period_end"].dt.to_period("M").dt.to_timestamp("M")
+    data["period_end"] = pd.to_datetime(data["period_end"])
+
     data = uid_maker(data, trading_day="period_end")
-    data = data.drop(columns=["WC05905A"])
+    data = data.drop(columns=["WC05905A", "year", "month", "day", "frequency_number"])
     data = data.drop_duplicates(subset=["uid"], keep="first", inplace=False)
     print(data)
     upsert_data_to_database(data, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
