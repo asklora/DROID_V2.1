@@ -47,6 +47,7 @@ def user_sell_position(live_price, trading_day, position_uid, apps=False):
         qty=position.share_num,
         setup=setup,
         order_type=order_type,
+        margin=position.margin
     )
 
     return position, order

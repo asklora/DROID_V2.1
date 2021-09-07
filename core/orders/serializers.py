@@ -302,9 +302,9 @@ class OrderPortfolioCheckSerializer(serializers.Serializer):
     
     
     ticker=serializers.CharField(required=True,write_only=True)
-    bot_id=serializers.CharField(required=True,write_only=True)
+    bot_id=serializers.ListField(required=True,write_only=True)
     user = serializers.CharField(required=False,write_only=True)
-    position = serializers.CharField(required=False,read_only=True)
+    allowed_bot = serializers.ListField(required=False,read_only=True)
     
     
     
@@ -325,7 +325,7 @@ class OrderPortfolioCheckSerializer(serializers.Serializer):
                                         validated_data["ticker"],
                                         validated_data["bot_id"],
                                         user_id)
-        data = validation.validate()
+        data = validation.allowed_bot()
         if data:
             return data
         else:

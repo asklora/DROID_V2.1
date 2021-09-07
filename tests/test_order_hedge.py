@@ -5,7 +5,7 @@ from core.master.models import MasterOhlcvtr
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from portfolio import (classic_position_check, ucdc_position_check,
                        uno_position_check)
-
+import pandas as pd
 from utils import create_buy_order
 
 @pytest.mark.django_db
@@ -210,6 +210,8 @@ class TestHedge:
             position_uid=position.position_uid
         )
 
+        df =pd.DataFrame(list(performance.values()))
+        df.to_csv('hedge_margin.csv')
         print(performance.count())
 
         assert performance.exists() == True

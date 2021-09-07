@@ -65,12 +65,13 @@ def classic_sell_position(live_price, trading_day, position_uid, apps=False):
         updated=log_time,
         price=live_price,
         bot_id=bot.bot_id,
-        amount=position.share_num * live_price,
+        # amount=position.share_num * live_price,
         user_id=position.user_id,
         side="sell",
         qty=position.share_num,
         setup=setup,
         order_type=order_type,
+        margin=position.margin
     )
     # only for none apps
     if order and not apps:
@@ -227,11 +228,12 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
                         order.save()
                     
                         print(f"Position event: {OrderPosition.objects.get(position_uid=position.position_uid).event}")
-                print("\n")
-                print(f"Bot cash balance: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_bot_cash_balance}")
-                print(f"Share num: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').share_num}")
-                print(f"PnL amount: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_pnl_amt}")
-                print(f"trading_day {trading_day}-{tac_price.ticker} done")
+                if settings.TESTDEBUG:
+                    print("\n")
+                    print(f"Bot cash balance: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_bot_cash_balance}")
+                    print(f"Share num: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').share_num}")
+                    print(f"PnL amount: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_pnl_amt}")
+                    print(f"trading_day {trading_day}-{tac_price.ticker} done")
                 if status:
                     break
             if(type(trading_day) == datetime):

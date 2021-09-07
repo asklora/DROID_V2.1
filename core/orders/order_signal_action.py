@@ -64,7 +64,6 @@ class BaseOrderConnector(AbstracOrderConnector):
     def run(self):
         """
         in here we delete the long if else statement
-
         will trigger the function inside this class with prefix name and invoke
         """
         func_name =f'on_{self.instance.side}_{self.instance.status}'

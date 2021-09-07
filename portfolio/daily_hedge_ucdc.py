@@ -66,7 +66,7 @@ def populate_order(status, hedge_shares, log_time, live_price, bot, performance,
         if hedge_shares < 0:
             hedge_shares = hedge_shares * -1  # make it positive in order
         order_type = 'apps' if apps else None
-        
+        # amount=formatdigit((hedge_shares*live_price) / position.margin,position.ticker.currency_code.is_decimal)
         order = Order.objects.create(
             is_init=False,
             ticker_id=position_val["ticker"],
@@ -74,12 +74,13 @@ def populate_order(status, hedge_shares, log_time, live_price, bot, performance,
             updated=log_time,
             price=live_price,
             bot_id=bot.bot_id,
-            amount=(hedge_shares*live_price),
+            amount=hedge_shares*live_price,
             user_id_id=position_val["user_id"],
             side=status,
             qty=hedge_shares,
             setup=setup,
             order_type=order_type,
+            margin=position.margin
         )
         if order and not apps:
             order.status = "placed"
@@ -98,13 +99,13 @@ def populate_performance(live_price, ask_price, bid_price, trading_day, log_time
         last_performance = False
 
     t, r, q = get_trq(position.ticker, position.expiry, trading_day,position.ticker.currency_code)
+    margin_amount = position.margin * position.investment_amount
     if last_performance:
         currency_code = str(position.ticker.currency_code)
         strike = last_performance.strike
         strike_2 = last_performance.strike_2
         option_price = last_performance.option_price
         current_pnl_amt = last_performance.current_pnl_amt + (live_price - last_performance.last_live_price) * last_performance.share_num
-
         v1, v2 = get_v1_v2(position.ticker, live_price,trading_day, t, r, q, strike, strike_2)
         if(expiry):
             delta = last_performance.last_hedge_delta
@@ -116,10 +117,17 @@ def populate_performance(live_price, ask_price, bid_price, trading_day, log_time
         else:
             delta = uno.deltaRC(live_price, strike,strike_2, t/365, r, q, v1, v2)
             delta, hedge = get_ucdc_hedge(currency_code, delta, last_performance.last_hedge_delta)
-            share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, last_performance.current_bot_cash_balance, 
+
+            margin_amount = (position.margin - 1) * position.investment_amount
+            available_balance = last_performance.current_bot_cash_balance + margin_amount
+            if(position.margin == 1):
+                if(available_balance < 0):
+                    available_balance = 0
+
+            share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, available_balance, 
                 ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta,
                 hedge=hedge, ucdc=True)
-            bot_cash_balance = formatdigit(last_performance.current_bot_cash_balance-(share_num-last_performance.share_num)*live_price)
+            bot_cash_balance = formatdigit(last_performance.current_bot_cash_balance - ((share_num-last_performance.share_num) * live_price))
     else:
         current_pnl_amt = 0  # initial value
         vol = get_vol(position.ticker, trading_day, t, r, q, bot.time_to_exp)
@@ -280,11 +288,12 @@ def ucdc_position_check(position_uid, to_date=None, tac=False, hedge=False, late
                         order.status = "filled"
                         order.filled_at = log_time
                         order.save()
-                print("\n")
-                print(f"Bot cash balance: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_bot_cash_balance}")
-                print(f"Share num: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').share_num}")
-                print(f"PnL amount: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_pnl_amt}")
-                print(f"trading_day {trading_day}-{tac_price.ticker} done")
+                if settings.TESTDEBUG:
+                    print("\n")
+                    print(f"Bot cash balance: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_bot_cash_balance}")
+                    print(f"Share num: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').share_num}")
+                    print(f"PnL amount: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_pnl_amt}")
+                    print(f"trading_day {trading_day}-{tac_price.ticker} done")
                 if status:
                     break
             if(type(trading_day) == datetime):
