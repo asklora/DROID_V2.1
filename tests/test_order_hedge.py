@@ -254,6 +254,16 @@ def test_should_create_hedge_order_for_ucdc_bot_with_margin(user) -> None:
     performance_df["status_pnl"] = np.where(performance_df["real_pnl_amt"] == performance_df["current_pnl_amt"], True, False)
     performance_df["status_pnl_ret"] = np.where(performance_df["real_pnl_ret"] == performance_df["current_pnl_ret"], True, False)
 
+    #Syarat Lulus Test
+    status = True
+    status = status and len(performance_df.loc[performance_df["status_margin"] == False]) == 0
+    status = status and len(performance_df.loc[performance_df["status_share_num"] == False]) == 0
+    status = status and len(performance_df.loc[performance_df["status_investment_amount"] == False]) == 0
+    status = status and len(performance_df.loc[performance_df["status_side"] == False]) == 0
+    status = status and len(performance_df.loc[performance_df["status_qty"] == False]) == 0
+    status = status and len(performance_df.loc[performance_df["status_pnl"] == False]) == 0
+    status = status and len(performance_df.loc[performance_df["status_pnl_ret"] == False]) == 0
+    status = status and len(performance_df.loc[performance_df["status"] == "Populate"]) == 1
 
     assert performance.exists() == True
     assert performance.count() > 1
