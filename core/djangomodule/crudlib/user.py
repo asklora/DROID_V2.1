@@ -2,7 +2,7 @@ from core.user.models import User,Accountbalance,TransactionHistory
 from ..general import is_hashed
 from django.contrib.auth.hashers import make_password
 from ingestion import firebase_user_update
-
+from firebase_admin import firestore
 
 def sync_user(payload):
     create=False
@@ -58,6 +58,9 @@ def sync_user(payload):
 def sync_delete_user(payload):
     try:
         user = User.objects.get(username=payload['username'])
+        db = firestore.client()
+        collection =db.collection(u"portfolio").document(f"{user.id}")
+        collection.delete()
         user.delete()
         return {'message':f'{user.username} deleted successfully'}
 
