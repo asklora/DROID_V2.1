@@ -61,13 +61,14 @@ def sync_delete_user(payload):
         user = User.objects.get(username=payload['username'])
         db = firestore.client()
         collection =db.collection(u"portfolio").document(f"{user.id}")
-        collection.delete()
         PositionPerformance.objects.filter(position_uid__user_id=user).delete()
         Order.objects.filter(user_id=user).delete()
         OrderPosition.objects.filter(user_id=user).delete()
         TransactionHistory.objects.filter(balance_uid__user=user).delete()
         Accountbalance.objects.filter(user=user).delete()
         user.delete()
+        collection.delete()
+
         return {'message':f'{user.username} {user.id} deleted successfully'}
 
     except User.DoesNotExist:
