@@ -603,7 +603,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             # df_industry = df_industry.rename(columns = {column_robust_score : "score"})
             fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
             # fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
-            fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0.4, fundamentals[column_minmax_currency_code])
+            fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), fundamentals[column_minmax_currency_code].mean()*0.9, fundamentals[column_minmax_currency_code])
             # fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
             minmax_column.append(column_minmax_currency_code)
             # minmax_column.append(column_minmax_industry)
@@ -676,6 +676,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("Calculate AI Score 2")
     fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] +
                                  fundamentals["fundamentals_momentum"] + fundamentals["esg"]) / 4
+    fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].round(1)
 
     # scale ai_score with history min / max
     score_history = get_ai_score_testing_history()
@@ -690,14 +691,14 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
                                             "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
-                                            "dlp_3m", "wts_rating2", "classic_vol"]]
+                                            "dlp_3m", "wts_rating2", "classic_vol", "fundamentals_extra"]]
 
     universe_rating_detail_history = fundamentals[minmax_column]
 
     print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
     if(len(fundamentals)) > 0 :
         print(fundamentals)
-        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum",
+        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra"
                                "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
         result["updated"] = dateNow()
         print(result)
