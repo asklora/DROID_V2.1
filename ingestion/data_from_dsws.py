@@ -704,11 +704,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         print(result)
         print(universe_rating_history)
         print(universe_rating_detail_history)
-        # result.to_csv("/home/loratech/result.csv")
-        # universe_rating_history.to_csv("/home/loratech/universe_rating_history.csv")
-        # universe_rating_detail_history.to_csv("/home/loratech/universe_rating_detail_history.csv")
-        # import sys
-        # sys.exit(1)
         upsert_data_to_database(result, get_universe_rating_table_name(), "ticker", how="update", Text=True)
         upsert_data_to_database(universe_rating_history, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
         upsert_data_to_database(universe_rating_detail_history, get_universe_rating_detail_history_table_name(), "uid", how="update", Text=True)
