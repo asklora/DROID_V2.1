@@ -57,7 +57,7 @@ def get_price_data_firebase(ticker:list) -> pd.DataFrame:
     db = firestore.client()
     object_list = []
     # here loop numpy split
-    split = len(ticker) / min(len(ticker), 9)
+    split = len(ticker) / min(len(ticker), 8)
     splitting_df = np.array_split(ticker, split)
     for univ in splitting_df:
         univ = univ.tolist()
