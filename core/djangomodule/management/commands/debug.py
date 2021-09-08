@@ -23,7 +23,7 @@ import time
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Something")
-        # populate_daily_profit()
+        populate_daily_profit()
         firebase_user_update()
         # ticker = [ticker.ticker.ticker for ticker in OrderPosition.objects.prefetch_related('ticker').filter(is_live=True,ticker__currency_code__in=["HKD"]).distinct('ticker')]
         # get_price_data_firebase(ticker)
