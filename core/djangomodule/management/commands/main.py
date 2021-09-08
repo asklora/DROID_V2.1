@@ -84,6 +84,8 @@ class Command(BaseCommand):
         parser.add_argument("-split", "--split", type=int, help="split", default=1)
         parser.add_argument("-currency_code", "--currency_code", nargs="+", help="currency_code", default=None)
 
+        parser.add_argument("-month", "--month", type=bool, help="month", default=False)
+
     def handle(self, *args, **options):
         d = str_to_date(dateNow())
         d = d.strftime("%d")
@@ -153,7 +155,11 @@ class Command(BaseCommand):
                 update_fundamentals_quality_value()
             
             if(options["fundamentals_rating"]):
-                if(d in ["1", "2", "3", "4", "5", "6", "7"]):
+                if(options["month"]):
+                    if(d in ["1", "2", "3", "4", "5", "6", "7"]):
+                        status = "Fundamentals Quality Update"
+                        update_fundamentals_quality_value()
+                else:
                     status = "Fundamentals Quality Update"
                     update_fundamentals_quality_value()
 
