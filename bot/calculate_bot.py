@@ -610,9 +610,10 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
     user_core["user_id"] = user_core["user_id"].astype(int)
     user_core = user_core.drop(columns=["currency_code", "is_decimal"])
-    user_core = user_core.sort_values(by=["daily_invested_amount"])
+    user_core = user_core.sort_values(by=["daily_invested_amount"], ascending=[False])
+    user_core = user_core.reset_index(inplace=False, drop=True)
     user_core = user_core.reset_index(inplace=False)
     user_core = user_core.rename(columns={"index" : "rank"})
-    user_core = user_core["rank"] + 1
-    # print(user_core)
+    user_core["rank"] = user_core["rank"] + 1
+    print(user_core)
     upsert_data_to_database(user_core, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
