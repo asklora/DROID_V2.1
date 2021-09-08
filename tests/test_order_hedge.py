@@ -234,11 +234,11 @@ def test_should_create_hedge_order_for_ucdc_bot_with_margin(user) -> None:
     # performance_df = pd.read_csv("hedge_margin.csv")
     print(performance_df)
     print(performance_df.columns)
-    performance_df["real_share_num"] = performance_df["yesterday_share_num"] + ((performance_df["last_hedge_delta"] - performance_df["yesterday_last_hedge_delta"]) * performance_df["bot_share_num"]).round(0)
+    performance_df["real_share_num"] = performance_df["share_num"].shift() + ((performance_df["last_hedge_delta"] - performance_df["last_hedge_delta"].shift()) * performance_df["bot_share_num"]).round(0)
     performance_df["real_investment_amount"] = performance_df["real_share_num"] * performance_df["last_live_price"]
-    performance_df["real_pnl_amt"] = performance_df["yesterday_current_pnl_amt"] + (performance_df["last_live_price"] - performance_df["yerterday_last_live_price"]) * performance_df["yerterday_share_num"]
+    performance_df["real_pnl_amt"] = performance_df["current_pnl_amt"].shift() + (performance_df["last_live_price"] - performance_df["last_live_price"].shift()) * performance_df["share_num"].shift()
     performance_df["real_pnl_ret"] = (performance_df["real_pnl_amt"] / performance_df["investment_amount"]).round(4)
-    performance_df["real_qty"] = performance_df["real_share_num"] - performance_df["yesterday_share_num"]
+    performance_df["real_qty"] = performance_df["real_share_num"] - performance_df["share_num"].shift()
 
     performance_df["real_side"] = ""
     performance_df["real_side"] = np.where(performance_df["real_qty"] > 0, "buy", performance_df["real_side"])
@@ -246,7 +246,7 @@ def test_should_create_hedge_order_for_ucdc_bot_with_margin(user) -> None:
 
     performance_df["margin_amount"] = (1 - performance_df["margin"]) * performance_df["investment_amount"]
     performance_df["margin_threshold"] = performance_df["margin_amount"] - performance_df["current_bot_cash_balance"]
-    performance_df["status_margin"] = np.where(performance_df["status_margin"] <= 0, True, False)
+    performance_df["status_margin"] = np.where(performance_df["margin_threshold"] <= 0, True, False)
     performance_df["status_share_num"] = np.where(performance_df["real_share_num"] == performance_df["share_num"], True, False)
     performance_df["status_investment_amount"] = np.where(performance_df["real_investment_amount"] == performance_df["investment_amount"], True, False)
     performance_df["status_side"] = np.where(performance_df["real_side"] == performance_df["side"], True, False)
