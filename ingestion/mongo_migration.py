@@ -301,6 +301,7 @@ async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,us
     tasks=[]
     users= user_core["user_id"].unique().tolist()
     for user in users:
+        print(user)
         tasks.append(
             asyncio.ensure_future(
             do_task(position_data, bot_option_type, user, user_core)
@@ -348,7 +349,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             # pct_total_user_invested_amount = int(round(total_user_invested_amount / total_invested_amount, 0) * 100)
             # total_profit_amount = sum(orders_position["profit"].to_list())
             total_invested_amount = NoneToZero(np.nansum(orders_position["current_values"].to_list()))
-            daily_live_profit = total_invested_amount - user_core.loc[0, "daily_invested_amount"]
+            daily_live_profit = total_invested_amount - user_core.loc[0, "daily_invested_amount"] + user_core.loc[0, "pending_amount"]
             total_bot_invested_amount = NoneToZero(np.nansum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_values"].to_list()))
             total_user_invested_amount = NoneToZero(np.nansum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["current_values"].to_list()))
             pct_total_bot_invested_amount = NoneToZero(int(round(total_bot_invested_amount / total_invested_amount, 0) * 100))
@@ -437,6 +438,7 @@ def firebase_user_update(user_id=None, currency_code=None):
         # sys.exit(1)
         orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
         position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
+        print(position_data)
         position_data["expiry"]=position_data["expiry"].astype(str)
         if(len(position_data) > 0):
             universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "currency_code"]]
@@ -448,9 +450,12 @@ def firebase_user_update(user_id=None, currency_code=None):
             position_data["trading_day"] = np.where(position_data["trading_day"].isnull(), position_data["spot_date"], position_data["trading_day"])
             position_data = position_data.merge(universe, how="left", on=["ticker"])
 
-            orders_performance_field = "position_uid, share_num, order_uid"
+            orders_performance_field = "distinct created::date, position_uid, share_num, order_uid"
             performance_data = get_orders_position_performance(position_uid=position_data["position_uid"].to_list(), field=orders_performance_field, latest=True)
+            performance_data = performance_data.drop_duplicates(subset=["created", "position_uid"], keep="first")
+            performance_data = performance_data.drop(columns=["created"])
             position_data = position_data.merge(performance_data, how="left", on=["position_uid"])
             position_data = position_data.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
+        print(position_data)
         # concurent calculation
         asyncio.run(gather_task(position_data, bot_option_type, user_core))

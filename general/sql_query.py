@@ -771,5 +771,6 @@ def get_orders_position_performance(user_id=None, ticker=None, currency_code=Non
         query += "and exists (select 1 from (select filters.position_uid, max(filters.created) max_date "
         query += "from orders_position_performance as filters group by filters.position_uid) result "
         query += "where result.position_uid=opp.position_uid and result.max_date::date=opp.created::date) "
+        query += "order by created;"
     data = read_query(query, table_name, cpu_counts=True)
     return data
