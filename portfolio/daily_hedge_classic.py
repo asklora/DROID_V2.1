@@ -263,7 +263,7 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
             if(not status and trading_day <= lastest_price_data.last_date and exp_date >= lastest_price_data.last_date):
                 trading_day = lastest_price_data.last_date
                 print(f"latest price {trading_day} done")
-                status, order_id = create_performance(lastest_price_data, position, latest_price=True)
+                status, order_id = create_performance(lastest_price_data, position, latest=True)
                 if order_id:
                     order = Order.objects.get(order_uid=order_id)
                     log_time = lastest_price_data.intraday_time
