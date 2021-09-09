@@ -188,7 +188,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry
         "performance":{},
         "position":{}
     }
-    total_bot_share_num = round((investment_amount * margin) / price, 0)
+    total_bot_share_num = math.floor((investment_amount * margin) / price)
     bot_cash_balance =round(investment_amount - (total_bot_share_num * price), 2)
     data["performance"]["vol"] = dur
     data["performance"]["last_hedge_delta"] = 1
@@ -277,7 +277,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     targeted_profit = -1 * option_price / price
     delta = uno.deltaRC(price, strike, strike_2, t/365, r, q, v1, v2)
     delta = np.nan_to_num(delta, nan=0)
-    total_bot_share_num = round((investment_amount * margin) / price, 0)
+    total_bot_share_num = math.floor((investment_amount * margin) / price)
     bot_hedge_share = math.floor(delta *total_bot_share_num)
     bot_cash_balance = round(investment_amount - (bot_hedge_share * price), digits)
     data['performance']["last_hedge_delta"] = delta
@@ -378,7 +378,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     option_price = np.nan_to_num(option_price, nan=0)
     potential_loss = -1 * option_price / price
     targeted_profit = (barrier-strike) / price
-    total_bot_share_num = round((investment_amount * margin) / price, 1)
+    total_bot_share_num = math.floor((investment_amount * margin) / price)
     bot_hedge_share = math.floor(delta *total_bot_share_num)
     bot_cash_balance = round(investment_amount - (bot_hedge_share * price), digits)
     data['performance']["option_price"] = option_price
