@@ -1,9 +1,6 @@
-import collections
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from pandas.tseries.offsets import BDay
-from dateutil.relativedelta import relativedelta
 from sklearn.preprocessing import robust_scale, minmax_scale, quantile_transform
 from general.data_process import remove_null, uid_maker
 from general.sql_process import do_function
@@ -52,12 +49,9 @@ from general.sql_query import (
     get_factor_calculation_formula,
     get_factor_rank,
     get_fundamentals_score,
-    get_ibes_new_ticker, 
     get_last_close_industry_code, 
     get_max_last_ingestion_from_universe, 
-    get_pred_mean,
     get_ai_value_pred_final,
-    get_specific_tri,
     get_ai_score_testing_history,
     get_specific_tri_avg,
     get_specific_volume_avg,
@@ -67,7 +61,6 @@ from general.sql_query import (
 from general.date_process import (
     backdate_by_day, 
     backdate_by_month,
-    backdate_by_year, 
     dateNow, 
     datetimeNow, 
     dlp_start_date, 
