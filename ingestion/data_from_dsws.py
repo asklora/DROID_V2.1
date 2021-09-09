@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from pandas.tseries.offsets import BDay
-from dateutil.relativedelta import relativedelta
 from sklearn.preprocessing import robust_scale, minmax_scale, quantile_transform
 from general.data_process import remove_null, uid_maker
 from general.sql_process import do_function
@@ -51,12 +49,9 @@ from general.sql_query import (
     get_factor_calculation_formula,
     get_factor_rank,
     get_fundamentals_score,
-    get_ibes_new_ticker, 
     get_last_close_industry_code, 
     get_max_last_ingestion_from_universe, 
-    get_pred_mean,
     get_ai_value_pred_final,
-    get_specific_tri,
     get_ai_score_testing_history,
     get_specific_tri_avg,
     get_specific_volume_avg,
@@ -66,13 +61,14 @@ from general.sql_query import (
 from general.date_process import (
     backdate_by_day, 
     backdate_by_month,
-    backdate_by_year, 
     dateNow, 
     datetimeNow, 
     dlp_start_date, 
     droid_start_date,
     find_nearest_specific_days,
-    forwarddate_by_day)
+    forwarddate_by_day,
+    forwarddate_by_month,
+    get_period_end_list)
 from datasource.fred import read_fred_csv
 
 def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None, manual_universe=None, universe=None):
@@ -413,8 +409,6 @@ def score_update_vol_rs(list_of_start_end, days_in_year=256):
         tri[name_col] = tri.groupby("ticker")[name_col].rolling(end - start, min_periods=1).mean().reset_index(drop=1)
         tri[name_col] = tri[name_col].apply(lambda x: np.sqrt(x * days_in_year))
         tri[name_col] = tri[name_col].shift(start)
-        nan_idx = tri.groupby("ticker")["trading_day"].nlargest(end - 1).index.get_level_values(1)
-        tri.loc[nan_idx, name_col] = np.nan  # y-1 ~ y0
 
     # return tri on the most recent trading_day
     final_tri = tri[["ticker"]+vol_col].dropna(how="any").groupby(["ticker"]).last().reset_index()
@@ -556,23 +550,18 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     calculate_column += ["environment", "social", "goverment"]
 
     fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
-    # fundamentals = fundamentals.loc[fundamentals['industry_code']!='NA']
     fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
     print(fundamentals)
+
+    x = fundamentals.groupby(['currency_code']).apply(lambda x: x.notnull().sum()/len(x))
 
     # trim outlier to +/- 2 std
     calculate_column_score = []
     for column in calculate_column:
-        try:
-            if fundamentals[column].notnull().sum():
-                column_score = column + "_score"
-                fundamentals[column_score] = fundamentals.groupby("currency_code")[column].transform(
-                    lambda x: np.clip(x, np.nanmean(x)-2*np.nanstd(x), np.nanmean(x)+2*np.nanstd(x)))
-
-                calculate_column_score.append(column_score)
-        except Exception as e:
-            print(e)
-            continue
+        column_score = column + "_score"
+        fundamentals[column_score] = fundamentals.groupby("currency_code")[column].transform(
+            lambda x: np.clip(x, np.nanmean(x)-2*np.nanstd(x), np.nanmean(x)+2*np.nanstd(x)))
+        calculate_column_score.append(column_score)
     print(calculate_column_score)
 
     # apply robust scaler
@@ -590,34 +579,28 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # apply maxmin scaler on Currency / Industry
     minmax_column = ["uid", "ticker", "trading_day"]
     for column in calculate_column:
-        try:
-            column_robust_score = column + "_robust_score"
-            column_minmax_currency_code = column + "_minmax_currency_code"
-            # column_minmax_industry = column + "_minmax_industry"
-            df_currency_code = fundamentals[["currency_code", column_robust_score]]
-            df_currency_code = df_currency_code.rename(columns = {column_robust_score : "score"})
-            # df_industry = fundamentals[["industry_code", column_robust_score]]
-            # df_industry = df_industry.rename(columns = {column_robust_score : "score"})
-            fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
-            # fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
-            fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), 0.4, fundamentals[column_minmax_currency_code])
-            # fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
-            minmax_column.append(column_minmax_currency_code)
-            # minmax_column.append(column_minmax_industry)
-        except Exception as e:
-            print(e)
+        column_robust_score = column + "_robust_score"
+        column_minmax_currency_code = column + "_minmax_currency_code"
+        # column_minmax_industry = column + "_minmax_industry"
+        df_currency_code = fundamentals[["currency_code", column_robust_score]]
+        df_currency_code = df_currency_code.rename(columns = {column_robust_score : "score"})
+        # df_industry = fundamentals[["industry_code", column_robust_score]]
+        # df_industry = df_industry.rename(columns = {column_robust_score : "score"})
+        fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
+        # fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
+        fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), fundamentals[column_minmax_currency_code].mean()*0.9, fundamentals[column_minmax_currency_code])
+        # fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
+        minmax_column.append(column_minmax_currency_code)
+        # minmax_column.append(column_minmax_industry)
     print(minmax_column)
 
     # apply quantile transformation on before scaling scores
-    try:
-        tmp = fundamentals.melt(["ticker", "currency_code", "industry_code"], calculate_column)
-        tmp["quantile_transformed"] = tmp.groupby(["currency_code", "variable"])["value"].transform(lambda x: quantile_transform(x.values.reshape(-1, 1), n_quantiles=4).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
-        tmp = tmp[["ticker", "variable", "quantile_transformed"]]
-        tmp["variable"] = tmp["variable"] + "_quantile_currency_code"
-        tmp = tmp.pivot(["ticker"], ["variable"]).droplevel(0, axis=1)
-        fundamentals = fundamentals.merge(tmp, how="left", on="ticker")
-    except Exception as e:
-        print(e)
+    tmp = fundamentals.melt(["ticker", "currency_code", "industry_code"], calculate_column)
+    tmp["quantile_transformed"] = tmp.groupby(["currency_code", "variable"])["value"].transform(lambda x: quantile_transform(x.values.reshape(-1, 1), n_quantiles=4).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
+    tmp = tmp[["ticker", "variable", "quantile_transformed"]]
+    tmp["variable"] = tmp["variable"] + "_quantile_currency_code"
+    tmp = tmp.pivot(["ticker"], ["variable"]).droplevel(0, axis=1)
+    fundamentals = fundamentals.merge(tmp, how="left", on="ticker")
 
     # add DLPA scores
     fundamentals = fundamentals.merge(universe_rating, on="ticker", how="left")
@@ -653,16 +636,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals_factors_scores_col = fundamentals.filter(regex="^fundamentals_").columns
     fundamentals[fundamentals_factors_scores_col] = (fundamentals[fundamentals_factors_scores_col]*10).round(1)
 
-    # from sqlalchemy import create_engine
-    # from global_vars import DB_URL_ALIBABA
-    # with create_engine(DB_URL_ALIBABA, max_overflow=-1, isolation_level="AUTOCOMMIT").connect() as conn:
-    #     extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 10000}
-    #     fundamentals.to_sql('test_fundamentals_clair', **extra)
-
     print("Calculate ESG Value")
-    # fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
-    #     fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
-    #     fundamentals["goverment_minmax_currency_code"] + fundamentals["goverment_minmax_industry"]) / 6
     fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] +
         fundamentals["social_minmax_currency_code"] + fundamentals["goverment_minmax_currency_code"]) / 3
 
@@ -673,10 +647,14 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("Calculate AI Score 2")
     fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] +
                                  fundamentals["fundamentals_momentum"] + fundamentals["esg"]) / 4
+    fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].round(1)
 
     # scale ai_score with history min / max
     score_history = get_ai_score_testing_history()
+    score_history['score_max'] = score_history['score_max'].fillna(score_history['score_max'].max())
+    score_history['score_min'] = score_history['score_min'].fillna(score_history['score_min'].min())
     fundamentals = fundamentals.merge(score_history, on=['currency_code'], how='left')
+
     print(fundamentals[["ai_score","ai_score2"]].describe())
     for col in ["ai_score","ai_score2"]:
         fundamentals[['min']] = fundamentals.groupby(['currency_code'])[col].transform('min')
@@ -687,24 +665,19 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
                                             "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
-                                            "dlp_3m", "wts_rating2", "classic_vol"]]
+                                            "dlp_3m", "wts_rating2", "classic_vol", "fundamentals_extra"]]
 
     universe_rating_detail_history = fundamentals[minmax_column]
 
     print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
     if(len(fundamentals)) > 0 :
         print(fundamentals)
-        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum",
+        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra",
                                "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
         result["updated"] = dateNow()
         print(result)
         print(universe_rating_history)
         print(universe_rating_detail_history)
-        # result.to_csv("/home/loratech/result.csv")
-        # universe_rating_history.to_csv("/home/loratech/universe_rating_history.csv")
-        # universe_rating_detail_history.to_csv("/home/loratech/universe_rating_detail_history.csv")
-        # import sys
-        # sys.exit(1)
         upsert_data_to_database(result, get_universe_rating_table_name(), "ticker", how="update", Text=True)
         upsert_data_to_database(universe_rating_history, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
         upsert_data_to_database(universe_rating_detail_history, get_universe_rating_detail_history_table_name(), "uid", how="update", Text=True)
@@ -1051,101 +1024,308 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
         worldscope_quarter_summary_from_dsws(ticker=ticker, currency_code=currency_code, filter_field=[field], history=history)
     report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
 
-def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filter_field=None, history=False):
+def worldscope_quarter_report_date_from_dsws(ticker = None, currency_code=None, history=False):
+    identifier="ticker"
+    filter_field = ["WC05905A"]
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
-    if(len(universe) < 1):
-        return False
-    end_date = dateNow()
+    ticker = universe[["ticker"]]
+    end_date = forwarddate_by_month(9)
     start_date = backdate_by_month(6)
     if(history):
         start_date = "2000-03-31"
-    identifier="ticker"
-    ticker = universe[["ticker"]]
-    ticker = ticker["ticker"].tolist()
-    result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, ticker, identifier, filter_field, use_ticker=True, split_number=1, monthly=True, worldscope=True)
-    # print(result)
-    result = result.dropna()
-    print(result)
-    if(len(result)) > 0 :
-        result = result.rename(columns={
-            #"WC06035": "identifier",
-            #     "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
-            "WC05192A": "fn_5192",
-            "WC18271A": "fn_18271",
-            "WC02999A": "fn_2999",
-            "WC03255A": "fn_3255",
-            "WC03501A" : "fn_3501",
-            "WC18313A" : "fn_18313",
-            "WC18312A": "fn_18312",
-            #     "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
-            "WC18310A": "fn_18310",
-            "WC18311A" : "fn_18311",
-            "WC18309A" : "fn_18309",
-            "WC18308A": "fn_18308",
-            "WC18269A": "fn_18269",
-            "WC18304A" : "fn_18304",
-            "WC18266A" : "fn_18266",
-            #     "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
-            "WC18267A": "fn_18267",
-            "WC18265A": "fn_18265",
-            "WC18264A" : "fn_18264",
-            "WC18263A" : "fn_18263",
-            "WC18262A": "fn_18262",
-            "WC18199A": "fn_18199",
-            "WC18158A" : "fn_18158",
-            #     "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
-            "WC18100A": "fn_18100",
-            "WC08001A": "fn_8001",
-            "WC05085A" : "fn_5085",
-            "WC03101A" : "fn_3101",
-            "WC02501A": "fn_2501",
-            "WC02201A": "fn_2201",
-            "WC02101A" : "fn_2101",
-            #     "WC02001A", "WC05575A"]
-            "WC02001A" : "fn_2001",
-            "WC05575A" : "fn_5575",
-            "index" : "period_end",
-            # "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A"
-            "WC01451A" : "fn_1451",
-            "WC18810A" : "fn_18810",
-            "WC02401A" : "fn_2401",
-            "WC18274A" : "fn_18274",
-            "WC03040A" : "fn_3040"
-        })
-        result = result.reset_index(inplace=False)
-        # print(result)
-        result["period_end"] = pd.to_datetime(result["period_end"])
-        result["year"] = pd.DatetimeIndex(result["period_end"]).year
-        result["month"] = pd.DatetimeIndex(result["period_end"]).month
-        result["day"] = pd.DatetimeIndex(result["period_end"]).day
-        # print(result)
-        for index, row in result.iterrows():
-            if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
-                result.loc[index, "month"] = 3
-                result.loc[index, "frequency_number"] = int(1)
-            elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31) :
-                result.loc[index, "month"] = 6
-                result.loc[index, "frequency_number"] = int(2)
-            elif (result.loc[index, "month"] <= 9) and (result.loc[index, "day"] <= 31) :
-                result.loc[index, "month"] = 9
-                result.loc[index, "frequency_number"] = int(3)
+    period_end_list = get_period_end_list(start_date=start_date, end_date=end_date)
+    data = []
+    for period_end in period_end_list:
+        try:
+            result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 20), dsws=False)
+            print(result)
+            print(error_ticker)
+            if len(error_ticker) == 0 :
+                second_result = []
             else:
-                result.loc[index, "month"] = 12
-                result.loc[index, "frequency_number"] = int(4)
+                second_result, error_ticker = get_data_history_by_field_from_dsws(period_end, period_end, error_ticker, identifier, filter_field, use_ticker=True, split_number=1, dsws=False)
+            try:
+                if(len(result) == 0):
+                    result = second_result
+                elif(len(second_result) == 0):
+                    result = result
+                else :
+                    result = result.append(second_result)
+            except Exception as e:
+                result = second_result
+            print(result)
+            data = result.copy()
+            data = data.rename(columns = {"level_1" : "period_end"})
+            data = data[["ticker", "period_end", "WC05905A"]]
+            print(data)
+            data["WC05905A"] = data["WC05905A"].astype(str)
+            data["WC05905A"] = data["WC05905A"].str.slice(6, 16)
+            data["WC05905A"] = np.where(data["WC05905A"] == "nan", np.nan, data["WC05905A"])
+            data["WC05905A"] = np.where(data["WC05905A"] == "NA", np.nan, data["WC05905A"])
+            data["WC05905A"] = np.where(data["WC05905A"] == "None", np.nan, data["WC05905A"])
+            data["WC05905A"] = np.where(data["WC05905A"] == "", np.nan, data["WC05905A"])
+            data["WC05905A"] = np.where(data["WC05905A"] == "NaN", np.nan, data["WC05905A"])
+            data["WC05905A"] = np.where(data["WC05905A"] == "NaT", np.nan, data["WC05905A"])
+            data["WC05905A"] = data["WC05905A"].astype(float)
+            data = data.dropna(subset=["WC05905A"], inplace=False)
+            if(len(data) > 0):
+                data["WC05905A"] = data["WC05905A"].astype(int)
+                data["WC05905A"] = np.where(data["WC05905A"] > 9000000000, data["WC05905A"]/10, data["WC05905A"])
+                data["report_date"] = datetime.strptime(dateNow(), "%Y-%m-%d")
+                data = data.reset_index(inplace=False, drop=True)
+                for index, row in data.iterrows():
+                    WC05905A = row["WC05905A"]
+                    report_date = datetime.fromtimestamp(WC05905A)
+                    data.loc[index, "report_date"] = report_date
+                data["report_date"] = pd.to_datetime(data["report_date"])
+                data["period_end"] = pd.to_datetime(data["period_end"])
+                data["year"] = pd.DatetimeIndex(data["period_end"]).year
+                data["month"] = pd.DatetimeIndex(data["period_end"]).month
+                data["day"] = pd.DatetimeIndex(data["period_end"]).day
+                # print(data)
+                for index, row in data.iterrows():
+                    if (data.loc[index, "month"] <= 3) and (data.loc[index, "day"] <= 31) :
+                        data.loc[index, "month"] = 3
+                        data.loc[index, "frequency_number"] = int(1)
+                    elif (data.loc[index, "month"] <= 6) and (data.loc[index, "day"] <= 31) :
+                        data.loc[index, "month"] = 6
+                        data.loc[index, "frequency_number"] = int(2)
+                    elif (data.loc[index, "month"] <= 9) and (data.loc[index, "day"] <= 31) :
+                        data.loc[index, "month"] = 9
+                        data.loc[index, "frequency_number"] = int(3)
+                    else:
+                        data.loc[index, "month"] = 12
+                        data.loc[index, "frequency_number"] = int(4)
 
-            result.loc[index, "period_end"] = datetime(result.loc[index, "year"], result.loc[index, "month"], 1)
-        result["period_end"] = result["period_end"].dt.to_period("M").dt.to_timestamp("M")
-        result["period_end"] = pd.to_datetime(result["period_end"])
+                    data.loc[index, "period_end"] = datetime(data.loc[index, "year"], data.loc[index, "month"], 1)
+                data["period_end"] = data["period_end"].dt.to_period("M").dt.to_timestamp("M")
+                data["period_end"] = pd.to_datetime(data["period_end"])
+
+                data = uid_maker(data, trading_day="period_end")
+                data = data.drop(columns=["WC05905A", "year", "month", "day", "frequency_number"])
+                data = data.drop_duplicates(subset=["uid"], keep="first", inplace=False)
+                print(data)
+                upsert_data_to_database(data, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
+        except Exception as e:
+            print("{} : === ERROR === : {}".format(dateNow(), e))
+
+def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filter_field=None, history=False):
+    identifier="ticker"
+    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+    ticker = universe[["ticker"]]
+    end_date = forwarddate_by_month(9)
+    start_date = backdate_by_month(6)
+    if(history):
+        start_date = "2000-03-31"
+    period_end_list = get_period_end_list(start_date=start_date, end_date=end_date)
+    data = []
+    for period_end in period_end_list:
+        try:
+            result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 20), dsws=False)
+            print(result)
+            print(error_ticker)
+            if len(error_ticker) == 0 :
+                second_result = []
+            else:
+                second_result, error_ticker = get_data_history_by_field_from_dsws(period_end, period_end, error_ticker, identifier, filter_field, use_ticker=True, split_number=1, dsws=False)
+            try:
+                if(len(result) == 0):
+                    result = second_result
+                elif(len(second_result) == 0):
+                    result = result
+                else :
+                    result = result.append(second_result)
+            except Exception as e:
+                result = second_result
+            print(result)
+            data = result.copy()
+            result = result.rename(columns = {"level_1" : "period_end"})
+            result = result[["ticker", "period_end", filter_field[0]]]
+            print(result)
+            result[filter_field[0]] = result[filter_field[0]].astype(str)
+            result[filter_field[0]] = np.where(result[filter_field[0]] == "nan", np.nan, result[filter_field[0]])
+            result[filter_field[0]] = np.where(result[filter_field[0]] == "NA", np.nan, result[filter_field[0]])
+            result[filter_field[0]] = np.where(result[filter_field[0]] == "None", np.nan, result[filter_field[0]])
+            result[filter_field[0]] = np.where(result[filter_field[0]] == "", np.nan, result[filter_field[0]])
+            result[filter_field[0]] = np.where(result[filter_field[0]] == "NaN", np.nan, result[filter_field[0]])
+            result[filter_field[0]] = np.where(result[filter_field[0]] == "NaT", np.nan, result[filter_field[0]])
+            result[filter_field[0]] = result[filter_field[0]].astype(float)
+            result = result.dropna(subset=[filter_field[0]], inplace=False)
+            if(len(result) > 0):
+                result = result.rename(columns={
+                    #"WC06035": "identifier",
+                    #     "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
+                    "WC05192A": "fn_5192",
+                    "WC18271A": "fn_18271",
+                    "WC02999A": "fn_2999",
+                    "WC03255A": "fn_3255",
+                    "WC03501A" : "fn_3501",
+                    "WC18313A" : "fn_18313",
+                    "WC18312A": "fn_18312",
+                    #     "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
+                    "WC18310A": "fn_18310",
+                    "WC18311A" : "fn_18311",
+                    "WC18309A" : "fn_18309",
+                    "WC18308A": "fn_18308",
+                    "WC18269A": "fn_18269",
+                    "WC18304A" : "fn_18304",
+                    "WC18266A" : "fn_18266",
+                    #     "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
+                    "WC18267A": "fn_18267",
+                    "WC18265A": "fn_18265",
+                    "WC18264A" : "fn_18264",
+                    "WC18263A" : "fn_18263",
+                    "WC18262A": "fn_18262",
+                    "WC18199A": "fn_18199",
+                    "WC18158A" : "fn_18158",
+                    #     "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
+                    "WC18100A": "fn_18100",
+                    "WC08001A": "fn_8001",
+                    "WC05085A" : "fn_5085",
+                    "WC03101A" : "fn_3101",
+                    "WC02501A": "fn_2501",
+                    "WC02201A": "fn_2201",
+                    "WC02101A" : "fn_2101",
+                    #     "WC02001A", "WC05575A"]
+                    "WC02001A" : "fn_2001",
+                    "WC05575A" : "fn_5575",
+                    "index" : "period_end",
+                    # "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A"
+                    "WC01451A" : "fn_1451",
+                    "WC18810A" : "fn_18810",
+                    "WC02401A" : "fn_2401",
+                    "WC18274A" : "fn_18274",
+                    "WC03040A" : "fn_3040"
+                })
+                result = result.reset_index(inplace=False, drop=True)
+                result["period_end"] = pd.to_datetime(result["period_end"])
+                result["year"] = pd.DatetimeIndex(result["period_end"]).year
+                result["month"] = pd.DatetimeIndex(result["period_end"]).month
+                result["day"] = pd.DatetimeIndex(result["period_end"]).day
+                for index, row in result.iterrows():
+                    if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
+                        result.loc[index, "month"] = 3
+                        result.loc[index, "frequency_number"] = int(1)
+                    elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31) :
+                        result.loc[index, "month"] = 6
+                        result.loc[index, "frequency_number"] = int(2)
+                    elif (result.loc[index, "month"] <= 9) and (result.loc[index, "day"] <= 31) :
+                        result.loc[index, "month"] = 9
+                        result.loc[index, "frequency_number"] = int(3)
+                    else:
+                        result.loc[index, "month"] = 12
+                        result.loc[index, "frequency_number"] = int(4)
+                    result.loc[index, "period_end"] = datetime(result.loc[index, "year"], result.loc[index, "month"], 1)
+                result["period_end"] = result["period_end"].dt.to_period("M").dt.to_timestamp("M")
+                result["period_end"] = pd.to_datetime(result["period_end"])
+
+                result = uid_maker(result, trading_day="period_end")
+                result["fiscal_quarter_end"] = result["period_end"].astype(str)
+                result["fiscal_quarter_end"] = result["fiscal_quarter_end"].str.replace("-", "", regex=True)
+                result = result.drop(columns=["WC05905A", "month", "day"])
+                worldscope_identifier = universe[["ticker", "worldscope_identifier"]]
+                result = result.merge(worldscope_identifier, how="left", on="ticker")
+                result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
+                print(result)
+                upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
+        except Exception as e:
+            print("{} : === ERROR === : {}".format(dateNow(), e))
+
+# def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filter_field=None, history=False):
+#     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+#     if(len(universe) < 1):
+#         return False
+#     end_date = dateNow()
+#     start_date = backdate_by_month(6)
+#     if(history):
+#         start_date = "2000-03-31"
+#     identifier="ticker"
+#     ticker = universe[["ticker"]]
+#     ticker = ticker["ticker"].tolist()
+#     result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, ticker, identifier, filter_field, use_ticker=True, split_number=1, monthly=True, worldscope=True)
+#     # print(result)
+#     result = result.dropna()
+#     print(result)
+#     if(len(result)) > 0 :
+#         result = result.rename(columns={
+#             #"WC06035": "identifier",
+#             #     "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
+#             "WC05192A": "fn_5192",
+#             "WC18271A": "fn_18271",
+#             "WC02999A": "fn_2999",
+#             "WC03255A": "fn_3255",
+#             "WC03501A" : "fn_3501",
+#             "WC18313A" : "fn_18313",
+#             "WC18312A": "fn_18312",
+#             #     "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
+#             "WC18310A": "fn_18310",
+#             "WC18311A" : "fn_18311",
+#             "WC18309A" : "fn_18309",
+#             "WC18308A": "fn_18308",
+#             "WC18269A": "fn_18269",
+#             "WC18304A" : "fn_18304",
+#             "WC18266A" : "fn_18266",
+#             #     "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
+#             "WC18267A": "fn_18267",
+#             "WC18265A": "fn_18265",
+#             "WC18264A" : "fn_18264",
+#             "WC18263A" : "fn_18263",
+#             "WC18262A": "fn_18262",
+#             "WC18199A": "fn_18199",
+#             "WC18158A" : "fn_18158",
+#             #     "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
+#             "WC18100A": "fn_18100",
+#             "WC08001A": "fn_8001",
+#             "WC05085A" : "fn_5085",
+#             "WC03101A" : "fn_3101",
+#             "WC02501A": "fn_2501",
+#             "WC02201A": "fn_2201",
+#             "WC02101A" : "fn_2101",
+#             #     "WC02001A", "WC05575A"]
+#             "WC02001A" : "fn_2001",
+#             "WC05575A" : "fn_5575",
+#             "index" : "period_end",
+#             # "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A"
+#             "WC01451A" : "fn_1451",
+#             "WC18810A" : "fn_18810",
+#             "WC02401A" : "fn_2401",
+#             "WC18274A" : "fn_18274",
+#             "WC03040A" : "fn_3040"
+#         })
+#         result = result.reset_index(inplace=False)
+#         # print(result)
+#         result["period_end"] = pd.to_datetime(result["period_end"])
+#         result["year"] = pd.DatetimeIndex(result["period_end"]).year
+#         result["month"] = pd.DatetimeIndex(result["period_end"]).month
+#         result["day"] = pd.DatetimeIndex(result["period_end"]).day
+#         # print(result)
+#         for index, row in result.iterrows():
+#             if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
+#                 result.loc[index, "month"] = 3
+#                 result.loc[index, "frequency_number"] = int(1)
+#             elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31) :
+#                 result.loc[index, "month"] = 6
+#                 result.loc[index, "frequency_number"] = int(2)
+#             elif (result.loc[index, "month"] <= 9) and (result.loc[index, "day"] <= 31) :
+#                 result.loc[index, "month"] = 9
+#                 result.loc[index, "frequency_number"] = int(3)
+#             else:
+#                 result.loc[index, "month"] = 12
+#                 result.loc[index, "frequency_number"] = int(4)
+
+#             result.loc[index, "period_end"] = datetime(result.loc[index, "year"], result.loc[index, "month"], 1)
+#         result["period_end"] = result["period_end"].dt.to_period("M").dt.to_timestamp("M")
+#         result["period_end"] = pd.to_datetime(result["period_end"])
         
-        result = uid_maker(result, trading_day="period_end")
-        result["fiscal_quarter_end"] = result["period_end"].astype(str)
-        result["fiscal_quarter_end"] = result["fiscal_quarter_end"].str.replace("-", "", regex=True)
-        result = result.drop(columns=["month", "day", "index"])
-        identifier = universe[["ticker", "worldscope_identifier"]]
-        result = result.merge(identifier, how="left", on="ticker")
-        result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
-        print(result)
-        upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
+#         result = uid_maker(result, trading_day="period_end")
+#         result["fiscal_quarter_end"] = result["period_end"].astype(str)
+#         result["fiscal_quarter_end"] = result["fiscal_quarter_end"].str.replace("-", "", regex=True)
+#         result = result.drop(columns=["month", "day", "index"])
+#         identifier = universe[["ticker", "worldscope_identifier"]]
+#         result = result.merge(identifier, how="left", on="ticker")
+#         result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
+#         print(result)
+#         upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
 
 def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
     print("{} : === RECSELL RECBUY Start Ingestion ===".format(datetimeNow()))

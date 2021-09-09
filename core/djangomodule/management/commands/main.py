@@ -34,7 +34,8 @@ from ingestion.data_from_dsws import (
     update_worldscope_quarter_summary_from_dsws,
     update_currency_code_from_dsws,
     update_lot_size_from_dsws,
-    update_mic_from_dsws)
+    update_mic_from_dsws,
+    worldscope_quarter_report_date_from_dsws)
 
 def split_ticker(currency_code, split=1):
     from general.sql_query import get_active_universe
@@ -82,6 +83,8 @@ class Command(BaseCommand):
         parser.add_argument("-monthly", "--monthly", type=bool, help="monthly", default=False)
         parser.add_argument("-split", "--split", type=int, help="split", default=1)
         parser.add_argument("-currency_code", "--currency_code", nargs="+", help="currency_code", default=None)
+
+        parser.add_argument("-month", "--month", type=bool, help="month", default=False)
 
     def handle(self, *args, **options):
         d = str_to_date(dateNow())
@@ -136,6 +139,8 @@ class Command(BaseCommand):
                     ticker = split_ticker(options["currency_code"], split=options["split"])
                     print(ticker)
                     update_worldscope_quarter_summary_from_dsws(ticker=ticker)
+                    status = "Worldscope Report Date Ingestion"
+                    worldscope_quarter_report_date_from_dsws(ticker = ticker)
                 else:
                     print(dateNow())
                     print(d)
@@ -150,7 +155,11 @@ class Command(BaseCommand):
                 update_fundamentals_quality_value()
             
             if(options["fundamentals_rating"]):
-                if(d in ["1", "2", "3", "4", "5", "6", "7"]):
+                if(options["month"]):
+                    if(d in ["1", "2", "3", "4", "5", "6", "7"]):
+                        status = "Fundamentals Quality Update"
+                        update_fundamentals_quality_value()
+                else:
                     status = "Fundamentals Quality Update"
                     update_fundamentals_quality_value()
 

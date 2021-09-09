@@ -147,10 +147,14 @@ def rolling_apply(group, field):
 def mongo_universe_update(ticker=None, currency_code=None):
     #Populate Universe
     all_universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    currency = get_active_currency(currency_code=currency_code)[["currency_code", "country"]]
     industry = get_industry()
     industry_group = get_industry_group()
     result = all_universe.merge(industry, on="industry_code", how="left")
+    result = result.merge(currency, on="currency_code", how="left")
     result = result.merge(industry_group, on="industry_group_code", how="left")
+    print(result)
+    print(result.columns)
     universe = result[["ticker"]]
     print(result)
     
@@ -159,7 +163,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     for tick in universe["ticker"].unique():
         detail_data = result.loc[result["ticker"] == tick]
         detail_data = detail_data[["currency_code", "ticker_name", "ticker_fullname", "company_description", 
-            "industry_code", "industry_name", "industry_group_code", "industry_group_name", "ticker_symbol", "lot_size", "mic"]].to_dict("records")
+            "industry_code", "industry_name", "industry_group_code", "industry_group_name", "ticker_symbol", "lot_size", "mic", "country"]].to_dict("records")
         details = pd.DataFrame({"ticker":[tick], "detail":[detail_data[0]]}, index=[0])
         detail_df = detail_df.append(details)
     detail_df = detail_df.reset_index(inplace=False)
@@ -302,6 +306,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
     print(universe)
+    print(universe.columns)
     update_to_mongo(data=universe, index="ticker", table="universe", dict=False)
 
 
@@ -365,9 +370,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
 
             active_df = []
             orders_position = orders_position.reset_index(inplace=False, drop=True)
-            orders_position = change_date_to_str(orders_position)
-            # orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
-            # orders_position = get_orders_position(user_id=[user], active=False, field=orders_position_field)
+            orders_position = change_date_to_str(orders_position, exception=["rank"])
             orders_position = orders_position.sort_values(by=["profit"])
             for index, row in orders_position.iterrows():
                 act_df = orders_position.loc[orders_position["position_uid"] == row["position_uid"]]
@@ -395,6 +398,15 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
                 "total_user_invested_amount":[0], "pct_total_bot_invested_amount":[0], "pct_total_user_invested_amount":[0], 
                 "total_profit_amount":[0], "daily_live_profit":[0], "total_portfolio":[0], "active_portfolio":[[]]}, index=[0])
         # print(active)
+        profile = user_core[["username", "first_name", "last_name", "email", "phone", "birth_date", "is_joined", "gender"]]
+        profile["birth_date"] = profile["birth_date"].astype(str)
+        
+        user_core = user_core.drop(columns=profile.columns.tolist())
+        
+        profile = profile.to_dict("records")[0]
+        profile = pd.DataFrame({"user_id":[user_core.loc[0, "user_id"]], "profile":[profile]}, index=[0])
+
+        user_core = user_core.merge(profile, how="left", on=["user_id"])
         result = user_core.merge(active, how="left", on=["user_id"])
         result = result.rename(columns={"currency_code" : "currency"})
         result["current_asset"] = result["balance"] + result["total_portfolio"] + result["pending_amount"]
@@ -414,8 +426,8 @@ def firebase_user_update(user_id=None, currency_code=None):
     currency = get_currency_data(currency_code=currency_code)
     currency = currency[["currency_code", "is_decimal"]]
 
-    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")
-    user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_profit, daily_profit_pct, daily_invested_amount")
+    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, first_name, last_name, email, phone, birth_date, gender")
+    user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_profit, daily_profit_pct, daily_invested_amount, rank")
     user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, amount as balance, currency_code")
     user_core = user_core.merge(user_balance, how="left", on=["user_id"])
     user_core = user_core.merge(user_daily_profit, how="left", on=["user_id"])
@@ -436,7 +448,7 @@ def firebase_user_update(user_id=None, currency_code=None):
 
         orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
         position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
-        position_data['expiry']=position_data['expiry'].astype(str)
+        position_data["expiry"]=position_data["expiry"].astype(str)
         # print(position_data)
         if(len(position_data) > 0):
             universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "currency_code"]]

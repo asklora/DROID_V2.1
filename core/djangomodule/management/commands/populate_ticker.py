@@ -37,7 +37,8 @@ from ingestion.data_from_dsws import (
     update_rec_buy_sell_from_dsws, 
     update_ticker_name_from_dsws, 
     update_worldscope_identifier_from_dsws, 
-    update_worldscope_quarter_summary_from_dsws)
+    update_worldscope_quarter_summary_from_dsws,
+    worldscope_quarter_report_date_from_dsws)
 
 def new_ticker_ingestion(ticker):
     update_ticker_name_from_dsws(ticker=ticker)
@@ -63,6 +64,7 @@ def new_ticker_ingestion(ticker):
     update_fundamentals_quality_value()
     update_ibes_data_monthly_from_dsws(ticker=ticker, history=True)
     update_worldscope_quarter_summary_from_dsws(ticker=ticker, history=True)
+    worldscope_quarter_report_date_from_dsws(ticker = ticker, history=True)
     update_rec_buy_sell_from_dsws(ticker=ticker)
 
 def populate_ticker_monthly(client=None):

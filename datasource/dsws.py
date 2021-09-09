@@ -11,8 +11,8 @@ def setDataStream(DSWS=True):
         DS = Datastream(username=DSWS_USERNAME2, password=DSWS_PASSWORD2)
     return DS
 
-def get_data_static_with_string_from_dsws(identifier, universe, *field):
-    DS = setDataStream()
+def get_data_static_with_string_from_dsws(identifier, universe, *field, dsws=True):
+    DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
     try:
         result = DS.fetch(universe, *field, static=True)
@@ -24,8 +24,8 @@ def get_data_static_with_string_from_dsws(identifier, universe, *field):
     print("== Getting Data From DSWS Done ==")
     return result
 
-def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, split_number=40):
-    DS = setDataStream()
+def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, split_number=40, dsws=True):
+    DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
 
     chunk_data = []
@@ -64,8 +64,8 @@ def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, spl
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
         
-def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, dividend=False, split_number=40):
-    DS = setDataStream()
+def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, dividend=False, split_number=40, dsws=True):
+    DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
     chunk_data = []
     error_universe = []
@@ -137,8 +137,8 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
 
-def get_data_history_by_field_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, dividend=False, split_number=40):
-    DS = setDataStream()
+def get_data_history_by_field_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, dividend=False, split_number=40, dsws=True):
+    DS = setDataStream(DSWS=dsws)
     chunk_data = []
     print(universe)
     error_universe = []
@@ -175,8 +175,8 @@ def get_data_history_by_field_from_dsws(start_date, end_date, universe, identifi
     print(data)
     return data, error_universe
 
-def get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False):
-    DS = setDataStream()
+def get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False, dsws=True):
+    DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
     chunk_data = []
     error_universe = []
@@ -231,7 +231,7 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
     print(data)
     return data, error_universe
 
-def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False, worldscope=False):
+def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False, worldscope=False, dsws=True):
     DS = setDataStream(DSWS=False)
     print("== Getting Data From DSWS ==")
     chunk_data = []
@@ -274,7 +274,7 @@ def get_data_history_frequently_by_field_from_dsws(start_date, end_date, univers
                     chunck_field = result
                 else:
                     chunck_field = pd.merge(chunck_field, result, how="inner",on=[identifier, "index"])
-        # print(chunck_field)
+        print(chunck_field)
         chunk_data.append(chunck_field)
     data = []
     for frame in chunk_data:

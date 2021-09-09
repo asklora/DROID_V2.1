@@ -3,6 +3,7 @@ from django.conf import settings
 from core.djangomodule.general import get_cached_data,set_cache_data
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
+from general import table_name
 from general.sql_process import db_read, alibaba_db_url
 from general.date_process import (
     backdate_by_day,
@@ -20,6 +21,7 @@ from general.table_name import (
     get_data_ibes_monthly_table_name,
     get_data_macro_monthly_table_name,
     get_ai_value_pred_table_name,
+    get_data_worldscope_summary_table_name,
     get_industry_group_table_name,
     get_industry_table_name,
     get_latest_bot_update_table_name,
@@ -228,9 +230,7 @@ def get_universe_rating(ticker=None, currency_code=None, active=True):
     return data
 
 
-def get_active_universe_by_entity_type(
-    ticker=None, currency_code=None, null_entity_type=False, active=True
-):
+def get_active_universe_by_entity_type(ticker=None, currency_code=None, null_entity_type=False, active=True):
     query = f"select * from {get_universe_table_name()} where is_active=True "
     if null_entity_type:
         query += f"and entity_type is null "
@@ -245,6 +245,11 @@ def get_active_universe_by_entity_type(
     data = read_query(query, table=get_universe_table_name())
     return data
 
+def get_worldscope_period_end_list(start_date="2000-01-01", end_date=dateNow()):
+    table_name = get_data_worldscope_summary_table_name()
+    query = f"select distinct period_end from {table_name} where period_end>='{start_date}' and period_end<='{end_date}' order by period_end ASC"
+    data = read_query(query, table=table_name)
+    return data["period_end"].to_list()
 
 def get_active_universe_by_country_code(country_code, method=True):
     if method:

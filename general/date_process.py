@@ -178,6 +178,44 @@ def count_date_range_by_month(start, end, month, ascending=False):
         date_range = date_range.sort_values(by="date", ascending=True)
     return date_range["date"]
 
+def get_period_end_list(start_date=backdate_by_month(6), end_date=dateNow()):
+    start_date = datetime.strptime(start_date, "%Y-%m-%d")
+    end_date = datetime.strptime(end_date, "%Y-%m-%d")
+    data = pd.DataFrame({"period_end": []}, index=[])
+    count = -3
+    while True:
+        count = count + 3
+        date_result = end_date - relativedelta(months=count)
+        data = data.append(
+            pd.DataFrame({"period_end": [date_result.date()]}, index=[0])
+        )
+        if (start_date.month >= date_result.month) and (
+            start_date.year >= date_result.year
+        ):
+            break
+    data.reset_index(inplace=True)
+    data["period_end"] = pd.to_datetime(data["period_end"])
+    data["year"] = pd.DatetimeIndex(data["period_end"]).year
+    data["month"] = pd.DatetimeIndex(data["period_end"]).month
+    data["day"] = pd.DatetimeIndex(data["period_end"]).day
+    # print(data)
+    for index, row in data.iterrows():
+        if (data.loc[index, "month"] <= 3) and (data.loc[index, "day"] <= 31) :
+            data.loc[index, "month"] = 3
+            data.loc[index, "frequency_number"] = int(1)
+        elif (data.loc[index, "month"] <= 6) and (data.loc[index, "day"] <= 31) :
+            data.loc[index, "month"] = 6
+            data.loc[index, "frequency_number"] = int(2)
+        elif (data.loc[index, "month"] <= 9) and (data.loc[index, "day"] <= 31) :
+            data.loc[index, "month"] = 9
+            data.loc[index, "frequency_number"] = int(3)
+        else:
+            data.loc[index, "month"] = 12
+            data.loc[index, "frequency_number"] = int(4)
+        data.loc[index, "period_end"] = datetime(data.loc[index, "year"], data.loc[index, "month"], 1)
+    data["period_end"] = data["period_end"].dt.to_period("M").dt.to_timestamp("M")
+    data["period_end"] = pd.to_datetime(data["period_end"])
+    return data["period_end"].astype(str).to_list()
 
 def timeit(func):
     @functools.wraps(func)
