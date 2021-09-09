@@ -375,7 +375,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             pct_total_bot_invested_amount = formatdigit(pct_total_bot_invested_amount, user_core.loc[0, "is_decimal"])
             daily_live_profit = formatdigit(daily_live_profit, user_core.loc[0, "is_decimal"])
             total_profit_amount = formatdigit(total_profit_amount, user_core.loc[0, "is_decimal"])
-            total_portfolio = formatdigit(total_invested_amount, user_core.loc[0, "is_decimal"]) - user_core.loc[0, "pending_amount"]
+            total_portfolio = formatdigit(total_invested_amount, user_core.loc[0, "is_decimal"])
             active = pd.DataFrame({"user_id":[user], "total_invested_amount":[total_invested_amount], "total_bot_invested_amount":[total_bot_invested_amount], 
                 "total_user_invested_amount":[total_user_invested_amount], "pct_total_bot_invested_amount":[pct_total_bot_invested_amount], "pct_total_user_invested_amount":[pct_total_user_invested_amount], 
                 "total_profit_amount":[total_profit_amount], "daily_live_profit":[daily_live_profit], "total_portfolio":[total_portfolio], 
