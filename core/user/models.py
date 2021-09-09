@@ -35,23 +35,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     email = models.EmailField(("email address"),null=True, blank=True)
-    username = models.CharField(
-        max_length=255, unique=True)
+    username = models.CharField(max_length=255, unique=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
     address = models.TextField(blank=True, null=True)
     first_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255, null=True, blank=True)
     birth_date = models.DateField(null=True, blank=True)
-    avatar = models.ImageField(
-        upload_to=usermanagerprofile, null=True, blank=True)
+    avatar = models.ImageField(upload_to=usermanagerprofile, null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
-    current_status = models.CharField(
-        max_length=255, null=True, blank=True, choices=status_choices, default=UNVERIFIED)
+    current_status = models.CharField(max_length=255, null=True, blank=True, choices=status_choices, default=UNVERIFIED)
     is_joined = models.BooleanField(default=False)
     USERNAME_FIELD = "username"
     AUTH_FIELD_NAME = "email"
+    gender = models.CharField(max_length=255, null=True, blank=True)
     # REQUIRED_FIELDS = ["username"]
 
     objects = AppUserManager()
