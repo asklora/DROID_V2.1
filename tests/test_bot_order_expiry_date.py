@@ -6,85 +6,88 @@ from core.bot.models import BotOptionType
 
 from utils import create_buy_order
 
-@pytest.mark.django_db
-class TestBotExpiry:
-    def test_should_confirm_bot_expiry_for_classic(self) -> None:
-        bot_types: List[BotOptionType] = BotOptionType.objects.filter(
-            bot_type="CLASSIC"
-        ).order_by("time_to_exp")
+pytestmark = pytest.mark.django_db
 
-        for bot_type in bot_types:
-            order = create_buy_order(
-                bot_id=bot_type.bot_id,
-                price=1317,
-                ticker="3377.HK",
-                user_id=197,
-            )
 
-            expiry = get_expiry_date(
-                bot_type.time_to_exp,
-                order.created,
-                order.ticker.currency_code.currency_code,
-            )
-            expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
+def test_should_confirm_bot_expiry_for_classic() -> None:
+    bot_types: List[BotOptionType] = BotOptionType.objects.filter(
+        bot_type="CLASSIC"
+    ).order_by("time_to_exp")
 
-            print("\nCreated date: " + order.created.date().strftime("%Y-%m-%d"))
-            print("Expiry date: " + order.setup["position"]["expiry"])
-            print("Calculated expiry date: " + expiry_date)
-            print("Duration: " + bot_type.duration)
+    for bot_type in bot_types:
+        order = create_buy_order(
+            bot_id=bot_type.bot_id,
+            price=1317,
+            ticker="3377.HK",
+            user_id=197,
+        )
 
-            assert order.setup["position"]["expiry"] == expiry_date
+        expiry = get_expiry_date(
+            bot_type.time_to_exp,
+            order.created,
+            order.ticker.currency_code.currency_code,
+        )
+        expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
 
-    def test_should_confirm_bot_expiry_for_uno(self) -> None:
-        bot_types: List[BotOptionType] = BotOptionType.objects.filter(
-            bot_type="UNO"
-        ).order_by("time_to_exp")
+        print("\nCreated date: " + order.created.date().strftime("%Y-%m-%d"))
+        print("Expiry date: " + order.setup["position"]["expiry"])
+        print("Calculated expiry date: " + expiry_date)
+        print("Duration: " + bot_type.duration)
 
-        for bot_type in bot_types:
-            order = create_buy_order(
-                bot_id=bot_type.bot_id,
-                price=1317,
-                ticker="3377.HK",
-                user_id=197,
-            )
+        assert order.setup["position"]["expiry"] == expiry_date
 
-            expiry = get_expiry_date(
-                bot_type.time_to_exp,
-                order.created,
-                order.ticker.currency_code.currency_code,
-            )
-            expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
 
-            print("\nCreated date: " + order.created.date().strftime("%Y-%m-%d"))
-            print("Expiry date: " + order.setup["position"]["expiry"])
-            print("Calculated expiry date: " + expiry_date)
-            print("Duration: " + bot_type.duration)
+def test_should_confirm_bot_expiry_for_uno() -> None:
+    bot_types: List[BotOptionType] = BotOptionType.objects.filter(
+        bot_type="UNO"
+    ).order_by("time_to_exp")
 
-            assert order.setup["position"]["expiry"] == expiry_date
+    for bot_type in bot_types:
+        order = create_buy_order(
+            bot_id=bot_type.bot_id,
+            price=1317,
+            ticker="3377.HK",
+            user_id=197,
+        )
 
-    def test_should_confirm_bot_expiry_for_ucdc(self) -> None:
-        bot_types: List[BotOptionType] = BotOptionType.objects.filter(
-            bot_type="UCDC"
-        ).order_by("time_to_exp")
+        expiry = get_expiry_date(
+            bot_type.time_to_exp,
+            order.created,
+            order.ticker.currency_code.currency_code,
+        )
+        expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
 
-        for bot_type in bot_types:
-            order = create_buy_order(
-                bot_id=bot_type.bot_id,
-                price=1317,
-                ticker="3377.HK",
-                user_id=197,
-            )
+        print("\nCreated date: " + order.created.date().strftime("%Y-%m-%d"))
+        print("Expiry date: " + order.setup["position"]["expiry"])
+        print("Calculated expiry date: " + expiry_date)
+        print("Duration: " + bot_type.duration)
 
-            expiry = get_expiry_date(
-                bot_type.time_to_exp,
-                order.created,
-                order.ticker.currency_code.currency_code,
-            )
-            expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
+        assert order.setup["position"]["expiry"] == expiry_date
 
-            print("\nCreated date: " + order.created.date().strftime("%Y-%m-%d"))
-            print("Expiry date: " + order.setup["position"]["expiry"])
-            print("Calculated expiry date: " + expiry_date)
-            print("Duration: " + bot_type.duration)
 
-            assert order.setup["position"]["expiry"] == expiry_date
+def test_should_confirm_bot_expiry_for_ucdc() -> None:
+    bot_types: List[BotOptionType] = BotOptionType.objects.filter(
+        bot_type="UCDC"
+    ).order_by("time_to_exp")
+
+    for bot_type in bot_types:
+        order = create_buy_order(
+            bot_id=bot_type.bot_id,
+            price=1317,
+            ticker="3377.HK",
+            user_id=197,
+        )
+
+        expiry = get_expiry_date(
+            bot_type.time_to_exp,
+            order.created,
+            order.ticker.currency_code.currency_code,
+        )
+        expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
+
+        print("\nCreated date: " + order.created.date().strftime("%Y-%m-%d"))
+        print("Expiry date: " + order.setup["position"]["expiry"])
+        print("Calculated expiry date: " + expiry_date)
+        print("Duration: " + bot_type.duration)
+
+        assert order.setup["position"]["expiry"] == expiry_date
