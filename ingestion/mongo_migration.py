@@ -306,6 +306,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
     print(universe)
+    print(universe.columns)
     update_to_mongo(data=universe, index="ticker", table="universe", dict=False)
 
 
@@ -369,7 +370,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
 
             active_df = []
             orders_position = orders_position.reset_index(inplace=False, drop=True)
-            orders_position = change_date_to_str(orders_position)
+            orders_position = change_date_to_str(orders_position, exception=["rank"])
             orders_position = orders_position.sort_values(by=["profit"])
             for index, row in orders_position.iterrows():
                 act_df = orders_position.loc[orders_position["position_uid"] == row["position_uid"]]
@@ -398,9 +399,13 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
                 "total_profit_amount":[0], "daily_live_profit":[0], "total_portfolio":[0], "active_portfolio":[[]]}, index=[0])
         # print(active)
         profile = user_core[["username", "first_name", "last_name", "email", "phone", "birth_date", "is_joined", "gender"]]
+        profile["birth_date"] = profile["birth_date"].astype(str)
+        
+        user_core = user_core.drop(columns=profile.columns.tolist())
+        
         profile = profile.to_dict("records")[0]
         profile = pd.DataFrame({"user_id":[user_core.loc[0, "user_id"]], "profile":[profile]}, index=[0])
-        user_core = user_core.drop(columns=["username", "first_name", "last_name", "email", "phone", "birth_date", "is_joined"])
+
         user_core = user_core.merge(profile, how="left", on=["user_id"])
         result = user_core.merge(active, how="left", on=["user_id"])
         result = result.rename(columns={"currency_code" : "currency"})
