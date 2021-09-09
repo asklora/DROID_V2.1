@@ -153,11 +153,8 @@ def mongo_universe_update(ticker=None, currency_code=None):
     result = all_universe.merge(industry, on="industry_code", how="left")
     result = result.merge(currency, on="currency_code", how="left")
     result = result.merge(industry_group, on="industry_group_code", how="left")
-    print(result)
-    print(result.columns)
     universe = result[["ticker"]]
-    print(result)
-    
+
     result = change_null_to_zero(result)
     detail_df = pd.DataFrame({"ticker":[], "detail":[]}, index=[])
     for tick in universe["ticker"].unique():
@@ -169,8 +166,6 @@ def mongo_universe_update(ticker=None, currency_code=None):
     detail_df = detail_df.reset_index(inplace=False)
     detail_df = detail_df.drop(columns=["index"])
     universe = universe.merge(detail_df, how="left", on=["ticker"])
-    print(universe)
-
     price = result[["ticker", "ebitda", "free_cash_flow", "market_cap", "pb", "pe_forecast", "pe_ratio", "revenue_per_share", "wk52_high", "wk52_low"]]
     latest_price = get_latest_price_data(ticker=ticker, currency_code=currency_code)
     latest_price = price.merge(latest_price, how="left", on=["ticker"])
@@ -189,7 +184,6 @@ def mongo_universe_update(ticker=None, currency_code=None):
     price_df = price_df.reset_index(inplace=False)
     price_df = price_df.drop(columns=["index"])
     universe = universe.merge(price_df, how="left", on=["ticker"])
-    print(universe)
 
     rating = result[["ticker"]]
     universe_rating = get_universe_rating_history(ticker=ticker, currency_code=currency_code)
@@ -237,7 +231,6 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe_rating = universe_rating.merge(universe_rating_positive_negative, how="left", on=["ticker"])
     universe_rating = change_date_to_str(universe_rating)
     universe_rating = change_null_to_zero(universe_rating)
-    print(universe_rating)
     rating_df = pd.DataFrame({"ticker":[], "rating":[], "ai_score":[], "ai_score2":[]}, index=[])
     for tick in universe_rating["ticker"].unique():
         rating_data = universe_rating.loc[universe_rating["ticker"] == tick]
@@ -254,8 +247,6 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.reset_index(inplace=False)
     universe = universe.drop(columns=["index", "ai_score", "ai_score2"])
     universe = universe.reset_index(inplace=False, drop=True)
-    print(universe)
-
     ranking = result[["ticker"]]
     duration_list = ["2 Weeks", "4 Weeks"]
     bot_ranking = get_latest_ranking(ticker=ticker, currency_code=currency_code)
@@ -286,12 +277,10 @@ def mongo_universe_update(ticker=None, currency_code=None):
     bot_ranking = bot_ranking.merge(bot_statistic[["ticker", "time_to_exp", "bot_type", 
         "bot_option_type", "win_rate", "bot_return", "risk_moderation"]], 
         how="left", on=["ticker", "bot_type", "bot_option_type", "time_to_exp"])
-    print(bot_ranking)
     ranking = pd.DataFrame({"ticker":[], "ranking":[]}, index=[])
     for tick in bot_ranking["ticker"].unique():
         ranking_data = bot_ranking.loc[bot_ranking["ticker"] == tick]
         ranking_data = ranking_data.sort_values(by=["ticker", "ranking", "duration"])
-        print(ranking_data)
         ranking_df = []
         for index, row in ranking_data.iterrows():
             rank_data = ranking_data.loc[ranking_data["duration"] == row["duration"]]
@@ -302,11 +291,9 @@ def mongo_universe_update(ticker=None, currency_code=None):
         rank = pd.DataFrame({"ticker":[tick], "ranking":[ranking_df]}, index=[0])
         ranking = ranking.append(rank)
     ranking = ranking.reset_index(inplace=False, drop=True)
-    print(ranking)
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
-    print(universe)
-    print(universe.columns)
+    universe = change_date_to_str(universe)
     update_to_mongo(data=universe, index="ticker", table="universe", dict=False)
 
 
@@ -370,7 +357,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
 
             active_df = []
             orders_position = orders_position.reset_index(inplace=False, drop=True)
-            orders_position = change_date_to_str(orders_position, exception=["rank"])
+            orders_position = change_date_to_str(orders_position)
             orders_position = orders_position.sort_values(by=["profit"])
             for index, row in orders_position.iterrows():
                 act_df = orders_position.loc[orders_position["position_uid"] == row["position_uid"]]
@@ -410,15 +397,12 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         result = user_core.merge(active, how="left", on=["user_id"])
         result = result.rename(columns={"currency_code" : "currency"})
         result["current_asset"] = result["balance"] + result["total_portfolio"] + result["pending_amount"]
-        # print(result)
+        result = change_date_to_str(result, exception=["rank"])
         await sync_to_async(update_to_mongo)(data=result, index="user_id", table="portfolio", dict=False)
         return active
 
 
 def firebase_user_update(user_id=None, currency_code=None):
-    # import time
-    # start = time.time()
-
     print("Start User Populate")
     bot_type = get_bot_type()
     bot_option_type = get_bot_option_type()
@@ -449,11 +433,9 @@ def firebase_user_update(user_id=None, currency_code=None):
         orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
         position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
         position_data["expiry"]=position_data["expiry"].astype(str)
-        # print(position_data)
         if(len(position_data) > 0):
             universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "currency_code"]]
             latest_price = get_price_data_firebase(position_data["ticker"].unique().tolist())
-            # print(latest_price)
             latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})
 
             position_data = position_data.merge(latest_price, how="left", on=["ticker"])
@@ -465,213 +447,5 @@ def firebase_user_update(user_id=None, currency_code=None):
             performance_data = get_orders_position_performance(position_uid=position_data["position_uid"].to_list(), field=orders_performance_field, latest=True)
             position_data = position_data.merge(performance_data, how="left", on=["position_uid"])
             position_data = position_data.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
-
-            # print(position_data)
-            active_portfolio = pd.DataFrame({"user_id":[], "total_invested_amount":[], "total_bot_invested_amount":[], "total_user_invested_amount":[], 
-                "pct_total_bot_invested_amount":[], "pct_total_user_invested_amount":[], "total_profit_amount":[], "active_portfolio":[]}, index=[])
-            
         # concurent calculation
         asyncio.run(gather_task(position_data, bot_option_type, user_core))
-    # end = time.time()
-    # print(f"time consumed : {end-start}")
-
-
-    # active_portfolio = pd.concat(gather_active_portfolios)
-    # active_portfolio = active_portfolio.reset_index(inplace=False, drop=True)
-    # result = user_core.merge(active_portfolio, how="left", on=["user_id"])
-    # result = result.rename(columns={"currency_code" : "currency"})
-    # print(result)
-    # update_to_mongo(data=result, index="user_id", table="portfolio", dict=False)
-
-
-
-
-
-
-
-
-
-
-    
-
-# def mongo_create_currency():
-#     collection = json.load(open("files/file_json/validator_currency.json"))
-#     print(collection)
-#     table = "currency"
-#     create_collection(collection, table)
-
-# def mongo_currency_update():
-#     region = get_region()
-#     region = region.rename(columns={"ingestion_time" : "region_time"})
-#     currency = get_active_currency()
-#     result = currency.merge(region, on="region_id", how="left")
-#     result = result[["currency_code", "currency_name", "last_price", "utc_offset", "utc_timezone_location", 
-#         "classic_schedule", "region_id", "region_name", "region_time"]]
-#     result = result.rename(columns={"classic_schedule" : "close_time", "utc_timezone_location" : "timezone"})
-#     print(result)
-#     update_to_mongo(data=result, index="currency_code", table="currency", dict=False)
-
-# def mongo_universe_update():
-#     #Populate Universe
-#     universe = get_active_universe()
-#     industry = get_industry()
-#     industry_group = get_industry_group()
-#     result = universe.merge(industry, on="industry_code", how="left")
-#     result = result.merge(industry_group, on="industry_group_code", how="left")
-    
-#     result = result[["ticker", "currency_code", "ticker_name", "company_description", "industry_code", "industry_group_img", 
-#     "ticker_symbol", "exchange_code", "quandl_symbol", "lot_size", "is_active"]]
-#     # ["isin", "cusip", "sedol", "permid", origin_ticker"]
-#     #Populate Price
-#     isin = get_consolidated_data("consolidated_ticker as ticker, isin", "isin is not null", "consolidated_ticker, isin")
-#     isin = isin.drop_duplicates(subset=["ticker"], keep="first")
-
-#     cusip = get_consolidated_data("consolidated_ticker as ticker, cusip", "cusip is not null", "consolidated_ticker, cusip")
-#     cusip = cusip.drop_duplicates(subset=["ticker"], keep="first")
-
-#     sedol = get_consolidated_data("consolidated_ticker as ticker, sedol", "sedol is not null", "consolidated_ticker, sedol")
-#     sedol = sedol.drop_duplicates(subset=["ticker"], keep="first")
-
-#     permid = get_consolidated_data("consolidated_ticker as ticker, permid", "permid is not null", "consolidated_ticker, permid")
-#     permid = permid.drop_duplicates(subset=["ticker"], keep="first")
-
-#     origin_ticker = get_consolidated_data("consolidated_ticker as ticker, origin_ticker, source_id", "origin_ticker is not null", "consolidated_ticker, origin_ticker, source_id")
-
-#     result = result.merge(isin, on="ticker", how="left")
-#     result = result.merge(cusip, on="ticker", how="left")
-#     result = result.merge(sedol, on="ticker", how="left")
-#     result = result.merge(permid, on="ticker", how="left")
-
-#     origin_ticker_df = pd.DataFrame({"ticker":[], "origin_ticker":[]}, index=[])
-#     for tick in result["ticker"].unique():
-#         ticker_data = origin_ticker.loc[origin_ticker["ticker"] == tick]
-#         if(len(ticker_data) > 0):
-#             ticker_data = ticker_data[["origin_ticker", "source_id"]].to_dict("records")
-#             ticker_data = pd.DataFrame({"ticker":[tick], "origin_ticker":[ticker_data]}, index=[0])
-#             origin_ticker_df = origin_ticker_df.append(ticker_data)
-#     result = result.merge(origin_ticker_df, on="ticker", how="left")
-#     print(result)
-#     update_to_mongo(data=result, index="ticker", table="universe", dict=False)
-
-# def mongo_universe_rating_update():
-#     #Populate Universe
-#     rating = get_universe_rating()
-#     result = rating[["ticker", "fundamentals_quality", "fundamentals_value", "dlp_1m", "dlp_3m", "wts_rating", "wts_rating2"]]
-#     result["ST"] = np.where((result["wts_rating"] + result["dlp_1m"]) >= 11, True, False)
-#     result["MT"] = np.where(result["dlp_3m"] >= 7, True, False)
-#     result["GQ"] = np.where(result["fundamentals_quality"] >= 5, True, False)
-#     result["GV"] = np.where(result["fundamentals_value"] >= 5, True, False)
-#     print(result)
-#     update_to_mongo(data=result, index="ticker", table="universe_rating", dict=False)
-
-# def mongo_latest_price_update():
-#     result = get_latest_price_data()
-#     result = result[["ticker", "close", "latest_price_change", "last_date"]]
-#     print(result)
-#     update_specific_to_mongo(data=result, index="ticker", table="universe", column=["close", "latest_price_change", "intraday_ask", "intraday_bid", "last_date"], dict=False)
-
-# def mongo_price_update():
-#     start_date = backdate_by_month(1)
-#     ticker = ["AAPL.O"]
-#     result = get_master_tac_data(start_date=start_date, ticker=ticker)
-#     result = result[["ticker", "trading_day", "tri_adj_close", "day_status"]]
-#     result = result.rename(columns={"tri_adj_close" : "price"})
-#     result = change_date_to_str(result)
-#     print(result["ticker"].unique())
-#     for tick in result["ticker"].unique():
-#         price_data = result.loc[result["ticker"] == tick]
-#         price_data = price_data.sort_values(by="trading_day", ascending=False)
-#         price_data = price_data[["trading_day", "price"]].to_dict("records")
-#         price_data = pd.DataFrame({"ticker":[tick], "price_data":[price_data]}, index=[0])
-#         print(price_data)
-#         update_specific_to_mongo(data=result, index="ticker", table="universe", column=["price_data"], dict=False)
-
-# def mongo_bot_data_update():
-#     universe = get_active_universe()
-#     bot_data = get_latest_bot_update_data()
-#     for time_exp in bot_data["time_to_exp_str"].unique():
-#         bot_data.loc[bot_data["time_to_exp_str"] == time_exp, "expiry_date"] = bot_data[f"expiry_{time_exp}"]
-#     bot_data = bot_data[["ticker", "bot_id", "potential_max_loss", "targeted_profit", "expiry_date", "ranking"]]
-#     print(bot_data)
-#     bot_option_type = get_bot_option_type()
-#     bot_data = bot_data.merge(bot_option_type, on="bot_id", how="left")
-#     bot_data = change_date_to_str(bot_data)
-#     for tick in universe["ticker"].unique():
-#         result = bot_data.loc[bot_data["ticker"] == tick]
-#         result = result.sort_values(by="ranking", ascending=False)
-#         result = result[["potential_max_loss", "targeted_profit", "bot_type", "bot_option_type", "bot_option_name", "expiry_date", "ranking"]]
-#         result = result.to_dict("records")
-#         result = pd.DataFrame({"ticker":[tick], "bot_data":[result]}, index=[0])
-#         update_to_mongo(data=result, index="ticker", table="bot_data", dict=False)
-    
-# def mongo_statistic_backtest_update():
-#     universe = get_active_universe()
-#     bot_option_type = get_bot_option_type()
-#     backtest_data = get_bot_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, bot_id=None)
-#     backtest_data = backtest_data[["ticker", "bot_id", "spot_price", "spot_date", "potential_max_loss", "targeted_profit", "bot_return"]]
-#     backtest_data.loc[backtest_data["bot_return"] >= 0, "event"] = "TP"
-#     backtest_data.loc[backtest_data["bot_return"] < 0, "event"] = "SL"
-#     backtest_data.loc[backtest_data["bot_return"].isnull(), "event"] = "RUN"
-#     bot_statistic = get_bot_statistic_data(ticker=None, currency_code=None)
-    
-#     bot_data = change_date_to_str(bot_data)
-#     for tick in universe["ticker"].unique():
-#         result = bot_data.loc[bot_data["ticker"] == tick]
-#         result = result.sort_values(by="ranking", ascending=False)
-#         result = result[["potential_max_loss", "targeted_profit", "bot_type", "bot_option_type", "bot_option_name", "expiry_date", "ranking"]]
-#         result = result.to_dict("records")
-#         result = pd.DataFrame({"ticker":[tick], "bot_data":[result]}, index=[0])
-#         update_to_mongo(data=result, index="ticker", table="bot_data", dict=False)
-#     bot_backtest
-# uid
-# spot_date
-# bot_type
-# bot_id
-# option_type
-# time_to_exp
-# spot_price
-# potential_max_loss
-# targeted_profit
-# bot_return
-# event
-# ticker
-
-#     bot_statistic
-# uid
-# option_type
-# bot_type
-# lookback
-# time_to_exp
-# avg_days
-# pct_profit
-# pct_losses
-# avg_profit
-# avg_loss
-# avg_return
-# pct_max_profit
-# pct_max_loss
-# ann_avg_return
-# ann_avg_return_bm
-# avg_return_bm
-# max_loss_bot
-# max_loss_bm
-# avg_days_max_profit
-# avg_days_max_loss
-# ticker
-
-
-# start_date = backdate_by_month(1)
-#     price = get_master_tac_data(start_date=start_date)
-#     price = price[["ticker", "trading_day", "tri_adj_close", "day_status"]]
-#     price = price.rename(columns={"tri_adj_close" : "price"})
-#     price = change_date_to_str(price)
-#     print(price)
-#     price_df = pd.DataFrame({"ticker":[], "price_data":[]}, index=[])
-#     for tick in result["ticker"].unique():
-#         price_data = price.loc[price["ticker"] == tick]
-#         price_data = price_data.sort_values(by="trading_day", ascending=False)
-#         price_data = price_data[["trading_day", "price"]].to_dict("records")
-#         price_data = pd.DataFrame({"ticker":[tick], "price_data":[price_data]}, index=[0])
-#         price_df = price_df.append(price_data)
-#     result = result.merge(price_df, on="ticker", how="left")
-#     print(result)

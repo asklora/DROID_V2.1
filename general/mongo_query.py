@@ -20,6 +20,10 @@ def change_date_to_str(data, exception=None):
         if(exception != None):
             if (col == exception or col in exception):
                 status = False
+                print(col == exception)
+                print(col in exception)
+            print(col == exception or col in exception)
+        print(f"{col} = {status}")
         if(status):
             if (str(type(data.loc[0, col])) == "<class 'datetime.date'>" or 
                 str(type(data.loc[0, col])) == "<class 'pandas._libs.tslibs.timestamps.Timestamp'>" or 
@@ -76,7 +80,6 @@ def get_price_data_firebase(ticker:list) -> pd.DataFrame:
     return result
     
 def update_to_mongo(data, index, table, dict=False):
-    data = change_date_to_str(data)
     data["indexes"] = data[index]
     data = data.set_index("indexes")
     df = data.to_dict("index")
