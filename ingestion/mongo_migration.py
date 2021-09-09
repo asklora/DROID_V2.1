@@ -398,6 +398,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         result = result.rename(columns={"currency_code" : "currency"})
         result["current_asset"] = result["balance"] + result["total_portfolio"] + result["pending_amount"]
         result = change_date_to_str(result, exception=["rank"])
+        result["rank"] = np.where(result["rank"].isnull(), None, result["rank"])
         await sync_to_async(update_to_mongo)(data=result, index="user_id", table="portfolio", dict=False)
         return active
 
