@@ -50,6 +50,7 @@ def classic_sell_position(live_price, trading_day, position_uid, apps=False):
             position.event = "Profit"
         else:
             position.event = "Bot Expired"
+            
     # serializing -> make dictionary position instance
     position_val = OrderPositionSerializer(position).data
     # remove created and updated from position
