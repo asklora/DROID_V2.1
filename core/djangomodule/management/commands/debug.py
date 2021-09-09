@@ -12,6 +12,7 @@ from core.user.models import User
 from requests.api import get
 from django.core.management.base import BaseCommand
 from core.services.tasks import populate_client_top_stock_weekly, order_client_topstock, daily_hedge, send_csv_hanwha, hedge
+from core.services.order_services import update_rtdb_user_porfolio
 from datasource.rkd import RkdData,RkdStream
 from datetime import datetime
 from core.djangomodule.calendar import TradingHours
@@ -23,9 +24,10 @@ import time
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Something")
+        update_rtdb_user_porfolio()
         # populate_daily_profit()
         # firebase_user_update()
-        mongo_universe_update(currency_code=["HKD"])
+        # mongo_universe_update(currency_code=["HKD"])
         # ticker = [ticker.ticker.ticker for ticker in OrderPosition.objects.prefetch_related('ticker').filter(is_live=True,ticker__currency_code__in=["HKD"]).distinct('ticker')]
         # get_price_data_firebase(ticker)
         # users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
