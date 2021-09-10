@@ -2,6 +2,7 @@ from core.djangomodule.general import formatdigit
 from general.data_process import NoneToZero
 from bot.data_download import get_currency_data
 import random
+from datetime import datetime, date
 from asgiref.sync import sync_to_async
 import numpy as np
 import pandas as pd
@@ -450,12 +451,11 @@ def firebase_user_update(user_id=None, currency_code=None):
             position_data["trading_day"] = np.where(position_data["trading_day"].isnull(), position_data["spot_date"], position_data["trading_day"])
             position_data = position_data.merge(universe, how="left", on=["ticker"])
 
-            orders_performance_field = "distinct created::date, position_uid, share_num, order_uid"
+            orders_performance_field = "distinct created, position_uid, share_num, order_uid"
             performance_data = get_orders_position_performance(position_uid=position_data["position_uid"].to_list(), field=orders_performance_field, latest=True)
+            performance_data["created"] = performance_data["created"].dt.date
             performance_data = performance_data.drop_duplicates(subset=["created", "position_uid"], keep="first")
             performance_data = performance_data.drop(columns=["created"])
             position_data = position_data.merge(performance_data, how="left", on=["position_uid"])
             position_data = position_data.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
-        print(position_data)
-        # concurent calculation
         asyncio.run(gather_task(position_data, bot_option_type, user_core))
