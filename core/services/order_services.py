@@ -143,6 +143,7 @@ def order_executor(self, payload, recall=False):
 
 
 
+
 @app.task
 def update_rtdb_user_porfolio():
     try:
