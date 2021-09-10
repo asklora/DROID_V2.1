@@ -1,3 +1,4 @@
+from core.user.models import Accountbalance
 from datetime import datetime
 import numpy as np
 import pandas as pd
@@ -247,7 +248,7 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
         tac=True,
     )
 
-    # step 3: get hedge positions
+    # step 3: get hedge values
     performance = PositionPerformance.objects.filter(position_uid=position.position_uid)
     performance_df = pd.DataFrame(list(performance.values()))
     performance_df = performance_df[
@@ -318,7 +319,6 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
     performance_df = performance_df.sort_values(by=["created"])
     performance_df = performance_df.merge(position_df, how="left", on=["position_uid"])
     performance_df = performance_df.merge(orders_df, how="left", on=["order_uid"])
-    performance_df.to_csv("hedge_margin.csv")
 
     # performance_df = pd.read_csv("hedge_margin.csv")
     print(performance_df)
@@ -385,6 +385,7 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
     performance_df["status_pnl_ret"] = np.where(
         performance_df["real_pnl_ret"] == performance_df["current_pnl_ret"], True, False
     )
+    performance_df.to_csv("hedge_margin.csv")
 
     # Syarat Lulus Test
     status = True
@@ -420,3 +421,113 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
 
     assert performance.exists() == True
     assert performance.count() > 1
+
+def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
+    # step 1: create a new order
+    ticker = "9901.HK"
+    master = MasterOhlcvtr.objects.get(
+        ticker=ticker,
+        trading_day="2021-06-01",
+    )
+    price = master.close
+    log_time = datetime.combine(master.trading_day, datetime.min.time())
+
+    buy_order = create_buy_order(
+        ticker=ticker,
+        price=price,
+        user_id=user.id,
+        margin=2,
+        bot_id="UCDC_ATM_007692",  # 4 weeks worth of testing
+    )
+
+    buy_order.status = "placed"
+    buy_order.placed = True
+    buy_order.placed_at = log_time
+    buy_order.save()
+
+    buy_order.status = "filled"
+    buy_order.filled_at = log_time
+    buy_order.save()
+
+    confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
+
+    performance = PositionPerformance.objects.get(
+        order_uid_id=confirmed_buy_order.order_uid
+    )
+
+    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+
+    # step 2: setup hedge
+    ucdc_position_check(
+        position_uid=position.position_uid,
+        tac=True,
+    )
+
+    # get hedge performances
+    performance = PositionPerformance.objects.filter(position_uid=position.position_uid)
+    performance_df = pd.DataFrame(list(performance.values()))
+    performance_df = performance_df[
+        [
+            "created",
+            "position_uid_id",
+            "performance_uid",
+            "last_spot_price",
+            "last_live_price",
+            "current_pnl_ret",
+            "current_pnl_amt",
+            "current_bot_cash_balance",
+            "share_num",
+            "current_investment_amount",
+            "last_hedge_delta",
+            "order_summary",
+            "order_uid_id",
+            "status",
+        ]
+    ]
+
+    performance_df = performance_df.rename(
+        columns={"position_uid_id": "position_uid", "order_uid_id": "order_uid"}
+    )
+
+    # get hedge positions
+    position = OrderPosition.objects.filter(position_uid=position.position_uid)
+    position_df = pd.DataFrame(list(position.values()))
+    position_df = position_df[
+        [
+            "position_uid",
+            "user_id_id",
+            "ticker_id",
+            "bot_id",
+            "expiry",
+            "spot_date",
+            "entry_price",
+            "investment_amount",
+            "bot_cash_balance",
+            "share_num",
+            "margin",
+            "bot_cash_dividend",
+        ]
+    ]
+    position_df = position_df.rename(
+        columns={
+            "user_id_id": "user_id",
+            "ticker_id": "ticker",
+            "share_num": "bot_share_num",
+        }
+    )
+
+    # get hedge orders
+    orders = Order.objects.filter(order_uid__in=performance_df["order_uid"].to_list())
+    orders_df = pd.DataFrame(list(orders.values()))
+    orders_df = orders_df[["order_uid", "order_type", "side", "amount", "price", "qty"]]
+
+    # get user balances
+    balances = Accountbalance.objects.filter(user=user)
+    balances_df = pd.DataFrame(list(balances.values()))
+
+    performance_df = performance_df.sort_values(by=["created"])
+    performance_df = performance_df.merge(position_df, how="left", on=["position_uid"])
+    performance_df = performance_df.merge(orders_df, how="left", on=["order_uid"])
+    performance_df = performance_df.merge(balances_df, how="left", on=["user_id"])
+
+    performance_df.to_csv("hedge_user_balance.csv")
