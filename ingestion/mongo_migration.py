@@ -20,19 +20,13 @@ from general.sql_query import (
     get_industry_group, 
     get_latest_price_data,
     get_latest_ranking,
-    get_latest_ranking_rank_1, 
-    get_master_tac_data,
     get_orders_position_group_by_user_id,
     get_orders_position,
     get_orders_position_performance, 
-    get_region, 
-    get_universe_rating, 
     get_universe_rating_detail_history, 
     get_universe_rating_history,
-    get_bot_backtest, 
     get_bot_option_type, 
     get_bot_statistic_data, 
-    get_latest_bot_update_data,
     get_user_account_balance,
     get_user_core,
     get_user_profit_history)
@@ -414,8 +408,9 @@ def firebase_user_update(user_id=None, currency_code=None):
     currency = currency[["currency_code", "is_decimal"]]
 
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, first_name, last_name, email, phone, birth_date, gender")
-    user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_profit, daily_profit_pct, daily_invested_amount, rank")
+    user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_profit, daily_profit_pct, daily_invested_amount, rank, total_profit, total_profit_pct")
     user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, amount as balance, currency_code")
+    
     user_core = user_core.merge(user_balance, how="left", on=["user_id"])
     user_core = user_core.merge(user_daily_profit, how="left", on=["user_id"])
     user_core = user_core.merge(currency, how="left", on=["currency_code"])

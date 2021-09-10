@@ -332,6 +332,8 @@ class UserProfitHistory(models.Model):
     daily_profit = models.FloatField(default=0)
     daily_profit_pct = models.FloatField(default=0)
     daily_invested_amount = models.FloatField(default=0)
+    total_profit = models.FloatField(null=True, blank=True)
+    total_profit_pct = models.FloatField(null=True, blank=True)
     rank = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
