@@ -43,6 +43,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     birth_date = models.DateField(null=True, blank=True)
     avatar = models.ImageField(upload_to=usermanagerprofile, null=True, blank=True)
     is_staff = models.BooleanField(default=False)
+    is_test = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     current_status = models.CharField(max_length=255, null=True, blank=True, choices=status_choices, default=UNVERIFIED)
