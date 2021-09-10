@@ -8,7 +8,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
 from general.data_process import tuple_data, NoneToZero, uid_maker
-from general.sql_query import get_active_universe, get_orders_position, get_orders_position_performance, get_user_account_balance, get_user_core, read_query
+from general.sql_query import get_active_universe, get_orders_position, get_orders_position_group_by_user_id, get_orders_position_performance, get_user_account_balance, get_user_core, read_query
 from general.table_name import (
     get_currency_calendar_table_name,
     get_data_dividend_daily_rates_table_name,
@@ -579,6 +579,15 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core = user_core.merge(user_balance, how="left", on=["user_id"])
     user_core = user_core.merge(currency, how="left", on=["currency_code"])
 
+    bot_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
+    user_core = user_core.merge(bot_order_pending, how="left", on=["user_id"])
+    user_core["bot_pending_amount"] = np.where(user_core["bot_pending_amount"].isnull(), 0, user_core["bot_pending_amount"])
+    stock_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=True)
+    user_core = user_core.merge(stock_order_pending, how="left", on=["user_id"])
+    user_core["stock_pending_amount"] = np.where(user_core["stock_pending_amount"].isnull(), 0, user_core["stock_pending_amount"])
+
+    user_core["pending_amount"] = user_core["stock_pending_amount"] + user_core["bot_pending_amount"]
+    
     orders_position_field = "position_uid, user_id, investment_amount, margin"
     orders_position = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
     if(len(orders_position)):
@@ -604,12 +613,12 @@ def populate_daily_profit(currency_code=None, user_id=None):
             daily_invested_amount = 0
         user_core.loc[index, "daily_profit"] = profit
         user_core.loc[index, "daily_profit_pct"] = daily_profit_pct
-        user_core.loc[index, "daily_invested_amount"] = daily_invested_amount
+        user_core.loc[index, "daily_invested_amount"] = daily_invested_amount + user_core.loc[index, "pending_amount"]
     user_core["trading_day"] =  str_to_date(dateNow())
     user_core["user_id"] = user_core["user_id"].astype(str)
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
     user_core["user_id"] = user_core["user_id"].astype(int)
-    user_core = user_core.drop(columns=["currency_code", "is_decimal"])
+    user_core = user_core.drop(columns=["currency_code", "is_decimal", "bot_pending_amount", "stock_pending_amount", "pending_amount"])
 
     joined = user_core.loc[user_core["is_joined"] == True]
     joined = joined.sort_values(by=["daily_invested_amount"], ascending=[False])

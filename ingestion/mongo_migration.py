@@ -349,7 +349,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             # pct_total_user_invested_amount = int(round(total_user_invested_amount / total_invested_amount, 0) * 100)
             # total_profit_amount = sum(orders_position["profit"].to_list())
             total_invested_amount = NoneToZero(np.nansum(orders_position["current_values"].to_list()))
-            daily_live_profit = total_invested_amount - user_core.loc[0, "daily_invested_amount"] + user_core.loc[0, "pending_amount"]
+            daily_live_profit = total_invested_amount + user_core.loc[0, "pending_amount"] - user_core.loc[0, "daily_invested_amount"]
             total_bot_invested_amount = NoneToZero(np.nansum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_values"].to_list()))
             total_user_invested_amount = NoneToZero(np.nansum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["current_values"].to_list()))
             pct_total_bot_invested_amount = NoneToZero(int(round(total_bot_invested_amount / total_invested_amount, 0) * 100))
