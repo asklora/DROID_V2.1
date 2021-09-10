@@ -1,13 +1,9 @@
 import numpy as np
 import pandas as pd
 from datetime import datetime
-<<<<<<< HEAD
-from sklearn.preprocessing import robust_scale, minmax_scale, quantile_transform
-=======
 from pandas.tseries.offsets import BDay
 from dateutil.relativedelta import relativedelta
 from sklearn.preprocessing import robust_scale, minmax_scale, QuantileTransformer, PowerTransformer, MinMaxScaler
->>>>>>> 2c1a327e99f181655839a28b2b5d9b2ef2f144d9
 from general.data_process import remove_null, uid_maker
 from general.sql_process import do_function
 from general.slack import report_to_slack
