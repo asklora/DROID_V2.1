@@ -541,11 +541,21 @@ def get_consolidated_data(column, condition, group_field=None):
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+<<<<<<< HEAD
 def get_ai_score_testing_history():
     query = f"SELECT currency_code, max(ai_score) as score_max, min(ai_score) as score_min " 
     query += f"FROM {get_ai_score_history_testing_table_name()} " 
     query += f"WHERE period_end > '{backdate_by_year(3)}' GROUP BY currency_code"
+=======
+def get_ai_score_testing_history(backyear=1):
+    query =  f"SELECT currency_code, ai_score "
+    # query =  f"SELECT currency_code, min(ai_score) as score_min, max(ai_score) as score_max FROM {get_ai_score_history_testing_table_name()} "
+    query += f"FROM {get_ai_score_history_testing_table_name()} "
+    query += f"WHERE period_end > '{backdate_by_year(backyear)}' "
+    # query += f"GROUP BY currency_code"
+>>>>>>> 2c1a327e99f181655839a28b2b5d9b2ef2f144d9
     data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
+    # data = data.groupby(['currency_code']).mean().reset_index()
     return data
 
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):

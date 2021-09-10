@@ -1,7 +1,13 @@
 import numpy as np
 import pandas as pd
 from datetime import datetime
+<<<<<<< HEAD
 from sklearn.preprocessing import robust_scale, minmax_scale, quantile_transform
+=======
+from pandas.tseries.offsets import BDay
+from dateutil.relativedelta import relativedelta
+from sklearn.preprocessing import robust_scale, minmax_scale, QuantileTransformer, PowerTransformer, MinMaxScaler
+>>>>>>> 2c1a327e99f181655839a28b2b5d9b2ef2f144d9
 from general.data_process import remove_null, uid_maker
 from general.sql_process import do_function
 from general.slack import report_to_slack
@@ -553,8 +559,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
     print(fundamentals)
 
-    x = fundamentals.groupby(['currency_code']).apply(lambda x: x.notnull().sum()/len(x))
-
     # trim outlier to +/- 2 std
     calculate_column_score = []
     for column in calculate_column:
@@ -596,7 +600,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     # apply quantile transformation on before scaling scores
     tmp = fundamentals.melt(["ticker", "currency_code", "industry_code"], calculate_column)
-    tmp["quantile_transformed"] = tmp.groupby(["currency_code", "variable"])["value"].transform(lambda x: quantile_transform(x.values.reshape(-1, 1), n_quantiles=4).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
+    tmp["quantile_transformed"] = tmp.groupby(["currency_code", "variable"])["value"].transform(lambda x: QuantileTransformer(n_quantiles=4).fit_transform(x.values.reshape(-1, 1)).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
     tmp = tmp[["ticker", "variable", "quantile_transformed"]]
     tmp["variable"] = tmp["variable"] + "_quantile_currency_code"
     tmp = tmp.pivot(["ticker"], ["variable"]).droplevel(0, axis=1)
@@ -612,17 +616,18 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals[[f"fundamentals_{name}" for name in factor_rank['pillar'].unique()]] = np.nan
     fundamentals[['dlp_1m','wts_rating']] = fundamentals[['dlp_1m','wts_rating']]/10    # adjust dlp score to 0 ~ 1 (originally 0 ~ 10)
 
-    # calculate ai_score by each currency_code (i.e. group) for each of 3 pillar
+    # calculate ai_score by each currency_code (i.e. group) for each of [Quality, Value, Momentum]
     for (group, pillar_name), g in factor_rank.groupby(["group", "pillar"]):
         print(f"Calculate Fundamentals [{pillar_name}] in group [{group}]")
         sub_g = g.loc[(g["factor_weight"]==2)|(g["factor_weight"].isnull())]        # use all rank=2 (best class)
-        if len(sub_g) == 0:                         # if no factor rank=2, use the highest ranking one & DLPA/ai_value scores
+        if len(sub_g.dropna()) == 0:                         # if no factor rank=2, use the highest ranking one & DLPA/ai_value scores
             sub_g = g.loc[g.nlargest(1, columns=["pred_z"]).index.union(g.loc[g["factor_weight"].isnull()].index)]
 
         score_col = [f"{x}_{y}_currency_code" for x, y in sub_g.loc[sub_g["scaler"].notnull(), ["factor_name","scaler"]].to_numpy()]
         score_col += [x for x in sub_g.loc[sub_g["scaler"].isnull(), "factor_name"]]
         fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_{pillar_name}"] = fundamentals[score_col].mean(axis=1)
-    
+
+    # calculate ai_score by each currency_code (i.e. group) for [Extra]
     for group, g in factor_rank.groupby("group"):
         print(f"Calculate Fundamentals [extra] in group [{group}]")
         sub_g = g.loc[(g["factor_weight"]==2) & (g["pred_z"] >= 1)]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
@@ -639,6 +644,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("Calculate ESG Value")
     fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] +
         fundamentals["social_minmax_currency_code"] + fundamentals["goverment_minmax_currency_code"]) / 3
+    fundamentals["esg"] = (fundamentals["esg"]*10).round(1)
 
     print("Calculate AI Score")
     fundamentals["ai_score"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] + \
@@ -647,21 +653,28 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("Calculate AI Score 2")
     fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] +
                                  fundamentals["fundamentals_momentum"] + fundamentals["esg"]) / 4
-    fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].round(1)
+
+    print(fundamentals[["fundamentals_value","fundamentals_quality","fundamentals_momentum","fundamentals_extra",'esg']].describe())
 
     # scale ai_score with history min / max
-    score_history = get_ai_score_testing_history()
-    score_history['score_max'] = score_history['score_max'].fillna(score_history['score_max'].max())
-    score_history['score_min'] = score_history['score_min'].fillna(score_history['score_min'].min())
-    fundamentals = fundamentals.merge(score_history, on=['currency_code'], how='left')
+    score_history = get_ai_score_testing_history(backyear=1)
 
+    print(fundamentals[["ai_score", "ai_score2"]].describe())
+    for name, g in fundamentals.groupby(['currency_code']):
+        group_history1 = score_history.loc[(score_history['currency_code'] == name)&
+                                          (score_history['ai_score']>score_history['ai_score'].median()), ['ai_score','ai_score']].values
+        group_history2 = score_history.loc[(score_history['currency_code'] == name)&
+                                          (score_history['ai_score']<score_history['ai_score'].median()), ['ai_score','ai_score']].values
+        m1 = MinMaxScaler(feature_range=(5, 10)).fit(group_history1)
+        m2 = MinMaxScaler(feature_range=(0, 5)).fit(group_history2)
+        score_current1 = g.loc[(g['ai_score']>g['ai_score'].median()), ["ai_score", "ai_score2"]]
+        score_current2 = g.loc[(g['ai_score']<g['ai_score'].median()), ["ai_score", "ai_score2"]]
+        fundamentals.loc[score_current1.index, ["ai_score", "ai_score2"]] = m1.transform(score_current1)
+        fundamentals.loc[score_current2.index, ["ai_score", "ai_score2"]] = m2.transform(score_current2)
     print(fundamentals[["ai_score","ai_score2"]].describe())
-    for col in ["ai_score","ai_score2"]:
-        fundamentals[['min']] = fundamentals.groupby(['currency_code'])[col].transform('min')
-        fundamentals[['max']] = fundamentals.groupby(['currency_code'])[col].transform('max')
-        fundamentals[col] = (fundamentals[col] - fundamentals['min'])/(fundamentals['max']-fundamentals['min'])*(fundamentals['score_max']-fundamentals['score_min']) + fundamentals['score_min']
-        fundamentals[col] = fundamentals[col].clip(0, 10)
-    print(fundamentals[["ai_score","ai_score2"]].describe())
+
+    fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].clip(0, 10)
+    fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].round(1)
 
     universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
                                             "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
