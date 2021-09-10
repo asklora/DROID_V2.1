@@ -7,6 +7,7 @@ from core.Clients.models import UserClient
 from django.db import transaction as db_transaction
 from config.celery import app as worker
 from core.Clients.IBClientModule import IBClient 
+from datetime import datetime
 """
 user/bot
 broker/simulation

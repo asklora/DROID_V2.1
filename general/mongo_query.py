@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from global_vars import MONGO_URL
 import pandas as pd
 from firebase_admin import firestore
+import pprint
 
 def change_null_to_zero(data):
     for col in data.columns:
@@ -81,6 +82,8 @@ def update_to_mongo(data, index, table, dict=False):
     df = data.to_dict("index")
     del data
     db = firestore.client()
+    pretty =pprint.PrettyPrinter(indent=4)
+    # pretty.pprint(df)
     for key,val in df.items():
         if(table=="universe"):
             doc_ref = db.collection(u"universe").document(f"{key}")
