@@ -84,11 +84,11 @@ def test_should_create_new_sell_order_for_user(user) -> None:
 
 
 def test_should_create_new_sell_order_for_user_with_classic_bot(user) -> None:
-    price = 1317
+    price = 6.11
 
     # We create an order
     buy_order = create_buy_order(
-        ticker="6606.HK",
+        ticker="1199.HK",
         price=price,
         user_id=user.id,
         bot_id="CLASSIC_classic_007692",
@@ -112,7 +112,7 @@ def test_should_create_new_sell_order_for_user_with_classic_bot(user) -> None:
     position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
 
     sellPosition, sell_order = sell_position_service(
-        price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
+        price + 3.0,  # Selling in different price point (1317 + 13 = 1330 here)
         datetime.now(),
         position.position_uid,
     )
