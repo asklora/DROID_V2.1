@@ -38,6 +38,7 @@ from general.table_name import (
     get_user_account_balance_table_name,
     get_user_core_table_name,
     get_user_profit_history_table_name,
+    get_user_transaction_table_name,
     get_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
@@ -540,11 +541,14 @@ def get_consolidated_data(column, condition, group_field=None):
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
-def get_ai_score_testing_history():
-    query = f"SELECT currency_code, max(ai_score) as score_max, min(ai_score) as score_min " 
-    query += f"FROM {get_ai_score_history_testing_table_name()} " 
-    query += f"WHERE period_end > '{backdate_by_year(3)}' GROUP BY currency_code"
+def get_ai_score_testing_history(backyear=1):
+    query =  f"SELECT currency_code, ai_score "
+    # query =  f"SELECT currency_code, min(ai_score) as score_min, max(ai_score) as score_max FROM {get_ai_score_history_testing_table_name()} "
+    query += f"FROM {get_ai_score_history_testing_table_name()} "
+    query += f"WHERE period_end > '{backdate_by_year(backyear)}' "
+    # query += f"GROUP BY currency_code"
     data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
+    # data = data.groupby(['currency_code']).mean().reset_index()
     return data
 
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):
@@ -688,7 +692,7 @@ def get_data_from_table_name(table_name, ticker=None, currency_code=None, active
 
 def get_user_core(currency_code=None, user_id=None, field="*"):
     table_name = get_user_core_table_name()
-    query = f"select {field} from {table_name} where is_active=True and is_superuser=False "
+    query = f"select {field} from {table_name} where is_active=True and is_superuser=False and is_test=False "
     if type(user_id) != type(None):
         query += f"and id in {tuple_data(user_id)}  "
     elif type(currency_code) != type(None):
@@ -719,6 +723,17 @@ def get_user_account_balance(currency_code=None, user_id=None, field="*"):
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+def get_user_deposit(user_id=None, balance_uid=None, field="*"):
+    table_name = get_user_transaction_table_name()
+    query = f"select balance_uid, sum(amount) as deposit from {table_name} where transaction_detail ->> 'event' = 'first deposit' "
+    if type(user_id) != type(None):
+        query += f"and balance_uid in (select balance_uid from {get_user_account_balance_table_name()} where user_id in {tuple_data(user_id)})  "
+    elif type(balance_uid) != type(None):
+        query += f"and balance_uid in {tuple_data(balance_uid)} "
+    query += f"group by balance_uid; "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
 def get_orders_position(user_id=None, ticker=None, currency_code=None, position_uid=None, field="*", active=True):
     table_name = get_orders_position_table_name()
     query = f"select {field} from {table_name} where is_live={active} "
@@ -746,8 +761,8 @@ def get_orders_position_group_by_user_id(user_id=None, ticker=None, currency_cod
     if(stock):
         query = f"select user_id, sum(amount) as stock_pending_amount from orders where status='pending' and canceled_at is null and bot_id = 'STOCK_stock_0' {filter} group by user_id"
     else:
-        query = f"select user_id, sum((performance ->> 'current_bot_cash_balance')::double precision) as bot_pending_amount from ( "
-        query += f"select user_id, (setup ->> 'performance')::json as performance "
+        query = f"select user_id, (sum((performance ->> 'current_bot_cash_balance')::double precision) + sum(amount))  as bot_pending_amount from ( "
+        query += f"select user_id, (setup ->> 'performance')::json as performance, amount "
         query += f"from orders where status='pending' and canceled_at is null and bot_id != 'STOCK_stock_0' {filter}) as result "
         query += f"group by user_id; "
     data = read_query(query, table_name, cpu_counts=True)
@@ -771,5 +786,6 @@ def get_orders_position_performance(user_id=None, ticker=None, currency_code=Non
         query += "and exists (select 1 from (select filters.position_uid, max(filters.created) max_date "
         query += "from orders_position_performance as filters group by filters.position_uid) result "
         query += "where result.position_uid=opp.position_uid and result.max_date::date=opp.created::date) "
+        query += "order by created DESC;"
     data = read_query(query, table_name, cpu_counts=True)
     return data

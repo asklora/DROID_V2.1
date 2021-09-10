@@ -204,6 +204,9 @@ def get_user_core_table_name():
 def get_user_account_balance_table_name():
     return "user_account_balance"
 
+def get_user_transaction_table_name():
+    return "user_transaction"
+
 def get_user_profit_history_table_name():
     return "user_profit_history"
     

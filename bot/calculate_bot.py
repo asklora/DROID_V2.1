@@ -8,7 +8,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
 from general.data_process import tuple_data, NoneToZero, uid_maker
-from general.sql_query import get_active_universe, get_orders_position, get_orders_position_performance, get_user_account_balance, get_user_core, read_query
+from general.sql_query import get_active_universe, get_orders_position, get_orders_position_group_by_user_id, get_orders_position_performance, get_user_account_balance, get_user_core, get_user_deposit, read_query
 from general.table_name import (
     get_currency_calendar_table_name,
     get_data_dividend_daily_rates_table_name,
@@ -188,7 +188,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry
         "performance":{},
         "position":{}
     }
-    total_bot_share_num = round((investment_amount * margin) / price, 0)
+    total_bot_share_num = math.floor((investment_amount * margin) / price)
     bot_cash_balance =round(investment_amount - (total_bot_share_num * price), 2)
     data["performance"]["vol"] = dur
     data["performance"]["last_hedge_delta"] = 1
@@ -277,7 +277,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     targeted_profit = -1 * option_price / price
     delta = uno.deltaRC(price, strike, strike_2, t/365, r, q, v1, v2)
     delta = np.nan_to_num(delta, nan=0)
-    total_bot_share_num = round((investment_amount * margin) / price, 0)
+    total_bot_share_num = math.floor((investment_amount * margin) / price)
     bot_hedge_share = math.floor(delta *total_bot_share_num)
     bot_cash_balance = round(investment_amount - (bot_hedge_share * price), digits)
     data['performance']["last_hedge_delta"] = delta
@@ -378,7 +378,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     option_price = np.nan_to_num(option_price, nan=0)
     potential_loss = -1 * option_price / price
     targeted_profit = (barrier-strike) / price
-    total_bot_share_num = round((investment_amount * margin) / price, 1)
+    total_bot_share_num = math.floor((investment_amount * margin) / price)
     bot_hedge_share = math.floor(delta *total_bot_share_num)
     bot_cash_balance = round(investment_amount - (bot_hedge_share * price), digits)
     data['performance']["option_price"] = option_price
@@ -572,32 +572,50 @@ def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
     return bot_cash_dividend
 
 def populate_daily_profit(currency_code=None, user_id=None):
-    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username")[["user_id"]]
-    user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, currency_code")
+    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined")[["user_id", "is_joined"]]
+    user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, currency_code, amount as balance, balance_uid")
+    user_deposit = get_user_deposit(user_id=user_id, field="balance_uid, sum(amount) as deposit")
+
     currency = get_currency_data(currency_code=currency_code)
     currency = currency[["currency_code", "is_decimal"]]
     user_core = user_core.merge(user_balance, how="left", on=["user_id"])
+    user_core = user_core.merge(user_deposit, how="left", on=["balance_uid"])
     user_core = user_core.merge(currency, how="left", on=["currency_code"])
+    user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
+    user_core["deposit"] = np.where(user_core["deposit"].isnull(), 0, user_core["deposit"])
 
+    bot_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
+    user_core = user_core.merge(bot_order_pending, how="left", on=["user_id"])
+    user_core["bot_pending_amount"] = np.where(user_core["bot_pending_amount"].isnull(), 0, user_core["bot_pending_amount"])
+    stock_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=True)
+    user_core = user_core.merge(stock_order_pending, how="left", on=["user_id"])
+    user_core["stock_pending_amount"] = np.where(user_core["stock_pending_amount"].isnull(), 0, user_core["stock_pending_amount"])
+
+    user_core["pending_amount"] = user_core["stock_pending_amount"] + user_core["bot_pending_amount"]
+    
     orders_position_field = "position_uid, user_id, investment_amount, margin"
     orders_position = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
     if(len(orders_position)):
-        orders_performance_field = "position_uid, current_bot_cash_balance, current_investment_amount"
+        orders_performance_field = "distinct created, position_uid, current_bot_cash_balance, current_investment_amount"
         orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)
+        orders_performance["created"] = orders_performance["created"].dt.date
+        orders_performance = orders_performance.drop_duplicates(subset=["created", "position_uid"], keep="first")
+        orders_performance = orders_performance.drop(columns=["created"])
+
         orders_position = orders_position.merge(orders_performance, how="left", on=["position_uid"])
-    # print(user_core)
-    # print(orders_position)
     for index, row in user_core.iterrows():
+        rounded = 0
+        if(row["is_decimal"]):
+            rounded = 2
         user = row["user_id"]
-        # print(user)
         position = orders_position.loc[orders_position["user_id"] == user]
         if(len(position)):
             position["margin_invested_amount"] = position["investment_amount"] * position["margin"]
             position["crr_ivt_amt"] = (position["current_investment_amount"] + position["current_bot_cash_balance"])
-            position["daily_profit"] = position["investment_amount"] - position["crr_ivt_amt"]
+            position["daily_profit"] = position["crr_ivt_amt"] - position["investment_amount"]
             profit = formatdigit(NoneToZero(np.nansum(position["daily_profit"].to_list())), currency_decimal=row["is_decimal"])
-            daily_profit_pct = round(profit / NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) * 100, 2)
-            daily_invested_amount = formatdigit(NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())), currency_decimal=row["is_decimal"])
+            daily_profit_pct = round(profit / NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) * 100, 4)
+            daily_invested_amount = formatdigit(NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) + user_core.loc[index, "pending_amount"], currency_decimal=row["is_decimal"])
         else:
             profit = 0
             daily_profit_pct = 0
@@ -605,10 +623,23 @@ def populate_daily_profit(currency_code=None, user_id=None):
         user_core.loc[index, "daily_profit"] = profit
         user_core.loc[index, "daily_profit_pct"] = daily_profit_pct
         user_core.loc[index, "daily_invested_amount"] = daily_invested_amount
+        user_core.loc[index, "total_profit"] = round((user_core.loc[index, "daily_invested_amount"] + user_core.loc[index, "balance"] - user_core.loc[index, "deposit"]), rounded)
+        user_core.loc[index, "total_profit_pct"] = round((user_core.loc[index, "total_profit"] / user_core.loc[index, "deposit"]) * 100, 4)
     user_core["trading_day"] =  str_to_date(dateNow())
     user_core["user_id"] = user_core["user_id"].astype(str)
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
     user_core["user_id"] = user_core["user_id"].astype(int)
-    user_core = user_core.drop(columns=["currency_code", "is_decimal"])
-    # print(user_core)
-    upsert_data_to_database(user_core, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
+    user_core = user_core.drop(columns=["currency_code", "is_decimal", "bot_pending_amount", "stock_pending_amount", "pending_amount", "balance_uid", "deposit", "balance"])
+    joined = user_core.loc[user_core["is_joined"] == True]
+    joined = joined.sort_values(by=["total_profit_pct"], ascending=[False])
+    joined = joined.reset_index(inplace=False, drop=True)
+    joined = joined.reset_index(inplace=False)
+    joined = joined.rename(columns={"index" : "rank"})
+    joined["rank"] = joined["rank"] + 1
+    joined = joined.drop(columns=["is_joined"])
+    upsert_data_to_database(joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
+
+    not_joined = user_core.loc[user_core["is_joined"] == False]
+    not_joined = not_joined.drop(columns=["is_joined"])
+    not_joined["rank"] = None
+    upsert_data_to_database(not_joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)

@@ -36,7 +36,6 @@ class Currency(models.Model):
         Region, on_delete=models.CASCADE, db_column="region_id", related_name="currency_region_id")
     vix_id = models.ForeignKey(
         Vix, on_delete=models.CASCADE, db_column="vix_id", related_name="currency_vix_id")
-
     ric = models.CharField(blank=True, null=True, max_length=255)
     currency_name = models.CharField(blank=True, null=True, max_length=255)
     is_decimal = models.BooleanField(default=False)
@@ -61,6 +60,7 @@ class Currency(models.Model):
     hedge_schedule = models.TimeField(blank=True, null=True)
     index_ticker = models.TextField(blank=True, null=True)
     index_price = models.FloatField(blank=True, null=True)
+    country = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.currency_code
@@ -85,20 +85,20 @@ class CurrencyCalendars(models.Model):
         return self.uid
 
 
-class Country(models.Model):
-    country_code = models.TextField(primary_key=True)
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code",
-                                      related_name="country_currency_code", blank=True, null=True)
-    country_name = models.TextField(blank=True, null=True)
-    ds_country_code = models.TextField(blank=True, null=True)
-    is_open = models.BooleanField(default=False)
+# class Country(models.Model):
+#     country_code = models.TextField(primary_key=True)
+#     currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code",
+#                                       related_name="country_currency_code", blank=True, null=True)
+#     country_name = models.TextField(blank=True, null=True)
+#     ds_country_code = models.TextField(blank=True, null=True)
+#     is_open = models.BooleanField(default=False)
 
-    class Meta:
-        managed = True
-        db_table = "country"
+#     class Meta:
+#         managed = False
+#         db_table = "country"
 
-    def __str__(self):
-        return self.country_code
+#     def __str__(self):
+#         return self.country_code
 
 # class CountryCalendars(models.Model):
 #     uid = models.TextField(primary_key=True)

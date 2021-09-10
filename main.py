@@ -1,4 +1,3 @@
-from ingestion.data_from_dsws import worldscope_quarter_report_date_from_dsws
 from general.date_process import dateNow
 from general.sql_query import read_query
 from general.sql_process import do_function

@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from global_vars import MONGO_URL
 import pandas as pd
 from firebase_admin import firestore
+import pprint
 
 def change_null_to_zero(data):
     for col in data.columns:
@@ -14,20 +15,23 @@ def change_null_to_zero(data):
             data[col] = np.where(data[col] == np.NAN, 0, data[col])
     return data
 
-def change_date_to_str(data):
+def change_date_to_str(data, exception=None):
     for col in data.columns:
-        if (str(type(data.loc[0, col])) == "<class 'datetime.date'>" or 
-            str(type(data.loc[0, col])) == "<class 'pandas._libs.tslibs.timestamps.Timestamp'>" or 
-            str(type(data.loc[0, col])) == "<class 'datetime.time'>") :
-            # print(f"Change DATE columns {col} to string")
-            data[col] = data[col].astype(str)
-        elif(str(type(data.loc[0, col])) == "<class 'uuid.UUID'>"):
-            # print(f"Change UUID columns {col} to string")
-            data[col] = data[col].astype(str)
-        elif(type(data.loc[0, col]) == str):
-            data[col] = np.where(data[col].isnull(), "", data[col])
-        else:
-            data[col] = np.where(data[col].isnull(), 0, data[col])
+        status = True
+        if(exception != None):
+            if (col == exception or col in exception):
+                status = False
+        if(status):
+            if (str(type(data.loc[0, col])) == "<class 'datetime.date'>" or 
+                str(type(data.loc[0, col])) == "<class 'pandas._libs.tslibs.timestamps.Timestamp'>" or 
+                str(type(data.loc[0, col])) == "<class 'datetime.time'>") :
+                data[col] = data[col].astype(str)
+            elif(str(type(data.loc[0, col])) == "<class 'uuid.UUID'>"):
+                data[col] = data[col].astype(str)
+            elif(type(data.loc[0, col]) == str):
+                data[col] = np.where(data[col].isnull(), "", data[col])
+            elif(type(data.loc[0, col]) == np.float64 or type(data.loc[0, col]) == int or type(data.loc[0, col]) == float):
+                data[col] = np.where(data[col].isnull(), 0, data[col])
     return data
 
 def connects(table):
@@ -57,7 +61,7 @@ def get_price_data_firebase(ticker:list) -> pd.DataFrame:
     db = firestore.client()
     object_list = []
     # here loop numpy split
-    split = len(ticker) / min(len(ticker), 9)
+    split = len(ticker) / min(len(ticker), 8)
     splitting_df = np.array_split(ticker, split)
     for univ in splitting_df:
         univ = univ.tolist()
@@ -73,12 +77,13 @@ def get_price_data_firebase(ticker:list) -> pd.DataFrame:
     return result
     
 def update_to_mongo(data, index, table, dict=False):
-    data = change_date_to_str(data)
     data["indexes"] = data[index]
     data = data.set_index("indexes")
     df = data.to_dict("index")
     del data
     db = firestore.client()
+    pretty =pprint.PrettyPrinter(indent=4)
+    # pretty.pprint(df)
     for key,val in df.items():
         if(table=="universe"):
             doc_ref = db.collection(u"universe").document(f"{key}")
@@ -87,7 +92,6 @@ def update_to_mongo(data, index, table, dict=False):
         else:
             doc_ref = db.collection(u"universe").document(f"{key}")
         doc_ref.set(val)
-   
     # db_connect = connects(table)
     # if(dict):
     #     data_dict = data

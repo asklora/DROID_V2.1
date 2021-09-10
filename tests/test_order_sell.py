@@ -7,237 +7,233 @@ from core.user.models import Accountbalance, User
 
 from utils import create_buy_order
 
-@pytest.mark.django_db
-class TestSell:
-    def test_should_create_new_sell_order_for_user(self, user) -> None:
-        """
-        A new SELL order should be created from a buy order
-        """
+pytestmark = pytest.mark.django_db
 
-        price = 1317
 
-        # We create an order
-        buy_order = create_buy_order(
-            ticker="6606.HK",
-            price=price,
-            user_id=user.id,
-        )
+def test_should_create_new_sell_order_for_user(user) -> None:
+    """
+    A new SELL order should be created from a buy order
+    """
 
-        # We set it as filled
-        buy_order.status = "placed"
-        buy_order.placed = True
-        buy_order.placed_at = datetime.now()
-        buy_order.save()
+    price = 1317
 
-        buy_order.status = "filled"
-        buy_order.filled_at = datetime.now()
-        buy_order.save()
+    # We create an order
+    buy_order = create_buy_order(
+        ticker="6606.HK",
+        price=price,
+        user_id=user.id,
+    )
 
-        # We get the order to update the data
-        confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
+    # We set it as filled
+    buy_order.status = "placed"
+    buy_order.placed = True
+    buy_order.placed_at = datetime.now()
+    buy_order.save()
 
-        # Check if it successfully is added to the performance table
-        assert confirmed_buy_order.performance_uid != None
+    buy_order.status = "filled"
+    buy_order.filled_at = datetime.now()
+    buy_order.save()
 
-        # We get the position and performance data to update it
-        performance = PositionPerformance.objects.get(
-            order_uid_id=confirmed_buy_order.order_uid
-        )
+    # We get the order to update the data
+    confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
 
-        # We confirm the above test
-        assert performance != None
+    # Check if it successfully is added to the performance table
+    assert confirmed_buy_order.performance_uid != None
 
-        # We then get the position based on the performance data
-        position: OrderPosition = OrderPosition.objects.get(
-            pk=performance.position_uid_id
-        )
+    # We get the position and performance data to update it
+    performance = PositionPerformance.objects.get(
+        order_uid_id=confirmed_buy_order.order_uid
+    )
 
-        # We confirm if the position is set
-        assert position != None
+    # We confirm the above test
+    assert performance != None
 
-        # We create the sell order
-        sellPosition, sell_order = sell_position_service(
-            price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
-            datetime.now(),
-            position.position_uid,
-        )
+    # We then get the position based on the performance data
+    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
 
-        confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
-        assert sell_order.order_uid != None
+    # We confirm if the position is set
+    assert position != None
 
-        confirmed_sell_order.status = "placed"
-        confirmed_sell_order.placed = True
-        confirmed_sell_order.placed_at = datetime.now()
-        confirmed_sell_order.save()
+    # We create the sell order
+    sellPosition, sell_order = sell_position_service(
+        price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
+        datetime.now(),
+        position.position_uid,
+    )
 
-        # We get previous user balance
-        user = User.objects.get(pk=user.id)
-        previous_user_balance = Accountbalance.objects.get(user=user).amount
+    confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
+    assert sell_order.order_uid != None
 
-        # We accept the order and set it as filled
-        confirmed_sell_order.status = "filled"
-        confirmed_sell_order.filled_at = datetime.now()
-        confirmed_sell_order.save()
+    confirmed_sell_order.status = "placed"
+    confirmed_sell_order.placed = True
+    confirmed_sell_order.placed_at = datetime.now()
+    confirmed_sell_order.save()
 
-        # We confirm that the selling is successfully finished by checking the user balance
-        user_balance = Accountbalance.objects.get(user=user).amount
-        assert user_balance != previous_user_balance
+    # We get previous user balance
+    user = User.objects.get(pk=user.id)
+    previous_user_balance = Accountbalance.objects.get(user=user).amount
 
-    def test_should_create_new_sell_order_for_user_with_classic_bot(self, user) -> None:
-        price = 1317
+    # We accept the order and set it as filled
+    confirmed_sell_order.status = "filled"
+    confirmed_sell_order.filled_at = datetime.now()
+    confirmed_sell_order.save()
 
-        # We create an order
-        buy_order = create_buy_order(
-            ticker="6606.HK",
-            price=price,
-            user_id=user.id,
-            bot_id="CLASSIC_classic_007692",
-        )
+    # We confirm that the selling is successfully finished by checking the user balance
+    user_balance = Accountbalance.objects.get(user=user).amount
+    assert user_balance != previous_user_balance
 
-        buy_order.status = "placed"
-        buy_order.placed = True
-        buy_order.placed_at = datetime.now()
-        buy_order.save()
 
-        buy_order.status = "filled"
-        buy_order.filled_at = datetime.now()
-        buy_order.save()
+def test_should_create_new_sell_order_for_user_with_classic_bot(user) -> None:
+    price = 1317
 
-        confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
+    # We create an order
+    buy_order = create_buy_order(
+        ticker="6606.HK",
+        price=price,
+        user_id=user.id,
+        bot_id="CLASSIC_classic_007692",
+    )
 
-        performance = PositionPerformance.objects.get(
-            order_uid_id=confirmed_buy_order.order_uid
-        )
+    buy_order.status = "placed"
+    buy_order.placed = True
+    buy_order.placed_at = datetime.now()
+    buy_order.save()
 
-        position: OrderPosition = OrderPosition.objects.get(
-            pk=performance.position_uid_id
-        )
+    buy_order.status = "filled"
+    buy_order.filled_at = datetime.now()
+    buy_order.save()
 
-        sellPosition, sell_order = sell_position_service(
-            price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
-            datetime.now(),
-            position.position_uid,
-        )
+    confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
 
-        confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
-        assert sell_order.order_uid != None
+    performance = PositionPerformance.objects.get(
+        order_uid_id=confirmed_buy_order.order_uid
+    )
 
-        confirmed_sell_order.status = "placed"
-        confirmed_sell_order.placed = True
-        confirmed_sell_order.placed_at = datetime.now()
-        confirmed_sell_order.save()
+    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
 
-        # We get previous user balance
-        user = User.objects.get(pk=user.id)
-        previous_user_balance = Accountbalance.objects.get(user=user).amount
+    sellPosition, sell_order = sell_position_service(
+        price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
+        datetime.now(),
+        position.position_uid,
+    )
 
-        # We accept the order and set it as filled
-        confirmed_sell_order.status = "filled"
-        confirmed_sell_order.filled_at = datetime.now()
-        confirmed_sell_order.save()
+    confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
+    assert sell_order.order_uid != None
 
-    def test_should_create_new_sell_order_for_user_with_uno_bot(self, user) -> None:
-        price = 1317
+    confirmed_sell_order.status = "placed"
+    confirmed_sell_order.placed = True
+    confirmed_sell_order.placed_at = datetime.now()
+    confirmed_sell_order.save()
 
-        # We create an order
-        buy_order = create_buy_order(
-            ticker="6606.HK",
-            price=price,
-            user_id=user.id,
-            bot_id="UNO_OTM_007692",
-        )
+    # We get previous user balance
+    user = User.objects.get(pk=user.id)
+    previous_user_balance = Accountbalance.objects.get(user=user).amount
 
-        buy_order.status = "placed"
-        buy_order.placed = True
-        buy_order.placed_at = datetime.now()
-        buy_order.save()
+    # We accept the order and set it as filled
+    confirmed_sell_order.status = "filled"
+    confirmed_sell_order.filled_at = datetime.now()
+    confirmed_sell_order.save()
 
-        buy_order.status = "filled"
-        buy_order.filled_at = datetime.now()
-        buy_order.save()
 
-        confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
+def test_should_create_new_sell_order_for_user_with_uno_bot(user) -> None:
+    price = 1317
 
-        performance = PositionPerformance.objects.get(
-            order_uid_id=confirmed_buy_order.order_uid
-        )
+    # We create an order
+    buy_order = create_buy_order(
+        ticker="6606.HK",
+        price=price,
+        user_id=user.id,
+        bot_id="UNO_OTM_007692",
+    )
 
-        position: OrderPosition = OrderPosition.objects.get(
-            pk=performance.position_uid_id
-        )
+    buy_order.status = "placed"
+    buy_order.placed = True
+    buy_order.placed_at = datetime.now()
+    buy_order.save()
 
-        sellPosition, sell_order = sell_position_service(
-            price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
-            datetime.now(),
-            position.position_uid,
-        )
+    buy_order.status = "filled"
+    buy_order.filled_at = datetime.now()
+    buy_order.save()
 
-        confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
-        assert sell_order.order_uid != None
+    confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
 
-        confirmed_sell_order.status = "placed"
-        confirmed_sell_order.placed = True
-        confirmed_sell_order.placed_at = datetime.now()
-        confirmed_sell_order.save()
+    performance = PositionPerformance.objects.get(
+        order_uid_id=confirmed_buy_order.order_uid
+    )
 
-        # We get previous user balance
-        user = User.objects.get(pk=user.id)
-        previous_user_balance = Accountbalance.objects.get(user=user).amount
+    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
 
-        # We accept the order and set it as filled
-        confirmed_sell_order.status = "filled"
-        confirmed_sell_order.filled_at = datetime.now()
-        confirmed_sell_order.save()
+    sellPosition, sell_order = sell_position_service(
+        price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
+        datetime.now(),
+        position.position_uid,
+    )
 
-    def test_should_create_new_sell_order_for_user_with_ucdc_bot(self, user) -> None:
-        price = 1317
+    confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
+    assert sell_order.order_uid != None
 
-        # We create an order
-        buy_order = create_buy_order(
-            ticker="6606.HK",
-            price=price,
-            user_id=user.id,
-            bot_id="UCDC_ATM_007692",
-        )
+    confirmed_sell_order.status = "placed"
+    confirmed_sell_order.placed = True
+    confirmed_sell_order.placed_at = datetime.now()
+    confirmed_sell_order.save()
 
-        buy_order.status = "placed"
-        buy_order.placed = True
-        buy_order.placed_at = datetime.now()
-        buy_order.save()
+    # We get previous user balance
+    user = User.objects.get(pk=user.id)
+    previous_user_balance = Accountbalance.objects.get(user=user).amount
 
-        buy_order.status = "filled"
-        buy_order.filled_at = datetime.now()
-        buy_order.save()
+    # We accept the order and set it as filled
+    confirmed_sell_order.status = "filled"
+    confirmed_sell_order.filled_at = datetime.now()
+    confirmed_sell_order.save()
 
-        confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
 
-        performance = PositionPerformance.objects.get(
-            order_uid_id=confirmed_buy_order.order_uid
-        )
+def test_should_create_new_sell_order_for_user_with_ucdc_bot(user) -> None:
+    price = 1317
 
-        position: OrderPosition = OrderPosition.objects.get(
-            pk=performance.position_uid_id
-        )
+    # We create an order
+    buy_order = create_buy_order(
+        ticker="6606.HK",
+        price=price,
+        user_id=user.id,
+        bot_id="UCDC_ATM_007692",
+    )
 
-        sellPosition, sell_order = sell_position_service(
-            price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
-            datetime.now(),
-            position.position_uid,
-        )
+    buy_order.status = "placed"
+    buy_order.placed = True
+    buy_order.placed_at = datetime.now()
+    buy_order.save()
 
-        confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
-        assert sell_order.order_uid != None
+    buy_order.status = "filled"
+    buy_order.filled_at = datetime.now()
+    buy_order.save()
 
-        confirmed_sell_order.status = "placed"
-        confirmed_sell_order.placed = True
-        confirmed_sell_order.placed_at = datetime.now()
-        confirmed_sell_order.save()
+    confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
 
-        # We get previous user balance
-        user = User.objects.get(pk=user.id)
-        previous_user_balance = Accountbalance.objects.get(user=user).amount
+    performance = PositionPerformance.objects.get(
+        order_uid_id=confirmed_buy_order.order_uid
+    )
 
-        # We accept the order and set it as filled
-        confirmed_sell_order.status = "filled"
-        confirmed_sell_order.filled_at = datetime.now()
-        confirmed_sell_order.save()
+    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+
+    sellPosition, sell_order = sell_position_service(
+        price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
+        datetime.now(),
+        position.position_uid,
+    )
+
+    confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
+    assert sell_order.order_uid != None
+
+    confirmed_sell_order.status = "placed"
+    confirmed_sell_order.placed = True
+    confirmed_sell_order.placed_at = datetime.now()
+    confirmed_sell_order.save()
+
+    # We get previous user balance
+    user = User.objects.get(pk=user.id)
+    previous_user_balance = Accountbalance.objects.get(user=user).amount
+
+    # We accept the order and set it as filled
+    confirmed_sell_order.status = "filled"
+    confirmed_sell_order.filled_at = datetime.now()
+    confirmed_sell_order.save()

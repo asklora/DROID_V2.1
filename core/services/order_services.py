@@ -1,3 +1,4 @@
+from bot.calculate_bot import populate_daily_profit
 from config.celery import app
 from django.apps import apps
 from core.djangomodule.calendar import TradingHours
@@ -116,6 +117,7 @@ def order_executor(self, payload, recall=False):
         messages = 'order canceled'
         message = f'{order.side} order  stocks {order.ticker.ticker} was canceled'
     
+    populate_daily_profit(user_id=[order.user_id.id])
     firebase_user_update(user_id=[order.user_id.id])
     payload_serializer = OrderDetailsServicesSerializers(order).data
     channel_layer = get_channel_layer()
@@ -142,12 +144,14 @@ def order_executor(self, payload, recall=False):
 
 
 
+
 @app.task
 def update_rtdb_user_porfolio():
     try:
         hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
         if hkd_exchange.is_open:
             users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
+            populate_daily_profit(user_id=users)
             firebase_user_update(user_id=users)
     except Exception as e:
         err = ErrorLog.objects.create_log(

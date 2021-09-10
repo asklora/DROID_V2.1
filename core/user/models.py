@@ -35,23 +35,22 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     email = models.EmailField(("email address"),null=True, blank=True)
-    username = models.CharField(
-        max_length=255, unique=True)
+    username = models.CharField(max_length=255, unique=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
     address = models.TextField(blank=True, null=True)
     first_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255, null=True, blank=True)
     birth_date = models.DateField(null=True, blank=True)
-    avatar = models.ImageField(
-        upload_to=usermanagerprofile, null=True, blank=True)
+    avatar = models.ImageField(upload_to=usermanagerprofile, null=True, blank=True)
     is_staff = models.BooleanField(default=False)
+    is_test = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
-    current_status = models.CharField(
-        max_length=255, null=True, blank=True, choices=status_choices, default=UNVERIFIED)
+    current_status = models.CharField(max_length=255, null=True, blank=True, choices=status_choices, default=UNVERIFIED)
     is_joined = models.BooleanField(default=False)
     USERNAME_FIELD = "username"
     AUTH_FIELD_NAME = "email"
+    gender = models.CharField(max_length=255, null=True, blank=True)
     # REQUIRED_FIELDS = ["username"]
 
     objects = AppUserManager()
@@ -334,6 +333,9 @@ class UserProfitHistory(models.Model):
     daily_profit = models.FloatField(default=0)
     daily_profit_pct = models.FloatField(default=0)
     daily_invested_amount = models.FloatField(default=0)
+    total_profit = models.FloatField(null=True, blank=True)
+    total_profit_pct = models.FloatField(null=True, blank=True)
+    rank = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.user_id.email
