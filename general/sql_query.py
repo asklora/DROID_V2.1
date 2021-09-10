@@ -38,6 +38,7 @@ from general.table_name import (
     get_user_account_balance_table_name,
     get_user_core_table_name,
     get_user_profit_history_table_name,
+    get_user_transaction_table_name,
     get_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
@@ -688,7 +689,7 @@ def get_data_from_table_name(table_name, ticker=None, currency_code=None, active
 
 def get_user_core(currency_code=None, user_id=None, field="*"):
     table_name = get_user_core_table_name()
-    query = f"select {field} from {table_name} where is_active=True and is_superuser=False "
+    query = f"select {field} from {table_name} where is_active=True and is_superuser=False and is_test=False "
     if type(user_id) != type(None):
         query += f"and id in {tuple_data(user_id)}  "
     elif type(currency_code) != type(None):
@@ -716,6 +717,17 @@ def get_user_account_balance(currency_code=None, user_id=None, field="*"):
         query += f"and user_id in {tuple_data(user_id)}  "
     elif type(currency_code) != type(None):
         query += f"and currency_code in {tuple_data(currency_code)} "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_user_deposit(user_id=None, balance_uid=None, field="*"):
+    table_name = get_user_transaction_table_name()
+    query = f"select balance_uid, sum(amount) as deposit from {table_name} where transaction_detail ->> 'event' = 'first deposit' "
+    if type(user_id) != type(None):
+        query += f"and balance_uid in (select balance_uid from {get_user_account_balance_table_name()} where user_id in {tuple_data(user_id)})  "
+    elif type(balance_uid) != type(None):
+        query += f"and balance_uid in {tuple_data(balance_uid)} "
+    query += f"group by balance_uid; "
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
@@ -771,6 +783,6 @@ def get_orders_position_performance(user_id=None, ticker=None, currency_code=Non
         query += "and exists (select 1 from (select filters.position_uid, max(filters.created) max_date "
         query += "from orders_position_performance as filters group by filters.position_uid) result "
         query += "where result.position_uid=opp.position_uid and result.max_date::date=opp.created::date) "
-        query += "order by created;"
+        query += "order by created DESC;"
     data = read_query(query, table_name, cpu_counts=True)
     return data

@@ -2,6 +2,7 @@ from core.djangomodule.general import formatdigit
 from general.data_process import NoneToZero
 from bot.data_download import get_currency_data
 import random
+from datetime import datetime, date
 from asgiref.sync import sync_to_async
 import numpy as np
 import pandas as pd
@@ -19,19 +20,13 @@ from general.sql_query import (
     get_industry_group, 
     get_latest_price_data,
     get_latest_ranking,
-    get_latest_ranking_rank_1, 
-    get_master_tac_data,
     get_orders_position_group_by_user_id,
     get_orders_position,
     get_orders_position_performance, 
-    get_region, 
-    get_universe_rating, 
     get_universe_rating_detail_history, 
     get_universe_rating_history,
-    get_bot_backtest, 
     get_bot_option_type, 
     get_bot_statistic_data, 
-    get_latest_bot_update_data,
     get_user_account_balance,
     get_user_core,
     get_user_profit_history)
@@ -349,7 +344,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             # pct_total_user_invested_amount = int(round(total_user_invested_amount / total_invested_amount, 0) * 100)
             # total_profit_amount = sum(orders_position["profit"].to_list())
             total_invested_amount = NoneToZero(np.nansum(orders_position["current_values"].to_list()))
-            daily_live_profit = total_invested_amount - user_core.loc[0, "daily_invested_amount"] + user_core.loc[0, "pending_amount"]
+            daily_live_profit = total_invested_amount + user_core.loc[0, "pending_amount"] - user_core.loc[0, "daily_invested_amount"]
             total_bot_invested_amount = NoneToZero(np.nansum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_values"].to_list()))
             total_user_invested_amount = NoneToZero(np.nansum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["current_values"].to_list()))
             pct_total_bot_invested_amount = NoneToZero(int(round(total_bot_invested_amount / total_invested_amount, 0) * 100))
@@ -413,8 +408,9 @@ def firebase_user_update(user_id=None, currency_code=None):
     currency = currency[["currency_code", "is_decimal"]]
 
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, first_name, last_name, email, phone, birth_date, gender")
-    user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_profit, daily_profit_pct, daily_invested_amount, rank")
+    user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_profit, daily_profit_pct, daily_invested_amount, rank, total_profit, total_profit_pct")
     user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, amount as balance, currency_code")
+    
     user_core = user_core.merge(user_balance, how="left", on=["user_id"])
     user_core = user_core.merge(user_daily_profit, how="left", on=["user_id"])
     user_core = user_core.merge(currency, how="left", on=["currency_code"])
@@ -450,12 +446,11 @@ def firebase_user_update(user_id=None, currency_code=None):
             position_data["trading_day"] = np.where(position_data["trading_day"].isnull(), position_data["spot_date"], position_data["trading_day"])
             position_data = position_data.merge(universe, how="left", on=["ticker"])
 
-            orders_performance_field = "distinct created::date, position_uid, share_num, order_uid"
+            orders_performance_field = "distinct created, position_uid, share_num, order_uid"
             performance_data = get_orders_position_performance(position_uid=position_data["position_uid"].to_list(), field=orders_performance_field, latest=True)
+            performance_data["created"] = performance_data["created"].dt.date
             performance_data = performance_data.drop_duplicates(subset=["created", "position_uid"], keep="first")
             performance_data = performance_data.drop(columns=["created"])
             position_data = position_data.merge(performance_data, how="left", on=["position_uid"])
             position_data = position_data.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
-        print(position_data)
-        # concurent calculation
         asyncio.run(gather_task(position_data, bot_option_type, user_core))

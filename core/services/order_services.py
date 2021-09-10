@@ -117,6 +117,7 @@ def order_executor(self, payload, recall=False):
         messages = 'order canceled'
         message = f'{order.side} order  stocks {order.ticker.ticker} was canceled'
     
+    populate_daily_profit(user_id=[order.user_id.id])
     firebase_user_update(user_id=[order.user_id.id])
     payload_serializer = OrderDetailsServicesSerializers(order).data
     channel_layer = get_channel_layer()
@@ -140,6 +141,7 @@ def order_executor(self, payload, recall=False):
                                              'status_code': 200
                                          }))
     return payload_serializer
+
 
 
 
