@@ -85,30 +85,6 @@ class CurrencyCalendars(models.Model):
         return self.uid
 
 
-# class Country(models.Model):
-#     country_code = models.TextField(primary_key=True)
-#     currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code",
-#                                       related_name="country_currency_code", blank=True, null=True)
-#     country_name = models.TextField(blank=True, null=True)
-#     ds_country_code = models.TextField(blank=True, null=True)
-#     is_open = models.BooleanField(default=False)
-
-#     class Meta:
-#         managed = False
-#         db_table = "country"
-
-#     def __str__(self):
-#         return self.country_code
-
-# class CountryCalendars(models.Model):
-#     uid = models.TextField(primary_key=True)
-#     country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column="country_code",related_name="country_calendar_country_code", blank=True, null=True)
-#     non_working_day = models.DateField(blank=True, null=True)
-#     description = models.TextField(blank=True, null=True)
-
-#     class Meta:
-#         managed = False
-#         db_table = "country_calendar"
 
 
 class IndustryGroup(models.Model):
