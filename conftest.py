@@ -39,6 +39,7 @@ def user(django_db_setup, django_db_blocker, worker_id):
             password="everything_is_but_a_test",
             is_active=True,
             current_status="verified",
+            is_test=True,
         )
         user_balance = Accountbalance.objects.create(
             user=user,
