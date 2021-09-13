@@ -79,13 +79,10 @@ DATABASES = {
         'PORT': port,
 
     },
-    # 'mongo': {
-    #         'ENGINE': 'djongo',
-    #         'NAME': 'universe',
-    #         'CLIENT': {
-    #             'host': 'mongodb+srv://postgres:postgres@cluster0.b0com.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
-    #         },
-    #         'ENFORCE_SCHEMA': False,
-    #     }
 
+}
+
+FIREBASE_COLLECTION={
+    'portfolio':'portfolio',
+    'universe':'universe'
 }

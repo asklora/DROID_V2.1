@@ -13,6 +13,8 @@ from django_redis import get_redis_connection
 from redis.exceptions import ConnectionError
 import logging
 import pandas as pd
+import pprint
+
 logging.basicConfig()
 logger = logging.getLogger('redis')
 
@@ -38,7 +40,9 @@ class IsRegisteredUser(permissions.BasePermission):
             return NeedRegister()
         return True
 
-
+def jsonprint(data:dict)->None:
+    pretty =pprint.PrettyPrinter(indent=2)
+    pretty.pprint(data)
 @deconstructible
 class UploadTo:
     def __init__(self, name):

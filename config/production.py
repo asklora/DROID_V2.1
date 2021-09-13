@@ -72,3 +72,7 @@ DATABASES = {
     }
 
 }
+FIREBASE_COLLECTION={
+    'portfolio':'portfolio',
+    'universe':'universe'
+}

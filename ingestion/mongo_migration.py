@@ -1,4 +1,5 @@
 from core.djangomodule.general import formatdigit
+from django.conf import settings
 from general.data_process import NoneToZero
 from bot.data_download import get_currency_data
 import random
@@ -289,7 +290,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
     universe = change_date_to_str(universe)
-    update_to_mongo(data=universe, index="ticker", table="universe", dict=False)
+    update_to_mongo(data=universe, index="ticker", table=settings.FIREBASE_COLLECTION['universe'], dict=False)
 
 
 async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,user_core:pd.DataFrame)-> List[pd.DataFrame]:
@@ -395,7 +396,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         result["current_asset"] = result["balance"] + result["total_portfolio"] + result["pending_amount"]
         result = change_date_to_str(result, exception=["rank"])
         result["rank"] = np.where(result["rank"].isnull(), None, result["rank"])
-        await sync_to_async(update_to_mongo)(data=result, index="user_id", table="portfolio", dict=False)
+        await sync_to_async(update_to_mongo)(data=result, index="user_id", table=settings.FIREBASE_COLLECTION['protfolio'], dict=False)
         return active
 
 
