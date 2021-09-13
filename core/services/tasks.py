@@ -8,6 +8,7 @@ from channels.layers import get_channel_layer
 from datetime import datetime, timedelta
 from pandas.core.series import Series
 from django.core.cache import cache
+from django.conf import settings
 # CELERY APP
 from config.celery import app
 from celery.schedules import crontab
@@ -17,7 +18,7 @@ from core.universe.models import Universe, UniverseConsolidated,ExchangeMarket
 from core.Clients.models import ClientTopStock, UniverseClient
 from core.user.models import User
 from core.djangomodule.serializers import CsvSerializer
-from core.djangomodule.yahooFin import get_quote_index, get_quote_yahoo
+# from core.djangomodule.yahooFin import get_quote_index, get_quote_yahoo
 from core.master.models import Currency
 from core.orders.models import Order, PositionPerformance, OrderPosition
 from core.Clients.models import UserClient, Client
@@ -727,7 +728,7 @@ def hedge(currency=None, bot_tester=False, **options):
                     report_to_slack(
                         f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
             if group_celery_jobs:
-                result = celery_jobs.apply_async()
+                result = celery_jobs.apply_async(queue=settings.HEDGE_WORKER_DEFAULT_QUEUE)
                 retry = 0
                 while result.waiting():
                     tm.sleep(2)

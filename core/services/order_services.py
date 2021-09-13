@@ -15,7 +15,7 @@ from datasource import rkd as trkd
 import time
 import json
 import asyncio
-
+from django.conf import settings
 
 class OrderDetailsServicesSerializers(serializers.ModelSerializer):
 
