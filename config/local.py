@@ -41,6 +41,10 @@ print("using test db changes local")
 read_endpoint, write_endpoint, port = db.test_url
 CELERY_BROKER_URL = "amqp://rabbitmq:rabbitmq@16.162.110.123:5672"
 CELERY_TASK_DEFAULT_QUEUE ='localdev'
+HEDGE_WORKER_DEFAULT_QUEUE ='localdev'
+BROADCAST_WORKER_DEFAULT_QUEUE='localdev'
+PORTFOLIO_WORKER_DEFAULT_QUEUE='localdev'
+UTILS_WORKER_DEFAULT_QUEUE='localdev'
 
 print(f'using read: {read_endpoint}')
 # print(f'using write: {write_endpoint}')

@@ -34,7 +34,11 @@ CACHES = {
 print('using prod db')
 read_endpoint, write_endpoint, port = db.prod_url
 CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@18.167.118.164:5672'
-
+CELERY_TASK_DEFAULT_QUEUE ='celery'
+HEDGE_WORKER_DEFAULT_QUEUE ='hedger'
+BROADCAST_WORKER_DEFAULT_QUEUE='broadcaster'
+PORTFOLIO_WORKER_DEFAULT_QUEUE='portofolio'
+UTILS_WORKER_DEFAULT_QUEUE='utils'
 print(read_endpoint)
 
 DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
