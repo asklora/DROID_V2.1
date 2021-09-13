@@ -29,14 +29,25 @@ class ConvertMoney(Convert):
             function()
 
     
-    def convert_money(self, amount, from_currency, to_currency):
-        currency1 = Currency.objects.get(currency_code=from_currency)
-        currency2 = Currency.objects.get(currency_code=to_currency)
-        exchange_rate = currency1.last_price * currency2.last_price
+    def convert_money(self, amount, from_currency:str, to_currency:str):
+        from_currency = Currency.objects.get(currency_code=from_currency)
+        to_currency = Currency.objects.get(currency_code=to_currency)
+        exchange_rate = from_currency.last_price * to_currency.last_price
         rounded = 0
-        if(currency2.is_decimal):
+        if(to_currency.is_decimal):
             rounded = 2
-        if(currency1.last_price <= currency2.last_price):
+        if(from_currency.last_price <= to_currency.last_price):
+            result = amount * exchange_rate
+        else:
+            result = amount / exchange_rate
+        return round(result, rounded)
+    
+    def convert_money(self, amount, from_currency:Currency, to_currency:Currency):
+        exchange_rate = from_currency.last_price * to_currency.last_price
+        rounded = 0
+        if(to_currency.is_decimal):
+            rounded = 2
+        if(from_currency.last_price <= to_currency.last_price):
             result = amount * exchange_rate
         else:
             result = amount / exchange_rate

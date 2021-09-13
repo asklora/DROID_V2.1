@@ -1,3 +1,4 @@
+from core.universe.models import Currency
 from core.user.convert import ConvertMoney
 from core.orders.models import OrderPosition
 from core.user.models import User
@@ -20,3 +21,6 @@ class Command(BaseCommand):
         print(convert.convert_money(100, "HKD", "USD"))
         print(convert.convert_money(100, "KRW", "USD"))
         print(convert.convert_money(100, "USD", "KRW"))
+        from_curr = Currency.objects.get(currency_code="USD")
+        to_curr = Currency.objects.get(currency_code="HKD")
+        print(convert.convert_money(100, from_curr, to_curr))
