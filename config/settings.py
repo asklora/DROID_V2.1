@@ -5,6 +5,13 @@ from environs import Env
 from core.djangomodule.network.cloud import DroidDb
 from datetime import timedelta
 import firebase_admin
+import warnings
+import numpy as np
+
+
+np.seterr(all="ignore")
+warnings.filterwarnings("ignore")
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 """
 This is the default Django settings file sans the database settings, caches and celery configurations.
