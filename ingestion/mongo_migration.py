@@ -297,7 +297,6 @@ async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,us
     tasks=[]
     users= user_core["user_id"].unique().tolist()
     for user in users:
-        print(user)
         tasks.append(
             asyncio.ensure_future(
             do_task(position_data, bot_option_type, user, user_core)
@@ -420,22 +419,22 @@ def firebase_user_update(user_id=None, currency_code=None):
     user_core.loc[user_core["is_decimal"] == False, "balance"] = round(user_core.loc[user_core["is_decimal"] == False, "balance"], 0)
     if(len(user_core["user_id"].to_list()) > 0):
         bot_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
-        print(bot_order_pending)
+        # print(bot_order_pending)
         user_core = user_core.merge(bot_order_pending, how="left", on=["user_id"])
         user_core["bot_pending_amount"] = np.where(user_core["bot_pending_amount"].isnull(), 0, user_core["bot_pending_amount"])
 
         stock_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=True)
-        print(stock_order_pending)
+        # print(stock_order_pending)
         user_core = user_core.merge(stock_order_pending, how="left", on=["user_id"])
         user_core["stock_pending_amount"] = np.where(user_core["stock_pending_amount"].isnull(), 0, user_core["stock_pending_amount"])
 
         user_core["pending_amount"] = user_core["stock_pending_amount"] + user_core["bot_pending_amount"]
-        print(user_core)
+        # print(user_core)
         # import sys
         # sys.exit(1)
         orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
         position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
-        print(position_data)
+        # print(position_data)
         position_data["expiry"]=position_data["expiry"].astype(str)
         if(len(position_data) > 0):
             universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "currency_code"]]
