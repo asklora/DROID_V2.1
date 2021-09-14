@@ -6,6 +6,7 @@ artifacts:
 phases:
   install:
     commands:
+      - cd /code
       - pip install -r installer/requirements_test.txt
   pre_build:
     commands:
