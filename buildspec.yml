@@ -20,3 +20,5 @@ phases:
   post_build:
     commands:
       - echo test completed on `date`
+      - echo docker test
+      - docker version
