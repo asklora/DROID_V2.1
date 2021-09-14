@@ -617,10 +617,9 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     # dataframe for details checking
     fundamentals_details = {}
-    fundamentals_details['value'] = {}
-    fundamentals_details['momentum'] = {}
-    fundamentals_details['quality'] = {}
-    fundamentals_details['extra'] = {}
+    for i in universe_currency_code:
+        if i:
+            fundamentals_details[i] = {}
 
     # calculate ai_score by each currency_code (i.e. group) for each of [Quality, Value, Momentum]
     for (group, pillar_name), g in factor_rank.groupby(["group", "pillar"]):
@@ -631,11 +630,11 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
         score_col = [f"{x}_{y}_currency_code" for x, y in sub_g.loc[sub_g["scaler"].notnull(), ["factor_name","scaler"]].to_numpy()]
         score_col += [x for x in sub_g.loc[sub_g["scaler"].isnull(), "factor_name"]]
-        score_col_detail = sub_g.loc[sub_g["scaler"].notnull(),'factor_name'].to_list() + score_col
-
         fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_{pillar_name}"] = fundamentals[score_col].mean(axis=1)
-        fundamentals_details[pillar_name][group] = fundamentals.loc[fundamentals['currency_code']==group,
-                                                                    ['ticker', f"fundamentals_{pillar_name}"] + score_col_detail].sort_values(by=[ f"fundamentals_{pillar_name}"])
+
+        # save used columns to pillars
+        score_col_detail = ['ticker', f"fundamentals_{pillar_name}"] + sub_g.loc[sub_g["scaler"].notnull(),'factor_name'].to_list() + score_col
+        fundamentals_details[group][pillar_name] = fundamentals.loc[fundamentals['currency_code']==group, score_col_detail].sort_values(by=[ f"fundamentals_{pillar_name}"])
 
     # calculate ai_score by each currency_code (i.e. group) for [Extra]
     for group, g in factor_rank.groupby("group"):
@@ -648,14 +647,19 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = fundamentals[score_col].mean(axis=1)
         else:
             score_col_detail = []
-            fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = np.nan
+            fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = 0
 
-        fundamentals_details['extra'][group] = fundamentals.loc[fundamentals['currency_code']==group,
-                                                                ['ticker', "fundamentals_extra"] + score_col_detail].sort_values(by=[ f"fundamentals_extra"])
+        # save used columns to pillars
+        fundamentals_details[group]['extra'] = fundamentals.loc[fundamentals['currency_code']==group,
+               ['ticker', "fundamentals_extra"] + score_col_detail].sort_values(by=[ f"fundamentals_extra"])
+
     # manual score check output csv
-    for pillar, v in fundamentals_details.items():
-        for group, df in v.items():
-            upsert_data_to_database_ali(df,f"test_fundamental_score_details_{pillar}","ticker",how="update",Text=True)
+    for group, v in fundamentals_details.items():
+        pillar_df = []
+        for pillar, df in v.items():
+            pillar_df.append(df.set_index(['ticker']))
+        pillar_df = pd.concat(pillar_df, axis=1).reset_index()
+        upsert_data_to_database_ali(pillar_df, f"test_fundamental_score_details_{group}","index",how="update",Text=True)
 
     fundamentals_factors_scores_col = fundamentals.filter(regex="^fundamentals_").columns
     fundamentals[fundamentals_factors_scores_col] = (fundamentals[fundamentals_factors_scores_col]*10).round(1)
