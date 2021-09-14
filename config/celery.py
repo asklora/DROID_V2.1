@@ -11,10 +11,9 @@ from dotenv import load_dotenv
 
 env = Env()
 load_dotenv()
-debug = os.environ.get('DJANGO_SETTINGS_MODULE', True)
-if debug:
+debug = os.environ.get('DJANGO_SETTINGS_MODULE', False)
+if not debug:
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.local')
-    # app2 = Celery('core.services',broker='amqp://rabbitmq:rabbitmq@16.162.110.123:5672')
 dbdebug = env.bool("DROID_DEBUG")
 
 #NOTE AVALAIBLE TASK 13-09-2021
@@ -52,7 +51,8 @@ app = Celery('core.services')
 # app_dev.config_from_object('django.conf:settings', namespace='CELERY')
 # Load task modules from all registered Django app configs.
 # app_dev.autodiscover_tasks()
-
+if debug == 'config.production':
+    app.conf.broker_login_method = 'PLAIN'
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load task modules from all registered Django app configs.
