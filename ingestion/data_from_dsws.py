@@ -662,12 +662,12 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         upsert_data_to_database_ali(pillar_df, f"test_fundamental_score_details_{group}","index",how="update",Text=True)
 
     fundamentals_factors_scores_col = fundamentals.filter(regex="^fundamentals_").columns
-    fundamentals[fundamentals_factors_scores_col] = (fundamentals[fundamentals_factors_scores_col]*10).round(1)
+    fundamentals[fundamentals_factors_scores_col] *= 10
 
     print("Calculate ESG Value")
     esg_cols = ["environment_minmax_currency_code", "environment_minmax_industry", "social_minmax_currency_code",
                 "social_minmax_industry", "goverment_minmax_currency_code", "goverment_minmax_industry"]
-    fundamentals["esg"] = (fundamentals[esg_cols].mean(1)*10).round(1)
+    fundamentals["esg"] = fundamentals[esg_cols].mean(1)*10
 
     print("Calculate AI Score")
     ai_score_cols = ["fundamentals_value","fundamentals_quality","fundamentals_momentum","fundamentals_extra"]
@@ -684,20 +684,20 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     print(fundamentals[["ai_score", "ai_score2"]].describe())
     for name, g in fundamentals.groupby(['currency_code']):
-        group_history1 = score_history.loc[(score_history['currency_code'] == name)&
-                                          (score_history['ai_score']>score_history['ai_score'].median()), ['ai_score','ai_score']].values
-        group_history2 = score_history.loc[(score_history['currency_code'] == name)&
-                                          (score_history['ai_score']<score_history['ai_score'].median()), ['ai_score','ai_score']].values
+        score_history_group = score_history.loc[(score_history['currency_code'] == name)]
+        group_history1 = score_history_group.loc[score_history_group['ai_score']>score_history_group['ai_score'].median(), ['ai_score','ai_score']].values
+        group_history2 = score_history_group.loc[score_history_group['ai_score']<=score_history_group['ai_score'].median(), ['ai_score','ai_score']].values
         m1 = MinMaxScaler(feature_range=(5, 10)).fit(group_history1)
         m2 = MinMaxScaler(feature_range=(0, 5)).fit(group_history2)
         score_current1 = g.loc[(g['ai_score']>g['ai_score'].median()), ["ai_score", "ai_score2"]]
-        score_current2 = g.loc[(g['ai_score']<g['ai_score'].median()), ["ai_score", "ai_score2"]]
+        score_current2 = g.loc[(g['ai_score']<=g['ai_score'].median()), ["ai_score", "ai_score2"]]
         fundamentals.loc[score_current1.index, ["ai_score", "ai_score2"]] = m1.transform(score_current1)
         fundamentals.loc[score_current2.index, ["ai_score", "ai_score2"]] = m2.transform(score_current2)
     print(fundamentals[["ai_score","ai_score2"]].describe())
 
     fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].clip(0, 10)
-    fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].round(1)
+    fundamentals[['ai_score','ai_score2',"esg"]] = fundamentals[['ai_score','ai_score2',"esg"]].round(1)
+    fundamentals[fundamentals_factors_scores_col] = fundamentals[fundamentals_factors_scores_col].round(1)
 
     universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
                                             "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
@@ -708,7 +708,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
     if(len(fundamentals)) > 0 :
         print(fundamentals)
-        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra",
+        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "esg",
                                "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
         result["updated"] = dateNow()
         print(result)
