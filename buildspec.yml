@@ -12,4 +12,4 @@ phases:
         - echo "Running all unit tests"
   post_build:
     commands:
-      - echo Build completed on `date`
+      - echo Build completed sad `date`
