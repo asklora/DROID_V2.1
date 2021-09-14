@@ -22,12 +22,12 @@ jobs:
 
       - name: Create test env
       - run: echo "env test"
-        if: "contains(github.event.head_commit.message, 'ecr')"
-      - run: docker build . -t droid-test -f deployment/container/Dockerfile.test
-        id: ecr_env
         uses: jwalton/gh-ecr-push@v1
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ap-east-1
           image: droid-test:latest
+        id: ecr_env
+        if: "contains(github.event.head_commit.message, 'build-test')"
+      - run: docker build . -t droid-test -f deployment/container/Dockerfile.test
