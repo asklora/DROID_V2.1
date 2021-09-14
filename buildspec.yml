@@ -7,8 +7,8 @@ phases:
   install:
     commands:
       - echo "navigate to work dir"
-      - cd /code
       - echo "installing test dependencies"
+      - ./installer/requirement.sh
       - pip install -r installer/requirements_test.txt
   pre_build:
     commands:
