@@ -9,8 +9,8 @@ jobs:
 
     steps:
       
+      - if: "contains(github.event.head_commit.message, 'ecr')"
       - uses: actions/checkout@v2
-        if: "contains(github.event.head_commit.message, 'ecr')"
       - run: docker build . -t droid -f deployment/batch/Dockerfile.celery
       - name: Push to ECR
         id: ecr
@@ -22,8 +22,8 @@ jobs:
           image: droid:latest
       
      
+      - if: "contains(github.event.head_commit.message, 'build-test')"
       - uses: actions/checkout@v2
-        if: "contains(github.event.head_commit.message, 'build-test')"
       - run: docker build . -t droid-test -f deployment/container/Dockerfile.test
       - name: Create test env
         id: ecr_env
