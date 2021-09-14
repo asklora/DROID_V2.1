@@ -6,11 +6,11 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    if: "contains(github.event.head_commit.message, 'ecr')"
     steps:
       - uses: actions/checkout@v2
-      - run: docker build . -t droid -f deployment/batch/Dockerfile.celery
       - name: Push to ECR
+        if: "contains(github.event.head_commit.message, 'ecr')"
+      - run: docker build . -t droid -f deployment/batch/Dockerfile.celery
         id: ecr
         uses: jwalton/gh-ecr-push@v1
         with:
@@ -18,12 +18,10 @@ jobs:
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ap-east-1
           image: droid:latest
-    
-    if: "contains(github.event.head_commit.message, 'ebuild-test')"
-    steps:
-      - uses: actions/checkout@v2
-      - run: docker build . -t droid-test -f deployment/container/Dockerfile.test
+
       - name: Create test env
+        if: "contains(github.event.head_commit.message, 'ecr')"
+      - run: docker build . -t droid-test -f deployment/container/Dockerfile.test
         id: ecr_env
         uses: jwalton/gh-ecr-push@v1
         with:
