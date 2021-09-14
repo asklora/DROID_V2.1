@@ -323,7 +323,8 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             orders_position["margin_amount"] = (orders_position["margin"] - 1) * orders_position["investment_amount"]
             orders_position["bot_cash_balance"] = orders_position["bot_cash_balance"] + orders_position["margin_amount"]
             orders_position["threshold"] = (orders_position["margin_amount"] + orders_position["investment_amount"]) - orders_position["bot_cash_balance"]
-
+            orders_position["margin_amount"] = orders_position["bot_cash_balance"] - orders_position["margin_amount"]
+            orders_position["margin_amount"] = np.where(orders_position["margin_amount"] >= 0, 0, orders_position["margin_amount"] * -1)
             #PROFIT
             # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_values"]
             # orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"]
