@@ -10,17 +10,17 @@ from django.core.management.base import BaseCommand
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Something")
-        
+        populate_daily_profit()
         # uno_position_check("4cad83492f4749549a21412925560f4b", to_date=None, tac=False, hedge=False, latest=True)
         # populate_daily_profit()
         # firebase_user_update()
 
-        convert = ConvertMoney()
-        print(convert.convert_money(100, "USD", "HKD"))
-        print(convert.convert_money(100, "USD", "USD"))
-        print(convert.convert_money(100, "HKD", "USD"))
-        print(convert.convert_money(100, "KRW", "USD"))
-        print(convert.convert_money(100, "USD", "KRW"))
-        from_curr = Currency.objects.get(currency_code="USD")
-        to_curr = Currency.objects.get(currency_code="HKD")
-        print(convert.convert_money(100, from_curr, to_curr))
+        # convert = ConvertMoney()
+        # print(convert.convert_money(100, "USD", "HKD"))
+        # print(convert.convert_money(100, "USD", "USD"))
+        # print(convert.convert_money(100, "HKD", "USD"))
+        # print(convert.convert_money(100, "KRW", "USD"))
+        # print(convert.convert_money(100, "USD", "KRW"))
+        # from_curr = Currency.objects.get(currency_code="USD")
+        # to_curr = Currency.objects.get(currency_code="HKD")
+        # print(convert.convert_money(100, from_curr, to_curr))

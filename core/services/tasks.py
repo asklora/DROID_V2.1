@@ -611,7 +611,7 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False,
                         f"=== {client_name} ORDER {queue.ticker} - {queue.service_type} - {queue.capital} IS CREATED ===")
                 
                 
-                populate_daily_profit(currency_code=currency)
+                populate_daily_profit()
                 
             else:
                 report_to_slack(
@@ -770,7 +770,7 @@ def daily_hedge(currency=None, **options):
     hedge(currency=currency, bot_tester=True, **options)  # bot_tester
     daily_hedge_user(currency=currency,ingest=True)
     try:
-        populate_daily_profit(currency_code=currency)
+        populate_daily_profit()
     except Exception as e:
         err = ErrorLog.objects.create_log(
             error_description=f"===  ERROR IN DAILY profit Function {currency} ===", error_message=str(e))
