@@ -10,6 +10,7 @@ jobs:
     steps:
       
       - uses: actions/checkout@v2
+      - run: echo "droid env"
       - name: Push to ECR
         id: ecr
         uses: jwalton/gh-ecr-push@v1
@@ -18,12 +19,12 @@ jobs:
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ap-east-1
           image: droid:latest
-      - run: echo "droid env"
       - if: "contains(github.event.head_commit.message, 'ecr')"
       - run: docker build . -t droid -f deployment/batch/Dockerfile.celery
       
      
       - uses: actions/checkout@v2
+      - run: echo "test env"
       - name: Create test env
         id: ecr_env
         uses: jwalton/gh-ecr-push@v1
@@ -32,6 +33,5 @@ jobs:
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ap-east-1
           image: droid-test:latest
-      - run: echo "test env"
       - if: "contains(github.event.head_commit.message, 'build-test')"
       - run: docker build . -t droid-test -f deployment/container/Dockerfile.test
