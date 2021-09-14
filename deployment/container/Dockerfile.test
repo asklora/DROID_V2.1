@@ -1,0 +1,5 @@
+FROM python:3.8
+ENV PYTHONUNBUFFERED 1
+COPY ./installer .
+RUN installer/requirement.sh
+RUN pip install -r installer/requirements_test.txt
