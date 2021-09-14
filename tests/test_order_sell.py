@@ -241,7 +241,7 @@ def test_should_create_new_sell_order_for_user_with_ucdc_bot(user) -> None:
     confirmed_sell_order.save()
 
 
-def test_asasasasasasa(user) -> None:
+def test_should_confirm_wallet_changes(user) -> None:
     price = 1317
 
     # We create an order
@@ -330,6 +330,7 @@ def test_asasasasasasa(user) -> None:
             "expiry",
             "spot_date",
             "entry_price",
+            "final_pnl_amount",
             "investment_amount",
             "bot_cash_balance",
             "share_num",
@@ -357,24 +358,41 @@ def test_asasasasasasa(user) -> None:
     # get user transaction history
     transactions = TransactionHistory.objects.filter(balance_uid=balance)
     transactions_df = pd.DataFrame(list(transactions.values()))
-    transactions_df = transactions_df[["id", "side", "amount", "balance_uid_id", "transaction_detail"]]
-    transactions_df = transactions_df.join(pd.json_normalize(transactions_df['transaction_detail']))
+    transactions_df = transactions_df.sort_values("created", ascending=False)
+    transactions_df = transactions_df[
+        ["id", "created", "side", "amount", "transaction_detail"]
+    ]
+
+    transaction_details_df = pd.json_normalize(transactions_df["transaction_detail"])
+    transaction_details_df = transaction_details_df[
+        ["event", "order_uid", "last_amount"]
+    ]
+
+    transactions_df = transactions_df.join(transaction_details_df)
+
     transactions_df = transactions_df.rename(
         {
             "id": "transaction_id",
             "amount": "transaction_amount",
             "balance_uid_id": "balance_uid",
-            "position": "position_uid",
-        }, axis=1,
+        },
+        axis=1,
     )
-    
-    print(performance_df.count())
-    print(transactions_df.count())
-    print(transactions_df.count())
+
+    transactions_df["wallet_amount"] = np.where(
+        transactions_df["side"] == "credit",
+        transaction_details_df["last_amount"].fillna(0)
+        + transactions_df["transaction_amount"],
+        transaction_details_df["last_amount"].fillna(0)
+        - transactions_df["transaction_amount"],
+    )
+
+    transactions_df = transactions_df[["order_uid", "transaction_amount", "wallet_amount"]]
 
     performance_df = performance_df.sort_values(by=["created"])
     performance_df = performance_df.merge(position_df, how="left", on=["position_uid"])
     performance_df = performance_df.merge(orders_df, how="left", on=["order_uid"])
-    performance_df = performance_df.merge(transactions_df, how="left", on=["position_uid"])
+    # performance_df = performance_df.merge(transactions_df, how="left", on=["order_uid"])
 
-    performance_df.to_csv("anu.csv")
+    performance_df.to_csv("performance.csv")
+    transactions_df.to_csv("transactions.csv")

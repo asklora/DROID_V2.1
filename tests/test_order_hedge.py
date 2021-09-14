@@ -1,10 +1,11 @@
-from core.user.models import Accountbalance
 from datetime import datetime
+
 import numpy as np
 import pandas as pd
 import pytest
 from core.master.models import MasterOhlcvtr
 from core.orders.models import Order, OrderPosition, PositionPerformance
+from core.user.models import Accountbalance, TransactionHistory
 from portfolio import classic_position_check, ucdc_position_check, uno_position_check
 
 from utils import create_buy_order
@@ -422,6 +423,7 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
     assert performance.exists() == True
     assert performance.count() > 1
 
+
 def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     # step 1: create a new order
     ticker = "9901.HK"
@@ -437,7 +439,7 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
         price=price,
         user_id=user.id,
         margin=2,
-        bot_id="UCDC_ATM_007692",  # 4 weeks worth of testing
+        bot_id="UCDC_ATM_003846",  # 2 weeks worth of testing
     )
 
     buy_order.status = "placed"
@@ -501,6 +503,7 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
             "expiry",
             "spot_date",
             "entry_price",
+            "final_pnl_amount",
             "investment_amount",
             "bot_cash_balance",
             "share_num",
@@ -522,12 +525,51 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     orders_df = orders_df[["order_uid", "order_type", "side", "amount", "price", "qty"]]
 
     # get user balances
-    balances = Accountbalance.objects.filter(user=user)
-    balances_df = pd.DataFrame(list(balances.values()))
+    balance = Accountbalance.objects.get(user=user)
 
+    # get user transaction history
+    transactions = TransactionHistory.objects.filter(balance_uid=balance)
+    transactions_df = pd.DataFrame(list(transactions.values()))
+    transactions_df = transactions_df.sort_values("created", ascending=False)
+    transactions_df = transactions_df[
+        ["id", "created", "side", "amount", "transaction_detail"]
+    ]
+
+    # get transaction details
+    transaction_details_df = pd.json_normalize(transactions_df["transaction_detail"])
+    transaction_details_df = transaction_details_df[
+        ["event", "order_uid", "last_amount"]
+    ]
+    transactions_df = transactions_df.rename(
+        {
+            "id": "transaction_id",
+            "amount": "transaction_amount",
+            "balance_uid_id": "balance_uid",
+        },
+        axis=1,
+    )
+
+    # join both transaction dataframes
+    transactions_df = transactions_df.join(transaction_details_df)
+
+    # calculate user wallet amounts
+    transactions_df["wallet_amount"] = np.where(
+        transactions_df["side"] == "credit",
+        transaction_details_df["last_amount"].fillna(0)
+        + transactions_df["transaction_amount"],
+        transaction_details_df["last_amount"].fillna(0)
+        - transactions_df["transaction_amount"],
+    )
+
+    # we only take the columns we need
+    # transactions_df = transactions_df[
+    #     ["order_uid", "transaction_amount", "wallet_amount"]
+    # ]
+
+    # we join all interesting dataframes
     performance_df = performance_df.sort_values(by=["created"])
     performance_df = performance_df.merge(position_df, how="left", on=["position_uid"])
     performance_df = performance_df.merge(orders_df, how="left", on=["order_uid"])
-    performance_df = performance_df.merge(balances_df, how="left", on=["user_id"])
 
-    performance_df.to_csv("hedge_user_balance.csv")
+    transactions_df.to_csv("user_transactions.csv")
+    # performance_df.to_csv("hedge_user_balance.csv")

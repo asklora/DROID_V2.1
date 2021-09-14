@@ -85,7 +85,8 @@ def test_should_confirm_bot_expiry_for_ucdc() -> None:
         )
         expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
 
-        print("\nCreated date: " + order.created.date().strftime("%Y-%m-%d"))
+        print("\nBot type: " + bot_type.bot_id)
+        print("Created date: " + order.created.date().strftime("%Y-%m-%d"))
         print("Expiry date: " + order.setup["position"]["expiry"])
         print("Calculated expiry date: " + expiry_date)
         print("Duration: " + bot_type.duration)
