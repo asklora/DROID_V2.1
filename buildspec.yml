@@ -21,4 +21,5 @@ phases:
     commands:
       - echo test completed on `date`
       - echo docker test
-      - sudo docker version
+      - systemctl start docker
+      - docker version
