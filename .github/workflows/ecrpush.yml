@@ -19,7 +19,8 @@ jobs:
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ap-east-1
           image: droid:latest
-
+      
+      - uses: actions/checkout@v2
       - name: Create test env
       - run: echo "env test"
         uses: jwalton/gh-ecr-push@v1
