@@ -12,7 +12,8 @@ from general.sql_output import (
     delete_old_dividends_on_database, 
     fill_null_company_desc_with_ticker_name,
     update_universe_where_currency_code_null, 
-    upsert_data_to_database)
+    upsert_data_to_database,
+    upsert_data_to_database_ali)
 from general.table_name import (
     get_data_dividend_table_name, 
     get_data_dsws_table_name,
@@ -614,44 +615,63 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals[[f"fundamentals_{name}" for name in factor_rank['pillar'].unique()]] = np.nan
     fundamentals[['dlp_1m','wts_rating']] = fundamentals[['dlp_1m','wts_rating']]/10    # adjust dlp score to 0 ~ 1 (originally 0 ~ 10)
 
+    # dataframe for details checking
+    fundamentals_details = {}
+    fundamentals_details['value'] = {}
+    fundamentals_details['momentum'] = {}
+    fundamentals_details['quality'] = {}
+    fundamentals_details['extra'] = {}
+
     # calculate ai_score by each currency_code (i.e. group) for each of [Quality, Value, Momentum]
     for (group, pillar_name), g in factor_rank.groupby(["group", "pillar"]):
         print(f"Calculate Fundamentals [{pillar_name}] in group [{group}]")
         sub_g = g.loc[(g["factor_weight"]==2)|(g["factor_weight"].isnull())]        # use all rank=2 (best class)
-        if len(sub_g.dropna()) == 0:                         # if no factor rank=2, use the highest ranking one & DLPA/ai_value scores
+        if len(sub_g.dropna(subset=["pred_z"])) == 0:     # if no factor rank=2, use the highest ranking one & DLPA/ai_value scores
             sub_g = g.loc[g.nlargest(1, columns=["pred_z"]).index.union(g.loc[g["factor_weight"].isnull()].index)]
 
         score_col = [f"{x}_{y}_currency_code" for x, y in sub_g.loc[sub_g["scaler"].notnull(), ["factor_name","scaler"]].to_numpy()]
         score_col += [x for x in sub_g.loc[sub_g["scaler"].isnull(), "factor_name"]]
+        score_col_detail = sub_g.loc[sub_g["scaler"].notnull(),'factor_name'].to_list() + score_col
+
         fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_{pillar_name}"] = fundamentals[score_col].mean(axis=1)
+        fundamentals_details[pillar_name][group] = fundamentals.loc[fundamentals['currency_code']==group,
+                                                                    ['ticker', f"fundamentals_{pillar_name}"] + score_col_detail].sort_values(by=[ f"fundamentals_{pillar_name}"])
 
     # calculate ai_score by each currency_code (i.e. group) for [Extra]
     for group, g in factor_rank.groupby("group"):
         print(f"Calculate Fundamentals [extra] in group [{group}]")
         sub_g = g.loc[(g["factor_weight"]==2) & (g["pred_z"] >= 1)]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
 
-        if len(sub_g) > 0:     # if no factor rank=2, don"t add any factor into extra pillar
+        if len(sub_g.dropna(subset=["pred_z"])) > 0:     # if no factor rank=2, don"t add any factor into extra pillar
             score_col = [f"{x}_{y}_currency_code" for x, y in sub_g.loc[sub_g["scaler"].notnull(), ["factor_name", "scaler"]].to_numpy()]
+            score_col_detail = sub_g.loc[sub_g["scaler"].notnull(), 'factor_name'].to_list() + score_col
             fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = fundamentals[score_col].mean(axis=1)
         else:
-            fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = 0.
+            score_col_detail = []
+            fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = np.nan
+
+        fundamentals_details['extra'][group] = fundamentals.loc[fundamentals['currency_code']==group,
+                                                                ['ticker', "fundamentals_extra"] + score_col_detail].sort_values(by=[ f"fundamentals_extra"])
+    # manual score check output csv
+    for pillar, v in fundamentals_details.items():
+        for group, df in v.items():
+            upsert_data_to_database_ali(df,f"test_fundamental_score_details_{pillar}","ticker",how="update",Text=True)
 
     fundamentals_factors_scores_col = fundamentals.filter(regex="^fundamentals_").columns
     fundamentals[fundamentals_factors_scores_col] = (fundamentals[fundamentals_factors_scores_col]*10).round(1)
 
     print("Calculate ESG Value")
-    fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
-        fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
-        fundamentals["goverment_minmax_currency_code"] + fundamentals["goverment_minmax_industry"]) / 6
-    fundamentals["esg"] = (fundamentals["esg"]*10).round(1)
+    esg_cols = ["environment_minmax_currency_code", "environment_minmax_industry", "social_minmax_currency_code",
+                "social_minmax_industry", "goverment_minmax_currency_code", "goverment_minmax_industry"]
+    fundamentals["esg"] = (fundamentals[esg_cols].mean(1)*10).round(1)
 
     print("Calculate AI Score")
-    fundamentals["ai_score"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] + \
-        fundamentals["fundamentals_momentum"] + fundamentals["fundamentals_extra"]) / 4
+    ai_score_cols = ["fundamentals_value","fundamentals_quality","fundamentals_momentum","fundamentals_extra"]
+    fundamentals["ai_score"] = fundamentals[ai_score_cols].mean(1)
 
     print("Calculate AI Score 2")
-    fundamentals["ai_score2"] = (fundamentals["fundamentals_value"] + fundamentals["fundamentals_quality"] +
-                                 fundamentals["fundamentals_momentum"] + fundamentals["esg"]) / 4
+    ai_score_cols2 = ["fundamentals_value","fundamentals_quality","fundamentals_momentum","esg"]
+    fundamentals["ai_score2"] = fundamentals[ai_score_cols2].mean(1)
 
     print(fundamentals[["fundamentals_value","fundamentals_quality","fundamentals_momentum","fundamentals_extra",'esg']].describe())
 
