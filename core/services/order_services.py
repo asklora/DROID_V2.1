@@ -117,7 +117,7 @@ def order_executor(self, payload, recall=False):
         messages = 'order canceled'
         message = f'{order.side} order  stocks {order.ticker.ticker} was canceled'
     
-    populate_daily_profit(])
+    populate_daily_profit()
     firebase_user_update(user_id=[order.user_id.id])
     payload_serializer = OrderDetailsServicesSerializers(order).data
     channel_layer = get_channel_layer()
