@@ -452,6 +452,8 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
 
     confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
 
+    print(f"order setup: {confirmed_buy_order.setup}")
+
     performance = PositionPerformance.objects.get(
         order_uid_id=confirmed_buy_order.order_uid
     )
