@@ -1,7 +1,7 @@
 from abc import ABC,abstractmethod
 from core.universe.models import Currency
 
-class Convert():
+class Convert:
     @abstractmethod
     def convert_money(self):
         pass
