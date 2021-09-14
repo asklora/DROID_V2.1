@@ -6,11 +6,13 @@ artifacts:
 phases:
   install:
     commands:
+      - echo "navigate to work dir"
       - cd /code
+      - echo "installing test dependencies"
       - pip install -r installer/requirements_test.txt
   pre_build:
     commands:
-      - echo "Before running tests"
+      - echo "check DB Before running tests"
       - python manage.py createtestdb
   build:
     commands:
