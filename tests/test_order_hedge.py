@@ -438,7 +438,6 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
         ticker=ticker,
         price=price,
         user_id=user.id,
-        margin=2,
         bot_id="UCDC_ATM_003846",  # 2 weeks worth of testing
     )
 
@@ -458,6 +457,8 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     )
 
     position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+
+    print(f"expiry: {position.expiry}")
 
     # step 2: setup hedge
     ucdc_position_check(
