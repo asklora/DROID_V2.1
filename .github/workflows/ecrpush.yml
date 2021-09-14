@@ -8,8 +8,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      if: "contains(github.event.head_commit.message, 'ecr')"
+      
       - uses: actions/checkout@v2
+        if: "contains(github.event.head_commit.message, 'ecr')"
       - run: docker build . -t droid -f deployment/batch/Dockerfile.celery
       - name: Push to ECR
         id: ecr
@@ -20,8 +21,9 @@ jobs:
           region: ap-east-1
           image: droid:latest
       
-      if: "contains(github.event.head_commit.message, 'build-test')"
+     
       - uses: actions/checkout@v2
+        if: "contains(github.event.head_commit.message, 'build-test')"
       - run: docker build . -t droid -f deployment/container/Dockerfile.test
       - name: Create test env
         id: ecr
