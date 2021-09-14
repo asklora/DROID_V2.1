@@ -1,12 +1,12 @@
 from abc import ABC,abstractmethod
 from core.universe.models import Currency
 
-class Convert(ABC):
+class AbstractBaseConvert(ABC):
     @abstractmethod
     def convert_money(self):
         pass
 
-class Convert(Convert):
+class Convert(AbstractBaseConvert):
     
     def __init__(self, from_cur, to_cur):
         if(type(from_cur) == str):
