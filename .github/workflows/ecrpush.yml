@@ -21,7 +21,7 @@ jobs:
           image: droid:latest
       
       - uses: actions/checkout@v2
-      - run: docker build . -t droid-test -f deployment/container/Dockerfile.test
+      - run: docker build . -t app-test-env -f deployment/container/Dockerfile.test
         if: "contains(github.event.head_commit.message, 'build-test')"
       - name: Create test env
         if: "contains(github.event.head_commit.message, 'build-test')"
@@ -31,4 +31,4 @@ jobs:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ap-east-1
-          image: droid-test:latest
+          image: app-test-env:latest
