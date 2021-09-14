@@ -4,12 +4,18 @@ artifacts:
     - '**/*'
     name: s3-to-s3-latest-build.zip
 phases:
+  install:
+    commands:
+      - pip install -r installer/requirements_test.txt
   pre_build:
     commands:
       - echo "Before running tests"
+      - python manage.py createtestdb
   build:
     commands:
-        - echo "Running all unit tests"
+        - pytest -s
+        - echo "$CODEBUILD_BUILD_SUCCEEDING"
+        - echo "$CODEBUILD_SRC_DIR"
   post_build:
     commands:
-      - echo Build completed sad `date`
+      - echo test completed on `date`
