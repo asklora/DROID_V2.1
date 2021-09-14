@@ -30,6 +30,13 @@ class ConvertMoney(Convert):
             # and we can use this repeatedly without query again to the DB, except new converter
             usd_to_eur.convert(500)
             usd_to_hkd.convert(100)
+
+
+        better one i think:
+            money = ConvertMoney(current_currency,amount)
+            money.to_usd()
+            money.to_eur()
+            money.to_hkd()
         """
         # TODO: add exception handler
         self.from_currency = Currency.objects.get(currency_code=from_cur.upper())
