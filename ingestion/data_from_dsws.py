@@ -561,7 +561,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     calculate_column_score = []
     for column in calculate_column:
         column_score = column + "_score"
-        fundamentals[column_score] = fundamentals.groupby("currency_code")[column].transform(
+        fundamentals[column_score] = fundamentals.dropna(subset=[column]).groupby("currency_code")[column].transform(
             lambda x: np.clip(x, np.nanmean(x)-2*np.nanstd(x), np.nanmean(x)+2*np.nanstd(x)))
         calculate_column_score.append(column_score)
     print(calculate_column_score)
@@ -572,7 +572,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         try:
             column_score = column + "_score"
             column_robust_score = column + "_robust_score"
-            fundamentals[column_robust_score] = fundamentals.groupby("currency_code")[column_score].transform(lambda x: robust_scale(x))
+            fundamentals[column_robust_score] = fundamentals.dropna(subset=[column_score]).groupby("currency_code")[column_score].transform(lambda x: robust_scale(x))
             calculate_column_robust_score.append(column_robust_score)
         except Exception as e:
             print(e)
@@ -583,22 +583,22 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     for column in calculate_column:
         column_robust_score = column + "_robust_score"
         column_minmax_currency_code = column + "_minmax_currency_code"
-        # column_minmax_industry = column + "_minmax_industry"
+        column_minmax_industry = column + "_minmax_industry"
         df_currency_code = fundamentals[["currency_code", column_robust_score]]
         df_currency_code = df_currency_code.rename(columns = {column_robust_score : "score"})
-        # df_industry = fundamentals[["industry_code", column_robust_score]]
-        # df_industry = df_industry.rename(columns = {column_robust_score : "score"})
-        fundamentals[column_minmax_currency_code] = df_currency_code.groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
-        # fundamentals[column_minmax_industry] = df_industry.groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
+        df_industry = fundamentals[["industry_code", column_robust_score]]
+        df_industry = df_industry.rename(columns = {column_robust_score : "score"})
+        fundamentals[column_minmax_currency_code] = df_currency_code.dropna(subset=["currency_code", "score"]).groupby("currency_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
+        fundamentals[column_minmax_industry] = df_industry.dropna(subset=["industry_code", "score"]).groupby("industry_code").score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
         fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(), fundamentals[column_minmax_currency_code].mean()*0.9, fundamentals[column_minmax_currency_code])
-        # fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), 0.4, fundamentals[column_minmax_industry])
+        fundamentals[column_minmax_industry] = np.where(fundamentals[column_minmax_industry].isnull(), fundamentals[column_minmax_industry].mean()*0.9, fundamentals[column_minmax_industry])
         minmax_column.append(column_minmax_currency_code)
-        # minmax_column.append(column_minmax_industry)
+        minmax_column.append(column_minmax_industry)
     print(minmax_column)
 
     # apply quantile transformation on before scaling scores
     tmp = fundamentals.melt(["ticker", "currency_code", "industry_code"], calculate_column)
-    tmp["quantile_transformed"] = tmp.groupby(["currency_code", "variable"])["value"].transform(lambda x: QuantileTransformer(n_quantiles=4).fit_transform(x.values.reshape(-1, 1)).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
+    tmp["quantile_transformed"] = tmp.dropna(subset=["value"]).groupby(["currency_code", "variable"])["value"].transform(lambda x: QuantileTransformer(n_quantiles=4).fit_transform(x.values.reshape(-1, 1)).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
     tmp = tmp[["ticker", "variable", "quantile_transformed"]]
     tmp["variable"] = tmp["variable"] + "_quantile_currency_code"
     tmp = tmp.pivot(["ticker"], ["variable"]).droplevel(0, axis=1)
@@ -640,11 +640,9 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals[fundamentals_factors_scores_col] = (fundamentals[fundamentals_factors_scores_col]*10).round(1)
 
     print("Calculate ESG Value")
-    # fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
-    #     fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
-    #     fundamentals["goverment_minmax_currency_code"] + fundamentals["goverment_minmax_industry"]) / 6
-    fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] +
-        fundamentals["social_minmax_currency_code"] + fundamentals["goverment_minmax_currency_code"]) / 3
+    fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] + fundamentals["environment_minmax_industry"] + \
+        fundamentals["social_minmax_currency_code"] + fundamentals["social_minmax_industry"] + \
+        fundamentals["goverment_minmax_currency_code"] + fundamentals["goverment_minmax_industry"]) / 6
     fundamentals["esg"] = (fundamentals["esg"]*10).round(1)
 
     print("Calculate AI Score")
