@@ -1,0 +1,15 @@
+version: 0.2
+artifacts:
+    files:
+    - '**/*'
+    name: s3-to-s3-latest-build.zip
+phases:
+  pre_build:
+    commands:
+      - echo "Before running tests"
+  build:
+    commands:
+        - echo "Running all unit tests"
+  post_build:
+    commands:
+      - echo Build completed on `date`
