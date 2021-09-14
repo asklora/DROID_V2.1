@@ -104,7 +104,9 @@ class BaseOrderConnector(AbstracOrderConnector):
                 amount = self.instance.amount
             else:
                 amount = self.instance.setup['position']['investment_amount']
-                
+            
+
+
             TransactionHistory.objects.create(
                 balance_uid=self.user_wallet,
                 side="debit",
