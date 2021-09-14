@@ -25,9 +25,6 @@ CHANNEL_LAYERS = {
             "expiry": 2,
         },
 
-        # Method 3: Via In-memory channel layer
-        # Using this method.
-        # "BACKEND": "channels.layers.InMemoryChannelLayer"
     },
 }
 CACHES = {
