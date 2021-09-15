@@ -1,4 +1,5 @@
 from core.djangomodule.general import formatdigit
+from django.conf import settings
 from general.data_process import NoneToZero
 from bot.data_download import get_currency_data
 import random
@@ -289,14 +290,13 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
     universe = change_date_to_str(universe)
-    update_to_mongo(data=universe, index="ticker", table="universe", dict=False)
+    update_to_mongo(data=universe, index="ticker", table=settings.FIREBASE_COLLECTION['universe'], dict=False)
 
 
 async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,user_core:pd.DataFrame)-> List[pd.DataFrame]:
     tasks=[]
     users= user_core["user_id"].unique().tolist()
     for user in users:
-        print(user)
         tasks.append(
             asyncio.ensure_future(
             do_task(position_data, bot_option_type, user, user_core)
@@ -323,7 +323,8 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             orders_position["margin_amount"] = (orders_position["margin"] - 1) * orders_position["investment_amount"]
             orders_position["bot_cash_balance"] = orders_position["bot_cash_balance"] + orders_position["margin_amount"]
             orders_position["threshold"] = (orders_position["margin_amount"] + orders_position["investment_amount"]) - orders_position["bot_cash_balance"]
-
+            orders_position["margin_amount"] = orders_position["bot_cash_balance"] - orders_position["margin_amount"]
+            orders_position["margin_amount"] = np.where(orders_position["margin_amount"] >= 0, 0, orders_position["margin_amount"] * -1)
             #PROFIT
             # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_values"]
             # orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"]
@@ -333,8 +334,10 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             #BOT POSITION
             # orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["investment_amount"] * 100).round(0)
             # orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
-            orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / (orders_position["current_values"] / orders_position["margin"]) * 100).round(0)
+            orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / (orders_position["bot_cash_balance"] + orders_position["current_values"]) * 100).round(0)
+            orders_position["pct_cash"] = np.where(orders_position["bot_id"] == "STOCK_stock_0", 0, orders_position["pct_cash"])
             orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
+            
 
             #USER POSITION
             # total_invested_amount = sum(orders_position["investment_amount"].to_list())
@@ -395,7 +398,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         result["current_asset"] = result["balance"] + result["total_portfolio"] + result["pending_amount"]
         result = change_date_to_str(result, exception=["rank"])
         result["rank"] = np.where(result["rank"].isnull(), None, result["rank"])
-        await sync_to_async(update_to_mongo)(data=result, index="user_id", table="portfolio", dict=False)
+        await sync_to_async(update_to_mongo)(data=result, index="user_id", table=settings.FIREBASE_COLLECTION['portfolio'], dict=False)
         return active
 
 
@@ -419,22 +422,22 @@ def firebase_user_update(user_id=None, currency_code=None):
     user_core.loc[user_core["is_decimal"] == False, "balance"] = round(user_core.loc[user_core["is_decimal"] == False, "balance"], 0)
     if(len(user_core["user_id"].to_list()) > 0):
         bot_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
-        print(bot_order_pending)
+        # print(bot_order_pending)
         user_core = user_core.merge(bot_order_pending, how="left", on=["user_id"])
         user_core["bot_pending_amount"] = np.where(user_core["bot_pending_amount"].isnull(), 0, user_core["bot_pending_amount"])
 
         stock_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=True)
-        print(stock_order_pending)
+        # print(stock_order_pending)
         user_core = user_core.merge(stock_order_pending, how="left", on=["user_id"])
         user_core["stock_pending_amount"] = np.where(user_core["stock_pending_amount"].isnull(), 0, user_core["stock_pending_amount"])
 
         user_core["pending_amount"] = user_core["stock_pending_amount"] + user_core["bot_pending_amount"]
-        print(user_core)
+        # print(user_core)
         # import sys
         # sys.exit(1)
         orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
         position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
-        print(position_data)
+        # print(position_data)
         position_data["expiry"]=position_data["expiry"].astype(str)
         if(len(position_data) > 0):
             universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "currency_code"]]

@@ -623,8 +623,9 @@ def populate_daily_profit(currency_code=None, user_id=None):
         user_core.loc[index, "daily_profit"] = profit
         user_core.loc[index, "daily_profit_pct"] = daily_profit_pct
         user_core.loc[index, "daily_invested_amount"] = daily_invested_amount
-        user_core.loc[index, "total_profit"] = round((user_core.loc[index, "daily_invested_amount"] + user_core.loc[index, "balance"] - user_core.loc[index, "deposit"]), rounded)
-        user_core.loc[index, "total_profit_pct"] = round((user_core.loc[index, "total_profit"] / user_core.loc[index, "deposit"]) * 100, 4)
+        user_core.loc[index, "total_profit"] = (user_core.loc[index, "daily_invested_amount"] + user_core.loc[index, "balance"] - user_core.loc[index, "deposit"])
+        user_core.loc[index, "total_profit_pct"] = (user_core.loc[index, "total_profit"] / user_core.loc[index, "deposit"]) * 100
+    print(user_core[["user_id", "balance", "deposit", "daily_invested_amount", "total_profit", "total_profit_pct"]])
     user_core["trading_day"] =  str_to_date(dateNow())
     user_core["user_id"] = user_core["user_id"].astype(str)
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
@@ -635,6 +636,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
     joined = joined.reset_index(inplace=False, drop=True)
     joined = joined.reset_index(inplace=False)
     joined = joined.rename(columns={"index" : "rank"})
+    joined["total_profit_pct"] = joined["total_profit_pct"].round(4)
     joined["rank"] = joined["rank"] + 1
     joined = joined.drop(columns=["is_joined"])
     upsert_data_to_database(joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
@@ -642,4 +644,5 @@ def populate_daily_profit(currency_code=None, user_id=None):
     not_joined = user_core.loc[user_core["is_joined"] == False]
     not_joined = not_joined.drop(columns=["is_joined"])
     not_joined["rank"] = None
+    not_joined["total_profit_pct"] = not_joined["total_profit_pct"].round(4)
     upsert_data_to_database(not_joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)

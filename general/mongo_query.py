@@ -1,10 +1,10 @@
+import math
 import numpy as np
 from pymongo import MongoClient
 from global_vars import MONGO_URL
 import pandas as pd
 from firebase_admin import firestore
-import pprint
-
+from core.djangomodule.general import jsonprint
 def change_null_to_zero(data):
     for col in data.columns:
         if(type(data.loc[0, col]) == str):
@@ -61,7 +61,7 @@ def get_price_data_firebase(ticker:list) -> pd.DataFrame:
     db = firestore.client()
     object_list = []
     # here loop numpy split
-    split = len(ticker) / min(len(ticker), 8)
+    split = math.ceil(len(ticker) / min(len(ticker), 9))
     splitting_df = np.array_split(ticker, split)
     for univ in splitting_df:
         univ = univ.tolist()
@@ -82,15 +82,10 @@ def update_to_mongo(data, index, table, dict=False):
     df = data.to_dict("index")
     del data
     db = firestore.client()
-    pretty =pprint.PrettyPrinter(indent=4)
-    # pretty.pprint(df)
+    
+    # jsonprint(df)
     for key,val in df.items():
-        if(table=="universe"):
-            doc_ref = db.collection(u"universe").document(f"{key}")
-        elif(table=="portfolio"):
-            doc_ref = db.collection(u"portfolio").document(f"{key}")
-        else:
-            doc_ref = db.collection(u"universe").document(f"{key}")
+        doc_ref = db.collection(f"{table}").document(f"{key}")
         doc_ref.set(val)
     # db_connect = connects(table)
     # if(dict):

@@ -25,9 +25,6 @@ CHANNEL_LAYERS = {
             "expiry": 2,
         },
 
-        # Method 3: Via In-memory channel layer
-        # Using this method.
-        # "BACKEND": "channels.layers.InMemoryChannelLayer"
     },
 }
 CACHES = {
@@ -43,10 +40,10 @@ print('using test db changes')
 read_endpoint, write_endpoint, port = db.test_url
 CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@16.162.110.123:5672'
 CELERY_TASK_DEFAULT_QUEUE = 'droid_dev'
-HEDGE_WORKER_DEFAULT_QUEUE ='hedger'
-BROADCAST_WORKER_DEFAULT_QUEUE='broadcaster'
-PORTFOLIO_WORKER_DEFAULT_QUEUE='portofolio'
-UTILS_WORKER_DEFAULT_QUEUE='utils'
+HEDGE_WORKER_DEFAULT_QUEUE =CELERY_TASK_DEFAULT_QUEUE
+BROADCAST_WORKER_DEFAULT_QUEUE=CELERY_TASK_DEFAULT_QUEUE
+PORTFOLIO_WORKER_DEFAULT_QUEUE=CELERY_TASK_DEFAULT_QUEUE
+UTILS_WORKER_DEFAULT_QUEUE=CELERY_TASK_DEFAULT_QUEUE
 
 # print(f'using read: {read_endpoint}')
 # print(f'using write: {write_endpoint}')
@@ -79,13 +76,10 @@ DATABASES = {
         'PORT': port,
 
     },
-    # 'mongo': {
-    #         'ENGINE': 'djongo',
-    #         'NAME': 'universe',
-    #         'CLIENT': {
-    #             'host': 'mongodb+srv://postgres:postgres@cluster0.b0com.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
-    #         },
-    #         'ENFORCE_SCHEMA': False,
-    #     }
 
+}
+
+FIREBASE_COLLECTION={
+    'portfolio':'portfolio',
+    'universe':'universe'
 }

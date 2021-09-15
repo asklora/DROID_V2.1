@@ -30,7 +30,6 @@
 - os ubuntu >= 18.0
 
 ### install step
-
 1. Run talib and aws dependency
    - `sudo ./installer/requirement.sh`
 2. Run install python requirements in activated env

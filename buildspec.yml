@@ -1,0 +1,25 @@
+version: 0.2
+artifacts:
+    files:
+    - '**/*'
+    name: s3-to-s3-latest-build.zip
+phases:
+  install:
+    commands:
+      - echo "installing test dependencies"
+      - pip install -r installer/requirements_test.txt
+  pre_build:
+    commands:
+      - echo "check DB Before running tests"
+      - python manage.py createtestdb
+  build:
+    commands:
+        - pytest -s
+        - echo "$CODEBUILD_BUILD_SUCCEEDING"
+        - echo "$CODEBUILD_SRC_DIR"
+  post_build:
+    commands:
+      - echo test completed on `date`
+      - echo docker test
+      # - docker run -v /var/run/docker.sock:/var/run/docker.sock
+      # - docker version
