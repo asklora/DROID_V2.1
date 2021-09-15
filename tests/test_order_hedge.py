@@ -490,9 +490,12 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
 
     # we check if the user get the investment monye back from bot
     # first transaction is the initial deposit, and the last one is the bot return
-    assert transactions.count > 3
-    assert transactions[-1].transaction_detail["description"] == "bot return"
+    assert transactions.count() >= 3
+    assert transactions.last().transaction_detail["description"] == "bot return"
 
-    print(f"investment amount: {positions[-1].investment_amount}")
-    print(f"final pnl amount: {positions[-1].final_pnl_amount}")
-    print(f"bot return amount: {transactions[-1].transaction_amount}")
+    print(f"\ninvestment amount: {positions.last().investment_amount}")
+    print(f"final pnl amount: {positions.last().final_pnl_amount}")
+    print(f"bot return amount: {transactions.last().amount}")
+
+    # we see if the bot returns the correct amount of money
+    assert positions.last().investment_amount + positions.last().final_pnl_amount == transactions.last().amount
