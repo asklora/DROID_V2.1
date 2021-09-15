@@ -30,7 +30,6 @@ db = firestore.client()
 
 
 
-@app.task()
 def bulk_update_rtdb(data):
     batch = db.batch()
     for ticker,val in data.items():
@@ -624,7 +623,7 @@ class RkdStream(RkdData):
                 records = data.to_dict("index")
                 # logging.info(records)
 
-                bulk_update_rtdb.apply_async(args=(records,),queue="broadcaster")
+                bulk_update_rtdb(records)
                 del records
                 del data
                 gc.collect()
