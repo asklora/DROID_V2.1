@@ -87,7 +87,7 @@ class TestAPIOrder:
 
         assert order is not None
         assert order["order_uid"] is not None
-        assert order["amount"] == 100
+        assert order["amount"] == 99.43  # adjusted to stock numbers
 
     def test_api_create_order_with_margin(self, authentication, client, user) -> None:
         data = {
