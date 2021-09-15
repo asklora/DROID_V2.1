@@ -494,6 +494,11 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
     universe_rating = universe_rating[["ticker", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
 
+    # if DLPA results has problem will not using DLPA
+    for col in ['dlp_1m', 'wts_rating']:
+        if any(universe_rating[[col]].value_counts()/len(universe_rating) > .95):
+            universe_rating[[col]] = np.nan
+
     print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
     fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
     print(fundamentals_score)
