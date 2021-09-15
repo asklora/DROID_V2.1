@@ -598,7 +598,7 @@ class RkdStream(RkdData):
                 data = data[['ticker','price']]
                 data = data.set_index('ticker')
                 records = data.to_dict("index")
-                self.bulk_update_rtdb.apply_async(args=(records,),queue="broadcaster")
+                self.bulk_update_rtdb.delay(records)
                 del records
                 del data
                 gc.collect()
@@ -783,8 +783,8 @@ class RkdStream(RkdData):
         }
 
         ws.send(json.dumps(mp_req_json))
-        print("SENT:")
-        # print(json.dumps(mp_req_json, sort_keys=True,
+        logging.info("SENT:")
+        # logging.info(json.dumps(mp_req_json, sort_keys=True,
         #                  indent=2, separators=(",", ":")))
 
     def send_login_request(self, ws, *args, **options):
@@ -799,7 +799,7 @@ class RkdStream(RkdData):
         login_json["Key"]["Elements"]["ApplicationId"] = self.app_id
         login_json["Key"]["Elements"]["Position"] = self.position
         ws.send(json.dumps(login_json))
-        print("SENT LOGIN REQUEST:")
+        logging.info("SENT LOGIN REQUEST:")
         # print(json.dumps(login_json, sort_keys=True,
         #                  indent=2, separators=(",", ":")))
 
@@ -816,7 +816,7 @@ class RkdStream(RkdData):
 
     def on_error(self, ws, error, *args, **options):
         """ Called when websocket error has occurred """
-        print("error",error)
+        logging.error(error)
         ws.close()
         if self.is_thread:
             sys.exit()
@@ -824,14 +824,14 @@ class RkdStream(RkdData):
     def on_close(self, ws, *args, **options):
         # print(super(on_close, self))
         """ Called when websocket is closed """
-        print("WebSocket Closed")
+        logging.info("WebSocket Closed")
         ws.close()
         if self.is_thread:
             sys.exit()
 
     def on_open(self, ws, *args, **options):
         """ Called when handshake is complete and websocket is open, send login """
-        print("WebSocket open!")
+        logging.info("WebSocket open!")
         
         self.send_login_request(ws)
     
@@ -840,20 +840,20 @@ class RkdStream(RkdData):
                 "Type": "Close",
                 "ID": self.ID
                     }
-        print(payload)
+        logging.info(payload)
         ws.send(json.dumps(payload))
 
     @app.task(bind=True,ignore_result=True)
     def update_rtdb(self,data):
         data = data[0]
         ticker = data.pop("ticker")
-        print(ticker)
+        logging.info(ticker)
         ref = db.collection("universe").document(ticker)
         try:
             ref.set({"price":data},merge=True)
         except Exception as e:
             err = str(e)
-            print(err)
+            logging.error(err)
             return f"{ticker} error : \n {err}"
         del ref
         gc.collect()
@@ -871,8 +871,10 @@ class RkdStream(RkdData):
             batch.commit()
         except Exception as e:
             err = str(e)
-            print(err)
+            logging.error(err)
+
             return f" error : \n {err}"
+        logging.info("price updated")
         del ref
         gc.collect()
         return 'ticker bulk updated'
