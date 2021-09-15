@@ -897,7 +897,6 @@ class RkdStream(RkdData):
         except Exception as e:
             err = str(e)
             logging.error(err)
-
             return f" error : \n {err}"
         logging.info("price updated")
         del ref
