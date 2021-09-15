@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 from core.orders.models import Order
-from core.user.models import Accountbalance, TransactionHistory, User
+from core.user.models import Accountbalance
 
 from utils import create_buy_order
 
@@ -20,12 +20,12 @@ def test_should_create_order(user) -> None:
         price=1317,
     )
 
-    assert order.is_init == True
-    assert order.placed == False
+    assert order.is_init is True
+    assert order.placed is False
     assert order.status == "review"
-    assert order.placed_at == None
-    assert order.filled_at == None
-    assert order.canceled_at == None
+    assert order.placed_at is None
+    assert order.filled_at is None
+    assert order.canceled_at is None
     assert order.amount == 131700
     assert order.price == 1317
     assert order.qty == 100  # from order.amount divided by order.price
@@ -44,7 +44,7 @@ def test_should_create_new_buy_order_for_user(user) -> None:
     )
 
     assert order.side == "buy"
-    assert order.setup == None  # should be empty
+    assert order.setup is None  # should be empty
 
 
 def test_should_update_new_buy_order_for_user(user) -> None:
@@ -188,7 +188,7 @@ def test_should_create_new_buy_order_for_classic_bot(user) -> None:
     print(order.setup)
 
     assert order.side == "buy"
-    assert order.setup != None  # Setup will be populated with bot information
+    assert order.setup is not None  # Setup will be populated with bot information
     assert order.bot_id == bot_id
 
 
@@ -207,7 +207,7 @@ def test_should_create_new_buy_order_for_uno_bot(user) -> None:
     )
 
     assert order.side == "buy"
-    assert order.setup != None  # Setup will be populated with bot information
+    assert order.setup is not None  # Setup will be populated with bot information
     assert order.bot_id == bot_id
 
 
@@ -226,5 +226,5 @@ def test_should_create_new_buy_order_for_ucdc_bot(user) -> None:
     )
 
     assert order.side == "buy"
-    assert order.setup != None  # Setup will be populated with bot information
+    assert order.setup is not None  # Setup will be populated with bot information
     assert order.bot_id == bot_id
