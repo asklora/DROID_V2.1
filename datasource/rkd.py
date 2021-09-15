@@ -624,7 +624,7 @@ class RkdStream(RkdData):
                 records = data.to_dict("index")
                 # logging.info(records)
 
-                bulk_update_rtdb(records)
+                bulk_update_rtdb.apply_async(args=(records,),queue="broadcaster")
                 del records
                 del data
                 gc.collect()
