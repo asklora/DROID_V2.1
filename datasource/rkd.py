@@ -164,6 +164,7 @@ class Rkd:
         if json_data:
             data = json_data[0].get("Item",None)
             if not data:
+                logging.error(response)
                 raise Exception(response)
             formated_json_data = []
             for index, item in enumerate(data):
@@ -589,6 +590,7 @@ class RkdStream(RkdData):
         # FOR NOW ONLY HKD
         # TODO: Need to enhance this.
         while True:
+            logging.info('stream price')
             hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
             if hkd_exchange.is_open:
                 data =self.bulk_get_quote(self.ticker_data,df=True)

@@ -403,6 +403,8 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
 
 
 def firebase_user_update(user_id=None, currency_code=None):
+    if not user_id and not currency_code:
+        return
     print("Start User Populate")
     bot_type = get_bot_type()
     bot_option_type = get_bot_option_type()
