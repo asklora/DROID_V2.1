@@ -10,6 +10,6 @@ while True:
         ws.send(json.dumps({
             'type':'ping',
             'message':'PONG',
-            'user':'agam'
+            'user':'python-client'
         }))
 
