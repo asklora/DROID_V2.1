@@ -32,6 +32,9 @@ services:
     container_name: CeleryBroadcaster
     image: django/backend
     command: bash -c "export DJANGO_SETTINGS_MODULE=config.production && celery -A core.services worker -l  INFO --hostname=broadcaster@%h --concurrency=10 -Q broadcaster"
+    env_file: /var/lib/jenkins/workspace/Droid_v2/.env
+    volumes:
+      - /var/lib/jenkins/workspace/Droid_v2:/code
     restart: always
     depends_on:
       - redis
