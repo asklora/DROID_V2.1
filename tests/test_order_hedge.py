@@ -24,6 +24,7 @@ def test_should_create_hedge_order_for_classic_bot(user) -> None:
     log_time = datetime.combine(master.trading_day, datetime.min.time())
 
     buy_order = create_buy_order(
+        created=log_time,
         ticker=ticker,
         price=price,
         user_id=user.id,
@@ -57,7 +58,7 @@ def test_should_create_hedge_order_for_classic_bot(user) -> None:
 
     print(performance.count())
 
-    assert performance.exists() == True
+    assert performance.exists()
     assert performance.count() > 1
 
 
@@ -72,6 +73,7 @@ def test_should_create_hedge_order_for_uno_bot(user) -> None:
     log_time = datetime.combine(master.trading_day, datetime.min.time())
 
     buy_order = create_buy_order(
+        created=log_time,
         ticker=ticker,
         price=price,
         user_id=user.id,
@@ -105,7 +107,7 @@ def test_should_create_hedge_order_for_uno_bot(user) -> None:
 
     print(performance.count())
 
-    assert performance.exists() == True
+    assert performance.exists()
     assert performance.count() > 1
 
 
@@ -120,6 +122,7 @@ def test_should_create_hedge_order_for_ucdc_bot(user) -> None:
     log_time = datetime.combine(master.trading_day, datetime.min.time())
 
     buy_order = create_buy_order(
+        created=log_time,
         ticker=ticker,
         price=price,
         user_id=user.id,
@@ -154,7 +157,7 @@ def test_should_create_hedge_order_for_ucdc_bot(user) -> None:
 
     print(performance.count())
 
-    assert performance.exists() == True
+    assert performance.exists()
     assert performance.count() > 1
 
 
@@ -169,6 +172,7 @@ def test_should_create_hedge_order_for_ucdc_bot_with_margin(user) -> None:
     log_time = datetime.combine(master.trading_day, datetime.min.time())
 
     buy_order = create_buy_order(
+        created=log_time,
         ticker=ticker,
         price=price,
         user_id=user.id,
@@ -204,7 +208,7 @@ def test_should_create_hedge_order_for_ucdc_bot_with_margin(user) -> None:
 
     print(performance.count())
 
-    assert performance.exists() == True
+    assert performance.exists()
     assert performance.count() > 1
 
 
@@ -219,6 +223,7 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
     log_time = datetime.combine(master.trading_day, datetime.min.time())
 
     buy_order = create_buy_order(
+        created=log_time,
         ticker=ticker,
         price=price,
         user_id=user.id,
@@ -420,7 +425,7 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
         status and len(performance_df.loc[performance_df["status"] == "Populate"]) == 1
     )
 
-    assert performance.exists() == True
+    assert performance.exists()
     assert performance.count() > 1
 
 
@@ -435,6 +440,7 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     log_time = datetime.combine(master.trading_day, datetime.min.time())
 
     buy_order = create_buy_order(
+        created=log_time,
         ticker=ticker,
         price=price,
         user_id=user.id,
@@ -452,8 +458,6 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
 
     confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
 
-    print(f"order setup: {confirmed_buy_order.setup}")
-
     performance = PositionPerformance.objects.get(
         order_uid_id=confirmed_buy_order.order_uid
     )
@@ -468,111 +472,27 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
         tac=True,
     )
 
-    # get hedge performances
-    performance = PositionPerformance.objects.filter(position_uid=position.position_uid)
-    performance_df = pd.DataFrame(list(performance.values()))
-    performance_df = performance_df[
-        [
-            "created",
-            "position_uid_id",
-            "performance_uid",
-            "last_spot_price",
-            "last_live_price",
-            "current_pnl_ret",
-            "current_pnl_amt",
-            "current_bot_cash_balance",
-            "share_num",
-            "current_investment_amount",
-            "last_hedge_delta",
-            "order_summary",
-            "order_uid_id",
-            "status",
-        ]
-    ]
-
-    performance_df = performance_df.rename(
-        columns={"position_uid_id": "position_uid", "order_uid_id": "order_uid"}
-    )
-
     # get hedge positions
-    position = OrderPosition.objects.filter(position_uid=position.position_uid)
-    position_df = pd.DataFrame(list(position.values()))
-    position_df = position_df[
-        [
-            "position_uid",
-            "user_id_id",
-            "ticker_id",
-            "bot_id",
-            "expiry",
-            "spot_date",
-            "entry_price",
-            "final_pnl_amount",
-            "investment_amount",
-            "bot_cash_balance",
-            "share_num",
-            "margin",
-            "bot_cash_dividend",
-        ]
-    ]
-    position_df = position_df.rename(
-        columns={
-            "user_id_id": "user_id",
-            "ticker_id": "ticker",
-            "share_num": "bot_share_num",
-        }
-    )
+    positions = OrderPosition.objects.filter(position_uid=position.position_uid)
 
-    # get hedge orders
-    orders = Order.objects.filter(order_uid__in=performance_df["order_uid"].to_list())
-    orders_df = pd.DataFrame(list(orders.values()))
-    orders_df = orders_df[["order_uid", "order_type", "side", "amount", "price", "qty"]]
+    # get hedge performances
+    performances = PositionPerformance.objects.filter(position_uid=position.position_uid)
 
     # get user balances
     balance = Accountbalance.objects.get(user=user)
 
     # get user transaction history
-    transactions = TransactionHistory.objects.filter(balance_uid=balance)
-    transactions_df = pd.DataFrame(list(transactions.values()))
-    transactions_df = transactions_df.sort_values("created", ascending=False)
-    transactions_df = transactions_df[
-        ["id", "created", "side", "amount", "transaction_detail"]
-    ]
+    transactions: list[TransactionHistory] = TransactionHistory.objects.filter(balance_uid=balance)
 
-    # get transaction details
-    transaction_details_df = pd.json_normalize(transactions_df["transaction_detail"])
-    transaction_details_df = transaction_details_df[
-        ["event", "order_uid", "last_amount"]
-    ]
-    transactions_df = transactions_df.rename(
-        {
-            "id": "transaction_id",
-            "amount": "transaction_amount",
-            "balance_uid_id": "balance_uid",
-        },
-        axis=1,
-    )
+    # we check if the hedge created performances data
+    assert performances.exists()
+    assert performances.count() > 1
 
-    # join both transaction dataframes
-    transactions_df = transactions_df.join(transaction_details_df)
+    # we check if the user get the investment monye back from bot
+    # first transaction is the initial deposit, and the last one is the bot return
+    assert transactions.count > 3
+    assert transactions[-1].transaction_detail["description"] == "bot return"
 
-    # calculate user wallet amounts
-    transactions_df["wallet_amount"] = np.where(
-        transactions_df["side"] == "credit",
-        transaction_details_df["last_amount"].fillna(0)
-        + transactions_df["transaction_amount"],
-        transaction_details_df["last_amount"].fillna(0)
-        - transactions_df["transaction_amount"],
-    )
-
-    # we only take the columns we need
-    # transactions_df = transactions_df[
-    #     ["order_uid", "transaction_amount", "wallet_amount"]
-    # ]
-
-    # we join all interesting dataframes
-    performance_df = performance_df.sort_values(by=["created"])
-    performance_df = performance_df.merge(position_df, how="left", on=["position_uid"])
-    performance_df = performance_df.merge(orders_df, how="left", on=["order_uid"])
-
-    transactions_df.to_csv("user_transactions.csv")
-    # performance_df.to_csv("hedge_user_balance.csv")
+    print(f"investment amount: {positions[-1].investment_amount}")
+    print(f"final pnl amount: {positions[-1].final_pnl_amount}")
+    print(f"bot return amount: {transactions[-1].transaction_amount}")
