@@ -176,7 +176,7 @@ class Rkd:
                         val = f["Value"]
                         formated_json_data[index].update({field: val})
                 else:
-                    logging.warning(f"error status message {item['Status']['StatusMsg']} for {ticker}, no response data")
+                    logging.warning(f"error status message {item['Status']['StatusMsg']} for {ticker}, there is no response data")
         return formated_json_data
 
 
