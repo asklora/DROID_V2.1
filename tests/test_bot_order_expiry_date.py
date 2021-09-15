@@ -25,7 +25,8 @@ def test_should_confirm_bot_expiry_for_classic() -> None:
         expiry = get_expiry_date(
             bot_type.time_to_exp,
             order.created,
-            order.ticker.currency_code.currency_code,
+            order.ticker.currency_code.currency_code, 
+            apps=True
         )
         expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
 
@@ -54,6 +55,7 @@ def test_should_confirm_bot_expiry_for_uno() -> None:
             bot_type.time_to_exp,
             order.created,
             order.ticker.currency_code.currency_code,
+            apps=True
         )
         expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
 
@@ -82,6 +84,7 @@ def test_should_confirm_bot_expiry_for_ucdc() -> None:
             bot_type.time_to_exp,
             order.created,
             order.ticker.currency_code.currency_code,
+            apps=True
         )
         expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
 
