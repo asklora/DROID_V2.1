@@ -13,7 +13,7 @@ class BotDetailSerializer(serializers.ModelSerializer):
     bot_apps_description=serializers.SerializerMethodField()
     class Meta:
         model = BotOptionType
-        fields = ('bot_id','bot_option_type','bot_apps_name','bot_apps_description','duration')
+        fields = ("bot_id","bot_option_type","bot_apps_name","bot_apps_description","duration")
     
     def get_bot_apps_name(self,obj) -> str:
         return obj.bot_type.bot_apps_name
@@ -38,29 +38,28 @@ class BotHedgerSerializer(serializers.Serializer):
     def create(self, validated_data):
         print(validated_data)
         try:
-            ticker = Universe.objects.get(ticker=validated_data['ticker'])
+            ticker = Universe.objects.get(ticker=validated_data["ticker"])
         except Universe.DoesNotExist:
-            raise exceptions.NotFound({'detail':'Ticker not found'})
+            raise exceptions.NotFound({"detail":"Ticker not found"})
 
         try:
-            bot = BotOptionType.objects.get(bot_id=validated_data['bot_id'])
+            bot = BotOptionType.objects.get(bot_id=validated_data["bot_id"])
         except BotOptionType.DoesNotExist:
-            raise exceptions.NotFound({'detail':'Bot not found'})
+            raise exceptions.NotFound({"detail":"Bot not found"})
 
 
     
         margin = False
-        expiry = calculate_bot.get_expiry_date(
-            bot.time_to_exp, datetime.now(), ticker.currency_code.currency_code)
+        expiry = calculate_bot.get_expiry_date(bot.time_to_exp, datetime.now(), ticker.currency_code.currency_code, apps=True)
         if bot.bot_type.bot_type == "CLASSIC":
             setup = calculate_bot.get_classic(ticker.ticker, datetime.now(),
-                                bot.time_to_exp, validated_data['amount'], validated_data['price'], expiry)
+                                bot.time_to_exp, validated_data["amount"], validated_data["price"], expiry)
         elif bot.bot_type.bot_type == "UNO":
             setup = calculate_bot.get_uno(ticker.ticker, ticker.currency_code.currency_code, expiry,
-                            datetime.now(), bot.time_to_exp, validated_data['amount'], validated_data['price'], bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
+                            datetime.now(), bot.time_to_exp, validated_data["amount"], validated_data["price"], bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
         elif bot.bot_type.bot_type == "UCDC":
             setup = calculate_bot.get_ucdc(ticker.ticker, ticker.currency_code.currency_code, expiry,
-                                    datetime.now(), bot.time_to_exp, validated_data['amount'], validated_data['price'], bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
+                                    datetime.now(), bot.time_to_exp, validated_data["amount"], validated_data["price"], bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
         data={}
         data["expiry"]=setup["position"]["expiry"]
         data["max_loss_pct"]=setup["position"]["max_loss_pct"]

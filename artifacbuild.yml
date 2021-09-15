@@ -12,13 +12,11 @@ phases:
       - pip install -r installer/requirements_test.txt
   pre_build:
     commands:
-      - echo "check DB Before running tests"
+      - echo "check DB Before running"
       - python manage.py createtestdb
   build:
     commands:
         - pytest -s
-        - echo "$CODEBUILD_BUILD_SUCCEEDING"
-        - echo "$CODEBUILD_SRC_DIR"
   post_build:
     commands:
       - echo test completed on `date`

@@ -74,6 +74,7 @@ app.conf.task_routes = {
    ' core.services.order_services.update_rtdb_user_porfolio':{'queue': settings.BROADCAST_WORKER_DEFAULT_QUEUE},
     #market price realtime
     'datasource.rkd.update_rtdb':{'queue': settings.BROADCAST_WORKER_DEFAULT_QUEUE},
+    'datasource.rkd.bulk_update_rtdb':{'queue': settings.BROADCAST_WORKER_DEFAULT_QUEUE},
     # ===== SHORT INTERVAL =====
 
     # ===== ORDER & PORTFOLIO =====

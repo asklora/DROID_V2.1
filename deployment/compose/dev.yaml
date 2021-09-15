@@ -39,17 +39,6 @@ services:
     depends_on:
       - backend
       - redis
-  celery-broadcaster:
-    container_name: celery-broadcaster
-    image: django/backend
-    command: sh deployment/script/broadcaster.sh
-    env_file: ~/DROID_V2.1/.env
-    volumes:
-      - ~/DROID_V2.1:/code
-    restart: always
-    depends_on:
-      - backend
-      - redis
   redis:
     container_name: redis
     restart: always
