@@ -2,6 +2,8 @@ from datetime import datetime
 from typing import Union
 
 import pytest
+from bot.calculate_bot import check_date, get_expiry_date
+from core.bot.models import BotOptionType
 from core.orders.models import Order
 
 pytestmark = pytest.mark.django_db
@@ -16,12 +18,12 @@ class TestAPIAuth:
         # API only returns the status code with empty body
         assert response.status_code == 200
 
-    def test_api_token_revoke(self, client) -> None:
+    def test_api_token_revoke(self, user, client) -> None:
         response = client.post(
             path="/api/auth/",
             data={
-                "email": "pytest@tests.com",
-                "password": "helloworld",
+                "email": user.email,
+                "password": "everything_is_but_a_test",
             },
         )
 
@@ -58,7 +60,7 @@ class TestAPIUser:
         response_body = response.json()
         assert response_body["email"] == user.email
         assert response_body["username"] == user.username
-        assert response_body["is_active"] == True
+        assert response_body["is_active"]
 
 
 class TestAPIOrder:
@@ -70,10 +72,10 @@ class TestAPIOrder:
             "amount": 100,
             "user": user.id,
             "side": "buy",
-            "margin": 2,
         }
 
-        response = client.post(path="/api/order/create/", data=data, **authentication)
+        response = client.post(path="/api/order/create/",
+                               data=data, **authentication)
 
         if (
             response.status_code != 201
@@ -83,9 +85,77 @@ class TestAPIOrder:
 
         order = response.json()
 
-        assert order != None
-        assert order["order_uid"] != None
-        assert order["price"] == 1.63
+        assert order is not None
+        assert order["order_uid"] is not None
+        assert order["amount"] == 100
+
+    def test_api_create_order_with_margin(self, authentication, client, user) -> None:
+        data = {
+            "ticker": "3377.HK",
+            "price": 1.63,
+            "bot_id": "STOCK_stock_0",
+            "amount": 100,
+            "user": user.id,
+            "side": "buy",
+            "margin": 2,
+        }
+
+        response = client.post(path="/api/order/create/",
+                               data=data, **authentication)
+
+        if (
+            response.status_code != 201
+            or response.headers["Content-Type"] != "application/json"
+        ):
+            assert False
+
+        order = response.json()
+
+        assert order is not None
+        assert order["order_uid"] is not None
+        # confirm if the amount is the same even with margin
+        assert order["amount"] == 100
+
+    def test_api_create_order_with_classic_bot(self, authentication, client, user) -> None:
+        data = {
+            "ticker": "3377.HK",
+            "price": 1.63,
+            "bot_id": "CLASSIC_classic_008333",
+            "amount": 100,
+            "user": user.id,
+            "side": "buy",
+            "margin": 2,
+        }
+
+        response = client.post(path="/api/order/create/",
+                               data=data, **authentication)
+
+        if (
+            response.status_code != 201
+            or response.headers["Content-Type"] != "application/json"
+        ):
+            assert False
+
+        order = response.json()
+
+        assert order is not None
+        assert order["order_uid"] is not None
+        # confirm if the qty is correctly counted with margin
+        assert order["qty"] == 122.0
+        # confirm if the setup is not empty
+        assert order["setup"] is not None
+
+        # confirm if the expiry is set correctly
+        bot = BotOptionType.objects.get(bot_id="CLASSIC_classic_008333")
+
+        expiry = get_expiry_date(
+            bot.time_to_exp,
+            order["created"],
+            "HKD",
+            # apps=True
+        )
+        expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
+        assert order["setup"]["position"]["expiry"] == expiry_date
 
     def test_api_create_duplicated_orders(self, authentication, client, user) -> None:
         def create_order() -> Union[dict, None]:
@@ -112,13 +182,13 @@ class TestAPIOrder:
             return response.json()
 
         order1 = create_order()
-        assert order1 != None
+        assert order1 is not None
 
         # We then set it to filled
 
         # First, let's find the order
         currentOrder = Order.objects.get(pk=order1["order_uid"])
-        assert currentOrder != None
+        assert currentOrder is not None
 
         # And we set it
         currentOrder.placed = True
@@ -129,7 +199,7 @@ class TestAPIOrder:
 
         # This should fail and return None
         order2 = create_order()
-        assert order2 == None
+        assert order2 is None
 
     def test_api_edit_order_status(self, authentication, client, order) -> None:
         """Order is taken from the fixture so we dont have to create another"""
@@ -167,11 +237,12 @@ class TestAPIOrder:
         assert response.headers["Content-Type"] == "application/json"
 
         response_body = response.json()
-        assert response_body["order_uid"] != None
+        assert response_body["order_uid"] is not None
         assert response_body["ticker"] == "3377.HK"
         assert response_body["price"] == 1.63
         assert (
-            response_body["amount"] != 100  # Amount was cut to fit maximum share number
+            # Amount was cut to fit maximum share number
+            response_body["amount"] != 100
         )
 
     def test_api_get_user_orders(self, authentication, client, order) -> None:
@@ -179,7 +250,7 @@ class TestAPIOrder:
 
         currentOrder = Order.objects.get(pk=order["order_uid"])
 
-        assert currentOrder != None
+        assert currentOrder is not None
 
         currentOrder.status = "placed"
         currentOrder.placed = True
@@ -202,7 +273,7 @@ class TestAPIOrder:
 
         currentOrder = Order.objects.get(pk=order["order_uid"])
 
-        assert currentOrder != None
+        assert currentOrder is not None
 
         currentOrder.placed = True
         currentOrder.status = "filled"
@@ -230,7 +301,7 @@ class TestAPIOrder:
 
         currentOrder = Order.objects.get(pk=order["order_uid"])
 
-        assert currentOrder != None
+        assert currentOrder is not None
 
         currentOrder.placed = True
         currentOrder.status = "filled"
@@ -260,7 +331,7 @@ class TestAPIOrder:
 
         response_body = response.json()
 
-        assert response_body != None
+        assert response_body is not None
         assert response_body["entry_price"] == order["price"]
 
     def test_api_get_order_performance(
@@ -270,7 +341,7 @@ class TestAPIOrder:
 
         currentOrder = Order.objects.get(pk=order["order_uid"])
 
-        assert currentOrder != None
+        assert currentOrder is not None
 
         currentOrder.placed = True
         currentOrder.status = "filled"
@@ -296,7 +367,8 @@ class TestAPIOrder:
         assert response.status_code == 200
         assert response.headers["Content-Type"] == "application/json"
 
-        response_body = response.json()[0]  # We get the first performance record
+        # We get the first performance record
+        response_body = response.json()[0]
 
-        assert response_body != None
+        assert response_body is not None
         assert response_body["initial_investment_amt"] == order["amount"]
