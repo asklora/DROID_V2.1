@@ -15,10 +15,10 @@
         force: yes
         key_file: /home/ubuntu/red-git-key.pem
         version: dev
-    - name: Stop Container
+    - name: set aws
       ansible.builtin.command:
-        chdir: /home/ubuntu/DROID_V2.1/installer
-        cmd: sudo chmod +x aws-set.sh && ./aws-set.sh
+        chdir: /home/ubuntu/DROID_V2.1
+        cmd: sudo chmod +x installer/aws-set.sh && installer/aws-set.sh
     - name: Stop Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
