@@ -28,6 +28,27 @@ logging.getLogger().setLevel(logging.INFO)
 
 db = firestore.client()
 
+
+
+def bulk_update_rtdb(data):
+    batch = db.batch()
+    for ticker,val in data.items():
+        if not ticker == 'price':
+            ref = db.collection("universe").document(ticker)
+            batch.set(ref,val,merge=True)
+    try:
+        batch.commit()
+    except Exception as e:
+        err = str(e)
+        logging.error(err)
+
+        return f" error : \n {err}"
+    logging.info("price updated")
+    del ref
+    gc.collect()
+    return 'ticker bulk updated'
+
+
 class Rkd:
     token = None
 
@@ -164,6 +185,7 @@ class Rkd:
         if json_data:
             data = json_data[0].get("Item",None)
             if not data:
+                logging.error(response)
                 raise Exception(response)
             formated_json_data = []
             for index, item in enumerate(data):
@@ -175,7 +197,7 @@ class Rkd:
                         val = f["Value"]
                         formated_json_data[index].update({field: val})
                 else:
-                    logging.warning(f"error status message {item['Status']['StatusMsg']} for {ticker}, no response data")
+                    logging.warning(f"error status message {item['Status']['StatusMsg']} for {ticker}, there is no response data")
         return formated_json_data
 
 
@@ -363,7 +385,7 @@ class RkdData(Rkd):
                 "CF_LAST": "latest_price",
                 "CF_NETCHNG": "latest_net_change"
                 })
-        df_data["last_date"] = datetime.now().date()
+        df_data["last_date"] = str(datetime.now().date())
         df_data["intraday_time"] = str(datetime.now())
         df_data =df_data.astype(
             {
@@ -587,21 +609,27 @@ class RkdStream(RkdData):
 
     def stream_quote(self):
         # FOR NOW ONLY HKD
-        # 
         # TODO: Need to enhance this
         while True:
             hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
             if hkd_exchange.is_open:
+                logging.info('stream price')
                 data =self.bulk_get_quote(self.ticker_data,df=True)
-                for index in data.index:
-                    split_data = data.iloc[[index]]
-                    self.update_rtdb.apply_async(args=(split_data.to_dict("records"),),queue="broadcaster")
-                    # update_rtdb_user_porfolio.delay()
+                df = data.copy()
+                data['price'] = df.drop(columns=['ticker']).to_dict("records")
+                del df
+                data = data[['ticker','price']]
+                data = data.set_index('ticker')
+                records = data.to_dict("index")
+                # logging.info(records)
+
+                bulk_update_rtdb(records)
+                del records
                 del data
                 gc.collect()
             else:
                 break
-            time.sleep(120)
+            time.sleep(15)
         if self.is_thread:
                 sys.exit()
         
@@ -780,8 +808,8 @@ class RkdStream(RkdData):
         }
 
         ws.send(json.dumps(mp_req_json))
-        print("SENT:")
-        # print(json.dumps(mp_req_json, sort_keys=True,
+        logging.info("SENT:")
+        # logging.info(json.dumps(mp_req_json, sort_keys=True,
         #                  indent=2, separators=(",", ":")))
 
     def send_login_request(self, ws, *args, **options):
@@ -796,7 +824,7 @@ class RkdStream(RkdData):
         login_json["Key"]["Elements"]["ApplicationId"] = self.app_id
         login_json["Key"]["Elements"]["Position"] = self.position
         ws.send(json.dumps(login_json))
-        print("SENT LOGIN REQUEST:")
+        logging.info("SENT LOGIN REQUEST:")
         # print(json.dumps(login_json, sort_keys=True,
         #                  indent=2, separators=(",", ":")))
 
@@ -813,7 +841,7 @@ class RkdStream(RkdData):
 
     def on_error(self, ws, error, *args, **options):
         """ Called when websocket error has occurred """
-        print("error",error)
+        logging.error(error)
         ws.close()
         if self.is_thread:
             sys.exit()
@@ -821,14 +849,14 @@ class RkdStream(RkdData):
     def on_close(self, ws, *args, **options):
         # print(super(on_close, self))
         """ Called when websocket is closed """
-        print("WebSocket Closed")
+        logging.info("WebSocket Closed")
         ws.close()
         if self.is_thread:
             sys.exit()
 
     def on_open(self, ws, *args, **options):
         """ Called when handshake is complete and websocket is open, send login """
-        print("WebSocket open!")
+        logging.info("WebSocket open!")
         
         self.send_login_request(ws)
     
@@ -837,21 +865,40 @@ class RkdStream(RkdData):
                 "Type": "Close",
                 "ID": self.ID
                     }
-        print(payload)
+        logging.info(payload)
         ws.send(json.dumps(payload))
 
     @app.task(bind=True,ignore_result=True)
     def update_rtdb(self,data):
         data = data[0]
         ticker = data.pop("ticker")
-        print(ticker)
+        logging.info(ticker)
         ref = db.collection("universe").document(ticker)
         try:
             ref.set({"price":data},merge=True)
         except Exception as e:
             err = str(e)
-            print(err)
+            logging.error(err)
             return f"{ticker} error : \n {err}"
         del ref
         gc.collect()
         return ticker
+    
+    @app.task()
+    def bulk_update_rtdb(data):
+        batch = db.batch()
+        logging.info(data)
+        for ticker,val in data.items():
+            if not ticker == 'price':
+                ref = db.collection("universe").document(ticker)
+                batch.set(ref,val,merge=True)
+        try:
+            batch.commit()
+        except Exception as e:
+            err = str(e)
+            logging.error(err)
+            return f" error : \n {err}"
+        logging.info("price updated")
+        del ref
+        gc.collect()
+        return 'ticker bulk updated'

@@ -5,6 +5,13 @@ from environs import Env
 from core.djangomodule.network.cloud import DroidDb
 from datetime import timedelta
 import firebase_admin
+import warnings
+import numpy as np
+
+
+np.seterr(all="ignore")
+warnings.filterwarnings("ignore")
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 """
 This is the default Django settings file sans the database settings, caches and celery configurations.
@@ -28,6 +35,9 @@ SECRET_KEY = "!5fyj@#07=!rc9^)k0tgsl%dp@rmfe$*8t3*+m&mkwk-w^l!_a"
 django_debug = env.bool("DEBUG")
 
 DEBUG = django_debug
+
+TESTDEBUG=False # for tests
+SQLPRINT=True # for tests
 
 ALLOWED_HOSTS = [
     "18.167.118.164",

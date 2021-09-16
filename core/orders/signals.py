@@ -12,8 +12,7 @@ from .order_signal_action import OrderServices
 def generate_hedge_setup(instance: Order,margin:int) -> dict:
 
     bot = BotOptionType.objects.get(bot_id=instance.bot_id)
-    expiry = get_expiry_date(
-        bot.time_to_exp, instance.created, instance.ticker.currency_code.currency_code)
+    expiry = get_expiry_date(bot.time_to_exp, instance.created, instance.ticker.currency_code.currency_code, apps=(instance.order_type == "apps"))
     if bot.bot_type.bot_type == "CLASSIC":
         setup = get_classic(instance.ticker.ticker, instance.created,
                             bot.time_to_exp, instance.amount, instance.price, expiry,margin=margin)

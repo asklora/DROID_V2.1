@@ -8,6 +8,7 @@ from channels.layers import get_channel_layer
 from datetime import datetime, timedelta
 from pandas.core.series import Series
 from django.core.cache import cache
+from django.conf import settings
 # CELERY APP
 from config.celery import app
 from celery.schedules import crontab
@@ -17,7 +18,7 @@ from core.universe.models import Universe, UniverseConsolidated,ExchangeMarket
 from core.Clients.models import ClientTopStock, UniverseClient
 from core.user.models import User
 from core.djangomodule.serializers import CsvSerializer
-from core.djangomodule.yahooFin import get_quote_index, get_quote_yahoo
+# from core.djangomodule.yahooFin import get_quote_index, get_quote_yahoo
 from core.master.models import Currency
 from core.orders.models import Order, PositionPerformance, OrderPosition
 from core.Clients.models import UserClient, Client
@@ -27,6 +28,7 @@ from channels_presence.models import Presence
 from django.core.mail import EmailMessage
 from config.settings import db_debug
 from datasource.rkd import RkdData
+from bot.calculate_bot import populate_daily_profit
 # RAW SQL QUERY MODULE
 from general.sql_process import do_function
 # SLACK REPORT
@@ -607,6 +609,10 @@ def order_client_topstock(currency=None, client_name="HANWHA", bot_tester=False,
                     pos_list.append(str(order.order_uid))
                     report_to_slack(
                         f"=== {client_name} ORDER {queue.ticker} - {queue.service_type} - {queue.capital} IS CREATED ===")
+                
+                
+                populate_daily_profit()
+                
             else:
                 report_to_slack(
                     f"=== {client_name} MARKET {queue.ticker} IS CLOSE SKIPPING INITIAL ORDER ===")
@@ -722,7 +728,7 @@ def hedge(currency=None, bot_tester=False, **options):
                     report_to_slack(
                         f"===  MARKET {position.ticker} IS CLOSE SKIP HEDGE {status} ===")
             if group_celery_jobs:
-                result = celery_jobs.apply_async()
+                result = celery_jobs.apply_async(queue=settings.HEDGE_WORKER_DEFAULT_QUEUE)
                 retry = 0
                 while result.waiting():
                     tm.sleep(2)
@@ -763,7 +769,12 @@ def daily_hedge(currency=None, **options):
     hedge(currency=currency, **options)  # bot_advisor hanwha and fels
     hedge(currency=currency, bot_tester=True, **options)  # bot_tester
     daily_hedge_user(currency=currency,ingest=True)
-    
+    try:
+        populate_daily_profit()
+    except Exception as e:
+        err = ErrorLog.objects.create_log(
+            error_description=f"===  ERROR IN DAILY profit Function {currency} ===", error_message=str(e))
+        err.send_report_error()
     report_to_slack(f"===  HEDGE DAILY FOR {currency} DONE ===")
 
     return {"result": f"hedge {currency} done"}

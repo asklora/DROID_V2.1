@@ -7,6 +7,7 @@ from core.Clients.models import UserClient
 from django.db import transaction as db_transaction
 from config.celery import app as worker
 from core.Clients.IBClientModule import IBClient 
+from datetime import datetime
 """
 user/bot
 broker/simulation
@@ -64,8 +65,7 @@ class BaseOrderConnector(AbstracOrderConnector):
     def run(self):
         """
         in here we delete the long if else statement
-
-        will trigger the function inside this class with prefix name and invoke
+        will trigger the function inside this class with prefix name and invokes
         """
         func_name =f'on_{self.instance.side}_{self.instance.status}'
         
@@ -104,7 +104,9 @@ class BaseOrderConnector(AbstracOrderConnector):
                 amount = self.instance.amount
             else:
                 amount = self.instance.setup['position']['investment_amount']
-                
+            
+
+
             TransactionHistory.objects.create(
                 balance_uid=self.user_wallet,
                 side="debit",

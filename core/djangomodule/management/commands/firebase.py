@@ -6,14 +6,34 @@ import threading
 import time
 from firebase_admin import firestore
 import random
+import requests
 
+
+def delete_collection(coll_ref, batch_size):
+    docs = coll_ref.limit(batch_size).stream()
+    deleted = 0
+
+    for doc in docs:
+        print(f'Deleting doc {doc.id} => {doc.to_dict()}')
+        doc.reference.delete()
+        deleted = deleted + 1
+
+    if deleted >= batch_size:
+        return delete_collection(coll_ref, batch_size)
 
 class Command(BaseCommand):
+    
 
     def handle(self, *args, **options):
         # firebase_user_update(user_id=[119])
-        mongo_universe_update(currency_code=["HKD"])
+        # mongo_universe_update(currency_code=["HKD"])
         # db = firestore.client()
+        
+        # collection =db.collection(u"portfolio").document(u"638").get()
+        # collection =db.collection(u"portfolio").where("user_id","==",638)
+        # delete_collection(collection,1)
+        res = requests.delete("https://firestore.googleapis.com/v1/projects/asklora-android/databases/(default)/documents/portfolio/638")
+        print(res)
         # ticker = ['0998.HK','0267.HK','0883.HK']
         # while True:
         #     index = random.randint(0,2)

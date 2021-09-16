@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from core.djangomodule.network.cloud import DroidDb
-
+from datasource.rkd import logging
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
@@ -12,7 +12,6 @@ class Command(BaseCommand):
         )
     def handle(self, *args, **options):
         db = DroidDb()
-        if options["delete"]:
-            db.delete_old_testdb()
-        else:
-            db.create_test_db()
+        status =db.check_testdb_status()
+        logging.info(status)
+        

@@ -1,0 +1,6 @@
+-r requirements_no_AI.txt
+django-pandas==0.6.4
+pytest==6.2.5
+pytest-django==4.4.0
+pytest-sugar==0.9.4
+pytest-xdist==2.3.0

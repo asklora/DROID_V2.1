@@ -10,6 +10,8 @@ from core.djangomodule.serializers import OrderPositionSerializer
 from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
+from django.conf import settings
+
 
 def classic_sell_position(live_price, trading_day, position_uid, apps=False):
     position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
@@ -48,6 +50,7 @@ def classic_sell_position(live_price, trading_day, position_uid, apps=False):
             position.event = "Profit"
         else:
             position.event = "Bot Expired"
+            
     # serializing -> make dictionary position instance
     position_val = OrderPositionSerializer(position).data
     # remove created and updated from position
@@ -69,6 +72,7 @@ def classic_sell_position(live_price, trading_day, position_uid, apps=False):
         qty=position.share_num,
         setup=setup,
         order_type=order_type,
+        margin=position.margin
     )
     # only for none apps
     if order and not apps:
@@ -172,7 +176,9 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
 
 @app.task
 def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, latest=False):
-    transaction.set_autocommit(False)
+    if not settings.TESTDEBUG:
+        transaction.set_autocommit(False)
+
     try:
         position = OrderPosition.objects.get(
             position_uid=position_uid, is_live=True)
@@ -221,7 +227,14 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
                         order.status = "filled"
                         order.filled_at = log_time
                         order.save()
-                print(f"trading_day {trading_day}-{tac_price.ticker} done")
+                    
+                        print(f"Position event: {OrderPosition.objects.get(position_uid=position.position_uid).event}")
+                if settings.TESTDEBUG:
+                    print("\n")
+                    print(f"Bot cash balance: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_bot_cash_balance}")
+                    print(f"Share num: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').share_num}")
+                    print(f"PnL amount: {PositionPerformance.objects.filter(position_uid=position.position_uid).latest('created').current_pnl_amt}")
+                    print(f"trading_day {trading_day}-{tac_price.ticker} done")
                 if status:
                     break
             if(type(trading_day) == datetime):
@@ -251,7 +264,7 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
             if(not status and trading_day <= lastest_price_data.last_date and exp_date >= lastest_price_data.last_date):
                 trading_day = lastest_price_data.last_date
                 print(f"latest price {trading_day} done")
-                status, order_id = create_performance(lastest_price_data, position, latest_price=True)
+                status, order_id = create_performance(lastest_price_data, position, latest=True)
                 if order_id:
                     order = Order.objects.get(order_uid=order_id)
                     log_time = lastest_price_data.intraday_time
@@ -261,8 +274,11 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
                         order.save()
                 if status:
                     print(f"position end")
-        transaction.commit()
-        print("transaction committed")
+
+        if not settings.TESTDEBUG:
+            transaction.commit()
+            print("transaction committed")
+
         return True
     except OrderPosition.DoesNotExist as e:
         err = ErrorLog.objects.create_log(

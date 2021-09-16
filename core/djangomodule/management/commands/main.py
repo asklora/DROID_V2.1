@@ -34,7 +34,38 @@ from ingestion.data_from_dsws import (
     update_worldscope_quarter_summary_from_dsws,
     update_currency_code_from_dsws,
     update_lot_size_from_dsws,
-    update_mic_from_dsws)
+    update_mic_from_dsws,
+    worldscope_quarter_report_date_from_dsws)
+
+def split_ticker(currency_code, split=1):
+    from general.sql_query import get_active_universe
+
+    ticker = get_active_universe(currency_code=currency_code)["ticker"].to_list()
+    if(len(ticker) > 400):
+        ticker1 = ticker[0:100]
+        ticker2 = ticker[100:200]
+        ticker3 = ticker[200:300]
+        ticker4 = ticker[300:400]
+        ticker5 = ticker[400:]
+    elif(len(ticker) > 200):
+        ticker1 = ticker[0:100]
+        ticker2 = ticker[100:200]
+        ticker3 = ticker[200:]
+    else:
+        ticker1 = ticker[0:]
+    try:
+        if(split == 1):
+            return ticker1
+        elif(split == 2):
+            return ticker2
+        elif(split == 3):
+            return ticker3
+        elif(split == 4):
+            return ticker4
+        else:
+            return ticker5
+    except Exception as e:
+        return ticker
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
@@ -42,6 +73,7 @@ class Command(BaseCommand):
         parser.add_argument("-ws", "--ws", type=bool, help="ws", default=False)
         parser.add_argument("-worldscope", "--worldscope", type=bool, help="worldscope", default=False)
         parser.add_argument("-fundamentals_score", "--fundamentals_score", type=bool, help="fundamentals_score", default=False)
+        parser.add_argument("-fundamentals_rating", "--fundamentals_rating", type=bool, help="fundamentals_rating", default=False)
         parser.add_argument("-quandl", "--quandl", type=bool, help="quandl", default=False)
         parser.add_argument("-vix", "--vix", type=bool, help="vix", default=False)
         parser.add_argument("-interest", "--interest", type=bool, help="interest", default=False)
@@ -49,7 +81,10 @@ class Command(BaseCommand):
         parser.add_argument("-utc_offset", "--utc_offset", type=bool, help="utc_offset", default=False)
         parser.add_argument("-weekly", "--weekly", type=bool, help="weekly", default=False)
         parser.add_argument("-monthly", "--monthly", type=bool, help="monthly", default=False)
+        parser.add_argument("-split", "--split", type=int, help="split", default=1)
         parser.add_argument("-currency_code", "--currency_code", nargs="+", help="currency_code", default=None)
+
+        parser.add_argument("-month", "--month", type=bool, help="month", default=False)
 
     def handle(self, *args, **options):
         d = str_to_date(dateNow())
@@ -101,7 +136,11 @@ class Command(BaseCommand):
             if(options["worldscope"]):
                 if(d in ["1", "2", "3", "4", "5", "6", "7"]):
                     status = "Worldscope Ingestion"
-                    update_worldscope_quarter_summary_from_dsws(currency_code=options["currency_code"])
+                    ticker = split_ticker(options["currency_code"], split=options["split"])
+                    print(ticker)
+                    update_worldscope_quarter_summary_from_dsws(ticker=ticker)
+                    status = "Worldscope Report Date Ingestion"
+                    worldscope_quarter_report_date_from_dsws(ticker = ticker)
                 else:
                     print(dateNow())
                     print(d)
@@ -109,9 +148,20 @@ class Command(BaseCommand):
 
             if(options["fundamentals_score"]):
                 status = "Fundamentals Score Ingestion"
-                update_fundamentals_score_from_dsws(currency_code=options["currency_code"])
+                ticker = split_ticker(options["currency_code"], split=options["split"])
+                print(ticker)
+                update_fundamentals_score_from_dsws(ticker=ticker)
                 status = "Fundamentals Quality Update"
                 update_fundamentals_quality_value()
+            
+            if(options["fundamentals_rating"]):
+                if(options["month"]):
+                    if(d in ["1", "2", "3", "4", "5", "6", "7"]):
+                        status = "Fundamentals Quality Update"
+                        update_fundamentals_quality_value()
+                else:
+                    status = "Fundamentals Quality Update"
+                    update_fundamentals_quality_value()
 
             if(options["quandl"]):
                 status = "Quandl Ingestion"
@@ -153,6 +203,8 @@ class Command(BaseCommand):
                 update_ibes_data_monthly_from_dsws()
                 status = "Macro Ingestion"
                 update_macro_data_monthly_from_dsws()
+                status = "Universe hotness Ingestion" 
+                do_function("universe_hotness_update") 
 
             if(options["monthly"]):
                 if(d in ["1", "2", "3", "4", "5", "6", "7"]):

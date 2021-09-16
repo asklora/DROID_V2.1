@@ -1,12 +1,16 @@
 import pandas as pd
+from django.conf import settings
+from core.djangomodule.general import get_cached_data,set_cache_data
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
+from general import table_name
 from general.sql_process import db_read, alibaba_db_url
 from general.date_process import (
-    backdate_by_day, 
-    dateNow, 
-    date_minus_day, 
-    droid_start_date, 
+    backdate_by_day,
+    backdate_by_year,
+    dateNow,
+    date_minus_day,
+    droid_start_date,
     str_to_date)
 from general.data_process import tuple_data
 from general.table_name import (
@@ -17,6 +21,7 @@ from general.table_name import (
     get_data_ibes_monthly_table_name,
     get_data_macro_monthly_table_name,
     get_ai_value_pred_table_name,
+    get_data_worldscope_summary_table_name,
     get_industry_group_table_name,
     get_industry_table_name,
     get_latest_bot_update_table_name,
@@ -25,6 +30,7 @@ from general.table_name import (
     get_master_tac_table_name,
     get_orders_position_performance_table_name,
     get_orders_position_table_name,
+    get_orders_table_name,
     get_region_table_name,
     get_universe_client_table_name,
     get_universe_rating_detail_history_table_name,
@@ -32,6 +38,7 @@ from general.table_name import (
     get_user_account_balance_table_name,
     get_user_core_table_name,
     get_user_profit_history_table_name,
+    get_user_transaction_table_name,
     get_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
@@ -42,9 +49,15 @@ from general.table_name import (
     get_universe_consolidated_table_name,
     get_factor_calculation_table_name,
     get_factor_rank_table_name,
+    get_ai_score_history_testing_table_name,
 )
 
-def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=True):
+
+
+
+
+
+def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=settings.SQLPRINT):
     """Base function for database query
 
     Args:
@@ -200,6 +213,11 @@ def get_active_universe_by_created(created=dateNow()):
     data = read_query(query, table=get_universe_table_name())
     return data
 
+def get_active_position_ticker():
+    query = f"select distinct ticker from {get_orders_position_table_name()} where is_live=True"
+    data = read_query(query, table=get_orders_position_table_name())
+    return data
+
 def get_universe_rating(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_table_name()
     query = f"select * from {table_name} "
@@ -213,9 +231,7 @@ def get_universe_rating(ticker=None, currency_code=None, active=True):
     return data
 
 
-def get_active_universe_by_entity_type(
-    ticker=None, currency_code=None, null_entity_type=False, active=True
-):
+def get_active_universe_by_entity_type(ticker=None, currency_code=None, null_entity_type=False, active=True):
     query = f"select * from {get_universe_table_name()} where is_active=True "
     if null_entity_type:
         query += f"and entity_type is null "
@@ -230,6 +246,11 @@ def get_active_universe_by_entity_type(
     data = read_query(query, table=get_universe_table_name())
     return data
 
+def get_worldscope_period_end_list(start_date="2000-01-01", end_date=dateNow()):
+    table_name = get_data_worldscope_summary_table_name()
+    query = f"select distinct period_end from {table_name} where period_end>='{start_date}' and period_end<='{end_date}' order by period_end ASC"
+    data = read_query(query, table=table_name)
+    return data["period_end"].to_list()
 
 def get_active_universe_by_country_code(country_code, method=True):
     if method:
@@ -520,6 +541,16 @@ def get_consolidated_data(column, condition, group_field=None):
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+def get_ai_score_testing_history(backyear=1):
+    query =  f"SELECT currency_code, ai_score "
+    # query =  f"SELECT currency_code, min(ai_score) as score_min, max(ai_score) as score_max FROM {get_ai_score_history_testing_table_name()} "
+    query += f"FROM {get_ai_score_history_testing_table_name()} "
+    query += f"WHERE period_end > '{backdate_by_year(backyear)}' "
+    # query += f"GROUP BY currency_code"
+    data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
+    # data = data.groupby(['currency_code']).mean().reset_index()
+    return data
+
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_history_table_name()
     query = f"select * from {table_name} where trading_day=(select max(urh.trading_day) from {table_name} urh) "
@@ -549,8 +580,12 @@ def get_bot_type(condition=None):
     query = f"select * from {table_name} "
     if type(condition) != type(None):
         query += f" where {condition}"
-    data = read_query(query, table_name, cpu_counts=True)
-    return data
+    cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
+    if  not isinstance(cached_data,pd.DataFrame) :
+        data = read_query(query, table_name, cpu_counts=True)
+        set_cache_data(table_name,data.to_dict('records'))
+        return data
+    return cached_data
 
 
 def get_latest_bot_update_data(ticker=None, currency_code=None):
@@ -595,8 +630,12 @@ def get_bot_option_type(condition=None):
     query = f"select * from {table_name} "
     if type(condition) != type(None):
         query += f" where {condition}"
-    data = read_query(query, table_name, cpu_counts=True)
-    return data
+    cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
+    if  not isinstance(cached_data,pd.DataFrame) :
+        data = read_query(query, table_name, cpu_counts=True)
+        set_cache_data(table_name,data.to_dict('records'))
+        return data
+    return cached_data
 
 
 def get_latest_ranking(ticker=None, currency_code=None, active=True):
@@ -653,7 +692,7 @@ def get_data_from_table_name(table_name, ticker=None, currency_code=None, active
 
 def get_user_core(currency_code=None, user_id=None, field="*"):
     table_name = get_user_core_table_name()
-    query = f"select {field} from {table_name} where is_active=True and is_superuser=False "
+    query = f"select {field} from {table_name} where is_active=True and is_superuser=False and is_test=False "
     if type(user_id) != type(None):
         query += f"and id in {tuple_data(user_id)}  "
     elif type(currency_code) != type(None):
@@ -684,17 +723,48 @@ def get_user_account_balance(currency_code=None, user_id=None, field="*"):
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+def get_user_deposit(user_id=None, balance_uid=None, field="*"):
+    table_name = get_user_transaction_table_name()
+    query = f"select balance_uid, sum(amount) as deposit from {table_name} where transaction_detail ->> 'event' = 'first deposit' "
+    if type(user_id) != type(None):
+        query += f"and balance_uid in (select balance_uid from {get_user_account_balance_table_name()} where user_id in {tuple_data(user_id)})  "
+    elif type(balance_uid) != type(None):
+        query += f"and balance_uid in {tuple_data(balance_uid)} "
+    query += f"group by balance_uid; "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
 def get_orders_position(user_id=None, ticker=None, currency_code=None, position_uid=None, field="*", active=True):
     table_name = get_orders_position_table_name()
     query = f"select {field} from {table_name} where is_live={active} "
     if type(user_id) != type(None):
-        query += f"and user_id in {tuple_data(user_id)}  "
+        query += f"and user_id in {tuple_data(user_id)} "
     elif type(position_uid) != type(None):
-        query += f"where position_uid in {position_uid} "
+        query += f"where position_uid in {tuple_data(position_uid)} "
     elif type(ticker) != type(None):
         query += f"and ticker in {tuple_data(ticker)} "
     elif type(currency_code) != type(None):
         query += f"and ticker in (select ticker from universe where currency_code in {tuple_data(currency_code)}) "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_orders_position_group_by_user_id(user_id=None, ticker=None, currency_code=None, stock=False):
+    filter = ""
+    if type(user_id) != type(None):
+        filter = f"and user_id in {tuple_data(user_id)} "
+    elif type(ticker) != type(None):
+        filter = f"and ticker in {tuple_data(ticker)} "
+    elif type(currency_code) != type(None):
+        filter = f"and ticker in (select ticker from universe where currency_code in {tuple_data(currency_code)}) "
+
+    table_name = get_orders_table_name()
+    if(stock):
+        query = f"select user_id, sum(amount) as stock_pending_amount from orders where status='pending' and canceled_at is null and bot_id = 'STOCK_stock_0' {filter} group by user_id"
+    else:
+        query = f"select user_id, (sum((performance ->> 'current_bot_cash_balance')::double precision) + sum(amount))  as bot_pending_amount from ( "
+        query += f"select user_id, (setup ->> 'performance')::json as performance, amount "
+        query += f"from orders where status='pending' and canceled_at is null and bot_id != 'STOCK_stock_0' {filter}) as result "
+        query += f"group by user_id; "
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
@@ -716,5 +786,6 @@ def get_orders_position_performance(user_id=None, ticker=None, currency_code=Non
         query += "and exists (select 1 from (select filters.position_uid, max(filters.created) max_date "
         query += "from orders_position_performance as filters group by filters.position_uid) result "
         query += "where result.position_uid=opp.position_uid and result.max_date::date=opp.created::date) "
+        query += "order by created DESC;"
     data = read_query(query, table_name, cpu_counts=True)
     return data

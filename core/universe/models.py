@@ -36,7 +36,6 @@ class Currency(models.Model):
         Region, on_delete=models.CASCADE, db_column="region_id", related_name="currency_region_id")
     vix_id = models.ForeignKey(
         Vix, on_delete=models.CASCADE, db_column="vix_id", related_name="currency_vix_id")
-
     ric = models.CharField(blank=True, null=True, max_length=255)
     currency_name = models.CharField(blank=True, null=True, max_length=255)
     is_decimal = models.BooleanField(default=False)
@@ -61,6 +60,7 @@ class Currency(models.Model):
     hedge_schedule = models.TimeField(blank=True, null=True)
     index_ticker = models.TextField(blank=True, null=True)
     index_price = models.FloatField(blank=True, null=True)
+    country = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.currency_code
@@ -85,30 +85,6 @@ class CurrencyCalendars(models.Model):
         return self.uid
 
 
-class Country(models.Model):
-    country_code = models.TextField(primary_key=True)
-    currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code",
-                                      related_name="country_currency_code", blank=True, null=True)
-    country_name = models.TextField(blank=True, null=True)
-    ds_country_code = models.TextField(blank=True, null=True)
-    is_open = models.BooleanField(default=False)
-
-    class Meta:
-        managed = True
-        db_table = "country"
-
-    def __str__(self):
-        return self.country_code
-
-# class CountryCalendars(models.Model):
-#     uid = models.TextField(primary_key=True)
-#     country_code = models.ForeignKey(Country, on_delete=models.CASCADE, db_column="country_code",related_name="country_calendar_country_code", blank=True, null=True)
-#     non_working_day = models.DateField(blank=True, null=True)
-#     description = models.TextField(blank=True, null=True)
-
-#     class Meta:
-#         managed = False
-#         db_table = "country_calendar"
 
 
 class IndustryGroup(models.Model):
@@ -270,7 +246,7 @@ class Universe(models.Model):
     class Meta:
         managed = True
         db_table = "universe"
-        indexes = [models.Index(fields=['ticker_symbol','currency_code','mic'])]
+        indexes = [models.Index(fields=["ticker_symbol","currency_code","mic"])]
         
 #test
 
@@ -415,3 +391,24 @@ class ExchangeMarket(BaseTimeStampModel):
     def __str__(self):
         return self.mic
 
+class UniverseHotness(models.Model):
+    """
+    Schema
+    ------
+    create table universe_hotness
+    (
+        trading_day   date,
+        ticker        text,
+        volume_rate_z double precision
+    );
+    """
+    ticker = models.OneToOneField(Universe, primary_key=True, on_delete=models.CASCADE, db_column="ticker", related_name="universe_hotness_ticker")
+    trading_day = models.DateField(null=False)
+    volume_rate_z = models.FloatField(null=False)
+
+    class Meta:
+        managed = True
+        db_table = "universe_hotness"
+
+    def __str__(self):
+        return f"UniverseHotness(trading_day={self.trading_day}, ticker={self.ticker})"

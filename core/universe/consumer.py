@@ -81,6 +81,7 @@ class UniverseConsumer(WebsocketConsumer):
         print("ping event", event)
         process = [{proc.name: proc}
                    for proc in multiprocessing.active_children()]
+        print(process)
         if not process:
             rkd = RkdStream()
             rkd.chanels = self.room_group_name

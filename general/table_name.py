@@ -101,6 +101,9 @@ def get_data_worldscope_summary_table_name():
 def get_ai_value_pred_table_name():
     return "ai_value_lgbm_pred_final_eps"
 
+def get_ai_score_history_testing_table_name():
+    return "data_fundamental_score_history_testing"
+
 def get_factor_calculation_table_name():
     return "factor_formula_ratios_prod"
 
@@ -200,6 +203,9 @@ def get_user_core_table_name():
 
 def get_user_account_balance_table_name():
     return "user_account_balance"
+
+def get_user_transaction_table_name():
+    return "user_transaction"
 
 def get_user_profit_history_table_name():
     return "user_profit_history"

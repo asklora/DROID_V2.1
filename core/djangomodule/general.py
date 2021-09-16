@@ -9,6 +9,15 @@ from django.core.cache import cache
 import json
 from rest_framework import permissions,status
 from rest_framework.exceptions import APIException
+from django_redis import get_redis_connection
+from redis.exceptions import ConnectionError
+import logging
+import pandas as pd
+import pprint
+
+logging.basicConfig()
+logger = logging.getLogger('redis')
+
 
 
 
@@ -31,7 +40,9 @@ class IsRegisteredUser(permissions.BasePermission):
             return NeedRegister()
         return True
 
-
+def jsonprint(data:dict)->None:
+    pretty =pprint.PrettyPrinter(indent=2)
+    pretty.pprint(data)
 @deconstructible
 class UploadTo:
     def __init__(self, name):
@@ -182,15 +193,42 @@ def symbol_hkd_fix(symbol:str) ->str:
     return symbol
 
 
-def get_cached_data(key):
-    cached_data = cache.get(key)
-    if cached_data:
-        return json.loads(cached_data)
+def flush_cache():
+    try:
+        con =get_redis_connection("default")
+        con.flushall()
+        logger.info("cache flushed")
+    except ConnectionError:
+        logger.error("Redis isn't running. skip get cache`")
+
+
+def get_cached_data(key,df=False):
+    
+    try:
+        get_redis_connection("default")
+        cached_data = cache.get(key)
+        if cached_data:
+            data= json.loads(cached_data)
+            if df:
+                if isinstance(data,list):
+                    data = pd.DataFrame(data)
+                elif isinstance(data,dict):
+                    data = pd.DataFrame([data])
+                else:
+                    raise ValueError('dataframe should be a dict or list')
+            return data
+    except ConnectionError:
+        logger.error("Redis isn't running. skip get cache`")
     return False
 
 
 def set_cache_data(key,data=None,interval=60*60):
-    cache.set(key,json.dumps(data),interval)
+    try:
+        get_redis_connection("default")
+        cache.set(key,json.dumps(data),interval)
+    except ConnectionError:
+        logger.error("Redis isn't running. ignoring set cache ")
+    
 
 
 
