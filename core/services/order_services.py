@@ -146,6 +146,7 @@ def order_executor(self, payload, recall=False):
 
 @app.task
 def update_rtdb_user_porfolio():
+    
     try:
         # hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
         # if hkd_exchange.is_open:
