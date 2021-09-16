@@ -1,12 +1,5 @@
 version: '2.1'
 services:
-  # celery-broadcaster:
-  #   container_name: CeleryBroadcaster
-  #   image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/droid
-  #   command: bash -c "export DJANGO_SETTINGS_MODULE=config.production && celery -A core.services worker -l  INFO --hostname=broadcaster@%h --concurrency=10 -Q broadcaster"
-  #   restart: always
-  #   depends_on:
-  #     - redis
   celery-hedger:
     container_name: CeleryHedger
     image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/droid
