@@ -20,6 +20,10 @@
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1/installer
         cmd: sudo ./aws-set.sh
+    - name: docker allow
+      ansible.builtin.command:
+        chdir: /home/ubuntu
+        cmd: sudo chown $USER /var/run/docker.sock
     - name: docker login
       ansible.builtin.command:
         chdir: /home/ubuntu
