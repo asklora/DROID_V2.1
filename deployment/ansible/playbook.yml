@@ -18,7 +18,7 @@
     - name: Stop Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1/installer
-        cmd: chmod +x aws-set.sh && ./aws-set.sh
+        cmd: sudo chmod +x aws-set.sh && ./aws-set.sh
     - name: Stop Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
