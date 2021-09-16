@@ -232,7 +232,7 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
     return data, error_universe
 
 def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False, worldscope=False, dsws=True):
-    DS = setDataStream(DSWS=False)
+    DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
     chunk_data = []
     if(monthly):

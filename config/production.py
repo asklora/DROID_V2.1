@@ -29,7 +29,7 @@ CACHES = {
 }
 }
 
-# Database
+# Databases
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 print('using prod db')
 read_endpoint, write_endpoint, port = db.prod_url

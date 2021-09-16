@@ -28,6 +28,27 @@ logging.getLogger().setLevel(logging.INFO)
 
 db = firestore.client()
 
+
+
+def bulk_update_rtdb(data):
+    batch = db.batch()
+    for ticker,val in data.items():
+        if not ticker == 'price':
+            ref = db.collection("universe").document(ticker)
+            batch.set(ref,val,merge=True)
+    try:
+        batch.commit()
+    except Exception as e:
+        err = str(e)
+        logging.error(err)
+
+        return f" error : \n {err}"
+    logging.info("price updated")
+    del ref
+    gc.collect()
+    return 'ticker bulk updated'
+
+
 class Rkd:
     token = None
 
@@ -588,11 +609,11 @@ class RkdStream(RkdData):
 
     def stream_quote(self):
         # FOR NOW ONLY HKD
-        # TODO: Need to enhance this.
+        # TODO: Need to enhance this
         while True:
-            logging.info('stream price')
             hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
             if hkd_exchange.is_open:
+                logging.info('stream price')
                 data =self.bulk_get_quote(self.ticker_data,df=True)
                 df = data.copy()
                 data['price'] = df.drop(columns=['ticker']).to_dict("records")
@@ -600,7 +621,9 @@ class RkdStream(RkdData):
                 data = data[['ticker','price']]
                 data = data.set_index('ticker')
                 records = data.to_dict("index")
-                self.bulk_update_rtdb.delay(records)
+                # logging.info(records)
+
+                bulk_update_rtdb(records)
                 del records
                 del data
                 gc.collect()
@@ -861,10 +884,10 @@ class RkdStream(RkdData):
         gc.collect()
         return ticker
     
-    @app.task(bind=True,ignore_result=True)
-    def bulk_update_rtdb(self,data):
+    @app.task()
+    def bulk_update_rtdb(data):
         batch = db.batch()
-        
+        logging.info(data)
         for ticker,val in data.items():
             if not ticker == 'price':
                 ref = db.collection("universe").document(ticker)
@@ -874,7 +897,6 @@ class RkdStream(RkdData):
         except Exception as e:
             err = str(e)
             logging.error(err)
-
             return f" error : \n {err}"
         logging.info("price updated")
         del ref
