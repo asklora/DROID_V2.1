@@ -23,7 +23,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Create droid image
-        run: docker build . -t droid -f deployment/batch/Dockerfile.celery
+        run: docker build . -t droid -f deployment/jenkins/bastion/Dockerfile
         if: "contains(github.event.head_commit.message, 'ecr')"
       - name: Push to ECR
         if: "contains(github.event.head_commit.message, 'ecr')"
