@@ -9,4 +9,4 @@ RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${
     && rm docker-${DOCKERVERSION}.tgz
 
 RUN installer/requirement.sh
-
+RUN pip install -r installer/requirements_test.txt
