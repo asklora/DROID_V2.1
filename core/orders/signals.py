@@ -65,7 +65,7 @@ def order_revert(sender, instance, **kwargs):
         in_wallet_transactions = TransactionHistory.objects.filter(
             transaction_detail__order_uid=str(order.order_uid))
         if in_wallet_transactions.exists():
-            in_wallet_transactions.get().delete()
+            in_wallet_transactions.delete()
         position = OrderPosition.objects.get(
             position_uid=instance.position_uid.position_uid)
 
@@ -90,6 +90,6 @@ def return_fee_to_wallet(sender, instance, **kwargs):
     in_wallet_transactions_stamp = TransactionHistory.objects.filter(
         transaction_detail__stamp_duty_id=instance.id)
     if in_wallet_transactions_fee.exists():
-        in_wallet_transactions_fee.get().delete()
+        in_wallet_transactions_fee.delete()
     if in_wallet_transactions_stamp.exists():
-        in_wallet_transactions_stamp.get().delete()
+        in_wallet_transactions_stamp.delete()
