@@ -20,14 +20,6 @@
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1/installer
         cmd: sudo ./aws-set.sh
-    - name: docker allow
-      ansible.builtin.command:
-        chdir: /home/ubuntu
-        cmd: sudo chown $USER /var/run/docker.sock
-    - name: docker login
-      ansible.builtin.command:
-        chdir: /home/ubuntu
-        cmd: aws ecr get-login-password --region ap-east-1 && docker login --username AWS --password-stdin 736885973837.dkr.ecr.ap-east-1.amazonaws.com
     - name: Stop Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
