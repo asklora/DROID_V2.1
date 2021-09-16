@@ -87,13 +87,13 @@ class TestAPIOrder:
 
         assert order is not None
         assert order["order_uid"] is not None
-        assert order["amount"] == 99.43  # adjusted to stock numbers
+        assert order["amount"] == 99.43  # adjusted to the maximum purchasable stocks
 
     def test_api_create_order_with_margin(self, authentication, client, user) -> None:
         data = {
             "ticker": "3377.HK",
             "price": 1.63,
-            "bot_id": "STOCK_stock_0",
+            "bot_id": "UNO_ITM_003846",
             "amount": 100,
             "user": user.id,
             "side": "buy",
@@ -114,7 +114,7 @@ class TestAPIOrder:
         assert order is not None
         assert order["order_uid"] is not None
         # confirm if the qty is correctly counted with margin
-        assert order["qty"] == 122.0
+        assert order["qty"] != 100.0
 
     def test_api_create_order_with_classic_bot(self, authentication, client, user) -> None:
         data = {
@@ -124,7 +124,6 @@ class TestAPIOrder:
             "amount": 100,
             "user": user.id,
             "side": "buy",
-            "margin": 2,
         }
 
         response = client.post(path="/api/order/create/",
@@ -140,7 +139,6 @@ class TestAPIOrder:
 
         assert order is not None
         assert order["order_uid"] is not None
-        # confirm if the qty is correctly counted with margin
         assert order["qty"] == order["setup"]["performance"]["share_num"]
         # confirm if the setup is not empty
         assert order["setup"] is not None
@@ -250,7 +248,6 @@ class TestAPIOrder:
                     "amount": 100,
                     "user": user.id,
                     "side": "buy",
-                    "margin": 2,
                 },
                 **authentication,
             )
