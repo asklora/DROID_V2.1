@@ -21,6 +21,6 @@ phases:
     commands:
       - echo test completed on `date`
       - echo docker test
-      - ./deployment/script/hook.sh
+      - python manage.py create_image -b dev
       # - docker run -v /var/run/docker.sock:/var/run/docker.sock
       # - docker version

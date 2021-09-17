@@ -1,5 +1,5 @@
 name: github triger codepipeline  # feel free to pick your own name
-
+github.ref
 on:
   workflow_dispatch:
     inputs:
@@ -27,11 +27,23 @@ jobs:
 
       - name: Create droid image
         run: docker build . -t droid -f deployment/jenkins/bastion/Dockerfile
-      - name: Push to ECR
+
+      - name: Push prod to ECR
+        if: github.ref == 'refs/heads/master'
         id: ecr
         uses: jwalton/gh-ecr-push@v1
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ap-east-1
-          image: droid:prod
+          image: droid:latest,droid:prod
+      
+      - name: Push dev to ECR
+        if: github.ref == 'refs/heads/dev'
+        id: ecr
+        uses: jwalton/gh-ecr-push@v1
+        with:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ap-east-1
+          image: droid:latest
