@@ -23,6 +23,7 @@
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1/installer
         cmd: sudo ./aws-set.sh
+    
     - name: login aws
       ansible.builtin.command:
         chdir: /home/ubuntu
