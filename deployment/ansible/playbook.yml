@@ -38,7 +38,7 @@
         username: "AWS"
         password: "{{ password }}"
         reauthorize: yes
-    # - name: Stop Container
+    - name: Stop Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
         cmd: docker-compose -p droid -f deployment/compose/dev.yaml down
