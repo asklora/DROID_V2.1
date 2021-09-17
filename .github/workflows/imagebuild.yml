@@ -1,6 +1,7 @@
 name: github triger codepipeline  # feel free to pick your own name
 
-repository_dispatch:
+on:
+  repository_dispatch:
     types: 
       - build_image
 
