@@ -16,11 +16,12 @@ phases:
     commands:
         - pytest -s
         - echo "$CODEBUILD_BUILD_SUCCEEDING"
-        - echo "$CODEBUILD_SRC_DIR"
+        - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION"
   post_build:
     commands:
       - echo test completed on `date`
       - echo docker test
       - python manage.py create_image -b dev
+      - git branch
       # - docker run -v /var/run/docker.sock:/var/run/docker.sock
       # - docker version
