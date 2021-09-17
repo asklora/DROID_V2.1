@@ -45,8 +45,7 @@
     - name: Clean docker image
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
-        cmd: docker system prune -a -f && docker rmi $(docker images -q)
-    - name: Run Container
+        cmd: docker system prune -a -f && docker image prune -a -f
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
         cmd: docker-compose -p droid -f deployment/compose/dev.yaml up --build --force-recreate -d
