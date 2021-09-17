@@ -1,5 +1,4 @@
 name: github triger codepipeline  # feel free to pick your own name
-github.ref
 on:
   workflow_dispatch:
     inputs:

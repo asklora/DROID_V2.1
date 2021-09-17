@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
         data = json.dumps(
             {"ref":f"refs/heads/{head}"})
-
+        print(data)
         workflow = requests.post('https://api.github.com/repos/asklora/DROID_V2.1/actions/workflows/13294075/dispatches',data=data,headers={
             "Authorization": "token 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",
             "Accept": "application/vnd.github.v3+json"
