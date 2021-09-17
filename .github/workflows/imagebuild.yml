@@ -1,6 +1,8 @@
 name: github triger codepipeline  # feel free to pick your own name
 
 on:
+  branches:
+      - dev
   repository_dispatch:
     types: 
       - build_image
