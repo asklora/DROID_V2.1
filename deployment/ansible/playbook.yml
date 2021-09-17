@@ -28,12 +28,9 @@
       register: ecr_command
   
     - set_fact:
-        password: "{{ ecr_command.stdin }}"
-        
-    - name: set aws
-      ansible.builtin.command:
-        chdir: /home/ubuntu
-        cmd: echo "{{password}}"
+        password: "{{ ecr_command.stdout }}"
+
+    - debug: msg="{{password}}"
 
     - name: docker_repository - Log into ECR registry and force re-authorization
       docker_login:
