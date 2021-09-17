@@ -22,6 +22,6 @@ phases:
       - echo test completed on `date`
       - echo docker test
       - python manage.py create_image -b dev
-      - git branch
+      - git checkout master
       # - docker run -v /var/run/docker.sock:/var/run/docker.sock
       # - docker version
