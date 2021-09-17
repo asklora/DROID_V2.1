@@ -5,7 +5,7 @@ on:
     inputs:
       name:
         description: 'build image and push to ecr'
-        required: true
+        required: false
         default: 'asklora'
 
 jobs:
