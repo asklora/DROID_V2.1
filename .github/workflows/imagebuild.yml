@@ -4,6 +4,7 @@ on:
   repository_dispatch:
     types: 
       - build_image
+      - Organization
 
 jobs:
   build:
