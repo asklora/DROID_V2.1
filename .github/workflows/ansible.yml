@@ -15,12 +15,12 @@ jobs:
     if: "contains(github.event.head_commit.message, 'dev-run')"
 
     steps:
-      - name: Create Notification slack server down
-        uses: fjogeleit/http-request-action@master
-        with:
-          url: https://hooks.slack.com/services/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
-          method: POST
-          data: '{"text": ":notes: dev server update strated it may take times please wait. :notes:"}'
+      # - name: Create Notification slack server down
+      #   uses: fjogeleit/http-request-action@master
+      #   with:
+      #     url: https://hooks.slack.com/services/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
+      #     method: POST
+      #     data: '{"text": ":notes: dev server update strated it may take times please wait. :notes:"}'
       - uses: actions/checkout@v2
       - name: Run instance update
         uses: dawidd6/action-ansible-playbook@v2
@@ -34,9 +34,9 @@ jobs:
           inventory: |
             [instance]
             16.162.110.123
-      - name: Create Notification slack
-        uses: fjogeleit/http-request-action@master
-        with:
-          url: https://hooks.slack.com/services/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
-          method: POST
-          data: '{"text": "dev server updated, deployed by ${{ github.actor }} :sunglasses:"}'
+      # - name: Create Notification slack
+      #   uses: fjogeleit/http-request-action@master
+      #   with:
+      #     url: https://hooks.slack.com/services/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
+      #     method: POST
+      #     data: '{"text": "dev server updated, deployed by ${{ github.actor }} :sunglasses:"}'
