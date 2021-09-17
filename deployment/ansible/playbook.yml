@@ -23,11 +23,27 @@
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1/installer
         cmd: sudo ./aws-set.sh
+    - name: ecr docker get-authorization-token
+      shell: "aws ecr get-authorization-token  \
+      --profile {{ envsettings.infra.aws_profile }} --region {{ envsettings.infra.aws_region }}"
+      register: ecr_command
+  
+    - set_fact:
+      ecr_authorization_data: "{{ (ecr_command.stdout | from_json).authorizationData[0] }}"
     
-    - name: login aws
-      ansible.builtin.command:
-        chdir: /home/ubuntu
-        cmd: docker login --username AWS --password-stdin 736885973837.dkr.ecr.ap-east-1.amazonaws.com
+    - set_fact:
+      ecr_credentials: "{{ (ecr_authorization_data.authorizationToken | b64decode).split(':') }}"
+    
+    - name: docker_repository - Log into ECR registry and force re-authorization
+      docker_login:
+        registry_url: "{{ ecr_authorization_data.proxyEndpoint.rpartition('//')[2] }}"
+        username: "{{ ecr_credentials[0] }}"
+        password: "{{ ecr_credentials[1] }}"
+        reauthorize: yes
+    # - name: login aws
+    #   ansible.builtin.command:
+    #     chdir: /home/ubuntu
+    #     cmd: docker login --username AWS --password-stdin 736885973837.dkr.ecr.ap-east-1.amazonaws.com
     # - name: Stop Container
     #   ansible.builtin.command:
     #     chdir: /home/ubuntu/DROID_V2.1
