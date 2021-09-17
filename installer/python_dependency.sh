@@ -1,6 +1,5 @@
 echo "=========================="
 echo $PWD
-echo "=========================="
 if [ -f /var/lib/jenkins ];
 then 
 	echo "Updating Bastion instance ... "
