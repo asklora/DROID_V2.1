@@ -652,7 +652,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = fundamentals[score_col].mean(axis=1)
         else:
             score_col_detail = []
-            fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = 0
+            fundamentals.loc[fundamentals["currency_code"] == group, f"fundamentals_extra"] = \
+                fundamentals.loc[fundamentals["currency_code"] == group].filter(regex="^fundamentals_").mean().mean()
 
         # save used columns to pillars
         fundamentals_details[group]['extra'] = fundamentals.loc[fundamentals['currency_code']==group,
