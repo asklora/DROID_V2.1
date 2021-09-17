@@ -14,10 +14,15 @@
 #         }))
 import requests
 import json
-data = json.dumps({"event_type": "build_image"})
-response =requests.post('https://api.github.com/repos/asklora/DROID_V2.1',data=data,headers={
+# data = json.dumps({"event_type": "build_image"})
+# 13294075
+# response =requests.post('https://api.github.com/repos/asklora/DROID_V2.1',data=data,headers={
+#     "Authorization": "token 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",
+#     "Accept": "application/vnd.github.v3+json"
+# })
+workflow = requests.get('https://api.github.com/repos/asklora/DROID_V2.1/actions/workflows',headers={
     "Authorization": "token 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",
     "Accept": "application/vnd.github.v3+json"
 })
-print(response.json())
-print(response.status_code)
+print(workflow.json())
+print(workflow.status_code)

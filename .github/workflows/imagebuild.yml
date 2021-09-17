@@ -1,10 +1,12 @@
 name: github triger codepipeline  # feel free to pick your own name
 
 on:
-  repository_dispatch:
-    types: 
-      - build_image
-      - Organization
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'build image and push to ecr'
+        required: true
+        default: 'asklora'
 
 jobs:
   build:
