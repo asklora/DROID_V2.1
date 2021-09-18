@@ -759,11 +759,11 @@ def get_orders_position_group_by_user_id(user_id=None, ticker=None, currency_cod
 
     table_name = get_orders_table_name()
     if(stock):
-        query = f"select user_id, sum(amount) as stock_pending_amount from orders where status='pending' and canceled_at is null and bot_id = 'STOCK_stock_0' {filter} group by user_id"
+        query = f"select user_id, sum(amount) as stock_pending_amount from orders where status='pending' and side='buy' and canceled_at is null and bot_id = 'STOCK_stock_0' {filter} group by user_id"
     else:
         query = f"select user_id, (sum((performance ->> 'current_bot_cash_balance')::double precision) + sum(amount))  as bot_pending_amount from ( "
         query += f"select user_id, (setup ->> 'performance')::json as performance, amount "
-        query += f"from orders where status='pending' and canceled_at is null and bot_id != 'STOCK_stock_0' {filter}) as result "
+        query += f"from orders where status='pending' and side='buy' and canceled_at is null and bot_id != 'STOCK_stock_0' {filter}) as result "
         query += f"group by user_id; "
     data = read_query(query, table_name, cpu_counts=True)
     return data
