@@ -16,7 +16,8 @@ phases:
   build:
     on-failure: ABORT
     commands:
-        - pytest -s --ds=config.prodtest
+        # - pytest -s --ds=config.prodtest
+        - pytest -s
         - echo "$CODEBUILD_BUILD_SUCCEEDING"
         - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION"
   post_build:
