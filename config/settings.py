@@ -7,7 +7,7 @@ from datetime import timedelta
 import firebase_admin
 import warnings
 import numpy as np
-
+from socket import gethostname, gethostbyname
 
 np.seterr(all="ignore")
 warnings.filterwarnings("ignore")
@@ -40,13 +40,12 @@ TESTDEBUG=False # for tests
 SQLPRINT=True # for tests
 
 ALLOWED_HOSTS = [
-    "18.167.118.164",
+    gethostname(),
+     gethostbyname(gethostname()),
+    "118.0.1.71",
     "127.0.0.1",
     "services.asklora.ai",
-    "16.162.110.123",
     "0.0.0.0",
-    "118.0.34.231",
-    "118.0.40.93",
     "dev-services.asklora.ai",
 ]
 CORS_ALLOW_ALL_ORIGINS = True
