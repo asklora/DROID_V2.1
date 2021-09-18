@@ -2,12 +2,12 @@ version: '2.1'
 services:
   backend:
     container_name: django
-    build:
-      context: ~/DROID_V2.1
-      dockerfile: deployment/jenkins/bastion/Dockerfile
+    # build:
+    #   context: ~/DROID_V2.1
+    #   dockerfile: deployment/jenkins/bastion/Dockerfile
     env_file: ~/DROID_V2.1/.env
     command: sh deployment/jenkins/bastion/entrypointdjango.sh
-    image: django/backend
+    image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/droid:latest
     volumes:
       - ~/DROID_V2.1:/code
     ports:
@@ -30,7 +30,7 @@ services:
       - backend
   celery-broadcaster:
     container_name: CeleryBroadcaster
-    image: django/backend
+    image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/droid:latest
     command: sh deployment/script/broadcaster.sh
     env_file: ~/DROID_V2.1/.env
     volumes:
@@ -41,7 +41,7 @@ services:
       - backend
   celery:
     container_name: Celery
-    image: django/backend
+    image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/droid:latest
     command: sh deployment/jenkins/bastion/celery.sh
     env_file: ~/DROID_V2.1/.env
     volumes:

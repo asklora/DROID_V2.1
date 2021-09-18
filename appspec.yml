@@ -3,16 +3,16 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /home/ubuntu
+    destination: /home/ubuntu/DROID_V2.1
     runas: ubuntu
 hooks:
-  BeforeInstall:
-    - location: debug.sh
-  AfterInstall:
-    - location: deployment/scripts/after_install.sh
-  ApplicationStart:
-    - location: deployment/scripts/start_server.sh
   ApplicationStop:
-    - location: debug.sh
-  AfterAllowTraffic:
-    - location: deployment/scripts/start_server.sh
+    - location: deployment/scripts/codedeploy/stop_server.sh
+  BeforeInstall:
+    - location: deployment/scripts/codedeploy/before_install.sh
+  AfterInstall:
+    - location: deployment/scripts/codedeploy/after_install.sh
+  ApplicationStart:
+    - location: deployment/scripts/codedeploy/start_server.sh
+  # AfterAllowTraffic:
+  #   - location: deployment/scripts/codedeploy/start_server.sh
