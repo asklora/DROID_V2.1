@@ -33,8 +33,8 @@ CACHES = {
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 print('using prod db')
 read_endpoint, write_endpoint, port = db.prod_url
-MQPASS=os.getenv('MQPASS')
-MQUSER=os.getenv('MQUSER')
+MQPASS="NjI0NkZFQzVBQkQwNUE2RERCRjY1QzJGMzA2OUFFMjE1MjAyMkRFMjoxNjMxNjA0MjEwOTY5"
+MQUSER="MjphbXFwLXNnLTZ3cjJjbG1hbzAwMzpMVEFJNXRTaGR4VUhxV3ZCVm9MNVR5amE="
 CELERY_BROKER_URL = f'amqp://{MQUSER}:{MQPASS}@amqp-sg-6wr2clmao003.mq-amqp.cn-hongkong-3568556-b.aliyuncs.com:5672/master'
 CELERY_TASK_DEFAULT_QUEUE ='celery'
 HEDGE_WORKER_DEFAULT_QUEUE ='hedger'
