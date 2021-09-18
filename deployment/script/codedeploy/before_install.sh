@@ -12,3 +12,4 @@ else
 	aws configure set default.region ap-east-1
 fi
 aws ecr get-login-password --region ap-east-1 | docker login --username AWS --password-stdin 736885973837.dkr.ecr.ap-east-1.amazonaws.com
+sudo rm -rf /home/ubuntu/DROID_V2.1
