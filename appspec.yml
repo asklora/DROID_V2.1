@@ -11,12 +11,16 @@ files:
 
 hooks:
   ApplicationStop:
+    - runas: ubuntu
     - location: deployment/script/codedeploy/stop_server.sh
   BeforeInstall:
+    - runas: ubuntu
     - location: deployment/script/codedeploy/before_install.sh
   AfterInstall:
+    - runas: ubuntu
     - location: deployment/script/codedeploy/after_install.sh
   ApplicationStart:
+    - runas: ubuntu
     - location: deployment/script/codedeploy/start_server.sh
   # AfterAllowTraffic:
   #   - location: deployment/script/codedeploy/start_server.sh
