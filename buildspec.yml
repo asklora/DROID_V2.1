@@ -14,7 +14,7 @@ phases:
       - python manage.py createtestdb --settings=config.production
   build:
     commands:
-        - pytest -s --ds=config.production
+        - pytest -s --dc=config.prodtest
         - echo "$CODEBUILD_BUILD_SUCCEEDING"
         - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION"
   post_build:
