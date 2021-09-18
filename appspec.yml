@@ -1,10 +1,14 @@
 
 version: 0.0
 os: linux
+
 files:
   - source: /
     destination: /home/ubuntu/DROID_V2.1
     runas: ubuntu
+
+    file_exists_behavior: OVERWRITE
+
 hooks:
   ApplicationStop:
     - location: deployment/script/codedeploy/stop_server.sh
