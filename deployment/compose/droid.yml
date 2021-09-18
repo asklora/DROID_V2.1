@@ -5,7 +5,7 @@ services:
     build:
       context: ~/DROID_V2.1
       dockerfile: deployment/jenkins/bastion/Dockerfile
-    env_file: .env
+    env_file: ~/DROID_V2.1/.env
     command: sh deployment/jenkins/bastion/entrypointdjango.sh
     image: django/backend
     volumes:
@@ -32,7 +32,7 @@ services:
     container_name: CeleryBroadcaster
     image: django/backend
     command: bash -c "export DJANGO_SETTINGS_MODULE=config.production && celery -A core.services worker -l  INFO --hostname=broadcaster@%h --concurrency=10 -Q broadcaster"
-    env_file: .env
+    env_file: ~/DROID_V2.1/.env
     volumes:
       - ~/DROID_V2.1:/code
     restart: always
@@ -43,7 +43,7 @@ services:
     container_name: Celery
     image: django/backend
     command: sh deployment/jenkins/bastion/celery.sh
-    env_file: .env
+    env_file: ~/DROID_V2.1/.env
     volumes:
       -  ~/DROID_V2.1:/code
     restart: always
