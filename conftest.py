@@ -24,6 +24,7 @@ def django_db_setup():
         "PASSWORD": "ml2021#LORA",
         "PORT": port,
     }
+
     settings.DATABASES["aurora_read"] = {
         "ENGINE": DB_ENGINE,
         "HOST": read_endpoint,

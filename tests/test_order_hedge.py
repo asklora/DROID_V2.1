@@ -10,7 +10,8 @@ from portfolio import classic_position_check, ucdc_position_check, uno_position_
 
 from utils import create_buy_order
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(databases=['default','aurora_read','aurora_write'])
+
 
 
 def test_should_create_hedge_order_for_classic_bot(user) -> None:

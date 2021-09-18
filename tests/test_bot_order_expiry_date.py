@@ -6,7 +6,7 @@ from core.bot.models import BotOptionType
 
 from utils import create_buy_order
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(databases=['default','aurora_read','aurora_write'])
 
 
 def test_should_confirm_bot_expiry_for_classic(user) -> None:

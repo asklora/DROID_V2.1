@@ -9,6 +9,10 @@ class AuroraRouters:
         'services',
         'universe',
         'user',
+        'orders',
+        'master',
+        'Clients',
+        'services'
 
     }
     # mongo_app_labels = {

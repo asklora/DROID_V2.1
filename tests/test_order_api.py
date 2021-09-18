@@ -6,7 +6,7 @@ from bot.calculate_bot import check_date, get_expiry_date
 from core.bot.models import BotOptionType
 from core.orders.models import Order
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(databases=['default','aurora_read','aurora_write'])
 
 
 class TestAPIAuth:
