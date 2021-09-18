@@ -9,7 +9,7 @@ services:
     command: sh deployment/jenkins/bastion/entrypointdjango.sh
     image: django/backend
     volumes:
-      -~/DROID_V2.1:/code
+      - ~/DROID_V2.1:/code
     ports:
       - "8000:8000"
     links:

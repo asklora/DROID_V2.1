@@ -27,7 +27,7 @@
     - name: Clean docker image
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
-        cmd: docker system prune -a -f
+        cmd: docker system prune -a -f && docker image prune -a -f
     - name: Run Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
