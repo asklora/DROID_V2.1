@@ -24,6 +24,22 @@ def django_db_setup():
         "PASSWORD": "ml2021#LORA",
         "PORT": port,
     }
+    settings.DATABASES["aurora_read"] = {
+        "ENGINE": DB_ENGINE,
+        "HOST": read_endpoint,
+        "NAME": "postgres",
+        "USER": "postgres",
+        "PASSWORD": "ml2021#LORA",
+        "PORT": port,
+    }
+    settings.DATABASES["aurora_write"] = {
+        "ENGINE": DB_ENGINE,
+        "HOST": write_endpoint,
+        "NAME": "postgres",
+        "USER": "postgres",
+        "PASSWORD": "ml2021#LORA",
+        "PORT": port,
+    }
 
 
 @pytest.fixture(scope="session")
