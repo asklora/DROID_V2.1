@@ -31,7 +31,7 @@ services:
   celery-broadcaster:
     container_name: CeleryBroadcaster
     image: django/backend
-    command: DJANGO_SETTINGS_MODULE='config.production' celery -A core.services worker -l  INFO --hostname=broadcaster@%h --concurrency=10 -Q broadcaster
+    command: sh deployment/script/broadcaster.sh
     env_file: ~/DROID_V2.1/.env
     volumes:
       - ~/DROID_V2.1:/code
