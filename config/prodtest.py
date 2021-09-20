@@ -6,6 +6,4 @@ You can use this configuration file by running:
 `python manage.py runserver --settings=config.test`
 """
 DATABASE_ROUTERS = []
-
-DATABASE_ROUTERS = []
 TESTDEBUG = True
