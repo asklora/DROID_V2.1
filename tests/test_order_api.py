@@ -262,10 +262,12 @@ class TestAPIOrder:
 
         order1 = create_order()
         assert order1 is not None
-
         # We then set it to filled
 
         # First, let's find the order
+        from django.db import connection
+        db_name = connection.settings_dict
+        print(db_name)
         currentOrder = Order.objects.get(pk=order1["order_uid"])
         assert currentOrder is not None
 
