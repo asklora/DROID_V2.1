@@ -93,8 +93,9 @@ def momentum_factor_name():
 
 def other_fundamentals_name():
     return ["Sales", "Sales (ind.)", "Forward Sales", "Forward ROIC",
-        "Environment", "Environment (ind.)", "Social", "Social (ind.)", 
-        "Goverment", "Goverment (ind.)"]
+        "*ESG *Environment", "*ESG *Environment (ind.)", 
+        "*ESG *Social", "*ESG *Social (ind.)",
+        "*ESG *Governance", "*ESG *Governance (ind.)"]
 
 def factor_column_name_changes():
     return {"earnings_yield_minmax_currency_code" : "P/E",
@@ -126,12 +127,13 @@ def factor_column_name_changes():
     "momentum_minmax_currency_code" : "Price Momentum",
     "sales_to_price_minmax_currency_code" : "Sales", 
     "sales_to_price_minmax_industry" : "Sales (ind.)",
-    "environment_minmax_currency_code" : "Environment", 
-    "environment_minmax_industry" : "Environment (ind.)",
-    "social_minmax_currency_code" : "Social",
-    "social_minmax_industry" : "Social (ind.)", 
-    "goverment_minmax_currency_code" : "Goverment", 
-    "goverment_minmax_industry" : "Goverment (ind.)"}
+    "environment_minmax_currency_code" : "*ESG *Environment",
+    "environment_minmax_industry" : "*ESG *Environment (ind.)",
+    "social_minmax_currency_code" : "*ESG *Social",
+    "social_minmax_industry" : "*ESG *Social (ind.)",
+    "goverment_minmax_currency_code" : "*ESG *Governance",
+    "goverment_minmax_industry" : "*ESG *Governance (ind.)"
+}
 
 def rolling_apply(group, field):
     adjusted_price = [group[field].iloc[0]]
