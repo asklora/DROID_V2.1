@@ -6,7 +6,8 @@ from core.user.models import Accountbalance
 
 from utils import create_buy_order
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(databases=['default','aurora_read','aurora_write'])
+
 
 
 def test_should_create_order(user) -> None:

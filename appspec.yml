@@ -1,18 +1,27 @@
 
 version: 0.0
 os: linux
+
 files:
   - source: /
-    destination: /home/ubuntu/
+    destination: /home/ubuntu/DROID_V2.1
     runas: ubuntu
+
+    file_exists_behavior: OVERWRITE
+
 hooks:
-  BeforeInstall:
-    - location: debug.sh
-  AfterInstall:
-    - location: deployment/scripts/after_install.sh
-  ApplicationStart:
-    - location: deployment/scripts/start_server.sh
   ApplicationStop:
-    - location: deployment/scripts/stop_server.sh
-  AfterAllowTraffic:
-    - location: deployment/scripts/start_server.sh
+    - location: deployment/script/codedeploy/stop_server.sh
+      runas: ubuntu
+  BeforeInstall:
+    - location: deployment/script/codedeploy/before_install.sh
+      runas: ubuntu
+  AfterInstall:
+    - location: deployment/script/codedeploy/after_install.sh
+      runas: ubuntu
+  ApplicationStart:
+    - location: deployment/script/codedeploy/start_server.sh
+      runas: ubuntu
+  # AfterAllowTraffic:
+  #   - location: deployment/script/codedeploy/start_server.sh
+  #
