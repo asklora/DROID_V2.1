@@ -54,14 +54,3 @@
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
         cmd: docker-compose -p droid -f deployment/compose/dev.yaml up --build --force-recreate -d
-
-- name: connect to worker Instance(s) 
-  hosts: worker
-  remote_user: ubuntu
-  tasks:
-    - name: Run debug
-      ansible.builtin.command:
-        chdir: /home/ubuntu
-        cmd: ls -a
-      register: out
-    - debug: var=out.stdout_lines
