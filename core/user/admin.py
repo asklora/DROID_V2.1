@@ -11,11 +11,11 @@ class AppUserAdmin(UserAdmin):
     add_form = CustomUserCreationForm
     form = CustomUserChangeForm
     model = User
-    list_display = ('email', 'is_staff', 'is_active', 'current_status')
-    list_filter = ('email', 'is_staff', 'is_active','date_joined')
+    list_display = ('email', 'is_staff', 'is_active', 'current_status','username','is_test')
+    list_filter = ('is_staff', 'is_active','date_joined','current_status','is_test')
     fieldsets = (
         (None, {'fields': ('email', 'username',
-                           'password', 'address', 'phone', 'first_name', 'last_name', 'country',
+                           'password', 'address', 'phone', 'first_name', 'last_name',
                             'birth_date', 'avatar','current_status')}),
         ('Permissions', {'fields': ('is_staff',
                                     'is_active', 'is_superuser', 'groups')}),
@@ -26,7 +26,7 @@ class AppUserAdmin(UserAdmin):
             'fields': ('email', 'password1', 'password2', 'is_staff', 'is_active')}
          ),
     )
-    search_fields = ('email',)
+    search_fields = ('email','username')
     ordering = ('email',)
 
 
