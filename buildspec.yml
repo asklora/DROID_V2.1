@@ -16,7 +16,6 @@ phases:
   build:
     on-failure: ABORT
     commands:
-        - export DJANGO_SETTINGS_MODULE=config.production
         - pytest -s --ds=config.prodtest
         # - pytest -s
         - echo "$CODEBUILD_BUILD_SUCCEEDING"
