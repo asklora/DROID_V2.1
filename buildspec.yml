@@ -11,15 +11,16 @@ phases:
   pre_build:
     commands:
       - echo "check DB Before running tests"
-      - python manage.py createtestdb
+      - python manage.py createtestdb --settings=config.production
   build:
     commands:
-        - pytest -s
+        - pytest -s --ds=config.production
         - echo "$CODEBUILD_BUILD_SUCCEEDING"
-        - echo "$CODEBUILD_SRC_DIR"
+        - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION"
   post_build:
     commands:
       - echo test completed on `date`
-      - echo docker test
+      - echo create master image
+      - python manage.py create_image -b master
       # - docker run -v /var/run/docker.sock:/var/run/docker.sock
       # - docker version

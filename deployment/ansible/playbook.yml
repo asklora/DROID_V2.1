@@ -16,10 +16,28 @@
         key_file: /home/ubuntu/red-git-key.pem
         version: dev
         
+        
+      
+        
     - name: set aws
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1/installer
         cmd: sudo ./aws-set.sh
+    - name: ecr docker get-authorization-token
+      shell: "aws ecr get-login-password --region ap-east-1"
+      register: ecr_command
+  
+    - set_fact:
+        password: "{{ ecr_command.stdout }}"
+
+    - debug: msg="{{password}}"
+
+    - name: docker_repository - Log into ECR registry and force re-authorization
+      docker_login:
+        registry_url: "736885973837.dkr.ecr.ap-east-1.amazonaws.com"
+        username: "AWS"
+        password: "{{ password }}"
+        reauthorize: yes
     - name: Stop Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
@@ -27,7 +45,7 @@
     - name: Clean docker image
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
-        cmd: docker system prune -a -f
+        cmd: docker system prune -a -f && docker image prune -a -f
     - name: Run Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1

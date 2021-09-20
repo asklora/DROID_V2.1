@@ -626,7 +626,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
         user_core.loc[index, "daily_invested_amount"] = daily_invested_amount
         user_core.loc[index, "total_profit"] = (user_core.loc[index, "daily_invested_amount"] + user_core.loc[index, "balance"] - user_core.loc[index, "deposit"])
         user_core.loc[index, "total_profit_pct"] = (user_core.loc[index, "total_profit"] / user_core.loc[index, "deposit"]) * 100
-    print(user_core[["user_id", "balance", "deposit", "daily_invested_amount", "total_profit", "total_profit_pct"]])
+    # print(user_core[["user_id", "balance", "deposit", "daily_invested_amount", "total_profit", "total_profit_pct"]])
     user_core["trading_day"] =  str_to_date(dateNow())
     user_core["user_id"] = user_core["user_id"].astype(str)
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
