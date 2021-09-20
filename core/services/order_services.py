@@ -41,6 +41,8 @@ def order_executor(self, payload, recall=False):
         return {'err':f"{payload['order_uid']} doesnt exists"}
 
     if recall:
+        if order.status != 'pending':
+            return {'err':'order already executed'}
         rkd = trkd.RkdData()
         # getting new price
         df = rkd.get_quote([order.ticker.ticker], df=True)

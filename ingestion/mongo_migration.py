@@ -432,7 +432,6 @@ def firebase_user_update(user_id=None, currency_code=None):
         # print(stock_order_pending)
         user_core = user_core.merge(stock_order_pending, how="left", on=["user_id"])
         user_core["stock_pending_amount"] = np.where(user_core["stock_pending_amount"].isnull(), 0, user_core["stock_pending_amount"])
-
         user_core["pending_amount"] = user_core["stock_pending_amount"] + user_core["bot_pending_amount"]
         # print(user_core)
         # import sys
