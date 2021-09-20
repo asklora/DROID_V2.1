@@ -266,7 +266,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 raise exceptions.NotFound(error)
             validated_data["user_id"] = user
         
-
         if not "price" in validated_data:
             rkd = RkdData()
             df = rkd.get_quote([validated_data["ticker"].ticker],save=True, df=True)
