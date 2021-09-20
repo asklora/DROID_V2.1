@@ -1,0 +1,62 @@
+version: '2.1'
+services:
+  backend:
+    container_name: django
+    # build:
+    #   context: ~/DROID_V2.1
+    #   dockerfile: deployment/jenkins/bastion/Dockerfile
+    env_file: /home/ubuntu/DROID_V2.1/.env
+    command: sh deployment/jenkins/bastion/entrypointdjango.sh
+    image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/droid:latest
+    volumes:
+      - /home/ubuntu/DROID_V2.1:/code
+    ports:
+      - "8000:8000"
+    links:
+      - redis:redis
+    restart: always
+  nginx:
+    container_name: nginx
+    image: nginx:latest
+    volumes:
+      - /home/ubuntu/DROID_V2.1/deployment/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - /home/ubuntu/DROID_V2.1/deployment/nginx/default.conf:/etc/nginx/sites-enabled/default.conf
+      - /home/ubuntu/DROID_V2.1/files/staticfiles:/usr/share/nginx/html/static
+    ports:
+      - 80:80
+      - 443:443
+    restart: always
+    depends_on:
+      - backend
+  celery-broadcaster:
+    container_name: CeleryBroadcaster
+    image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/droid:latest
+    command: sh deployment/script/broadcaster.sh
+    env_file: /home/ubuntu/DROID_V2.1/.env
+    volumes:
+      - /home/ubuntu/DROID_V2.1:/code
+    restart: always
+    depends_on:
+      - redis
+      - backend
+  celery:
+    container_name: Celery
+    image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/droid:latest
+    command: sh deployment/jenkins/bastion/celery.sh
+    env_file: /home/ubuntu/DROID_V2.1/.env
+    volumes:
+      -  /home/ubuntu/DROID_V2.1:/code
+    restart: always
+    depends_on:
+      - backend
+      - redis
+  redis:
+    container_name: redis
+    restart: always
+    image: redis:latest
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+volumes:
+  redis_data:

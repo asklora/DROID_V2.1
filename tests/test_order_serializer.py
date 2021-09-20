@@ -3,7 +3,8 @@ from core.orders.serializers import OrderCreateSerializer
 from core.user.models import User
 from rest_framework import exceptions
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(databases=['default','aurora_read','aurora_write'])
+
 
 
 def test_should_create_new_buy_order_from_API(user) -> None:
