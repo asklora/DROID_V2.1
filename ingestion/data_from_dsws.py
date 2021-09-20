@@ -669,15 +669,9 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals[fundamentals_factors_scores_col] *= 10
 
     print("Calculate ESG Value")
-<<<<<<< HEAD
-    fundamentals["esg"] = (fundamentals["environment_minmax_currency_code"] +
-        fundamentals["social_minmax_currency_code"] + fundamentals["goverment_minmax_currency_code"]) / 3
-    fundamentals["esg"] = (fundamentals["esg"]*10).round(1)
-=======
     esg_cols = ["environment_minmax_currency_code", "environment_minmax_industry", "social_minmax_currency_code",
                 "social_minmax_industry", "goverment_minmax_currency_code", "goverment_minmax_industry"]
     fundamentals["esg"] = fundamentals[esg_cols].mean(1)*10
->>>>>>> 3db34f3031bb630d1c08f5ce8b115db8b809e64c
 
     print("Calculate AI Score")
     ai_score_cols = ["fundamentals_value","fundamentals_quality","fundamentals_momentum","fundamentals_extra"]
