@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import skew
 import pandas as pd
 from datetime import datetime
 from pandas.tseries.offsets import BDay
@@ -563,14 +564,31 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
     print(fundamentals)
 
+    # x = fundamentals.groupby("currency_code")[calculate_column].skew()
+    # y = fundamentals.groupby("currency_code")[calculate_column].apply(pd.DataFrame.kurtosis)
+    # m = fundamentals.groupby("currency_code")[calculate_column].min()
+    #
+    # calculate_column = ['book_to_price']
+
+    def transform_trim_outlier(x):
+        s = skew(x)
+        if (s<-5) or (s>5):
+            x = np.log(x+1-np.min(x))
+        m = np.median(x)
+        # clip_x = np.clip(x, np.percentile(x, 0.01), np.percentile(x, 0.99))
+        std = np.nanstd(x)
+        return np.clip(x, m-2*std, m+2*std)
+
     # trim outlier to +/- 2 std
     calculate_column_score = []
     for column in calculate_column:
         column_score = column + "_score"
-        fundamentals[column_score] = fundamentals.dropna(subset=[column]).groupby("currency_code")[column].transform(
-            lambda x: np.clip(x, np.nanmean(x)-2*np.nanstd(x), np.nanmean(x)+2*np.nanstd(x)))
+        fundamentals[column_score] = fundamentals.dropna(subset=[column]).groupby("currency_code")[column].transform(transform_trim_outlier)
         calculate_column_score.append(column_score)
     print(calculate_column_score)
+
+    # x1 = fundamentals.groupby("currency_code")[[x+'_score' for x in calculate_column]].skew()
+    # y1 = fundamentals.groupby("currency_code")[[x+'_score' for x in calculate_column]].apply(pd.DataFrame.kurtosis)
 
     # apply robust scaler
     calculate_column_robust_score = []
