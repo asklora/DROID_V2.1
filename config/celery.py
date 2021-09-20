@@ -51,7 +51,7 @@ app = Celery('core.services')
 # app_dev.config_from_object('django.conf:settings', namespace='CELERY')
 # Load task modules from all registered Django app configs.
 # app_dev.autodiscover_tasks()
-if debug == 'config.production':
+if debug in ['config.production','config.prodtest']:
     app.conf.broker_login_method = 'PLAIN'
 app.config_from_object('django.conf:settings', namespace='CELERY')
 

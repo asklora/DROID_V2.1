@@ -15,20 +15,14 @@ class AuroraRouters:
         'services'
 
     }
-    # mongo_app_labels = {
-    #     'hot_data',
-    # }
+
 
     def db_for_read(self, model, **hints):
         """
         Attempts to read auth and contenttypes models go to auth_db.
         """
         if model._meta.app_label in self.route_app_labels:
-            # print('aurora')
             return 'aurora_read'
-        # if model._meta.app_label in self.mongo_app_labels:
-        #     print('mongo')
-        #     return 'mongo'
         return 'default'
 
     def db_for_write(self, model, **hints):
@@ -37,8 +31,6 @@ class AuroraRouters:
         """
         if model._meta.app_label in self.route_app_labels:
             return 'aurora_write'
-        # if model._meta.app_label in self.mongo_app_labels:
-        #     return 'mongo'
         return 'default'
 
     def allow_relation(self, obj1, obj2, **hints):
