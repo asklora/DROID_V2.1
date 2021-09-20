@@ -7,8 +7,9 @@ from core.user.models import Accountbalance, User
 
 from utils import create_buy_order
 
-pytestmark = pytest.mark.django_db(databases=['default','aurora_read','aurora_write'])
-
+pytestmark = pytest.mark.django_db(databases=["default",
+                                              "aurora_read",
+                                              "aurora_write"])
 
 
 def test_should_create_new_sell_order_for_user(user) -> None:
@@ -50,8 +51,7 @@ def test_should_create_new_sell_order_for_user(user) -> None:
     assert performance is not None
 
     # We then get the position based on the performance data
-    position: OrderPosition = OrderPosition.objects.get(
-        pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
 
     # We confirm if the position is set
     assert position is not None
@@ -111,8 +111,7 @@ def test_should_create_new_sell_order_for_user_with_classic_bot(user) -> None:
         order_uid_id=confirmed_buy_order.order_uid
     )
 
-    position: OrderPosition = OrderPosition.objects.get(
-        pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
 
     sellPosition, sell_order = sell_position_service(
         # Selling in different price point (1317 + 13 = 1330 here)
@@ -169,8 +168,7 @@ def test_should_create_new_sell_order_for_user_with_uno_bot(user) -> None:
         order_uid_id=confirmed_buy_order.order_uid
     )
 
-    position: OrderPosition = OrderPosition.objects.get(
-        pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
 
     sellPosition, sell_order = sell_position_service(
         price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
@@ -226,8 +224,7 @@ def test_should_create_new_sell_order_for_user_with_ucdc_bot(user) -> None:
         order_uid_id=confirmed_buy_order.order_uid
     )
 
-    position: OrderPosition = OrderPosition.objects.get(
-        pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
 
     sellPosition, sell_order = sell_position_service(
         price + 13,  # Selling in different price point (1317 + 13 = 1330 here)

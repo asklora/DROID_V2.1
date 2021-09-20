@@ -6,8 +6,9 @@ from core.user.models import Accountbalance
 
 from utils import create_buy_order
 
-pytestmark = pytest.mark.django_db(databases=['default','aurora_read','aurora_write'])
-
+pytestmark = pytest.mark.django_db(databases=["default",
+                                              "aurora_read",
+                                              "aurora_write"])
 
 
 def test_should_create_order(user) -> None:
@@ -113,9 +114,7 @@ def test_should_create_new_buy_order_for_user_with_margin(user) -> None:
     assert order.amount == 85  # the correct amount
 
 
-def test_should_check_if_user_balance_is_cut_accordingly_with_margin(
-    user
-) -> None:
+def test_should_check_if_user_balance_is_cut_accordingly_with_margin(user) -> None:
     """
     A new buy order will be created and filled, and user balance is deducted buy the order amount.
     Margin calculation should not cut the user balance.

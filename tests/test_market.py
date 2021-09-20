@@ -4,7 +4,9 @@ import pytest
 from core.universe.models import Universe
 from datasource.rkd import RkdData
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(databases=["default",
+                                              "aurora_read",
+                                              "aurora_write"])
 
 
 def test_usd_market() -> None:

@@ -6,12 +6,16 @@ import pytest
 from core.master.models import MasterOhlcvtr
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.models import Accountbalance, TransactionHistory
-from portfolio import classic_position_check, ucdc_position_check, uno_position_check
+from portfolio import (
+    classic_position_check,
+    ucdc_position_check,
+    uno_position_check)
 
 from utils import create_buy_order
 
-pytestmark = pytest.mark.django_db(databases=['default','aurora_read','aurora_write'])
-
+pytestmark = pytest.mark.django_db(databases=["default",
+                                              "aurora_read",
+                                              "aurora_write"])
 
 
 def test_should_create_hedge_order_for_classic_bot(user) -> None:
@@ -477,13 +481,17 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     positions = OrderPosition.objects.filter(position_uid=position.position_uid)
 
     # get hedge performances
-    performances = PositionPerformance.objects.filter(position_uid=position.position_uid)
+    performances = PositionPerformance.objects.filter(
+        position_uid=position.position_uid
+    )
 
     # get user balances
     balance = Accountbalance.objects.get(user=user)
 
     # get user transaction history
-    transactions: list[TransactionHistory] = TransactionHistory.objects.filter(balance_uid=balance)
+    transactions: list[TransactionHistory] = TransactionHistory.objects.filter(
+        balance_uid=balance
+    )
 
     # we check if the hedge created performances data
     assert performances.exists()
@@ -499,4 +507,7 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     print(f"bot return amount: {transactions.last().amount}")
 
     # we see if the bot returns the correct amount of money
-    assert positions.last().investment_amount + positions.last().final_pnl_amount == transactions.last().amount
+    assert (
+        positions.last().investment_amount + positions.last().final_pnl_amount
+        == transactions.last().amount
+    )
