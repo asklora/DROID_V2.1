@@ -347,7 +347,7 @@ class UserDepositHistory(models.Model):
     uid = models.CharField(primary_key=True, max_length=300, blank=True, editable=False, unique=True)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_deposit_history_user_id", db_column="user_id")
     trading_day = models.DateField(null=True, blank=True)
-    deposit = models.FloatField(default=0)
+    deposit = models.FloatField(default=0) # this is current assets
 
     def __str__(self):
         return self.user_id.email
