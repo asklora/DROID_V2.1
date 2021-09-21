@@ -209,7 +209,9 @@ def get_user_transaction_table_name():
 
 def get_user_profit_history_table_name():
     return "user_profit_history"
-    
+
+def get_user_deposit_history_table_name():
+    return "user_deposit_history"
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 
