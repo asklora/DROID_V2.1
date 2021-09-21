@@ -17,7 +17,7 @@ jobs:
           region: ap-east-1
       - run: echo ${{ steps.ecr.outputs.password }}
     outputs:
-      password: ${{ steps.ecr.outputs.password }}
+      creds: "${{ steps.ecr.outputs.password }}"
 
   test:
     needs: login
@@ -26,7 +26,7 @@ jobs:
       image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/app-test-env:latest
       credentials:
         username: AWS
-        password: echo "${{ needs.login.outputs.password }}"
+        creds: ${{ needs.login.outputs.creds }}
     steps:
       - uses: actions/checkout@v2
       - name: running test
