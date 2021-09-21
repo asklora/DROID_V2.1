@@ -1,10 +1,11 @@
-from core.user.models import User,Accountbalance,TransactionHistory
+from general.data_process import get_uid
+from core.user.models import User,Accountbalance,TransactionHistory, UserDepositHistory
 from core.orders.models import OrderPosition,PositionPerformance, Order
 from ..general import is_hashed
 from django.contrib.auth.hashers import make_password
 from ingestion import firebase_user_update
 from firebase_admin import firestore
-
+from general.date_process import dateNow
 def sync_user(payload):
     create=False
     try:
@@ -51,6 +52,13 @@ def sync_user(payload):
         transaction_detail={
             'event':'first deposit'
         })
+        
+        # deposit_history =UserDepositHistory.objects.create(
+        #     uid = get_uid(user.id, trading_day=dateNow(), replace=True),
+        #     user_id = user.id,
+        #     trading_day = dateNow(),
+        #     deposit = 100000)
+        # deposit_history.save()
         parsed_payload['balance_info'] = { 'balance_uid':wallet.balance_uid,'currency_code':'HKD','transaction_id':transaction.id,'transaction_amount':transaction.amount}
         firebase_user_update([user.id])
         return parsed_payload

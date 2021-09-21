@@ -76,6 +76,14 @@ def user(django_db_setup, django_db_blocker, worker_id):
             amount=200000,
             transaction_detail={"event": "first deposit"},
         )
+        
+        # deposit_history =UserDepositHistory.objects.create(
+        #     uid = get_uid(user.id, trading_day=dateNow(), replace=True),
+        #     user_id = user.id,
+        #     trading_day = dateNow(),
+        #     deposit = 100000)
+        # deposit_history.save()
+
         yield user
         user.delete()
 
