@@ -351,6 +351,5 @@ class UserDepositHistory(models.Model):
 
     def __str__(self):
         return self.user_id.email
-
     class Meta:
         db_table = "user_deposit_history"
