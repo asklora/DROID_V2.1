@@ -1,3 +1,4 @@
+from core.user.convert import ConvertMoney
 from core.bot.models import BotOptionType
 from core.user.models import TransactionHistory
 from .models import Order, OrderFee, OrderPosition, PositionPerformance
@@ -105,7 +106,8 @@ class BaseOrderConnector(AbstracOrderConnector):
             else:
                 amount = self.instance.setup['position']['investment_amount']
             
-
+            # convert = ConvertMoney(self.instance.ticker.currency_code, self.user_wallet_currency)
+            # amount = convert.convert(amount)
 
             TransactionHistory.objects.create(
                 balance_uid=self.user_wallet,
@@ -197,9 +199,13 @@ class BaseOrderConnector(AbstracOrderConnector):
     
 
     def transfer_to_wallet(self,position:OrderPosition):
-
+        
         amt = position.investment_amount + position.final_pnl_amount
         return_amt = amt + position.bot_cash_dividend
+
+        # convert = ConvertMoney(position.ticker.currency_code.currency_code, self.user_wallet_currency)
+        # return_amt = convert.convert(return_amt)
+
         TransactionHistory.objects.create(
             balance_uid=self.user_wallet,
             side="credit",
@@ -209,6 +215,7 @@ class BaseOrderConnector(AbstracOrderConnector):
                 "description": "bot return",
                 "position": f"{position.position_uid}",
                 "event": "return",
+                # f"amount_{position.ticker.currency_code.currency_code}" : amt + position.bot_cash_dividend,
                 "order_uid": str(self.instance.order_uid)
             },
         )
