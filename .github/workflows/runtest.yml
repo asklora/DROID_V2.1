@@ -11,7 +11,7 @@ jobs:
         name: Get token to login to Amazon ECR
         uses: PhutureCorp/ecr-login-token@v0.8.0
         with:
-          registry: <aws-account-number>.dkr.ecr.<region>.amazonaws.com
+          registry: 736885973837.dkr.ecr.ap-east-1.amazonaws.com
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
