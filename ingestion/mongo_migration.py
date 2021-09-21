@@ -213,7 +213,8 @@ def mongo_universe_update(ticker=None, currency_code=None):
         negative_factor = []
         temp = universe_rating_detail_df.loc[universe_rating_detail_df["ticker"] == tick]
 
-        positive = temp.loc[temp["score"] > 0.4]
+        lb, hb = (temp["score"].mean() - temp["score"].std()), (temp["score"].mean() + temp["score"].std())
+        positive = temp.loc[temp["score"] > hb]
         positive = positive.sort_values(by=["score"], ascending=False)
         rule1 = positive.loc[positive["factor_name"].isin(fundamentals_value_factor_name())].head(2)
         rule2 = positive.loc[positive["factor_name"].isin(fundamentals_quality_factor_name())].head(2)
@@ -223,7 +224,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
         rule1 = rule1.append(rule3)
         rule1 = rule1.append(rule4)
 
-        negative = temp.loc[temp["score"] < 0.2]
+        negative = temp.loc[temp["score"] < lb]
         negative = negative.sort_values(by=["score"])
         rule1_min = negative.loc[negative["factor_name"].isin(fundamentals_value_factor_name())].head(2)
         rule2_min = negative.loc[negative["factor_name"].isin(fundamentals_quality_factor_name())].head(2)
