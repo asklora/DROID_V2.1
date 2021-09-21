@@ -46,5 +46,5 @@ def transaction_dec(sender, instance, **kwargs):
 @receiver(post_save,sender=User)
 def join_competition_lock_balance(sender, instance, created, **kwargs):
 
-    if instance.is_joined and not UserDepositHistory.objects.filter(user_id=instance.user.id).exists():
-        update_monthly_deposit([instance.user.id])
+    if instance.is_joined and not UserDepositHistory.objects.filter(user_id=instance.id).exists():
+        update_monthly_deposit(user_id=[instance.id])
