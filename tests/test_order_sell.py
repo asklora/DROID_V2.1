@@ -17,11 +17,11 @@ def test_should_create_new_sell_order_for_user(user) -> None:
     A new SELL order should be created from a buy order
     """
 
-    price = 1317
+    price = 10.52
 
     # We create an order
     buy_order = create_buy_order(
-        ticker="6606.HK",
+        ticker="9997.HK",
         price=price,
         user_id=user.id,
     )
