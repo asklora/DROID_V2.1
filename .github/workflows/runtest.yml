@@ -2,9 +2,10 @@ name: CI build and test
 
 on: [push]
 jobs:
-if: "contains(github.event.head_commit.message, 'testenv')"
   login:
     runs-on: ubuntu-latest
+    if: "contains(github.event.head_commit.message, 'testenv')"
+
 
     steps:
     - name: Login to ECR
@@ -18,7 +19,6 @@ if: "contains(github.event.head_commit.message, 'testenv')"
   test:
     needs: login
     runs-on: ubuntu-latest
-
     container:
       image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/app-test-env:latest
       credentials:
