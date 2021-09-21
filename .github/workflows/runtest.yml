@@ -1,0 +1,30 @@
+name: CI build and notify
+
+on: [push]
+if: "contains(github.event.head_commit.message, 'testenv')"
+jobs:
+  login:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Login to ECR
+      id: ecr
+      uses: elgohr/ecr-login-action@master
+      with:
+        access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        region: ap-east-1
+
+  test:
+    needs: login
+    runs-on: ubuntu-latest
+
+    container:
+      image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/app-test-env:latest
+      credentials:
+        username: AWS
+        password: ${{ steps.ecr.outputs.password }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: running test
+        run: ls -a
