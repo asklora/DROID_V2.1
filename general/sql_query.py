@@ -54,6 +54,7 @@ from general.table_name import (
 )
 
 
+from core.djangomodule.general import logging
 
 
 
@@ -74,7 +75,7 @@ def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba
     """
   
     if(prints):
-        print(f"Get Data From Database on {table} table")
+        logging.info(f"Get Data From Database on {table} table")
     if alibaba:
         dbcon = alibaba_db_url
     else:
@@ -93,7 +94,7 @@ def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba
     data = pd.DataFrame(data)
 
     if prints:
-        print("Total Data = " + str(len(data)))
+        logging.info("Total Data = " + str(len(data)))
     return data
 
 def check_start_end_date(start_date, end_date):

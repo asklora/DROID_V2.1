@@ -10,7 +10,6 @@ from core.universe.models import ExchangeMarket,Universe
 from core.djangomodule.calendar import TradingHours
 from core.services.order_services import update_rtdb_user_porfolio
 import sys
-import logging
 import websocket
 import aiohttp
 import asyncio
@@ -21,10 +20,9 @@ import numpy as np
 from firebase_admin import firestore
 import multiprocessing as mp
 import gc
+from core.djangomodule.general import logging
 
-logging.basicConfig(format="%(asctime)s - %(message)s",
-                    datefmt="%d-%b-%y %H:%M:%S")
-logging.getLogger().setLevel(logging.INFO)
+
 
 db = firestore.client()
 

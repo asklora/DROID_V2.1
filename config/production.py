@@ -5,7 +5,7 @@ This Django configuration file in used in the production environment.
 You can use this configuration file by running:
 `python manage.py runserver --settings=config.production`
 """
-
+SQLPRINT=False
 CHANNEL_LAYERS = {
     'default': {
 
@@ -44,7 +44,6 @@ UTILS_WORKER_DEFAULT_QUEUE='utils'
 print(read_endpoint)
 
 DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
-DB_ENGINE = 'psqlextra.backend'
 DATABASES = {
     'default': {
         'ENGINE': DB_ENGINE,
