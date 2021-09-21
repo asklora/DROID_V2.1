@@ -4,20 +4,16 @@ on: [push]
 jobs:
   login:
     runs-on: ubuntu-latest
-    if: "contains(github.event.head_commit.message, 'testenv')"
-
-
-    steps:
-      - name: Login to ECR
-        id: ecr
-        uses: elgohr/ecr-login-action@master
-        with:
-          access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: ap-east-1
-      - run: echo "${{ steps.ecr.outputs.password }}"
     outputs:
-      output: "${{ steps.ecr.outputs.password }}"
+      token: ${{ steps.ecr.outputs.token }}
+    steps:
+      -
+        name: Get token to login to Amazon ECR
+        uses: PhutureCorp/ecr-login-token@v0.8.0
+        with:
+          registry: <aws-account-number>.dkr.ecr.<region>.amazonaws.com
+          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   test:
     needs: login
@@ -26,7 +22,7 @@ jobs:
       image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/app-test-env:latest
       credentials:
         username: AWS
-        password: ${{ needs.login.outputs.output }}
+        password: ${{ needs.login.outputs.token }}
     steps:
       - uses: actions/checkout@v2
       - name: running test
