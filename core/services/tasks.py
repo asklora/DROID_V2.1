@@ -36,7 +36,7 @@ from general.slack import report_to_slack
 # date interval
 from general.date_process import date_interval
 # POPULATE TOPSTOCK MODULE
-from client_test_pick import populate_fels_bot, test_pick, populate_bot_advisor, populate_bot_tester
+from portfolio.client_test_pick import populate_fels_bot, test_pick, populate_bot_advisor, populate_bot_tester
 # HEDGE MODULE
 from portfolio.daily_hedge_user import user_position_check
 from portfolio.daily_hedge_classic import classic_position_check
