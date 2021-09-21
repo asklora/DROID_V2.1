@@ -15,6 +15,7 @@ jobs:
           access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ap-east-1
+      - run: echo "${{ steps.ecr.outputs.password }}"
     outputs:
       output: "${{ steps.ecr.outputs.password }}"
 
