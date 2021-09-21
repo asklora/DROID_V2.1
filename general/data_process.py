@@ -16,7 +16,7 @@ def get_uid(ticker, trading_day=dateNow(), replace=True):
         if(type(trading_day) == datetime or type(trading_day) == Timestamp):
             trading_day = trading_day.date()
         trading_day = trading_day.strftime("%Y-%m-%d")
-    uid=trading_day + ticker
+    uid = f"{trading_day}-{ticker}"
     if(replace):
         uid = uid.replace("-", "").replace(".", "").replace(" ", "")
     return uid
