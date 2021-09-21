@@ -649,7 +649,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
     not_joined["total_profit_pct"] = not_joined["total_profit_pct"].round(4)
     upsert_data_to_database(not_joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
-def update_monthly_deposit(currency_code=None, user_id=None):
+def update_monthly_deposit(currency_code:list=None, user_id:list=None) -> None:
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined")[["user_id", "is_joined"]]
     user_core = user_core.loc[user_core["is_joined"] == True]
     user_balance = get_user_account_balance(user_id=user_id, field="user_id, amount as balance, currency_code")

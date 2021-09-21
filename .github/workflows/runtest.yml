@@ -28,5 +28,7 @@ jobs:
         password: ${{ needs.login.outputs.token }}
     steps:
       - uses: actions/checkout@v2
+      - name: check env
+        run: cat .env
       - name: running test
         run: pytest -s
