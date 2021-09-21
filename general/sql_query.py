@@ -694,7 +694,7 @@ def get_data_from_table_name(table_name, ticker=None, currency_code=None, active
 
 def get_user_core(currency_code=None, user_id=None, field="*", ):
     table_name = get_user_core_table_name()
-    query = f"select {field} from {table_name} where is_active=True and is_joined=True and current_status='verified' and is_test=False "
+    query = f"select {field} from {table_name} where is_active=True and is_superuser=False and is_test=False " #is_active=True and is_joined=True and current_status='verified' and is_test=False
     if type(user_id) != type(None):
         query += f"and id in {tuple_data(user_id)}  "
     elif type(currency_code) != type(None):
