@@ -662,7 +662,7 @@ def update_monthly_deposit(currency_code=None, user_id=None) -> None:
     user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
     user_core["daily_invested_amount"] = np.where(user_core["daily_invested_amount"].isnull(), 0, user_core["daily_invested_amount"])
     user_core["deposit"] = (user_core["balance"] + user_core["daily_invested_amount"])
-    user_core["deposit"] = np.where(user_core["is_decimal"] == True, round(user_core["deposit"], 2), user_core["deposit"])
+    user_core["deposit"] = np.where(user_core["is_decimal"] == True, user_core["deposit"].astype(float).round(2), user_core["deposit"])
     user_core["trading_day"] = str_to_date(dateNow())
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True, ticker_int=True, replace=True)
     user_core = user_core[["uid", "user_id", "trading_day", "deposit"]]
