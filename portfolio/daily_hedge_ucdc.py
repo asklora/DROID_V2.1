@@ -120,8 +120,9 @@ def populate_performance(live_price, ask_price, bid_price, trading_day, log_time
 
             margin_amount = (position.margin - 1) * position.investment_amount
             available_balance = last_performance.current_bot_cash_balance + margin_amount
-            if(available_balance < 0):
-                available_balance = 0
+            if(position.margin == 1):
+                if(available_balance < 0):
+                    available_balance = 0
 
             share_num, hedge_shares, status, hedge_price = get_hedge_detail(live_price, available_balance, 
                 ask_price, bid_price, last_performance.share_num, position.share_num, delta, last_performance.last_hedge_delta,
