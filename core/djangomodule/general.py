@@ -15,8 +15,9 @@ import logging
 import pandas as pd
 import pprint
 
-logging.basicConfig()
-logger = logging.getLogger('redis')
+logging.basicConfig(format="%(asctime)s - %(message)s",
+                    datefmt="%d-%b-%y %H:%M:%S")
+logging.getLogger().setLevel(logging.INFO)
 
 
 

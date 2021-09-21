@@ -1,7 +1,8 @@
-from .models import TransactionHistory, Accountbalance,User
+from .models import TransactionHistory, Accountbalance,User,UserDepositHistory
 from django.db.models.signals import post_save, pre_save,post_delete
 from django.dispatch import receiver
 from core.djangomodule.general import formatdigit
+from bot.calculate_bot import update_monthly_deposit
 
 
 @receiver(post_save, sender=TransactionHistory)
@@ -40,3 +41,10 @@ def transaction_dec(sender, instance, **kwargs):
         result = wallet.amount - instance.amount
         wallet.amount = formatdigit(result, wallet.currency_code.is_decimal)
         wallet.save()
+
+
+@receiver(post_save,sender=User)
+def join_competition_lock_balance(sender, instance, created, **kwargs):
+
+    if instance.is_joined and not UserDepositHistory.objects.filter(user_id=instance.user.id).exists():
+        update_monthly_deposit([instance.user.id])

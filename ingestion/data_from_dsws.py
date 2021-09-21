@@ -657,7 +657,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         fundamentals_details[group]['extra'] = fundamentals.loc[fundamentals['currency_code']==group,
                ['ticker', "fundamentals_extra"] + score_col_detail].sort_values(by=[ f"fundamentals_extra"])
 
-    # manual score check output csv
+    # manual score check output csv o
     for group, v in fundamentals_details.items():
         pillar_df = []
         for pillar, df in v.items():

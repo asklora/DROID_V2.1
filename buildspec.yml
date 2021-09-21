@@ -17,7 +17,6 @@ phases:
     on-failure: ABORT
     commands:
         - pytest -s --ds=config.prodtest
-        # - pytest -s
         - echo "$CODEBUILD_BUILD_SUCCEEDING"
         - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION"
   post_build:
@@ -25,5 +24,3 @@ phases:
       - echo test completed on `date`
       - echo create master image
       - python manage.py create_image -b master
-      # - docker run -v /var/run/docker.sock:/var/run/docker.sock
-      # - docker version

@@ -46,4 +46,10 @@ class Command(BaseCommand):
                         }
                         
                     )
+                    # deposit_history =UserDepositHistory.objects.create(
+                    #     uid = get_uid(user.id, trading_day=dateNow(), replace=True),
+                    #     user_id = user.id,
+                    #     trading_day = dateNow(),
+                    #     deposit = 100000)
+                    # deposit_history.save()
             ftr.close()

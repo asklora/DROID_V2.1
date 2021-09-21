@@ -42,12 +42,15 @@
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
         cmd: docker-compose -p droid -f deployment/compose/dev.yaml down
+    - name: Clean docker system
+      ansible.builtin.command:
+        chdir: /home/ubuntu/DROID_V2.1
+        cmd: docker system prune -a -f
     - name: Clean docker image
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
-        cmd: docker system prune -a -f && docker image prune -a -f
+        cmd: docker image prune -a -f
     - name: Run Container
       ansible.builtin.command:
         chdir: /home/ubuntu/DROID_V2.1
         cmd: docker-compose -p droid -f deployment/compose/dev.yaml up --build --force-recreate -d
-

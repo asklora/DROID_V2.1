@@ -21,7 +21,7 @@ def django_db_setup():
         read_endpoint, write_endpoint, port = db.prod_url
 
 
-    DB_ENGINE = "psqlextra.backend"
+    DB_ENGINE = "django.db.backends.postgresql_psycopg2"
     settings.DATABASES["default"] = {
         "ENGINE": DB_ENGINE,
         "HOST": write_endpoint,
@@ -75,6 +75,14 @@ def user(django_db_setup, django_db_blocker):
             amount=200000,
             transaction_detail={"event": "first deposit"},
         )
+        
+        # deposit_history =UserDepositHistory.objects.create(
+        #     uid = get_uid(user.id, trading_day=dateNow(), replace=True),
+        #     user_id = user.id,
+        #     trading_day = dateNow(),
+        #     deposit = 100000)
+        # deposit_history.save()
+
         yield user
         user.delete()
 

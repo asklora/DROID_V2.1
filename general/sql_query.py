@@ -37,6 +37,7 @@ from general.table_name import (
     get_universe_rating_history_table_name,
     get_user_account_balance_table_name,
     get_user_core_table_name,
+    get_user_deposit_history_table_name,
     get_user_profit_history_table_name,
     get_user_transaction_table_name,
     get_vix_table_name,
@@ -53,6 +54,7 @@ from general.table_name import (
 )
 
 
+from core.djangomodule.general import logging
 
 
 
@@ -73,7 +75,7 @@ def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba
     """
   
     if(prints):
-        print(f"Get Data From Database on {table} table")
+        logging.info(f"Get Data From Database on {table} table")
     if alibaba:
         dbcon = alibaba_db_url
     else:
@@ -92,7 +94,7 @@ def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba
     data = pd.DataFrame(data)
 
     if prints:
-        print("Total Data = " + str(len(data)))
+        logging.info("Total Data = " + str(len(data)))
     return data
 
 def check_start_end_date(start_date, end_date):
@@ -723,14 +725,13 @@ def get_user_account_balance(currency_code=None, user_id=None, field="*"):
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
-def get_user_deposit(user_id=None, balance_uid=None, field="*"):
-    table_name = get_user_transaction_table_name()
-    query = f"select balance_uid, sum(amount) as deposit from {table_name} where transaction_detail ->> 'event' = 'first deposit' "
+def get_user_deposit(user_id=None):
+    table_name = get_user_deposit_history_table_name()
+    query = f"select user_id, deposit from {table_name} udh "
+    query += f"where exists (select 1 from (select filters.user_id, max(filters.trading_day) max_date from {table_name} as filters "
+    query += f"group by filters.user_id) result where result.user_id=udh.user_id and result.max_date::date=udh.trading_day) "
     if type(user_id) != type(None):
-        query += f"and balance_uid in (select balance_uid from {get_user_account_balance_table_name()} where user_id in {tuple_data(user_id)})  "
-    elif type(balance_uid) != type(None):
-        query += f"and balance_uid in {tuple_data(balance_uid)} "
-    query += f"group by balance_uid; "
+        query += f"and user_id in {tuple_data(user_id)} "
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
