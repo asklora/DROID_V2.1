@@ -649,7 +649,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
     not_joined["total_profit_pct"] = not_joined["total_profit_pct"].round(4)
     upsert_data_to_database(not_joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
-def update_monthly_deposit(currency_code:list=None, user_id:list=None) -> None:
+def update_monthly_deposit(currency_code=None, user_id=None) -> None:
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined")[["user_id", "is_joined"]]
     user_core = user_core.loc[user_core["is_joined"] == True]
     user_balance = get_user_account_balance(user_id=user_id, field="user_id, amount as balance, currency_code")
@@ -662,9 +662,9 @@ def update_monthly_deposit(currency_code:list=None, user_id:list=None) -> None:
     user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
     user_core["daily_invested_amount"] = np.where(user_core["daily_invested_amount"].isnull(), 0, user_core["daily_invested_amount"])
     user_core["deposit"] = (user_core["balance"] + user_core["daily_invested_amount"])
-    user_core["deposit"] = np.where(user_core["is_decimal"] == True, round(user_core["deposit"], 2), user_core["deposit"])
+    user_core["deposit"] = np.where(user_core["is_decimal"] == True, user_core["deposit"].astype(float).round(2), user_core["deposit"])
     user_core["trading_day"] = str_to_date(dateNow())
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True, ticker_int=True, replace=True)
     user_core = user_core[["uid", "user_id", "trading_day", "deposit"]]
-    print(user_core)
+    # print(user_core)
     upsert_data_to_database(user_core, get_user_deposit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
