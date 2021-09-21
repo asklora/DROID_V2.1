@@ -25,7 +25,7 @@ jobs:
       image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/app-test-env:latest
       credentials:
         username: AWS
-        password: ${{ needs.login.outputs.password }}
+        password: '${{ needs.login.outputs.password }}'
     steps:
       - uses: actions/checkout@v2
       - name: running test
