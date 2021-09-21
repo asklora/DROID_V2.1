@@ -34,7 +34,9 @@ from general.sql_query import (
     get_latest_bot_update_data,
     get_user_account_balance,
     get_user_core,
-    get_user_profit_history)
+    get_user_profit_history,
+    get_factor_calculation_formula,
+    get_factor_current_used)
 import asyncio
 from asgiref.sync import sync_to_async
 from typing import List
@@ -48,103 +50,87 @@ def NonetoZero(value):
     else:
         return value
 
-def factor_column_name():
-    return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry", 
-        "book_to_price_minmax_currency_code", "book_to_price_minmax_industry",
-        "ebitda_to_ev_minmax_currency_code", "ebitda_to_ev_minmax_industry",
-        "fwd_bps_minmax_currency_code", "fwd_bps_minmax_industry",
-        "fwd_ebitda_to_ev_minmax_currency_code", "fwd_ebitda_to_ev_minmax_industry",
-        "roe_minmax_currency_code", "roe_minmax_industry",
-        "roic_minmax_currency_code", "roic_minmax_industry",
-        "cf_to_price_minmax_currency_code", "cf_to_price_minmax_industry",
-        "eps_growth_minmax_currency_code", "eps_growth_minmax_industry",
-        "fwd_ey_minmax_industry", "fwd_ey_minmax_currency_code",
-        "fwd_roic_minmax_industry", "fwd_sales_to_price_minmax_industry",
-        "earnings_pred_minmax_industry", "earnings_pred_minmax_currency_code",
-        "momentum_minmax_currency_code", 
-        "sales_to_price_minmax_currency_code", "sales_to_price_minmax_industry",
-        "fwd_sales_to_price_minmax_currency_code", "fwd_roic_minmax_currency_code",
-        "environment_minmax_currency_code", "social_minmax_currency_code",
-        "goverment_minmax_currency_code", "environment_minmax_industry",
-        "social_minmax_industry", "goverment_minmax_industry"]
-
-def fundamentals_value_factor_column_name():
-    return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry",
-        "book_to_price_minmax_currency_code", "book_to_price_minmax_industry",
-        "ebitda_to_ev_minmax_currency_code", "ebitda_to_ev_minmax_industry",
-        "fwd_bps_minmax_currency_code", "fwd_bps_minmax_industry",
-        "fwd_ebitda_to_ev_minmax_currency_code", "fwd_ebitda_to_ev_minmax_industry",
-        "roe_minmax_currency_code", "roe_minmax_industry"]
-
-def fundamentals_quality_factor_column_name():
-    return ["roic_minmax_currency_code", "roic_minmax_industry",
-        "cf_to_price_minmax_currency_code", "cf_to_price_minmax_industry",
-        "eps_growth_minmax_currency_code", "eps_growth_minmax_industry",
-        "fwd_ey_minmax_industry", "fwd_ey_minmax_currency_code",
-        "fwd_sales_to_price_minmax_industry", "fwd_roic_minmax_industry",
-        "earnings_pred_minmax_industry", "earnings_pred_minmax_currency_code"]
-
-def other_fundamentals_column_name():
-    return ["sales_to_price_minmax_currency_code", "sales_to_price_minmax_industry",
-        "fwd_sales_to_price_minmax_currency_code", "fwd_roic_minmax_currency_code",
-        "environment_minmax_currency_code", "social_minmax_currency_code",
-        "goverment_minmax_currency_code", "environment_minmax_industry",
-        "social_minmax_industry", "goverment_minmax_industry"]
-
-def fundamentals_value_factor_name():
-    return ["P/E", "P/E (ind.)", "Book Value", "Book Value (ind.)",
-        "EV/EBITDA", "EV/EBITDA (ind.)", "Forward Book Value", "Forward Book Value (ind.)",
-        "Forward EV/EBITDA", "Forward EV/EBITDA (ind.)", "ROE", "ROE (ind.)"]
-
-def fundamentals_quality_factor_name():
-    return ["ROIC", "ROIC (ind.)", "Free Cash Flow", "Free Cash Flow (ind.)",
-        "PEG ratio", "PEG ratio (ind.)", "Forward P/E","Forward P/E (ind.)", 
-        "Forward Sales (ind.)", "Forward ROIC (ind.)", "Earning Momentum", "Earnings Momentum (ind.)"]
-
-def momentum_factor_name():
-    return ["Price Momentum"]
-
-def other_fundamentals_name():
-    return ["Sales", "Sales (ind.)", "Forward Sales", "Forward ROIC",
-        "Environment", "Environment (ind.)", "Social", "Social (ind.)", 
-        "Goverment", "Goverment (ind.)"]
+# def factor_column_name():
+#     return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry",
+#         "book_to_price_minmax_currency_code", "book_to_price_minmax_industry",
+#         "ebitda_to_ev_minmax_currency_code", "ebitda_to_ev_minmax_industry",
+#         "fwd_bps_minmax_currency_code", "fwd_bps_minmax_industry",
+#         "fwd_ebitda_to_ev_minmax_currency_code", "fwd_ebitda_to_ev_minmax_industry",
+#         "roe_minmax_currency_code", "roe_minmax_industry",
+#         "roic_minmax_currency_code", "roic_minmax_industry",
+#         "cf_to_price_minmax_currency_code", "cf_to_price_minmax_industry",
+#         "eps_growth_minmax_currency_code", "eps_growth_minmax_industry",
+#         "fwd_ey_minmax_industry", "fwd_ey_minmax_currency_code",
+#         "fwd_roic_minmax_industry", "fwd_sales_to_price_minmax_industry",
+#         "earnings_pred_minmax_industry", "earnings_pred_minmax_currency_code",
+#         "momentum_minmax_currency_code",
+#         "sales_to_price_minmax_currency_code", "sales_to_price_minmax_industry",
+#         "fwd_sales_to_price_minmax_currency_code", "fwd_roic_minmax_currency_code",
+#         "environment_minmax_currency_code", "social_minmax_currency_code",
+#         "goverment_minmax_currency_code", "environment_minmax_industry",
+#         "social_minmax_industry", "goverment_minmax_industry"]
+#
+# def fundamentals_value_factor_column_name():
+#     return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry",
+#         "book_to_price_minmax_currency_code", "book_to_price_minmax_industry",
+#         "ebitda_to_ev_minmax_currency_code", "ebitda_to_ev_minmax_industry",
+#         "fwd_bps_minmax_currency_code", "fwd_bps_minmax_industry",
+#         "fwd_ebitda_to_ev_minmax_currency_code", "fwd_ebitda_to_ev_minmax_industry",
+#         "roe_minmax_currency_code", "roe_minmax_industry"]
+#
+# def fundamentals_quality_factor_column_name():
+#     return ["roic_minmax_currency_code", "roic_minmax_industry",
+#         "cf_to_price_minmax_currency_code", "cf_to_price_minmax_industry",
+#         "eps_growth_minmax_currency_code", "eps_growth_minmax_industry",
+#         "fwd_ey_minmax_industry", "fwd_ey_minmax_currency_code",
+#         "fwd_sales_to_price_minmax_industry", "fwd_roic_minmax_industry",
+#         "earnings_pred_minmax_industry", "earnings_pred_minmax_currency_code"]
+#
+# def other_fundamentals_column_name():
+#     return ["sales_to_price_minmax_currency_code", "sales_to_price_minmax_industry",
+#         "fwd_sales_to_price_minmax_currency_code", "fwd_roic_minmax_currency_code",
+#         "environment_minmax_currency_code", "social_minmax_currency_code",
+#         "goverment_minmax_currency_code", "environment_minmax_industry",
+#         "social_minmax_industry", "goverment_minmax_industry"]
+#
+# def fundamentals_value_factor_name():
+#     return ["P/E", "P/E (ind.)", "Book Value", "Book Value (ind.)",
+#         "EV/EBITDA", "EV/EBITDA (ind.)", "Forward Book Value", "Forward Book Value (ind.)",
+#         "Forward EV/EBITDA", "Forward EV/EBITDA (ind.)", "ROE", "ROE (ind.)"]
+#
+# def fundamentals_quality_factor_name():
+#     return ["ROIC", "ROIC (ind.)", "Free Cash Flow", "Free Cash Flow (ind.)",
+#         "PEG ratio", "PEG ratio (ind.)", "Forward P/E","Forward P/E (ind.)",
+#         "Forward Sales (ind.)", "Forward ROIC (ind.)", "Earning Momentum", "Earnings Momentum (ind.)"]
+#
+# def momentum_factor_name():
+#     return ["Price Momentum"]
+#
+# def other_fundamentals_name():
+#     return ["Sales", "Sales (ind.)", "Forward Sales", "Forward ROIC",
+#         "Environment", "Environment (ind.)", "Social", "Social (ind.)",
+#         "Goverment", "Goverment (ind.)"]
 
 def factor_column_name_changes():
-    return {"earnings_yield_minmax_currency_code" : "P/E",
-    "earnings_yield_minmax_industry" : "P/E (ind.)",
-    "book_to_price_minmax_currency_code" : "Book Value",
-    "book_to_price_minmax_industry" : "Book Value (ind.)",
-    "ebitda_to_ev_minmax_currency_code" : "EV/EBITDA",
-    "ebitda_to_ev_minmax_industry" : "EV/EBITDA (ind.)",
-    "fwd_bps_minmax_currency_code" : "Forward Book Value",
-    "fwd_bps_minmax_industry" : "Forward Book Value (ind.)",
-    "fwd_ebitda_to_ev_minmax_currency_code" : "Forward EV/EBITDA",
-    "fwd_ebitda_to_ev_minmax_industry" : "Forward EV/EBITDA (ind.)",
-    "roe_minmax_currency_code" : "ROE",
-    "roe_minmax_industry" : "ROE (ind.)",
-    "roic_minmax_currency_code" : "ROIC",
-    "roic_minmax_industry" : "ROIC (ind.)",
-    "cf_to_price_minmax_currency_code" : "Free Cash Flow",
-    "cf_to_price_minmax_industry" : "Free Cash Flow (ind.)",
-    "eps_growth_minmax_currency_code" : "PEG ratio",
-    "eps_growth_minmax_industry" : "PEG ratio (ind.)",
-    "fwd_ey_minmax_currency_code" : "Forward P/E",
-    "fwd_ey_minmax_industry" : "Forward P/E (ind.)",
-    "fwd_sales_to_price_minmax_currency_code" : "Forward Sales", 
-    "fwd_sales_to_price_minmax_industry": "Forward Sales (ind.)",
-    "fwd_roic_minmax_currency_code" : "Forward ROIC",
-    "fwd_roic_minmax_industry" : "Forward ROIC (ind.)",
-    "earnings_pred_minmax_currency_code" : "Earning Momentum",
-    "earnings_pred_minmax_industry" : "Earnings Momentum (ind.)",
-    "momentum_minmax_currency_code" : "Price Momentum",
-    "sales_to_price_minmax_currency_code" : "Sales", 
-    "sales_to_price_minmax_industry" : "Sales (ind.)",
-    "environment_minmax_currency_code" : "Environment", 
-    "environment_minmax_industry" : "Environment (ind.)",
-    "social_minmax_currency_code" : "Social",
-    "social_minmax_industry" : "Social (ind.)", 
-    "goverment_minmax_currency_code" : "Goverment", 
-    "goverment_minmax_industry" : "Goverment (ind.)"}
+    ''' map factor name used in DB to name shown on APP '''
+
+    name_df = get_factor_calculation_formula()
+    name_df['index'] = np.where(name_df['scaler'].notnull(),
+                                [f"{x}_{y}_currency_code" for x, y in name_df[["name","scaler"]].to_numpy()],
+                                name_df["name"].values)
+    name_dict = name_df.set_index('index')['app_name'].to_dict()
+    esg_name = esg_factor_name_change()
+    name_dict.update(esg_name)
+
+    return name_dict
+
+def esg_factor_name_change():
+    return {"environment_minmax_currency_code": "Environment",
+            "environment_minmax_industry": "Environment (ind.)",
+            "social_minmax_currency_code": "Social",
+            "social_minmax_industry": "Social (ind.)",
+            "goverment_minmax_currency_code": "Goverment",
+            "goverment_minmax_industry": "Goverment (ind.)"}
 
 def rolling_apply(group, field):
     adjusted_price = [group[field].iloc[0]]
@@ -154,7 +140,13 @@ def rolling_apply(group, field):
     return group
 
 def mongo_universe_update(ticker=None, currency_code=None):
-    #Populate Universe
+    ''' update mongo for:
+    1. APP "Details" from universe_rating
+
+    1. ai_score from universe_rating
+    '''
+
+    # Populate Universe
     all_universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     industry = get_industry()
     industry_group = get_industry_group()
@@ -162,7 +154,8 @@ def mongo_universe_update(ticker=None, currency_code=None):
     result = result.merge(industry_group, on="industry_group_code", how="left")
     universe = result[["ticker"]]
     print(result)
-    
+
+    # detail_df of static info dict of {Companies Name, Industry, Currency, Description, Lot Size}
     result = change_null_to_zero(result)
     detail_df = pd.DataFrame({"ticker":[], "detail":[]}, index=[])
     for tick in universe["ticker"].unique():
@@ -176,6 +169,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(detail_df, how="left", on=["ticker"])
     print(universe)
 
+    # detail_df of financial info dict of {price, pe, pb, ...} <- from Universe
     price = result[["ticker", "ebitda", "free_cash_flow", "market_cap", "pb", "pe_forecast", "pe_ratio", "revenue_per_share", "wk52_high", "wk52_low"]]
     latest_price = get_latest_price_data(ticker=ticker, currency_code=currency_code)
     latest_price = price.merge(latest_price, how="left", on=["ticker"])
@@ -196,17 +190,21 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(price_df, how="left", on=["ticker"])
     print(universe)
 
+    # detail_df of financial info dict of {price, pe, pb, ...} <- from Universe
     rating = result[["ticker"]]
     universe_rating = get_universe_rating_history(ticker=ticker, currency_code=currency_code)
     universe_rating_detail = get_universe_rating_detail_history(ticker=ticker, currency_code=currency_code)
-    universe_rating_detail = universe_rating_detail.merge(universe_rating[["ticker", "momentum"]], how="left", on=["ticker"])
-    universe_rating_detail = universe_rating_detail.rename(columns={"momentum" : "momentum_minmax_currency_code"})
+    universe_rating_detail = universe_rating_detail.merge(universe_rating[["ticker", "dlp_1m", "wts_rating"]], how="left", on=["ticker"])
+    # universe_rating_detail = universe_rating_detail.rename(columns={"momentum" : "momentum_minmax_currency_code"})
     universe_rating_detail_df = pd.DataFrame({"ticker":[], "factor_name":[], "score":[]}, index=[])
-    for col in factor_column_name():
+    for col in factor_column_name_changes().keys():
         temp = universe_rating_detail[["ticker", col]]
         temp = temp.rename(columns={col : "score"})
         temp["factor_name"] = factor_column_name_changes()[col]
         universe_rating_detail_df = universe_rating_detail_df.append(temp)
+
+    df = get_factor_current_used()
+
     universe_rating_positive_negative = pd.DataFrame({"ticker":[], "positive_factor":[], "negative_factor":[]}, index=[])
     for tick in universe_rating_detail_df["ticker"].unique():
         positive_factor = []
@@ -262,6 +260,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.reset_index(inplace=False, drop=True)
     print(universe)
 
+    # bot ranking & statistics
     ranking = result[["ticker"]]
     duration_list = ["2 Weeks", "4 Weeks"]
     bot_ranking = get_latest_ranking(ticker=ticker, currency_code=currency_code)

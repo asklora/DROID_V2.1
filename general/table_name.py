@@ -107,6 +107,9 @@ def get_ai_score_history_testing_table_name():
 def get_factor_calculation_table_name():
     return "factor_formula_ratios_prod"
 
+def get_factor_current_use_table_name():
+    return "test_fundamental_score_current_names"
+
 def get_factor_rank_table_name():
     return "factor_result_pred_prod"
 
