@@ -6,7 +6,6 @@ files:
   - source: /
     destination: /home/ubuntu/DROID_V2.1
     runas: ubuntu
-
     file_exists_behavior: OVERWRITE
 
 hooks:

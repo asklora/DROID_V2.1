@@ -516,12 +516,12 @@ def get_ucdc_hedge(currency_code, delta, last_hedge_delta):
     return delta, hedge
 
 
-def get_hedge_detail(live_price, bot_cash_balance, ask_price, bid_price, last_share_num, bot_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False, margin=1):
+def get_hedge_detail(live_price, available_balance, ask_price, bid_price, last_share_num, bot_share_num, delta, last_hedge_delta, hedge=False, uno=False, ucdc=False, margin=1):
     #err
     if(hedge):
         hedge_shares = round((delta - last_hedge_delta) * bot_share_num, 0)
         if(hedge_shares > 0):
-            hedge_shares = min(hedge_shares, math.floor(bot_cash_balance/live_price))
+            hedge_shares = min(hedge_shares, math.floor(available_balance/live_price))
         if(hedge_shares < 0):
             hedge_shares = max(hedge_shares, last_share_num * -1)
         share_num = last_share_num + hedge_shares
@@ -612,7 +612,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
         user = row["user_id"]
         position = orders_position.loc[orders_position["user_id"] == user]
         if(len(position)):
-            position["margin_invested_amount"] = position["investment_amount"] * position["margin"]
+            # position["margin_invested_amount"] = position["investment_amount"] * position["margin"]
             position["crr_ivt_amt"] = (position["current_investment_amount"] + position["current_bot_cash_balance"])
             position["daily_profit"] = position["crr_ivt_amt"] - position["investment_amount"]
             profit = formatdigit(NoneToZero(np.nansum(position["daily_profit"].to_list())), currency_decimal=row["is_decimal"])
@@ -666,5 +666,5 @@ def update_monthly_deposit(currency_code=None, user_id=None) -> None:
     user_core["trading_day"] = str_to_date(dateNow())
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True, ticker_int=True, replace=True)
     user_core = user_core[["uid", "user_id", "trading_day", "deposit"]]
-    print(user_core)
+    # print(user_core)
     upsert_data_to_database(user_core, get_user_deposit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
