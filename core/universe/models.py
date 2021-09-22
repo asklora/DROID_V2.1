@@ -61,6 +61,7 @@ class Currency(models.Model):
     index_ticker = models.TextField(blank=True, null=True)
     index_price = models.FloatField(blank=True, null=True)
     country = models.TextField(blank=True, null=True)
+    etf_ticker = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.currency_code
