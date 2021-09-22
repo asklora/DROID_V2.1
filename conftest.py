@@ -1,17 +1,19 @@
 import socket
-import time
 from typing import Union
 
 import pytest
 from django.conf import settings
+from django.core.management import call_command
 from django.test.client import Client
+from dotenv import load_dotenv
+from environs import Env
 
 from core.djangomodule.network.cloud import DroidDb
 from core.user.models import Accountbalance, TransactionHistory, User
-from dotenv import load_dotenv
-from environs import Env
+
 load_dotenv()
 env = Env()
+
 
 @pytest.fixture(scope="session")
 def django_db_setup():
@@ -20,7 +22,6 @@ def django_db_setup():
         read_endpoint, write_endpoint, port = db.test_url
     else:
         read_endpoint, write_endpoint, port = db.prod_url
-
 
     DB_ENGINE = "django.db.backends.postgresql_psycopg2"
     settings.DATABASES["default"] = {
@@ -31,7 +32,6 @@ def django_db_setup():
         "PASSWORD": "ml2021#LORA",
         "PORT": port,
     }
-
     settings.DATABASES["aurora_read"] = {
         "ENGINE": DB_ENGINE,
         "HOST": read_endpoint,
@@ -51,10 +51,10 @@ def django_db_setup():
 
 
 @pytest.fixture(scope="session")
-def user(django_db_setup, django_db_blocker, worker_id):
+def user(django_db_setup, django_db_blocker):
     # Creating unique user for each computer and invocation
     computer_name = socket.gethostname().lower()
-    unique_email = f"{computer_name}-{worker_id}@tests.com"
+    unique_email = f"{computer_name}@tests.com"
 
     with django_db_blocker.unblock():
         user = User.objects.create_user(
@@ -76,16 +76,9 @@ def user(django_db_setup, django_db_blocker, worker_id):
             amount=200000,
             transaction_detail={"event": "first deposit"},
         )
-        
-        # deposit_history =UserDepositHistory.objects.create(
-        #     uid = get_uid(user.id, trading_day=dateNow(), replace=True),
-        #     user_id = user.id,
-        #     trading_day = dateNow(),
-        #     deposit = 100000)
-        # deposit_history.save()
 
         yield user
-        user.delete()
+        call_command("delete_user", username=user.username)
 
 
 @pytest.fixture(scope="session")

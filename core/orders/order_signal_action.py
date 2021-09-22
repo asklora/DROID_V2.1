@@ -1,3 +1,4 @@
+from core.user.convert import ConvertMoney
 from core.bot.models import BotOptionType
 from core.user.models import TransactionHistory
 from .models import Order, OrderFee, OrderPosition, PositionPerformance
@@ -105,7 +106,8 @@ class BaseOrderConnector(AbstracOrderConnector):
             else:
                 amount = self.instance.setup['position']['investment_amount']
             
-
+            # convert = ConvertMoney(self.instance.ticker.currency_code, self.user_wallet_currency)
+            # amount = convert.convert(amount)
 
             TransactionHistory.objects.create(
                 balance_uid=self.user_wallet,
@@ -197,9 +199,13 @@ class BaseOrderConnector(AbstracOrderConnector):
     
 
     def transfer_to_wallet(self,position:OrderPosition):
-
+        
         amt = position.investment_amount + position.final_pnl_amount
         return_amt = amt + position.bot_cash_dividend
+
+        # convert = ConvertMoney(position.ticker.currency_code.currency_code, self.user_wallet_currency)
+        # return_amt = convert.convert(return_amt)
+
         TransactionHistory.objects.create(
             balance_uid=self.user_wallet,
             side="credit",
@@ -209,6 +215,7 @@ class BaseOrderConnector(AbstracOrderConnector):
                 "description": "bot return",
                 "position": f"{position.position_uid}",
                 "event": "return",
+                # f"amount_{position.ticker.currency_code.currency_code}" : amt + position.bot_cash_dividend,
                 "order_uid": str(self.instance.order_uid)
             },
         )
@@ -339,7 +346,13 @@ class BaseOrderConnector(AbstracOrderConnector):
 
 
     def calculate_fee(self):
+    # def calculate_fee(self, position_uid):
         user_client = UserClient.objects.get(user_id=self.instance.user_id)
+
+        # position = OrderPosition.objects.get(position_uid=position_uid)
+        # convert = ConvertMoney(position.ticker.currency_code.currency_code, self.user_wallet_currency)
+        # return_amt = convert.convert(return_amt)
+
         if(self.instance.side == "sell"):
             commissions = user_client.client.commissions_sell
             stamp_duty = user_client.stamp_duty_sell
@@ -363,7 +376,7 @@ class BaseOrderConnector(AbstracOrderConnector):
 
     def create_fee(self,  position_uid):
         commissions_fee, stamp_duty_fee, total_fee = self.calculate_fee()
-        
+        # commissions_fee, stamp_duty_fee, total_fee = self.calculate_fee(position_uid)
         if commissions_fee:
             fee = OrderFee.objects.create(
                 order_uid=self.instance,

@@ -3,8 +3,9 @@ from core.orders.serializers import OrderCreateSerializer
 from core.user.models import User
 from rest_framework import exceptions
 
-pytestmark = pytest.mark.django_db(databases=['default','aurora_read','aurora_write'])
-
+pytestmark = pytest.mark.django_db(databases=["default",
+                                              "aurora_read",
+                                              "aurora_write"])
 
 
 def test_should_create_new_buy_order_from_API(user) -> None:
@@ -30,10 +31,11 @@ def test_should_create_new_buy_order_from_API(user) -> None:
     if serializer.is_valid(raise_exception=True):
         buy_order = serializer.save()
 
-    assert buy_order.order_uid != None
+    assert buy_order.order_uid is not None
 
 
 def test_should_fail_on_new_buy_order_from_API(user) -> None:
+    # This line catches the exception, this is where the assertion happens
     with pytest.raises(exceptions.NotAcceptable):
         side = "buy"
         ticker = "0780.HK"
