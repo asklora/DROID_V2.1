@@ -16,7 +16,9 @@ phases:
   build:
     on-failure: ABORT
     commands:
-        - pytest -s --ds=config.settings.prodtest
+        - pytest -s --ds=config.prodtest
+        - python manage.py testuserdeposit
+        - python manage.py testuserdeposit --delete
         - echo "$CODEBUILD_BUILD_SUCCEEDING"
         - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION"
   post_build:

@@ -12,7 +12,9 @@ phases:
   build:
     on-failure: ABORT
     commands:
-        - pytest -s 
+        - pytest -s
+        - python manage.py testuserdeposit
+        - python manage.py testuserdeposit --delete
   post_build:
     commands:
       - echo test completed on `date`

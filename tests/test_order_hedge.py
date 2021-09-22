@@ -6,12 +6,16 @@ import pytest
 from core.master.models import MasterOhlcvtr
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.models import Accountbalance, TransactionHistory
-from portfolio import classic_position_check, ucdc_position_check, uno_position_check
+from portfolio import (
+    classic_position_check,
+    ucdc_position_check,
+    uno_position_check)
 
 from utils import create_buy_order
 
-pytestmark = pytest.mark.django_db(databases=['default','aurora_read','aurora_write'])
-
+pytestmark = pytest.mark.django_db(databases=["default",
+                                              "aurora_read",
+                                              "aurora_write"])
 
 
 def test_should_create_hedge_order_for_classic_bot(user) -> None:
@@ -57,10 +61,10 @@ def test_should_create_hedge_order_for_classic_bot(user) -> None:
     # step 3: get hedge positions
     performance = PositionPerformance.objects.filter(position_uid=position.position_uid)
 
-    print(performance.count())
+    print(len(performance))
 
     assert performance.exists()
-    assert performance.count() > 1
+    assert len(performance) > 1
 
 
 def test_should_create_hedge_order_for_uno_bot(user) -> None:
@@ -106,10 +110,10 @@ def test_should_create_hedge_order_for_uno_bot(user) -> None:
     # step 3: get hedge positions
     performance = PositionPerformance.objects.filter(position_uid=position.position_uid)
 
-    print(performance.count())
+    print(len(performance))
 
     assert performance.exists()
-    assert performance.count() > 1
+    assert len(performance) > 1
 
 
 def test_should_create_hedge_order_for_ucdc_bot(user) -> None:
@@ -156,10 +160,10 @@ def test_should_create_hedge_order_for_ucdc_bot(user) -> None:
     # step 3: get hedge positions
     performance = PositionPerformance.objects.filter(position_uid=position.position_uid)
 
-    print(performance.count())
+    print(len(performance))
 
     assert performance.exists()
-    assert performance.count() > 1
+    assert len(performance) > 1
 
 
 def test_should_create_hedge_order_for_ucdc_bot_with_margin(user) -> None:
@@ -207,10 +211,10 @@ def test_should_create_hedge_order_for_ucdc_bot_with_margin(user) -> None:
     # step 3: get hedge positions
     performance = PositionPerformance.objects.filter(position_uid=position.position_uid)
 
-    print(performance.count())
+    print(len(performance))
 
     assert performance.exists()
-    assert performance.count() > 1
+    assert len(performance) > 1
 
 
 def test_hedge_values_for_ucdc_bot(user) -> None:
@@ -313,15 +317,15 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
 
     print(position_df)
     print(position_df.columns)
-    print(position.count())
+    print(len(position))
 
     print(performance_df)
     print(performance_df.columns)
-    print(performance.count())
+    print(len(performance))
 
     print(orders_df)
     print(orders_df.columns)
-    print(orders.count())
+    print(len(orders))
 
     performance_df = performance_df.sort_values(by=["created"])
     performance_df = performance_df.merge(position_df, how="left", on=["position_uid"])
@@ -427,7 +431,7 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
     )
 
     assert performance.exists()
-    assert performance.count() > 1
+    assert len(performance) > 1
 
 
 def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
@@ -477,21 +481,25 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     positions = OrderPosition.objects.filter(position_uid=position.position_uid)
 
     # get hedge performances
-    performances = PositionPerformance.objects.filter(position_uid=position.position_uid)
+    performances = PositionPerformance.objects.filter(
+        position_uid=position.position_uid
+    )
 
     # get user balances
     balance = Accountbalance.objects.get(user=user)
 
     # get user transaction history
-    transactions: list[TransactionHistory] = TransactionHistory.objects.filter(balance_uid=balance)
+    transactions: list[TransactionHistory] = TransactionHistory.objects.filter(
+        balance_uid=balance
+    )
 
     # we check if the hedge created performances data
     assert performances.exists()
-    assert performances.count() > 1
+    assert len(performances) > 1
 
     # we check if the user get the investment monye back from bot
     # first transaction is the initial deposit, and the last one is the bot return
-    assert transactions.count() >= 3
+    assert len(transactions) >= 3
     assert transactions.last().transaction_detail["description"] == "bot return"
 
     print(f"\ninvestment amount: {positions.last().investment_amount}")
@@ -499,4 +507,7 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     print(f"bot return amount: {transactions.last().amount}")
 
     # we see if the bot returns the correct amount of money
-    assert positions.last().investment_amount + positions.last().final_pnl_amount == transactions.last().amount
+    assert (
+        positions.last().investment_amount + positions.last().final_pnl_amount
+        == transactions.last().amount
+    )

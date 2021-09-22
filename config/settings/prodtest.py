@@ -6,5 +6,4 @@ You can use this configuration file by running:
 `python manage.py runserver --settings=config.settings.prodtest`
 """
 DATABASE_ROUTERS = []
-
-TESTDEBUG=True
+TESTDEBUG = True
