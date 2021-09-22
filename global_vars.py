@@ -64,7 +64,7 @@ DLP_HISTORY_YEARS=12
 DROID_HISTORY_YEARS=4
 
 #vol ranges
-max_vol = 0.95
+max_vol = 1.25
 min_vol = 0.2
 default_vol = 0.25
 
