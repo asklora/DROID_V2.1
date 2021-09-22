@@ -141,9 +141,11 @@ def rolling_apply(group, field):
 
 def mongo_universe_update(ticker=None, currency_code=None):
     ''' update mongo for:
-    1. APP "Details" from universe_rating
-
-    1. ai_score from universe_rating
+    1. static information
+    2. price/financial ratios
+    3. positive / negative factors
+    4. ai_ratings
+    5. bot informations
     '''
 
     # Populate Universe
@@ -155,12 +157,12 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = result[["ticker"]]
     print(result)
 
-    # detail_df of static info dict of {Companies Name, Industry, Currency, Description, Lot Size}
+    # 1. static info dict of {Companies Name, Industry, Currency, Description, Lot Size}
     result = change_null_to_zero(result)
     detail_df = pd.DataFrame({"ticker":[], "detail":[]}, index=[])
     for tick in universe["ticker"].unique():
         detail_data = result.loc[result["ticker"] == tick]
-        detail_data = detail_data[["currency_code", "ticker_name", "ticker_fullname", "company_description", 
+        detail_data = detail_data[["currency_code", "ticker_name", "ticker_fullname", "company_description",
             "industry_code", "industry_name", "industry_group_code", "industry_group_name", "ticker_symbol", "lot_size", "mic"]].to_dict("records")
         details = pd.DataFrame({"ticker":[tick], "detail":[detail_data[0]]}, index=[0])
         detail_df = detail_df.append(details)
@@ -169,7 +171,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(detail_df, how="left", on=["ticker"])
     print(universe)
 
-    # detail_df of financial info dict of {price, pe, pb, ...} <- from Universe
+    # 2. detail_df of financial info dict of {price, pe, pb, ...} <- from Universe
     price = result[["ticker", "ebitda", "free_cash_flow", "market_cap", "pb", "pe_forecast", "pe_ratio", "revenue_per_share", "wk52_high", "wk52_low"]]
     latest_price = get_latest_price_data(ticker=ticker, currency_code=currency_code)
     latest_price = price.merge(latest_price, how="left", on=["ticker"])
@@ -178,10 +180,10 @@ def mongo_universe_update(ticker=None, currency_code=None):
     price_df = pd.DataFrame({"ticker":[], "price":[]}, index=[])
     for tick in latest_price["ticker"].unique():
         price_data = latest_price.loc[latest_price["ticker"] == tick]
-        price_data = price_data[["ebitda", "free_cash_flow", "market_cap", 
-        "pb", "pe_forecast", "pe_ratio", "revenue_per_share", "wk52_high", "wk52_low", 
-        "open", "high", "low", "close", "intraday_date", "intraday_ask", "intraday_bid", 
-        "latest_price_change", "intraday_time", "last_date", "capital_change", 
+        price_data = price_data[["ebitda", "free_cash_flow", "market_cap",
+        "pb", "pe_forecast", "pe_ratio", "revenue_per_share", "wk52_high", "wk52_low",
+        "open", "high", "low", "close", "intraday_date", "intraday_ask", "intraday_bid",
+        "latest_price_change", "intraday_time", "last_date", "capital_change",
         "latest_price", "volume"]].to_dict("records")
         price = pd.DataFrame({"ticker":[tick], "price":[price_data[0]]}, index=[0])
         price_df = price_df.append(price)
@@ -190,66 +192,73 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(price_df, how="left", on=["ticker"])
     print(universe)
 
-    # detail_df of financial info dict of {price, pe, pb, ...} <- from Universe
+    # 3. positive / negative factor -> factor = factor used in ai_score calculation
     rating = result[["ticker"]]
     universe_rating = get_universe_rating_history(ticker=ticker, currency_code=currency_code)
     universe_rating_detail = get_universe_rating_detail_history(ticker=ticker, currency_code=currency_code)
     universe_rating_detail = universe_rating_detail.merge(universe_rating[["ticker", "dlp_1m", "wts_rating"]], how="left", on=["ticker"])
-    # universe_rating_detail = universe_rating_detail.rename(columns={"momentum" : "momentum_minmax_currency_code"})
-    universe_rating_detail_df = pd.DataFrame({"ticker":[], "factor_name":[], "score":[]}, index=[])
-    for col in factor_column_name_changes().keys():
-        temp = universe_rating_detail[["ticker", col]]
-        temp = temp.rename(columns={col : "score"})
-        temp["factor_name"] = factor_column_name_changes()[col]
-        universe_rating_detail_df = universe_rating_detail_df.append(temp)
-
-    df = get_factor_current_used()
 
     universe_rating_positive_negative = pd.DataFrame({"ticker":[], "positive_factor":[], "negative_factor":[]}, index=[])
-    for tick in universe_rating_detail_df["ticker"].unique():
-        positive_factor = []
-        negative_factor = []
-        temp = universe_rating_detail_df.loc[universe_rating_detail_df["ticker"] == tick]
+    name_map = factor_column_name_changes()
 
-        lb, hb = (temp["score"].mean() - temp["score"].std()), (temp["score"].mean() + temp["score"].std())
-        positive = temp.loc[temp["score"] > hb]
-        positive = positive.sort_values(by=["score"], ascending=False)
-        rule1 = positive.loc[positive["factor_name"].isin(fundamentals_value_factor_name())].head(2)
-        rule2 = positive.loc[positive["factor_name"].isin(fundamentals_quality_factor_name())].head(2)
-        rule3 = positive.loc[positive["factor_name"].isin(momentum_factor_name())].head(1)
-        rule4 = positive.loc[positive["factor_name"].isin(other_fundamentals_name())].head(2)
-        rule1 = rule1.append(rule2)
-        rule1 = rule1.append(rule3)
-        rule1 = rule1.append(rule4)
+    # factor currently used in ai_score calculation
+    factor_use = get_factor_current_used().set_index('index').transpose().to_dict(orient='list')
+    for cur, v in factor_use.items():   # work on different currency separately -> can use different factors
+        lst = [x for x in ','.join(v).split(',') if len(x) > 0]
+        lst += [x + '_minmax_currency_code' for x in lst]
 
-        negative = temp.loc[temp["score"] < lb]
-        negative = negative.sort_values(by=["score"])
-        rule1_min = negative.loc[negative["factor_name"].isin(fundamentals_value_factor_name())].head(2)
-        rule2_min = negative.loc[negative["factor_name"].isin(fundamentals_quality_factor_name())].head(2)
-        rule3_min = negative.loc[negative["factor_name"].isin(momentum_factor_name())].head(1)
-        rule4_min = negative.loc[negative["factor_name"].isin(other_fundamentals_name())].head(2)
-        rule1_min = rule1_min.append(rule2_min)
-        rule1_min = rule1_min.append(rule3_min)
-        rule1_min = rule1_min.append(rule4_min)
-        for index, row in rule1.iterrows():
-            positive_factor.append(row["factor_name"])
-        for index, row in rule1_min.iterrows():
-            negative_factor.append(row["factor_name"])
-        positive_negative_result = pd.DataFrame({"ticker":[tick], "positive_factor":[positive_factor], "negative_factor":[negative_factor]}, index=[0])
-        universe_rating_positive_negative = universe_rating_positive_negative.append(positive_negative_result)
+        # select dataframe for given industry
+        curr_ticker = result.loc[result['currency_code']==cur,'ticker'].to_list()
+        curr_details = universe_rating_detail.loc[universe_rating_detail['ticker'].isin(curr_ticker)]
+
+        # unstack dataframe
+        cols = list(set(lst) & set(universe_rating_detail.columns.to_list()))
+        curr_details = curr_details.set_index(["ticker"])[cols].unstack().reset_index()
+        curr_details.columns = ["factor_name", "ticker", "score"]
+        curr_details["factor_name"] = curr_details["factor_name"].map(name_map)
+
+        # rules for positive / negative factors
+        curr_des = curr_details.groupby(['factor_name'])['score'].agg(['mean','std'])
+        curr_pos = (curr_des['mean'] + 0.4*curr_des['std']).to_dict()       # positive = factors > mean + 0.4std
+        curr_neg = (curr_des['mean'] - 0.4*curr_des['std']).to_dict()       # negative = factors < mean - 0.4std
+
+        for tick in curr_details['ticker'].unique():
+            positive_factor = []
+            negative_factor = []
+            temp = curr_details.loc[curr_details["ticker"] == tick]
+
+            positive = temp.loc[temp["score"] > temp["factor_name"].map(curr_pos)]
+            positive = positive.sort_values(by=["score"], ascending=False)
+            # if len(positive) == 0:
+            #     positive = temp.nlargest(1,'score')     # if no factor > mean + 0.4*std -> use highest score one as pos
+
+            negative = temp.loc[temp["score"] < temp["factor_name"].map(curr_neg)]
+            negative = negative.sort_values(by=["score"])
+            # if len(negative) == 0:
+            #     positive = temp.nsmallest(1,'score')
+
+            for index, row in positive.iterrows():
+                positive_factor.append(row["factor_name"])
+            for index, row in negative.iterrows():
+                negative_factor.append(row["factor_name"])
+            positive_negative_result = pd.DataFrame({"ticker":[tick], "positive_factor":[positive_factor], "negative_factor":[negative_factor]}, index=[0])
+            universe_rating_positive_negative = universe_rating_positive_negative.append(positive_negative_result)
+
     universe_rating = rating.merge(universe_rating, how="left", on=["ticker"])
     universe_rating = universe_rating.merge(universe_rating_positive_negative, how="left", on=["ticker"])
     universe_rating = change_date_to_str(universe_rating)
     universe_rating = change_null_to_zero(universe_rating)
     print(universe_rating)
+
+    # 4. ai_ratings
     rating_df = pd.DataFrame({"ticker":[], "rating":[], "ai_score":[], "ai_score2":[]}, index=[])
     for tick in universe_rating["ticker"].unique():
         rating_data = universe_rating.loc[universe_rating["ticker"] == tick]
         rating_data["final_score"] = rating_data["ai_score"]
         ai_score = rating_data["ai_score"].to_list()[0]
         ai_score2 = rating_data["ai_score2"].to_list()[0]
-        rating_data = rating_data[["final_score", "ai_score", "ai_score2", "fundamentals_quality", "fundamentals_value", 
-        "dlp_1m", "dlp_3m", "wts_rating", "wts_rating2", "esg", "momentum", "technical", "positive_factor", "negative_factor"]].to_dict("records")
+        rating_data = rating_data[["final_score", "ai_score", "ai_score2", "fundamentals_quality", "fundamentals_value", "fundamentals_extra",
+        "dlp_1m", "dlp_3m", "wts_rating", "wts_rating2", "esg", "positive_factor", "negative_factor"]].to_dict("records")
         rating = pd.DataFrame({"ticker":[tick], "rating":[rating_data[0]], "ai_score":[ai_score], "ai_score2":[ai_score2]}, index=[0])
         rating_df = rating_df.append(rating)
     rating_df = rating_df.reset_index(inplace=False, drop=True)
@@ -260,7 +269,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.reset_index(inplace=False, drop=True)
     print(universe)
 
-    # bot ranking & statistics
+    # 5. bot ranking & statistics
     ranking = result[["ticker"]]
     duration_list = ["2 Weeks", "4 Weeks"]
     bot_ranking = get_latest_ranking(ticker=ticker, currency_code=currency_code)
