@@ -13,7 +13,7 @@ env = Env()
 load_dotenv()
 debug = os.environ.get('DJANGO_SETTINGS_MODULE', False)
 if not debug:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.local')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.local')
 dbdebug = env.bool("DROID_DEBUG")
 
 #NOTE AVALAIBLE TASK 13-09-2021
@@ -51,7 +51,7 @@ app = Celery('core.services')
 # app_dev.config_from_object('django.conf:settings', namespace='CELERY')
 # Load task modules from all registered Django app configs.
 # app_dev.autodiscover_tasks()
-if debug in ['config.production','config.prodtest']:
+if debug in ['config.settings.production','config.settings.prodtest']:
     app.conf.broker_login_method = 'PLAIN'
 app.config_from_object('django.conf:settings', namespace='CELERY')
 

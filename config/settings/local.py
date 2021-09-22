@@ -1,4 +1,4 @@
-from .settings import *
+from .base import *
 
 """
 This Django configuration file in used in the local development environment for tests.

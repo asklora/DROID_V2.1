@@ -1,5 +1,5 @@
 import time
-from config.settings import db_debug
+from django.conf import settings
 from django.contrib import admin
 from .models import UniverseConsolidated, Universe
 from .forms import AddTicker
@@ -63,7 +63,7 @@ class AddTickerAdmin(ImportExportModelAdmin):
         self.add_success_message(result, request)
         resources = self.get_import_resource_class()
         # post_import.send(sender=None, model=self.model)
-        if db_debug:
+        if settings.db_debug:
             get_isin_populate_universe.delay(
                     resources.ticker, request.user.id)
         else:

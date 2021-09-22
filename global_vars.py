@@ -64,7 +64,7 @@ DLP_HISTORY_YEARS=12
 DROID_HISTORY_YEARS=4
 
 #vol ranges
-max_vol = 0.95
+max_vol = 1.25
 min_vol = 0.2
 default_vol = 0.25
 
@@ -83,7 +83,6 @@ random_state = 8
 # valid_size = 
 r_days=200
 q_days=200
-currency_code_to_etf_file = "files/file_csv/currency_code_to_etf.csv"
 run_time_min = time.time()
 modified_delta_list = ["d2", "v10"]
 time_to_expiry = [0.03846, 0.07692, 0.08333, 0.15384, 0.16666, 0.25, 0.5] #[2 weeks, 4 weeks, 1 month, 8 weeks, 2 months, 3 months, 6 months]
