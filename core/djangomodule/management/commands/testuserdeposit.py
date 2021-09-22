@@ -58,7 +58,7 @@ class Command(BaseCommand):
                     UserDepositHistory
                 ] = UserDepositHistory.objects.filter(user_id=user.id)
 
-                assert deposit_history.exists()
+                assert deposit_history.exists() == True
 
                 last_deposit = deposit_history.last()
 
