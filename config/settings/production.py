@@ -1,9 +1,9 @@
-from .settings import *
+from .base import *
 
 """
 This Django configuration file in used in the production environment.
 You can use this configuration file by running:
-`python manage.py runserver --settings=config.production`
+`python manage.py runserver --settings=config.settings.production`
 """
 SQLPRINT=False
 CHANNEL_LAYERS = {
