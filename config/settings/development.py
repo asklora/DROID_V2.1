@@ -79,6 +79,6 @@ DATABASES = {
 }
 
 FIREBASE_COLLECTION={
-    'portfolio':'portfolio',
+    'portfolio':'dev_portfolio',
     'universe':'universe'
 }
