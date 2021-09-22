@@ -6,7 +6,9 @@ from bot.calculate_bot import check_date, get_expiry_date
 from core.bot.models import BotOptionType
 from core.orders.models import Order
 
-pytestmark = pytest.mark.django_db(databases=['default','aurora_read','aurora_write'])
+pytestmark = pytest.mark.django_db(databases=["default",
+                                              "aurora_read",
+                                              "aurora_write"])
 
 
 class TestAPIAuth:
@@ -74,8 +76,7 @@ class TestAPIOrder:
             "side": "buy",
         }
 
-        response = client.post(path="/api/order/create/",
-                               data=data, **authentication)
+        response = client.post(path="/api/order/create/", data=data, **authentication)
 
         if (
             response.status_code != 201
@@ -100,8 +101,7 @@ class TestAPIOrder:
             "margin": 2,
         }
 
-        response = client.post(path="/api/order/create/",
-                               data=data, **authentication)
+        response = client.post(path="/api/order/create/", data=data, **authentication)
 
         if (
             response.status_code != 201
@@ -116,7 +116,9 @@ class TestAPIOrder:
         # confirm if the qty is correctly counted with margin
         assert order["qty"] != 100.0
 
-    def test_api_create_order_with_classic_bot(self, authentication, client, user) -> None:
+    def test_api_create_order_with_classic_bot(
+        self, authentication, client, user
+    ) -> None:
         data = {
             "ticker": "3377.HK",
             "price": 1.63,
@@ -126,8 +128,7 @@ class TestAPIOrder:
             "side": "buy",
         }
 
-        response = client.post(path="/api/order/create/",
-                               data=data, **authentication)
+        response = client.post(path="/api/order/create/", data=data, **authentication)
 
         if (
             response.status_code != 201
@@ -146,12 +147,7 @@ class TestAPIOrder:
         # confirm if the expiry is set correctly
         bot = BotOptionType.objects.get(bot_id="CLASSIC_classic_003846")
 
-        expiry = get_expiry_date(
-            bot.time_to_exp,
-            order["created"],
-            "HKD",
-            apps=True
-        )
+        expiry = get_expiry_date(bot.time_to_exp, order["created"], "HKD", apps=True)
         expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
         assert order["setup"]["position"]["expiry"] == expiry_date
 
@@ -166,8 +162,7 @@ class TestAPIOrder:
             "margin": 2,
         }
 
-        response = client.post(path="/api/order/create/",
-                               data=data, **authentication)
+        response = client.post(path="/api/order/create/", data=data, **authentication)
 
         if (
             response.status_code != 201
@@ -187,12 +182,7 @@ class TestAPIOrder:
         # confirm if the expiry is set correctly
         bot = BotOptionType.objects.get(bot_id="UNO_ITM_003846")
 
-        expiry = get_expiry_date(
-            bot.time_to_exp,
-            order["created"],
-            "HKD",
-            apps=True
-        )
+        expiry = get_expiry_date(bot.time_to_exp, order["created"], "HKD", apps=True)
         expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
         assert order["setup"]["position"]["expiry"] == expiry_date
 
@@ -207,8 +197,7 @@ class TestAPIOrder:
             "margin": 2,
         }
 
-        response = client.post(path="/api/order/create/",
-                               data=data, **authentication)
+        response = client.post(path="/api/order/create/", data=data, **authentication)
 
         if (
             response.status_code != 201
@@ -228,12 +217,7 @@ class TestAPIOrder:
         # confirm if the expiry is set correctly
         bot = BotOptionType.objects.get(bot_id="UCDC_ATM_003846")
 
-        expiry = get_expiry_date(
-            bot.time_to_exp,
-            order["created"],
-            "HKD",
-            apps=True
-        )
+        expiry = get_expiry_date(bot.time_to_exp, order["created"], "HKD", apps=True)
         expiry_date = check_date(expiry).date().strftime("%Y-%m-%d")
         assert order["setup"]["position"]["expiry"] == expiry_date
 
@@ -323,7 +307,8 @@ class TestAPIOrder:
         assert response_body["price"] == 1.63
         assert (
             # Amount was cut to fit maximum share number
-            response_body["amount"] != 100
+            response_body["amount"]
+            != 100
         )
 
     def test_api_get_user_orders(self, authentication, client, order) -> None:
