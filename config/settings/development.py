@@ -1,10 +1,10 @@
-from .settings import *
+from .base import *
 
 
 """
 This Django configuration file in used in the development environment.
 You can use this configuration file by running:
-`python manage.py runserver --settings=config.development`
+`python manage.py runserver --settings=config.settings.development`
 """
 SQLPRINT=False
 CHANNEL_LAYERS = {

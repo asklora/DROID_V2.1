@@ -12,11 +12,11 @@ phases:
     on-failure: ABORT
     commands:
       - echo "check DB Before running tests"
-      - python manage.py createtestdb --settings=config.production
+      - python manage.py createtestdb --settings=config.settings.production
   build:
     on-failure: ABORT
     commands:
-        - pytest -s --ds=config.prodtest
+        - pytest -s --ds=config.settings.prodtest
         - echo "$CODEBUILD_BUILD_SUCCEEDING"
         - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION"
   post_build:

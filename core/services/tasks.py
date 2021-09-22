@@ -26,7 +26,7 @@ from core.services.models import ErrorLog
 from .models import ChannelPresence
 from channels_presence.models import Presence
 from django.core.mail import EmailMessage
-from config.settings import db_debug
+from django.conf import settings
 from datasource.rkd import RkdData
 from bot.calculate_bot import populate_daily_profit
 # RAW SQL QUERY MODULE
@@ -827,16 +827,16 @@ def sending_csv(hanwha, currency=None, client_name=None, new=None, bot_tester=Fa
         csv = export_csv(df)
         hanwha_csv = export_csv(hanwha_df)
         if new:
-            if db_debug:
+            if settings.db_debug:
                 subject = "TEST NEW PICK"
             else:
                 subject = "NEW PICK"
         else:
-            if db_debug:
+            if settings.db_debug:
                 subject = "TEST HEDGE"
             else:
                 subject = "HEDGE"
-        if db_debug:
+        if settings.db_debug:
             # if(bot_tester):
             #     LORA_MEMBER=["rede.akbar@loratechai.com","agustian@loratechai.com", "stepchoi@loratechai.com",
             #     "kenson.lau@loratechai.com", "nick.choi@loratechai.com"]

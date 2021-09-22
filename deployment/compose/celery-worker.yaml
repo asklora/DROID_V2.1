@@ -3,21 +3,21 @@ services:
   celery-hedger:
     container_name: CeleryHedger
     image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/droid:latest
-    command: bash -c "export DJANGO_SETTINGS_MODULE=config.production && celery -A core.services worker -l  INFO --hostname=hedger@%h --concurrency=10 -Q hedger"
+    command: bash -c "export DJANGO_SETTINGS_MODULE=config.settings.production && celery -A core.services worker -l  INFO --hostname=hedger@%h --concurrency=10 -Q hedger"
     restart: always
     depends_on:
       - redis
   celery-portofolio:
     container_name: CeleryPortofolio
     image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/droid:latest
-    command: bash -c "export DJANGO_SETTINGS_MODULE=config.production && celery -A core.services worker -l  INFO --hostname=portofolio@%h --concurrency=10 -Q portofolio"
+    command: bash -c "export DJANGO_SETTINGS_MODULE=config.settings.production && celery -A core.services worker -l  INFO --hostname=portofolio@%h --concurrency=10 -Q portofolio"
     restart: always
     depends_on:
       - redis
   celery-utils:
     container_name: CeleryUtils
     image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/droid:latest
-    command: bash -c "export DJANGO_SETTINGS_MODULE=config.production && celery -A core.services worker -l  INFO --hostname=utils@%h --concurrency=10 -Q utils"
+    command: bash -c "export DJANGO_SETTINGS_MODULE=config.settings.production && celery -A core.services worker -l  INFO --hostname=utils@%h --concurrency=10 -Q utils"
     restart: always
     depends_on:
       - redis
