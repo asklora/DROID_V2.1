@@ -164,13 +164,13 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     currency_code_to_etf = get_ticker_etf(active=True)
     universe_df = get_active_universe()
     universe_df = universe_df.merge(currency_code_to_etf, on="currency_code", how="left")
-    etf_list = currency_code_to_etf.etf.unique()
+    etf_list = currency_code_to_etf.etf_ticker.unique()
 
     main_df2 = main_df.copy()
     main_df = main_df2.copy()
 
     # Adding index vols to the main dataframe
-    main_df = main_df.merge(universe_df[["etf", "ticker"]], on="ticker", how="left")
+    main_df = main_df.merge(universe_df[["etf_ticker", "ticker"]], on="ticker", how="left")
     etf_df = main_df[main_df.ticker.isin(etf_list)].copy()
 
     # main_df = main_df[~main_df.ticker.isin(etf_list)]
@@ -193,8 +193,8 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
                            "deriv_inf": "deriv_inf_x",
                            }, inplace=True)
 
-    main_df = main_df.merge(etf_df, on=["etf", "trading_day"], how="left")
-    main_df.drop(["uid", "slope_x", "slope_inf_x", "deriv_x","deriv_inf_x", "etf"], axis=1, inplace=True)
+    main_df = main_df.merge(etf_df, on=["etf_ticker", "trading_day"], how="left")
+    main_df.drop(["uid", "slope_x", "slope_inf_x", "deriv_x","deriv_inf_x", "etf_ticker"], axis=1, inplace=True)
     
     # temp = get_active_universe()
     # temp = temp[["ticker", "industry_code"]]
