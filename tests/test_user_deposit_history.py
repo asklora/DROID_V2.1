@@ -84,8 +84,8 @@ def upsert_data_to_database(
 
 
 def test_user_deposit_history(mocker) -> None:
-    computer_name = socket.gethostname().lower()
-    unique_email = f"{computer_name}-deposit@tests.com"
+    computer_name = socket.gethostname().lower() + "-deposit"
+    unique_email = f"{computer_name}@tests.com"
 
     # We get our user here
     new_user = User.objects.create(
