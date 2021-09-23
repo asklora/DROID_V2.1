@@ -51,6 +51,7 @@ from general.table_name import (
     get_factor_calculation_table_name,
     get_factor_rank_table_name,
     get_ai_score_history_testing_table_name,
+    get_factor_current_use_table_name
 )
 
 
@@ -433,6 +434,11 @@ def get_specific_volume_avg(trading_day, avg_days=7, volume_name="volume"):
 def get_factor_calculation_formula():
     query = f"SELECT * FROM {get_factor_calculation_table_name()}"
     data = read_query(query, table=get_factor_calculation_table_name(), alibaba=True)
+    return data
+
+def get_factor_current_used():
+    query = f"SELECT * FROM {get_factor_current_use_table_name()}"
+    data = read_query(query, table=get_factor_current_use_table_name(), alibaba=True)
     return data
 
 def get_factor_rank():

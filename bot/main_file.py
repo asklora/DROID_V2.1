@@ -39,6 +39,7 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
 
     #Get Vol Surface Parameter Ticker That Not Infer
     outputs_df = get_vol_surface_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, infer=False)
+    outputs_infer_df = get_vol_surface_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, infer=True)
 
     #Prepare All Data for Calculation
     dates_df = prices_df.pivot_table(index="trading_day", columns="ticker", values="day_status", aggfunc="first",dropna=False)
@@ -157,10 +158,12 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         main_df = main_df.append(temp_df)
         print(f"{trading_day} is finished.")
     main_df = main_df.merge(prices_df[["vix_value", "ticker", "trading_day"]], on=["ticker", "trading_day"], how="left")
-    main_df = main_df.merge(outputs_df, on=["ticker", "trading_day"], how="left")
-    Y_columns_temp = ["slope", "atm_volatility_spot", "atm_volatility_one_year", "atm_volatility_infinity", "deriv_inf",
-                      "deriv", "slope_inf", "ticker", "trading_day"]
-
+    Y_columns_temp = ["atm_volatility_spot", "atm_volatility_one_year", "atm_volatility_infinity", "deriv_inf",
+                      "deriv", "slope", "slope_inf", "ticker", "trading_day"]
+    # main_df = main_df.merge(outputs_df, on=["ticker", "trading_day"], how="left")
+    volatility = [outputs_df[Y_columns_temp], outputs_infer_df[Y_columns_temp]]
+    volatility = pd.concat(volatility)
+    main_df = main_df.merge(volatility, on=["ticker", "trading_day"], how="left")
     currency_code_to_etf = get_ticker_etf(active=True)
     universe_df = get_active_universe()
     universe_df = universe_df.merge(currency_code_to_etf, on="currency_code", how="left")
@@ -194,7 +197,7 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
                            }, inplace=True)
 
     main_df = main_df.merge(etf_df, on=["etf_ticker", "trading_day"], how="left")
-    main_df.drop(["uid", "slope_x", "slope_inf_x", "deriv_x","deriv_inf_x", "etf_ticker"], axis=1, inplace=True)
+    main_df.drop(["slope_x", "slope_inf_x", "deriv_x","deriv_inf_x", "etf_ticker"], axis=1, inplace=True)
     
     # temp = get_active_universe()
     # temp = temp[["ticker", "industry_code"]]
