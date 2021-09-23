@@ -6,9 +6,13 @@ from bot.calculate_bot import check_date, get_expiry_date
 from core.bot.models import BotOptionType
 from core.orders.models import Order
 
-pytestmark = pytest.mark.django_db(databases=["default",
-                                              "aurora_read",
-                                              "aurora_write"])
+pytestmark = pytest.mark.django_db(
+    databases=[
+        "default",
+        "aurora_read",
+        "aurora_write",
+    ]
+)
 
 
 class TestAPIAuth:
@@ -250,6 +254,7 @@ class TestAPIOrder:
 
         # First, let's find the order
         from django.db import connection
+
         db_name = connection.settings_dict
         print(db_name)
         currentOrder = Order.objects.get(pk=order1["order_uid"])
