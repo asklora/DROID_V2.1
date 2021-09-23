@@ -200,7 +200,7 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     # temp = temp[["ticker", "industry_code"]]
     # temp[temp.industry_code == "NA"] = 0
     # main_df = main_df.merge(temp, on=["ticker"], how="left")
-
+    main_df["trading_day"] = pd.to_datetime(main_df["trading_day"]).dt.date
     main_df = uid_maker(main_df, uid="uid", ticker="ticker", trading_day="trading_day")
 
     table_name = get_bot_data_table_name()
