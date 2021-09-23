@@ -1,4 +1,5 @@
 #!/bin/bash
+
 python manage.py createuser -e chariot_sm_usd_classic@chariot.com -p chariotadmin -c USD -amt 5000 -cap small -type CLASSIC -s bot_tester -b2b -client CHARIOT --settings=config.settings.production
 python manage.py createuser -e chariot_lg_usd_classic@chariot.com -p chariotadmin -c USD -amt 30000 -cap large -type CLASSIC -s bot_tester -b2b -client CHARIOT --settings=config.settings.production
 python manage.py createuser -e chariot_sm_usd_uno@chariot.com -p chariotadmin -c USD -amt 5000 -cap small -type UNO -s bot_tester -b2b -client CHARIOT --settings=config.settings.production
