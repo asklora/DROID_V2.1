@@ -200,11 +200,15 @@ def get_all_universe(ticker=None, currency_code=None, active=True):
     data = read_query(query, table=get_universe_table_name())
     return data
 
-def get_ticker_etf(active=True):
+def get_ticker_etf(currency_code=None, active=True):
     table_name = get_currency_table_name()
     query = f"select currency_code, etf_ticker from {table_name} "
-    if(active):
+    if(active and type(currency_code) != type(None)):
+        query += f"where is_active=True and currency_code in {tuple_data(currency_code)} "
+    elif(active):
         query += f"where is_active=True "
+    elif(type(currency_code) != type(None)):
+        query += f"where currency_code in {tuple_data(currency_code)} "
     data = read_query(query, table=table_name)
     return data
 
