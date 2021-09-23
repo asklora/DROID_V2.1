@@ -15,4 +15,4 @@ phases:
         - pytest -s
   post_build:
     commands:
-      - echo test completed on `date`
+      - echo test is completed on `date`
