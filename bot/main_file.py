@@ -182,7 +182,7 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     etf_df = etf_df[Y_columns_temp]
     etf_df.rename(columns={"slope": "slope_x", "atm_volatility_spot": "atm_volatility_spot_x",
                            "atm_volatility_one_year": "atm_volatility_one_year_x",
-                           "atm_volatility_infinity": "atm_volatility_infinity_x", "ticker": "etf",
+                           "atm_volatility_infinity": "atm_volatility_infinity_x", "ticker": "etf_ticker",
                            "total_returns_0_63": "total_returns_0_63_x", "total_returns_21_126": "total_returns_21_126_x",
                            "total_returns_0_21": "total_returns_0_21_x",
                            "total_returns_21_231": "total_returns_21_231_x", "c2c_vol_0_21": "c2c_vol_0_21_x",
@@ -200,7 +200,7 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     # temp = temp[["ticker", "industry_code"]]
     # temp[temp.industry_code == "NA"] = 0
     # main_df = main_df.merge(temp, on=["ticker"], how="left")
-
+    main_df["trading_day"] = pd.to_datetime(main_df["trading_day"]).dt.date
     main_df = uid_maker(main_df, uid="uid", ticker="ticker", trading_day="trading_day")
     print(main_df)
     table_name = get_bot_data_table_name()
