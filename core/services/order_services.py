@@ -5,7 +5,6 @@ from core.djangomodule.calendar import TradingHours
 from core.djangomodule.general import logging
 from core.user.models import User
 from core.services.models import ErrorLog
-from core.universe.models  import ExchangeMarket
 from django.db import transaction
 from firebase_admin import messaging
 from datetime import datetime,timedelta
@@ -25,6 +24,24 @@ class OrderDetailsServicesSerializers(serializers.ModelSerializer):
         fields = ['ticker', 'price', 'bot_id', 'amount', 'side',
                   'order_uid', 'status', 'setup', 'created', 'filled_at',
                   'placed', 'placed_at', 'canceled_at', 'qty']
+
+@app.task(bind=True)
+def pending_order_checker(self):
+    Exchange = apps.get_model('universe', 'ExchangeMarket')
+    Order = apps.get_model('orders', 'Order')
+    orders = Order.objects.prefetch_related('ticker').filter(status='pending')
+    if orders.exists():
+        for order in orders:
+            market_db = Exchange.objects.get(mic=order.ticker.mic)
+            if market_db.is_open:
+                payload = {'order_uid': str(order.order_uid)}
+                order_executor.apply_async(args=(payload,),kwargs={'recall':True},task_id=payload["order_uid"])
+    return {'success':'order pending executed'}
+
+
+
+
+
 
 
 @app.task(bind=True)

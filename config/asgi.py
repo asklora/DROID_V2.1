@@ -12,9 +12,9 @@ from django.core.asgi import get_asgi_application
 import django
 debug = os.environ.get('DJANGO_SETTINGS_MODULE',True)
 if debug:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.production')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.production')
 else:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.development')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
     
 django.setup()
 from django.contrib.staticfiles.handlers import ASGIStaticFilesHandler

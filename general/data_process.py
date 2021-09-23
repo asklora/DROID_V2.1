@@ -5,6 +5,8 @@ from pandas.core.series import Series
 from datetime import datetime, date
 from pandas._libs.tslibs.timestamps import Timestamp
 
+
+
 def nonetozero(value):
     if value:
         return value

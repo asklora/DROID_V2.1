@@ -346,7 +346,13 @@ class BaseOrderConnector(AbstracOrderConnector):
 
 
     def calculate_fee(self):
+    # def calculate_fee(self, position_uid):
         user_client = UserClient.objects.get(user_id=self.instance.user_id)
+
+        # position = OrderPosition.objects.get(position_uid=position_uid)
+        # convert = ConvertMoney(position.ticker.currency_code.currency_code, self.user_wallet_currency)
+        # return_amt = convert.convert(return_amt)
+
         if(self.instance.side == "sell"):
             commissions = user_client.client.commissions_sell
             stamp_duty = user_client.stamp_duty_sell
@@ -370,7 +376,7 @@ class BaseOrderConnector(AbstracOrderConnector):
 
     def create_fee(self,  position_uid):
         commissions_fee, stamp_duty_fee, total_fee = self.calculate_fee()
-        
+        # commissions_fee, stamp_duty_fee, total_fee = self.calculate_fee(position_uid)
         if commissions_fee:
             fee = OrderFee.objects.create(
                 order_uid=self.instance,

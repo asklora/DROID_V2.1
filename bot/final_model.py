@@ -13,7 +13,7 @@ from general.sql_query import get_active_universe
 from general.sql_output import upsert_data_to_database
 from general.table_name import get_data_vol_surface_inferred_table_name
 
-from global_vars import random_state, saved_model_path, model_filename, X_columns, Y_columns, time_to_expiry, bots_list
+from global_vars import random_state, saved_model_path, model_filename, X_columns, Y_columns, time_to_expiry, bots_list, max_vol, min_vol
 
 def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, train_model=False, daily=False, history=False):
     cols_temp_1 = X_columns.copy()
@@ -179,10 +179,10 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
         final_inferred = uid_maker(final_inferred, uid="uid", ticker="ticker", trading_day="trading_day")
         final_inferred = final_inferred.infer_objects()
 
-        final_inferred = final_inferred[final_inferred.atm_volatility_one_year > 0.1]
-        final_inferred = final_inferred[final_inferred.atm_volatility_infinity > 0.1]
-        final_inferred = final_inferred[final_inferred.atm_volatility_one_year < 1.25]
-        final_inferred = final_inferred[final_inferred.atm_volatility_infinity < 1.25]
+        final_inferred = final_inferred[final_inferred.atm_volatility_one_year > min_vol * 0.65]
+        final_inferred = final_inferred[final_inferred.atm_volatility_infinity > min_vol * 0.65]
+        final_inferred = final_inferred[final_inferred.atm_volatility_one_year < max_vol * 1.25]
+        final_inferred = final_inferred[final_inferred.atm_volatility_infinity < max_vol * 1.25]
 
         start_date = start_date.strftime("%Y-%m-%d")
         end_date = end_date.strftime("%Y-%m-%d")

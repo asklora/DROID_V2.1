@@ -4,24 +4,6 @@ from config.celery import app
 from datasource.rkd import RkdData
 from core.services.models import ErrorLog
 from celery.schedules import crontab
-from config.settings import db_debug
-
-if not db_debug:
-    app.conf.beat_schedule={
-        
-        
-        "WS-TRKD-DATA": {
-            "task": "core.services.ingestionstask.get_trkd_data_by_region",
-            "schedule": crontab(minute=30, hour=00, day_of_week="1-5"),
-            "kwargs": {"region": "ws"},
-        },
-        "NA-TRKD-DATA": {
-            "task": "core.services.ingestionstask.get_trkd_data_by_region",
-            "schedule": crontab(minute=30, hour=16, day_of_week="1-5"),
-            "kwargs": {"region": "na"},
-        },
-
-    }
 
 @app.task
 def get_trkd_data_by_region(region=None):
