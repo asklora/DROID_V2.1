@@ -6,16 +6,17 @@ import pytest
 from core.master.models import MasterOhlcvtr
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.models import Accountbalance, TransactionHistory
-from portfolio import (
-    classic_position_check,
-    ucdc_position_check,
-    uno_position_check)
+from portfolio import classic_position_check, ucdc_position_check, uno_position_check
 
 from utils import create_buy_order
 
-pytestmark = pytest.mark.django_db(databases=["default",
-                                              "aurora_read",
-                                              "aurora_write"])
+pytestmark = pytest.mark.django_db(
+    databases=[
+        "default",
+        "aurora_read",
+        "aurora_write",
+    ]
+)
 
 
 def test_should_create_hedge_order_for_classic_bot(user) -> None:
