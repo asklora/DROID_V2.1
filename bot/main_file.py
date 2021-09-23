@@ -182,7 +182,7 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     etf_df = etf_df[Y_columns_temp]
     etf_df.rename(columns={"slope": "slope_x", "atm_volatility_spot": "atm_volatility_spot_x",
                            "atm_volatility_one_year": "atm_volatility_one_year_x",
-                           "atm_volatility_infinity": "atm_volatility_infinity_x", "ticker": "etf",
+                           "atm_volatility_infinity": "atm_volatility_infinity_x", "ticker": "etf_ticker",
                            "total_returns_0_63": "total_returns_0_63_x", "total_returns_21_126": "total_returns_21_126_x",
                            "total_returns_0_21": "total_returns_0_21_x",
                            "total_returns_21_231": "total_returns_21_231_x", "c2c_vol_0_21": "c2c_vol_0_21_x",
