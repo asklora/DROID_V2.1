@@ -1,5 +1,7 @@
 ## Commands don't delete
 
+- set `testbuild` as commit message to trigger aws test
+
 ### docker login
 
 - aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 736885973837.dkr.ecr.ap-northeast-2.amazonaws.com
