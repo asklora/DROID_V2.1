@@ -1,8 +1,12 @@
 from django.core.management.base import BaseCommand
 from core.user.models import User, Accountbalance
 from core.Clients.models import UserClient, Client
-
-
+import uuid
+def create_unique_username(email):
+        strip = email.replace('@', '_').replace(
+            '.com', '').replace('.', '_')
+        unique_usr = "%s%s" % (uuid.uuid4().hex[:8], strip)
+        return unique_usr
 class Command(BaseCommand):
     def add_arguments(self, parser):
 
@@ -23,7 +27,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options['type']:
-            types = ["type"].upper()
+            types = options["type"].upper()
             if types == "null" or types == "NULL":
                 types = None
         else:
@@ -44,7 +48,7 @@ class Command(BaseCommand):
             email=options["email"],
             current_status="approved",
             is_active=True,
-            is_staff=is_staff
+            is_staff=is_staff,username=create_unique_username(options["email"])
         )
         user.set_password(options["password"])
         user.save()
