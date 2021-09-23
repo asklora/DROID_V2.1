@@ -202,7 +202,7 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     # main_df = main_df.merge(temp, on=["ticker"], how="left")
 
     main_df = uid_maker(main_df, uid="uid", ticker="ticker", trading_day="trading_day")
-
+    print(main_df)
     table_name = get_bot_data_table_name()
     if(daily):
         upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=True, Text=True)
