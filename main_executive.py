@@ -158,8 +158,12 @@ def data_prep_daily(ticker=None, currency_code=None):
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
-
-    populate_bot_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, daily=True)
+    ticker = get_active_universe(currency_code=currency_code)["ticker"].tolist()
+    currency_code_to_etf = get_ticker_etf(currency_code=currency_code, active=True)
+    universe_df = get_active_universe(ticker=currency_code_to_etf["etf_ticker"].to_list())
+    universe_df = universe_df.loc[~universe_df["ticker"].isin(ticker)]
+    ticker.extend(universe_df["ticker"].to_list())
+    populate_bot_data(start_date=start_date, end_date=end_date, ticker=ticker, daily=True)
     report = "DATA PREPERATION DAILY COMPLETED"
     report_check(report, ticker=ticker, currency_code=currency_code)
 
@@ -174,6 +178,10 @@ def data_prep_check_new_ticker(ticker=None, currency_code=None):
     date_identifier = "trading_day"
     new_ticker = get_new_tickers_from_bot_data(start_date, start_date2, date_identifier, ticker=ticker, currency_code=currency_code)["ticker"].to_list()
     if (len(new_ticker) > 0):
+        currency_code_to_etf = get_ticker_etf(ticker=new_ticker, active=True)
+        universe_df = get_active_universe(ticker=currency_code_to_etf["etf_ticker"].to_list())
+        universe_df = universe_df.loc[~universe_df["ticker"].isin(new_ticker)]
+        new_ticker.extend(universe_df["ticker"].to_list())
         print(f"Found {len(new_ticker)} New Ticker {tuple(new_ticker)}")
         populate_bot_data(start_date=start_date2, end_date=end_date, ticker=new_ticker, new_ticker=True)
         report = "DATA PREPERATION CHECK NEW TICKER COMPLETED"
