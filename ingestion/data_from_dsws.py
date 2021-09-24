@@ -1462,3 +1462,19 @@ def update_mic_from_dsws(ticker=None, currency_code=None):
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), "ticker", how="update", Text=True)
         report_to_slack("{} : === MIC Updated ===".format(datetimeNow()))
+
+def update_ibes_currency_from_dsws(ticker=None, currency_code=None):
+    print("{} : === IBES Currency Start Ingestion ===".format(datetimeNow()))
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    universe = universe.drop(columns=["ibes_currency"])
+    filter_field = ["IBCUR"]
+    identifier="ticker"
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
+    result = result.rename(columns={"IBCUR": "ibes_currency", "index":"ticker"})
+    result = remove_null(result, "ibes_currency")
+    print(result)
+    if(len(result)) > 0 :
+        result = universe.merge(result, how="left", on=["ticker"])
+        print(result)
+        upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+        report_to_slack("{} : === IBES Currency Updated ===".format(datetimeNow()))
