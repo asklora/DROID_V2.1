@@ -314,5 +314,5 @@ firebase_admin.initialize_app(
         "databaseURL": "https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/"
     },
 )
-
+# additional logger
 DRF_API_LOGGER_DATABASE = True
