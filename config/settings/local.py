@@ -5,6 +5,7 @@ This Django configuration file in used in the local development environment for 
 You can use this configuration file by running:
 `python manage.py runserver --settings=config.local`
 """
+
 SQLPRINT=True
 CHANNEL_LAYERS = {
     "default": {
