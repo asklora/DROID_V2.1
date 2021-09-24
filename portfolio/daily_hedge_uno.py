@@ -230,7 +230,7 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
     status_expiry = high > position.target_profit_price or trading_day >= expiry
 
     if(status_expiry):
-        position, order = uno_sell_position(live_price, trading_day, position.position_uid,apps=apps)
+        position, order = uno_sell_position(live_price, trading_day, position,apps=apps)
         return True, order.order_uid
     else:
         performance, position, status, hedge_shares = populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=False)
