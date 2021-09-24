@@ -712,13 +712,15 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # scale ai_score with history min / max
     print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
     fundamentals[["ai_score_unscaled", "ai_score2_unscaled"]] = fundamentals[["ai_score", "ai_score2"]]
-    try:
-        score_history = get_ai_score_testing_history(backyear=1)
-        m1 = MinMaxScaler(feature_range=(0, 10)).fit(score_history[["ai_score_unscaled", "ai_score2_unscaled"]])
-    except Exception as e:
-        print(e)
-        m1 = MinMaxScaler(feature_range=(0, 10)).fit(fundamentals[["ai_score", "ai_score2"]])
-    fundamentals[["ai_score", "ai_score2"]] = m1.transform(fundamentals[["ai_score", "ai_score2"]])
+    score_history = get_ai_score_testing_history(backyear=1)
+    for cur, g in fundamentals.groupby(['currency_code']):
+        try:
+            score_history_cur = score_history.loc[score_history['currency_code']==cur]
+            m1 = MinMaxScaler(feature_range=(0, 10)).fit(score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]])
+            fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = m1.transform(g[["ai_score", "ai_score2"]])
+        except Exception as e:
+            print(e)
+            fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = MinMaxScaler(feature_range=(0, 10)).fit_transform(g[["ai_score", "ai_score2"]])
 
     print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
 
