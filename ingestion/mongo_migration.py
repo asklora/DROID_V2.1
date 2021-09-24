@@ -1,6 +1,6 @@
 from core.djangomodule.general import formatdigit
 from django.conf import settings
-from general.data_process import NoneToZero
+from general.data_process import NoneToZero, dateNow
 from bot.data_download import get_currency_data
 import random
 from datetime import datetime, date
@@ -36,15 +36,7 @@ from general.sql_query import (
 import asyncio
 from asgiref.sync import sync_to_async
 from typing import List
-
-
-
-def NonetoZero(value):
-    return value
-    if value is None or value == np.nan:
-        return 0
-    else:
-        return value
+from general.slack import report_to_slack_factor
 
 # def factor_column_name():
 #     return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry",
@@ -160,7 +152,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     detail_df = pd.DataFrame({"ticker":[], "detail":[]}, index=[])
     for tick in universe["ticker"].unique():
         detail_data = result.loc[result["ticker"] == tick]
-        detail_data = detail_data[["currency_code", "ticker_name", "ticker_fullname", "company_description", 
+        detail_data = detail_data[["currency_code", "ticker_name", "ticker_fullname", "company_description",
             "industry_code", "industry_name", "industry_group_code", "industry_group_name", "ticker_symbol", "lot_size", "mic", "country"]].to_dict("records")
         details = pd.DataFrame({"ticker":[tick], "detail":[detail_data[0]]}, index=[0])
         detail_df = detail_df.append(details)
@@ -265,6 +257,15 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.drop(columns=["index", "ai_score", "ai_score2"])
     universe = universe.reset_index(inplace=False, drop=True)
     # print(universe)
+
+    # 3/4 testing: What tickers has no postive/negative tickers?
+    for cur in factor_use.keys():
+        curr_ticker = result.loc[result['currency_code'] == cur, 'ticker'].to_list()
+        df_cur = universe_rating.loc[universe_rating['ticker'].isin(list(curr_ticker))]
+        for i in ['positive_factor', 'negative_factor']:
+            df = df_cur.loc[df_cur[i].astype(str) == '[]']
+            report_to_slack_factor("*{} : === [{}] without {}: {}/{} ===*".format(dateNow(), cur, i, len(df), len(df_cur)))
+            report_to_slack_factor('```'+', '.join(["{0:<10}: {1:<5}".format(x,y) for x, y in df[['ticker', 'ai_score']].values])+'```')
 
     # 5. bot ranking & statistics
     ranking = result[["ticker"]]
@@ -458,8 +459,11 @@ def firebase_user_update(user_id=None, currency_code=None):
         # print(user_core)
         # import sys
         # sys.exit(1)
-        orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin, entry_price, investment_amount, user_id"
+        orders_position_field = "position_uid, bot_id, ticker, expiry, spot_date, bot_cash_balance, margin"
+        orders_position_field += ", entry_price, investment_amount, user_id"
+        orders_position_field += ", target_profit_price, max_loss_price"
         position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
+        position_data = position_data.rename(columns={"target_profit_price" : "take_profit", "max_loss_price" : "stop_loss"})
         # print(position_data)
         position_data["expiry"]=position_data["expiry"].astype(str)
         if(len(position_data) > 0):
@@ -472,7 +476,7 @@ def firebase_user_update(user_id=None, currency_code=None):
             position_data["trading_day"] = np.where(position_data["trading_day"].isnull(), position_data["spot_date"], position_data["trading_day"])
             position_data = position_data.merge(universe, how="left", on=["ticker"])
 
-            orders_performance_field = "distinct created, position_uid, share_num, order_uid"
+            orders_performance_field = "distinct created, position_uid, share_num, order_uid, barrier"
             performance_data = get_orders_position_performance(position_uid=position_data["position_uid"].to_list(), field=orders_performance_field, latest=True)
             performance_data["created"] = performance_data["created"].dt.date
             performance_data = performance_data.drop_duplicates(subset=["created", "position_uid"], keep="first")

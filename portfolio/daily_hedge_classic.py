@@ -11,10 +11,13 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 from django.conf import settings
+from typing import Optional,Union,Tuple
 
 
-def classic_sell_position(live_price, trading_day, position_uid, apps=False):
-    position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
+def classic_sell_position(live_price:float, trading_day:str, 
+                            position:OrderPosition, apps:bool=False) -> Tuple[OrderPosition,Optional[Union[Order,None]]]:
+
+                            
     bot = position.bot
     latest = LatestPrice.objects.get(ticker=position.ticker)
     high = latest.high

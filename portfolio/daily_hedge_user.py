@@ -11,9 +11,12 @@ from core.djangomodule.serializers import OrderPositionSerializer
 from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
+from typing import Optional,Union,Tuple
 
-def user_sell_position(live_price, trading_day, position_uid, apps=False):
-    position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
+def user_sell_position(  live_price:float, trading_day:str, 
+                        position:OrderPosition, apps:bool=False) -> Tuple[OrderPosition,Optional[Union[Order,None]]]:
+
+                        
     log_time = pd.Timestamp(trading_day)
     if log_time.date() == datetime.now().date():
         log_time = datetime.now()

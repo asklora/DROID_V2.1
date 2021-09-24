@@ -19,4 +19,12 @@ def report_to_slack(message, channel=SLACK_CHANNEL):
                 text=message)
     except Exception as e:
         print(e)
-    
+
+def report_to_slack_factor(message):
+    try:
+        client = slack.WebClient(token=SLACK_API, timeout=30)
+        client.chat_postMessage(
+            channel="#factor_message",
+            text=message)
+    except Exception as e:
+        print(e)

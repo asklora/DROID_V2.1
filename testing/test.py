@@ -1,4 +1,6 @@
 
+from datasource.dsws import get_data_static_from_dsws
+from general.sql_query import get_active_universe
 from ingestion.data_from_dsws import update_currency_code_from_dsws, update_lot_size_from_dsws, update_mic_from_dsws
 from general.date_process import datetimeNow
 from ingestion.mongo_migration import firebase_user_update
@@ -36,9 +38,16 @@ def split_ticker():
     ticker17 = ticker[400:]
 
 if __name__ == "__main__":
-    user_id = [108, 109, 110]
+    # user_id = [108, 109, 110]
     # currency_code = ["KRW"]
-    contoh = datetimeNow()
-    firebase_user_update(user_id=[119])
+    # contoh = datetimeNow()
+    # firebase_user_update(user_id=[119])
     # ticker = ["1179.HK", "9868.HK"]
     # update_currency_code_from_dsws(ticker = ticker)
+    ticker = ["0700.HK"]
+    universe = get_active_universe(ticker=ticker)
+    filter_field = ["IBCUR"]
+    identifier="ticker"
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
+    print(result)
+    print(error_ticker)
