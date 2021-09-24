@@ -263,6 +263,9 @@ class UniverseRating(models.Model):
     updated = models.DateField(blank=True, null=True)
     ai_score = models.FloatField(blank=True, null=True)
     ai_score2 = models.FloatField(blank=True, null=True)
+    fundamentals_momentum = models.FloatField(blank=True, null=True)
+    fundamentals_extra = models.FloatField(blank=True, null=True)
+    esg = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return str(self.ticker.ticker)
@@ -289,7 +292,10 @@ class UniverseRatingHistory(models.Model):
     classic_vol = models.FloatField(blank=True, null=True)
     recsell = models.FloatField(blank=True, null=True)
     recbuy = models.FloatField(blank=True, null=True)
-
+    fundamentals_momentum = models.FloatField(blank=True, null=True)
+    fundamentals_extra = models.FloatField(blank=True, null=True)
+    ai_score_unscaled = models.FloatField(blank=True, null=True)
+    ai_score2_unscaled = models.FloatField(blank=True, null=True)
     def __str__(self):
         return str(self.ticker.ticker)
 
@@ -336,6 +342,30 @@ class UniverseRatingDetailHistory(models.Model):
     social_minmax_industry = models.FloatField(blank=True, null=True)
     goverment_minmax_industry = models.FloatField(blank=True, null=True)
     tri_quantile = models.FloatField(blank=True, null=True)
+    assets_1yr_minmax_currency_code = models.FloatField(blank=True, null=True)
+    cash_ratio_minmax_currency_code = models.FloatField(blank=True, null=True)
+    gross_margin_minmax_currency_code = models.FloatField(blank=True, null=True)
+    inv_turnover_minmax_currency_code = models.FloatField(blank=True, null=True)
+    market_cap_usd_minmax_currency_code = models.FloatField(blank=True, null=True)
+    revenue_pred_minmax_currency_code = models.FloatField(blank=True, null=True)
+    stock_return_r12_7_minmax_currency_code = models.FloatField(blank=True, null=True)
+    stock_return_r1_0_minmax_currency_code = models.FloatField(blank=True, null=True)
+    stock_return_r6_2_minmax_currency_code = models.FloatField(blank=True, null=True)
+    tax_less_pension_to_accu_depre_minmax_currency_code = models.FloatField(blank=True, null=True)
+    vol_0_30_minmax_currency_code = models.FloatField(blank=True, null=True)
+    volume_minmax_currency_code = models.FloatField(blank=True, null=True)
+    assets_1yr_minmax_industry = models.FloatField(blank=True, null=True)
+    cash_ratio_minmax_industry = models.FloatField(blank=True, null=True)
+    gross_margin_minmax_industry = models.FloatField(blank=True, null=True)
+    inv_turnover_minmax_industry = models.FloatField(blank=True, null=True)
+    market_cap_usd_minmax_industry = models.FloatField(blank=True, null=True)
+    revenue_pred_minmax_industry = models.FloatField(blank=True, null=True)
+    stock_return_r12_7_minmax_industry = models.FloatField(blank=True, null=True)
+    stock_return_r1_0_minmax_industry = models.FloatField(blank=True, null=True)
+    stock_return_r6_2_minmax_industry = models.FloatField(blank=True, null=True)
+    tax_less_pension_to_accu_depre_minmax_industry = models.FloatField(blank=True, null=True)
+    vol_0_30_minmax_industry = models.FloatField(blank=True, null=True)
+    volume_minmax_industry = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return str(self.ticker.ticker)
