@@ -287,9 +287,13 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
         err = ErrorLog.objects.create_log(
             error_description=f"{position_uid} not exist", error_message=str(e))
         err.send_report_error()
-        return {"err": f"{position.ticker.ticker} - {position_uid}"}
+        if settings.TESTDEBUG:
+            raise Exception('Hedge error position not found')
+        return {"err": f"{position.ticker.ticker}"}
     except Exception as e:
         err = ErrorLog.objects.create_log(
             error_description=f"error in Position {position_uid}", error_message=str(e))
         err.send_report_error()
-        return {"err": f"{position.ticker.ticker} - {position_uid}"}
+        if settings.TESTDEBUG:
+            raise Exception('Hedge error',str(e))
+        return {"err": f"{position.ticker.ticker}"}

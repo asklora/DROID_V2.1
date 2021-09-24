@@ -12,6 +12,7 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 from typing import Optional,Union,Tuple
+from django.conf import settings
 
 def user_sell_position(  live_price:float, trading_day:str, 
                         position:OrderPosition, apps:bool=False) -> Tuple[OrderPosition,Optional[Union[Order,None]]]:
@@ -196,10 +197,16 @@ def user_position_check(position_uid, to_date=None, tac=False, hedge=False, late
         print("transaction committed")
         return True
     except OrderPosition.DoesNotExist as e:
-        err = ErrorLog.objects.create_log(error_description=f"{position_uid} not exist",error_message=str(e))
+        err = ErrorLog.objects.create_log(
+            error_description=f"{position_uid} not exist", error_message=str(e))
         err.send_report_error()
-        return {"err":f"{position.ticker.ticker}"}
+        if settings.TESTDEBUG:
+            raise Exception('Hedge error position not found')
+        return {"err": f"{position.ticker.ticker}"}
     except Exception as e:
-        err = ErrorLog.objects.create_log(error_description=f"error in Position {position_uid}",error_message=str(e))
+        err = ErrorLog.objects.create_log(
+            error_description=f"error in Position {position_uid}", error_message=str(e))
         err.send_report_error()
-        return {"err":f"{position.ticker.ticker}"}
+        if settings.TESTDEBUG:
+            raise Exception('Hedge error',str(e))
+        return {"err": f"{position.ticker.ticker}"}

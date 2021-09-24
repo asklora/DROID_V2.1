@@ -359,10 +359,13 @@ def ucdc_position_check(position_uid:str, to_date:str=None, tac:bool=False, hedg
         err = ErrorLog.objects.create_log(
             error_description=f"{position_uid} not exist", error_message=str(e))
         err.send_report_error()
+        if settings.TESTDEBUG:
+            raise Exception('Hedge error position not found')
         return {"err": f"{position.ticker.ticker}"}
     except Exception as e:
         err = ErrorLog.objects.create_log(
             error_description=f"error in Position {position_uid}", error_message=str(e))
         err.send_report_error()
-        
+        if settings.TESTDEBUG:
+            raise Exception('Hedge error',str(e))
         return {"err": f"{position.ticker.ticker}"}
