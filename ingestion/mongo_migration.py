@@ -1,6 +1,6 @@
 from core.djangomodule.general import formatdigit
 from django.conf import settings
-from general.data_process import NoneToZero
+from general.data_process import NoneToZero, dateNow
 from bot.data_download import get_currency_data
 import random
 from datetime import datetime, date
@@ -36,7 +36,7 @@ from general.sql_query import (
 import asyncio
 from asgiref.sync import sync_to_async
 from typing import List
-
+from general.slack import report_to_slack_factor
 
 
 def NonetoZero(value):
@@ -160,7 +160,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     detail_df = pd.DataFrame({"ticker":[], "detail":[]}, index=[])
     for tick in universe["ticker"].unique():
         detail_data = result.loc[result["ticker"] == tick]
-        detail_data = detail_data[["currency_code", "ticker_name", "ticker_fullname", "company_description", 
+        detail_data = detail_data[["currency_code", "ticker_name", "ticker_fullname", "company_description",
             "industry_code", "industry_name", "industry_group_code", "industry_group_name", "ticker_symbol", "lot_size", "mic", "country"]].to_dict("records")
         details = pd.DataFrame({"ticker":[tick], "detail":[detail_data[0]]}, index=[0])
         detail_df = detail_df.append(details)
@@ -265,6 +265,15 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.drop(columns=["index", "ai_score", "ai_score2"])
     universe = universe.reset_index(inplace=False, drop=True)
     # print(universe)
+
+    # 3/4 testing: What tickers has no postive/negative tickers?
+    for cur in factor_use.keys():
+        curr_ticker = result.loc[result['currency_code'] == cur, 'ticker'].to_list()
+        df_cur = universe_rating.loc[universe_rating['ticker'].isin(list(curr_ticker))]
+        for i in ['positive_factor', 'negative_factor']:
+            df = df_cur.loc[df_cur[i].astype(str) == '[]']
+            report_to_slack_factor("*{} : === [{}] without {}: {}/{} ===*".format(dateNow(), cur, i, len(df), len(df_cur)))
+            report_to_slack_factor('```'+', '.join(["{0:<10}: {1:<5}".format(x,y) for x, y in df[['ticker', 'ai_score']].values])+'```')
 
     # 5. bot ranking & statistics
     ranking = result[["ticker"]]
