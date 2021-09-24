@@ -75,6 +75,7 @@ ADDITIONAL_APPS = [
     'channels_presence',
     'django_redis',
     'simple_history',
+    'drf_api_logger',
 ]
 CORE_APPS = [
     "core.bot",
@@ -95,7 +96,6 @@ INSTALLED_APPS = DJANGO_DEFAULT_APPS + ADDITIONAL_APPS + CORE_APPS
 Django middleware settings
 """
 MIDDLEWARE = [
-    "config.middleware.HealthCheck.HealthCheckMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -104,6 +104,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    # custom midleware
+    "config.middleware.HealthCheck.HealthCheckMiddleware",
+    # additional
+    'drf_api_logger.middleware.api_logger_middleware.APILoggerMiddleware',
 ]
 
 
@@ -147,6 +151,9 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "config.jwt_auth_module.AuthJwt",
     ),
+    'DEFAULT_THROTTLE_RATES': {
+        'order': '10/min',
+    }
 }
 
 ELASTICSEARCH_DSL = {"default": {"hosts": "localhost:9200"}}
@@ -307,3 +314,5 @@ firebase_admin.initialize_app(
         "databaseURL": "https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/"
     },
 )
+
+DRF_API_LOGGER_DATABASE = True

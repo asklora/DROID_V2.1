@@ -44,6 +44,7 @@ djangorestframework-simplejwt==4.7.0
 dnspython==1.16.0
 docutils==0.15.2
 drf-spectacular==0.16.0
+drf-api-logger==1.0.8
 enforce==0.3.4
 environs==9.2.0
 et-xmlfile==1.0.1
