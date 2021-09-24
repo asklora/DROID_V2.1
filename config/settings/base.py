@@ -75,6 +75,7 @@ ADDITIONAL_APPS = [
     'channels_presence',
     'django_redis',
     'simple_history',
+    # docs https://github.com/vishalanandl177/DRF-API-Logger
     'drf_api_logger',
 ]
 CORE_APPS = [
