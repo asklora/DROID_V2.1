@@ -294,6 +294,8 @@ class UniverseRatingHistory(models.Model):
     recbuy = models.FloatField(blank=True, null=True)
     fundamentals_momentum = models.FloatField(blank=True, null=True)
     fundamentals_extra = models.FloatField(blank=True, null=True)
+    ai_score_unscaled = models.FloatField(blank=True, null=True)
+    ai_score2_unscaled = models.FloatField(blank=True, null=True)
     def __str__(self):
         return str(self.ticker.ticker)
 
