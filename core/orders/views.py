@@ -311,7 +311,7 @@ class OrderActionViews(views.APIView):
     """
     Order actions
     """
-    throttle_classes = OrderThrottle
+    throttle_classes = [OrderThrottle]
     serializer_class = OrderActionSerializer
     permission_classes = (IsRegisteredUser,)
 
