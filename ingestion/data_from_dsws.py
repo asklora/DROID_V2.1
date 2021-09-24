@@ -697,7 +697,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("Calculate ESG Value")
     esg_cols = ["environment_minmax_currency_code", "environment_minmax_industry", "social_minmax_currency_code",
                 "social_minmax_industry", "goverment_minmax_currency_code", "goverment_minmax_industry"]
-    fundamentals["esg"] = fundamentals[esg_cols].mean(1)*10
+    fundamentals["esg"] = fundamentals[esg_cols].mean(1)
 
     print("Calculate AI Score")
     ai_score_cols = ["fundamentals_value","fundamentals_quality","fundamentals_momentum","fundamentals_extra"]
@@ -710,22 +710,17 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print(fundamentals[["fundamentals_value","fundamentals_quality","fundamentals_momentum","fundamentals_extra",'esg']].describe())
 
     # scale ai_score with history min / max
-    score_history = get_ai_score_testing_history(backyear=1)
+    print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
+    fundamentals[["ai_score_unscaled", "ai_score2_unscaled"]] = fundamentals[["ai_score", "ai_score2"]]
+    try:
+        score_history = get_ai_score_testing_history(backyear=1)
+        m1 = MinMaxScaler(feature_range=(0, 10)).fit(score_history[["ai_score_unscaled", "ai_score2_unscaled"]])
+    except Exception as e:
+        print(e)
+        m1 = MinMaxScaler(feature_range=(0, 10)).fit(fundamentals[["ai_score", "ai_score2"]])
+    fundamentals[["ai_score", "ai_score2"]] = m1.transform(fundamentals[["ai_score", "ai_score2"]])
 
-    print(fundamentals[["ai_score", "ai_score2"]].describe())
-    for name, g in fundamentals.groupby(['dummy']):
-        score_history_group = score_history#.loc[(score_history['currency_code'] == name)]
-        group_history1 = score_history_group.loc[score_history_group['ai_score']>score_history_group['ai_score'].median(), ['ai_score','ai_score']].values
-        group_history2 = score_history_group.loc[score_history_group['ai_score']<=score_history_group['ai_score'].median(), ['ai_score','ai_score']].values
-        score_current1 = g.loc[(g['ai_score']>g['ai_score'].median()), ["ai_score", "ai_score"]]
-        score_current2 = g.loc[(g['ai_score']<=g['ai_score'].median()), ["ai_score", "ai_score"]]
-        m1 = MinMaxScaler(feature_range=(5, 10)).fit(group_history1)
-        m2 = MinMaxScaler(feature_range=(0, 5)).fit(group_history2)
-        # m3 = MinMaxScaler(feature_range=(5, 10)).fit(score_current1)
-        # m4 = MinMaxScaler(feature_range=(0, 5)).fit(score_current2)
-        fundamentals.loc[score_current1.index, ["ai_score", "ai_score2"]] = m1.transform(score_current1)
-        fundamentals.loc[score_current2.index, ["ai_score", "ai_score2"]] = m2.transform(score_current2)
-        print(fundamentals[["ai_score","ai_score2"]].describe())
+    print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
 
     fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].clip(0, 10)
     fundamentals[['ai_score','ai_score2',"esg"]] = fundamentals[['ai_score','ai_score2',"esg"]].round(1)
@@ -735,7 +730,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
                                             "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
-                                            "dlp_3m", "wts_rating2", "classic_vol", "fundamentals_extra"]]
+                                            "dlp_3m", "wts_rating2", "classic_vol", "fundamentals_extra",
+                                            "ai_score_unscaled", "ai_score2_unscaled"]]
 
     universe_rating_detail_history = fundamentals[minmax_column]
 
