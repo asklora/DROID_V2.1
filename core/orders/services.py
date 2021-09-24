@@ -7,8 +7,8 @@ from portfolio import (
     uno_sell_position,
     user_sell_position
     )
-from typing import Union
-
+from typing import Union,Optional,Tuple
+from datetime import datetime
 
 class OrderPositionValidation:
     def __init__(self,ticker:str,bot_id:Union[str,list],user_id:Union[str,int]):
@@ -79,17 +79,17 @@ class OrderPositionValidation:
 
 
 
-def sell_position_service(price, trading_day, position_uid):
-    position  = OrderPosition.objects.get(position_uid=position_uid)
+def sell_position_service(price:float, trading_day:datetime, position_uid:str)->Tuple[OrderPosition,Optional[Union[Order,None]]]:
+    position  = OrderPosition.objects.select_related('ticker').get(position_uid=position_uid)
     bot = position.bot
     if bot.is_ucdc():
-       positions, order= ucdc_sell_position(price, trading_day, position_uid,apps=True)
+       positions, order= ucdc_sell_position(price, trading_day, position,apps=True)
     elif bot.is_uno():
-        positions, order=uno_sell_position(price, trading_day, position_uid,apps=True)
+        positions, order=uno_sell_position(price, trading_day, position,apps=True)
     elif bot.is_classic():
-        positions, order=classic_sell_position(price, trading_day, position_uid,apps=True)
+        positions, order=classic_sell_position(price, trading_day, position,apps=True)
     elif bot.is_stock():
-        positions, order=user_sell_position(price, trading_day, position_uid, apps=True)
+        positions, order=user_sell_position(price, trading_day, position, apps=True)
     return positions, order
 
 

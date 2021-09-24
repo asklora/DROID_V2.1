@@ -23,8 +23,8 @@ def test_usd_market() -> None:
     # We turn them into list of tickers
     tickers_list = [str(elem) for elem in list(usd_tickers)]
 
-    # We pick 5 random tickers
-    tickers = random.sample(tickers_list, 5)
+    # We pick 6 random tickers
+    tickers = random.sample(tickers_list, 6)
 
     # We initiate the rkd datasource class
     rkd = RkdData()

@@ -2,8 +2,8 @@ version: 0.2
 phases:
   install:
     commands:
-      - echo "installing test dependencies"
-      - pip install -r installer/requirements_test.txt
+      - echo "skip installing dependencies"
+      # - pip install -r installer/requirements_test.txt
   pre_build:
     on-failure: ABORT
     commands:

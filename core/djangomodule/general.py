@@ -14,6 +14,7 @@ from redis.exceptions import ConnectionError
 import logging
 import pandas as pd
 import pprint
+from rest_framework.throttling import UserRateThrottle
 
 logging.basicConfig(format="%(asctime)s - %(message)s",
                     datefmt="%d-%b-%y %H:%M:%S")
@@ -28,6 +29,53 @@ class NeedRegister(APIException):
     default_code = 'credentials_error'
 
 
+
+class OrderThrottle(UserRateThrottle):
+    scope = 'order'
+
+    def parse_rate(self, rate):
+        """
+        Given the request rate string, return a two tuple of:
+        <allowed number of requests>, <period of time in seconds>
+
+        So we always return a rate for 1 request per 6 second. to prevent burst order
+
+        Args:
+            string: rate to be parsed, which we ignore.
+
+        Returns:
+            tuple:  <allowed number of requests>, <period of time in seconds>
+        """
+        return (1, 6)
+
+    def allow_request(self, request, view):
+        """
+        Implement the check to see if the request should be throttled.
+
+        On success calls `throttle_success`.
+        On failure calls `throttle_failure`.
+        """
+        if self.rate is None:
+            return True
+
+        self.key = self.get_cache_key(request, view)
+        if self.key is None:
+            return True
+
+        self.history = self.cache.get(self.key, [])
+        self.now = self.timer()
+
+        # Drop any requests from the history which have now passed the
+        # throttle duration
+        print(self.num_requests)
+
+        while self.history and self.history[-1] <= self.now - self.duration:
+            self.history.pop()
+        if len(self.history) >= self.num_requests:
+            return self.throttle_failure()
+        return self.throttle_success()
+
+    
 class IsRegisteredUser(permissions.BasePermission):
     message = 'User is not Registered or has permission'
 
