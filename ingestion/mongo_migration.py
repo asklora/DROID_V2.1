@@ -38,14 +38,6 @@ from asgiref.sync import sync_to_async
 from typing import List
 from general.slack import report_to_slack_factor
 
-
-def NonetoZero(value):
-    return value
-    if value is None or value == np.nan:
-        return 0
-    else:
-        return value
-
 # def factor_column_name():
 #     return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry",
 #         "book_to_price_minmax_currency_code", "book_to_price_minmax_industry",

@@ -314,7 +314,7 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
     print("{} : === Fundamentals Score Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
     start_date = backdate_by_month(12)
-    start_date2 = backdate_by_month(24)
+    start_date2 = backdate_by_month(24) 
     identifier = "ticker"
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
     print(universe)
