@@ -51,6 +51,7 @@ from general.table_name import (
     get_factor_calculation_table_name,
     get_factor_rank_table_name,
     get_ai_score_history_testing_table_name,
+    get_factor_current_use_table_name
 )
 
 
@@ -200,11 +201,13 @@ def get_all_universe(ticker=None, currency_code=None, active=True):
     data = read_query(query, table=get_universe_table_name())
     return data
 
-def get_ticker_etf(active=True):
+def get_ticker_etf(ticker=None, currency_code=None, active=True):
     table_name = get_currency_table_name()
-    query = f"select currency_code, etf_ticker from {table_name} "
-    if(active):
-        query += f"where is_active=True "
+    query = f"select currency_code, etf_ticker from {table_name} where is_active={active} "
+    if(type(currency_code) != type(None)):
+        query += f"and currency_code in {tuple_data(currency_code)} "
+    elif(type(ticker) != type(None)):
+        query += f"and currency_code in (select distinct currency_code from universe where ticker in {tuple_data(ticker)}) "
     data = read_query(query, table=table_name)
     return data
 
@@ -431,6 +434,11 @@ def get_specific_volume_avg(trading_day, avg_days=7, volume_name="volume"):
 def get_factor_calculation_formula():
     query = f"SELECT * FROM {get_factor_calculation_table_name()}"
     data = read_query(query, table=get_factor_calculation_table_name(), alibaba=True)
+    return data
+
+def get_factor_current_used():
+    query = f"SELECT * FROM {get_factor_current_use_table_name()}"
+    data = read_query(query, table=get_factor_current_use_table_name(), alibaba=True)
     return data
 
 def get_factor_rank():

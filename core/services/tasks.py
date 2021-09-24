@@ -1,4 +1,5 @@
 # PYTHON TOOLS
+from ingestion.data_from_dsws import update_ibes_currency_from_dsws
 import time as tm
 import pandas as pd
 import io
@@ -293,6 +294,7 @@ def new_ticker_ingestion(ticker):
     update_entity_type_from_dsws(ticker=ticker)
     update_lot_size_from_dsws(ticker=ticker)
     update_currency_code_from_dsws(ticker=ticker)
+    update_ibes_currency_from_dsws(ticker=ticker)
     update_industry_from_dsws(ticker=ticker)
     update_company_desc_from_dsws(ticker=ticker)
     update_mic_from_dsws(ticker=ticker)

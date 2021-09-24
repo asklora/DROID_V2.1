@@ -40,12 +40,12 @@ CACHES = {
 print("using test db changes local")
 read_endpoint, write_endpoint, port = db.test_url
 CELERY_BROKER_URL = "amqp://rabbitmq:rabbitmq@16.162.110.123:5672"
-CELERY_TASK_DEFAULT_QUEUE ='localdev'
-HEDGE_WORKER_DEFAULT_QUEUE ='localdev'
-BROADCAST_WORKER_DEFAULT_QUEUE='localdev'
-PORTFOLIO_WORKER_DEFAULT_QUEUE='localdev'
-UTILS_WORKER_DEFAULT_QUEUE='localdev'
-
+CELERY_TASK_DEFAULT_QUEUE ='droid_dev'
+HEDGE_WORKER_DEFAULT_QUEUE ='droid_dev'
+BROADCAST_WORKER_DEFAULT_QUEUE='droid_dev'
+PORTFOLIO_WORKER_DEFAULT_QUEUE='droid_dev'
+UTILS_WORKER_DEFAULT_QUEUE='droid_dev'
+ASKLORA_QUEUE="asklora-dev"
 print(f'using read: {read_endpoint}')
 # print(f'using write: {write_endpoint}')
 # DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']

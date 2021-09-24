@@ -41,6 +41,8 @@ HEDGE_WORKER_DEFAULT_QUEUE ='hedger'
 BROADCAST_WORKER_DEFAULT_QUEUE='broadcaster'
 PORTFOLIO_WORKER_DEFAULT_QUEUE='portofolio'
 UTILS_WORKER_DEFAULT_QUEUE='utils'
+ASKLORA_QUEUE="asklora"
+
 print(read_endpoint)
 
 DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']

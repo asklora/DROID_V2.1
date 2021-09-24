@@ -2,6 +2,7 @@ from bot.calculate_bot import populate_daily_profit
 from config.celery import app
 from django.apps import apps
 from core.djangomodule.calendar import TradingHours
+from core.djangomodule.general import logging
 from core.user.models import User
 from core.services.models import ErrorLog
 from django.db import transaction
@@ -149,8 +150,13 @@ def order_executor(self, payload, recall=False):
                 ),
                 token=payload['firebase_token'],
             )
-            res = messaging.send(msg)
-            print(res)
+            try:
+                res = messaging.send(msg)
+                logging.info(res)
+            except Exception as e:
+                logging.error(str(e))
+
+                
     asyncio.run(channel_layer.group_send(self.request.id,
                                          {
                                              'type': 'send_order_message',
