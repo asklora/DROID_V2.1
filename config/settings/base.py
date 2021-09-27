@@ -10,7 +10,6 @@ import numpy as np
 from socket import gethostname, gethostbyname
 
 
-
 np.seterr(all="ignore")
 warnings.filterwarnings("ignore")
 warnings.simplefilter(action="ignore", category=FutureWarning)
