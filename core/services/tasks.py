@@ -312,7 +312,7 @@ def new_ticker_ingestion(ticker):
 
 @app.task
 def weekly_universe_firebase_update(currency_code:list) -> dict:
-    from ingestion.mongo_migration import mongo_universe_update
+    from ingestion.firestore_migration import mongo_universe_update
     try:
         mongo_universe_update(currency_code=currency_code)
     except Exception as e:

@@ -11,10 +11,13 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 from django.conf import settings
+from typing import Optional,Union,Tuple
 
 
-def classic_sell_position(live_price, trading_day, position_uid, apps=False):
-    position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
+def classic_sell_position(live_price:float, trading_day:str, 
+                            position:OrderPosition, apps:bool=False) -> Tuple[OrderPosition,Optional[Union[Order,None]]]:
+
+                            
     bot = position.bot
     latest = LatestPrice.objects.get(ticker=position.ticker)
     high = latest.high
@@ -159,7 +162,7 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
     expiry = to_date(position.expiry)
     status_expiry = high > position.target_profit_price or low < position.max_loss_price or trading_day >= expiry
     if(status_expiry):
-        position, order = classic_sell_position(live_price, trading_day, position.position_uid, apps=apps)
+        position, order = classic_sell_position(live_price, trading_day, position, apps=apps)
         return True, order.order_uid
     else:
         performance, position = populate_performance(live_price, trading_day, log_time, position)
@@ -284,9 +287,13 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
         err = ErrorLog.objects.create_log(
             error_description=f"{position_uid} not exist", error_message=str(e))
         err.send_report_error()
-        return {"err": f"{position.ticker.ticker} - {position_uid}"}
+        if settings.TESTDEBUG:
+            raise Exception('Hedge error position not found')
+        return {"err": f"{position.ticker.ticker}"}
     except Exception as e:
         err = ErrorLog.objects.create_log(
             error_description=f"error in Position {position_uid}", error_message=str(e))
         err.send_report_error()
-        return {"err": f"{position.ticker.ticker} - {position_uid}"}
+        if settings.TESTDEBUG:
+            raise Exception('Hedge error',str(e))
+        return {"err": f"{position.ticker.ticker}"}

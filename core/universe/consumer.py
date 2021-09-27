@@ -198,9 +198,8 @@ class OrderConsumer(AsyncWebsocketConsumer):
                 self.channel_name,
                 self.payload
             )
-            asyncio.ensure_future(self.force_close())
-
-    # Receive message from room group
+            await self.close()
+            # Receive message from room group
 
     async def send_message(self, event):
         event.pop('type')
@@ -213,8 +212,7 @@ class OrderConsumer(AsyncWebsocketConsumer):
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps(event))
-        asyncio.ensure_future(self.force_close())
-
+        await self.close()
 
 class TestConsumer(AsyncWebsocketConsumer):
     

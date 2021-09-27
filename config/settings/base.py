@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 from socket import gethostname, gethostbyname
 
+
 np.seterr(all="ignore")
 warnings.filterwarnings("ignore")
 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -35,13 +36,14 @@ SECRET_KEY = "!5fyj@#07=!rc9^)k0tgsl%dp@rmfe$*8t3*+m&mkwk-w^l!_a"
 django_debug = env.bool("DEBUG")
 
 DEBUG = django_debug
-
 TESTDEBUG=False # for tests
 SQLPRINT=True # for tests
 
+
+
 ALLOWED_HOSTS = [
     gethostname(),
-     gethostbyname(gethostname()),
+    gethostbyname(gethostname()),
     "118.0.1.71",
     "127.0.0.1",
     "services.asklora.ai",
@@ -75,6 +77,8 @@ ADDITIONAL_APPS = [
     'channels_presence',
     'django_redis',
     'simple_history',
+    # docs https://github.com/vishalanandl177/DRF-API-Logger
+    'drf_api_logger',
 ]
 CORE_APPS = [
     "core.bot",
@@ -95,7 +99,6 @@ INSTALLED_APPS = DJANGO_DEFAULT_APPS + ADDITIONAL_APPS + CORE_APPS
 Django middleware settings
 """
 MIDDLEWARE = [
-    "config.middleware.HealthCheck.HealthCheckMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -104,6 +107,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    # custom midleware
+    "config.middleware.HealthCheck.HealthCheckMiddleware",
+    # additional
+    'drf_api_logger.middleware.api_logger_middleware.APILoggerMiddleware',
 ]
 
 
@@ -147,9 +154,13 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "config.jwt_auth_module.AuthJwt",
     ),
+    'DEFAULT_THROTTLE_RATES': {
+        'order': '10/min',
+        'order_action': '10/min',
+    }
 }
 
-ELASTICSEARCH_DSL = {"default": {"hosts": "localhost:9200"}}
+
 DB_ENGINE = 'django.db.backends.postgresql_psycopg2'
 
 
@@ -307,3 +318,5 @@ firebase_admin.initialize_app(
         "databaseURL": "https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/"
     },
 )
+# additional logger
+DRF_API_LOGGER_DATABASE = True

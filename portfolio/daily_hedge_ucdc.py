@@ -1,3 +1,4 @@
+from core.bot.models import BotOptionType
 from datetime import datetime
 from general.date_process import to_date
 import math
@@ -19,10 +20,10 @@ from core.djangomodule.general import formatdigit
 from core.services.models import ErrorLog
 from django.db import transaction
 from django.conf import settings
+from typing import Optional,Union,Tuple
 
 
-def ucdc_sell_position(live_price, trading_day, position_uid, apps=False):
-    position = OrderPosition.objects.get(position_uid=position_uid, is_live=True)
+def ucdc_sell_position(live_price:float, trading_day:str, position:OrderPosition, apps:bool=False)-> Tuple[OrderPosition,Optional[Union[Order,None]]]:
     bot = position.bot
     latest = LatestPrice.objects.get(ticker=position.ticker)
     ask_price = latest.intraday_ask
@@ -49,14 +50,21 @@ def ucdc_sell_position(live_price, trading_day, position_uid, apps=False):
     position.event_date = trading_day
     position.is_live = False
 
-    expiry = to_date(position.expiry)
+    expiry_date = to_date(position.expiry)
 
-    if trading_day >= expiry:
+    if trading_day >= expiry_date:
         position.event = "Bot Expired"
     order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=apps)
     return position, order
 
-def populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=False):
+def populate_order(status:str, hedge_shares:int, 
+                    log_time:datetime, live_price:float,
+                    bot:BotOptionType,performance:dict, 
+                    position:dict, apps:bool=False) -> Tuple[Optional[Union[Order,None]],dict,dict]:
+
+
+
+
     position_val = OrderPositionSerializer(position).data
     # remove created and updated from position
     [position_val.pop(key) for key in ["created", "updated"]]
@@ -90,7 +98,12 @@ def populate_order(status, hedge_shares, log_time, live_price, bot, performance,
         return order, performance, position
     return None, performance, position
 
-def populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=False):
+def populate_performance(live_price:float, ask_price:float, 
+                        bid_price:float, trading_day:datetime.date,
+                        log_time:datetime, position:OrderPosition,
+                        expiry:bool=False) -> Tuple[dict,dict,str,int]:
+
+                        
     bot = position.bot
     try:
         last_performance = PositionPerformance.objects.filter(
@@ -172,7 +185,9 @@ def populate_performance(live_price, ask_price, bid_price, trading_day, log_time
     )
     return performance, position, status, hedge_shares
     
-def create_performance(price_data, position, latest=False, hedge=False, tac=False):
+def create_performance(price_data:Optional[Union[HedgeLatestPriceHistory,MasterOhlcvtr,LatestPrice]], 
+                        position:OrderPosition, latest:bool=False,
+                        hedge:bool=False, tac:bool=False)-> Tuple[bool,Optional[Union[str,None]]]:
     bot = position.bot
     apps=False
     if position.user_id.current_status == "verified":
@@ -210,7 +225,7 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
     expiry = to_date(position.expiry)
     status_expiry = trading_day >= expiry
     if(status_expiry):
-        position, order = ucdc_sell_position(live_price, trading_day, position.position_uid,apps=apps)
+        position, order = ucdc_sell_position(live_price, trading_day, position,apps=apps)
         return True, order.order_uid
     else:
         performance, position, status, hedge_shares = populate_performance(live_price, ask_price, bid_price, trading_day, log_time, position, expiry=False)
@@ -234,12 +249,12 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
 
 
 @app.task
-def ucdc_position_check(position_uid, to_date=None, tac=False, hedge=False, latest=False):
+def ucdc_position_check(position_uid:str, to_date:str=None, tac:bool=False, hedge:bool=False, latest:bool=False):
     if not settings.TESTDEBUG:
         transaction.set_autocommit(False)
 
     try:
-        position = OrderPosition.objects.get(
+        position = OrderPosition.objects.select_related('ticker','user_id').get(
             position_uid=position_uid, is_live=True)
         try:
             performance = PositionPerformance.objects.filter(position_uid=position.position_uid, status="Hedge").latest("created")
@@ -270,9 +285,10 @@ def ucdc_position_check(position_uid, to_date=None, tac=False, hedge=False, late
                         order.status = "filled"
                         order.filled_at = log_time
                         order.save()
-                        
-                        print(f"Position event: {OrderPosition.objects.get(position_uid=position.position_uid).event}")
-                print(f"trading_day {trading_day}-{hedge_price.ticker} done")
+                        if settings.TESTDEBUG:
+                            print(f"Position event: {OrderPosition.objects.get(position_uid=position.position_uid).event}")
+                if settings.TESTDEBUG:
+                    print(f"trading_day {trading_day}-{hedge_price.ticker} done")
                 if status:
                     break
         elif(tac):
@@ -343,10 +359,13 @@ def ucdc_position_check(position_uid, to_date=None, tac=False, hedge=False, late
         err = ErrorLog.objects.create_log(
             error_description=f"{position_uid} not exist", error_message=str(e))
         err.send_report_error()
+        if settings.TESTDEBUG:
+            raise Exception('Hedge error position not found')
         return {"err": f"{position.ticker.ticker}"}
     except Exception as e:
         err = ErrorLog.objects.create_log(
             error_description=f"error in Position {position_uid}", error_message=str(e))
         err.send_report_error()
-        
+        if settings.TESTDEBUG:
+            raise Exception('Hedge error',str(e))
         return {"err": f"{position.ticker.ticker}"}
