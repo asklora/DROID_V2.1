@@ -51,7 +51,9 @@ from general.table_name import (
     get_factor_calculation_table_name,
     get_factor_rank_table_name,
     get_ai_score_history_testing_table_name,
-    get_factor_current_use_table_name
+    get_factor_current_use_table_name,
+    get_historic_fx_rate_table_name,
+    get_ingestion_name_source_table_name,
 )
 
 
@@ -441,6 +443,11 @@ def get_factor_current_used():
     data = read_query(query, table=get_factor_current_use_table_name(), alibaba=True)
     return data
 
+def get_ingestion_name_source():
+    query = f"SELECT * FROM {get_ingestion_name_source_table_name()}"
+    data = read_query(query, table=get_ingestion_name_source_table_name(), alibaba=True)
+    return data
+
 def get_factor_rank():
     query = f"SELECT * FROM {get_factor_rank_table_name()}"
     data = read_query(query, table=get_factor_rank_table_name(), alibaba=True)
@@ -559,13 +566,26 @@ def get_consolidated_data(column, condition, group_field=None):
     return data
 
 def get_ai_score_testing_history(backyear=1):
-    query =  f"SELECT currency_code, ai_score "
-    # query =  f"SELECT currency_code, min(ai_score) as score_min, max(ai_score) as score_max FROM {get_ai_score_history_testing_table_name()} "
-    query += f"FROM {get_ai_score_history_testing_table_name()} "
-    query += f"WHERE period_end > '{backdate_by_year(backyear)}' "
-    # query += f"GROUP BY currency_code"
+    ''' get ai_score / ai_score2 history from universe rating '''
+    query =  f"SELECT trading_day, h.ticker, currency_code, ai_score_unscaled, ai_score2_unscaled "
+    query += f"FROM {get_universe_rating_history_table_name()} h "
+    query += f"INNER JOIN {get_universe_table_name()} u ON u.ticker=h.ticker "
+    query += f"WHERE trading_day > '{backdate_by_year(backyear)}' "
+    query += f"AND ai_score_unscaled IS NOT NULL "
+    data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=False)
+    return data
+
+def get_currenct_fx_rate_dict():
+    ''' get ai_score / ai_score2 history from universe rating '''
+    query =  f"SELECT * FROM {get_historic_fx_rate_table_name()} "
+    query += f"WHERE period_end > '{backdate_by_day(5)}'"
     data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
-    # data = data.groupby(['currency_code']).mean().reset_index()
+    return data.sort_values('period_end').groupby('ticker')['fx_rate'].last().to_dict()
+
+def get_currency_code_ibes_ws():
+    ''' get ai_score / ai_score2 history from universe rating '''
+    query =  f"SELECT ticker, currency_code_ibes, currency_code_ws FROM universe_newcode"
+    data = read_query(query, table="universe_newcode", alibaba=True)
     return data
 
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):
