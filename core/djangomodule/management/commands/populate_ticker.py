@@ -29,7 +29,8 @@ from ingestion.data_from_dsws import (
     update_data_dsws_from_dsws, 
     update_entity_type_from_dsws, 
     update_fundamentals_quality_value, 
-    update_fundamentals_score_from_dsws, 
+    update_fundamentals_score_from_dsws,
+    update_ibes_currency_from_dsws, 
     update_ibes_data_monthly_from_dsws, 
     update_industry_from_dsws,
     update_lot_size_from_dsws,
@@ -46,6 +47,7 @@ def new_ticker_ingestion(ticker):
     update_entity_type_from_dsws(ticker=ticker)
     update_lot_size_from_dsws(ticker=ticker)
     update_currency_code_from_dsws(ticker=ticker)
+    update_ibes_currency_from_dsws(ticker=ticker)
     update_industry_from_dsws(ticker=ticker)
     update_company_desc_from_dsws(ticker=ticker)
     update_mic_from_dsws(ticker=ticker)
