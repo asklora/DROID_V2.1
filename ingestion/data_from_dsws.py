@@ -1496,6 +1496,7 @@ def update_ibes_currency_from_dsws(ticker=None, currency_code=None):
     result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
     result = result.rename(columns={"IBCUR": "currency_code_ibes", "index":"ticker"})
     result["currency_code_ws"] = result["WC06027"].map(get_iso_currency_code_map())
+    result["currency_code_ibes"] = result["currency_code_ibes"].replace(['BPN'], ['GBP'])
     result = result.drop(columns=["WC06027"])
     print(result)
     if(len(result)) > 0 :
