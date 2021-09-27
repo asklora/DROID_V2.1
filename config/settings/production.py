@@ -1,10 +1,20 @@
 from .base import *
+import requests
 
 """
 This Django configuration file in used in the production environment.
 You can use this configuration file by running:
 `python manage.py runserver --settings=config.settings.production`
 """
+
+try:
+    EC2_IP_PUBLIC = requests.get('http://169.254.169.254/latest/meta-data/public-ipv4').text
+    EC2_IP_LOCAL =requests.get('http://169.254.169.254/latest/meta-data/local-ipv4').text
+    ALLOWED_HOSTS.append(EC2_IP_PUBLIC)
+    ALLOWED_HOSTS.append(EC2_IP_LOCAL)
+except requests.exceptions.RequestException:
+    pass
+
 SQLPRINT=False
 CHANNEL_LAYERS = {
     'default': {

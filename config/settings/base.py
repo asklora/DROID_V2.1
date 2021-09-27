@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 from socket import gethostname, gethostbyname
 
+
 np.seterr(all="ignore")
 warnings.filterwarnings("ignore")
 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -38,10 +39,11 @@ DEBUG = django_debug
 
 TESTDEBUG=False # for tests
 SQLPRINT=True # for tests
-
+EC2HOST=os.getenv("EC2HOST")
 ALLOWED_HOSTS = [
+    EC2HOST,
     gethostname(),
-     gethostbyname(gethostname()),
+    gethostbyname(gethostname()),
     "118.0.1.71",
     "127.0.0.1",
     "services.asklora.ai",
