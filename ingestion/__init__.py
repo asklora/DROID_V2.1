@@ -11,7 +11,7 @@ from .data_from_dsws import (
     update_mic_from_dsws,
     update_ticker_name_from_dsws,
     update_worldscope_identifier_from_dsws)
-from .mongo_migration import firebase_user_update
+from .firestore_migration import firebase_user_update
 __all__=[
     'update_quandl_orats_from_quandl',
     'update_data_dss_from_dss',

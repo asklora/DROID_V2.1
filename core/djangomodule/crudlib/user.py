@@ -4,7 +4,7 @@ from core.orders.models import OrderPosition,PositionPerformance, Order
 from ..general import is_hashed
 from django.contrib.auth.hashers import make_password
 from ingestion import firebase_user_update
-from general.mongo_query import delete_firestore_user
+from general.firestore_query import delete_firestore_user
 
 
 def sync_user(payload):
