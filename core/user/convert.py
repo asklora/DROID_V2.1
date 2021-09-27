@@ -98,10 +98,8 @@ class ConvertMoney(AbstractBaseConvert):
     def set_exchange_rate(self):
         if(self.from_currency.last_price == self.to_currency.last_price):
             self.exchange_rate = 1
-        elif(self.from_currency.last_price <= self.to_currency.last_price):
-            self.exchange_rate = self.to_currency.last_price / self.from_currency.last_price
         else:
-            self.exchange_rate = self.from_currency.last_price * self.to_currency.last_price
+            self.exchange_rate = self.to_currency.last_price / self.from_currency.last_price
 
     def get_from_currency(self):
         return self.from_currency
@@ -109,7 +107,7 @@ class ConvertMoney(AbstractBaseConvert):
     def get_to_currency(self):
         return self.to_currency
 
-    def get_exchange_code(self):
+    def get_exchange_rate(self):
         return self.exchange_rate
 
     def convert(self, amount):
