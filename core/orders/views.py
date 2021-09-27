@@ -1,4 +1,9 @@
-from core.djangomodule.general import IsRegisteredUser, errserializer,OrderThrottle
+from core.djangomodule.general import (
+    IsRegisteredUser, 
+    errserializer,
+    OrderThrottle,
+    OrderActionThrottle
+    )
 from rest_framework import viewsets, views, response, status
 from drf_spectacular.utils import (
     extend_schema_view,
@@ -311,7 +316,7 @@ class OrderActionViews(views.APIView):
     """
     Order actions
     """
-    throttle_classes = [OrderThrottle]
+    throttle_classes = [OrderActionThrottle]
     serializer_class = OrderActionSerializer
     permission_classes = (IsRegisteredUser,)
 
