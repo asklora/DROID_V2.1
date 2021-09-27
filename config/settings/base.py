@@ -36,12 +36,12 @@ SECRET_KEY = "!5fyj@#07=!rc9^)k0tgsl%dp@rmfe$*8t3*+m&mkwk-w^l!_a"
 django_debug = env.bool("DEBUG")
 
 DEBUG = django_debug
-
 TESTDEBUG=False # for tests
 SQLPRINT=True # for tests
-EC2HOST=os.getenv("EC2HOST")
+
+
+
 ALLOWED_HOSTS = [
-    EC2HOST,
     gethostname(),
     gethostbyname(gethostname()),
     "118.0.1.71",
