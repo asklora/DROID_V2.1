@@ -65,6 +65,7 @@ from general.sql_query import (
     get_master_ohlcvtr_data,
     get_ingestion_name_source,
     get_currency_code_ibes_ws,
+    get_iso_currency_code_map,
 )
 from general.date_process import (
     backdate_by_day, 
@@ -750,8 +751,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].clip(0, 10)
     fundamentals[['ai_score','ai_score2',"esg"]] = fundamentals[['ai_score','ai_score2',"esg"]].round(1)
     fundamentals[fundamentals_factors_scores_col] = fundamentals[fundamentals_factors_scores_col].round(1)
-
-    x = fundamentals.groupby(['currency_code']).agg(['min','max','mean','std'])
 
     universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
                                             "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
@@ -1491,15 +1490,16 @@ def update_mic_from_dsws(ticker=None, currency_code=None):
 def update_ibes_currency_from_dsws(ticker=None, currency_code=None):
     print("{} : === IBES Currency Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
-    universe = universe.drop(columns=["ibes_currency"])
+    # universe = universe.drop(columns=[["currency_code_ws", "currency_code_ibes"]])
     filter_field = ["IBCUR", "WC06027"]
-    identifier="ticker"
+    identifier = "ticker"
     result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
-    result = result.rename(columns={"IBCUR": "ibes_currency", "index":"ticker", "WC06027": "ws_currency"})
-    result = remove_null(result, "ibes_currency")
+    result = result.rename(columns={"IBCUR": "currency_code_ibes", "index":"ticker"})
+    result["currency_code_ws"] = result["WC06027"].map(get_iso_currency_code_map())
+    result = result.drop(columns=["WC06027"])
     print(result)
     if(len(result)) > 0 :
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
-        upsert_data_to_database_ali(result, 'ibes_currency_code', identifier, how="update", Text=True)
+        upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === IBES Currency Updated ===".format(datetimeNow()))

@@ -588,6 +588,12 @@ def get_currency_code_ibes_ws():
     data = read_query(query, table="universe_newcode", alibaba=True)
     return data
 
+def get_iso_currency_code_map():
+    ''' get ai_score / ai_score2 history from universe rating '''
+    query =  f"SELECT currency_code, nation_code FROM iso_currency_code"
+    data = read_query(query, table="iso_currency_code", alibaba=True)
+    return data.set_index('nation_code')['currency_code'].to_dict()
+
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_history_table_name()
     query = f"select * from {table_name} where trading_day=(select max(urh.trading_day) from {table_name} urh) "
