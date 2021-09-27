@@ -5,6 +5,11 @@ from global_vars import MONGO_URL
 import pandas as pd
 from firebase_admin import firestore
 from core.djangomodule.general import jsonprint
+from django.conf import settings
+
+
+
+
 def change_null_to_zero(data):
     for col in data.columns:
         if(type(data.loc[0, col]) == str):
@@ -53,6 +58,16 @@ def insert_to_mongo(data, index, table, dict=False):
         data = change_date_to_str(data)
         data_dict = data.to_dict("records")
     db_connect.insert_many(data_dict)
+
+
+
+def delete_firestore_user(user_id:str):
+    db = firestore.client()
+    collection =db.collection(settings.FIREBASE_COLLECTION['portfolio']).document(f"{user_id}")
+    collection.delete()
+
+
+
 
 
 def get_price_data_firebase(ticker:list) -> pd.DataFrame:

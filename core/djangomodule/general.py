@@ -14,11 +14,16 @@ from redis.exceptions import ConnectionError
 import logging
 import pandas as pd
 import pprint
-from rest_framework.throttling import UserRateThrottle,AnonRateThrottle
+from rest_framework.throttling import UserRateThrottle
+
 
 logging.basicConfig(format="%(asctime)s - %(message)s",
                     datefmt="%d-%b-%y %H:%M:%S")
 logging.getLogger().setLevel(logging.INFO)
+
+
+
+
 
 class NeedRegister(APIException):
     """
