@@ -3,7 +3,7 @@ from datasource.dsws import get_data_static_from_dsws
 from general.sql_query import get_active_universe
 from ingestion.data_from_dsws import update_currency_code_from_dsws, update_lot_size_from_dsws, update_mic_from_dsws
 from general.date_process import datetimeNow
-from ingestion.mongo_migration import firebase_user_update
+from ingestion.firestore_migration import firebase_user_update
 
 def split_ticker():
     from general.sql_query import get_active_universe

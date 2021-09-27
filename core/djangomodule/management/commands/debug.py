@@ -4,7 +4,7 @@ from core.orders.models import Order, OrderPosition
 from core.user.models import User
 from portfolio.daily_hedge_uno import uno_position_check
 from bot.calculate_bot import populate_daily_profit, update_monthly_deposit
-from ingestion.mongo_migration import firebase_user_update
+from ingestion.firestore_migration import firebase_user_update
 from django.core.management.base import BaseCommand
 from core.services.tasks import daily_hedge_user
 from django.utils import timezone
