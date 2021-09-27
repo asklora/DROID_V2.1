@@ -4,8 +4,9 @@ from core.orders.models import OrderPosition,PositionPerformance, Order
 from ..general import is_hashed
 from django.contrib.auth.hashers import make_password
 from ingestion import firebase_user_update
-from firebase_admin import firestore
-from general.date_process import dateNow
+from general.firestore_query import delete_firestore_user
+
+
 def sync_user(payload):
     create=False
     try:
@@ -67,16 +68,14 @@ def sync_user(payload):
 def sync_delete_user(payload):
     try:
         user = User.objects.get(username=payload['username'])
-        db = firestore.client()
-        collection =db.collection(u"portfolio").document(f"{user.id}")
+        
         PositionPerformance.objects.filter(position_uid__user_id=user).delete()
         Order.objects.filter(user_id=user).delete()
         OrderPosition.objects.filter(user_id=user).delete()
         TransactionHistory.objects.filter(balance_uid__user=user).delete()
         Accountbalance.objects.filter(user=user).delete()
         user.delete()
-        collection.delete()
-
+        delete_firestore_user(user.id)
         return {'message':f'{user.username} {user.id} deleted successfully'}
 
     except User.DoesNotExist:

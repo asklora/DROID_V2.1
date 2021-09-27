@@ -2,14 +2,13 @@ from core.djangomodule.general import formatdigit
 from django.conf import settings
 from general.data_process import NoneToZero, dateNow
 from bot.data_download import get_currency_data
-import random
 from datetime import datetime, date
 from asgiref.sync import sync_to_async
 import numpy as np
 import pandas as pd
-from general.mongo_query import (
+from general.firestore_query import (
     change_null_to_zero, 
-    update_to_mongo, 
+    update_to_firestore, 
     change_date_to_str, 
     get_price_data_firebase
     )
@@ -315,7 +314,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
     universe = change_date_to_str(universe)
-    update_to_mongo(data=universe, index="ticker", table=settings.FIREBASE_COLLECTION['universe'], dict=False)
+    update_to_firestore(data=universe, index="ticker", table=settings.FIREBASE_COLLECTION['universe'], dict=False)
 
 
 async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,user_core:pd.DataFrame)-> List[pd.DataFrame]:
@@ -423,7 +422,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         result["current_asset"] = result["balance"] + result["total_portfolio"] + result["pending_amount"]
         result = change_date_to_str(result, exception=["rank"])
         result["rank"] = np.where(result["rank"].isnull(), None, result["rank"])
-        await sync_to_async(update_to_mongo)(data=result, index="user_id", table=settings.FIREBASE_COLLECTION['portfolio'], dict=False)
+        await sync_to_async(update_to_firestore)(data=result, index="user_id", table=settings.FIREBASE_COLLECTION['portfolio'], dict=False)
         return active
 
 
