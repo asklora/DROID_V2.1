@@ -156,6 +156,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_THROTTLE_RATES': {
         'order': '10/min',
+        'order_action': '10/min',
     }
 }
 
