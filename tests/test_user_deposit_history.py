@@ -5,7 +5,7 @@ import pytest
 from core.universe.models import Currency
 from core.user.models import Accountbalance, User, UserProfitHistory
 from django.core.management import call_command
-
+from general.mongo_query import delete_firestore_user
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -138,4 +138,6 @@ def test_user_deposit_history(mocker) -> None:
     currency_mock.assert_called_once()
     upsert_mock.assert_called_once()
 
+    # delete the user!
+    delete_firestore_user(new_user.id)
     call_command("delete_user", username=new_user.username)
