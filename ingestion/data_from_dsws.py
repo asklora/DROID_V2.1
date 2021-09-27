@@ -455,7 +455,7 @@ def score_update_fx_conversion(df):
     df['fx_ibes'] = df['currency_code_ibes'].map(fx)
     df['fx_ws'] = df['currency_code_ws'].map(fx)
 
-    ingestion_source = get_ingestion_name_source()
+    ingestion_source = get_ingestion_name_source().dropna(subset=['score_name'])
     ingestion_source = ingestion_source.loc[ingestion_source['non_ratio']]     # no fx conversion for ratio items
 
     for name, g in ingestion_source.groupby(['source']):        # convert for ibes / ws
