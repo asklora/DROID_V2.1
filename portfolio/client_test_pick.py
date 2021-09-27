@@ -37,7 +37,7 @@ def check_currency_code(currency_code, client_uid):
 def get_bot_option_type(time_to_exp):
     table_name = get_bot_option_type_table_name()
     query = f"select * from {table_name} where time_to_exp in {tuple_data(time_to_exp)};"
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table=table_name, prints=False)
     return data
 
 def get_client_universe(currency_code, client_uid):
@@ -46,7 +46,7 @@ def get_client_universe(currency_code, client_uid):
     check = check_currency_code(currency_code, client_uid)
     if (check != ""):
         query += f"where {check} "
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table=table_name, prints=False)
     return data
 
 def get_currency_rate(currency_code):
@@ -55,13 +55,13 @@ def get_currency_rate(currency_code):
         return 1
     else:
         query = f"select * from {table_name} where currency_code in ('{currency_code}', 'EUR')"
-        data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+        data = read_query(query, table=table_name, prints=False)
         return data.loc[0, "last_price"] / data.loc[1, "last_price"]
 
 def get_client_uid(client_name="HANWHA"):
     table_name = get_client_table_name()
     query = f"select * from {table_name} where client_name = '{client_name}';"
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table=table_name, prints=False)
     return data.loc[0, "client_uid"]
 
 def get_user_id(client_uid, currency_code, tester=False, advisor=False, capital="small", bot="UNO"):
@@ -69,7 +69,7 @@ def get_user_id(client_uid, currency_code, tester=False, advisor=False, capital=
     query = f"select user_id, extra_data-> 'type' as bot_type, "
     query += f"extra_data-> 'capital' as capital, extra_data-> 'service_type' as service_type "
     query += f"from {table_name} where client_uid='{client_uid}' and currency_code in {tuple_data(currency_code)} "
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table=table_name, prints=False)
     if(advisor):
         data = data.loc[data["capital"] == capital]
         data = data.loc[data["service_type"] == "bot_advisor"]
@@ -93,7 +93,7 @@ def get_client_test_pick_ticker(client_uid, currency_code):
     query += f"from {table_name} ctp1 group by client_uid, currency_code) filter on ctp.client_uid = filter.client_uid "
     query += f"and ctp.currency_code = filter.currency_code and ctp.spot_date = filter.max_date "
     query += f"where ctp.client_uid='{client_uid}' and ctp.currency_code  in {tuple_data(currency_code)}; "
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table=table_name, prints=False)
     result = pd.DataFrame({"client_uid":[], "currency_code":[], "spot_date":[], "ticker":[], "rank":[]}, index=[])
     for col in data.columns:
         if(col not in ["uid", "client_uid", "currency_code", "spot_date"]):
@@ -107,7 +107,7 @@ def get_client_test_pick_ticker(client_uid, currency_code):
 def get_industry_code():
     table_name = get_universe_table_name()
     query = f"select ticker, industry_code from {table_name}"
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table=table_name, prints=False)
     return data
 
 def get_portfolio_ticker_list(user_id):
@@ -115,7 +115,7 @@ def get_portfolio_ticker_list(user_id):
     table_name = get_orders_position_table_name()
     query = f"select distinct op.ticker, u.industry_code from {table_name} op inner join universe u on op.ticker = u.ticker "
     query += f"where user_id='{user_id}' and op.is_live=True; "
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table=table_name, prints=False)
     return data
 
 # def get_old_bot_ticker_pick(client_uid, currency_code, tester=False, advisor=False, capital="small", bot="UNO"):
@@ -126,7 +126,7 @@ def get_portfolio_ticker_list(user_id):
 #         query += f"and service_type = 'bot_advisor' and capital = '{capital}' "
 #     if(tester):
 #         query += f"and service_type = 'bot_tester' and capital = '{capital}' and bot = '{bot}' "
-#     data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+#     data = read_query(query, table=table_name, prints=False)
 #     return data["ticker"].to_list()
 
 def get_bot_ranking(ticker, spot_date):
@@ -135,7 +135,7 @@ def get_bot_ranking(ticker, spot_date):
     query += f"from {table_name} br1 where spot_date<='{spot_date}' group by br1.ticker) as filter "
     query += f"on filter.ticker=br.ticker and filter.spot_date=br.spot_date "
     query += f"where br.ticker in {tuple_data(ticker)}; "
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table=table_name, prints=False)
     return data
 
 def get_newest_price(ticker, spot_date, master_ohlcvtr=False):
@@ -153,17 +153,17 @@ def get_newest_price(ticker, spot_date, master_ohlcvtr=False):
         query += f"from {table_name} tac1 where trading_day<='{spot_date}' and tac1.tri_adj_close is not null group by tac1.ticker) as filter "
         query += f"on filter.ticker=tac.ticker and filter.max_date=tac.trading_day "
         query += f"where tac.ticker in {tuple_data(ticker)}; "
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table=table_name, prints=False)
     return data
     
 def get_current_assets(user_id):
     table_name = get_orders_position_table_name()
     query = f"select sum(current_values) as current_value from {table_name} where user_id='{user_id}' and is_live=True;"
-    total_current_value = NoneToZero(read_query(query, table=table_name, cpu_counts=True, prints=False).loc[0, "current_value"])
+    total_current_value = NoneToZero(read_query(query, table=table_name, prints=False).loc[0, "current_value"])
     print(total_current_value)
     table_name = get_user_account_balance_table_name()
     query = f"select amount from {table_name} where user_id='{user_id}';"
-    user_balance = NoneToZero(read_query(query, table=table_name, cpu_counts=True, prints=False).loc[0, "amount"])
+    user_balance = NoneToZero(read_query(query, table=table_name, prints=False).loc[0, "amount"])
     current_assets = round(total_current_value + user_balance, 2)
     return current_assets
 
@@ -213,7 +213,7 @@ def another_top_stock(currency_code, client_uid, top_distinct_ticker_list, top_p
     # query += f") f1) f2) f3 "
     # #top total ribbons, then wts score, then combined score
     # query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit {top_pick_stock-top_pick_distinct} "
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table=table_name, prints=False)
     return data
 
 def top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct, threshold, top_pick_stock):
@@ -264,7 +264,7 @@ def top_stock_distinct_industry(currency_code, client_uid, top_pick_distinct, th
     # query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC) f4 where rn=1) f5 "
     # #top total ribbons, then wts score, then combined score
     # query += f"order by ribbon_score DESC, wts_rating DESC, wts_score DESC, ticker ASC limit {top_pick_distinct}; "
-    data = read_query(query, table=table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table=table_name, prints=False)
     return data
 
 def populate_bot_advisor(currency_code=None, client_name="HANWHA", top_pick_stock=7, time_to_exp=[0.07692], top_pick = 2, capital="small"):

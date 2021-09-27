@@ -6,7 +6,7 @@ from general.table_name import get_bot_uno_backtest_table_name, get_bot_ucdc_bac
 
 def get_pnl_data(table_name):
     query = f"select spot_date, ticker, pnl, spot_price, option_type from {table_name} "
-    data = read_query(query, table=table_name, cpu_counts=True)
+    data = read_query(query, table=table_name)
     if len(data) == 0:
         print(f"We don't have executive data in {data}.")
         sys.exit()

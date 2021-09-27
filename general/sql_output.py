@@ -2,6 +2,7 @@ from general.data_process import tuple_data
 from general.slack import report_to_slack
 import pandas as pd
 import sqlalchemy as db
+from django.conf import settings
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count as cpucount
 from sqlalchemy.types import DATE, BIGINT, TEXT, INTEGER, BOOLEAN, Integer
@@ -16,10 +17,9 @@ from general.data_process import tuple_data
 
 def execute_query(query, table=None):
     print(f"Execute Query to Table {table}")
-    engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    engine = settings.READ_DB_ENGINE
     with engine.connect() as conn:
         result = conn.execute(query)
-    engine.dispose()
     return True
 
 def truncate_table(table_name):
@@ -29,7 +29,7 @@ def truncate_table(table_name):
 
 def insert_data_to_database(data, table, how="append"):
     print(f"=== Insert Data to Database on Table {table} ===")
-    engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    engine = settings.WRITE_DB_ENGINE
     try:
         with engine.connect() as conn:
             data.to_sql(
@@ -62,10 +62,7 @@ def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=Fa
     else:
         data_type={primary_key:TEXT}
     
-    if(cpu_count):
-        engine = create_engine(db_write, pool_size=cpucount(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-    else:
-        engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    engine = settings.WRITE_DB_ENGINE
     upsert(engine=engine,
            df=data,
            table_name=table,
@@ -108,10 +105,7 @@ def upsert_data_to_database_ali(data, table, primary_key, how="replace", cpu_cou
     else:
         data_type = {primary_key: TEXT}
 
-    if (cpu_count):
-        engine = create_engine(alibaba_db_url, pool_size=cpucount(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-    else:
-        engine = create_engine(alibaba_db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    engine = settings.ALIBABA_DB_ENGINE
     upsert(engine=engine,
            df=data,
            table_name=table,
@@ -147,7 +141,7 @@ def update_fundamentals_score_in_droid_universe_daily(data, table):
     print(f"=== Update Data to Database on Table {table} ===")
     data = data[["ticker","mkt_cap"]]
     resultdict = data.to_dict("records")
-    engine = db.create_engine(db_write)
+    engine = settings.WRITE_DB_ENGINE
     sm = sessionmaker(bind=engine)
     session = sm()
     metadata = db.MetaData(bind=engine)

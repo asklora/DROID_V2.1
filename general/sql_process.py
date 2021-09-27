@@ -1,5 +1,6 @@
 import os
-from sqlalchemy import create_engine
+
+from django.conf import settings
 from dotenv import load_dotenv
 from core.djangomodule.network.cloud import DroidDb
 from environs import Env
@@ -24,7 +25,7 @@ def get_debug_url():
     return db_debug_write
     
 def do_function(func):
-    engine = create_engine(db_write)
+    engine = settings.WRITE_DB_ENGINE
     print("create connections to db")
     connection = engine.raw_connection()
     cursor = connection.cursor()

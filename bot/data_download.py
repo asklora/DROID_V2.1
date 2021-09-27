@@ -50,7 +50,7 @@ def get_bot_data_latest_date(bot_data=False, vol_infer=False, ranking=False):
         table_name = get_data_vol_surface_table_name()
         indentifier = "trading_day"
     query = f"select ticker, max({indentifier}) as max_date from {table_name} group by ticker"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     if(len(data) == 0):
         return str_to_date(droid_start_date())
     return min(data["max_date"])
@@ -63,7 +63,7 @@ def get_master_tac_price(start_date=None, end_date=None, ticker=None, currency_c
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
         query += "and " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_latest_price(ticker=None, currency_code=None):
@@ -72,7 +72,7 @@ def get_latest_price(ticker=None, currency_code=None):
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
         query += "where " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -82,7 +82,7 @@ def get_latest_bot_update_data(ticker=None, currency_code=None):
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
         query += "where " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_bot_statistic_data(ticker=None, currency_code=None):
@@ -91,13 +91,13 @@ def get_bot_statistic_data(ticker=None, currency_code=None):
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
         query += "where " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_data_vix_price():
     table_name = get_data_vix_table_name()
     query = f"select * from {table_name}"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_currency_data(currency_code=None):
@@ -105,7 +105,7 @@ def get_currency_data(currency_code=None):
     query = f"select * from {table_name} "
     if type(currency_code) != type(None):
         query += f"where currency_code in {tuple_data(currency_code)} "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_data_vol_surface_ticker(ticker=None, currency_code=None):
@@ -127,7 +127,7 @@ def get_volatility_latest_date(ticker=None, currency_code=None, infer=True):
     if(check != ""):
         query += "where " + check
     query += f"group by ticker"
-    data = read_query(query, table=table_name, cpu_counts=True)
+    data = read_query(query, table=table_name)
     return data["max_date"].min()
 
 def get_backtest_latest_date(ticker=None, currency_code=None, ucdc=False, uno=False, classic=False, mod=False):
@@ -146,7 +146,7 @@ def get_backtest_latest_date(ticker=None, currency_code=None, ucdc=False, uno=Fa
     if(check != ""):
         query += "where " + check
     query += f"group by ticker"
-    data = read_query(query, table=table_name, cpu_counts=True)
+    data = read_query(query, table=table_name)
     return data
 
 def get_data_vol_surface_inferred_ticker(ticker=None, currency_code=None):
@@ -362,7 +362,7 @@ def get_calendar_data(start_date=None, end_date=None, ticker=None, currency_code
         query += f"and currency_code in (select distinct currency_code from {get_universe_table_name()} where is_active=True and ticker in {tuple_data(ticker)}) "
     elif type(currency_code) != type(None):
         query += f"and currency_code in (select distinct currency_code from {get_universe_table_name()} where is_active=True and currency_code in {tuple_data(currency_code)}) "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_vol_surface_data(start_date=None, end_date=None, ticker=None, currency_code=None, infer=True):
@@ -376,19 +376,19 @@ def get_vol_surface_data(start_date=None, end_date=None, ticker=None, currency_c
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
         query += "and " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_interest_rate_data():
     table_name = get_data_interest_table_name()
     query = f"select * from {table_name} "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_dividends_data():
     table_name = get_data_dividend_table_name()
     query = f"select * from {table_name} "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_bot_backtest_data(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, uno=False, ucdc=False, classic=False, mod=False, null_filler=False, not_null=False):
@@ -416,7 +416,7 @@ def get_bot_backtest_data(start_date=None, end_date=None, time_to_exp=None, tick
         query += f"and event is null "
     if(not_null):
         query += f"and event is not null "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_bot_backtest_data_date_list(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, uno=False, ucdc=False, classic=False, mod=False, null_filler=False):
@@ -440,19 +440,19 @@ def get_bot_backtest_data_date_list(start_date=None, end_date=None, time_to_exp=
         query += f"and time_to_exp in {tuple_data(time_to_exp)} "
     if(null_filler):
         query += f"and event is null "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data.spot_date.unique()
 
 def get_bot_ranking_data():
     table_name = get_bot_ranking_table_name()
     query = f"select * from {table_name} "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_latest_bot_ranking_data():
     table_name = get_bot_latest_ranking_table_name()
     query = f"select * from {table_name} "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_data_interest_daily(condition=None):
@@ -460,7 +460,7 @@ def get_data_interest_daily(condition=None):
     query = f"select * from {table_name} "
     if(type(condition) != type(None)):
         query+= f" where {condition}"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_data_dividend_daily_rates(condition=None):
@@ -468,14 +468,14 @@ def get_data_dividend_daily_rates(condition=None):
     query = f"select * from {table_name} "
     if(type(condition) != type(None)):
         query+= f" where {condition}"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_holiday_by_day_and_currency_code(non_working_day, currency_code):
     table_name = get_currency_calendar_table_name()
     query = f"select * from {table_name} "
     query+= f" where non_working_day='{non_working_day}' and currency_code in {tuple_data(currency_code)}"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_latest_vol(condition=None):
@@ -483,7 +483,7 @@ def get_latest_vol(condition=None):
     query = f"select * from {table_name} "
     if(type(condition) != type(None)):
         query+= f" where {condition}"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_latest_price_by_condition(condition=None):
@@ -491,7 +491,7 @@ def get_latest_price_by_condition(condition=None):
     query = f"select * from {table_name} "
     if(type(condition) != type(None)):
         query+= f" where {condition}"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_bot_option_type(condition=None):
@@ -499,7 +499,7 @@ def get_bot_option_type(condition=None):
     query = f"select * from {table_name} "
     if(type(condition) != type(None)):
         query+= f" where {condition}"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_bot_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, bot_id=None):
@@ -513,5 +513,5 @@ def get_bot_backtest(start_date=None, end_date=None, ticker=None, currency_code=
         query += f"and " + check
     if(type(bot_id) != type(None)):
         query += f"and bot_id='{bot_id}'"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data

@@ -36,7 +36,7 @@ def check_date(dates):
 def get_q(ticker, t):
     table_name = get_data_dividend_daily_rates_table_name()
     query = f"select * from {table_name} where t = {t} and ticker='{ticker}'"
-    data = read_query(query, table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table_name, prints=False)
     try:
         q = data.loc[0, "q"]
     except Exception as e:
@@ -47,7 +47,7 @@ def get_q(ticker, t):
 def get_r(currency_code, t):
     table_name = get_data_interest_daily_rates_table_name()
     query = f"select * from {table_name} where t = {t} and currency_code='{currency_code}'"
-    data = read_query(query, table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table_name, prints=False)
     try:
         r = data.loc[0, "r"]
     except Exception as e:
@@ -59,7 +59,7 @@ def get_spot_date(spot_date, ticker):
     spot_date = check_date(spot_date)
     table_name = get_master_tac_table_name()
     query = f"select max(trading_day) as max_date from {table_name} where ticker = {ticker} and spot_date>='{spot_date}' and day_status='trading_day'"
-    data = read_query(query, table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table_name, prints=False)
     return data.loc[0, "max_date"]
 
 
@@ -67,7 +67,7 @@ def get_holiday(non_working_day, currency_code):
     table_name = get_currency_calendar_table_name()
     query = f"select distinct ON (non_working_day) non_working_day, currency_code from {table_name} "
     query += f" where non_working_day='{non_working_day}' and currency_code in {tuple_data(currency_code)}"
-    data = read_query(query, table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table_name, prints=False)
     return data
 
 
@@ -421,7 +421,7 @@ def get_vol_by_date(ticker, trading_day):
     query += f"where vol.ticker = '{ticker}' and "
     query += f"vol.trading_day <= '{trading_day}' "
     query += f"order by trading_day DESC limit 1;"
-    data = read_query(query, vol_table, cpu_counts=True, prints=False)
+    data = read_query(query, vol_table, prints=False)
     if(len(data) != 1):
         query = f"select * "
         query += f"from {vol_inferred_table} vol "
@@ -429,13 +429,13 @@ def get_vol_by_date(ticker, trading_day):
         query += f"vol.trading_day <= '{trading_day}' "
         query += f"order by trading_day DESC limit 1;"
         data = read_query(query, vol_inferred_table,
-                          cpu_counts=True, prints=False)
+                          prints=False)
         if(len(data) != 1):
             query = f"select * "
             query += f"from {latest_vol_table} vol "
             query += f"where vol.ticker = '{ticker}' limit 1;"
             data = read_query(query, latest_vol_table,
-                              cpu_counts=True, prints=False)
+                              prints=False)
             if(len(data) != 1):
                 data = {
                     "ticker": ticker,
@@ -464,7 +464,7 @@ def get_classic_vol_by_date(ticker, trading_day):
     query += f"from {latest_price_table} vol "
     query += f"where vol.ticker = '{ticker}';"
     data = read_query(query, latest_price_table,
-                        cpu_counts=True, prints=False)
+                        prints=False)
     if(len(data) != 1):
         classic_vol = default_vol
     else:

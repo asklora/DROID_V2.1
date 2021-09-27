@@ -2,7 +2,10 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from environs import Env
+from sqlalchemy import create_engine
+from multiprocessing import cpu_count
 from core.djangomodule.network.cloud import DroidDb
+from general.sql_process import db_read, db_write, alibaba_db_url
 from datetime import timedelta
 import firebase_admin
 import warnings
@@ -320,3 +323,24 @@ firebase_admin.initialize_app(
 )
 # additional logger
 DRF_API_LOGGER_DATABASE = True
+
+# global SQLAlchemy engines for raw SQL queries
+READ_DB_ENGINE = create_engine(
+    db_read,
+    pool_size=cpu_count(),
+    max_overflow=-1,
+    isolation_level="AUTOCOMMIT",
+)
+
+WRITE_DB_ENGINE = create_engine(
+    db_write,
+    max_overflow=-1,
+    isolation_level="AUTOCOMMIT",
+)
+
+ALIBABA_DB_ENGINE = create_engine(
+    alibaba_db_url,
+    pool_size=cpu_count(),
+    max_overflow=-1,
+    isolation_level="AUTOCOMMIT",
+)

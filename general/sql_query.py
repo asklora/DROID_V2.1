@@ -1,10 +1,6 @@
 import pandas as pd
-from django.conf import settings
 from core.djangomodule.general import get_cached_data,set_cache_data
-from sqlalchemy import create_engine
-from multiprocessing import cpu_count
-from general import table_name
-from general.sql_process import db_read, alibaba_db_url
+from django.conf import settings
 from general.date_process import (
     backdate_by_day,
     backdate_by_year,
@@ -54,18 +50,20 @@ from general.table_name import (
     get_factor_current_use_table_name
 )
 
-
 from core.djangomodule.general import logging
 
 
-
-
-def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=settings.SQLPRINT):
+def read_query(
+    query,
+    table=get_universe_table_name(),
+    alibaba=False,
+    prints=settings.SQLPRINT,
+):
     """Base function for database query
 
     Args:
         query (String): Raw SQL query to be performed
-        table (String, optional): Database table name. Defaults to get_universe_table_name().
+        table (String, optional): Database table name. Defaults to Tables.universe.
         cpu_counts (bool, optional): Use cpu counts from the running system. Defaults to False.
         dlp (bool, optional): Use DLP database. Defaults to False.
         alibaba (bool, optional): Use Alibaba database. Defaults to False.
@@ -74,29 +72,22 @@ def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba
     Returns:
         DataFrame: Resulting data from the query
     """
-  
+
     if(prints):
         logging.info(f"Get Data From Database on {table} table")
     if alibaba:
-        dbcon = alibaba_db_url
+        engine = settings.ALIBABA_DB_ENGINE
     else:
-        dbcon = db_read
-
-    if cpu_counts:
-        engine = create_engine(
-            dbcon, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT"
-        )
-    else:
-        engine = create_engine(dbcon, max_overflow=-1, isolation_level="AUTOCOMMIT")
+        engine = settings.READ_DB_ENGINE
 
     with engine.connect() as conn:
         data = pd.read_sql(query, con=conn)
-    engine.dispose()
     data = pd.DataFrame(data)
 
     if prints:
         logging.info("Total Data = " + str(len(data)))
     return data
+
 
 def check_start_end_date(start_date, end_date):
     if type(start_date) == type(None):
@@ -467,7 +458,7 @@ def get_latest_price_data(ticker=None, currency_code=None, active=True):
     )
     if check != "":
         query += f"where " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -479,7 +470,7 @@ def get_latest_price_capital_change(ticker=None, currency_code=None, active=True
     )
     if check != "":
         query += f"and " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -489,7 +480,7 @@ def get_data_ibes_monthly(start_date):
     query += f"where trading_day in (select max(mcm.trading_day) "
     query += f"from {table_name} mcm where mcm.trading_day>='{start_date}' "
     query += f"group by mcm.period_end, ticker); "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -499,7 +490,7 @@ def get_ibes_new_ticker():
     query += f"where is_active=True and "
     query += f"entity_type is not null and "
     query += f"ticker not in (select ticker from {get_data_ibes_monthly_table_name()} group by ticker having count(ticker) >= 48)"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -509,7 +500,7 @@ def get_data_macro_monthly(start_date):
     query += f"where trading_day in (select max(mcm.trading_day) "
     query += f"from {table_name} mcm where mcm.trading_day>='{start_date}' "
     query += f"group by mcm.period_end); "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -539,13 +530,13 @@ def get_master_tac_data(
     )
     if check != "":
         query += "and " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_consolidated_universe_data():
     table_name = get_universe_consolidated_table_name()
     query = f"select * from {table_name} "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_consolidated_data(column, condition, group_field=None):
@@ -555,7 +546,7 @@ def get_consolidated_data(column, condition, group_field=None):
         query += f"where {condition} "
     if type(group_field) != type(None):
         query += f"group by {group_field} "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_ai_score_testing_history(backyear=1):
@@ -576,7 +567,7 @@ def get_universe_rating_history(ticker=None, currency_code=None, active=True):
     )
     if check != "":
         query += "and " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -588,7 +579,7 @@ def get_universe_rating_detail_history(ticker=None, currency_code=None, active=T
     )
     if check != "":
         query += "and " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -599,7 +590,7 @@ def get_bot_type(condition=None):
         query += f" where {condition}"
     cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
     if  not isinstance(cached_data,pd.DataFrame) :
-        data = read_query(query, table_name, cpu_counts=True)
+        data = read_query(query, table_name)
         set_cache_data(table_name,data.to_dict('records'))
         return data
     return cached_data
@@ -611,7 +602,7 @@ def get_latest_bot_update_data(ticker=None, currency_code=None):
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if check != "":
         query += "where " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -621,7 +612,7 @@ def get_bot_statistic_data(ticker=None, currency_code=None):
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if check != "":
         query += "where " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -638,7 +629,7 @@ def get_bot_backtest(
         query += f"and " + check
     if type(bot_id) != type(None):
         query += f"and bot_id='{bot_id}'"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -649,7 +640,7 @@ def get_bot_option_type(condition=None):
         query += f" where {condition}"
     cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
     if  not isinstance(cached_data,pd.DataFrame) :
-        data = read_query(query, table_name, cpu_counts=True)
+        data = read_query(query, table_name)
         set_cache_data(table_name,data.to_dict('records'))
         return data
     return cached_data
@@ -663,7 +654,7 @@ def get_latest_ranking(ticker=None, currency_code=None, active=True):
     )
     if check != "":
         query += "where " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -678,7 +669,7 @@ def get_latest_ranking_rank_1(ticker=None, currency_code=None, active=True):
     if check != "":
         query += "and " + check
     query += f"group by rank2.ticker, rank2.time_to_exp); "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -693,7 +684,7 @@ def get_order_performance_by_ticker(ticker=None, trading_day=None):
     if type(ticker) != type(None):
         query += f"where ticker='{ticker}' "
     query += f") and order_summary is not null;"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 
@@ -704,7 +695,7 @@ def get_data_from_table_name(table_name, ticker=None, currency_code=None, active
     )
     if check != "":
         query += "where " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_user_core(currency_code=None, user_id=None, field="*", ):
@@ -715,7 +706,7 @@ def get_user_core(currency_code=None, user_id=None, field="*", ):
     elif type(currency_code) != type(None):
         query += f"and id in (select user_id as id from {get_user_account_balance_table_name()} where currency_code in {tuple_data(currency_code)}) "
     query += "order by id "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_user_profit_history(user_id=None, field="*"):
@@ -727,7 +718,7 @@ def get_user_profit_history(user_id=None, field="*"):
     if type(user_id) != type(None):
         query += f"and user_id in {tuple_data(user_id)}  "
     query += "order by user_id "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_user_account_balance(currency_code=None, user_id=None, field="*"):
@@ -737,7 +728,7 @@ def get_user_account_balance(currency_code=None, user_id=None, field="*"):
         query += f"and user_id in {tuple_data(user_id)}  "
     elif type(currency_code) != type(None):
         query += f"and currency_code in {tuple_data(currency_code)} "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_user_deposit(user_id=None):
@@ -747,7 +738,7 @@ def get_user_deposit(user_id=None):
     query += f"group by filters.user_id) result where result.user_id=udh.user_id and result.max_date::date=udh.trading_day) "
     if type(user_id) != type(None):
         query += f"and user_id in {tuple_data(user_id)} "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_orders_position(user_id=None, ticker=None, currency_code=None, position_uid=None, field="*", active=True):
@@ -761,7 +752,7 @@ def get_orders_position(user_id=None, ticker=None, currency_code=None, position_
         query += f"and ticker in {tuple_data(ticker)} "
     elif type(currency_code) != type(None):
         query += f"and ticker in (select ticker from universe where currency_code in {tuple_data(currency_code)}) "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_orders_position_group_by_user_id(user_id=None, ticker=None, currency_code=None, stock=False):
@@ -781,7 +772,7 @@ def get_orders_position_group_by_user_id(user_id=None, ticker=None, currency_cod
         query += f"select user_id, (setup ->> 'performance')::json as performance, amount "
         query += f"from orders where status='pending' and side='buy' and canceled_at is null and bot_id != 'STOCK_stock_0' {filter}) as result "
         query += f"group by user_id; "
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
 
 def get_orders_position_performance(user_id=None, ticker=None, currency_code=None, position_uid=None, field="*", active=True, latest=False):
@@ -803,5 +794,5 @@ def get_orders_position_performance(user_id=None, ticker=None, currency_code=Non
         query += "from orders_position_performance as filters group by filters.position_uid) result "
         query += "where result.position_uid=opp.position_uid and result.max_date::date=opp.created::date) "
         query += "order by created DESC;"
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name)
     return data
