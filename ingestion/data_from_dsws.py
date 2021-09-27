@@ -459,7 +459,7 @@ def score_update_fx_conversion(df):
     ingestion_source = ingestion_source.loc[ingestion_source['non_ratio']]     # no fx conversion for ratio items
 
     for name, g in ingestion_source.groupby(['source']):        # convert for ibes / ws
-        cols = g['new_name'].to_list()
+        cols = g['score_name'].to_list()
         df[cols] = df[cols].div(df[f'fx_{name}'], axis="index")
 
     df['close'] = df['close']/df['fx_dss']  # convert close price
