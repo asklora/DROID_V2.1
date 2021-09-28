@@ -53,6 +53,11 @@ def classic_sell_position(live_price:float, trading_day:str,
             position.event = "Profit"
         else:
             position.event = "Bot Expired"
+    else:
+        if live_price < position.entry_price:
+            position.event = "Loss"
+        elif live_price > position.entry_price:
+            position.event = "Profit"
             
     # serializing -> make dictionary position instance
     position_val = OrderPositionSerializer(position).data
