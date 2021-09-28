@@ -39,25 +39,6 @@ def change_date_to_str(data, exception=None):
                 data[col] = np.where(data[col].isnull(), 0, data[col])
     return data
 
-def connects(table):
-    client =  MongoClient(MONGO_URL)
-    db_connect = client["universe"][table]
-    return db_connect
-
-def create_collection(collection_validator, table):
-    client =  MongoClient(MONGO_URL)
-    db_connect = client
-    db_connect.createCollection(table, collection_validator)
-    return True
-
-def insert_to_mongo(data, index, table, dict=False):
-    db_connect = connects(table)
-    if(dict):
-        data_dict = data
-    else:
-        data = change_date_to_str(data)
-        data_dict = data.to_dict("records")
-    db_connect.insert_many(data_dict)
 
 
 
@@ -80,7 +61,7 @@ def get_price_data_firebase(ticker:list) -> pd.DataFrame:
     splitting_df = np.array_split(ticker, split)
     for univ in splitting_df:
         univ = univ.tolist()
-        doc_ref = db.collection(u"universe").where("ticker","in", univ).get()
+        doc_ref = db.collection(settings.FIREBASE_COLLECTION['universe']).where("ticker","in", univ).get()
         for data in doc_ref:
             format_data = {}
             data = data.to_dict()
@@ -91,7 +72,7 @@ def get_price_data_firebase(ticker:list) -> pd.DataFrame:
     result = pd.DataFrame(object_list)
     return result
     
-def update_to_mongo(data, index, table, dict=False):
+def update_to_firestore(data, index, table, dict=False):
     data["indexes"] = data[index]
     data = data.set_index("indexes")
     df = data.to_dict("index")
@@ -102,35 +83,3 @@ def update_to_mongo(data, index, table, dict=False):
     for key,val in df.items():
         doc_ref = db.collection(f"{table}").document(f"{key}")
         doc_ref.set(val)
-    # db_connect = connects(table)
-    # if(dict):
-    #     data_dict = data
-    # else:
-    #     data = change_date_to_str(data)
-    #     data_dict = data.to_dict("records")
-    # for new_data in data_dict:
-    #     db_connect.delete_one({index: new_data[index]})
-    #     db_connect.insert_one(new_data)
-
-def update_specific_to_mongo(data, index, table, column, dict=False):
-    db_connect = connects(table)
-    if(dict):
-        data_dict = data
-    else:
-        data = change_date_to_str(data)
-        data_dict = data.to_dict("records")
-    for new_data in data_dict:
-        condition = { index: new_data[index] }
-        for col in column:
-            newvalues = { "$set": { col: new_data[col] } }
-            db_connect.update_one(condition, newvalues)
-
-def delete_to_mongo(data, index, table, dict=False):
-    db_connect = connects(table)
-    if(dict):
-        data_dict = data
-    else:
-        data = change_date_to_str(data)
-        data_dict = data.to_dict("records")
-    for new_data in data_dict:
-        db_connect.delete_one({index: new_data[index]})

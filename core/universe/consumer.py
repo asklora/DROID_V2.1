@@ -199,7 +199,7 @@ class OrderConsumer(AsyncWebsocketConsumer):
                 self.payload
             )
             await self.close()
-    # Receive message from room group
+            # Receive message from room group
 
     async def send_message(self, event):
         event.pop('type')

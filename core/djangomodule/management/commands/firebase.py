@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from ingestion.mongo_migration import firebase_user_update, mongo_universe_update
+from ingestion.firestore_migration import firebase_user_update, mongo_universe_update
 import json
 import pandas as pd
 import threading
