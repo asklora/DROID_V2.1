@@ -4,7 +4,7 @@ import pytest
 from bot.calculate_bot import check_date, get_expiry_date
 from core.bot.models import BotOptionType
 
-from utils import create_buy_order
+from tests.utils import create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[

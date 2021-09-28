@@ -3,13 +3,15 @@ from typing import Union
 
 import pytest
 from django.conf import settings
-from django.core.management import call_command
 from django.test.client import Client
 from dotenv import load_dotenv
 from environs import Env
+from firebase_admin import firestore
 
 from core.djangomodule.network.cloud import DroidDb
 from core.user.models import Accountbalance, TransactionHistory, User
+
+from tests.utils import delete_user
 
 load_dotenv()
 env = Env()
@@ -63,14 +65,13 @@ def user(django_db_setup, django_db_blocker):
             password="everything_is_but_a_test",
             is_active=True,
             current_status="verified",
-            is_test=True,
         )
         user_balance = Accountbalance.objects.create(
             user=user,
             amount=0,
             currency_code_id="HKD",
         )
-        trans = TransactionHistory.objects.create(
+        TransactionHistory.objects.create(
             balance_uid=user_balance,
             side="credit",
             amount=200000,
@@ -78,12 +79,19 @@ def user(django_db_setup, django_db_blocker):
         )
 
         yield user
-        call_command("delete_user", username=user.username)
+
+        # clean up
+        delete_user(user)
 
 
 @pytest.fixture(scope="session")
 def client() -> Client:
     return Client(raise_request_exception=True)
+
+
+@pytest.fixture(scope="session")
+def firestore_client() -> Client:
+    return firestore.client()
 
 
 @pytest.fixture(scope="session")
@@ -117,7 +125,11 @@ def order(authentication, client, user) -> Union[dict, None]:
         "side": "buy",
     }
 
-    response = client.post(path="/api/order/create/", data=data, **authentication)
+    response = client.post(
+        path="/api/order/create/",
+        data=data,
+        **authentication,
+    )
 
     if (
         response.status_code != 201
