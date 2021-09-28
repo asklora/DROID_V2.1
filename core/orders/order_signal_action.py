@@ -207,15 +207,12 @@ class BaseOrderConnector(AbstracOrderConnector):
         except Exception as e:
             print(e)
 
-    def transfer_to_wallet(self,position:OrderPosition):
-        # print("TRANSFER WALLET")
-        # sys.exit(1)
+    def transfer_to_wallet(self, position:OrderPosition):
         amt = position.investment_amount + position.final_pnl_amount
         return_amt = amt + position.bot_cash_dividend
 
-        # convert = ConvertMoney(position.ticker.currency_code.currency_code, self.user_wallet_currency)
-        # return_amt = convert.convert(return_amt)
-
+        convert = ConvertMoney(self.instance.ticker.currency_code, self.user_wallet_currency)#TODO disini
+        return_amt = convert.convert(return_amt)#TODO disini
         TransactionHistory.objects.create(
             balance_uid=self.user_wallet,
             side="credit",
