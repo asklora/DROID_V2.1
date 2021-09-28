@@ -6,6 +6,7 @@ import time
 from environs import Env
 from celery.signals import worker_ready
 from django.conf import settings
+from celery.backends.rpc import RPCBackend as CeleryRpcBackend
 
 from dotenv import load_dotenv
 
@@ -46,11 +47,6 @@ dbdebug = env.bool("DROID_DEBUG")
 #   . portfolio.daily_hedge_user.user_position_check
 
 app = Celery('core.services')
-# app_dev=Celery('core.services',broker='amqp://rabbitmq:rabbitmq@16.162.110.123:5672')
-# app_dev.conf.task_default_queue = 'droid_dev'
-# app_dev.config_from_object('django.conf:settings', namespace='CELERY')
-# Load task modules from all registered Django app configs.
-# app_dev.autodiscover_tasks()
 if debug in ['config.settings.production','config.settings.prodtest']:
     app.conf.broker_login_method = 'PLAIN'
 app.config_from_object('django.conf:settings', namespace='CELERY')
@@ -62,6 +58,13 @@ app.autodiscover_tasks()
 def at_start(sender, **k):
     with sender.app.connection() as conn:
          sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn)
+
+
+
+
+_RPC = CeleryRpcBackend(app=app)
+
+
 
 
 app.conf.task_routes = {
