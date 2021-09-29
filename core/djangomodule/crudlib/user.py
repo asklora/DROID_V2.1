@@ -67,6 +67,7 @@ def sync_user(payload):
                 user_id = user,
                 trading_day = dateNow(),
                 deposit = transaction.amount)
+        
         except Exception as e:
             return {"err": str(e)}
         
