@@ -648,7 +648,6 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core["user_id"] = user_core["user_id"].astype(int)
     user_core = user_core.drop(columns=["currency_code", "is_decimal", "bot_pending_amount", "stock_pending_amount", "pending_amount", "deposit", "balance"])
     user_core = user_core.replace([np.inf, -np.inf], 0).copy()
-    print(user_core)
     joined = user_core.loc[user_core["is_joined"] == True]
     joined = joined.loc[joined["total_position"] > 0]
     joined = joined.sort_values(by=["total_profit_pct"], ascending=[False])
@@ -658,14 +657,12 @@ def populate_daily_profit(currency_code=None, user_id=None):
     joined["total_profit_pct"] = joined["total_profit_pct"].round(4)
     joined["rank"] = joined["rank"] + 1
     joined = joined.drop(columns=["is_joined", "total_position"])
-    print(joined)
     upsert_data_to_database(joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
     not_joined = user_core.loc[~user_core["user_id"].isin(joined["user_id"].to_list())]
     not_joined = not_joined.drop(columns=["is_joined", "total_position"])
     not_joined["rank"] = None
     not_joined["total_profit_pct"] = not_joined["total_profit_pct"].round(4)
-    print(not_joined)
     upsert_data_to_database(not_joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
 def update_monthly_deposit(currency_code=None, user_id=None) -> None:
