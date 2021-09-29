@@ -47,7 +47,7 @@ def sync_user(payload):
     try:
         user = User.objects.create(**parsed_payload)
     except IntegrityError:
-        return {'err':'user exist','data':payload}
+        return sync_user(payload)
     except Exception as e:
         return {"err": str(e)}
     if user:
