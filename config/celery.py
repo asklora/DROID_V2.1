@@ -7,7 +7,7 @@ from environs import Env
 from celery.signals import worker_ready
 from django.conf import settings
 from celery.backends.rpc import RPCBackend as CeleryRpcBackend
-
+from django.conf import settings
 from dotenv import load_dotenv
 
 env = Env()
@@ -57,7 +57,7 @@ app.autodiscover_tasks()
 @worker_ready.connect
 def at_start(sender, **k):
     with sender.app.connection() as conn:
-         sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn)
+         sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn,queue=settings.UTILS_WORKER_DEFAULT_QUEUE)
 
 
 

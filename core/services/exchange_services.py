@@ -5,7 +5,7 @@ from core.universe.models import ExchangeMarket
 
 
 
-@app.task
+@app.task(ignore_result=True)
 def init_exchange_check():
     exchanges = ExchangeMarket.objects.exclude(currency_code=None)
     exchanges = exchanges.filter(group='Core')
@@ -16,7 +16,7 @@ def init_exchange_check():
             market_check_routines.apply_async(args=(exchange.mic,),eta=market.time_to_check)
 
 
-@app.task
+@app.task(ignore_result=True)
 def market_check_routines(mic):
     market = TradingHours(mic=mic)
     market.run_market_check()
