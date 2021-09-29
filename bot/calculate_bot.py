@@ -8,7 +8,17 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
 from general.data_process import tuple_data, NoneToZero, uid_maker
-from general.sql_query import get_active_universe, get_orders_position, get_orders_position_group_by_user_id, get_orders_position_performance, get_user_account_balance, get_user_core, get_user_deposit, get_user_profit_history, read_query
+from general.sql_query import (
+    get_active_universe,
+    get_count_orders_position, 
+    get_orders_group_by_user_id, 
+    get_orders_position, 
+    get_orders_position_performance, 
+    get_user_account_balance, 
+    get_user_core, 
+    get_user_deposit, 
+    get_user_profit_history, 
+    read_query)
 from general.table_name import (
     get_currency_calendar_table_name,
     get_data_dividend_daily_rates_table_name,
@@ -18,8 +28,7 @@ from general.table_name import (
     get_latest_price_table_name,
     get_latest_vol_table_name,
     get_master_tac_table_name,
-    get_user_deposit_history_table_name,
-    get_user_profit_history_table_name)
+    get_user_deposit_history_table_name)
 from datasource.dsws import get_data_static_from_dsws
 from bot import uno
 from global_vars import large_hedge, small_hedge, buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem, max_vol, min_vol, default_vol
@@ -586,10 +595,14 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
     user_core["deposit"] = np.where(user_core["deposit"].isnull(), 0, user_core["deposit"])
 
-    bot_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
+    bot_order_pending = get_orders_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
     user_core = user_core.merge(bot_order_pending, how="left", on=["user_id"])
+
+    count_position = get_count_orders_position(user_id=user_core["user_id"].to_list())
+    user_core = user_core.merge(count_position, how="left", on=["user_id"])
+
     user_core["bot_pending_amount"] = np.where(user_core["bot_pending_amount"].isnull(), 0, user_core["bot_pending_amount"])
-    stock_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=True)
+    stock_order_pending = get_orders_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=True)
     user_core = user_core.merge(stock_order_pending, how="left", on=["user_id"])
     user_core["stock_pending_amount"] = np.where(user_core["stock_pending_amount"].isnull(), 0, user_core["stock_pending_amount"])
 
@@ -633,21 +646,26 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
     user_core["user_id"] = user_core["user_id"].astype(int)
     user_core = user_core.drop(columns=["currency_code", "is_decimal", "bot_pending_amount", "stock_pending_amount", "pending_amount", "deposit", "balance"])
+    user_core = user_core.replace([np.inf, -np.inf], 0).copy()
+    print(user_core)
     joined = user_core.loc[user_core["is_joined"] == True]
+    joined = joined.loc[joined["total_position"] > 0]
     joined = joined.sort_values(by=["total_profit_pct"], ascending=[False])
     joined = joined.reset_index(inplace=False, drop=True)
     joined = joined.reset_index(inplace=False)
     joined = joined.rename(columns={"index" : "rank"})
     joined["total_profit_pct"] = joined["total_profit_pct"].round(4)
     joined["rank"] = joined["rank"] + 1
-    joined = joined.drop(columns=["is_joined"])
-    upsert_data_to_database(joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
+    joined = joined.drop(columns=["is_joined", "total_position"])
+    print(joined)
+    # upsert_data_to_database(joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
-    not_joined = user_core.loc[user_core["is_joined"] == False]
-    not_joined = not_joined.drop(columns=["is_joined"])
+    not_joined = user_core.loc[~user_core["user_id"].isin(joined["user_id"].to_list())]
+    not_joined = not_joined.drop(columns=["is_joined", "total_position"])
     not_joined["rank"] = None
     not_joined["total_profit_pct"] = not_joined["total_profit_pct"].round(4)
-    upsert_data_to_database(not_joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
+    print(not_joined)
+    # upsert_data_to_database(not_joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
 def update_monthly_deposit(currency_code=None, user_id=None) -> None:
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined")[["user_id", "is_joined"]]

@@ -10,7 +10,8 @@ from core.services.tasks import daily_hedge
 #debug
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        daily_hedge(currency="HKD")
+        # daily_hedge(currency="HKD")
+        populate_daily_profit()
         # print("Something")
         # users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
         # print(users)
