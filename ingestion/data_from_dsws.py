@@ -1490,17 +1490,33 @@ def update_mic_from_dsws(ticker=None, currency_code=None):
 def update_ibes_currency_from_dsws(ticker=None, currency_code=None):
     print("{} : === IBES Currency Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
-    # universe = universe.drop(columns=[["currency_code_ws", "currency_code_ibes"]])
-    filter_field = ["IBCUR", "WC06027"]
-    identifier = "ticker"
+    universe = universe.drop(columns=["currency_code_ibes"])
+    filter_field = ["IBCUR"]
+    identifier="ticker"
     result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
     result = result.rename(columns={"IBCUR": "currency_code_ibes", "index":"ticker"})
-    result["currency_code_ws"] = result["WC06027"].map(get_iso_currency_code_map())
-    result["currency_code_ibes"] = result["currency_code_ibes"].replace(['BPN'], ['GBP'])
-    result = result.drop(columns=["WC06027"])
+    result = remove_null(result, "currency_code_ibes")
     print(result)
     if(len(result)) > 0 :
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === IBES Currency Updated ===".format(datetimeNow()))
+    
+    update_worldscope_currency_from_dsws(ticker=ticker, currency_code=currency_code)
+
+def update_worldscope_currency_from_dsws(ticker=None, currency_code=None):
+    print("{} : === Worldscope Currency Start Ingestion ===".format(datetimeNow()))
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    universe = universe.drop(columns=["currency_code_ws"])
+    filter_field = ["WC06027"]
+    identifier="ticker"
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
+    result = result.rename(columns={"WC06027": "currency_code_ws", "index":"ticker"})
+    result = remove_null(result, "currency_code_ws")
+    print(result)
+    if(len(result)) > 0 :
+        result = universe.merge(result, how="left", on=["ticker"])
+        print(result)
+        upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+        report_to_slack("{} : === Worldscope Currency Updated ===".format(datetimeNow()))
