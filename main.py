@@ -5,7 +5,6 @@ from general.sql_process import do_function
 def dlpa_weekly():
     print("Run DLPA")
     # main_portfolio.py --live --portfolio_period 0
-
     query = f"select distinct on (index, ticker, spot_date, forward_date) index, ticker, spot_date, forward_date "
     query += f"from client_portfolios where forward_tri is null and forward_return is null "
     query += f"and index_forward_price is not null and index_forward_return is not null "
