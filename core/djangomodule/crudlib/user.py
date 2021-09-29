@@ -63,7 +63,7 @@ def sync_user(payload):
         })
         deposit_history =UserDepositHistory.objects.create(
             uid = get_uid(user.id, trading_day=dateNow(), replace=True),
-            user_id = user.id,
+            user_id = user,
             trading_day = dateNow(),
             deposit = transaction.amount)
         
