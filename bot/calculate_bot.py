@@ -587,7 +587,8 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined")[["user_id", "is_joined"]]
     user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, currency_code, amount as balance")
     user_deposit = get_user_deposit(user_id=user_id)
-
+    if user_core.empty:
+        return
     currency = get_currency_data(currency_code=currency_code)
     currency = currency[["currency_code", "is_decimal"]]
     user_core = user_core.merge(user_balance, how="left", on=["user_id"])
