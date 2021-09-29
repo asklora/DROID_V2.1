@@ -4,6 +4,7 @@
 - set `dev-run` as commit message in branch dev to trigger dev server update
 - set `test-noimage` as commit message in branch master to prod server update
 - set `'build-base-image` as commit message to trigger build base image and push to ecr
+
 ### docker login
 - aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 736885973837.dkr.ecr.ap-northeast-2.amazonaws.com
 
