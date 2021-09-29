@@ -26,6 +26,9 @@ def get_universe_rating_history_table_name():
 def get_universe_rating_detail_history_table_name():
     return "universe_rating_detail_history"
 
+def get_historic_fx_rate_table_name():
+    return "data_factor_eikon_others_fx"
+
 def get_currency_table_name():
     return "currency"
 
@@ -109,6 +112,9 @@ def get_factor_calculation_table_name():
 
 def get_factor_current_use_table_name():
     return "test_fundamental_score_current_names"
+
+def get_ingestion_name_source_table_name():
+    return "ingestion_name"
 
 def get_factor_rank_table_name():
     return "factor_result_pred_prod"

@@ -241,8 +241,9 @@ class Universe(models.Model):
     Error = models.TextField(null=True,blank=True)
     schi_name = models.TextField(null=True,blank=True)
     tchi_name = models.TextField(null=True,blank=True)
-    ibes_currency = models.TextField(null=True,blank=True)
-    
+    currency_code_ibes = models.TextField(null=True,blank=True)
+    currency_code_ws = models.TextField(null=True,blank=True)
+
     def __str__(self):
         return self.ticker
 
