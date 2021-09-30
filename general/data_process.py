@@ -68,6 +68,6 @@ def DivByZero(value1, value2):
 def NoneToZero(value):
     if value:
         return value
-    if value in [np.inf, -np.np.inf]:
+    if value in [np.inf, -np.inf]:
         return 0
     return 0
