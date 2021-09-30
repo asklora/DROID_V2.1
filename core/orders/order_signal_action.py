@@ -498,6 +498,7 @@ class SimulationOrderConnector(BaseOrderConnector):
         if not position.is_live:
             # transfer to wallet
             self.transfer_to_wallet(position)
+            position.notify_bot_done()
             if self.instance.order_type != 'apps':
                 # apps no fee
                 self.create_fee(position.position_uid)

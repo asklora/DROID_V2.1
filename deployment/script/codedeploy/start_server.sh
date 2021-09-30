@@ -4,3 +4,4 @@ docker-compose -p droid -f deployment/compose/droid.yml up --build --force-recre
 sudo chown -R ubuntu:ubuntu /home/ubuntu/DROID_V2.1
 cd /home/ubuntu/DROID_V2.1/deployment/ansible
 ansible-playbook alibabaworker.yml -i inventory.yml
+docker restart CeleryBroadcaster

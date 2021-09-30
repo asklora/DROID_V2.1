@@ -7,7 +7,7 @@ from django.db import IntegrityError
 import uuid
 from core.djangomodule.general import generate_id, formatdigit
 from simple_history.models import HistoricalRecords
-
+from core.services.notification import send_notification
 
 class Order(BaseTimeStampModel):
     """
@@ -170,6 +170,13 @@ class OrderPosition(BaseTimeStampModel):
         else:
             super().save(*args, **kwargs)
 
+    def notify_bot_done(self):
+        if not self.bot.is_stock():
+            return send_notification(
+                self.user_id.username,
+                f"Bot {self.bot.bot_type.bot_apps_name} completed",
+                f"{self.ticker} - {self.event}"
+                )
 
 class PositionPerformance(BaseTimeStampModel):
     """

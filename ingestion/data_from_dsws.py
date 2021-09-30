@@ -53,7 +53,8 @@ from general.sql_query import (
     get_factor_calculation_formula,
     get_factor_rank,
     get_fundamentals_score,
-    get_last_close_industry_code, 
+    get_last_close_industry_code,
+    get_currenct_fx_rate_dict,
     get_max_last_ingestion_from_universe, 
     get_ai_value_pred_final,
     get_ai_score_testing_history,
@@ -61,7 +62,11 @@ from general.sql_query import (
     get_specific_volume_avg,
     get_universe_rating, 
     get_vix,
-    get_master_ohlcvtr_data)
+    get_master_ohlcvtr_data,
+    get_ingestion_name_source,
+    get_currency_code_ibes_ws,
+    get_iso_currency_code_map,
+)
 from general.date_process import (
     backdate_by_day, 
     backdate_by_month,
@@ -435,12 +440,39 @@ def score_update_stock_return(list_of_start_end):
 
     return df
 
+def score_update_fx_conversion(df):
+    """ Convert all columns to USD for factor calculation (DSS, WORLDSCOPE, IBES using different currency) """
+
+    org_cols = df.columns.to_list()     # record original columns for columns to return
+
+    curr_code = get_currency_code_ibes_ws()     # map ibes/ws currency for each ticker
+    df = df.merge(curr_code, on='ticker', how='left')
+    df = df.dropna(subset=['currency_code_ibes', 'currency_code_ws', 'currency_code'], how='any')   # remove ETF / index / some B-share -> tickers will not be recommended
+
+    # map fx rate for conversion for each ticker
+    fx = get_currenct_fx_rate_dict()
+    df['fx_dss'] = df['currency_code'].map(fx)
+    df['fx_ibes'] = df['currency_code_ibes'].map(fx)
+    df['fx_ws'] = df['currency_code_ws'].map(fx)
+
+    ingestion_source = get_ingestion_name_source().dropna(subset=['score_name'])
+    ingestion_source = ingestion_source.loc[ingestion_source['non_ratio']]     # no fx conversion for ratio items
+
+    for name, g in ingestion_source.groupby(['source']):        # convert for ibes / ws
+        cols = g['score_name'].to_list()
+        df[cols] = df[cols].div(df[f'fx_{name}'], axis="index")
+
+    df['close'] = df['close']/df['fx_dss']  # convert close price
+
+    return df[org_cols]
+
 def score_update_factor_ratios(df):
     """ Calculate all factor used referring to DB ratio table """
 
     formula = get_factor_calculation_formula()
-
     print(df.columns)
+
+    df = score_update_fx_conversion(df)
 
     # Prepare for field requires add/minus
     add_minus_fields = formula[["field_num", "field_denom"]].dropna(how="any").to_numpy().flatten()
@@ -468,16 +500,6 @@ def score_update_factor_ratios(df):
     new_name = formula.loc[keep_original_mask, "name"].to_list()
     old_name = formula.loc[keep_original_mask, "field_num"].to_list()
     df[new_name] = df[old_name]
-
-    # b) Time series ratios (Calculate 1m change first)
-    for r in formula.loc[formula["field_num"] == formula["field_denom"], ["name", "field_denom"]].to_dict(
-            orient="records"):  # minus calculation for ratios
-        if r["name"][-2:] == "yr":
-            df[r["name"]] = df[r["field_denom"]] / df[r["field_denom"]].shift(12) - 1
-            df.loc[df.groupby("ticker").head(12).index, r["name"]] = np.nan
-        elif r["name"][-1] == "q":
-            df[r["name"]] = df[r["field_denom"]] / df[r["field_denom"]].shift(3) - 1
-            df.loc[df.groupby("ticker").head(3).index, r["name"]] = np.nan
 
     # c) Divide ratios
     print(f"      ------------------------> Calculate dividing ratios ")
@@ -518,7 +540,9 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print(tri)
 
     # get last week average volume
-    volume = get_specific_volume_avg(backdate_by_month(0), avg_days=7)
+    volume1 = get_specific_volume_avg(backdate_by_month(0), avg_days=7).set_index('ticker')
+    volume2 = get_specific_volume_avg(backdate_by_month(0), avg_days=91).set_index('ticker')
+    volume = (volume1/volume2).reset_index()
     print(volume)
 
     # merge scores used for calculation
@@ -712,21 +736,21 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # scale ai_score with history min / max
     print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
     fundamentals[["ai_score_unscaled", "ai_score2_unscaled"]] = fundamentals[["ai_score", "ai_score2"]]
-    try:
-        score_history = get_ai_score_testing_history(backyear=1)
-        m1 = MinMaxScaler(feature_range=(0, 10)).fit(score_history[["ai_score_unscaled", "ai_score2_unscaled"]])
-    except Exception as e:
-        print(e)
-        m1 = MinMaxScaler(feature_range=(0, 10)).fit(fundamentals[["ai_score", "ai_score2"]])
-    fundamentals[["ai_score", "ai_score2"]] = m1.transform(fundamentals[["ai_score", "ai_score2"]])
+    score_history = get_ai_score_testing_history(backyear=1)
+    for cur, g in fundamentals.groupby(['currency_code']):
+        try:
+            score_history_cur = score_history.loc[score_history['currency_code']==cur]
+            m1 = MinMaxScaler(feature_range=(0, 10)).fit(score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]])
+            fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = m1.transform(g[["ai_score", "ai_score2"]])
+        except Exception as e:
+            print(e)
+            fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = MinMaxScaler(feature_range=(0, 10)).fit_transform(g[["ai_score", "ai_score2"]])
 
     print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
 
     fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].clip(0, 10)
     fundamentals[['ai_score','ai_score2',"esg"]] = fundamentals[['ai_score','ai_score2',"esg"]].round(1)
     fundamentals[fundamentals_factors_scores_col] = fundamentals[fundamentals_factors_scores_col].round(1)
-
-    x = fundamentals.groupby(['currency_code']).agg(['min','max','mean','std'])
 
     universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
                                             "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
@@ -1466,15 +1490,33 @@ def update_mic_from_dsws(ticker=None, currency_code=None):
 def update_ibes_currency_from_dsws(ticker=None, currency_code=None):
     print("{} : === IBES Currency Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
-    universe = universe.drop(columns=["ibes_currency"])
+    universe = universe.drop(columns=["currency_code_ibes"])
     filter_field = ["IBCUR"]
     identifier="ticker"
     result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
-    result = result.rename(columns={"IBCUR": "ibes_currency", "index":"ticker"})
-    result = remove_null(result, "ibes_currency")
+    result = result.rename(columns={"IBCUR": "currency_code_ibes", "index":"ticker"})
+    result = remove_null(result, "currency_code_ibes")
     print(result)
     if(len(result)) > 0 :
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === IBES Currency Updated ===".format(datetimeNow()))
+    
+    update_worldscope_currency_from_dsws(ticker=ticker, currency_code=currency_code)
+
+def update_worldscope_currency_from_dsws(ticker=None, currency_code=None):
+    print("{} : === Worldscope Currency Start Ingestion ===".format(datetimeNow()))
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    universe = universe.drop(columns=["currency_code_ws"])
+    filter_field = ["WC06027"]
+    identifier="ticker"
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
+    result = result.rename(columns={"WC06027": "currency_code_ws", "index":"ticker"})
+    result = remove_null(result, "currency_code_ws")
+    print(result)
+    if(len(result)) > 0 :
+        result = universe.merge(result, how="left", on=["ticker"])
+        print(result)
+        upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+        report_to_slack("{} : === Worldscope Currency Updated ===".format(datetimeNow()))

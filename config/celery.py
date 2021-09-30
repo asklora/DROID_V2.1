@@ -6,7 +6,8 @@ import time
 from environs import Env
 from celery.signals import worker_ready
 from django.conf import settings
-
+from celery.backends.rpc import RPCBackend as CeleryRpcBackend
+from django.conf import settings
 from dotenv import load_dotenv
 
 env = Env()
@@ -46,11 +47,6 @@ dbdebug = env.bool("DROID_DEBUG")
 #   . portfolio.daily_hedge_user.user_position_check
 
 app = Celery('core.services')
-# app_dev=Celery('core.services',broker='amqp://rabbitmq:rabbitmq@16.162.110.123:5672')
-# app_dev.conf.task_default_queue = 'droid_dev'
-# app_dev.config_from_object('django.conf:settings', namespace='CELERY')
-# Load task modules from all registered Django app configs.
-# app_dev.autodiscover_tasks()
 if debug in ['config.settings.production','config.settings.prodtest']:
     app.conf.broker_login_method = 'PLAIN'
 app.config_from_object('django.conf:settings', namespace='CELERY')
@@ -61,48 +57,13 @@ app.autodiscover_tasks()
 @worker_ready.connect
 def at_start(sender, **k):
     with sender.app.connection() as conn:
-         sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn)
-
-
-app.conf.task_routes = {
-    # ===== SHORT INTERVAL =====
-    #websocket ping
-    'core.services.tasks.ping_available_presence': {'queue': settings.BROADCAST_WORKER_DEFAULT_QUEUE},
-    #prune inactive channel
-    'core.services.tasks.channel_prune':{'queue': settings.BROADCAST_WORKER_DEFAULT_QUEUE},
-    #realtime ranking and portfolio
-   ' core.services.order_services.update_rtdb_user_porfolio':{'queue': settings.BROADCAST_WORKER_DEFAULT_QUEUE},
-    #market price realtime
-    'datasource.rkd.update_rtdb':{'queue': settings.BROADCAST_WORKER_DEFAULT_QUEUE},
-    'datasource.rkd.bulk_update_rtdb':{'queue': settings.BROADCAST_WORKER_DEFAULT_QUEUE},
-    # ===== SHORT INTERVAL =====
-
-    # ===== ORDER & PORTFOLIO =====
-    # order executor
-    'core.services.order_services.order_executor':{'queue': settings.PORTFOLIO_WORKER_DEFAULT_QUEUE},
-    # ===== ORDER & PORTFOLIO =====
-    
-    # ===== HEDGE BOT RELATED =====
-    # weekly topstock and hedge
-    'core.services.tasks.populate_client_top_stock_weekly':{'queue': settings.HEDGE_WORKER_DEFAULT_QUEUE},
-    # ===== HEDGE BOT RELATED =====
-
-    # ===== UTILITY =====
-    # update ticker weekly
-    'core.services.tasks.weekly_universe_firebase_update':{'queue': settings.UTILS_WORKER_DEFAULT_QUEUE},
-    # exchange hours updater
-    'core.services.exchange_services.init_exchange_check':{'queue': settings.UTILS_WORKER_DEFAULT_QUEUE},
-    'core.services.exchange_services.market_check_routines':{'queue': settings.UTILS_WORKER_DEFAULT_QUEUE},
-    # ===== UTILITY =====
-
-    # ===== CELERY DEFAULT =====
-    # contains celery beat, user sync, micro service cross language
-    #   . config.celery.app_publish -> for cross language/app producer
-    #   . config.celery.listener  -> for cross language/app consumer
+         sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn,queue=settings.UTILS_WORKER_DEFAULT_QUEUE)
 
 
 
-    }
+
+_RPC = CeleryRpcBackend(app=app)
+
 
 
 

@@ -1,9 +1,7 @@
 from django.core.management.base import BaseCommand
-from config.celery import debug_task
-from datasource.rkd import RkdStream,bulk_update_rtdb
 import time
-from config.celery import app
-
+from config.celery import app,_RPC,app_publish
+from django.conf import settings
 def callback(message):
     print(message)
 
@@ -19,12 +17,24 @@ class Command(BaseCommand):
         # while True:
         #     print('ok')
         #     time.sleep(5)
-        # app.send_task("djangomodule.aoa.apa", kwargs={
-        #               "payload": "222"}, queue='javascript')
+        # payload ={
+        #     "type":"function",
+        #     "module":"djangomodule.crudlib.notification.send_notif",
+        #     "payload":{
+        #     "username":"babebo",
+        #     "title":"notif",
+        #     "body":"hallo boy"
+        #     }
+        # }
+        # task = app.send_task("config.celery.listener", args=(payload,), queue=settings.ASKLORA_QUEUE,backend=_RPC)
+        # print(task.get())
         
         # while True:
         #     time.sleep(2)
-        #     if r.status ==""
-        #     print(r.status)
+        #     print(task.backend)
         # r.get(on_message=callback, propagate=False)
+        r=app_publish.delay()
+        print(r.get())
+        # while True:
+        #     print(r.status)
 

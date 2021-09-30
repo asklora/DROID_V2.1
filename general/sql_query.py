@@ -51,7 +51,9 @@ from general.table_name import (
     get_factor_calculation_table_name,
     get_factor_rank_table_name,
     get_ai_score_history_testing_table_name,
-    get_factor_current_use_table_name
+    get_factor_current_use_table_name,
+    get_historic_fx_rate_table_name,
+    get_ingestion_name_source_table_name,
 )
 
 
@@ -441,6 +443,11 @@ def get_factor_current_used():
     data = read_query(query, table=get_factor_current_use_table_name(), alibaba=True)
     return data
 
+def get_ingestion_name_source():
+    query = f"SELECT * FROM {get_ingestion_name_source_table_name()}"
+    data = read_query(query, table=get_ingestion_name_source_table_name(), alibaba=True)
+    return data
+
 def get_factor_rank():
     query = f"SELECT * FROM {get_factor_rank_table_name()}"
     data = read_query(query, table=get_factor_rank_table_name(), alibaba=True)
@@ -559,14 +566,33 @@ def get_consolidated_data(column, condition, group_field=None):
     return data
 
 def get_ai_score_testing_history(backyear=1):
-    query =  f"SELECT currency_code, ai_score "
-    # query =  f"SELECT currency_code, min(ai_score) as score_min, max(ai_score) as score_max FROM {get_ai_score_history_testing_table_name()} "
-    query += f"FROM {get_ai_score_history_testing_table_name()} "
-    query += f"WHERE period_end > '{backdate_by_year(backyear)}' "
-    # query += f"GROUP BY currency_code"
-    data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
-    # data = data.groupby(['currency_code']).mean().reset_index()
+    ''' get ai_score / ai_score2 history from universe rating '''
+    query =  f"SELECT trading_day, h.ticker, currency_code, ai_score_unscaled, ai_score2_unscaled "
+    query += f"FROM {get_universe_rating_history_table_name()} h "
+    query += f"INNER JOIN {get_universe_table_name()} u ON u.ticker=h.ticker "
+    query += f"WHERE trading_day > '{backdate_by_year(backyear)}' "
+    query += f"AND ai_score_unscaled IS NOT NULL "
+    data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=False)
     return data
+
+def get_currenct_fx_rate_dict():
+    ''' get ai_score / ai_score2 history from universe rating '''
+    query =  f"SELECT * FROM {get_historic_fx_rate_table_name()} "
+    query += f"WHERE period_end > '{backdate_by_day(5)}'"
+    data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
+    return data.sort_values('period_end').groupby('ticker')['fx_rate'].last().to_dict()
+
+def get_currency_code_ibes_ws():
+    ''' get ai_score / ai_score2 history from universe rating '''
+    query =  f"SELECT ticker, currency_code_ibes, currency_code_ws FROM universe_newcode"
+    data = read_query(query, table="universe_newcode", alibaba=True)
+    return data
+
+def get_iso_currency_code_map():
+    ''' get ai_score / ai_score2 history from universe rating '''
+    query =  f"SELECT currency_code, nation_code FROM iso_currency_code"
+    data = read_query(query, table="iso_currency_code", alibaba=True)
+    return data.set_index('nation_code')['currency_code'].to_dict()
 
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_history_table_name()
@@ -764,7 +790,7 @@ def get_orders_position(user_id=None, ticker=None, currency_code=None, position_
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
-def get_orders_position_group_by_user_id(user_id=None, ticker=None, currency_code=None, stock=False):
+def get_orders_group_by_user_id(user_id=None, ticker=None, currency_code=None, stock=False):
     filter = ""
     if type(user_id) != type(None):
         filter = f"and user_id in {tuple_data(user_id)} "
@@ -775,12 +801,26 @@ def get_orders_position_group_by_user_id(user_id=None, ticker=None, currency_cod
 
     table_name = get_orders_table_name()
     if(stock):
-        query = f"select user_id, sum(amount) as stock_pending_amount from orders where status='pending' and side='buy' and canceled_at is null and bot_id = 'STOCK_stock_0' {filter} group by user_id"
+        query = f"select user_id, sum(amount) as stock_pending_amount from {table_name} where status='pending' and side='buy' and canceled_at is null and bot_id = 'STOCK_stock_0' {filter} group by user_id"
     else:
         query = f"select user_id, (sum((performance ->> 'current_bot_cash_balance')::double precision) + sum(amount))  as bot_pending_amount from ( "
         query += f"select user_id, (setup ->> 'performance')::json as performance, amount "
-        query += f"from orders where status='pending' and side='buy' and canceled_at is null and bot_id != 'STOCK_stock_0' {filter}) as result "
+        query += f"from {table_name} where status='pending' and side='buy' and canceled_at is null and bot_id != 'STOCK_stock_0' {filter}) as result "
         query += f"group by user_id; "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def get_count_orders_position(user_id=None, ticker=None, currency_code=None):
+    filter = ""
+    if type(user_id) != type(None):
+        filter = f"where user_id in {tuple_data(user_id)} "
+    elif type(ticker) != type(None):
+        filter = f"where ticker in {tuple_data(ticker)} "
+    elif type(currency_code) != type(None):
+        filter = f"where ticker in (select ticker from universe where currency_code in {tuple_data(currency_code)}) "
+
+    table_name = get_orders_position_table_name()
+    query = f"select user_id, count(position_uid) as total_position from  {table_name} {filter} group by user_id; "
     data = read_query(query, table_name, cpu_counts=True)
     return data
 

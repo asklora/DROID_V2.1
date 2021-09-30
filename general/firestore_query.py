@@ -1,12 +1,10 @@
 import math
 import numpy as np
-from pymongo import MongoClient
-from global_vars import MONGO_URL
 import pandas as pd
 from firebase_admin import firestore
-from core.djangomodule.general import jsonprint
+from core.djangomodule.general import logging
 from django.conf import settings
-
+import time
 
 
 
@@ -45,7 +43,16 @@ def change_date_to_str(data, exception=None):
 def delete_firestore_user(user_id:str):
     db = firestore.client()
     collection =db.collection(settings.FIREBASE_COLLECTION['portfolio']).document(f"{user_id}")
-    collection.delete()
+    trying =0
+    while collection.get().exists:
+            collection.delete()
+            time.sleep(2)
+            trying += 1
+            if trying > 10:
+                logging.warning(f"{user_id} cannot delete")
+                break
+    logging.info(f"{user_id} deleted")
+    # user_data =db.collection(settings.FIREBASE_COLLECTION['portfolio']).where("id","==",f"{user_id}")
 
 
 

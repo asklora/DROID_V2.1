@@ -1,11 +1,13 @@
-from general.data_process import get_uid
-from core.user.models import User,Accountbalance,TransactionHistory, UserDepositHistory
+from core.user.models import User,Accountbalance,TransactionHistory,UserDepositHistory
 from core.orders.models import OrderPosition,PositionPerformance, Order
 from ..general import is_hashed
 from django.contrib.auth.hashers import make_password
 from ingestion import firebase_user_update
+from bot.calculate_bot import populate_daily_profit
+from django.db import IntegrityError
 from general.firestore_query import delete_firestore_user
-
+from general.data_process import get_uid
+from general.date_process import dateNow
 
 def sync_user(payload):
     create=False
@@ -33,7 +35,8 @@ def sync_user(payload):
         user.save()
         for key in unused_key:
             payload.pop(key)
-        firebase_user_update([user.id])
+        firebase_user_update(user_id=[user.id])
+        populate_daily_profit(user_id=[user.id])
         return payload
 
 
@@ -41,7 +44,12 @@ def sync_user(payload):
     for attr,val in payload.items():
         if hasattr(User,attr):
             parsed_payload[attr] =val
-    user = User.objects.create(**parsed_payload)
+    try:
+        user = User.objects.create(**parsed_payload)
+    except IntegrityError:
+        return {'err':'user exist','data':payload}
+    except Exception as e:
+        return {"err": str(e)}
     if user:
         if is_hashed(payload['password']):
             pass
@@ -53,15 +61,18 @@ def sync_user(payload):
         transaction_detail={
             'event':'first deposit'
         })
+        try:
+            deposit_history =UserDepositHistory.objects.create(
+                uid = get_uid(user.id, trading_day=dateNow(), replace=True),
+                user_id = user,
+                trading_day = dateNow(),
+                deposit = transaction.amount)
+        except Exception as e:
+            return {"err": str(e)}
         
-        # deposit_history =UserDepositHistory.objects.create(
-        #     uid = get_uid(user.id, trading_day=dateNow(), replace=True),
-        #     user_id = user.id,
-        #     trading_day = dateNow(),
-        #     deposit = 100000)
-        # deposit_history.save()
         parsed_payload['balance_info'] = { 'balance_uid':wallet.balance_uid,'currency_code':'HKD','transaction_id':transaction.id,'transaction_amount':transaction.amount}
-        firebase_user_update([user.id])
+        firebase_user_update(user_id=[user.id])
+        populate_daily_profit(user_id=[user.id])
         return parsed_payload
 
 

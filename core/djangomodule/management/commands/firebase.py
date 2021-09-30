@@ -8,7 +8,7 @@ from firebase_admin import firestore
 import random
 import requests
 
-
+from django.conf import settings
 def delete_collection(coll_ref, batch_size):
     docs = coll_ref.limit(batch_size).stream()
     deleted = 0
@@ -25,6 +25,15 @@ class Command(BaseCommand):
     
 
     def handle(self, *args, **options):
+        user_id=643
+        db = firestore.client()
+        collection =db.collection(settings.FIREBASE_COLLECTION['portfolio']).document(f"{user_id}")
+        while collection.get().exists:
+            collection.delete()
+        user_data =db.collection(settings.FIREBASE_COLLECTION['portfolio']).where("id","==",f"{user_id}")
+        # print(collection.get().exists)
+        for data in user_data.get():
+            print(data.id)
         # firebase_user_update(user_id=[119])
         # mongo_universe_update(currency_code=["HKD"])
         # db = firestore.client()
@@ -32,8 +41,8 @@ class Command(BaseCommand):
         # collection =db.collection(u"portfolio").document(u"638").get()
         # collection =db.collection(u"portfolio").where("user_id","==",638)
         # delete_collection(collection,1)
-        res = requests.delete("https://firestore.googleapis.com/v1/projects/asklora-android/databases/(default)/documents/portfolio/638")
-        print(res)
+        # res = requests.delete("https://firestore.googleapis.com/v1/projects/asklora-android/databases/(default)/documents/portfolio/638")
+        # print(res)
         # ticker = ['0998.HK','0267.HK','0883.HK']
         # while True:
         #     index = random.randint(0,2)
