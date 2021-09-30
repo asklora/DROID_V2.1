@@ -2,6 +2,7 @@ from general.date_process import dateNow
 from general.sql_query import read_query
 from general.sql_process import do_function
 
+
 def dlpa_weekly():
     print("Run DLPA")
     # main_portfolio.py --live --portfolio_period 0
