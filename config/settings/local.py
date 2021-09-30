@@ -41,11 +41,11 @@ CACHES = {
 print("using test db changes local")
 read_endpoint, write_endpoint, port = db.test_url
 CELERY_BROKER_URL = "amqp://rabbitmq:rabbitmq@16.162.110.123:5672"
-CELERY_TASK_DEFAULT_QUEUE ='droid_dev'
-HEDGE_WORKER_DEFAULT_QUEUE ='droid_dev'
-BROADCAST_WORKER_DEFAULT_QUEUE='droid_dev'
-PORTFOLIO_WORKER_DEFAULT_QUEUE='droid_dev'
-UTILS_WORKER_DEFAULT_QUEUE='droid_dev'
+CELERY_TASK_DEFAULT_QUEUE ='local-dev'
+HEDGE_WORKER_DEFAULT_QUEUE ='local-dev'
+BROADCAST_WORKER_DEFAULT_QUEUE='local-dev'
+PORTFOLIO_WORKER_DEFAULT_QUEUE='local-dev'
+UTILS_WORKER_DEFAULT_QUEUE='local-dev'
 ASKLORA_QUEUE="asklora-dev"
 print(f'using read: {read_endpoint}')
 # print(f'using write: {write_endpoint}')
@@ -77,6 +77,7 @@ DATABASES = {
     },
 }
 
+CELERY_RESULT_BACKEND = f'db+postgres://{os.getenv("DBUSER")}:ml2021%23LORA@{read_endpoint}:{port}/{os.getenv("DBNAME")}'
 
 FIREBASE_COLLECTION={
     'portfolio':'dev_portfolio',

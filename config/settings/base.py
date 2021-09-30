@@ -202,7 +202,6 @@ USE_TZ = False
 Settings for Redis and Celery
 """
 CELERY_TIMEZONE = "UTC"
-CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TASK_SERIALIZER = "json"
@@ -214,6 +213,7 @@ CELERY_IMPORTS = [
     "core.services.order_services",
     "core.services.exchange_services",
 ]
+
 
 
 CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"

@@ -33,8 +33,10 @@ class Command(BaseCommand):
         #     time.sleep(2)
         #     print(task.backend)
         # r.get(on_message=callback, propagate=False)
-        r=app_publish.delay()
-        print(r.get())
+        # r=app_publish.delay()
+        # print(r.get())
         # while True:
         #     print(r.status)
+        r=app.AsyncResult(id='aa11c040-6683-4146-a9e7-b484eee8019f')
+        print(r.get())
 

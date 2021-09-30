@@ -49,8 +49,12 @@ dbdebug = env.bool("DROID_DEBUG")
 app = Celery('core.services')
 if debug in ['config.settings.production','config.settings.prodtest']:
     app.conf.broker_login_method = 'PLAIN'
+# app.conf.s3_access_key_id = 'AKIA2XEOTUNGWEQ43TB6'
+# app.conf.s3_secret_access_key = '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'
+# app.conf.s3_bucket = 'celery-result'
+# app.conf.s3_base_path = ''
+# app.conf.s3_endpoint_url = 'https://droid-v2-logs.s3.ap-east-1.amazonaws.com'
 app.config_from_object('django.conf:settings', namespace='CELERY')
-
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
 
@@ -110,4 +114,6 @@ def listener(self, data):
         module, function = data['module'].rsplit('.', 1)
         mod = import_module(module)
         func = getattr(mod, function)
-        func()
+        data = func()
+        if isinstance(data,dict):
+            return data
