@@ -218,6 +218,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry
     data["performance"]["share_num"] = total_bot_share_num
     data['performance']["current_bot_cash_balance"] = bot_cash_balance
     data["position"]["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
+    data["position"]["spot_date"] = spot_date.date().strftime("%Y-%m-%d")
     data["position"]["total_bot_share_num"] = total_bot_share_num
     data["position"]["max_loss_pct"] = - (dur * classic_vol * 1.25)
     data["position"]["max_loss_price"] = round(price * (1 + data["position"]["max_loss_pct"]), int(digits))
@@ -316,6 +317,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     data['performance']["vol"] = vol
     data['performance']["current_bot_cash_balance"] = bot_cash_balance
     data['position']["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
+    data["position"]["spot_date"] = spot_date.date().strftime("%Y-%m-%d")
     data['position']["vol"] = vol
     data['position']["total_bot_share_num"] = total_bot_share_num
     data['position']["max_loss_pct"] = potential_loss
@@ -427,7 +429,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     data['position']["bot_cash_balance"] = bot_cash_balance
     data['position']["investment_amount"]=investment_amount
     data['position']["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
-    
+    data["position"]["spot_date"] = spot_date.date().strftime("%Y-%m-%d")
     
     return data
 
