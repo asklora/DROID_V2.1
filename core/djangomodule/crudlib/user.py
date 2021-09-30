@@ -89,6 +89,7 @@ def sync_delete_user(payload):
         user_id=user.id
         user.delete()
         delete_firestore_user(user_id)
+        
         return {'message':f'{user.username} {user_id} deleted successfully'}
 
     except User.DoesNotExist:
