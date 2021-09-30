@@ -14,7 +14,6 @@ user/bot
 broker/simulation
 init/hedge
     hedge expired,finish / hedge daily
-
 buy/sell
 
 """
