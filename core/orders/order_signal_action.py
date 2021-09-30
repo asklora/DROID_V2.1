@@ -313,7 +313,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         performance.current_pnl_ret = (performance.current_bot_cash_balance + performance.current_investment_amount -
                                 position.investment_amount) / position.investment_amount
         performance.order_id = self.instance
-
+        position.bot_cash_balance = performance.current_bot_cash_balance
         performance.save()
         position.save()
         
