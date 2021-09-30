@@ -108,10 +108,6 @@ def set_user_joined(mocker, user: User) -> None:
     currency_mock.assert_called_once()
     upsert_mock.assert_called_once()
 
-    # we manually have to put it here because in the server,
-    # this part of code is called when the user joined
-    firebase_user_update([user.id])
-
 
 def delete_user(user: User) -> None:
     PositionPerformance.objects.filter(position_uid__user_id=user).delete()
