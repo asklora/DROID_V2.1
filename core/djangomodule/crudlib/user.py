@@ -86,9 +86,10 @@ def sync_delete_user(payload):
         OrderPosition.objects.filter(user_id=user).delete()
         TransactionHistory.objects.filter(balance_uid__user=user).delete()
         Accountbalance.objects.filter(user=user).delete()
+        user_id=user.id
         user.delete()
-        delete_firestore_user(user.id)
-        return {'message':f'{user.username} {user.id} deleted successfully'}
+        delete_firestore_user(user_id)
+        return {'message':f'{user.username} {user_id} deleted successfully'}
 
     except User.DoesNotExist:
         return {'message':f'{payload["username"]} doesnt exist, nothing perform'}
