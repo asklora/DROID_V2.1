@@ -645,6 +645,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
             daily_profit_pct = round(profit / NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) * 100, 4)
             daily_invested_amount = formatdigit(NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) + user_core.loc[index, "pending_amount"], currency_decimal=row["is_decimal"])
         else:
+            
             profit = 0
             daily_profit_pct = 0
             daily_invested_amount = 0
