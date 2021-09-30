@@ -38,9 +38,6 @@ def get_user_account_balance(
 
 
 def get_user_profit_history(user_id=None, field="*") -> pd.DataFrame:
-    # Newly joined user should not have  profit history data
-    assert UserProfitHistory.objects.filter(user_id=user_id[0]).count() == 0
-
     # for the dataframe, we return empty dataframe with columns
     # similar to UserProfitHistory
     profit_history_col = [f.name for f in UserProfitHistory._meta.get_fields()]
