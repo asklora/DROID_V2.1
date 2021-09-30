@@ -423,7 +423,7 @@ class OrderListSerializers(serializers.ModelSerializer):
         model = Order
         fields = ["ticker", "side",
                   "order_uid", "status", "created", "filled_at",
-                  "placed", "placed_at", "qty","amount","bot_name","currency","bot_range","ticker_name"]
+                  "placed", "placed_at", "qty","amount","bot_name","currency","bot_range","ticker_name","setup"]
     
     def get_ticker_name(self,obj) -> str:
         return obj.ticker.ticker_name

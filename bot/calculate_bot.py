@@ -218,6 +218,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry
     data["performance"]["share_num"] = total_bot_share_num
     data['performance']["current_bot_cash_balance"] = bot_cash_balance
     data["position"]["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
+    data["position"]["spot_date"] = spot_date.date().strftime("%Y-%m-%d")
     data["position"]["total_bot_share_num"] = total_bot_share_num
     data["position"]["max_loss_pct"] = - (dur * classic_vol * 1.25)
     data["position"]["max_loss_price"] = round(price * (1 + data["position"]["max_loss_pct"]), int(digits))
@@ -316,6 +317,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     data['performance']["vol"] = vol
     data['performance']["current_bot_cash_balance"] = bot_cash_balance
     data['position']["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
+    data["position"]["spot_date"] = spot_date.date().strftime("%Y-%m-%d")
     data['position']["vol"] = vol
     data['position']["total_bot_share_num"] = total_bot_share_num
     data['position']["max_loss_pct"] = potential_loss
@@ -427,7 +429,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     data['position']["bot_cash_balance"] = bot_cash_balance
     data['position']["investment_amount"]=investment_amount
     data['position']["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
-    
+    data["position"]["spot_date"] = spot_date.date().strftime("%Y-%m-%d")
     
     return data
 
@@ -645,6 +647,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
             daily_profit_pct = round(profit / NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) * 100, 4)
             daily_invested_amount = formatdigit(NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) + user_core.loc[index, "pending_amount"], currency_decimal=row["is_decimal"])
         else:
+            
             profit = 0
             daily_profit_pct = 0
             daily_invested_amount = 0
