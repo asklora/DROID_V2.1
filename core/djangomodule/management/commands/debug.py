@@ -7,18 +7,25 @@ from bot.calculate_bot import populate_daily_profit, update_monthly_deposit
 from ingestion.firestore_migration import firebase_user_update
 from django.core.management.base import BaseCommand
 from core.services.tasks import daily_hedge
+from datasource.rkd import RkdData,RkdStream
 #debug
 class Command(BaseCommand):
     def handle(self, *args, **options):
         # daily_hedge(currency="HKD")
         # print("Something")
-        users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
+        rkd = RkdStream()
+        data =rkd.bulk_get_quote(["2777.HK"],df=True)
+        print(data)
+        # data = data.set_index('ticker')
+        # records = data.to_dict("index")
+        # rkd.update_rtdb(records)
+        # users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
         # print(users)
         # populate_daily_profit()
         # update_monthly_deposit(user_id = [229])
         # uno_position_check("4cad83492f4749549a21412925560f4b", to_date=None, tac=False, hedge=False, latest=True)
-        populate_daily_profit()
-        firebase_user_update(user_id=users)
+        # populate_daily_profit()
+        # firebase_user_update(user_id=users)
 
         # from_curr = Currency.objects.get(currency_code="HKD")
         # to_curr = Currency.objects.get(currency_code="USD")
