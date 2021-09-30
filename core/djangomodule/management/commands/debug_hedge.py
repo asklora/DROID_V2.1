@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from core.orders.models import Order,OrderPosition,PositionPerformance
 from core.master.models import MasterOhlcvtr
-from portfolio import ucdc_position_check
+from portfolio import ucdc_position_check,uno_position_check
 from datetime import datetime
 from core.user.models import User
 import pandas as pd
@@ -13,7 +13,7 @@ def create_buy_order(
     created:datetime,
     price: float,
     ticker: str,
-    amount: float = 10000,
+    amount: float = 20000,
     bot_id: str = "STOCK_stock_0",
     margin: int = 1,
     # qty: int = 100,
@@ -30,8 +30,8 @@ def create_buy_order(
         # qty=qty,
         side="buy",
         ticker_id=ticker,
-        user_id_id=user_id,
-        user_id=user,
+        # user_id_id=user_id,
+        user_id=user_id,
     )
 
 
@@ -39,12 +39,12 @@ def create_buy_order(
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        # user = User.objects.get(id=198)
+        # user = User.objects.get(id=713)
         
-        # ticker = "1658.HK"
+        # ticker = "2331.HK"
         # master = MasterOhlcvtr.objects.get(
         #     ticker=ticker,
-        #     trading_day="2021-06-01",
+        #     trading_day="2021-03-31",
         # )
         # price = master.close
         # log_time = datetime.combine(master.trading_day, datetime.min.time())
@@ -53,9 +53,9 @@ class Command(BaseCommand):
         #     created=log_time,
         #     ticker=ticker,
         #     price=price,
-        #     user_id=user.id,
+        #     user_id=user,
         #     margin=2,
-        #     bot_id="UCDC_ATM_015384",
+        #     bot_id="UNO_OTM_05",
         # )
 
         # buy_order.status = "placed"
@@ -78,10 +78,10 @@ class Command(BaseCommand):
         # )
 
         # step 2: setup hedge
-        ucdc_position_check(
-            position_uid='6e6044b2c1d44540b24b47f1b0ed49bb',
+        uno_position_check(
+            position_uid='50666e6827e946009b602fc586c0c957',
             tac=True,
-            to_date='2021-07-05'
+            to_date='2021-09-29'
         )
         # # step 3: get hedge positions
         # performance = PositionPerformance.objects.filter(

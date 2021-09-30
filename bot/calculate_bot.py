@@ -51,7 +51,7 @@ def get_q(ticker, t):
         q = data.loc[0, "q"]
     except Exception as e:
         q = 0
-    return q
+    return NoneToZero(q)
 
 
 def get_r(currency_code, t):
@@ -62,7 +62,7 @@ def get_r(currency_code, t):
         r = data.loc[0, "r"]
     except Exception as e:
         r = 0
-    return r
+    return NoneToZero(r)
 
 
 def get_spot_date(spot_date, ticker):
@@ -112,6 +112,8 @@ def get_expiry_date(time_to_exp, spot_date, currency_code, apps=False):
 
 
 def get_strike_barrier(price, vol, bot_option_type, bot_group):
+    price = NoneToZero(price)
+    vol = NoneToZero(vol)
     if bot_group == "UNO":
         if bot_option_type == "OTM":
             strike = price * (1 + vol * 0.5)
@@ -122,12 +124,12 @@ def get_strike_barrier(price, vol, bot_option_type, bot_group):
             barrier = price * (1 + vol * 2)
         elif bot_option_type == "ITM":
             barrier = price * (1 + vol * 1.5)
-        return float(strike), float(barrier)
+        return float(NoneToZero(strike)), float(NoneToZero(barrier))
 
     elif bot_group == "UCDC":
         strike = price
         strike_2 = price * (1 - vol * 1.5)
-        return float(strike), float(strike_2)
+        return float(NoneToZero(strike)), float(NoneToZero(strike_2))
     return False
 
 
@@ -142,17 +144,23 @@ def get_option_price_ucdc(price, strike, strike_2, t, r, q, v1, v2):
 def get_v1_v2(ticker, price, trading_day, t, r, q, strike, barrier):
     trading_day = check_date(trading_day)
     status, obj = get_vol_by_date(ticker, trading_day)
+    price = NoneToZero(price)
+    t = NoneToZero(t)
+    r = NoneToZero(r)
+    q = NoneToZero(q)
+    strike = NoneToZero(strike)
+    barrier = NoneToZero(barrier)
     if status:
-        v1 = uno.find_vol(strike / price, t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
+        v1 = uno.find_vol(NoneToZero(strike / price), t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
                           obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v1 = np.nan_to_num(v1, nan=0)
-        v2 = uno.find_vol(barrier / price, t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
+        v2 = uno.find_vol(NoneToZero(barrier / price), t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
                           obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v2 = np.nan_to_num(v2, nan=0)
     else:
         v1 = default_vol
         v2 = default_vol
-    return float(v1), float(v2)
+    return float(NoneToZero(v1)), float(NoneToZero(v2))
 
 
 def get_trq(ticker, expiry, spot_date, currency_code):
@@ -163,10 +171,13 @@ def get_trq(ticker, expiry, spot_date, currency_code):
         t = 1
     r = get_r(currency_code, t)
     q = get_q(ticker, t)
-    return int(t), float(r), float(q)
+    return int(NoneToZero(t)), float(NoneToZero(r)), float(NoneToZero(q))
 
 
 def get_vol(ticker, trading_day, t, r, q, time_to_exp):
+    t = NoneToZero(t)
+    r = NoneToZero(r)
+    q = NoneToZero(q)
     trading_day = check_date(trading_day)
     status, obj = get_vol_by_date(ticker, trading_day)
     if status:
@@ -182,7 +193,7 @@ def get_vol(ticker, trading_day, t, r, q, time_to_exp):
 
     else:
         vol = default_vol
-    return float(vol)
+    return float(NoneToZero(vol))
 
 
 def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry_date,margin:int=1):

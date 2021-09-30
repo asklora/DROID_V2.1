@@ -47,7 +47,7 @@ def sync_user(payload):
     try:
         user = User.objects.create(**parsed_payload)
     except IntegrityError:
-        return {'err':'user exist','data':payload}
+        return sync_user(payload)
     except Exception as e:
         return {"err": str(e)}
     if user:
@@ -67,6 +67,7 @@ def sync_user(payload):
                 user_id = user,
                 trading_day = dateNow(),
                 deposit = transaction.amount)
+        
         except Exception as e:
             return {"err": str(e)}
         
