@@ -373,6 +373,7 @@ class RkdData(Rkd):
         formated_json_data = self.parse_response(response)
         df_data = pd.DataFrame(formated_json_data).rename(columns={
                 "CF_ASK": "intraday_ask",
+                "CF_OPEN": "open",
                 "CF_CLOSE": "close",
                 "CF_BID": "intraday_bid",
                 "CF_HIGH": "high", 
@@ -389,6 +390,7 @@ class RkdData(Rkd):
             {
                 "intraday_ask":"float",
                 "close":"float",
+                "open":"float",
                 "intraday_bid":"float",
                 "high":"float",
                 "low":"float",
@@ -433,7 +435,7 @@ class RkdData(Rkd):
         for universe in splitting_df:
             ticker = universe.tolist()
             payload = self.retrive_template(ticker, fields=[
-                                            "CF_ASK", "CF_CLOSE", "CF_BID", "PCTCHNG", "CF_HIGH", "CF_LOW", "CF_LAST", 
+                                            "CF_ASK","CF_OPEN", "CF_CLOSE", "CF_BID", "PCTCHNG", "CF_HIGH", "CF_LOW", "CF_LAST", 
                                             "CF_VOLUME", "TRADE_DATE","CF_NETCHNG"])
             bulk_payload.append(payload)
         
@@ -462,7 +464,7 @@ class RkdData(Rkd):
             ticker = universe.tolist()
             print(len(ticker))
             payload = self.retrive_template(ticker, fields=[
-                                            "CF_ASK", "CF_CLOSE", "CF_BID", "PCTCHNG", "CF_HIGH", "CF_LOW", "CF_LAST", 
+                                            "CF_ASK","CF_OPEN", "CF_CLOSE", "CF_BID", "PCTCHNG", "CF_HIGH", "CF_LOW", "CF_LAST", 
                                             "CF_VOLUME", "TRADE_DATE","CF_NETCHNG"])
             response = self.send_request(quote_url, payload, self.auth_headers())
 
@@ -470,6 +472,7 @@ class RkdData(Rkd):
             df_data = pd.DataFrame(formated_json_data).rename(columns={
                 "CF_ASK": "intraday_ask",
                 "CF_CLOSE": "close",
+                "CF_OPEN": "open",
                 "CF_BID": "intraday_bid",
                 "CF_HIGH": "high", 
                 "CF_LOW": "low",
@@ -479,7 +482,7 @@ class RkdData(Rkd):
                 "CF_LAST": "latest_price",
                 "CF_NETCHNG": "latest_net_change"
             })
-            df_data["last_date"] = datetime.now().date()
+            df_data["last_date"] = str(datetime.now().date())
             df_data["intraday_time"] = str(datetime.now())
             collected_data.append(df_data)
         collected_data = pd.concat(collected_data,ignore_index=True)
