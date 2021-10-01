@@ -29,6 +29,8 @@ def test_creating_new_user_should_update_firebase(
     assert doc.exists
 
     doc_dict = doc.to_dict()
+    assert schema.validate(doc_dict)
+
     print("Firebase doc: " + str(doc_dict))
 
     assert doc_dict["profile"]["username"] == user.username
