@@ -5,7 +5,7 @@ from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.orders.services import sell_position_service
 from core.user.models import Accountbalance, User
 
-from utils import create_buy_order
+from tests.utils import create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -16,7 +16,7 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_should_create_new_sell_order_for_user(user) -> None:
+def test_create_new_sell_order_for_user(user) -> None:
     """
     A new SELL order should be created from a buy order
     """
@@ -55,7 +55,9 @@ def test_should_create_new_sell_order_for_user(user) -> None:
     assert performance is not None
 
     # We then get the position based on the performance data
-    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(
+        pk=performance.position_uid_id,
+    )
 
     # We confirm if the position is set
     assert position is not None
@@ -84,12 +86,13 @@ def test_should_create_new_sell_order_for_user(user) -> None:
     confirmed_sell_order.filled_at = datetime.now()
     confirmed_sell_order.save()
 
-    # We confirm that the selling is successfully finished by checking the user balance
+    # We confirm that the selling is successfully finished
+    # by checking the user balance
     user_balance = Accountbalance.objects.get(user=user).amount
     assert user_balance != previous_user_balance
 
 
-def test_should_create_new_sell_order_for_user_with_classic_bot(user) -> None:
+def test_create_new_sell_order_for_user_with_classic_bot(user) -> None:
     price = 6.11
 
     # We create an order
@@ -115,7 +118,9 @@ def test_should_create_new_sell_order_for_user_with_classic_bot(user) -> None:
         order_uid_id=confirmed_buy_order.order_uid
     )
 
-    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(
+        pk=performance.position_uid_id,
+    )
 
     sellPosition, sell_order = sell_position_service(
         # Selling in different price point (1317 + 13 = 1330 here)
@@ -141,12 +146,13 @@ def test_should_create_new_sell_order_for_user_with_classic_bot(user) -> None:
     confirmed_sell_order.filled_at = datetime.now()
     confirmed_sell_order.save()
 
-    # We confirm that the selling is successfully finished by checking the user balance
+    # We confirm that the selling is successfully finished
+    # by checking the user balance
     user_balance = Accountbalance.objects.get(user=user).amount
     assert user_balance != previous_user_balance
 
 
-def test_should_create_new_sell_order_for_user_with_uno_bot(user) -> None:
+def test_create_new_sell_order_for_user_with_uno_bot(user) -> None:
     price = 1317
 
     # We create an order
@@ -172,7 +178,9 @@ def test_should_create_new_sell_order_for_user_with_uno_bot(user) -> None:
         order_uid_id=confirmed_buy_order.order_uid
     )
 
-    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(
+        pk=performance.position_uid_id,
+    )
 
     sellPosition, sell_order = sell_position_service(
         price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
@@ -197,12 +205,13 @@ def test_should_create_new_sell_order_for_user_with_uno_bot(user) -> None:
     confirmed_sell_order.filled_at = datetime.now()
     confirmed_sell_order.save()
 
-    # We confirm that the selling is successfully finished by checking the user balance
+    # We confirm that the selling is successfully finished
+    # by checking the user balance
     user_balance = Accountbalance.objects.get(user=user).amount
     assert user_balance != previous_user_balance
 
 
-def test_should_create_new_sell_order_for_user_with_ucdc_bot(user) -> None:
+def test_create_new_sell_order_for_user_with_ucdc_bot(user) -> None:
     price = 1317
 
     # We create an order
@@ -228,7 +237,9 @@ def test_should_create_new_sell_order_for_user_with_ucdc_bot(user) -> None:
         order_uid_id=confirmed_buy_order.order_uid
     )
 
-    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(
+        pk=performance.position_uid_id,
+    )
 
     sellPosition, sell_order = sell_position_service(
         price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
@@ -253,6 +264,7 @@ def test_should_create_new_sell_order_for_user_with_ucdc_bot(user) -> None:
     confirmed_sell_order.filled_at = datetime.now()
     confirmed_sell_order.save()
 
-    # We confirm that the selling is successfully finished by checking the user balance
+    # We confirm that the selling is successfully finished
+    # by checking the user balance
     user_balance = Accountbalance.objects.get(user=user).amount
     assert user_balance != previous_user_balance
