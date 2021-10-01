@@ -312,6 +312,8 @@ def get_cached_data(key,df=False):
             return data
     except ConnectionError:
         logging.error("Redis isn't running. skip get cache`")
+    except Exception as e:
+        logging.info(e)
     return False
 
 
@@ -321,6 +323,8 @@ def set_cache_data(key,data=None,interval=60*60):
         cache.set(key,json.dumps(data),interval)
     except ConnectionError:
         logging.error("Redis isn't running. ignoring set cache ")
+    except Exception as e:
+        logging.info(e)
     
 
 

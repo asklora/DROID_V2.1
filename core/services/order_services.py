@@ -34,10 +34,10 @@ def pending_order_checker(self):
         for order in orders:
             market_db = Exchange.objects.get(mic=order.ticker.mic)
             if market_db.is_open:
-                payload = {'order_uid': str(order.order_uid)}
-                order_executor.apply_async(args=(payload,),kwargs={'recall':True},task_id=payload["order_uid"])
-    return {'success':'order pending executed'}
+                payload = json.dumps({'order_uid': str(order.order_uid)})
+                order_executor.apply_async(args=(payload,),task_id=str(order.order_uid))
 
+    return {'success':'order pending executed'}
 
 
 
@@ -167,7 +167,15 @@ def order_executor(self, payload, recall=False):
                                          }))
     return payload_serializer
 
-
+@app.task(bind=True)
+def cancel_pending_order(self,from_date:datetime=datetime.now()):
+    Order = apps.get_model('orders', 'Order')
+    orders = Order.objects.prefetch_related('ticker').filter(status='pending')
+    if orders.exists():
+        for order in orders:
+            payload = json.dumps({'order_uid': str(order.order_uid),'status':'cancel'})
+            order_executor(payload)
+    return {'success':'order pending canceled'}
 
 @app.task
 def update_rtdb_user_porfolio():
