@@ -1,5 +1,6 @@
 import random
 
+import pandas as pd
 import pytest
 from core.universe.models import Universe
 from datasource.rkd import RkdData
@@ -30,7 +31,7 @@ def test_usd_market() -> None:
     rkd = RkdData()
 
     # We get the quotes from the tickers above
-    quotes = rkd.bulk_get_quote(ticker=tickers, df=True)
+    quotes: pd.DataFrame = rkd.bulk_get_quote(ticker=tickers, df=True)
 
     # For debugging
     print(tickers)
