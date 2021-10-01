@@ -13,6 +13,7 @@ phases:
     commands:
       - echo "check DB Before running tests"
       - python manage.py createtestdb --settings=config.settings.production
+      - docker run -p 6379:6379 -d redis:5
   build:
     on-failure: ABORT
     commands:

@@ -157,24 +157,27 @@ def order_executor(self, payload, recall=False):
                 logging.error(str(e))
 
                 
-    asyncio.run(channel_layer.group_send(self.request.id,
-                                         {
-                                             'type': 'send_order_message',
-                                             'message_type': messages,
-                                             'message': 'order update',
-                                             'payload': payload_serializer,
-                                             'status_code': 200
-                                         }))
+    # asyncio.run(channel_layer.group_send(self.request.id,
+    #                                      {
+    #                                          'type': 'send_order_message',
+    #                                          'message_type': messages,
+    #                                          'message': 'order update',
+    #                                          'payload': payload_serializer,
+    #                                          'status_code': 200
+    #                                      }))
     return payload_serializer
 
 @app.task(bind=True)
-def cancel_pending_order(self,from_date:datetime=datetime.now()):
+def cancel_pending_order(self,from_date:datetime=datetime.now(),run_async=False):
     Order = apps.get_model('orders', 'Order')
     orders = Order.objects.prefetch_related('ticker').filter(status='pending')
     if orders.exists():
         for order in orders:
             payload = json.dumps({'order_uid': str(order.order_uid),'status':'cancel'})
-            order_executor(payload)
+            if run_async:
+                order_executor.apply_async(args=(payload,),task_id=str(order.order_uid))
+            else:
+                order_executor(payload)
     return {'success':'order pending canceled'}
 
 @app.task
