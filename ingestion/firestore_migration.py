@@ -405,9 +405,10 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
                 "total_profit_amount":[total_profit_amount], "daily_live_profit":[daily_live_profit], "total_portfolio":[total_portfolio], 
                 "active_portfolio":[active_df]}, index=[0])
         else:
-            active = pd.DataFrame({"user_id":[user], "total_invested_amount":[0.0], "total_bot_invested_amount":[0.0], 
-                "total_user_invested_amount":[0.0], "pct_total_bot_invested_amount":[0.0], "pct_total_user_invested_amount":[0.0], 
-                "total_profit_amount":[0.0], "daily_live_profit":[0.0], "total_portfolio":[0.0], "active_portfolio":[[]]}, index=[0])
+            zero = float(0)
+            active = pd.DataFrame({"user_id":[user], "total_invested_amount":[zero], "total_bot_invested_amount":[zero], 
+                "total_user_invested_amount":[zero], "pct_total_bot_invested_amount":[zero], "pct_total_user_invested_amount":[zero], 
+                "total_profit_amount":[zero], "daily_live_profit":[zero], "total_portfolio":[zero], "active_portfolio":[[]]}, index=[0])
         # print(active)
         profile = user_core[["username", "first_name", "last_name", "email", "phone", "birth_date", "is_joined", "gender"]]
         profile["birth_date"] = profile["birth_date"].astype(str)
