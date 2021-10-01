@@ -4,7 +4,7 @@ import pytest
 from core.orders.models import Order
 from core.user.models import Accountbalance
 
-from utils import create_buy_order
+from tests.utils import create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -15,9 +15,10 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_should_create_order(user) -> None:
+def test_create_simple_order(user) -> None:
     """
-    A new order should be created with default values for is_init, placed, status, dates, etc.
+    A new order should be created with default values for is_init, placed,
+    status, dates, etc.
     """
 
     order = create_buy_order(
@@ -37,7 +38,7 @@ def test_should_create_order(user) -> None:
     assert order.qty == 100  # from order.amount divided by order.price
 
 
-def test_should_create_new_buy_order_for_user(user) -> None:
+def test_create_new_buy_order_for_user(user) -> None:
     """
     A new BUY order should be created with empty setup
     """
@@ -53,9 +54,10 @@ def test_should_create_new_buy_order_for_user(user) -> None:
     assert order.setup is None  # should be empty
 
 
-def test_should_update_new_buy_order_for_user(user) -> None:
+def test_update_new_buy_order_for_user(user) -> None:
     """
-    A new BUY order's status will be set to PENDING and the price is deducted from USER balance
+    A new BUY order's status will be set to PENDING and the price is deducted
+    from USER balance
     #NOTE : after test must clean
     """
 
@@ -95,32 +97,10 @@ def test_should_update_new_buy_order_for_user(user) -> None:
     assert user_balance.amount == previous_user_balance.amount - order.amount
 
 
-def test_should_create_new_buy_order_for_user_with_margin(user) -> None:
+def test_check_if_user_balance_is_cut_accordingly_with_margin(user) -> None:
     """
-    A new order should be created for user with margin applied to the amount
-    """
-
-    order = create_buy_order(
-        user_id=user.id,
-        ticker="0535.HK",
-        amount=85,
-        price=0.85,
-        margin=2,
-        qty=None,
-    )
-
-    assert (
-        order.qty == 200
-    )  # order.qty (default to 100 for this test) multiplied by margin
-    assert (
-        order.amount != 170
-    )  # from order.price times order.qty, excluding margin calculation
-    assert order.amount == 85  # the correct amount
-
-
-def test_should_check_if_user_balance_is_cut_accordingly_with_margin(user) -> None:
-    """
-    A new buy order will be created and filled, and user balance is deducted buy the order amount.
+    A new buy order will be created and filled, and user balance is deducted
+    with the same nominal as the order amount.
     Margin calculation should not cut the user balance.
     """
 
@@ -129,7 +109,7 @@ def test_should_check_if_user_balance_is_cut_accordingly_with_margin(user) -> No
     amount = 131700
     price = 1317
     margin = 2
-    bot_id = "STOCK_stock_0"
+    bot_id = "UNO_OTM_007692"
 
     # Save initial user balance
     user_balance = Accountbalance.objects.get(user=user)
@@ -169,13 +149,10 @@ def test_should_check_if_user_balance_is_cut_accordingly_with_margin(user) -> No
 
     order = Order.objects.get(pk=order.order_uid)
 
-    assert (
-        order.qty == 200
-    )  # order.qty (default to 100 for this test) multiplied by margin
-    assert user_balance.amount == initial_user_balance - order.amount
+    assert user_balance.amount == initial_user_balance - amount
 
 
-def test_should_create_new_buy_order_for_classic_bot(user) -> None:
+def test_create_new_buy_order_for_classic_bot(user) -> None:
     """
     A new BUY order should be created with non-empty setup
     """
@@ -192,11 +169,12 @@ def test_should_create_new_buy_order_for_classic_bot(user) -> None:
     print(order.setup)
 
     assert order.side == "buy"
-    assert order.setup is not None  # Setup will be populated with bot information
+    # Setup should be populated with bot information
+    assert order.setup is not None
     assert order.bot_id == bot_id
 
 
-def test_should_create_new_buy_order_for_uno_bot(user) -> None:
+def test_create_new_buy_order_for_uno_bot(user) -> None:
     """
     A new BUY order should be created with non-empty setup
     """
@@ -211,11 +189,12 @@ def test_should_create_new_buy_order_for_uno_bot(user) -> None:
     )
 
     assert order.side == "buy"
-    assert order.setup is not None  # Setup will be populated with bot information
+    # Setup should be populated with bot information
+    assert order.setup is not None
     assert order.bot_id == bot_id
 
 
-def test_should_create_new_buy_order_for_ucdc_bot(user) -> None:
+def test_create_new_buy_order_for_ucdc_bot(user) -> None:
     """
     A new BUY order should be created with non-empty setup
     """
@@ -230,5 +209,6 @@ def test_should_create_new_buy_order_for_ucdc_bot(user) -> None:
     )
 
     assert order.side == "buy"
-    assert order.setup is not None  # Setup will be populated with bot information
+    # Setup should be populated with bot information
+    assert order.setup is not None
     assert order.bot_id == bot_id

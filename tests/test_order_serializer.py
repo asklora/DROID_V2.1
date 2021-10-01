@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_should_create_new_buy_order_from_API(user) -> None:
+def test_serialized_buy_order(user) -> None:
     side = "buy"
     ticker = "0008.HK"
     qty = 2
@@ -38,8 +38,9 @@ def test_should_create_new_buy_order_from_API(user) -> None:
     assert buy_order.order_uid is not None
 
 
-def test_should_fail_on_new_buy_order_from_API(user) -> None:
+def test_serialized_buy_order_should_fail(user) -> None:
     # This line catches the exception, this is where the assertion happens
+    # The order should fail if the order amount is exceeding the user's balance
     with pytest.raises(exceptions.NotAcceptable):
         side = "buy"
         ticker = "0780.HK"

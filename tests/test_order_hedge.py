@@ -8,7 +8,7 @@ from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.models import Accountbalance, TransactionHistory
 from portfolio import classic_position_check, ucdc_position_check, uno_position_check
 
-from utils import create_buy_order
+from tests.utils import create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[
