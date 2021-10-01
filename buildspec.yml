@@ -12,15 +12,27 @@ phases:
     on-failure: ABORT
     commands:
       - echo "check DB Before running tests"
+      - python manage.py send_slack_message -m 'preparing update' --settings=config.settings.production
       - python manage.py createtestdb --settings=config.settings.production
+      - python manage.py send_slack_message -m 'Connection DB check :white_check_mark:' --settings=config.settings.production
+    finally:
+      - if [[ $CODEBUILD_BUILD_SUCCEEDING == 1 ]]; then python manage.py send_slack_message -m 'Connection DB check :white_check_mark:' --settings=config.settings.production; fi
+      - if [[ $CODEBUILD_BUILD_SUCCEEDING == 0 ]]; then python manage.py send_slack_message -m 'Connection DB check fail :x:' --settings=config.settings.production; fi
+
   build:
     on-failure: ABORT
     commands:
+        - python manage.py send_slack_message -m 'preparing Test' --settings=config.settings.production
         - pytest -s --ds=config.settings.prodtest
         - echo "$CODEBUILD_BUILD_SUCCEEDING"
         - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION"
+    finally:
+        - if [[ $CODEBUILD_BUILD_SUCCEEDING == 1 ]]; then python manage.py send_slack_message -m 'Test Success :white_check_mark:' --settings=config.settings.production; fi
+        - if [[ $CODEBUILD_BUILD_SUCCEEDING == 0 ]]; then python manage.py send_slack_message -m 'Test Fail :x:' --settings=config.settings.production; fi
   post_build:
     commands:
       - echo test completed on `date`
       - echo create master image
       - python manage.py create_image -b master
+      - python manage.py send_slack_message -m 'preparing Blue/Green deploy' --settings=config.settings.production
+
