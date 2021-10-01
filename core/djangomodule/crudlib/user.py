@@ -18,12 +18,13 @@ def sync_user(payload):
     unused_key =[]
     if 'id' in payload:
         user_id =payload.pop('id')
-    if user.is_joined:
-        join =payload.get('is_joined',None)
-        if join:
-            payload.pop('is_joined')
+    
 
     if not create:
+        if user.is_joined:
+            join =payload.get('is_joined',None)
+            if join:
+                payload.pop('is_joined')
         for attrib, val in payload.items():
             if hasattr(user,attrib):
                 if attrib == 'password':

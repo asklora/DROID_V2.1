@@ -9,14 +9,17 @@ from django.conf import settings
 from celery.backends.rpc import RPCBackend as CeleryRpcBackend
 from django.conf import settings
 from dotenv import load_dotenv
+from django import db
 
 env = Env()
 load_dotenv()
 debug = os.environ.get('DJANGO_SETTINGS_MODULE', False)
+role = os.environ.get('CELERY_ROLE', 'slave')
 if not debug:
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.local')
 dbdebug = env.bool("DROID_DEBUG")
-
+db.connections.close_all()
+print(role)
 #NOTE AVALAIBLE TASK 13-09-2021
 #   . channels_presence.tasks.prune_presence
 #   . channels_presence.tasks.prune_rooms
@@ -56,8 +59,9 @@ app.autodiscover_tasks()
 
 @worker_ready.connect
 def at_start(sender, **k):
-    with sender.app.connection() as conn:
-         sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn,queue=settings.UTILS_WORKER_DEFAULT_QUEUE)
+    if role == 'master':
+        with sender.app.connection() as conn:
+            sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn,queue=settings.UTILS_WORKER_DEFAULT_QUEUE)
 
 
 
