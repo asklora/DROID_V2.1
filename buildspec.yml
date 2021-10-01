@@ -14,7 +14,6 @@ phases:
       - echo "check DB Before running tests"
       - python manage.py send_slack_message -m 'preparing update' --settings=config.settings.production
       - python manage.py createtestdb --settings=config.settings.production
-      - python manage.py send_slack_message -m 'Connection DB check :white_check_mark:' --settings=config.settings.production
     finally:
       - ./deployment/script/codebuild/beforetest.sh
   build:
@@ -25,7 +24,7 @@ phases:
         - echo "$CODEBUILD_BUILD_SUCCEEDING"
         - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION"
     finally:
-        - ./deployment/script/codebuild/aftertest.sh
+        - ./deployment/script/codebuild/after_test.sh
   post_build:
     commands:
       - echo test completed on `date`
