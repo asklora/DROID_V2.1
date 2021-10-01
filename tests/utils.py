@@ -203,7 +203,7 @@ schema = Schema(
                     "ticker": str,
                     "take_profit": float,
                     "pct_cash": float,
-                    "status": "LIVE",
+                    "status": str,
                     "ticker_name": str,
                     "price": float,
                     "bot_details": {
@@ -221,7 +221,7 @@ schema = Schema(
             [],
         ),
         "total_profit_pct": float,
-        "is_decimal": True,
+        "is_decimal": bool,
         "rank": Or(int, None),
         "daily_live_profit": float,
         "total_user_invested_amount": float,
