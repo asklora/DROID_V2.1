@@ -339,6 +339,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         if(len(orders_position) > 0):
             orders_position = orders_position.reset_index(inplace=False, drop=True)
             #TOP LEVEL
+            orders_position["margin"] = orders_position["margin"].astype(int)
             orders_position["status"] = "LIVE"
             orders_position["current_values"] = (orders_position["bot_cash_balance"] + (orders_position["share_num"] * orders_position["price"])).round(rounded)
             orders_position["current_ivt_amt"] = (orders_position["share_num"] * orders_position["price"]).round(rounded)
