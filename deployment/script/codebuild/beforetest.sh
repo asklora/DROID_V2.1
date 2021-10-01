@@ -1,5 +1,5 @@
 #!/bin/bash
-if [[ '$CODEBUILD_BUILD_SUCCEEDING'=='1' ]]
+if [[ '$CODEBUILD_BUILD_SUCCEEDING'==1 ]]
 then 
     python manage.py send_slack_message -m 'Connection DB check :white_check_mark:' --settings=config.settings.production 
 else

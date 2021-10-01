@@ -12,23 +12,22 @@ phases:
     on-failure: ABORT
     commands:
       - echo "check DB Before running tests"
-      # - python manage.py send_slack_message -m 'preparing update' --settings=config.settings.production
+      - python manage.py send_slack_message -m 'preparing update'
       # - python manage.py createtestdb --settings=config.settings.production
-    # finally:
-    #   - ./deployment/script/codebuild/beforetest.sh
+    finally:
+      - ./deployment/script/codebuild/beforetest.sh
   build:
     on-failure: ABORT
     commands:
-        # - python manage.py send_slack_message -m 'preparing Test' --settings=config.settings.production
         - pytest -s --ds=config.settings.prodtest
         - echo "$CODEBUILD_BUILD_SUCCEEDING"
         - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION"
-    # finally:
-    #     - ./deployment/script/codebuild/after_test.sh
+    finally:
+        - ./deployment/script/codebuild/after_test.sh
   post_build:
     commands:
       - echo test completed on `date`
       - echo create master image
       - python manage.py create_image -b master
-      # - python manage.py send_slack_message -m 'preparing Blue/Green deploy' --settings=config.settings.production
+      - python manage.py send_slack_message -m 'preparing Blue/Green deploy' --settings=config.settings.production
 
