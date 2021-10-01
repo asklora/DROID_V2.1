@@ -39,8 +39,15 @@ def pending_order_checker(self):
     return {'success':'order pending executed'}
 
 
-
-
+@app.task(bind=True)
+def cancel_pending_order(self,from_date:datetime=datetime.now()):
+    Order = apps.get_model('orders', 'Order')
+    orders = Order.objects.prefetch_related('ticker').filter(created__lte=from_date,status='pending')
+    if orders.exists():
+        for order in orders:
+            payload = {'order_uid': str(order.order_uid),'status':'cancel'}
+            order_executor.apply_async(args=(payload,),task_id=payload["order_uid"])
+    return {'success':'order pending canceled'}
 
 
 
