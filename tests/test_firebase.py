@@ -1,6 +1,10 @@
 import time
+from datetime import datetime
 
-from tests.utils import set_user_joined, create_buy_order
+from ingestion import firebase_user_update
+from django.conf import settings
+
+from tests.utils import create_buy_order, schema, set_user_joined
 
 
 def test_creating_new_user_should_update_firebase(
@@ -12,9 +16,11 @@ def test_creating_new_user_should_update_firebase(
     if not user.is_joined:
         set_user_joined(mocker, user)
 
-    time.sleep(30)
+    time.sleep(60)
 
-    doc_ref = firestore_client.collection("dev_portfolio").document(
+    doc_ref = firestore_client.collection(
+        settings.FIREBASE_COLLECTION["portfolio"],
+    ).document(
         str(user.id),
     )
 
@@ -23,14 +29,13 @@ def test_creating_new_user_should_update_firebase(
     assert doc.exists
 
     doc_dict = doc.to_dict()
-
     print("Firebase doc: " + str(doc_dict))
 
     assert doc_dict["profile"]["username"] == user.username
     assert doc_dict["profile"]["email"] == user.email
 
 
-def inactive_test_order_should_be_added_to_firebase(
+def test_order_should_be_updated_to_firebase(
     mocker,
     request,
     firestore_client,
@@ -41,7 +46,7 @@ def inactive_test_order_should_be_added_to_firebase(
         set_user_joined(mocker, user)
 
     # we create a new order here
-    create_buy_order(
+    order = create_buy_order(
         price=7.13,
         ticker="6837.HK",
         margin=2,
@@ -49,9 +54,24 @@ def inactive_test_order_should_be_added_to_firebase(
         bot_id="UNO_OTM_007692",
     )
 
+    order.status = "placed"
+    order.placed = True
+    order.placed_at = datetime.now()
+    order.save()
+
+    order.status = "filled"
+    order.filled_at = datetime.now()
+    order.save()
+
+    # update firebase
+    firebase_user_update([user.id])
+
+    # it takes a while to propagate to firebase so give it a second
     time.sleep(30)
 
-    doc_ref = firestore_client.collection("dev_portfolio").document(
+    doc_ref = firestore_client.collection(
+        settings.FIREBASE_COLLECTION["portfolio"],
+    ).document(
         str(user.id),
     )
 
@@ -60,6 +80,7 @@ def inactive_test_order_should_be_added_to_firebase(
     assert doc.exists
 
     doc_dict = doc.to_dict()
-    print(doc_dict["active_portfolio"])
+    assert schema.validate(doc_dict)
+    print(doc_dict)
 
     assert doc_dict["active_portfolio"]
