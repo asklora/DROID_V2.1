@@ -737,7 +737,8 @@ def get_user_core(currency_code=None, user_id=None, field="*", ):
     table_name = get_user_core_table_name()
     query = f"select {field} from {table_name} where is_active=True and is_superuser=False and is_test=False " #is_active=True and is_joined=True and current_status='verified' and is_test=False
     if type(user_id) != type(None):
-        query += f"and id in {tuple_data(user_id)}  "
+        if len(user_id) != 0:
+            query += f"and id in {tuple_data(user_id)}  "
     elif type(currency_code) != type(None):
         query += f"and id in (select user_id as id from {get_user_account_balance_table_name()} where currency_code in {tuple_data(currency_code)}) "
     query += "order by id "

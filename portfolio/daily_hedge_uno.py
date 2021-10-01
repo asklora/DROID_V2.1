@@ -67,6 +67,13 @@ def uno_sell_position(live_price:float, trading_day:str, position:OrderPosition,
             position.event = "Profit"
         else:
             position.event = "Bot Expired"
+    else:
+        if live_price < position.entry_price:
+            position.event = "Loss"
+        elif live_price > position.entry_price:
+            position.event = "Profit"
+        else:
+            position.event = "Bot Stopped"
     
     order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=apps)
     return position, order

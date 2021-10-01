@@ -598,10 +598,10 @@ def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
 
 def populate_daily_profit(currency_code=None, user_id=None):
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined")[["user_id", "is_joined"]]
-    user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, currency_code, amount as balance")
-    user_deposit = get_user_deposit(user_id=user_id)
     if user_core.empty:
         return
+    user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, currency_code, amount as balance")
+    user_deposit = get_user_deposit(user_id=user_id)
     currency = get_currency_data(currency_code=currency_code)
     currency = currency[["currency_code", "is_decimal"]]
     user_core = user_core.merge(user_balance, how="left", on=["user_id"])
@@ -682,6 +682,8 @@ def populate_daily_profit(currency_code=None, user_id=None):
 
 def update_monthly_deposit(currency_code=None, user_id=None) -> None:
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined")[["user_id", "is_joined"]]
+    if user_core.empty:
+        return
     user_core = user_core.loc[user_core["is_joined"] == True]
     user_balance = get_user_account_balance(user_id=user_id, field="user_id, amount as balance, currency_code")
     user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_invested_amount")
