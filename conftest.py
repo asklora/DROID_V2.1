@@ -62,6 +62,10 @@ def user(django_db_setup, django_db_blocker):
         user = User.objects.create_user(
             email=unique_email,
             username=computer_name,
+            first_name="Test",
+            last_name="on" + computer_name,
+            gender="other",
+            phone="012345678",
             password="everything_is_but_a_test",
             is_active=True,
             current_status="verified",

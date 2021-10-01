@@ -8,6 +8,7 @@ from core.user.models import (Accountbalance, TransactionHistory, User,
 from django.utils import timezone
 from general.firestore_query import delete_firestore_user
 from ingestion import firebase_user_update
+from schema import Or, Schema
 
 
 def get_user_core(currency_code=None, user_id=None, field="*") -> pd.DataFrame:
@@ -147,3 +148,82 @@ def create_buy_order(
         user_id_id=user_id,
         user_id=user,
     )
+
+
+schema = Schema(
+    {
+        "daily_profit_pct": float,
+        "bot_pending_amount": float,
+        "daily_invested_amount": float,
+        "profile": {
+            "birth_date": str,
+            "is_joined": bool,
+            "phone": str,
+            "gender": str,
+            "first_name": str,
+            "username": str,
+            "email": str,
+            "last_name": str,
+        },
+        "total_profit_amount": int,
+        "total_bot_invested_amount": float,
+        "total_portfolio": float,
+        "total_invested_amount": float,
+        "stock_pending_amount": int,
+        "pct_total_bot_invested_amount": int,
+        "current_asset": float,
+        "pending_amount": Or(float, int),
+        "currency": str,
+        "total_profit": float,
+        "daily_profit": float,
+        "balance": float,
+        "user_id": int,
+        "pct_total_user_invested_amount": int,
+        "active_portfolio": Or(
+            [
+                {
+                    "current_values": float,
+                    "user_id": int,
+                    "order_uid": str,
+                    "bot_cash_balance": float,
+                    "margin": float,
+                    "current_ivt_amt": float,
+                    "position_uid": str,
+                    "stop_loss": float,
+                    "entry_price": float,
+                    "share_num": float,
+                    "pct_stock": float,
+                    "spot_date": str,
+                    "margin_amount": float,
+                    "barrier": float,
+                    "expiry": str,
+                    "pct_profit": float,
+                    "investment_amount": float,
+                    "threshold": float,
+                    "ticker": str,
+                    "take_profit": float,
+                    "pct_cash": float,
+                    "status": "LIVE",
+                    "ticker_name": str,
+                    "price": float,
+                    "bot_details": {
+                        "duration": str,
+                        "bot_id": str,
+                        "bot_option_type": str,
+                        "bot_apps_name": str,
+                        "bot_apps_description": str,
+                    },
+                    "profit": float,
+                    "currency_code": str,
+                    "trading_day": str,
+                }
+            ],
+            [],
+        ),
+        "total_profit_pct": float,
+        "is_decimal": True,
+        "rank": Or(float, None),
+        "daily_live_profit": float,
+        "total_user_invested_amount": int,
+    }
+)
