@@ -26,6 +26,7 @@ def test_creating_new_user_should_update_firebase(
 
     doc = doc_ref.get()
 
+    # Whether the user data is updated to firebase
     assert doc.exists
 
     doc_dict = doc.to_dict()
@@ -33,6 +34,7 @@ def test_creating_new_user_should_update_firebase(
 
     print("Firebase doc: " + str(doc_dict))
 
+    # check if the data matches
     assert doc_dict["profile"]["username"] == user.username
     assert doc_dict["profile"]["email"] == user.email
 
