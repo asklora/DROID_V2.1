@@ -167,6 +167,8 @@ def order_executor(self, payload, recall=False):
                                          }))
     return payload_serializer
 
+
+
 @app.task(bind=True)
 def cancel_pending_order(self,from_date:datetime=datetime.now(),run_async=False):
     Order = apps.get_model('orders', 'Order')
