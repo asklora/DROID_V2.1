@@ -1128,22 +1128,11 @@ def worldscope_quarter_report_date_from_dsws(ticker = None, currency_code=None, 
     data = []
     for period_end in period_end_list:
         try:
-            result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 20), dsws=False)
-            print(result)
-            print(error_ticker)
-            if len(error_ticker) == 0 :
-                second_result = []
-            else:
-                second_result, error_ticker = get_data_history_by_field_from_dsws(period_end, period_end, error_ticker, identifier, filter_field, use_ticker=True, split_number=1, dsws=False)
-            try:
-                if(len(result) == 0):
-                    result = second_result
-                elif(len(second_result) == 0):
-                    result = result
-                else :
-                    result = result.append(second_result)
-            except Exception as e:
-                result = second_result
+            result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1), dsws=False)
+            if(len(result) == 0):
+                result = ticker
+                result[filter_field[0]] = np.nan
+                result["level_1"] = str_to_date(period_end)
             print(result)
             data = result.copy()
             data = data.rename(columns = {"level_1" : "period_end"})
