@@ -134,7 +134,7 @@ class Command(BaseCommand):
                 
         
             if(options["worldscope"]):
-                if(d in ["1", "2", "3", "4", "5", "6", "7"]):
+                if(d in ["1", "2", "3", "4", "5", "6", "7", "01", "02", "03", "04", "05", "06", "07"]):
                     status = "Worldscope Ingestion"
                     ticker = split_ticker(options["currency_code"], split=options["split"])
                     print(ticker)
@@ -156,7 +156,7 @@ class Command(BaseCommand):
             
             if(options["fundamentals_rating"]):
                 if(options["month"]):
-                    if(d in ["1", "2", "3", "4", "5", "6", "7"]):
+                    if(d in ["1", "2", "3", "4", "5", "6", "7", "01", "02", "03", "04", "05", "06", "07"]):
                         status = "Fundamentals Quality Update"
                         update_fundamentals_quality_value()
                 else:
@@ -207,7 +207,7 @@ class Command(BaseCommand):
                 do_function("universe_hotness_update") 
 
             if(options["monthly"]):
-                if(d in ["1", "2", "3", "4", "5", "6", "7"]):
+                if(d in ["1", "2", "3", "4", "5", "6", "7", "01", "02", "03", "04", "05", "06", "07"]):
                     status = "Entity Type Ingestion"
                     update_entity_type_from_dsws()
                     status = "Lot Size Ingestion"
