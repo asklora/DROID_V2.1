@@ -111,17 +111,24 @@ def order_executor(self, payload, recall=False):
         market.is_open
         market_db = Exchange.objects.get(mic=order.ticker.mic)
         if market_db.is_open:
-            order.status = 'filled'
-            order.filled_at = datetime.now()
-            order.save()
+            if not order.insuficent_balance():
+                order.status = 'filled'
+                order.filled_at = datetime.now()
+                order.save()
 
-            print('open')
-            messages = 'order accepted'
-            message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status filled'
+                print('open')
+                messages = 'order accepted'
+                message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status filled'
+            else:
+                order.status = 'cancel'
+                order.canceled_at = datetime.now()
+                order.save()
+                messages = 'order rejected'
+                message = f'{order.side} order {share} stocks {order.ticker.ticker} is rejected due insufficient funds, status canceled'
         else:
             print('close')
             messages = 'order pending'
-            message = f'{order.side} order {share} stocks {order.ticker.ticker} not executed, status pending'
+            message = f'{order.side} order {share} stocks {order.ticker.ticker} is received, status pending'
             # create schedule to next bell and will recrusive until market status open
             # still keep sending message. need to improve
             
@@ -135,7 +142,7 @@ def order_executor(self, payload, recall=False):
         we need message if order is cancel
         """
         messages = 'order canceled'
-        message = f'{order.side} order  stocks {order.ticker.ticker} was canceled'
+        message = f'{order.side} order  stocks {order.ticker.ticker} is canceled'
     
     populate_daily_profit()
     firebase_user_update(user_id=[order.user_id.id])
