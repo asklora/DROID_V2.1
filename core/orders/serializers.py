@@ -466,6 +466,9 @@ class OrderActionSerializer(serializers.ModelSerializer):
         if instance.status == validated_data['status']:
             raise exceptions.MethodNotAllowed(
                 {'detail': f'order already {instance.status}'})
+        if instance.insufficient_balance():
+            raise exceptions.MethodNotAllowed(
+                {'detail': 'insufficient funds'})
                 
         from core.services.order_services import order_executor
         payload = json.dumps(validated_data)
