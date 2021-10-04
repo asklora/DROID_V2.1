@@ -37,11 +37,11 @@ def test_currency_conversion():
     # we do the assertion three times
     for _ in range(3):
         # setting this as the amount to convert
-        amount = round(random.uniform(5.0, 1000.0), 2)
+        amount: float = round(random.uniform(5.0, 1000.0), 2)
 
         # we select 2 random currencies
-        currency_1 = random.choice(currencies)
-        currency_2 = random.choice(currencies)
+        currency_1: Currency = random.choice(currencies)
+        currency_2: Currency = random.choice(currencies)
 
         # the one we are testing
         conversion = ConvertMoney(currency_1, currency_2)
@@ -56,7 +56,7 @@ def test_currency_conversion():
         )
 
         print(f"\nconverting {amount} {currency_1} into {currency_2}")
-        print(f"ConvertMoney result: {conversion_result}")
-        print(f"Our function result: {test_conversion_result}")
+        print(f"ConvertMoney result: {conversion_result} {currency_2}")
+        print(f"Our function result: {test_conversion_result} {currency_2}")
 
         assert conversion_result == test_conversion_result
