@@ -35,7 +35,7 @@ def pending_order_checker(self):
             market_db = Exchange.objects.get(mic=order.ticker.mic)
             if market_db.is_open:
                 payload = json.dumps({'order_uid': str(order.order_uid)})
-                order_executor.apply_async(args=(payload,),task_id=str(order.order_uid))
+                order_executor.apply_async(args=(payload,),kwargs={"recall":True},task_id=str(order.order_uid))
 
     return {'success':'order pending executed'}
 
@@ -71,7 +71,7 @@ def order_executor(self, payload, recall=False):
         in_wallet_transactions = TransactionHistory.objects.filter(
             transaction_detail__order_uid=str(order.order_uid))
         if in_wallet_transactions.exists():
-            in_wallet_transactions.get().delete()
+            in_wallet_transactions.delete()
         
         # for apps, need to change later with better logic
         if order.side == 'buy' and order.order_type=='apps' and order.is_init:
@@ -128,8 +128,8 @@ def order_executor(self, payload, recall=False):
             # eta_debug=datetime.now()+timedelta(minutes=2)
             # order_executor.apply_async(args=(json.dumps(payload),), kwargs={
             #                         'recall': True}, eta=eta_debug,task_id=str(order.order_uid))
-            order_executor.apply_async(args=(json.dumps(payload),), kwargs={
-                                    'recall': True}, eta=market.next_bell,task_id=str(order.order_uid))
+            # order_executor.apply_async(args=(json.dumps(payload),), kwargs={
+            #                         'recall': True}, eta=market.next_bell,task_id=str(order.order_uid))
     else:
         """
         we need message if order is cancel
@@ -157,15 +157,17 @@ def order_executor(self, payload, recall=False):
                 logging.error(str(e))
 
                 
-    # asyncio.run(channel_layer.group_send(self.request.id,
-    #                                      {
-    #                                          'type': 'send_order_message',
-    #                                          'message_type': messages,
-    #                                          'message': 'order update',
-    #                                          'payload': payload_serializer,
-    #                                          'status_code': 200
-    #                                      }))
+    asyncio.run(channel_layer.group_send(self.request.id,
+                                         {
+                                             'type': 'send_order_message',
+                                             'message_type': messages,
+                                             'message': 'order update',
+                                             'payload': payload_serializer,
+                                             'status_code': 200
+                                         }))
     return payload_serializer
+
+
 
 @app.task(bind=True)
 def cancel_pending_order(self,from_date:datetime=datetime.now(),run_async=False):

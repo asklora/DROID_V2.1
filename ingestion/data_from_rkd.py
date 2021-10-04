@@ -8,6 +8,7 @@ else:
 django.setup()
 import numpy as np
 import pandas as pd
+from datetime import datetime
 from general.data_process import remove_null
 from general.slack import report_to_slack
 from general.table_name import get_currency_table_name, get_latest_price_table_name, get_universe_table_name
@@ -88,7 +89,7 @@ def populate_intraday_latest_price_from_rkd(ticker=None, currency_code=None,use_
     last_price = latest_price[["ticker", "classic_vol", "capital_change"]]
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     ticker = universe["ticker"].to_list()
-    field = ["CF_BID", "CF_ASK", "CF_OPEN", "CF_HIGH", "CF_LOW", "CF_LAST", "CF_DATE", "CF_TIME"]
+    field = ["CF_BID", "CF_ASK", "CF_OPEN", "CF_HIGH", "CF_LOW", "CF_CLOSE", "PCTCHNG", "TRADE_DATE", "CF_VOLUME", "CF_LAST", "CF_NETCHNG"]
     rkd = RKD.RkdData()
     result = rkd.get_data_from_rkd(ticker, field)
     print(result)
@@ -99,12 +100,17 @@ def populate_intraday_latest_price_from_rkd(ticker=None, currency_code=None,use_
             "CF_BID": "intraday_bid",
             "CF_ASK": "intraday_ask",
             "CF_OPEN": "open",
-            "CF_HIGH": "high",
+            "CF_HIGH": "high", 
             "CF_LOW": "low",
-            "CF_LAST": "close",
-            "CF_DATE": "last_date",
-            "CF_TIME": "intraday_time"
+            "CF_CLOSE": "close",
+            "PCTCHNG": "latest_price_change",
+            "TRADE_DATE": "last_date",
+            "CF_VOLUME": "volume",
+            "CF_LAST": "latest_price",
+            "CF_NETCHNG": "latest_net_change"
         })
+        # result["last_date"] = str(datetime.now().date())
+        result["intraday_time"] = str(datetime.now())
         result["intraday_bid"] = result["intraday_bid"].astype(float)
         result["intraday_ask"] = result["intraday_ask"].astype(float)
         result["open"] = result["open"].astype(float)
@@ -112,13 +118,13 @@ def populate_intraday_latest_price_from_rkd(ticker=None, currency_code=None,use_
         result["low"] = result["low"].astype(float)
         result["close"] = result["close"].astype(float)
         result["last_date"] = pd.to_datetime(result["last_date"])
-        result["intraday_time"] =  result["last_date"].astype(str) + " " + result["intraday_time"]
+        # result["intraday_time"] =  result["last_date"].astype(str) + " " + result["intraday_time"]
         print(result)
         result = result.dropna(subset=["close"])
         holiday = result.copy()
-        # if(len(holiday) == 0):
-        #     report_to_slack("{} : === {} is Holiday. Latest Price Not Updated ===".format(dateNow(), currency_code))
-        #     return False
+        if(len(holiday) == 0):
+            report_to_slack("{} : === {} is Holiday. Latest Price Not Updated ===".format(dateNow(), currency_code))
+            return False
         result["last_date"] = pd.to_datetime(result["last_date"])
         result["intraday_time"] = pd.to_datetime(result["intraday_time"])
         result = result.merge(percentage_change, how="left", on="ticker")

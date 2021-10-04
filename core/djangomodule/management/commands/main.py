@@ -1,3 +1,4 @@
+from ingestion.firestore_migration import mongo_universe_update
 from general.sql_query import get_universe_by_region
 from django.core.management.base import BaseCommand
 from general.date_process import dateNow, str_to_date
@@ -13,6 +14,7 @@ from bot.preprocess import (
 from ingestion.data_from_timezone import update_utc_offset_from_timezone
 from ingestion.data_from_dss import update_data_dss_from_dss, update_ticker_symbol_from_dss
 from ingestion.data_from_quandl import update_quandl_orats_from_quandl
+from ingestion.data_from_rkd import populate_intraday_latest_price_from_rkd
 from ingestion.data_from_dsws import (
     dividend_updated_from_dsws, 
     interest_update_from_dsws, 
@@ -104,12 +106,15 @@ class Command(BaseCommand):
                 master_tac_update()
                 status = "Master Multiple Update"
                 master_multiple_update()
+                status = "Update AI Score"
+                update_fundamentals_quality_value()
+                status = "Update Firebase Universe"
+                populate_intraday_latest_price_from_rkd(currency_code=["HKD"])
+                mongo_universe_update(currency_code=["HKD"])
+                status = "Interest Update"
                 interest_update_from_dsws()
                 dividend_daily_update()
                 interest_daily_update()
-                status = "Macro Ibes Update"
-                populate_macro_table()
-                populate_ibes_table()
             
             if (options["ws"]):
                 status = "Daily Ingestion Update"
@@ -124,13 +129,12 @@ class Command(BaseCommand):
                 master_tac_update()
                 status = "Master Multiple Update"
                 master_multiple_update()
+                status = "Update AI Score"
+                update_fundamentals_quality_value()
                 status = "Interest Update"
                 interest_update_from_dsws()
                 dividend_daily_update()
                 interest_daily_update()
-                status = "Macro Ibes Update"
-                populate_macro_table()
-                populate_ibes_table()
                 
         
             if(options["worldscope"]):

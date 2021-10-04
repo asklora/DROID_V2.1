@@ -60,27 +60,31 @@ def order_signal(sender, instance, created, **kwargs):
     
 @receiver(post_delete, sender=PositionPerformance)
 def order_revert(sender, instance, **kwargs):
+    skip=False
     if instance.order_uid:
         order = Order.objects.get(order_uid=instance.order_uid.order_uid)
         in_wallet_transactions = TransactionHistory.objects.filter(
             transaction_detail__order_uid=str(order.order_uid))
         if in_wallet_transactions.exists():
             in_wallet_transactions.delete()
-        position = OrderPosition.objects.get(
-            position_uid=instance.position_uid.position_uid)
-
-        # return to bot cash balance
-        if order.side == 'sell':
-            position.bot_cash_balance = position.bot_cash_balance - order.amount
-        elif order.side == 'buy':
-            position.bot_cash_balance = position.bot_cash_balance + order.amount
+        try:
+            position = OrderPosition.objects.get(
+                position_uid=instance.position_uid.position_uid)
+        except OrderPosition.DoesNotExist:
+            skip=True
+        if not skip:
+            # return to bot cash balance
+            if order.side == 'sell':
+                position.bot_cash_balance = position.bot_cash_balance - order.amount
+            elif order.side == 'buy':
+                position.bot_cash_balance = position.bot_cash_balance + order.amount
+            if position.order_position.all().exists():
+                if not position.is_live:
+                    position.is_live = True
+                position.save()
+            else:
+                position.delete()
         order.delete()
-        if position.order_position.all().exists():
-            if not position.is_live:
-                position.is_live = True
-            position.save()
-        else:
-            position.delete()
 
 
 @receiver(post_delete, sender=OrderFee)

@@ -109,7 +109,7 @@ class ConvertMoney(AbstractBaseConvert):
     def get_to_currency(self):
         return self.to_currency
 
-    def get_exchange_code(self):
+    def get_exchange_rate(self):
         return self.exchange_rate
 
     def convert(self, amount):
