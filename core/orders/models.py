@@ -40,7 +40,7 @@ class Order(BaseTimeStampModel):
         managed = True
         db_table = "orders"
 
-    def insuficent_balance(self):
+    def insufficient_balance(self):
         return (self.amount / self.margin) > self.user_id.user_balance.amount
 
 

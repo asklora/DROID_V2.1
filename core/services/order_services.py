@@ -111,7 +111,7 @@ def order_executor(self, payload, recall=False):
         market.is_open
         market_db = Exchange.objects.get(mic=order.ticker.mic)
         if market_db.is_open:
-            if not order.insuficent_balance():
+            if not order.insufficient_balance():
                 order.status = 'filled'
                 order.filled_at = datetime.now()
                 order.save()
