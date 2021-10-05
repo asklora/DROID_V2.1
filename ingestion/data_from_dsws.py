@@ -380,7 +380,23 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
             upsert_data_to_database(result, get_data_fundamental_score_history_table_name(), "uid", how="update", Text=True)
             report_to_slack("{} : === Fundamentals Score Updated ===".format(datetimeNow()))
 
-
+def update_daily_fundamentals_score_from_dsws(ticker=None, currency_code=None):
+    print("{} : === Fundamentals Daily Score Start Ingestion ===".format(datetimeNow()))
+    end_date = dateNow()
+    start_date = backdate_by_month(12)
+    identifier = "ticker"
+    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+    print(universe)
+    if(len(universe)):
+        filter_field = ["WC08005"]
+        column_name = {"WC08005": "mkt_cap"}
+        result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
+        print(result)
+        result = result.rename(columns=column_name)
+        result = result.drop(columns=["index"])
+        print(result)
+        upsert_data_to_database(result, get_fundamental_score_table_name(), "ticker", how="update", Text=True)
+        report_to_slack("{} : === Fundamentals Score Daily Updated ===".format(datetimeNow()))
 
 def score_update_vol_rs(list_of_start_end, days_in_year=256):
     """ Calculate roger satchell volatility:
