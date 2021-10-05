@@ -103,12 +103,12 @@ def side_validation(validated_data):
     else:
         validation=OrderPositionValidation(validated_data["ticker"],validated_data["bot_id"],validated_data["user_id"].id)
         init = True
-        if validated_data["amount"] > validated_data["user_id"].user_balance.amount:
-            raise exceptions.NotAcceptable({"detail": "insuficent balance"})
-        if validated_data["amount"] / validated_data["price"] < 1:
-            raise exceptions.NotAcceptable({"detail":"share should not below one"})
         if validated_data["amount"] <= 0:
             raise exceptions.NotAcceptable({"detail": "amount should not 0"})
+        if (validated_data["amount"] / validated_data["margin"]) > validated_data["user_id"].user_balance.amount:
+            raise exceptions.NotAcceptable({"detail": "insuficent balance"})
+        if (validated_data["amount"] / validated_data["margin"]) / validated_data["price"] < 1:
+            raise exceptions.NotAcceptable({"detail":"share should not below one"})
         if validation.validate():
             raise exceptions.NotAcceptable({"detail": f"user already has position for {validated_data['ticker']} in current options"})
 
