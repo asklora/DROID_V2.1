@@ -34,7 +34,9 @@ def pending_order_checker(self):
         for order in orders:
             market_db = Exchange.objects.get(mic=order.ticker.mic)
             if market_db.is_open:
-                fb_token = order.order_summary.get['firebase_token',None]
+                fb_token=None
+                if 'firebase_token' in order.order_summary:
+                    fb_token = order.order_summary['firebase_token']
                 payload = {'order_uid': str(order.order_uid),'status':'placed'}
                 if fb_token:
                     payload['firebase_token'] = fb_token
@@ -80,7 +82,7 @@ def order_executor(self, payload, recall=False):
         
         # for apps, need to change later with better logic
         if order.side == 'buy' and order.order_type=='apps' and order.is_init:
-            if order.amount > 10000:
+            if (order.amount / order.margin) > 10000:
                 order.amount = 20000
             else:
                 order.amount = 10000
