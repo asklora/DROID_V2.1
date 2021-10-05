@@ -7,15 +7,17 @@ from bot.calculate_bot import populate_daily_profit, update_monthly_deposit
 from ingestion.firestore_migration import firebase_user_update
 from django.core.management.base import BaseCommand
 from core.services.tasks import daily_hedge
+from core.services.order_services import pending_order_checker
 from datasource.rkd import RkdData,RkdStream
 #debug
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        pending_order_checker()
         # daily_hedge(currency="HKD")
         # print("Something")
-        rkd = RkdStream()
-        data =rkd.bulk_get_quote(["2777.HK"],df=True)
-        print(data)
+        # rkd = RkdStream()
+        # data =rkd.bulk_get_quote(["2777.HK"],df=True)
+        # print(data)
         # data = data.set_index('ticker')
         # records = data.to_dict("index")
         # rkd.update_rtdb(records)
