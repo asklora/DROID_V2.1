@@ -131,7 +131,7 @@ def order_executor(self, payload, recall=False):
             message = f'{order.side} order {share} stocks {order.ticker.ticker} is received, status pending'
             if payload.get('firebase_token',None):
                 filttered_order = Model.objects.filter(order_uid=order.order_uid)
-                filttered_order.update(summary={'firebase_token':payload['firebase_token']})
+                filttered_order.update(order_summary={'firebase_token':payload['firebase_token']})
 
             # create schedule to next bell and will recrusive until market status open
             
