@@ -224,7 +224,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     qty = serializers.FloatField(read_only=True)
     setup = serializers.JSONField(required=False)
     created = serializers.DateTimeField(required=False, read_only=True)
-    margin = serializers.IntegerField(required=False)
+    margin = serializers.IntegerField(required=False,default=1)
 
     class Meta:
         model = Order

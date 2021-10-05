@@ -34,7 +34,12 @@ def pending_order_checker(self):
         for order in orders:
             market_db = Exchange.objects.get(mic=order.ticker.mic)
             if market_db.is_open:
-                payload = json.dumps({'order_uid': str(order.order_uid),'status':'placed'})
+                fb_token = order.order_summary.get['firebase_token',None]
+                payload = {'order_uid': str(order.order_uid),'status':'placed'}
+                if fb_token:
+                    payload['firebase_token'] = fb_token
+                
+                payload = json.dumps(payload)
                 order_executor.apply_async(args=(payload,),kwargs={"recall":True},task_id=str(order.order_uid))
 
     return {'success':'order pending executed'}
@@ -207,3 +212,13 @@ def update_rtdb_user_porfolio():
         err.send_report_error()
         return {'error':str(e)}
     return {'status':'updated firebase portfolio'}
+
+
+
+
+
+
+
+
+
+    
