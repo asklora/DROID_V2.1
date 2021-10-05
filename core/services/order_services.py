@@ -34,7 +34,7 @@ def pending_order_checker(self):
         for order in orders:
             market_db = Exchange.objects.get(mic=order.ticker.mic)
             if market_db.is_open:
-                payload = json.dumps({'order_uid': str(order.order_uid)})
+                payload = json.dumps({'order_uid': str(order.order_uid),'status':'placed'})
                 order_executor.apply_async(args=(payload,),kwargs={"recall":True},task_id=str(order.order_uid))
 
     return {'success':'order pending executed'}
@@ -129,6 +129,9 @@ def order_executor(self, payload, recall=False):
             print('close')
             messages = 'order pending'
             message = f'{order.side} order {share} stocks {order.ticker.ticker} is received, status pending'
+            # if payload.get('firebase_token',None):
+                # order.summary = {'firebase_token':'firebase_token'}
+
             # create schedule to next bell and will recrusive until market status open
             # still keep sending message. need to improve
             
