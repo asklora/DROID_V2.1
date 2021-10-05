@@ -4,7 +4,7 @@ import pytest
 from core.orders.models import Order
 from core.user.models import Accountbalance
 
-from tests.utils import create_buy_order
+from tests.utils.order import create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[

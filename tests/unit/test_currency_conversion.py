@@ -8,7 +8,7 @@ from core.orders.services import sell_position_service
 from core.universe.models import Currency, Universe
 from core.user.convert import ConvertMoney
 
-from tests.utils import create_buy_order
+from tests.utils.order import create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[

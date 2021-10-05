@@ -6,9 +6,13 @@ import pytest
 from core.master.models import MasterOhlcvtr
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.models import Accountbalance, TransactionHistory
-from portfolio import classic_position_check, ucdc_position_check, uno_position_check
+from portfolio import (
+    classic_position_check,
+    ucdc_position_check,
+    uno_position_check,
+)
 
-from tests.utils import create_buy_order
+from tests.utils.order import create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -52,7 +56,9 @@ def test_should_create_hedge_order_for_classic_bot(user) -> None:
         order_uid_id=confirmed_buy_order.order_uid
     )
 
-    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(
+        pk=performance.position_uid_id,
+    )
 
     # step 2: setup hedge
     classic_position_check(
@@ -60,7 +66,9 @@ def test_should_create_hedge_order_for_classic_bot(user) -> None:
         tac=True,
     )
     # step 3: get hedge positions
-    performance = PositionPerformance.objects.filter(position_uid=position.position_uid)
+    performance = PositionPerformance.objects.filter(
+        position_uid=position.position_uid,
+    )
 
     print(len(performance))
 
@@ -101,7 +109,9 @@ def test_should_create_hedge_order_for_uno_bot(user) -> None:
         order_uid_id=confirmed_buy_order.order_uid
     )
 
-    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(
+        pk=performance.position_uid_id,
+    )
 
     # step 2: setup hedge
     uno_position_check(
@@ -109,7 +119,9 @@ def test_should_create_hedge_order_for_uno_bot(user) -> None:
         tac=True,
     )
     # step 3: get hedge positions
-    performance = PositionPerformance.objects.filter(position_uid=position.position_uid)
+    performance = PositionPerformance.objects.filter(
+        position_uid=position.position_uid,
+    )
 
     print(len(performance))
 
@@ -150,7 +162,9 @@ def test_should_create_hedge_order_for_ucdc_bot(user) -> None:
         order_uid_id=confirmed_buy_order.order_uid
     )
 
-    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(
+        pk=performance.position_uid_id,
+    )
 
     # step 2: setup hedge
     ucdc_position_check(
@@ -159,7 +173,9 @@ def test_should_create_hedge_order_for_ucdc_bot(user) -> None:
     )
 
     # step 3: get hedge positions
-    performance = PositionPerformance.objects.filter(position_uid=position.position_uid)
+    performance = PositionPerformance.objects.filter(
+        position_uid=position.position_uid,
+    )
 
     print(len(performance))
 
@@ -201,7 +217,9 @@ def test_should_create_hedge_order_for_ucdc_bot_with_margin(user) -> None:
         order_uid_id=confirmed_buy_order.order_uid
     )
 
-    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(
+        pk=performance.position_uid_id,
+    )
 
     # step 2: setup hedge
     ucdc_position_check(
@@ -210,7 +228,9 @@ def test_should_create_hedge_order_for_ucdc_bot_with_margin(user) -> None:
     )
 
     # step 3: get hedge positions
-    performance = PositionPerformance.objects.filter(position_uid=position.position_uid)
+    performance = PositionPerformance.objects.filter(
+        position_uid=position.position_uid,
+    )
 
     print(len(performance))
 
@@ -252,7 +272,9 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
         order_uid_id=confirmed_buy_order.order_uid
     )
 
-    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(
+        pk=performance.position_uid_id,
+    )
 
     # step 2: setup hedge
     ucdc_position_check(
@@ -261,7 +283,9 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
     )
 
     # step 3: get hedge values
-    performance = PositionPerformance.objects.filter(position_uid=position.position_uid)
+    performance = PositionPerformance.objects.filter(
+        position_uid=position.position_uid,
+    )
     performance_df = pd.DataFrame(list(performance.values()))
     performance_df = performance_df[
         [
@@ -283,7 +307,10 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
     ]
 
     performance_df = performance_df.rename(
-        columns={"position_uid_id": "position_uid", "order_uid_id": "order_uid"}
+        columns={
+            "position_uid_id": "position_uid",
+            "order_uid_id": "order_uid",
+        }
     )
 
     position = OrderPosition.objects.filter(position_uid=position.position_uid)
@@ -312,7 +339,9 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
         }
     )
 
-    orders = Order.objects.filter(order_uid__in=performance_df["order_uid"].to_list())
+    orders = Order.objects.filter(
+        order_uid__in=performance_df["order_uid"].to_list(),
+    )
     orders_df = pd.DataFrame(list(orders.values()))
     orders_df = orders_df[["order_uid", "order_type", "side", "amount", "price", "qty"]]
 
@@ -329,8 +358,16 @@ def test_hedge_values_for_ucdc_bot(user) -> None:
     print(len(orders))
 
     performance_df = performance_df.sort_values(by=["created"])
-    performance_df = performance_df.merge(position_df, how="left", on=["position_uid"])
-    performance_df = performance_df.merge(orders_df, how="left", on=["order_uid"])
+    performance_df = performance_df.merge(
+        position_df,
+        how="left",
+        on=["position_uid"],
+    )
+    performance_df = performance_df.merge(
+        orders_df,
+        how="left",
+        on=["order_uid"],
+    )
 
     # performance_df = pd.read_csv("hedge_margin.csv")
     print(performance_df)
@@ -468,7 +505,9 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
         order_uid_id=confirmed_buy_order.order_uid
     )
 
-    position: OrderPosition = OrderPosition.objects.get(pk=performance.position_uid_id)
+    position: OrderPosition = OrderPosition.objects.get(
+        pk=performance.position_uid_id,
+    )
 
     print(f"expiry: {position.expiry}")
 
@@ -479,7 +518,9 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     )
 
     # get hedge positions
-    positions = OrderPosition.objects.filter(position_uid=position.position_uid)
+    positions = OrderPosition.objects.filter(
+        position_uid=position.position_uid,
+    )
 
     # get hedge performances
     performances = PositionPerformance.objects.filter(

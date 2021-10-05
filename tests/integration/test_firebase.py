@@ -4,7 +4,9 @@ from datetime import datetime
 from ingestion import firebase_user_update
 from django.conf import settings
 
-from tests.utils import create_buy_order, schema, set_user_joined
+from tests.utils.order import create_buy_order
+from tests.utils.firebase_schema import FIREBASE_SCHEMA
+from tests.utils.user import set_user_joined
 
 
 def test_creating_new_user_should_update_firebase(
@@ -30,7 +32,7 @@ def test_creating_new_user_should_update_firebase(
     assert doc.exists
 
     doc_dict = doc.to_dict()
-    assert schema.validate(doc_dict)
+    assert FIREBASE_SCHEMA.validate(doc_dict)
 
     print("Firebase doc: " + str(doc_dict))
 
@@ -87,7 +89,7 @@ def test_order_should_be_updated_to_firebase(
     print(doc_dict)
 
     # whether the data in the firebase is structured correctly
-    assert schema.validate(doc_dict)
+    assert FIREBASE_SCHEMA.validate(doc_dict)
 
     active_portfolios = doc_dict["active_portfolio"]
 

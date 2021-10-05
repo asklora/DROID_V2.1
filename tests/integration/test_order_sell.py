@@ -5,7 +5,7 @@ from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.orders.services import sell_position_service
 from core.user.models import Accountbalance, User
 
-from tests.utils import create_buy_order
+from tests.utils.order import create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[

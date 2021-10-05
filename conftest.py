@@ -11,7 +11,7 @@ from firebase_admin import firestore
 from core.djangomodule.network.cloud import DroidDb
 from core.user.models import Accountbalance, TransactionHistory, User
 
-from tests.utils import delete_user
+from tests.utils.user import delete_user
 
 load_dotenv()
 env = Env()
