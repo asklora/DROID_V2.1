@@ -134,7 +134,6 @@ def order_executor(self, payload, recall=False):
                 filttered_order.update(summary={'firebase_token':payload['firebase_token']})
 
             # create schedule to next bell and will recrusive until market status open
-            # still keep sending message. need to improve
             
             # eta_debug=datetime.now()+timedelta(minutes=2)
             # order_executor.apply_async(args=(json.dumps(payload),), kwargs={
