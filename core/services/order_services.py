@@ -129,8 +129,9 @@ def order_executor(self, payload, recall=False):
             print('close')
             messages = 'order pending'
             message = f'{order.side} order {share} stocks {order.ticker.ticker} is received, status pending'
-            # if payload.get('firebase_token',None):
-                # order.summary = {'firebase_token':'firebase_token'}
+            if payload.get('firebase_token',None):
+                filttered_order = Model.objects.filter(order_uid=order.order_uid)
+                filttered_order.update(summary={'firebase_token':payload['firebase_token']})
 
             # create schedule to next bell and will recrusive until market status open
             # still keep sending message. need to improve
