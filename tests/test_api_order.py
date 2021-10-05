@@ -21,6 +21,7 @@ def test_api_create_order(authentication, client, user) -> None:
         "price": 1.63,
         "bot_id": "STOCK_stock_0",
         "amount": 100,
+        "margin": 1,
         "user": user.id,
         "side": "buy",
     }
@@ -90,6 +91,7 @@ def test_api_create_order_with_classic_bot(
         "price": 1.63,
         "bot_id": "CLASSIC_classic_003846",
         "amount": 100,
+        "margin": 1,
         "user": user.id,
         "side": "buy",
     }
@@ -238,6 +240,7 @@ def test_api_create_duplicated_orders(
                 "price": 1.63,
                 "bot_id": "STOCK_stock_0",
                 "amount": 100,
+                "margin": 1,
                 "user": user.id,
                 "side": "buy",
             },
