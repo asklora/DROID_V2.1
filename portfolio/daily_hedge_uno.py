@@ -282,7 +282,10 @@ def uno_position_check(position_uid, to_date=None, tac=False, hedge=False, lates
         status = False
         if hedge:
             try:
-                lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date__gt=trading_day, types="hedge", ticker=position.ticker)
+                if performance:
+                    lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date__gt=trading_day, types="hedge", ticker=position.ticker)
+                else:
+                    lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date__gte=trading_day, types="hedge", ticker=position.ticker)
             except HedgeLatestPriceHistory.DoesNotExist:
                 print("not exist", position.ticker.ticker)
                 return None
