@@ -354,7 +354,7 @@ class RkdData(Rkd):
         collected_data = pd.concat(collected_data)
         return result
 
-    def get_index_price(self,currency):
+    def get_index_price(self,currency:str):
         from django.apps import apps
         Model = apps.get_model("universe", "Currency")
         currency = Model.objects.get(currency_code=currency)
@@ -366,7 +366,8 @@ class RkdData(Rkd):
         df_data = pd.DataFrame(formated_json_data).rename(columns={
             "CF_CLOSE": "index_price",
         })
-        currency.index_price = formated_json_data[0]["CF_CLOSE"]
+        price = formated_json_data[0].get("CF_CLOSE", currency.index_price)
+        currency.index_price = price
         currency.save()
 
     def response_to_df(self,response:dict) -> pd.DataFrame:

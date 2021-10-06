@@ -1,13 +1,12 @@
 from bot.calculate_bot import populate_daily_profit
 from config.celery import app
 from django.apps import apps
-from core.djangomodule.calendar import TradingHours
 from core.djangomodule.general import logging
 from core.user.models import User
 from core.services.models import ErrorLog
 from django.db import transaction
 from firebase_admin import messaging
-from datetime import datetime,timedelta
+from datetime import datetime
 from rest_framework import serializers
 from channels.layers import get_channel_layer
 from ingestion import firebase_user_update
@@ -15,7 +14,6 @@ from datasource import rkd as trkd
 import time
 import json
 import asyncio
-from django.conf import settings
 
 class OrderDetailsServicesSerializers(serializers.ModelSerializer):
 
@@ -23,13 +21,14 @@ class OrderDetailsServicesSerializers(serializers.ModelSerializer):
         model = apps.get_model('orders', 'Order')
         fields = ['ticker', 'price', 'bot_id', 'amount', 'side',
                   'order_uid', 'status', 'setup', 'created', 'filled_at',
-                  'placed', 'placed_at', 'canceled_at', 'qty']
+                  'placed', 'placed_at', 'canceled_at', 'qty','user_id']
 
 @app.task(bind=True)
 def pending_order_checker(self):
     Exchange = apps.get_model('universe', 'ExchangeMarket')
     Order = apps.get_model('orders', 'Order')
     orders = Order.objects.prefetch_related('ticker').filter(status='pending')
+    orders_id=[]
     if orders.exists():
         for order in orders:
             market_db = Exchange.objects.get(mic=order.ticker.mic)
@@ -43,8 +42,9 @@ def pending_order_checker(self):
                 
                 payload = json.dumps(payload)
                 order_executor.apply_async(args=(payload,),kwargs={"recall":True},task_id=str(order.order_uid))
+                orders_id.append(str(order.order_uid))
 
-    return {'success':'order pending executed'}
+    return {'success':'order pending executed','data':orders_id}
 
 
 
@@ -67,7 +67,7 @@ def order_executor(self, payload, recall=False):
 
     if recall:
         if order.status != 'pending':
-            return {'err':'order already executed'}
+            return {'err':'order already executed','data':{'order_id':str(order.order_uid),'status':order.status}}
         rkd = trkd.RkdData()
         # getting new price
         df = rkd.get_quote([order.ticker.ticker], df=True)
@@ -81,7 +81,7 @@ def order_executor(self, payload, recall=False):
             in_wallet_transactions.delete()
         
         # for apps, need to change later with better logic
-        if order.side == 'buy' and order.order_type=='apps' and order.is_init:
+        if order.side == 'buy' and order.is_app_order and order.is_init:
             if (order.amount / order.margin) > 10000:
                 order.amount = 20000
             else:
@@ -108,14 +108,11 @@ def order_executor(self, payload, recall=False):
         """
         should not go here if canceled
         """
-        if order.bot_id == 'STOCK_stock_0' or order.side=='sell':
+        if not order.is_bot_order or order.side=='sell':
             share = order.qty
         else:
             share = order.setup['performance']['share_num']
             
-        Model = apps.get_model('orders', 'Order')
-        market = TradingHours(mic=order.ticker.mic)
-        market.is_open
         market_db = Exchange.objects.get(mic=order.ticker.mic)
         if market_db.is_open:
             if not order.insufficient_balance():
@@ -139,14 +136,6 @@ def order_executor(self, payload, recall=False):
             if payload.get('firebase_token',None):
                 filttered_order = Model.objects.filter(order_uid=order.order_uid)
                 filttered_order.update(order_summary={'firebase_token':payload['firebase_token']})
-
-            # create schedule to next bell and will recrusive until market status open
-            
-            # eta_debug=datetime.now()+timedelta(minutes=2)
-            # order_executor.apply_async(args=(json.dumps(payload),), kwargs={
-            #                         'recall': True}, eta=eta_debug,task_id=str(order.order_uid))
-            # order_executor.apply_async(args=(json.dumps(payload),), kwargs={
-            #                         'recall': True}, eta=market.next_bell,task_id=str(order.order_uid))
     else:
         """
         we need message if order is cancel
@@ -154,24 +143,22 @@ def order_executor(self, payload, recall=False):
         messages = 'order canceled'
         message = f'{order.side} order  stocks {order.ticker.ticker} is canceled'
     
-    populate_daily_profit()
-    firebase_user_update(user_id=[order.user_id.id])
+    order.populate_to_firebase()
     payload_serializer = OrderDetailsServicesSerializers(order).data
     channel_layer = get_channel_layer()
-    if 'firebase_token' in payload:
-        if payload['firebase_token']:
-            msg = messaging.Message(
-                notification=messaging.Notification(
-                    title=messages,
-                    body=message
-                ),
-                token=payload['firebase_token'],
-            )
-            try:
-                res = messaging.send(msg)
-                logging.info(res)
-            except Exception as e:
-                logging.error(str(e))
+    if payload.get('firebase_token',None):
+        msg = messaging.Message(
+            notification=messaging.Notification(
+                title=messages,
+                body=message
+            ),
+            token=payload['firebase_token'],
+        )
+        try:
+            res = messaging.send(msg)
+            logging.info(res)
+        except Exception as e:
+            logging.error(str(e))
 
                 
     asyncio.run(channel_layer.group_send(self.request.id,
