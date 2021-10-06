@@ -292,8 +292,14 @@ def mongo_universe_update(ticker=None, currency_code=None):
     bot_statistic["avg_loss"] = np.where(bot_statistic["avg_loss"].isnull(), float(0), bot_statistic["avg_loss"])
     bot_statistic["win_rate"] = bot_statistic["pct_profit"]
     for index, row in bot_statistic.iterrows():
-        bot_statistic.loc[index, "bot_return"] = max(min(row["avg_return"], 0.3), -0.2) / 0.5
-        bot_statistic.loc[index, "risk_moderation"] = max(0.3 + row["avg_loss"], float(0)) / 0.3
+        if(row["bot_type"] == "CLASSIC"):
+            avg_return = row["avg_return"]
+            avg_loss = row["avg_loss"]
+        else:
+            avg_return = row["avg_return"] * 2
+            avg_loss = row["avg_loss"] * 2
+        bot_statistic.loc[index, "bot_return"] = max(min(avg_return, 0.5), -0.4) + 0.4 / 0.9
+        bot_statistic.loc[index, "risk_moderation"] = max(0.5 + avg_loss, float(0)) / 0.5
     bot_ranking = bot_ranking.merge(bot_statistic[["ticker", "time_to_exp", "bot_type", 
         "bot_option_type", "win_rate", "bot_return", "risk_moderation"]], 
         how="left", on=["ticker", "bot_type", "bot_option_type", "time_to_exp"])
