@@ -465,7 +465,7 @@ def score_update_fx_conversion(df):
 
     curr_code = get_currency_code_ibes_ws()     # map ibes/ws currency for each ticker
     df = df.merge(curr_code, on='ticker', how='left')
-    df = df.dropna(subset=['currency_code_ibes', 'currency_code_ws', 'currency_code'], how='any')   # remove ETF / index / some B-share -> tickers will not be recommended
+    # df = df.dropna(subset=['currency_code_ibes', 'currency_code_ws', 'currency_code'], how='any')   # remove ETF / index / some B-share -> tickers will not be recommended
 
     # map fx rate for conversion for each ticker
     fx = get_currenct_fx_rate_dict()
@@ -705,7 +705,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # calculate ai_score by each currency_code (i.e. group) for [Extra]
     for group, g in factor_rank.groupby("group"):
         print(f"Calculate Fundamentals [extra] in group [{group}]")
-        sub_g = g.loc[(g["factor_weight"]==2) & (g["pred_z"] >= 1)]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
+        sub_g = g.loc[(g["factor_weight"]==2)|(g["factor_weight"].isnull())]        # use all rank=2 (best class)
+        sub_g = sub_g.loc[(g["pred_z"] >= 1)|(g["pred_z"].isnull())]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
 
         if len(sub_g.dropna(subset=["pred_z"])) > 0:     # if no factor rank=2, don"t add any factor into extra pillar
             score_col = [f"{x}_{y}_currency_code" for x, y in sub_g.loc[sub_g["scaler"].notnull(), ["factor_name", "scaler"]].to_numpy()]
@@ -719,8 +720,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             fundamentals_details_column_names[group]['extra'] = ''
 
         # save used columns to pillars
-        fundamentals_details[group]['extra'] = fundamentals.loc[fundamentals['currency_code']==group,
-               ['ticker', "fundamentals_extra"] + score_col_detail].sort_values(by=[ f"fundamentals_extra"])
+        # fundamentals_details[group]['extra'] = fundamentals.loc[fundamentals['currency_code']==group,
+        #        ['ticker', "fundamentals_extra"] + score_col_detail].sort_values(by=[ f"fundamentals_extra"])
 
     upsert_data_to_database_ali(pd.DataFrame(fundamentals_details_column_names).transpose().reset_index(),
                                 f"test_fundamental_score_current_names","index",how="update",Text=True)
@@ -757,6 +758,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     score_history = get_ai_score_testing_history(backyear=1)
     for cur, g in fundamentals.groupby(['currency_code']):
         try:
+            raise Exception('Scaling with current score')
             score_history_cur = score_history.loc[score_history['currency_code']==cur]
             m1 = MinMaxScaler(feature_range=(0, 10)).fit(score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]])
             fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = m1.transform(g[["ai_score", "ai_score2"]])
