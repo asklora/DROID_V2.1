@@ -21,6 +21,7 @@ from ingestion.data_from_dsws import (
     populate_ibes_table, 
     populate_macro_table, 
     update_company_desc_from_dsws,
+    update_currency_price_from_dsws,
     update_daily_fundamentals_score_from_dsws,
     update_data_dsws_from_dsws, 
     update_entity_type_from_dsws, 
@@ -99,6 +100,7 @@ class Command(BaseCommand):
                 ticker = get_universe_by_region(region_id=["na"])["ticker"].to_list()
                 update_data_dss_from_dss(ticker=ticker)
                 update_data_dsws_from_dsws(ticker=ticker)
+                update_currency_price_from_dsws()
                 do_function("special_cases_1")
                 do_function("master_ohlcvtr_update")
                 status = "Master OHLCVTR Update"
@@ -124,6 +126,7 @@ class Command(BaseCommand):
                 ticker = get_universe_by_region(region_id=["ws"])["ticker"].to_list()
                 update_data_dss_from_dss(ticker=ticker)
                 update_data_dsws_from_dsws(ticker=ticker)
+                update_currency_price_from_dsws()
                 do_function("special_cases_1")
                 do_function("master_ohlcvtr_update")
                 status = "Master OHLCVTR Update"
