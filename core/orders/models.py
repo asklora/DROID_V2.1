@@ -8,6 +8,8 @@ import uuid
 from core.djangomodule.general import generate_id, formatdigit
 from simple_history.models import HistoricalRecords
 from core.services.notification import send_notification
+from bot.calculate_bot import populate_daily_profit
+from ingestion import firebase_user_update
 
 class Order(BaseTimeStampModel):
     """
@@ -42,6 +44,19 @@ class Order(BaseTimeStampModel):
 
     def insufficient_balance(self):
         return (self.amount / self.margin) > self.user_id.user_balance.amount
+    
+    @property
+    def is_bot_order(self):
+        return self.bot_id != 'STOCK_stock_0'
+    
+    @property
+    def is_app_order(self):
+        return self.order_type == 'apps'
+
+    
+    def populate_to_firebase(self):
+        populate_daily_profit()
+        firebase_user_update(user_id=[self.user_id.id])
 
 
     def save(self, *args, **kwargs):
