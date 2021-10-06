@@ -292,7 +292,6 @@ def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, m
         result = result.rename(columns={"RI": "total_return_index", "level_1" : "trading_day"})
         result = result.dropna(subset=["ticker"])
         result = result.dropna(subset=["trading_day"])
-        result = uid_maker(result, uid="dss_id", ticker="ticker", trading_day="trading_day")
         result = uid_maker(result, uid="dsws_id", ticker="ticker", trading_day="trading_day")
         result = result[["dsws_id", "ticker", "trading_day", "total_return_index"]]
         print(result)
