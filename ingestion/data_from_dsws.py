@@ -47,6 +47,7 @@ from datasource.dsws import (
     get_data_static_from_dsws, 
     get_data_static_with_string_from_dsws)
 from general.sql_query import (
+    get_active_currency_ric_not_null,
     get_active_universe, 
     get_active_universe_by_entity_type, 
     get_active_universe_company_description_null, 
