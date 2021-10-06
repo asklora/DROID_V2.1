@@ -578,14 +578,14 @@ def get_ai_score_testing_history(backyear=1):
 def get_currenct_fx_rate_dict():
     ''' get ai_score / ai_score2 history from universe rating '''
     query =  f"SELECT * FROM {get_historic_fx_rate_table_name()} "
-    query += f"WHERE period_end > '{backdate_by_day(5)}'"
+    query += f"WHERE period_end > '{backdate_by_day(30)}'"
     data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
     return data.sort_values('period_end').groupby('ticker')['fx_rate'].last().to_dict()
 
 def get_currency_code_ibes_ws():
     ''' get ai_score / ai_score2 history from universe rating '''
-    query =  f"SELECT ticker, currency_code_ibes, currency_code_ws FROM universe_newcode"
-    data = read_query(query, table="universe_newcode", alibaba=True)
+    query =  f"SELECT ticker, currency_code_ibes, currency_code_ws FROM {get_universe_table_name()}"
+    data = read_query(query, table=get_universe_table_name(), alibaba=False)
     return data
 
 def get_iso_currency_code_map():
