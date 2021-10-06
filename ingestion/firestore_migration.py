@@ -291,7 +291,8 @@ def mongo_universe_update(ticker=None, currency_code=None):
     bot_statistic["avg_return"] = np.where(bot_statistic["avg_return"].isnull(), float(0), bot_statistic["avg_return"])
     bot_statistic["avg_loss"] = np.where(bot_statistic["avg_loss"].isnull(), float(0), bot_statistic["avg_loss"])
     bot_statistic["win_rate"] = bot_statistic["pct_profit"]
-    if(row["bot_type"] == "CLASSIC"):
+    for index, row in bot_statistic.iterrows():
+        if(row["bot_type"] == "CLASSIC"):
             avg_return = row["avg_return"]
             avg_loss = row["avg_loss"]
         else:
