@@ -224,7 +224,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     qty = serializers.FloatField(read_only=True)
     setup = serializers.JSONField(required=False)
     created = serializers.DateTimeField(required=False, read_only=True)
-    margin = serializers.IntegerField(required=False)
+    margin = serializers.IntegerField(required=False,default=1)
 
     class Meta:
         model = Order
@@ -423,7 +423,7 @@ class OrderListSerializers(serializers.ModelSerializer):
         model = Order
         fields = ["ticker", "side",
                   "order_uid", "status", "created", "filled_at",
-                  "placed", "placed_at", "qty","amount","bot_name","currency","bot_range","ticker_name"]
+                  "placed", "placed_at", "qty","amount","bot_name","currency","bot_range","ticker_name","setup"]
     
     def get_ticker_name(self,obj) -> str:
         return obj.ticker.ticker_name
@@ -466,6 +466,9 @@ class OrderActionSerializer(serializers.ModelSerializer):
         if instance.status == validated_data['status']:
             raise exceptions.MethodNotAllowed(
                 {'detail': f'order already {instance.status}'})
+        if instance.insufficient_balance():
+            raise exceptions.MethodNotAllowed(
+                {'detail': 'insufficient funds'})
                 
         from core.services.order_services import order_executor
         payload = json.dumps(validated_data)

@@ -8,7 +8,17 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
 from general.data_process import tuple_data, NoneToZero, uid_maker
-from general.sql_query import get_active_universe, get_orders_position, get_orders_position_group_by_user_id, get_orders_position_performance, get_user_account_balance, get_user_core, get_user_deposit, get_user_profit_history, read_query
+from general.sql_query import (
+    get_active_universe,
+    get_count_orders_position, 
+    get_orders_group_by_user_id, 
+    get_orders_position, 
+    get_orders_position_performance, 
+    get_user_account_balance, 
+    get_user_core, 
+    get_user_deposit, 
+    get_user_profit_history, 
+    read_query)
 from general.table_name import (
     get_currency_calendar_table_name,
     get_data_dividend_daily_rates_table_name,
@@ -41,7 +51,7 @@ def get_q(ticker, t):
         q = data.loc[0, "q"]
     except Exception as e:
         q = 0
-    return q
+    return NoneToZero(q)
 
 
 def get_r(currency_code, t):
@@ -52,7 +62,7 @@ def get_r(currency_code, t):
         r = data.loc[0, "r"]
     except Exception as e:
         r = 0
-    return r
+    return NoneToZero(r)
 
 
 def get_spot_date(spot_date, ticker):
@@ -102,6 +112,8 @@ def get_expiry_date(time_to_exp, spot_date, currency_code, apps=False):
 
 
 def get_strike_barrier(price, vol, bot_option_type, bot_group):
+    price = NoneToZero(price)
+    vol = NoneToZero(vol)
     if bot_group == "UNO":
         if bot_option_type == "OTM":
             strike = price * (1 + vol * 0.5)
@@ -112,12 +124,12 @@ def get_strike_barrier(price, vol, bot_option_type, bot_group):
             barrier = price * (1 + vol * 2)
         elif bot_option_type == "ITM":
             barrier = price * (1 + vol * 1.5)
-        return float(strike), float(barrier)
+        return float(NoneToZero(strike)), float(NoneToZero(barrier))
 
     elif bot_group == "UCDC":
         strike = price
         strike_2 = price * (1 - vol * 1.5)
-        return float(strike), float(strike_2)
+        return float(NoneToZero(strike)), float(NoneToZero(strike_2))
     return False
 
 
@@ -132,17 +144,23 @@ def get_option_price_ucdc(price, strike, strike_2, t, r, q, v1, v2):
 def get_v1_v2(ticker, price, trading_day, t, r, q, strike, barrier):
     trading_day = check_date(trading_day)
     status, obj = get_vol_by_date(ticker, trading_day)
+    price = NoneToZero(price)
+    t = NoneToZero(t)
+    r = NoneToZero(r)
+    q = NoneToZero(q)
+    strike = NoneToZero(strike)
+    barrier = NoneToZero(barrier)
     if status:
-        v1 = uno.find_vol(strike / price, t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
+        v1 = uno.find_vol(NoneToZero(strike / price), t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
                           obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v1 = np.nan_to_num(v1, nan=0)
-        v2 = uno.find_vol(barrier / price, t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
+        v2 = uno.find_vol(NoneToZero(barrier / price), t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
                           obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
         v2 = np.nan_to_num(v2, nan=0)
     else:
         v1 = default_vol
         v2 = default_vol
-    return float(v1), float(v2)
+    return float(NoneToZero(v1)), float(NoneToZero(v2))
 
 
 def get_trq(ticker, expiry, spot_date, currency_code):
@@ -153,10 +171,13 @@ def get_trq(ticker, expiry, spot_date, currency_code):
         t = 1
     r = get_r(currency_code, t)
     q = get_q(ticker, t)
-    return int(t), float(r), float(q)
+    return int(NoneToZero(t)), float(NoneToZero(r)), float(NoneToZero(q))
 
 
 def get_vol(ticker, trading_day, t, r, q, time_to_exp):
+    t = NoneToZero(t)
+    r = NoneToZero(r)
+    q = NoneToZero(q)
     trading_day = check_date(trading_day)
     status, obj = get_vol_by_date(ticker, trading_day)
     if status:
@@ -172,7 +193,7 @@ def get_vol(ticker, trading_day, t, r, q, time_to_exp):
 
     else:
         vol = default_vol
-    return float(vol)
+    return float(NoneToZero(vol))
 
 
 def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry_date,margin:int=1):
@@ -197,6 +218,7 @@ def get_classic(ticker, spot_date, time_to_exp, investment_amount, price, expiry
     data["performance"]["share_num"] = total_bot_share_num
     data['performance']["current_bot_cash_balance"] = bot_cash_balance
     data["position"]["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
+    data["position"]["spot_date"] = spot_date.date().strftime("%Y-%m-%d")
     data["position"]["total_bot_share_num"] = total_bot_share_num
     data["position"]["max_loss_pct"] = - (dur * classic_vol * 1.25)
     data["position"]["max_loss_price"] = round(price * (1 + data["position"]["max_loss_pct"]), int(digits))
@@ -295,6 +317,7 @@ def get_ucdc(ticker, currency_code, expiry_date, spot_date, time_to_exp, investm
     data['performance']["vol"] = vol
     data['performance']["current_bot_cash_balance"] = bot_cash_balance
     data['position']["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
+    data["position"]["spot_date"] = spot_date.date().strftime("%Y-%m-%d")
     data['position']["vol"] = vol
     data['position']["total_bot_share_num"] = total_bot_share_num
     data['position']["max_loss_pct"] = potential_loss
@@ -406,7 +429,7 @@ def get_uno(ticker, currency_code, expiry_date, spot_date, time_to_exp, investme
     data['position']["bot_cash_balance"] = bot_cash_balance
     data['position']["investment_amount"]=investment_amount
     data['position']["expiry"] = expiry_date.date().strftime("%Y-%m-%d")
-    
+    data["position"]["spot_date"] = spot_date.date().strftime("%Y-%m-%d")
     
     return data
 
@@ -575,9 +598,10 @@ def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
 
 def populate_daily_profit(currency_code=None, user_id=None):
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined")[["user_id", "is_joined"]]
+    if user_core.empty:
+        return
     user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, currency_code, amount as balance")
     user_deposit = get_user_deposit(user_id=user_id)
-
     currency = get_currency_data(currency_code=currency_code)
     currency = currency[["currency_code", "is_decimal"]]
     user_core = user_core.merge(user_balance, how="left", on=["user_id"])
@@ -586,10 +610,14 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
     user_core["deposit"] = np.where(user_core["deposit"].isnull(), 0, user_core["deposit"])
 
-    bot_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
+    bot_order_pending = get_orders_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
     user_core = user_core.merge(bot_order_pending, how="left", on=["user_id"])
+
+    count_position = get_count_orders_position(user_id=user_core["user_id"].to_list())
+    user_core = user_core.merge(count_position, how="left", on=["user_id"])
+
     user_core["bot_pending_amount"] = np.where(user_core["bot_pending_amount"].isnull(), 0, user_core["bot_pending_amount"])
-    stock_order_pending = get_orders_position_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=True)
+    stock_order_pending = get_orders_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=True)
     user_core = user_core.merge(stock_order_pending, how="left", on=["user_id"])
     user_core["stock_pending_amount"] = np.where(user_core["stock_pending_amount"].isnull(), 0, user_core["stock_pending_amount"])
 
@@ -619,6 +647,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
             daily_profit_pct = round(profit / NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) * 100, 4)
             daily_invested_amount = formatdigit(NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) + user_core.loc[index, "pending_amount"], currency_decimal=row["is_decimal"])
         else:
+            
             profit = 0
             daily_profit_pct = 0
             daily_invested_amount = 0
@@ -633,24 +662,28 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
     user_core["user_id"] = user_core["user_id"].astype(int)
     user_core = user_core.drop(columns=["currency_code", "is_decimal", "bot_pending_amount", "stock_pending_amount", "pending_amount", "deposit", "balance"])
+    user_core = user_core.replace([np.inf, -np.inf], 0).copy()
     joined = user_core.loc[user_core["is_joined"] == True]
+    joined = joined.loc[joined["total_position"] > 0]
     joined = joined.sort_values(by=["total_profit_pct"], ascending=[False])
     joined = joined.reset_index(inplace=False, drop=True)
     joined = joined.reset_index(inplace=False)
     joined = joined.rename(columns={"index" : "rank"})
     joined["total_profit_pct"] = joined["total_profit_pct"].round(4)
     joined["rank"] = joined["rank"] + 1
-    joined = joined.drop(columns=["is_joined"])
+    joined = joined.drop(columns=["is_joined", "total_position"])
     upsert_data_to_database(joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
-    not_joined = user_core.loc[user_core["is_joined"] == False]
-    not_joined = not_joined.drop(columns=["is_joined"])
+    not_joined = user_core.loc[~user_core["user_id"].isin(joined["user_id"].to_list())]
+    not_joined = not_joined.drop(columns=["is_joined", "total_position"])
     not_joined["rank"] = None
     not_joined["total_profit_pct"] = not_joined["total_profit_pct"].round(4)
     upsert_data_to_database(not_joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
 def update_monthly_deposit(currency_code=None, user_id=None) -> None:
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined")[["user_id", "is_joined"]]
+    if user_core.empty:
+        return
     user_core = user_core.loc[user_core["is_joined"] == True]
     user_balance = get_user_account_balance(user_id=user_id, field="user_id, amount as balance, currency_code")
     user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_invested_amount")

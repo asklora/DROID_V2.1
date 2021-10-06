@@ -11,16 +11,16 @@ from rest_framework import permissions,status
 from rest_framework.exceptions import APIException
 from django_redis import get_redis_connection
 from redis.exceptions import ConnectionError
-import logging
+import logging,coloredlogs
 import pandas as pd
 import pprint
 from rest_framework.throttling import UserRateThrottle
 
 
+coloredlogs.install()
 logging.basicConfig(format="%(asctime)s - %(message)s",
                     datefmt="%d-%b-%y %H:%M:%S")
 logging.getLogger().setLevel(logging.INFO)
-
 
 
 
@@ -312,6 +312,8 @@ def get_cached_data(key,df=False):
             return data
     except ConnectionError:
         logging.error("Redis isn't running. skip get cache`")
+    except Exception as e:
+        logging.info(e)
     return False
 
 
@@ -321,6 +323,8 @@ def set_cache_data(key,data=None,interval=60*60):
         cache.set(key,json.dumps(data),interval)
     except ConnectionError:
         logging.error("Redis isn't running. ignoring set cache ")
+    except Exception as e:
+        logging.info(e)
     
 
 

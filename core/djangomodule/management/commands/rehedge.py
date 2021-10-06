@@ -8,6 +8,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         daily_hedge(currency=options['currency'],rehedge={
-            'date':'2021-08-19',
+            'date':'2021-10-05',
             'types':'hedge'
         })

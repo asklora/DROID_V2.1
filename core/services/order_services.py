@@ -34,10 +34,17 @@ def pending_order_checker(self):
         for order in orders:
             market_db = Exchange.objects.get(mic=order.ticker.mic)
             if market_db.is_open:
-                payload = {'order_uid': str(order.order_uid)}
-                order_executor.apply_async(args=(payload,),kwargs={'recall':True},task_id=payload["order_uid"])
-    return {'success':'order pending executed'}
+                fb_token=None
+                if 'firebase_token' in order.order_summary:
+                    fb_token = order.order_summary['firebase_token']
+                payload = {'order_uid': str(order.order_uid),'status':'placed'}
+                if fb_token:
+                    payload['firebase_token'] = fb_token
+                
+                payload = json.dumps(payload)
+                order_executor.apply_async(args=(payload,),kwargs={"recall":True},task_id=str(order.order_uid))
 
+    return {'success':'order pending executed'}
 
 
 
@@ -71,11 +78,11 @@ def order_executor(self, payload, recall=False):
         in_wallet_transactions = TransactionHistory.objects.filter(
             transaction_detail__order_uid=str(order.order_uid))
         if in_wallet_transactions.exists():
-            in_wallet_transactions.get().delete()
+            in_wallet_transactions.delete()
         
         # for apps, need to change later with better logic
         if order.side == 'buy' and order.order_type=='apps' and order.is_init:
-            if order.amount > 10000:
+            if (order.amount / order.margin) > 10000:
                 order.amount = 20000
             else:
                 order.amount = 10000
@@ -111,31 +118,41 @@ def order_executor(self, payload, recall=False):
         market.is_open
         market_db = Exchange.objects.get(mic=order.ticker.mic)
         if market_db.is_open:
-            order.status = 'filled'
-            order.filled_at = datetime.now()
-            order.save()
+            if not order.insufficient_balance():
+                order.status = 'filled'
+                order.filled_at = datetime.now()
+                order.save()
 
-            print('open')
-            messages = 'order accepted'
-            message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status filled'
+                print('open')
+                messages = 'order accepted'
+                message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status filled'
+            else:
+                order.status = 'cancel'
+                order.canceled_at = datetime.now()
+                order.save()
+                messages = 'order rejected'
+                message = f'{order.side} order {share} stocks {order.ticker.ticker} is rejected due insufficient funds, status canceled'
         else:
             print('close')
             messages = 'order pending'
-            message = f'{order.side} order {share} stocks {order.ticker.ticker} was executed, status pending'
+            message = f'{order.side} order {share} stocks {order.ticker.ticker} is received, status pending'
+            if payload.get('firebase_token',None):
+                filttered_order = Model.objects.filter(order_uid=order.order_uid)
+                filttered_order.update(order_summary={'firebase_token':payload['firebase_token']})
+
             # create schedule to next bell and will recrusive until market status open
-            # still keep sending message. need to improve
             
             # eta_debug=datetime.now()+timedelta(minutes=2)
             # order_executor.apply_async(args=(json.dumps(payload),), kwargs={
             #                         'recall': True}, eta=eta_debug,task_id=str(order.order_uid))
-            order_executor.apply_async(args=(json.dumps(payload),), kwargs={
-                                    'recall': True}, eta=market.next_bell,task_id=str(order.order_uid))
+            # order_executor.apply_async(args=(json.dumps(payload),), kwargs={
+            #                         'recall': True}, eta=market.next_bell,task_id=str(order.order_uid))
     else:
         """
         we need message if order is cancel
         """
         messages = 'order canceled'
-        message = f'{order.side} order  stocks {order.ticker.ticker} was canceled'
+        message = f'{order.side} order  stocks {order.ticker.ticker} is canceled'
     
     populate_daily_profit()
     firebase_user_update(user_id=[order.user_id.id])
@@ -169,6 +186,19 @@ def order_executor(self, payload, recall=False):
 
 
 
+@app.task(bind=True)
+def cancel_pending_order(self,from_date:datetime=datetime.now(),run_async=False):
+    Order = apps.get_model('orders', 'Order')
+    orders = Order.objects.prefetch_related('ticker').filter(status='pending')
+    if orders.exists():
+        for order in orders:
+            payload = json.dumps({'order_uid': str(order.order_uid),'status':'cancel'})
+            if run_async:
+                order_executor.apply_async(args=(payload,),task_id=str(order.order_uid))
+            else:
+                order_executor(payload)
+    return {'success':'order pending canceled'}
+
 @app.task
 def update_rtdb_user_porfolio():
     
@@ -184,3 +214,13 @@ def update_rtdb_user_porfolio():
         err.send_report_error()
         return {'error':str(e)}
     return {'status':'updated firebase portfolio'}
+
+
+
+
+
+
+
+
+
+    

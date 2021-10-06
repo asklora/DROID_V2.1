@@ -77,7 +77,8 @@ from general.date_process import (
     find_nearest_specific_days,
     forwarddate_by_day,
     forwarddate_by_month,
-    get_period_end_list)
+    get_period_end_list,
+    str_to_date)
 from datasource.fred import read_fred_csv
 
 def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None, manual_universe=None, universe=None):
@@ -447,7 +448,7 @@ def score_update_fx_conversion(df):
 
     curr_code = get_currency_code_ibes_ws()     # map ibes/ws currency for each ticker
     df = df.merge(curr_code, on='ticker', how='left')
-    df = df.dropna(subset=['currency_code_ibes', 'currency_code_ws', 'currency_code'], how='any')   # remove ETF / index / some B-share -> tickers will not be recommended
+    # df = df.dropna(subset=['currency_code_ibes', 'currency_code_ws', 'currency_code'], how='any')   # remove ETF / index / some B-share -> tickers will not be recommended
 
     # map fx rate for conversion for each ticker
     fx = get_currenct_fx_rate_dict()
@@ -687,7 +688,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # calculate ai_score by each currency_code (i.e. group) for [Extra]
     for group, g in factor_rank.groupby("group"):
         print(f"Calculate Fundamentals [extra] in group [{group}]")
-        sub_g = g.loc[(g["factor_weight"]==2) & (g["pred_z"] >= 1)]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
+        sub_g = g.loc[(g["factor_weight"]==2)|(g["factor_weight"].isnull())]        # use all rank=2 (best class)
+        sub_g = sub_g.loc[(g["pred_z"] >= 1)|(g["pred_z"].isnull())]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
 
         if len(sub_g.dropna(subset=["pred_z"])) > 0:     # if no factor rank=2, don"t add any factor into extra pillar
             score_col = [f"{x}_{y}_currency_code" for x, y in sub_g.loc[sub_g["scaler"].notnull(), ["factor_name", "scaler"]].to_numpy()]
@@ -701,8 +703,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             fundamentals_details_column_names[group]['extra'] = ''
 
         # save used columns to pillars
-        fundamentals_details[group]['extra'] = fundamentals.loc[fundamentals['currency_code']==group,
-               ['ticker', "fundamentals_extra"] + score_col_detail].sort_values(by=[ f"fundamentals_extra"])
+        # fundamentals_details[group]['extra'] = fundamentals.loc[fundamentals['currency_code']==group,
+        #        ['ticker', "fundamentals_extra"] + score_col_detail].sort_values(by=[ f"fundamentals_extra"])
 
     upsert_data_to_database_ali(pd.DataFrame(fundamentals_details_column_names).transpose().reset_index(),
                                 f"test_fundamental_score_current_names","index",how="update",Text=True)
@@ -739,6 +741,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     score_history = get_ai_score_testing_history(backyear=1)
     for cur, g in fundamentals.groupby(['currency_code']):
         try:
+            raise Exception('Scaling with current score')
             score_history_cur = score_history.loc[score_history['currency_code']==cur]
             m1 = MinMaxScaler(feature_range=(0, 10)).fit(score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]])
             fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = m1.transform(g[["ai_score", "ai_score2"]])
@@ -1127,22 +1130,11 @@ def worldscope_quarter_report_date_from_dsws(ticker = None, currency_code=None, 
     data = []
     for period_end in period_end_list:
         try:
-            result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 20), dsws=False)
-            print(result)
-            print(error_ticker)
-            if len(error_ticker) == 0 :
-                second_result = []
-            else:
-                second_result, error_ticker = get_data_history_by_field_from_dsws(period_end, period_end, error_ticker, identifier, filter_field, use_ticker=True, split_number=1, dsws=False)
-            try:
-                if(len(result) == 0):
-                    result = second_result
-                elif(len(second_result) == 0):
-                    result = result
-                else :
-                    result = result.append(second_result)
-            except Exception as e:
-                result = second_result
+            result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1), dsws=False)
+            if(len(result) == 0):
+                result = ticker
+                result[filter_field[0]] = np.nan
+                result["level_1"] = str_to_date(period_end)
             print(result)
             data = result.copy()
             data = data.rename(columns = {"level_1" : "period_end"})
@@ -1210,213 +1202,102 @@ def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filt
     period_end_list = get_period_end_list(start_date=start_date, end_date=end_date)
     data = []
     for period_end in period_end_list:
-        try:
-            result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 20), dsws=False)
+        print(period_end)
+        result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=1, dsws=False)
+        if(len(result) == 0):
+            result = ticker
+            result[filter_field[0]] = np.nan
+            result["level_1"] = str_to_date(period_end)
+        print(result)
+        result = result.rename(columns = {"level_1" : "period_end"})
+        result = result[["ticker", "period_end", filter_field[0]]]
+        print(result)
+        result[filter_field[0]] = result[filter_field[0]].astype(str)
+        result[filter_field[0]] = np.where(result[filter_field[0]] == "nan", np.nan, result[filter_field[0]])
+        result[filter_field[0]] = np.where(result[filter_field[0]] == "NA", np.nan, result[filter_field[0]])
+        result[filter_field[0]] = np.where(result[filter_field[0]] == "None", np.nan, result[filter_field[0]])
+        result[filter_field[0]] = np.where(result[filter_field[0]] == "", np.nan, result[filter_field[0]])
+        result[filter_field[0]] = np.where(result[filter_field[0]] == "NaN", np.nan, result[filter_field[0]])
+        result[filter_field[0]] = np.where(result[filter_field[0]] == "NaT", np.nan, result[filter_field[0]])
+        result[filter_field[0]] = result[filter_field[0]].astype(float)
+        result = result.dropna(subset=[filter_field[0]], inplace=False)
+        if(len(result) > 0):
+            result = result.rename(columns={
+                #"WC06035": "identifier",
+                #     "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
+                "WC05192A": "fn_5192",
+                "WC18271A": "fn_18271",
+                "WC02999A": "fn_2999",
+                "WC03255A": "fn_3255",
+                "WC03501A" : "fn_3501",
+                "WC18313A" : "fn_18313",
+                "WC18312A": "fn_18312",
+                #     "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
+                "WC18310A": "fn_18310",
+                "WC18311A" : "fn_18311",
+                "WC18309A" : "fn_18309",
+                "WC18308A": "fn_18308",
+                "WC18269A": "fn_18269",
+                "WC18304A" : "fn_18304",
+                "WC18266A" : "fn_18266",
+                #     "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
+                "WC18267A": "fn_18267",
+                "WC18265A": "fn_18265",
+                "WC18264A" : "fn_18264",
+                "WC18263A" : "fn_18263",
+                "WC18262A": "fn_18262",
+                "WC18199A": "fn_18199",
+                "WC18158A" : "fn_18158",
+                #     "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
+                "WC18100A": "fn_18100",
+                "WC08001A": "fn_8001",
+                "WC05085A" : "fn_5085",
+                "WC03101A" : "fn_3101",
+                "WC02501A": "fn_2501",
+                "WC02201A": "fn_2201",
+                "WC02101A" : "fn_2101",
+                #     "WC02001A", "WC05575A"]
+                "WC02001A" : "fn_2001",
+                "WC05575A" : "fn_5575",
+                "index" : "period_end",
+                # "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A"
+                "WC01451A" : "fn_1451",
+                "WC18810A" : "fn_18810",
+                "WC02401A" : "fn_2401",
+                "WC18274A" : "fn_18274",
+                "WC03040A" : "fn_3040"
+            })
+            result = result.reset_index(inplace=False, drop=True)
+            result["period_end"] = pd.to_datetime(result["period_end"])
+            result["year"] = pd.DatetimeIndex(result["period_end"]).year
+            result["month"] = pd.DatetimeIndex(result["period_end"]).month
+            result["day"] = pd.DatetimeIndex(result["period_end"]).day
+            for index, row in result.iterrows():
+                if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
+                    result.loc[index, "month"] = 3
+                    result.loc[index, "frequency_number"] = int(1)
+                elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31) :
+                    result.loc[index, "month"] = 6
+                    result.loc[index, "frequency_number"] = int(2)
+                elif (result.loc[index, "month"] <= 9) and (result.loc[index, "day"] <= 31) :
+                    result.loc[index, "month"] = 9
+                    result.loc[index, "frequency_number"] = int(3)
+                else:
+                    result.loc[index, "month"] = 12
+                    result.loc[index, "frequency_number"] = int(4)
+                result.loc[index, "period_end"] = datetime(result.loc[index, "year"], result.loc[index, "month"], 1)
+            result["period_end"] = result["period_end"].dt.to_period("M").dt.to_timestamp("M")
+            result["period_end"] = pd.to_datetime(result["period_end"])
+
+            result = uid_maker(result, trading_day="period_end")
+            result["fiscal_quarter_end"] = result["period_end"].astype(str)
+            result["fiscal_quarter_end"] = result["fiscal_quarter_end"].str.replace("-", "", regex=True)
+            result = result.drop(columns=["month", "day"])
+            worldscope_identifier = universe[["ticker", "worldscope_identifier"]]
+            result = result.merge(worldscope_identifier, how="left", on="ticker")
+            result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
             print(result)
-            print(error_ticker)
-            if len(error_ticker) == 0 :
-                second_result = []
-            else:
-                second_result, error_ticker = get_data_history_by_field_from_dsws(period_end, period_end, error_ticker, identifier, filter_field, use_ticker=True, split_number=1, dsws=False)
-            try:
-                if(len(result) == 0):
-                    result = second_result
-                elif(len(second_result) == 0):
-                    result = result
-                else :
-                    result = result.append(second_result)
-            except Exception as e:
-                result = second_result
-            print(result)
-            data = result.copy()
-            result = result.rename(columns = {"level_1" : "period_end"})
-            result = result[["ticker", "period_end", filter_field[0]]]
-            print(result)
-            result[filter_field[0]] = result[filter_field[0]].astype(str)
-            result[filter_field[0]] = np.where(result[filter_field[0]] == "nan", np.nan, result[filter_field[0]])
-            result[filter_field[0]] = np.where(result[filter_field[0]] == "NA", np.nan, result[filter_field[0]])
-            result[filter_field[0]] = np.where(result[filter_field[0]] == "None", np.nan, result[filter_field[0]])
-            result[filter_field[0]] = np.where(result[filter_field[0]] == "", np.nan, result[filter_field[0]])
-            result[filter_field[0]] = np.where(result[filter_field[0]] == "NaN", np.nan, result[filter_field[0]])
-            result[filter_field[0]] = np.where(result[filter_field[0]] == "NaT", np.nan, result[filter_field[0]])
-            result[filter_field[0]] = result[filter_field[0]].astype(float)
-            result = result.dropna(subset=[filter_field[0]], inplace=False)
-            if(len(result) > 0):
-                result = result.rename(columns={
-                    #"WC06035": "identifier",
-                    #     "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
-                    "WC05192A": "fn_5192",
-                    "WC18271A": "fn_18271",
-                    "WC02999A": "fn_2999",
-                    "WC03255A": "fn_3255",
-                    "WC03501A" : "fn_3501",
-                    "WC18313A" : "fn_18313",
-                    "WC18312A": "fn_18312",
-                    #     "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
-                    "WC18310A": "fn_18310",
-                    "WC18311A" : "fn_18311",
-                    "WC18309A" : "fn_18309",
-                    "WC18308A": "fn_18308",
-                    "WC18269A": "fn_18269",
-                    "WC18304A" : "fn_18304",
-                    "WC18266A" : "fn_18266",
-                    #     "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
-                    "WC18267A": "fn_18267",
-                    "WC18265A": "fn_18265",
-                    "WC18264A" : "fn_18264",
-                    "WC18263A" : "fn_18263",
-                    "WC18262A": "fn_18262",
-                    "WC18199A": "fn_18199",
-                    "WC18158A" : "fn_18158",
-                    #     "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
-                    "WC18100A": "fn_18100",
-                    "WC08001A": "fn_8001",
-                    "WC05085A" : "fn_5085",
-                    "WC03101A" : "fn_3101",
-                    "WC02501A": "fn_2501",
-                    "WC02201A": "fn_2201",
-                    "WC02101A" : "fn_2101",
-                    #     "WC02001A", "WC05575A"]
-                    "WC02001A" : "fn_2001",
-                    "WC05575A" : "fn_5575",
-                    "index" : "period_end",
-                    # "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A"
-                    "WC01451A" : "fn_1451",
-                    "WC18810A" : "fn_18810",
-                    "WC02401A" : "fn_2401",
-                    "WC18274A" : "fn_18274",
-                    "WC03040A" : "fn_3040"
-                })
-                result = result.reset_index(inplace=False, drop=True)
-                result["period_end"] = pd.to_datetime(result["period_end"])
-                result["year"] = pd.DatetimeIndex(result["period_end"]).year
-                result["month"] = pd.DatetimeIndex(result["period_end"]).month
-                result["day"] = pd.DatetimeIndex(result["period_end"]).day
-                for index, row in result.iterrows():
-                    if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
-                        result.loc[index, "month"] = 3
-                        result.loc[index, "frequency_number"] = int(1)
-                    elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31) :
-                        result.loc[index, "month"] = 6
-                        result.loc[index, "frequency_number"] = int(2)
-                    elif (result.loc[index, "month"] <= 9) and (result.loc[index, "day"] <= 31) :
-                        result.loc[index, "month"] = 9
-                        result.loc[index, "frequency_number"] = int(3)
-                    else:
-                        result.loc[index, "month"] = 12
-                        result.loc[index, "frequency_number"] = int(4)
-                    result.loc[index, "period_end"] = datetime(result.loc[index, "year"], result.loc[index, "month"], 1)
-                result["period_end"] = result["period_end"].dt.to_period("M").dt.to_timestamp("M")
-                result["period_end"] = pd.to_datetime(result["period_end"])
-
-                result = uid_maker(result, trading_day="period_end")
-                result["fiscal_quarter_end"] = result["period_end"].astype(str)
-                result["fiscal_quarter_end"] = result["fiscal_quarter_end"].str.replace("-", "", regex=True)
-                result = result.drop(columns=["WC05905A", "month", "day"])
-                worldscope_identifier = universe[["ticker", "worldscope_identifier"]]
-                result = result.merge(worldscope_identifier, how="left", on="ticker")
-                result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
-                print(result)
-                upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
-        except Exception as e:
-            print("{} : === ERROR === : {}".format(dateNow(), e))
-
-# def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filter_field=None, history=False):
-#     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
-#     if(len(universe) < 1):
-#         return False
-#     end_date = dateNow()
-#     start_date = backdate_by_month(6)
-#     if(history):
-#         start_date = "2000-03-31"
-#     identifier="ticker"
-#     ticker = universe[["ticker"]]
-#     ticker = ticker["ticker"].tolist()
-#     result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, ticker, identifier, filter_field, use_ticker=True, split_number=1, monthly=True, worldscope=True)
-#     # print(result)
-#     result = result.dropna()
-#     print(result)
-#     if(len(result)) > 0 :
-#         result = result.rename(columns={
-#             #"WC06035": "identifier",
-#             #     "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
-#             "WC05192A": "fn_5192",
-#             "WC18271A": "fn_18271",
-#             "WC02999A": "fn_2999",
-#             "WC03255A": "fn_3255",
-#             "WC03501A" : "fn_3501",
-#             "WC18313A" : "fn_18313",
-#             "WC18312A": "fn_18312",
-#             #     "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
-#             "WC18310A": "fn_18310",
-#             "WC18311A" : "fn_18311",
-#             "WC18309A" : "fn_18309",
-#             "WC18308A": "fn_18308",
-#             "WC18269A": "fn_18269",
-#             "WC18304A" : "fn_18304",
-#             "WC18266A" : "fn_18266",
-#             #     "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
-#             "WC18267A": "fn_18267",
-#             "WC18265A": "fn_18265",
-#             "WC18264A" : "fn_18264",
-#             "WC18263A" : "fn_18263",
-#             "WC18262A": "fn_18262",
-#             "WC18199A": "fn_18199",
-#             "WC18158A" : "fn_18158",
-#             #     "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
-#             "WC18100A": "fn_18100",
-#             "WC08001A": "fn_8001",
-#             "WC05085A" : "fn_5085",
-#             "WC03101A" : "fn_3101",
-#             "WC02501A": "fn_2501",
-#             "WC02201A": "fn_2201",
-#             "WC02101A" : "fn_2101",
-#             #     "WC02001A", "WC05575A"]
-#             "WC02001A" : "fn_2001",
-#             "WC05575A" : "fn_5575",
-#             "index" : "period_end",
-#             # "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A"
-#             "WC01451A" : "fn_1451",
-#             "WC18810A" : "fn_18810",
-#             "WC02401A" : "fn_2401",
-#             "WC18274A" : "fn_18274",
-#             "WC03040A" : "fn_3040"
-#         })
-#         result = result.reset_index(inplace=False)
-#         # print(result)
-#         result["period_end"] = pd.to_datetime(result["period_end"])
-#         result["year"] = pd.DatetimeIndex(result["period_end"]).year
-#         result["month"] = pd.DatetimeIndex(result["period_end"]).month
-#         result["day"] = pd.DatetimeIndex(result["period_end"]).day
-#         # print(result)
-#         for index, row in result.iterrows():
-#             if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
-#                 result.loc[index, "month"] = 3
-#                 result.loc[index, "frequency_number"] = int(1)
-#             elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31) :
-#                 result.loc[index, "month"] = 6
-#                 result.loc[index, "frequency_number"] = int(2)
-#             elif (result.loc[index, "month"] <= 9) and (result.loc[index, "day"] <= 31) :
-#                 result.loc[index, "month"] = 9
-#                 result.loc[index, "frequency_number"] = int(3)
-#             else:
-#                 result.loc[index, "month"] = 12
-#                 result.loc[index, "frequency_number"] = int(4)
-
-#             result.loc[index, "period_end"] = datetime(result.loc[index, "year"], result.loc[index, "month"], 1)
-#         result["period_end"] = result["period_end"].dt.to_period("M").dt.to_timestamp("M")
-#         result["period_end"] = pd.to_datetime(result["period_end"])
-        
-#         result = uid_maker(result, trading_day="period_end")
-#         result["fiscal_quarter_end"] = result["period_end"].astype(str)
-#         result["fiscal_quarter_end"] = result["fiscal_quarter_end"].str.replace("-", "", regex=True)
-#         result = result.drop(columns=["month", "day", "index"])
-#         identifier = universe[["ticker", "worldscope_identifier"]]
-#         result = result.merge(identifier, how="left", on="ticker")
-#         result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
-#         print(result)
-#         upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
-
+            upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
 def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
     print("{} : === RECSELL RECBUY Start Ingestion ===".format(datetimeNow()))
     universe = get_all_universe(ticker=ticker, currency_code=currency_code)
@@ -1490,17 +1371,33 @@ def update_mic_from_dsws(ticker=None, currency_code=None):
 def update_ibes_currency_from_dsws(ticker=None, currency_code=None):
     print("{} : === IBES Currency Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
-    # universe = universe.drop(columns=[["currency_code_ws", "currency_code_ibes"]])
-    filter_field = ["IBCUR", "WC06027"]
-    identifier = "ticker"
+    universe = universe.drop(columns=["currency_code_ibes"])
+    filter_field = ["IBCUR"]
+    identifier="ticker"
     result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
     result = result.rename(columns={"IBCUR": "currency_code_ibes", "index":"ticker"})
-    result["currency_code_ws"] = result["WC06027"].map(get_iso_currency_code_map())
-    result["currency_code_ibes"] = result["currency_code_ibes"].replace(['BPN'], ['GBP'])
-    result = result.drop(columns=["WC06027"])
+    result = remove_null(result, "currency_code_ibes")
     print(result)
     if(len(result)) > 0 :
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === IBES Currency Updated ===".format(datetimeNow()))
+    
+    update_worldscope_currency_from_dsws(ticker=ticker, currency_code=currency_code)
+
+def update_worldscope_currency_from_dsws(ticker=None, currency_code=None):
+    print("{} : === Worldscope Currency Start Ingestion ===".format(datetimeNow()))
+    universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    universe = universe.drop(columns=["currency_code_ws"])
+    filter_field = ["WC06027"]
+    identifier="ticker"
+    result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
+    result = result.rename(columns={"WC06027": "currency_code_ws", "index":"ticker"})
+    result = remove_null(result, "currency_code_ws")
+    print(result)
+    if(len(result)) > 0 :
+        result = universe.merge(result, how="left", on=["ticker"])
+        print(result)
+        upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
+        report_to_slack("{} : === Worldscope Currency Updated ===".format(datetimeNow()))

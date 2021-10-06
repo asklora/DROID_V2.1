@@ -67,6 +67,13 @@ def uno_sell_position(live_price:float, trading_day:str, position:OrderPosition,
             position.event = "Profit"
         else:
             position.event = "Bot Expired"
+    else:
+        if live_price < position.entry_price:
+            position.event = "Loss"
+        elif live_price > position.entry_price:
+            position.event = "Profit"
+        else:
+            position.event = "Bot Stopped"
     
     order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=apps)
     return position, order
@@ -275,7 +282,10 @@ def uno_position_check(position_uid, to_date=None, tac=False, hedge=False, lates
         status = False
         if hedge:
             try:
-                lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date__gt=trading_day, types="hedge", ticker=position.ticker)
+                if performance:
+                    lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date__gt=trading_day, types="hedge", ticker=position.ticker)
+                else:
+                    lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date__gte=trading_day, types="hedge", ticker=position.ticker)
             except HedgeLatestPriceHistory.DoesNotExist:
                 print("not exist", position.ticker.ticker)
                 return None

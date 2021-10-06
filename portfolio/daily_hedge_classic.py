@@ -58,6 +58,8 @@ def classic_sell_position(live_price:float, trading_day:str,
             position.event = "Loss"
         elif live_price > position.entry_price:
             position.event = "Profit"
+        else:
+            position.event = "Bot Stopped"
             
     # serializing -> make dictionary position instance
     position_val = OrderPositionSerializer(position).data
@@ -205,7 +207,10 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
         status = False
         if hedge:
             try:
-                lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date__gt=trading_day, types="hedge", ticker=position.ticker)
+                if performance:
+                    lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date__gt=trading_day, types="hedge", ticker=position.ticker)
+                else:
+                    lastest_price_data = HedgeLatestPriceHistory.objects.filter(last_date__gte=trading_day, types="hedge", ticker=position.ticker)
             except HedgeLatestPriceHistory.DoesNotExist:
                 print("not exist", position.ticker.ticker)
                 return None
