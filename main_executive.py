@@ -165,7 +165,7 @@ def data_prep_daily(ticker=None, currency_code=None):
     ticker.extend(universe_df["ticker"].to_list())
     populate_bot_data(start_date=start_date, end_date=end_date, ticker=ticker, daily=True)
     report = "DATA PREPERATION DAILY COMPLETED"
-    report_check(report, ticker=ticker, currency_code=currency_code)
+    report_check(report, currency_code=currency_code)
 
 
 def data_prep_check_new_ticker(ticker=None, currency_code=None):
