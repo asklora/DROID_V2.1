@@ -282,23 +282,23 @@ def mongo_universe_update(ticker=None, currency_code=None):
 
     bot_statistic = get_bot_statistic_data(ticker=ticker, currency_code=currency_code)
     bot_statistic = bot_statistic.rename(columns={"option_type" : "bot_option_type"})
-    bot_statistic = bot_statistic[["ticker", "time_to_exp", "lookback", "bot_type", "bot_option_type", "pct_profit", "avg_return", "avg_loss"]]
+    bot_statistic = bot_statistic[["ticker", "time_to_exp", "lookback", "bot_type", "bot_option_type", "pct_profit", "avg_profit", "avg_loss"]]
     time_to_exp = bot_ranking["time_to_exp"].unique().tolist()
     bot_statistic = bot_statistic.loc[bot_statistic["time_to_exp"].isin(time_to_exp)]
     bot_statistic = bot_statistic.loc[bot_statistic["lookback"] == 6]
     bot_statistic = bot_statistic.reset_index(inplace=False, drop=True)
     bot_statistic["pct_profit"] = np.where(bot_statistic["pct_profit"].isnull(), float(0), bot_statistic["pct_profit"])
-    bot_statistic["avg_return"] = np.where(bot_statistic["avg_return"].isnull(), float(0), bot_statistic["avg_return"])
+    bot_statistic["avg_profit"] = np.where(bot_statistic["avg_profit"].isnull(), float(0), bot_statistic["avg_profit"])
     bot_statistic["avg_loss"] = np.where(bot_statistic["avg_loss"].isnull(), float(0), bot_statistic["avg_loss"])
     bot_statistic["win_rate"] = bot_statistic["pct_profit"]
     for index, row in bot_statistic.iterrows():
         if(row["bot_type"] == "CLASSIC"):
-            avg_return = row["avg_return"]
+            avg_profit = row["avg_profit"]
             avg_loss = row["avg_loss"]
         else:
-            avg_return = row["avg_return"] * 2
+            avg_profit = row["avg_profit"] * 2
             avg_loss = row["avg_loss"] * 2
-        bot_statistic.loc[index, "bot_return"] = max(min(avg_return, 0.5), -0.4) + 0.4 / 0.9
+        bot_statistic.loc[index, "bot_return"] = max(min(avg_profit, 0.5), 0) / 0.5
         bot_statistic.loc[index, "risk_moderation"] = max(0.5 + avg_loss, float(0)) / 0.5
     bot_ranking = bot_ranking.merge(bot_statistic[["ticker", "time_to_exp", "bot_type", 
         "bot_option_type", "win_rate", "bot_return", "risk_moderation"]], 
