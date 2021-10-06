@@ -27,6 +27,15 @@ def truncate_table(table_name):
     data = execute_query(query, table=table_name)
     return True
 
+def replace_table_datebase_ali(data, table_name):
+    print(f"=== Replace Table to ALIBABA Database on Table {table_name} ===")
+    engine = create_engine(alibaba_db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    with engine.connect() as conn:
+        extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 1000}
+        data.to_sql(table_name, **extra)
+    engine.dispose()
+    return True
+
 def insert_data_to_database(data, table, how="append"):
     print(f"=== Insert Data to Database on Table {table} ===")
     engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")

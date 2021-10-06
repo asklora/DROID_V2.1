@@ -263,8 +263,9 @@ def mongo_universe_update(ticker=None, currency_code=None):
         df_cur = universe_rating.loc[universe_rating['ticker'].isin(list(curr_ticker))]
         for i in ['positive_factor', 'negative_factor']:
             df = df_cur.loc[df_cur[i].astype(str) == '[]']
-            report_to_slack_factor("*{} : === [{}] without {}: {}/{} ===*".format(dateNow(), cur, i, len(df), len(df_cur)))
-            report_to_slack_factor('```'+', '.join(["{0:<10}: {1:<5}".format(x,y) for x, y in df[['ticker', 'ai_score']].values])+'```')
+            if cur in ['USD', 'HKD']:
+                report_to_slack_factor("*{} : === [{}] without {}: {}/{} ===*".format(dateNow(), cur, i, len(df), len(df_cur)))
+                report_to_slack_factor('```'+', '.join(["{0:<10}: {1:<5}".format(x,y) for x, y in df[['ticker', 'ai_score']].values])+'```')
 
     # 5. bot ranking & statistics
     ranking = result[["ticker"]]
@@ -292,8 +293,14 @@ def mongo_universe_update(ticker=None, currency_code=None):
     bot_statistic["avg_loss"] = np.where(bot_statistic["avg_loss"].isnull(), float(0), bot_statistic["avg_loss"])
     bot_statistic["win_rate"] = bot_statistic["pct_profit"]
     for index, row in bot_statistic.iterrows():
-        bot_statistic.loc[index, "bot_return"] = max(min(row["avg_return"], 0.3), -0.2) / 0.5
-        bot_statistic.loc[index, "risk_moderation"] = max(0.3 + row["avg_loss"], float(0)) / 0.3
+        if(row["bot_type"] == "CLASSIC"):
+            avg_return = row["avg_return"]
+            avg_loss = row["avg_loss"]
+        else:
+            avg_return = row["avg_return"] * 2
+            avg_loss = row["avg_loss"] * 2
+        bot_statistic.loc[index, "bot_return"] = max(min(avg_return, 0.5), -0.4) + 0.4 / 0.9
+        bot_statistic.loc[index, "risk_moderation"] = max(0.5 + avg_loss, float(0)) / 0.5
     bot_ranking = bot_ranking.merge(bot_statistic[["ticker", "time_to_exp", "bot_type", 
         "bot_option_type", "win_rate", "bot_return", "risk_moderation"]], 
         how="left", on=["ticker", "bot_type", "bot_option_type", "time_to_exp"])
@@ -314,7 +321,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
     universe = change_date_to_str(universe)
-    update_to_firestore(data=universe, index="ticker", table=settings.FIREBASE_COLLECTION['universe'], dict=False)
+    # update_to_firestore(data=universe, index="ticker", table=settings.FIREBASE_COLLECTION['universe'], dict=False)
 
 
 async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,user_core:pd.DataFrame)-> List[pd.DataFrame]:

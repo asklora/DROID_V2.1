@@ -21,6 +21,7 @@ from ingestion.data_from_dsws import (
     populate_ibes_table, 
     populate_macro_table, 
     update_company_desc_from_dsws,
+    update_daily_fundamentals_score_from_dsws,
     update_data_dsws_from_dsws, 
     update_entity_type_from_dsws, 
     update_fred_data_from_fred, 
@@ -106,6 +107,8 @@ class Command(BaseCommand):
                 master_tac_update()
                 status = "Master Multiple Update"
                 master_multiple_update()
+                status = "Fundamentals Ingestion"
+                update_daily_fundamentals_score_from_dsws(ticker=ticker)
                 status = "Update AI Score"
                 update_fundamentals_quality_value()
                 status = "Update Firebase Universe"
@@ -129,6 +132,8 @@ class Command(BaseCommand):
                 master_tac_update()
                 status = "Master Multiple Update"
                 master_multiple_update()
+                status = "Fundamentals Ingestion"
+                update_daily_fundamentals_score_from_dsws(ticker=ticker)
                 status = "Update AI Score"
                 update_fundamentals_quality_value()
                 status = "Interest Update"
