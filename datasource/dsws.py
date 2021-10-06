@@ -11,6 +11,18 @@ def setDataStream(DSWS=True):
         DS = Datastream(username=DSWS_USERNAME2, password=DSWS_PASSWORD2)
     return DS
 
+def fetch_data_from_dsws(start_date, end_date, universe, *field, dsws=True):
+    DS = setDataStream(DSWS=dsws)
+    DS.raise_on_error = False
+    result = DS.fetch(universe, *field, date_from=start_date, date_to=end_date)
+    return result
+
+def fetch_data_static_from_dsws(universe, *field, dsws=True):
+    DS = setDataStream(DSWS=dsws)
+    DS.raise_on_error = False
+    result = DS.fetch(universe, *field, static=True)
+    return result
+    
 def get_data_static_with_string_from_dsws(identifier, universe, *field, dsws=True):
     DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
