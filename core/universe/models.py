@@ -70,6 +70,18 @@ class Currency(models.Model):
         managed = True
         db_table = "currency"
 
+class CurrencyPriceHistory(models.Model):
+    uid = models.TextField(primary_key=True)
+    currency_code = models.CharField(blank=True, null=True, max_length=10)
+    last_price = models.FloatField(blank=True, null=True)
+    last_date = models.DateField(blank=True, null=True)
+
+    def __str__(self):
+        return self.uid
+
+    class Meta:
+        managed = True
+        db_table = "currency_price_history"
 
 class CurrencyCalendars(models.Model):
     uid = models.TextField(primary_key=True)
