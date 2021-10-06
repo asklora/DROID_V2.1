@@ -74,7 +74,6 @@ def update_data_dss_from_dss(ticker=None, currency_code=None, history=False, man
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     jsonFileName = "files/file_json/historyAPI.json"
     result = get_data_from_dss(start_date, end_date, universe["ticker"].to_list(), jsonFileName, report=REPORT_HISTORY)
-    print(result)
     result = result.drop(columns=["IdentifierType", "Identifier"])
     print(result)
     if (len(result) > 0 ):
@@ -87,8 +86,9 @@ def update_data_dss_from_dss(ticker=None, currency_code=None, history=False, man
             "Universal Close Price": "close",
             "Accumulated Volume Unscaled": "volume"
         })
-        result = uid_maker(result, uid="dss_id", ticker="ticker", trading_day="trading_day")
         result = result.dropna(subset=["ticker"])
+        result = result.dropna(subset=["trading_day"])
+        result = uid_maker(result, uid="dss_id", ticker="ticker", trading_day="trading_day")
         print(result)
         upsert_data_to_database(result, get_data_dss_table_name(), "dss_id", how="update", Text=True)
         report_to_slack("{} : === DSS Updated ===".format(datetimeNow()))
