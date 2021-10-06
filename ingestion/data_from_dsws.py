@@ -39,6 +39,7 @@ from general.table_name import (
     get_universe_rating_table_name, 
     get_universe_table_name)
 from datasource.dsws import (
+    fetch_data_from_dsws,
     get_data_history_by_field_from_dsws,
     get_data_history_frequently_by_field_from_dsws,
     get_data_history_frequently_from_dsws, 
