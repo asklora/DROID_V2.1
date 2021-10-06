@@ -14,7 +14,8 @@ from general.sql_output import (
     fill_null_company_desc_with_ticker_name,
     update_universe_where_currency_code_null, 
     upsert_data_to_database,
-    upsert_data_to_database_ali)
+    upsert_data_to_database_ali,
+    replace_table_datebase_ali)
 from general.table_name import (
     get_data_dividend_table_name, 
     get_data_dsws_table_name,
@@ -723,8 +724,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         # fundamentals_details[group]['extra'] = fundamentals.loc[fundamentals['currency_code']==group,
         #        ['ticker', "fundamentals_extra"] + score_col_detail].sort_values(by=[ f"fundamentals_extra"])
 
-    upsert_data_to_database_ali(pd.DataFrame(fundamentals_details_column_names).transpose().reset_index(),
-                                f"test_fundamental_score_current_names","index",how="update",Text=True)
+    replace_table_datebase_ali(pd.DataFrame(fundamentals_details_column_names).transpose().reset_index(),f"test_fundamental_score_current_names")
 
     # manual score check output to alibaba DB
     for group, v in fundamentals_details.items():
@@ -733,7 +733,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             pillar_df.append(df.set_index(['ticker']))
         pillar_df = pd.concat(pillar_df, axis=1)
         pillar_df.index = pillar_df.index.set_names(['index'])
-        upsert_data_to_database_ali(pillar_df.reset_index(), f"test_fundamental_score_details_{group}", "index", how="update",Text=True)
+        replace_table_datebase_ali(pillar_df.reset_index(), f"test_fundamental_score_details_{group}")
 
     fundamentals_factors_scores_col = fundamentals.filter(regex="^fundamentals_").columns
 
@@ -753,20 +753,24 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print(fundamentals[["fundamentals_value","fundamentals_quality","fundamentals_momentum","fundamentals_extra",'esg']].describe())
 
     # scale ai_score with history min / max
-    print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
+    # print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
     fundamentals[["ai_score_unscaled", "ai_score2_unscaled"]] = fundamentals[["ai_score", "ai_score2"]]
     score_history = get_ai_score_testing_history(backyear=1)
     for cur, g in fundamentals.groupby(['currency_code']):
         try:
             raise Exception('Scaling with current score')
             score_history_cur = score_history.loc[score_history['currency_code']==cur]
+            print(f'{cur} History Min/Max: ', score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]].min().values,
+                  score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]].max().values)
+            print(f'{cur} Current Min/Max: ', g[["ai_score", "ai_score2"]].min().values, g[["ai_score", "ai_score2"]].max().values)
             m1 = MinMaxScaler(feature_range=(0, 10)).fit(score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]])
             fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = m1.transform(g[["ai_score", "ai_score2"]])
         except Exception as e:
             print(e)
+            print('Current Min/Max: ', g[["ai_score", "ai_score2"]].min().values, g[["ai_score", "ai_score2"]].max().values)
             fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = MinMaxScaler(feature_range=(0, 10)).fit_transform(g[["ai_score", "ai_score2"]])
 
-    print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
+    # print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
 
     fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].clip(0, 10)
     fundamentals[['ai_score','ai_score2',"esg"]] = fundamentals[['ai_score','ai_score2',"esg"]].round(1)
