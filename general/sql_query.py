@@ -578,7 +578,7 @@ def get_ai_score_testing_history(backyear=1):
 def get_currenct_fx_rate_dict():
     ''' get ai_score / ai_score2 history from universe rating '''
     query =  f"SELECT * FROM {get_historic_fx_rate_table_name()} "
-    query += f"WHERE period_end > '{backdate_by_day(5)}'"
+    query += f"WHERE period_end > '{backdate_by_day(30)}'"
     data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
     return data.sort_values('period_end').groupby('ticker')['fx_rate'].last().to_dict()
 
