@@ -17,6 +17,8 @@ from general.sql_output import (
     upsert_data_to_database_ali,
     replace_table_datebase_ali)
 from general.table_name import (
+    get_currency_price_history_table_name,
+    get_currency_table_name,
     get_data_dividend_table_name, 
     get_data_dsws_table_name,
     get_data_fred_table_name,
@@ -37,6 +39,7 @@ from general.table_name import (
     get_universe_rating_table_name, 
     get_universe_table_name)
 from datasource.dsws import (
+    fetch_data_from_dsws,
     get_data_history_by_field_from_dsws,
     get_data_history_frequently_by_field_from_dsws,
     get_data_history_frequently_from_dsws, 
@@ -44,6 +47,7 @@ from datasource.dsws import (
     get_data_static_from_dsws, 
     get_data_static_with_string_from_dsws)
 from general.sql_query import (
+    get_active_currency_ric_not_null,
     get_active_universe, 
     get_active_universe_by_entity_type, 
     get_active_universe_company_description_null, 
@@ -1422,3 +1426,29 @@ def update_worldscope_currency_from_dsws(ticker=None, currency_code=None):
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Worldscope Currency Updated ===".format(datetimeNow()))
+
+def update_currency_price_from_dsws(currency_code=None):
+    print("{} : === Currency Price Start Ingestion ===".format(datetimeNow()))
+    currency = get_active_currency_ric_not_null(currency_code=currency_code)
+    currency = currency.drop(columns=["last_date", "last_price"])
+    ticker = list(set(get_currency_code_ibes_ws().iloc[:, 1:].values.flatten()))
+    ticker = ["<USD"+x+"FIXM=WM>" for x in ticker if x and (x not in ["KHR", "USD"])]
+    start_date = dateNow()
+    end_date = dateNow()
+    filter_field = ["ER"]
+    result = fetch_data_from_dsws(start_date, end_date, ticker, filter_field, dsws=True)
+    result = result.reset_index(inplace=False)
+    result = result.rename(columns={"ER": "last_price", "level_0":"currency_code", "level_1" : "last_date"})
+    result["currency_code"] = result["currency_code"].str[4:7]
+    result["last_price"] = np.where(result["currency_code"] == "EUR", 1/result["last_price"], result["last_price"])
+    result["last_price"] = np.where(result["currency_code"] == "GBP", 1/result["last_price"], result["last_price"])
+    result["last_price"] = np.where(result["currency_code"] == "USD", 1, result["last_price"])
+    result["last_price"] = np.where(result["currency_code"] == "KHR", 4070, result["last_price"])
+    print(result)
+    if(len(result)) > 0 :
+        currency = currency.merge(result, how="left", on=["currency_code"])
+        print(currency)
+        upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
+        report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
+        result = uid_maker(result, uid="uid", ticker="currency_code", trading_day="last_date")
+        upsert_data_to_database(result, get_currency_price_history_table_name(), "uid", how="update", Text=True)

@@ -12,6 +12,8 @@ from datasource.rkd import RkdData,RkdStream
 #debug
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        # rkd = RkdData()
+        # rkd.get_index_price("USD")
         pending_order_checker()
         # daily_hedge(currency="HKD")
         # print("Something")
