@@ -35,6 +35,9 @@ def get_currency_table_name():
 def get_currency_calendar_table_name():
     return "currency_calendar"
 
+def get_currency_price_history_table_name():
+    return "currency_price_history"
+
 def get_industry_table_name():
     return "industry"
 
