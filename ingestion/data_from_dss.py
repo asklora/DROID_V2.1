@@ -74,7 +74,6 @@ def update_data_dss_from_dss(ticker=None, currency_code=None, history=False, man
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     jsonFileName = "files/file_json/historyAPI.json"
     result = get_data_from_dss(start_date, end_date, universe["ticker"].to_list(), jsonFileName, report=REPORT_HISTORY)
-    print(result)
     result = result.drop(columns=["IdentifierType", "Identifier"])
     print(result)
     if (len(result) > 0 ):

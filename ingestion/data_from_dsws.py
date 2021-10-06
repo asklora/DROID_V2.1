@@ -381,7 +381,23 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
             upsert_data_to_database(result, get_data_fundamental_score_history_table_name(), "uid", how="update", Text=True)
             report_to_slack("{} : === Fundamentals Score Updated ===".format(datetimeNow()))
 
-
+def update_daily_fundamentals_score_from_dsws(ticker=None, currency_code=None):
+    print("{} : === Fundamentals Daily Score Start Ingestion ===".format(datetimeNow()))
+    end_date = dateNow()
+    start_date = backdate_by_month(12)
+    identifier = "ticker"
+    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+    print(universe)
+    if(len(universe)):
+        filter_field = ["WC08005"]
+        column_name = {"WC08005": "mkt_cap"}
+        result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
+        print(result)
+        result = result.rename(columns=column_name)
+        result = result.drop(columns=["index"])
+        print(result)
+        upsert_data_to_database(result, get_fundamental_score_table_name(), "ticker", how="update", Text=True)
+        report_to_slack("{} : === Fundamentals Score Daily Updated ===".format(datetimeNow()))
 
 def score_update_vol_rs(list_of_start_end, days_in_year=256):
     """ Calculate roger satchell volatility:
@@ -449,7 +465,7 @@ def score_update_fx_conversion(df):
 
     curr_code = get_currency_code_ibes_ws()     # map ibes/ws currency for each ticker
     df = df.merge(curr_code, on='ticker', how='left')
-    df = df.dropna(subset=['currency_code_ibes', 'currency_code_ws', 'currency_code'], how='any')   # remove ETF / index / some B-share -> tickers will not be recommended
+    # df = df.dropna(subset=['currency_code_ibes', 'currency_code_ws', 'currency_code'], how='any')   # remove ETF / index / some B-share -> tickers will not be recommended
 
     # map fx rate for conversion for each ticker
     fx = get_currenct_fx_rate_dict()
@@ -689,7 +705,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # calculate ai_score by each currency_code (i.e. group) for [Extra]
     for group, g in factor_rank.groupby("group"):
         print(f"Calculate Fundamentals [extra] in group [{group}]")
-        sub_g = g.loc[(g["factor_weight"]==2) & (g["pred_z"] >= 1)]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
+        sub_g = g.loc[(g["factor_weight"]==2)|(g["factor_weight"].isnull())]        # use all rank=2 (best class)
+        sub_g = sub_g.loc[(g["pred_z"] >= 1)|(g["pred_z"].isnull())]    # use all rank=2 (best class) and predicted factor premiums with z-value >= 1
 
         if len(sub_g.dropna(subset=["pred_z"])) > 0:     # if no factor rank=2, don"t add any factor into extra pillar
             score_col = [f"{x}_{y}_currency_code" for x, y in sub_g.loc[sub_g["scaler"].notnull(), ["factor_name", "scaler"]].to_numpy()]
@@ -703,8 +720,8 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
             fundamentals_details_column_names[group]['extra'] = ''
 
         # save used columns to pillars
-        fundamentals_details[group]['extra'] = fundamentals.loc[fundamentals['currency_code']==group,
-               ['ticker', "fundamentals_extra"] + score_col_detail].sort_values(by=[ f"fundamentals_extra"])
+        # fundamentals_details[group]['extra'] = fundamentals.loc[fundamentals['currency_code']==group,
+        #        ['ticker', "fundamentals_extra"] + score_col_detail].sort_values(by=[ f"fundamentals_extra"])
 
     upsert_data_to_database_ali(pd.DataFrame(fundamentals_details_column_names).transpose().reset_index(),
                                 f"test_fundamental_score_current_names","index",how="update",Text=True)
@@ -741,6 +758,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     score_history = get_ai_score_testing_history(backyear=1)
     for cur, g in fundamentals.groupby(['currency_code']):
         try:
+            raise Exception('Scaling with current score')
             score_history_cur = score_history.loc[score_history['currency_code']==cur]
             m1 = MinMaxScaler(feature_range=(0, 10)).fit(score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]])
             fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = m1.transform(g[["ai_score", "ai_score2"]])
