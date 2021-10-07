@@ -90,6 +90,16 @@ def sell_position_service(price:float, trading_day:datetime, position_uid:str)->
         positions, order=classic_sell_position(price, trading_day, position,apps=True)
     elif bot.is_stock():
         positions, order=user_sell_position(price, trading_day, position, apps=True)
+    pending_order = Order.objects.prefetch_related("ticker").filter(
+        user_id=order.user_id,
+        status='pending',
+        bot_id=order.bot_id,
+        ticker=order.ticker
+        )
+    if pending_order.exists():
+        orderId = order.order_uid
+        order.delete()
+        raise exceptions.NotAcceptable(f"sell order already exists for this position, order id : {orderId}, current status pending")
     return positions, order
 
 
