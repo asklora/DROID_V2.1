@@ -1,11 +1,14 @@
-from core.djangomodule.general import formatdigit
-from django.conf import settings
-from general.data_process import NoneToZero, dateNow
-from bot.data_download import get_currency_data
-from datetime import datetime, date
-from asgiref.sync import sync_to_async
 import numpy as np
 import pandas as pd
+from core.djangomodule.general import formatdigit
+from django.conf import settings
+from typing import List
+import asyncio
+from asgiref.sync import sync_to_async
+from general.data_process import NoneToZero, dateNow
+from bot.data_download import get_currency_data
+from asgiref.sync import sync_to_async
+from general.slack import report_to_slack_factor
 from general.firestore_query import (
     change_null_to_zero, 
     update_to_firestore, 
@@ -22,7 +25,7 @@ from general.sql_query import (
     get_latest_ranking,
     get_orders_group_by_user_id,
     get_orders_position,
-    get_orders_position_performance, 
+    get_orders_position_performance,
     get_universe_rating_detail_history, 
     get_universe_rating_history,
     get_bot_option_type, 
@@ -32,71 +35,6 @@ from general.sql_query import (
     get_user_profit_history,
     get_factor_calculation_formula,
     get_factor_current_used)
-import asyncio
-from asgiref.sync import sync_to_async
-from typing import List
-from general.slack import report_to_slack_factor
-
-# def factor_column_name():
-#     return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry",
-#         "book_to_price_minmax_currency_code", "book_to_price_minmax_industry",
-#         "ebitda_to_ev_minmax_currency_code", "ebitda_to_ev_minmax_industry",
-#         "fwd_bps_minmax_currency_code", "fwd_bps_minmax_industry",
-#         "fwd_ebitda_to_ev_minmax_currency_code", "fwd_ebitda_to_ev_minmax_industry",
-#         "roe_minmax_currency_code", "roe_minmax_industry",
-#         "roic_minmax_currency_code", "roic_minmax_industry",
-#         "cf_to_price_minmax_currency_code", "cf_to_price_minmax_industry",
-#         "eps_growth_minmax_currency_code", "eps_growth_minmax_industry",
-#         "fwd_ey_minmax_industry", "fwd_ey_minmax_currency_code",
-#         "fwd_roic_minmax_industry", "fwd_sales_to_price_minmax_industry",
-#         "earnings_pred_minmax_industry", "earnings_pred_minmax_currency_code",
-#         "momentum_minmax_currency_code",
-#         "sales_to_price_minmax_currency_code", "sales_to_price_minmax_industry",
-#         "fwd_sales_to_price_minmax_currency_code", "fwd_roic_minmax_currency_code",
-#         "environment_minmax_currency_code", "social_minmax_currency_code",
-#         "goverment_minmax_currency_code", "environment_minmax_industry",
-#         "social_minmax_industry", "goverment_minmax_industry"]
-#
-# def fundamentals_value_factor_column_name():
-#     return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry",
-#         "book_to_price_minmax_currency_code", "book_to_price_minmax_industry",
-#         "ebitda_to_ev_minmax_currency_code", "ebitda_to_ev_minmax_industry",
-#         "fwd_bps_minmax_currency_code", "fwd_bps_minmax_industry",
-#         "fwd_ebitda_to_ev_minmax_currency_code", "fwd_ebitda_to_ev_minmax_industry",
-#         "roe_minmax_currency_code", "roe_minmax_industry"]
-#
-# def fundamentals_quality_factor_column_name():
-#     return ["roic_minmax_currency_code", "roic_minmax_industry",
-#         "cf_to_price_minmax_currency_code", "cf_to_price_minmax_industry",
-#         "eps_growth_minmax_currency_code", "eps_growth_minmax_industry",
-#         "fwd_ey_minmax_industry", "fwd_ey_minmax_currency_code",
-#         "fwd_sales_to_price_minmax_industry", "fwd_roic_minmax_industry",
-#         "earnings_pred_minmax_industry", "earnings_pred_minmax_currency_code"]
-#
-# def other_fundamentals_column_name():
-#     return ["sales_to_price_minmax_currency_code", "sales_to_price_minmax_industry",
-#         "fwd_sales_to_price_minmax_currency_code", "fwd_roic_minmax_currency_code",
-#         "environment_minmax_currency_code", "social_minmax_currency_code",
-#         "goverment_minmax_currency_code", "environment_minmax_industry",
-#         "social_minmax_industry", "goverment_minmax_industry"]
-#
-# def fundamentals_value_factor_name():
-#     return ["P/E", "P/E (ind.)", "Book Value", "Book Value (ind.)",
-#         "EV/EBITDA", "EV/EBITDA (ind.)", "Forward Book Value", "Forward Book Value (ind.)",
-#         "Forward EV/EBITDA", "Forward EV/EBITDA (ind.)", "ROE", "ROE (ind.)"]
-#
-# def fundamentals_quality_factor_name():
-#     return ["ROIC", "ROIC (ind.)", "Free Cash Flow", "Free Cash Flow (ind.)",
-#         "PEG ratio", "PEG ratio (ind.)", "Forward P/E","Forward P/E (ind.)",
-#         "Forward Sales (ind.)", "Forward ROIC (ind.)", "Earning Momentum", "Earnings Momentum (ind.)"]
-#
-# def momentum_factor_name():
-#     return ["Price Momentum"]
-#
-# def other_fundamentals_name():
-#     return ["Sales", "Sales (ind.)", "Forward Sales", "Forward ROIC",
-#         "Environment", "Environment (ind.)", "Social", "Social (ind.)",
-#         "Goverment", "Goverment (ind.)"]
 
 def factor_column_name_changes():
     ''' map factor name used in DB to name shown on APP '''
@@ -137,7 +75,12 @@ def mongo_universe_update(ticker=None, currency_code=None):
 
     # Populate Universe
     all_universe = get_active_universe(ticker=ticker, currency_code=currency_code)
-    currency = get_active_currency(currency_code=currency_code)[["currency_code", "country"]]
+    currency = get_active_currency(currency_code=currency_code)
+
+    all_universe = all_universe.loc[~all_universe["ticker"].isin(currency["index_ticker"].to_list())]
+    all_universe = all_universe.loc[~all_universe["ticker"].isin(currency["etf_ticker"].to_list())]
+    
+    currency = currency[["currency_code", "country"]]
     industry = get_industry()
     industry_group = get_industry_group()
     result = all_universe.merge(industry, on="industry_code", how="left")
