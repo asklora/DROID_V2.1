@@ -25,17 +25,17 @@ class Command(BaseCommand):
     
 
     def handle(self, *args, **options):
-        user_id=643
-        db = firestore.client()
-        collection =db.collection(settings.FIREBASE_COLLECTION['portfolio']).document(f"{user_id}")
-        while collection.get().exists:
-            collection.delete()
-        user_data =db.collection(settings.FIREBASE_COLLECTION['portfolio']).where("id","==",f"{user_id}")
+        # user_id=643
+        # db = firestore.client()
+        # collection =db.collection(settings.FIREBASE_COLLECTION['portfolio']).document(f"{user_id}")
+        # while collection.get().exists:
+        #     collection.delete()
+        # user_data =db.collection(settings.FIREBASE_COLLECTION['portfolio']).where("id","==",f"{user_id}")
         # print(collection.get().exists)
-        for data in user_data.get():
-            print(data.id)
+        # for data in user_data.get():
+        #     print(data.id)
         # firebase_user_update(user_id=[119])
-        # mongo_universe_update(currency_code=["HKD"])
+        mongo_universe_update(currency_code=["HKD","USD"])
         # db = firestore.client()
         
         # collection =db.collection(u"portfolio").document(u"638").get()
