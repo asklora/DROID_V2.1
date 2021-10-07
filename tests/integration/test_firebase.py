@@ -70,6 +70,7 @@ def test_order_should_be_updated_to_firebase(
     order.save()
 
     # update firebase
+    populate_daily_profit()
     firebase_user_update([user.id])
 
     # it takes a while to propagate to firebase so give it a second
@@ -110,8 +111,7 @@ def test_order_should_be_updated_to_firebase(
         == order.qty
     )
 
-    populate_daily_profit()
-    time.sleep(600)
+    # time.sleep(600)
 
     # whether the user's rank changes
     assert doc_dict["rank"] is not None

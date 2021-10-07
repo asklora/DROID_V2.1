@@ -73,7 +73,7 @@ FIREBASE_SCHEMA = Schema(
         ),
         "total_profit_pct": Or(float, 0),
         "is_decimal": bool,
-        "rank": Or(float, None),
+        "rank": Or(int, None),
         "daily_live_profit": Or(float, 0),
         "total_user_invested_amount": Or(float, 0),
     }

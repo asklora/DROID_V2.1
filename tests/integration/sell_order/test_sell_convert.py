@@ -68,6 +68,6 @@ def test_sell_order_with_conversion(user):
     print(confirmed_sell_order.setup)
 
     assert (
-        confirmed_sell_order.setup["position"]["bot_cash_balance"]
+        confirmed_sell_order.setup["position"]["investment_amount"]
         == conversion_result
     )
