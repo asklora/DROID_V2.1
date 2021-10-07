@@ -39,29 +39,34 @@ def create_buy_order(
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        # user = User.objects.get(id=713)
+        user = User.objects.get(id=1509)
         
-        # ticker = "2331.HK"
-        # master = MasterOhlcvtr.objects.get(
-        #     ticker=ticker,
-        #     trading_day="2021-03-31",
-        # )
-        # price = master.close
+        ticker = "2331.HK"
+        master = MasterOhlcvtr.objects.get(
+            ticker=ticker,
+            trading_day="2021-03-31",
+        )
+        price = master.close
         # log_time = datetime.combine(master.trading_day, datetime.min.time())
+        log_time = datetime.now()
 
-        # buy_order = create_buy_order(
-        #     created=log_time,
-        #     ticker=ticker,
-        #     price=price,
-        #     user_id=user,
-        #     margin=2,
-        #     bot_id="UNO_OTM_05",
-        # )
+        buy_order = create_buy_order(
+            created=log_time,
+            ticker=ticker,
+            price=price,
+            user_id=user,
+            margin=2,
+            bot_id="UNO_OTM_05",
+        )
 
-        # buy_order.status = "placed"
-        # buy_order.placed = True
-        # buy_order.placed_at = log_time
-        # buy_order.save()
+        buy_order.status = "placed"
+        buy_order.placed = True
+        buy_order.placed_at = log_time
+        buy_order.save()
+        buy_order.status = "pending"
+        buy_order.save()
+
+
 
         # buy_order.status = "filled"
         # buy_order.filled_at = log_time
@@ -78,11 +83,11 @@ class Command(BaseCommand):
         # )
 
         # step 2: setup hedge
-        uno_position_check(
-            position_uid='50666e6827e946009b602fc586c0c957',
-            tac=True,
-            to_date='2021-09-29'
-        )
+        # uno_position_check(
+        #     position_uid='50666e6827e946009b602fc586c0c957',
+        #     tac=True,
+        #     to_date='2021-09-29'
+        # )
         # # step 3: get hedge positions
         # performance = PositionPerformance.objects.filter(
         #     position_uid=position.position_uid
