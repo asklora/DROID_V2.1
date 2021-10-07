@@ -290,6 +290,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                                                 validated_data.get("setup",{}).get("position",None))
                 except OrderPosition.DoesNotExist:
                     raise exceptions.NotFound({'detail':'live position not found error'})
+                except exceptions.NotAcceptable as reason:
+                    raise exceptions.NotAcceptable({'detail':f'{reason}'})
                 except Exception as e:
                     raise exceptions.APIException({'detail':f'{str(e)}'})
         return order
