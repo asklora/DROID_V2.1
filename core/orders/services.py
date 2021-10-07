@@ -11,7 +11,7 @@ from typing import Union,Optional,Tuple
 from datetime import datetime
 
 class OrderPositionValidation:
-    def __init__(self,ticker:str,bot_id:Union[str,list],user_id:Union[str,int]):
+    def __init__(self,ticker:str,bot_id:Union[str,list,None],user_id:Union[str,int]):
         self.ticker =ticker
         self.bot_id =bot_id
         self.user_id =user_id
@@ -42,8 +42,8 @@ class OrderPositionValidation:
         return {"allowed_bot":response}
 
 
-    def is_order_exist(self):
-        orders = Order.objects.filter(user_id=self.user_id,ticker=self.ticker,bot_id__in=self.bots,status='pending',side='buy')
+    def is_order_exist(self,side):
+        orders = Order.objects.filter(user_id=self.user_id,ticker=self.ticker,bot_id__in=self.bots,status='pending',side=side)
         if orders.exists():
             try:
                 order = orders.latest('created')
@@ -65,15 +65,22 @@ class OrderPositionValidation:
             return portfolio
         return None
     
-    def validate(self):
+    def validate_buy(self):
         valid_position = self.is_portfolio_exist()
-        valid_order = self.is_order_exist()
+        valid_order = self.is_order_exist('buy')
         if valid_position or valid_order:
             
             if valid_position:
                 return {"position":f"{valid_position.position_uid}"}
             elif valid_order :
                 return {"position":f"{valid_order.order_uid}"}
+        else:
+            return None
+    
+    def validate_sell(self):
+        has_order = self.is_order_exist('sell')
+        if has_order:
+            return {"order_uid":f"{has_order.order_uid}"}
         else:
             return None
 
@@ -90,10 +97,23 @@ def sell_position_service(price:float, trading_day:datetime, position_uid:str)->
         positions, order=classic_sell_position(price, trading_day, position,apps=True)
     elif bot.is_stock():
         positions, order=user_sell_position(price, trading_day, position, apps=True)
+    pending_order = Order.objects.prefetch_related("ticker").filter(
+        user_id=order.user_id,
+        status='pending',
+        bot_id=order.bot_id,
+        ticker=order.ticker
+        )
+    if pending_order.exists():
+        orderId = order.order_uid
+        order.delete()
+        raise exceptions.NotAcceptable(f"sell order already exists for this position, order id : {orderId}, current status pending")
     return positions, order
 
 
 def side_validation(validated_data):
+    
+    
+    
     
     if validated_data["side"] == "sell":
         init = False
@@ -101,7 +121,8 @@ def side_validation(validated_data):
         if not position:
             raise exceptions.NotAcceptable({"detail":"must provided the position uid for sell side"})
     else:
-        validation=OrderPositionValidation(validated_data["ticker"],validated_data["bot_id"],validated_data["user_id"].id)
+        
+        validation=OrderPositionValidation(validated_data["ticker"],validated_data.get("bot_id",None),validated_data["user_id"].id)
         init = True
         if validated_data["amount"] <= 0:
             raise exceptions.NotAcceptable({"detail": "amount should not 0"})
@@ -109,7 +130,7 @@ def side_validation(validated_data):
             raise exceptions.NotAcceptable({"detail": "insufficient funds"})
         if (validated_data["amount"] / validated_data["margin"]) / validated_data["price"] < 1:
             raise exceptions.NotAcceptable({"detail":"share should not below one"})
-        if validation.validate():
+        if validation.validate_buy():
             raise exceptions.NotAcceptable({"detail": f"user already has position for {validated_data['ticker']} in current options"})
 
     return init
