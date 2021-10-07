@@ -1,11 +1,11 @@
 import time
 from datetime import datetime
 
-from ingestion import firebase_user_update
+from bot.calculate_bot import populate_daily_profit
 from django.conf import settings
-
-from tests.utils.order import create_buy_order
+from ingestion import firebase_user_update
 from tests.utils.firebase_schema import FIREBASE_SCHEMA
+from tests.utils.order import create_buy_order
 from tests.utils.user import set_user_joined
 
 
@@ -109,6 +109,9 @@ def test_order_should_be_updated_to_firebase(
         active_portfolios[len(active_portfolios) - 1]["share_num"]
         == order.qty
     )
+
+    populate_daily_profit()
+    time.sleep(600)
 
     # whether the user's rank changes
     assert doc_dict["rank"] is not None
