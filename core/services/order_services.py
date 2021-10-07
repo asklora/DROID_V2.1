@@ -32,17 +32,22 @@ def pending_order_checker(self):
     if orders.exists():
         for order in orders:
             market_db = Exchange.objects.get(mic=order.ticker.mic)
+            order_latest = Order.objects.prefetch_related('ticker').filter(
+                ticker=order.ticker,
+                bot_id=order.bot_id,
+                user_id=order.user_id
+                ).latest('created')
             if market_db.is_open:
                 fb_token=None
-                if 'firebase_token' in order.order_summary:
-                    fb_token = order.order_summary['firebase_token']
-                payload = {'order_uid': str(order.order_uid),'status':'placed'}
+                if 'firebase_token' in order_latest.order_summary:
+                    fb_token = order_latest.order_summary['firebase_token']
+                payload = {'order_uid': str(order_latest.order_uid),'status':'placed'}
                 if fb_token:
                     payload['firebase_token'] = fb_token
                 
                 payload = json.dumps(payload)
-                order_executor.apply_async(args=(payload,),kwargs={"recall":True},task_id=str(order.order_uid))
-                orders_id.append(str(order.order_uid))
+                order_executor.apply_async(args=(payload,),kwargs={"recall":True},task_id=str(order_latest.order_uid))
+                orders_id.append(str(order_latest.order_uid))
 
     return {'success':'order pending executed','data':orders_id}
 

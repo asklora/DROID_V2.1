@@ -7,7 +7,7 @@ import time
 from firebase_admin import firestore
 import random
 import requests
-
+from core.universe.models import Universe
 from django.conf import settings
 def delete_collection(coll_ref, batch_size):
     docs = coll_ref.limit(batch_size).stream()
@@ -37,8 +37,10 @@ class Command(BaseCommand):
         # firebase_user_update(user_id=[119])
         mongo_universe_update(currency_code=["HKD","USD"])
         # db = firestore.client()
-        
-        # collection =db.collection(u"portfolio").document(u"638").get()
+        # univ = Universe.objects.prefetch_related("currency_code").filter(currency_code="USD")
+        # for ticker in univ:
+        #     collection =db.collection(u"universe").document(f"{ticker.ticker}")
+        #     collection.delete()
         # collection =db.collection(u"portfolio").where("user_id","==",638)
         # delete_collection(collection,1)
         # res = requests.delete("https://firestore.googleapis.com/v1/projects/asklora-android/databases/(default)/documents/portfolio/638")
