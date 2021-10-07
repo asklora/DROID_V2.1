@@ -1,3 +1,4 @@
+from ingestion.data_from_dsws import update_currency_price_from_dsws
 from general.date_process import dateNow
 from general.sql_query import read_query
 from general.sql_process import do_function
@@ -50,3 +51,4 @@ def dlpa_weekly():
 if __name__ == "__main__":
     print("Start Process")
     # worldscope_quarter_report_date_from_dsws(history=True)
+    update_currency_price_from_dsws()
