@@ -37,7 +37,7 @@ def order_signal_check(sender, instance, **kwargs):
     # if status not in ["filled", "placed", "pending", "cancel"] and is new order, recalculate price and share
     if not instance.status in ["filled", "placed", "pending", "cancel"] and instance.is_init:
         # if bot will create setup expiry , SL and TP
-        if instance.bot_id != "STOCK_stock_0":
+        if instance.is_bot_order:
             setup = generate_hedge_setup(instance,instance.margin)
             instance.setup = setup
             instance.qty = setup['performance']["share_num"]
