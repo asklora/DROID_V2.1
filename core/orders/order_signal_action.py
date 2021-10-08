@@ -174,7 +174,6 @@ class BaseOrderConnector(AbstracOrderConnector):
             if trans.exists():
                 trans.get().delete()
             # cancel any pending shedule in celery worker
-            self.instance.update(canceled_at = timezone.now())#TODO disini
             print("canceled")
             try:
                 worker.control.revoke(self.instance.order_uid,terminate=True)
