@@ -114,16 +114,17 @@ class BaseOrderConnector(AbstracOrderConnector):
         """
         Only Take amount off order from wallet if order initialized
         """
-        if (self.instance.is_init and self.instance.placed_at is None):#TODO disini
+        if (self.instance.is_init):#TODO disini
             if self.bot.is_stock():
                 amount = self.instance.amount
             else:
                 amount = self.instance.setup["position"]["investment_amount"]
             amount = self.Converter.convert(amount)#TODO disini
+            print(f"amount: {amount}")
             TransactionHistory.objects.create(
                 balance_uid=self.user_wallet,
                 side="debit",
-                amount=formatdigit(amount, self.is_decimal),
+                amount=amount,
                 transaction_detail={
                     "last_amount" : self.user_wallet_amount,
                     "description": "bot order",
@@ -131,7 +132,6 @@ class BaseOrderConnector(AbstracOrderConnector):
                     "order_uid": str(self.instance.order_uid)
                 },
             )
-            self.instance.update(placed=True, placed_at = timezone.now())#TODO disini
         else:
             """Must be BOT buy here"""
             pass
