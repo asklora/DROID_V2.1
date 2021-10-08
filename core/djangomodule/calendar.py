@@ -120,7 +120,7 @@ class TradingHours:
                 self.exchange.is_open = market_status
                 self.exchange.save()
         else:
-            print(req.status_code)
+            print("error market check",req.status_code)
 
             
             
