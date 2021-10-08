@@ -61,8 +61,7 @@ def order_signal_check(sender, instance, **kwargs):
 def order_signal(sender, instance, created, **kwargs):
     services=OrderServices(instance)
     services.process_transaction()
-    if(instance.status == "canceled"):
-        instance.canceled_at = timezone.now()
+    
     
 @receiver(post_delete, sender=PositionPerformance)
 def order_revert(sender, instance, **kwargs):
