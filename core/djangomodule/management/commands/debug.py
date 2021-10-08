@@ -1,4 +1,4 @@
-from core.universe.models import Currency
+from core.universe.models import Currency,ExchangeMarket,Universe
 from core.user.convert import ConvertMoney
 from core.orders.models import Order, OrderPosition
 from core.user.models import User
@@ -14,9 +14,13 @@ from django.utils import timezone
 #debug
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        open_market=list(ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"],
+            group="Core",is_open=True).values_list("currency_code",flat=True))
+        univ =list(Universe.objects.filter(currency_code__in=open_market, 
+        is_active=True).exclude(entity_type='index').values_list('ticker',flat=True))
         # rkd = RkdData()
         # rkd.get_index_price("USD")
-        pending_order_checker()
+        # pending_order_checker()
         # daily_hedge(currency="HKD")
         # print("Something")
         # rkd = RkdStream()
@@ -26,7 +30,8 @@ class Command(BaseCommand):
         # records = data.to_dict("index")
         # rkd.update_rtdb(records)
         print("Something")
-        user = User.objects.get(id=517)
+        # user = list(User.objects.filter(current_status="verified").values_list("id",flat=True))
+        print(len(univ))
         # order = Order.objects.create(
         #     amount=10000,
         #     bot_id="CLASSIC_classic_008333",
@@ -42,9 +47,9 @@ class Command(BaseCommand):
         #     ticker_id="MSFT.O",
         #     user_id_id=517
         # )
-        order = Order.objects.get(user_id = 517)
-        order.status = 'filled'
-        order.save()
+        # order = Order.objects.get(user_id = 517)
+        # order.status = 'filled'
+        # order.save()
         # order.status = 'pending'
         # order.save()
         # users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
