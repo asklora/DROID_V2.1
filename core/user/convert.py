@@ -81,17 +81,17 @@ class ConvertMoney(AbstractBaseConvert):
         self.set_exchange_rate()
 
     def set_from_currency(self, from_cur):
-        if(type(from_cur) == str):
+        if isinstance(from_cur,str):
             self.from_currency = Currency.objects.get(currency_code=from_cur.upper())
-        elif(type(from_cur) == Currency):
+        elif isinstance(from_cur,Currency):
             self.from_currency = from_cur
         else:
             raise ValueError(f"currency wrong type {type(from_cur)}")
 
     def set_to_currency(self, to_cur):
-        if(type(to_cur) == str):
+        if isinstance(to_cur,str):
             self.to_currency = Currency.objects.get(currency_code=to_cur.upper())
-        elif(type(to_cur) == Currency):
+        elif isinstance(to_cur,Currency):
             self.to_currency = to_cur
         else:
             raise ValueError(f"currency wrong type {type(to_cur)}")
