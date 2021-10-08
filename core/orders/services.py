@@ -88,6 +88,8 @@ class OrderPositionValidation:
 
 def sell_position_service(price:float, trading_day:datetime, position_uid:str)->Tuple[OrderPosition,Optional[Union[Order,None]]]:
     position  = OrderPosition.objects.select_related('ticker').get(position_uid=position_uid)
+    if not position.live:
+        raise exceptions.NotAcceptable(f"position, has been sold")
     bot = position.bot
     if bot.is_ucdc():
        positions, order= ucdc_sell_position(price, trading_day, position,apps=True)
