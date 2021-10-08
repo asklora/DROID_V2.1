@@ -1464,7 +1464,6 @@ def update_worldscope_currency_from_dsws(ticker=None, currency_code=None):
 def update_currency_price_from_dsws(currency_code=None):
     print("{} : === Currency Price Start Ingestion ===".format(datetimeNow()))
     currency = get_active_currency_ric_not_null(currency_code=currency_code)
-    currency = currency.drop(columns=["last_date", "last_price"])
     ticker = list(set(get_currency_code_ibes_ws().iloc[:, 1:].values.flatten()))
     ticker = ["<USD"+x+"FIXM=WM>" for x in ticker if x and (x not in ["KHR", "USD"])]
     start_date = dateNow()
@@ -1473,16 +1472,25 @@ def update_currency_price_from_dsws(currency_code=None):
     result = fetch_data_from_dsws(start_date, end_date, ticker, filter_field, dsws=True)
     result = result.reset_index(inplace=False)
     result = result.rename(columns={"ER": "last_price", "level_0":"currency_code", "level_1" : "last_date"})
+    result["last_date"] = result["last_date"].dt.date
     result["currency_code"] = result["currency_code"].str[4:7]
     result["last_price"] = np.where(result["currency_code"] == "EUR", 1/result["last_price"], result["last_price"])
     result["last_price"] = np.where(result["currency_code"] == "GBP", 1/result["last_price"], result["last_price"])
+    result["last_price"] = np.where(result["currency_code"] == "AUD", 1/result["last_price"], result["last_price"])
     result["last_price"] = np.where(result["currency_code"] == "USD", 1, result["last_price"])
     result["last_price"] = np.where(result["currency_code"] == "KHR", 4070, result["last_price"])
     print(result)
     if(len(result)) > 0 :
-        currency = currency.merge(result, how="left", on=["currency_code"])
+        currency = currency.merge(result, how="outer", on=["currency_code"], suffixes=('_old',''))
+        currency["last_price"] = currency["last_price"].fillna(currency["last_price_old"])
+        currency["last_date"] = currency["last_date"].fillna(currency["last_date_old"])
+        currency = currency.drop(columns=["last_date_old", "last_price_old"])
+        currency[["is_decimal","is_active"]] = currency[["is_decimal","is_active"]].fillna(False)
+        currency[["region_id"]] = currency[["region_id"]].fillna('sa')     # fillin due to "not null" DB rules
+        currency[["vix_id"]] = currency[["vix_id"]].fillna('CBOEVIX')       # fillin due to "not null" DB rules
         print(currency)
-        upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
+        upsert_data_to_database(currency, get_currency_table_name(), "currency_code", how="update", Text=True)
         report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
-        result = uid_maker(result, uid="uid", ticker="currency_code", trading_day="last_date")
-        upsert_data_to_database(result, get_currency_price_history_table_name(), "uid", how="update", Text=True)
+        result = uid_maker(currency, uid="uid", ticker="currency_code", trading_day="last_date")
+        upsert_data_to_database(result[["uid", "currency_code", "last_price", "last_date"]],
+                                get_currency_price_history_table_name(), "uid", how="update", Text=True)
