@@ -1,3 +1,5 @@
+from core.universe.models import Currency
+from core.user.convert import ConvertMoney
 import math
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
@@ -7,7 +9,7 @@ from bot.calculate_bot import get_classic, get_expiry_date, get_uno, get_ucdc
 from core.djangomodule.general import formatdigit
 from core.user.models import TransactionHistory
 from .order_signal_action import OrderServices
-
+from django.utils import timezone
 
 def generate_hedge_setup(instance: Order,margin:int) -> dict:
 
@@ -31,11 +33,17 @@ def order_signal_check(sender, instance, **kwargs):
     currency_decimal =instance.user_id.user_balance.currency_code.is_decimal
     # this for locking balance before order is filled
     if instance.placed and instance.status == 'placed':
+        print("PLACED")
         if instance.status != "filled":
             instance.status = "pending"
-    
+            
     # if status not in ["filled", "placed", "pending", "cancel"] and is new order, recalculate price and share
     if not instance.status in ["filled", "placed", "pending", "cancel"] and instance.is_init:
+        if(instance.order_type == "apps"):
+            from_curr = instance.user_id.user_balance.currency_code
+            to_curr = instance.ticker.currency_code
+            convert = ConvertMoney(from_curr, to_curr)
+            instance.amount = convert.convert(instance.amount)
         # if bot will create setup expiry , SL and TP
         if instance.is_bot_order:
             setup = generate_hedge_setup(instance,instance.margin)
@@ -49,14 +57,12 @@ def order_signal_check(sender, instance, **kwargs):
                 instance.qty = math.floor((instance.amount / instance.price) * instance.margin) 
             instance.amount = formatdigit((instance.qty * instance.price) / instance.margin,currency_decimal)
 
-
 @receiver(post_save, sender=Order)
 def order_signal(sender, instance, created, **kwargs):
-    
     services=OrderServices(instance)
     services.process_transaction()
-    
-
+    if(instance.status == "canceled"):
+        instance.canceled_at = timezone.now()
     
 @receiver(post_delete, sender=PositionPerformance)
 def order_revert(sender, instance, **kwargs):
@@ -85,7 +91,6 @@ def order_revert(sender, instance, **kwargs):
             else:
                 position.delete()
         order.delete()
-
 
 @receiver(post_delete, sender=OrderFee)
 def return_fee_to_wallet(sender, instance, **kwargs):
