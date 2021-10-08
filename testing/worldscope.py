@@ -8,6 +8,69 @@ from general.date_process import dateNow
 from general.sql_output import upsert_data_to_database
 from general.data_process import uid_maker
 
+
+
+# def factor_column_name():
+#     return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry",
+#         "book_to_price_minmax_currency_code", "book_to_price_minmax_industry",
+#         "ebitda_to_ev_minmax_currency_code", "ebitda_to_ev_minmax_industry",
+#         "fwd_bps_minmax_currency_code", "fwd_bps_minmax_industry",
+#         "fwd_ebitda_to_ev_minmax_currency_code", "fwd_ebitda_to_ev_minmax_industry",
+#         "roe_minmax_currency_code", "roe_minmax_industry",
+#         "roic_minmax_currency_code", "roic_minmax_industry",
+#         "cf_to_price_minmax_currency_code", "cf_to_price_minmax_industry",
+#         "eps_growth_minmax_currency_code", "eps_growth_minmax_industry",
+#         "fwd_ey_minmax_industry", "fwd_ey_minmax_currency_code",
+#         "fwd_roic_minmax_industry", "fwd_sales_to_price_minmax_industry",
+#         "earnings_pred_minmax_industry", "earnings_pred_minmax_currency_code",
+#         "momentum_minmax_currency_code",
+#         "sales_to_price_minmax_currency_code", "sales_to_price_minmax_industry",
+#         "fwd_sales_to_price_minmax_currency_code", "fwd_roic_minmax_currency_code",
+#         "environment_minmax_currency_code", "social_minmax_currency_code",
+#         "goverment_minmax_currency_code", "environment_minmax_industry",
+#         "social_minmax_industry", "goverment_minmax_industry"]
+#
+# def fundamentals_value_factor_column_name():
+#     return ["earnings_yield_minmax_currency_code", "earnings_yield_minmax_industry",
+#         "book_to_price_minmax_currency_code", "book_to_price_minmax_industry",
+#         "ebitda_to_ev_minmax_currency_code", "ebitda_to_ev_minmax_industry",
+#         "fwd_bps_minmax_currency_code", "fwd_bps_minmax_industry",
+#         "fwd_ebitda_to_ev_minmax_currency_code", "fwd_ebitda_to_ev_minmax_industry",
+#         "roe_minmax_currency_code", "roe_minmax_industry"]
+#
+# def fundamentals_quality_factor_column_name():
+#     return ["roic_minmax_currency_code", "roic_minmax_industry",
+#         "cf_to_price_minmax_currency_code", "cf_to_price_minmax_industry",
+#         "eps_growth_minmax_currency_code", "eps_growth_minmax_industry",
+#         "fwd_ey_minmax_industry", "fwd_ey_minmax_currency_code",
+#         "fwd_sales_to_price_minmax_industry", "fwd_roic_minmax_industry",
+#         "earnings_pred_minmax_industry", "earnings_pred_minmax_currency_code"]
+#
+# def other_fundamentals_column_name():
+#     return ["sales_to_price_minmax_currency_code", "sales_to_price_minmax_industry",
+#         "fwd_sales_to_price_minmax_currency_code", "fwd_roic_minmax_currency_code",
+#         "environment_minmax_currency_code", "social_minmax_currency_code",
+#         "goverment_minmax_currency_code", "environment_minmax_industry",
+#         "social_minmax_industry", "goverment_minmax_industry"]
+#
+# def fundamentals_value_factor_name():
+#     return ["P/E", "P/E (ind.)", "Book Value", "Book Value (ind.)",
+#         "EV/EBITDA", "EV/EBITDA (ind.)", "Forward Book Value", "Forward Book Value (ind.)",
+#         "Forward EV/EBITDA", "Forward EV/EBITDA (ind.)", "ROE", "ROE (ind.)"]
+#
+# def fundamentals_quality_factor_name():
+#     return ["ROIC", "ROIC (ind.)", "Free Cash Flow", "Free Cash Flow (ind.)",
+#         "PEG ratio", "PEG ratio (ind.)", "Forward P/E","Forward P/E (ind.)",
+#         "Forward Sales (ind.)", "Forward ROIC (ind.)", "Earning Momentum", "Earnings Momentum (ind.)"]
+#
+# def momentum_factor_name():
+#     return ["Price Momentum"]
+#
+# def other_fundamentals_name():
+#     return ["Sales", "Sales (ind.)", "Forward Sales", "Forward ROIC",
+#         "Environment", "Environment (ind.)", "Social", "Social (ind.)",
+#         "Goverment", "Goverment (ind.)"]
+
 # def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, history=False):
 #     filter_field = [
 #         "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
