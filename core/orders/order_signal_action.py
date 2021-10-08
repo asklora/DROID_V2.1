@@ -66,10 +66,13 @@ class AbstracOrderConnector(ABC):
 
 class BaseOrderConnector(AbstracOrderConnector):
     
+
+
     def __init__(self,*args,**kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.is_decimal = self.instance.ticker.currency_code.is_decimal
+        self.Converter = ConvertMoney(self.instance.ticker.currency_code, self.user_wallet_currency)
     
     def run(self):
         """
@@ -116,8 +119,7 @@ class BaseOrderConnector(AbstracOrderConnector):
                 amount = self.instance.amount
             else:
                 amount = self.instance.setup["position"]["investment_amount"]
-            convert = ConvertMoney(self.instance.ticker.currency_code, self.user_wallet_currency)#TODO disini
-            amount = convert.convert(amount)#TODO disini
+            amount = self.Converter.convert(amount)#TODO disini
             TransactionHistory.objects.create(
                 balance_uid=self.user_wallet,
                 side="debit",
@@ -130,8 +132,6 @@ class BaseOrderConnector(AbstracOrderConnector):
                 },
             )
             self.instance.update(placed=True, placed_at = timezone.now())#TODO disini
-        elif(self.instance.is_init):
-            pass
         else:
             """Must be BOT buy here"""
             pass
@@ -211,8 +211,9 @@ class BaseOrderConnector(AbstracOrderConnector):
         amt = position.investment_amount + position.final_pnl_amount
         return_amt = amt + position.bot_cash_dividend
 
-        convert = ConvertMoney(self.instance.ticker.currency_code, self.user_wallet_currency)#TODO disini
-        return_amt = convert.convert(return_amt)#TODO disini
+        return_amt = self.Converter.convert(return_amt)#TODO disini
+
+
         TransactionHistory.objects.create(
             balance_uid=self.user_wallet,
             side="credit",

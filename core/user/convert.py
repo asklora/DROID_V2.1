@@ -74,26 +74,28 @@ class AbstractBaseConvert(ABC):
 
 class ConvertMoney(AbstractBaseConvert):
     
-    def __init__(self, from_cur=None, to_cur=None):
-        self.set_from_currency(from_cur)
-        self.set_to_currency(to_cur)
+    def __init__(self, from_cur:Currency, to_cur:Currency):
+        # self.set_from_currency(from_cur)
+        # self.set_to_currency(to_cur)
+        self.from_currency = from_cur
+        self.to_currency = to_cur
         self.set_exchange_rate()
 
-    def set_from_currency(self, from_cur):
-        if(type(from_cur) == str):
-            self.from_currency = Currency.objects.get(currency_code=from_cur.upper())
-        elif(type(from_cur) == Currency):
-            self.from_currency = from_cur
-        else:
-            self.from_currency = Currency.objects.get(currency_code="USD")
+    # def set_from_currency(self, from_cur):
+    #     if(type(from_cur) == str):
+    #         self.from_currency = Currency.objects.get(currency_code=from_cur.upper())
+    #     elif(type(from_cur) == Currency):
+    #         self.from_currency = from_cur
+    #     else:
+    #         self.from_currency = Currency.objects.get(currency_code="USD")
 
-    def set_to_currency(self, to_cur):
-        if(type(to_cur) == str):
-            self.to_currency = Currency.objects.get(currency_code=to_cur.upper())
-        elif(type(to_cur) == Currency):
-            self.to_currency = to_cur
-        else:
-            self.to_currency = Currency.objects.get(currency_code="USD")
+    # def set_to_currency(self, to_cur):
+    #     if(type(to_cur) == str):
+    #         self.to_currency = Currency.objects.get(currency_code=to_cur.upper())
+    #     elif(type(to_cur) == Currency):
+    #         self.to_currency = to_cur
+    #     else:
+    #         self.to_currency = Currency.objects.get(currency_code="USD")
 
     def set_exchange_rate(self):
         if(self.from_currency.last_price == self.to_currency.last_price):

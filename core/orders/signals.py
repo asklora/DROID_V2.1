@@ -17,13 +17,13 @@ def generate_hedge_setup(instance: Order,margin:int) -> dict:
     expiry = get_expiry_date(bot.time_to_exp, instance.created, instance.ticker.currency_code.currency_code, apps=(instance.order_type == "apps"))
     if bot.bot_type.bot_type == "CLASSIC":
         setup = get_classic(instance.ticker.ticker, instance.created,
-                            bot.time_to_exp, instance.amount, instance.price, expiry,margin=margin)
+                            bot.time_to_exp, instance.converted_amount, instance.price, expiry,margin=margin)
     elif bot.bot_type.bot_type == "UNO":
         setup = get_uno(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
-                        instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
+                        instance.created, bot.time_to_exp, instance.converted_amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
     elif bot.bot_type.bot_type == "UCDC":
         setup = get_ucdc(instance.ticker.ticker, instance.ticker.currency_code.currency_code, expiry,
-                         instance.created, bot.time_to_exp, instance.amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
+                         instance.created, bot.time_to_exp, instance.converted_amount, instance.price, bot.bot_option_type, bot.bot_type.bot_type, margin=margin)
 
     return setup
 
@@ -39,11 +39,11 @@ def order_signal_check(sender, instance, **kwargs):
             
     # if status not in ["filled", "placed", "pending", "cancel"] and is new order, recalculate price and share
     if not instance.status in ["filled", "placed", "pending", "cancel"] and instance.is_init:
-        if(instance.order_type == "apps"):
-            from_curr = instance.user_id.user_balance.currency_code
-            to_curr = instance.ticker.currency_code
-            convert = ConvertMoney(from_curr, to_curr)
-            instance.amount = convert.convert(instance.amount)
+        # if(instance.order_type == "apps"):
+        #     from_curr = instance.user_id.user_balance.currency_code
+        #     to_curr = instance.ticker.currency_code
+        #     convert = ConvertMoney(from_curr, to_curr)
+        #     instance.amount = convert.convert(instance.amount)
         # if bot will create setup expiry , SL and TP
         if instance.is_bot_order:
             setup = generate_hedge_setup(instance,instance.margin)

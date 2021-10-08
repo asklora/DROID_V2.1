@@ -10,6 +10,7 @@ from simple_history.models import HistoricalRecords
 from core.services.notification import send_notification
 from bot.calculate_bot import populate_daily_profit
 from ingestion import firebase_user_update
+from core.user.convert import ConvertMoney
 
 class Order(BaseTimeStampModel):
     """
@@ -58,6 +59,10 @@ class Order(BaseTimeStampModel):
         populate_daily_profit()
         firebase_user_update(user_id=[self.user_id.id])
 
+    @property
+    def converted_amount(self):
+        converter = ConvertMoney(self.ticker.currency_code,self.user_id.currency)
+        return converter.convert(self.amount)
 
     def save(self, *args, **kwargs):
 
