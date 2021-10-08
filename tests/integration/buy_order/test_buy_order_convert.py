@@ -38,7 +38,7 @@ def test_buy_order_with_conversion(user):
     order: Order = create_buy_order(
         price=price,
         ticker=ticker,
-        amount=conversion_result,
+        amount=amount,
         margin=2,
         user_id=user.id,
         bot_id="UNO_OTM_007692",
