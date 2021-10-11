@@ -383,14 +383,10 @@ class RkdData(Rkd):
             'CF_VOLUME',
             'CF_LAST',
             'CF_NETCHNG']
-        date_fields = [
-            'TRADE_DATE',
-        ]
+
         for parsed_data in formated_json_data:
             for field in float_fields:
                 parsed_data[field]=parsed_data.get(field,0)
-            for date in date_fields:
-                parsed_data[date]=parsed_data.get(date,str(datetime.now()))
         df_data = pd.DataFrame(formated_json_data).rename(columns={
                 "CF_ASK": "intraday_ask",
                 "CF_OPEN": "open",
