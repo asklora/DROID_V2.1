@@ -1476,6 +1476,7 @@ def update_currency_price_from_dsws(currency_code=None):
     result["currency_code"] = result["currency_code"].str[4:7]
     result["last_price"] = np.where(result["currency_code"] == "EUR", 1/result["last_price"], result["last_price"])
     result["last_price"] = np.where(result["currency_code"] == "GBP", 1/result["last_price"], result["last_price"])
+    result["last_price"] = np.where(result["currency_code"] == "AUD", 1/result["last_price"], result["last_price"])
     result["last_price"] = np.where(result["currency_code"] == "USD", 1, result["last_price"])
     result["last_price"] = np.where(result["currency_code"] == "KHR", 4070, result["last_price"])
     print(result)
