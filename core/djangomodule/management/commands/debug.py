@@ -11,6 +11,7 @@ from core.services.order_services import pending_order_checker
 from datasource.rkd import RkdData,RkdStream
 from core.services.tasks import daily_hedge_user
 from django.utils import timezone
+from django.db.models import Q
 #debug
 class Command(BaseCommand):
     def handle(self, *args, **options):
@@ -23,10 +24,11 @@ class Command(BaseCommand):
         # pending_order_checker()
         # daily_hedge(currency="HKD")
         # print("Something")
-        ticker_data =list(Universe.objects.filter(currency_code__in=["USD","HKD"], 
-        is_active=True).exclude(entity_type='index').values_list('ticker',flat=True))
-        rkd = RkdStream()
-        data =rkd.get_rkd_data(ticker_data,save=True)
+        ticker_data =list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
+                is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
+        print(len(ticker_data))
+        # rkd = RkdStream()
+        # data =rkd.bulk_get_quote(ticker_data,save=True)
         # data.to_csv('usd_rkd_quote.csv',index=False)
         # print(data)
         # data = data.set_index('ticker')
