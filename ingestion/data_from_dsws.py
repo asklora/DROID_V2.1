@@ -546,7 +546,7 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
         std = np.nanstd(x)
         return np.clip(x, m - 2 * std, m + 2 * std)
 
-    # trim outlier to +/- 2 std
+`    # Scale 1: log transformation for high skewness & trim outlier to +/- 2 std
     calculate_column_score = []
     for column in calculate_column:
         column_score = column + "_score"
@@ -558,7 +558,18 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
     # x1 = fundamentals.groupby("currency_code")[[x+'_score' for x in calculate_column]].skew()
     # y1 = fundamentals.groupby("currency_code")[[x+'_score' for x in calculate_column]].apply(pd.DataFrame.kurtosis)
 
-    # apply robust scaler
+    # Scale 2: Reverse value for long_large = False (i.e. recommend short larger value)
+    append_df = factor_rank.loc[factor_rank['keep']]
+    for group in factor_rank["group"].dropna().unique():
+        # change ratio to negative if original factor calculation using reverse premiums
+        neg_factor = factor_rank.loc[(factor_rank["long_large"]==False)&(factor_rank["group"]==group), "factor_name"].to_list()
+        fundamentals.loc[fundamentals["currency_code"]==group, list(set(neg_factor) & set(fundamentals.columns))] *= -1
+
+        # for non calculating socre -> we add same for each one
+        append_df["group"] = group
+        factor_rank = factor_rank.append(append_df, ignore_index=True)
+
+    # Scale 3: apply robust scaler
     calculate_column_robust_score = []
     for column in calculate_column:
         try:
@@ -571,7 +582,7 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
             print(e)
     print(calculate_column_robust_score)
 
-    # apply maxmin scaler on Currency / Industry
+    # Scale 4a: apply maxmin scaler on Currency / Industry
     minmax_column = ["uid", "ticker", "trading_day"]
     for column in calculate_column:
         column_robust_score = column + "_robust_score"
@@ -600,15 +611,15 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
 
     print(minmax_column)
 
-    # apply quantile transformation on before scaling scores
-    tmp = fundamentals.melt(["ticker", "currency_code", "industry_code"], calculate_column)
-    tmp["quantile_transformed"] = tmp.dropna(subset=["value"]).groupby(groupby_col + ["variable"])["value"].transform(
-        lambda x: QuantileTransformer(n_quantiles=4).fit_transform(
-            x.values.reshape(-1, 1)).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
-    tmp = tmp[["ticker", "variable", "quantile_transformed"]]
-    tmp["variable"] = tmp["variable"] + "_quantile_currency_code"
-    tmp = tmp.pivot(["ticker"], ["variable"]).droplevel(0, axis=1)
-    fundamentals = fundamentals.merge(tmp, how="left", on="ticker")
+    # Scale 4b: apply quantile transformation on before scaling scores
+    # tmp = fundamentals.melt(["ticker", "currency_code", "industry_code"], calculate_column)
+    # tmp["quantile_transformed"] = tmp.dropna(subset=["value"]).groupby(groupby_col + ["variable"])["value"].transform(
+    #     lambda x: QuantileTransformer(n_quantiles=4).fit_transform(
+    #         x.values.reshape(-1, 1)).flatten() if x.notnull().sum() else np.full_like(x, np.nan))
+    # tmp = tmp[["ticker", "variable", "quantile_transformed"]]
+    # tmp["variable"] = tmp["variable"] + "_quantile_currency_code"
+    # tmp = tmp.pivot(["ticker"], ["variable"]).droplevel(0, axis=1)
+    # fundamentals = fundamentals.merge(tmp, how="left", on="ticker")
 
     # add column for 3 pillar score
     fundamentals[[f"fundamentals_{name}" for name in factor_rank['pillar'].unique()]] = np.nan
@@ -622,7 +633,7 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
             fundamentals_details[i] = {}
             fundamentals_details_column_names[i] = {}
 
-    # calculate ai_score by each currency_code (i.e. group) for each of [Quality, Value, Momentum]
+    # Scale 5a: calculate ai_score by each currency_code (i.e. group) for each of [Quality, Value, Momentum]
     for (group, pillar_name), g in factor_rank.groupby(["group", "pillar"]):
         print(f"Calculate Fundamentals [{pillar_name}] in group [{group}]")
         sub_g = g.loc[(g["factor_weight"] == 2) | (g["factor_weight"].isnull())]  # use all rank=2 (best class)
@@ -643,7 +654,7 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
         fundamentals_details[group][pillar_name] = fundamentals.loc[
             fundamentals['currency_code'] == group, score_col_detail].sort_values(by=[f"fundamentals_{pillar_name}"])
 
-    # calculate ai_score by each currency_code (i.e. group) for [Extra]
+    # Scale 5b: calculate ai_score by each currency_code (i.e. group) for [Extra]
     for group, g in factor_rank.groupby("group"):
         print(f"Calculate Fundamentals [extra] in group [{group}]")
         sub_g = g.loc[(g["factor_weight"] == 2) | (g["factor_weight"].isnull())]  # use all rank=2 (best class)
@@ -697,13 +708,13 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
     print(fundamentals[["fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra",
                         'esg']].describe())
 
-    # scale ai_score with history min / max
+    # Scale 6: scale ai_score with history min / max
     # print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
     fundamentals[["ai_score_unscaled", "ai_score2_unscaled"]] = fundamentals[["ai_score", "ai_score2"]]
     score_history = get_ai_score_testing_history(backyear=1)
     for cur, g in fundamentals.groupby(['currency_code']):
         try:
-            raise Exception('Scaling with current score')
+            # raise Exception('Scaling with current score')
             score_history_cur = score_history.loc[score_history['currency_code'] == cur]
             print(f'{cur} History Min/Max: ',
                   score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]].min().values,
@@ -722,7 +733,8 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
     return fundamentals, minmax_column, fundamentals_factors_scores_col
 
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
-
+    ''' Update: '''
+    # Ingest 1: DLPA & Universe
     print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
     universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
     universe_rating = universe_rating[["ticker", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
@@ -732,6 +744,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         if any(universe_rating[[col]].value_counts()/len(universe_rating) > .95):
             universe_rating[[col]] = np.nan
 
+    # Ingest 2: fundamental score
     print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
     fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
     print(fundamentals_score)
@@ -779,16 +792,6 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     factor_rank = factor_rank.merge(factor_formula, left_on=['factor_name'], right_index=True, how='outer')
     factor_rank['long_large'] = factor_rank['long_large'].fillna(True)
     factor_rank = factor_rank.dropna(subset=['pillar'])
-    append_df = factor_rank.loc[factor_rank['keep']]
-
-    for group in factor_rank["group"].dropna().unique():
-        # change ratio to negative if original factor calculation using reverse premiums
-        neg_factor = factor_rank.loc[(factor_rank["long_large"]==False)&(factor_rank["group"]==group), "factor_name"].to_list()
-        fundamentals_score.loc[fundamentals_score["currency_code"]==group, list(set(neg_factor) & set(fundamentals_score.columns))] *= -1
-
-        # for non calculating socre -> we add same for each one
-        append_df["group"] = group
-        factor_rank = factor_rank.append(append_df, ignore_index=True)
 
     calculate_column = list(factor_formula.loc[factor_formula["scaler"].notnull()].index)
     calculate_column = sorted(set(calculate_column))
