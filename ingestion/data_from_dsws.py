@@ -924,7 +924,7 @@ def update_fred_data_from_fred():
     result["data"] = np.where(result["data"]== ".", 0, result["data"])
     result["data"] = result["data"].astype(float)
     if(len(result)) > 0 :
-        upsert_data_to_database(result, get_data_fred_table_name(), "uid", how="update", Text=True)
+        upsert_data_to_database(result, get_data_fred_table_name(), "trading_day", how="update", Date=True)
         report_to_slack("{} : === Fred Updated ===".format(datetimeNow()))
 
 def populate_ibes_table():
