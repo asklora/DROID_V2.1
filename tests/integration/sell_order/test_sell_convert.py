@@ -5,8 +5,8 @@ from core.djangomodule.general import formatdigit, jsonprint
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.orders.services import sell_position_service
 from core.user.convert import ConvertMoney
-from core.user.models import Accountbalance, User
-from tests.utils.order import create_buy_order
+from core.user.models import Accountbalance
+from tests.utils.order import confirm_order, create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -40,14 +40,7 @@ def test_sell_order_with_conversion(user):
         bot_id="UNO_OTM_007692",
     )
 
-    order.status = "placed"
-    order.placed = True
-    order.placed_at = datetime.now()
-    order.save()
-
-    order.status = "filled"
-    order.filled_at = datetime.now()
-    order.save()
+    confirm_order(order)
 
     # check if user balance is deducted
     wallet = Accountbalance.objects.get(user=user)
@@ -81,16 +74,11 @@ def test_sell_order_with_conversion(user):
     confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
     assert confirmed_sell_order
 
-    confirmed_sell_order.status = "placed"
-    confirmed_sell_order.placed = True
-    confirmed_sell_order.placed_at = datetime.now()
-    confirmed_sell_order.save()
+    confirm_order(confirmed_sell_order)
 
-    confirmed_sell_order.status = "filled"
-    confirmed_sell_order.filled_at = datetime.now()
-    confirmed_sell_order.save()
-
-    sell_position = OrderPosition.objects.get(position_uid=sell_position.position_uid)
+    sell_position = OrderPosition.objects.get(
+        position_uid=sell_position.position_uid,
+    )
     assert not sell_position.is_live
 
     jsonprint(confirmed_sell_order.setup)

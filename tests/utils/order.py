@@ -29,3 +29,18 @@ def create_buy_order(
         user_id_id=user_id,
         user_id=user,
     )
+
+
+def confirm_order(
+    order: Order,
+    date: datetime = datetime.now(),
+) -> None:
+    if order:
+        order.status = "placed"
+        order.placed = True
+        order.placed_at = date
+        order.save()
+
+        order.status = "filled"
+        order.filled_at = date
+        order.save()
