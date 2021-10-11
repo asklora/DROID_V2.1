@@ -1171,7 +1171,8 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
         "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
         "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
         "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
-        "WC02001A", "WC05575A", "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A"]
+        "WC02001A", "WC05575A", "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A", 
+        "WC02003A"]
     for field in filter_field:
         worldscope_quarter_summary_from_dsws(ticker=ticker, currency_code=currency_code, filter_field=[field], history=history)
     report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
@@ -1319,12 +1320,13 @@ def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filt
                 "WC02001A" : "fn_2001",
                 "WC05575A" : "fn_5575",
                 "index" : "period_end",
-                # "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A"
+                # "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A", "WC02003A"
                 "WC01451A" : "fn_1451",
                 "WC18810A" : "fn_18810",
                 "WC02401A" : "fn_2401",
                 "WC18274A" : "fn_18274",
-                "WC03040A" : "fn_3040"
+                "WC03040A" : "fn_3040",
+                "WC02003A" : "fn_2003"
             })
             result = result.reset_index(inplace=False, drop=True)
             result["period_end"] = pd.to_datetime(result["period_end"])
