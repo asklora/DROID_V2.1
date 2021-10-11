@@ -16,7 +16,7 @@ from .services import (
     side_validation
     )
 from datetime import datetime
-
+from threading import Thread
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
@@ -249,6 +249,16 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
 
     def create(self, validated_data):
+        if not "price" in validated_data:
+            rkd = RkdData()
+
+            df = rkd.get_quote([validated_data["ticker"].ticker],save=True, df=True)
+            df["latest_price"] = df["latest_price"].astype(float)
+            ticker = df.loc[df["ticker"] == validated_data["ticker"].ticker]
+            validated_data["price"] = ticker.iloc[0]["latest_price"]
+
+
+            
         if not "user" in validated_data:
             request = self.context.get("request", None)
             if request:
@@ -266,12 +276,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 raise exceptions.NotFound(error)
             validated_data["user_id"] = user
         
-        if not "price" in validated_data:
-            rkd = RkdData()
-            df = rkd.get_quote([validated_data["ticker"].ticker],save=True, df=True)
-            df["latest_price"] = df["latest_price"].astype(float)
-            ticker = df.loc[df["ticker"] == validated_data["ticker"].ticker]
-            validated_data["price"] = ticker.iloc[0]["latest_price"]
         
         order_type = "apps"
         if user.id == 135:
@@ -290,6 +294,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                                                 validated_data.get("setup",{}).get("position",None))
                 except OrderPosition.DoesNotExist:
                     raise exceptions.NotFound({'detail':'live position not found error'})
+                except exceptions.NotAcceptable as reason:
+                    raise exceptions.NotAcceptable({'detail':f'{reason}'})
                 except Exception as e:
                     raise exceptions.APIException({'detail':f'{str(e)}'})
         return order

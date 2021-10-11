@@ -7,7 +7,7 @@ from core.universe.models import ExchangeMarket
 
 @app.task(ignore_result=True)
 def init_exchange_check():
-    exchanges = ExchangeMarket.objects.exclude(currency_code=None)
+    exchanges = ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"])
     exchanges = exchanges.filter(group='Core')
     for exchange in exchanges:
         market = TradingHours(mic=exchange.mic)
