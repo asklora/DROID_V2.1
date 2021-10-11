@@ -63,6 +63,11 @@ class Order(BaseTimeStampModel):
     def converted_amount(self):
         converter = ConvertMoney(self.user_id.currency, self.ticker.currency_code)
         return converter.convert(self.amount)
+    
+    @property
+    def user_amount(self):
+        converter = ConvertMoney(self.ticker.currency_code,self.user_id.currency)
+        return converter.convert(self.amount)
 
     def save(self, *args, **kwargs):
 

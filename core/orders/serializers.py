@@ -390,6 +390,7 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
     currency = serializers.SerializerMethodField()
     bot_range= serializers.SerializerMethodField()
     ticker_name = serializers.SerializerMethodField()
+    amount = serializers.FloatField(source='user_amount')
 
 
 
@@ -424,6 +425,8 @@ class OrderListSerializers(serializers.ModelSerializer):
     currency = serializers.SerializerMethodField()
     bot_range= serializers.SerializerMethodField()
     ticker_name = serializers.SerializerMethodField()
+    amount = serializers.FloatField(source='user_amount')
+
     
     class Meta:
         model = Order

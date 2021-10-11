@@ -408,8 +408,8 @@ def get_pred_mean():
 def get_ai_value_pred_final():
     query = f"SELECT * FROM {get_ai_value_pred_table_name()}"
     data = read_query(query, table=get_ai_value_pred_table_name(), alibaba=True)
-    data = pd.pivot_table(data, index=['ticker'], columns=['y_type'], values='final_pred')
-    data.columns = ['ai_value_'+x for x in data.columns]
+    data = pd.pivot_table(data, index=["ticker"], columns=["y_type"], values="final_pred")
+    data.columns = ["ai_value_"+x for x in data.columns]
     return data.reset_index()
 
 
@@ -566,7 +566,7 @@ def get_consolidated_data(column, condition, group_field=None):
     return data
 
 def get_ai_score_testing_history(backyear=1):
-    ''' get ai_score / ai_score2 history from universe rating '''
+    """ get ai_score / ai_score2 history from universe rating """
     query =  f"SELECT trading_day, h.ticker, currency_code, ai_score_unscaled, ai_score2_unscaled "
     query += f"FROM {get_universe_rating_history_table_name()} h "
     query += f"INNER JOIN {get_universe_table_name()} u ON u.ticker=h.ticker "
@@ -575,24 +575,28 @@ def get_ai_score_testing_history(backyear=1):
     data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=False)
     return data
 
-def get_currenct_fx_rate_dict():
-    ''' get ai_score / ai_score2 history from universe rating '''
-    query =  f"SELECT * FROM {get_historic_fx_rate_table_name()} "
-    query += f"WHERE period_end > '{backdate_by_day(30)}'"
-    data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=True)
-    return data.sort_values('period_end').groupby('ticker')['fx_rate'].last().to_dict()
+def get_currency_fx_rate_dict():
+    """ get ai_score / ai_score2 history from universe rating """
+    table_name = get_currency_table_name()
+    query =  f"select currency_code, last_price, last_date from {table_name} cph "
+    query +=  f"where exists (select 1 from (select filters.currency_code, max(filters.last_date) max_date "
+    query +=  f"from {table_name} as filters group by filters.currency_code) result "
+    query +=  f"where result.currency_code=cph.currency_code and result.max_date=cph.last_date); "
+    # query =  f"SELECT currency_code, last_price FROM {get_currency_table_name()} "
+    data = read_query(query, table=get_ai_score_history_testing_table_name())
+    return data.set_index("currency_code")["last_price"].to_dict()
 
 def get_currency_code_ibes_ws():
-    ''' get ai_score / ai_score2 history from universe rating '''
+    """ get ai_score / ai_score2 history from universe rating """
     query =  f"SELECT ticker, currency_code_ibes, currency_code_ws FROM {get_universe_table_name()}"
     data = read_query(query, table=get_universe_table_name(), alibaba=False)
     return data
 
 def get_iso_currency_code_map():
-    ''' get ai_score / ai_score2 history from universe rating '''
+    """ get ai_score / ai_score2 history from universe rating """
     query =  f"SELECT currency_code, nation_code FROM iso_currency_code"
     data = read_query(query, table="iso_currency_code", alibaba=True)
-    return data.set_index('nation_code')['currency_code'].to_dict()
+    return data.set_index("nation_code")["currency_code"].to_dict()
 
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_history_table_name()
@@ -626,7 +630,7 @@ def get_bot_type(condition=None):
     cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
     if  not isinstance(cached_data,pd.DataFrame) :
         data = read_query(query, table_name, cpu_counts=True)
-        set_cache_data(table_name,data.to_dict('records'))
+        set_cache_data(table_name,data.to_dict("records"))
         return data
     return cached_data
 
@@ -676,7 +680,7 @@ def get_bot_option_type(condition=None):
     cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
     if  not isinstance(cached_data,pd.DataFrame) :
         data = read_query(query, table_name, cpu_counts=True)
-        set_cache_data(table_name,data.to_dict('records'))
+        set_cache_data(table_name,data.to_dict("records"))
         return data
     return cached_data
 

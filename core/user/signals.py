@@ -33,6 +33,7 @@ def transaction_dec(sender, instance, **kwargs):
     wallet = Accountbalance.objects.get(
         balance_uid=instance.balance_uid.balance_uid)
     trans_type = instance.side
+    print('called return deposit')
     if trans_type == 'debit':
         result = wallet.amount + instance.amount
         wallet.amount = formatdigit(result, wallet.currency_code.is_decimal)

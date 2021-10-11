@@ -14,24 +14,27 @@ from django.utils import timezone
 #debug
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        open_market=list(ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"],
-            group="Core",is_open=True).values_list("currency_code",flat=True))
-        univ =list(Universe.objects.filter(currency_code__in=open_market, 
-        is_active=True).exclude(entity_type='index').values_list('ticker',flat=True))
+        # open_market=list(ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"],
+        #     group="Core",is_open=True).values_list("currency_code",flat=True))
+        # univ =list(Universe.objects.filter(currency_code__in=open_market, 
+        # is_active=True).exclude(entity_type='index').values_list('ticker',flat=True))
         # rkd = RkdData()
-        # rkd.get_index_price("USD")
+        # print(rkd.bulk_get_quote(["BIIB.O"],df=True))
         # pending_order_checker()
         # daily_hedge(currency="HKD")
         # print("Something")
-        # rkd = RkdStream()
-        # data =rkd.bulk_get_quote(["2777.HK"],df=True)
+        ticker_data =list(Universe.objects.filter(currency_code__in=["USD"], 
+        is_active=True).exclude(entity_type='index').values_list('ticker',flat=True))
+        rkd = RkdStream()
+        data =rkd.bulk_get_quote(["ABC","ZION.O"],df=True)
+        # data.to_csv('usd_rkd_quote.csv',index=False)
         # print(data)
         # data = data.set_index('ticker')
         # records = data.to_dict("index")
         # rkd.update_rtdb(records)
-        print("Something")
+        # print("Something")
         # user = list(User.objects.filter(current_status="verified").values_list("id",flat=True))
-        print(len(univ))
+        # print(len(univ))
         # order = Order.objects.create(
         #     amount=10000,
         #     bot_id="CLASSIC_classic_008333",
