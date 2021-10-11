@@ -28,7 +28,7 @@ CHANNEL_LAYERS = {
         # Method 2: Via local Redis
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('localhost', 6379)],
+            "hosts": [('redis', 6379)],
             "capacity": 1500,  # default 100
             "expiry": 2,
         },
@@ -38,7 +38,7 @@ CHANNEL_LAYERS = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379/1",
+        "LOCATION": "redis://redis:6379/1",
 }
 }
 
