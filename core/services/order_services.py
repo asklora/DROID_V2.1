@@ -84,7 +84,7 @@ def order_executor(self, payload, recall=False):
         if order.side == 'buy' and order.is_app_order and order.is_init:
             if (order.amount / order.margin) > 10000:
                 order.amount = 20000
-            else:
+            elif (order.amount / order.margin) < 10000:
                 order.amount = 10000
         order.status = 'review'
         order.placed = False
