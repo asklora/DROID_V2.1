@@ -936,6 +936,7 @@ def populate_ibes_table():
     report_to_slack("{} : === Data IBES Update Updated ===".format(datetimeNow()))
 
 
+
 def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=False):
     end_date = dateNow()
     start_date = backdate_by_month(1)
