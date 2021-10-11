@@ -372,7 +372,7 @@ class RkdData(Rkd):
     def response_to_df(self,response:dict) -> pd.DataFrame:
         formated_json_data = self.parse_response(response)
         # jsonprint(formated_json_data)
-        fields = [
+        float_fields = [
             'CF_ASK',
             'CF_OPEN',
             'CF_CLOSE',
@@ -380,14 +380,17 @@ class RkdData(Rkd):
             'CF_HIGH',
             'CF_LOW',
             'PCTCHNG',
-            'TRADE_DATE',
             'CF_VOLUME',
             'CF_LAST',
             'CF_NETCHNG']
+        date_fields = [
+            'TRADE_DATE',
+        ]
         for parsed_data in formated_json_data:
-            for field in fields:
-                parsed_data[field]=parsed_data.get(field,None)
-
+            for field in float_fields:
+                parsed_data[field]=parsed_data.get(field,0)
+            for date in date_fields:
+                parsed_data[date]=parsed_data.get(date,str(datetime.now()))
         df_data = pd.DataFrame(formated_json_data).rename(columns={
                 "CF_ASK": "intraday_ask",
                 "CF_OPEN": "open",
