@@ -21,7 +21,7 @@ from firebase_admin import firestore
 import multiprocessing as mp
 import gc
 from core.djangomodule.general import logging
-
+from django.conf import settings
 
 
 db = firestore.client()
@@ -32,7 +32,7 @@ def bulk_update_rtdb(data):
     batch = db.batch()
     for ticker,val in data.items():
         if not ticker == 'price':
-            ref = db.collection("universe").document(ticker)
+            ref = db.collection(settings.FIREBASE_COLLECTION['universe']).document(ticker)
             batch.set(ref,val,merge=True)
     try:
         batch.commit()
@@ -879,7 +879,7 @@ class RkdStream(RkdData):
         data = data[0]
         ticker = data.pop("ticker")
         logging.info(ticker)
-        ref = db.collection("universe").document(ticker)
+        ref = db.collection(settings.FIREBASE_COLLECTION['universe']).document(ticker)
         try:
             ref.set({"price":data},merge=True)
         except Exception as e:
@@ -896,7 +896,7 @@ class RkdStream(RkdData):
         logging.info(data)
         for ticker,val in data.items():
             if not ticker == 'price':
-                ref = db.collection("universe").document(ticker)
+                ref = db.collection(settings.FIREBASE_COLLECTION['universe']).document(ticker)
                 batch.set(ref,val,merge=True)
         try:
             batch.commit()

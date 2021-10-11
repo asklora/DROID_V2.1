@@ -12,7 +12,7 @@ import base64
 from core.djangomodule.models import BaseTimeStampModel
 from core.djangomodule.general import nonetozero
 from simple_history.models import HistoricalRecords
-
+from django.core.validators import MinValueValidator
 
 def generate_balance_id():
     r_id = base64.b64encode(uuid.uuid4().bytes).replace("=", "").decode()
@@ -271,7 +271,7 @@ class Accountbalance(BaseTimeStampModel):
         primary_key=True, max_length=300, blank=True, editable=False, unique=True)
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="user_balance", db_column="user_id")
-    amount = models.FloatField(default=0)
+    amount = models.FloatField(default=0,validators=[MinValueValidator(0)])
     currency_code = models.ForeignKey(
         Currency, on_delete=models.DO_NOTHING, related_name="user_currency", default="USD", db_column="currency_code")
     history = HistoricalRecords(table_name="user_account_history")
