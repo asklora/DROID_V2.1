@@ -59,7 +59,7 @@ from general.sql_query import (
     get_factor_rank,
     get_fundamentals_score,
     get_last_close_industry_code,
-    get_currenct_fx_rate_dict,
+    get_currency_fx_rate_dict,
     get_max_last_ingestion_from_universe, 
     get_ai_value_pred_final,
     get_ai_score_testing_history,
@@ -473,7 +473,7 @@ def score_update_fx_conversion(df):
     # df = df.dropna(subset=['currency_code_ibes', 'currency_code_ws', 'currency_code'], how='any')   # remove ETF / index / some B-share -> tickers will not be recommended
 
     # map fx rate for conversion for each ticker
-    fx = get_currenct_fx_rate_dict()
+    fx = get_currency_fx_rate_dict()
     df['fx_dss'] = df['currency_code'].map(fx)
     df['fx_ibes'] = df['currency_code_ibes'].map(fx)
     df['fx_ws'] = df['currency_code_ws'].map(fx)
