@@ -1482,7 +1482,7 @@ def update_currency_price_from_dsws(currency_code=None):
     if(len(result)) > 0 :
         currency = currency.merge(result, how="left", on=["currency_code"])
         print(currency)
-        upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
+        upsert_data_to_database(currency, get_currency_table_name(), "currency_code", how="update", Text=True)
         report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
         result = uid_maker(result, uid="uid", ticker="currency_code", trading_day="last_date")
         upsert_data_to_database(result, get_currency_price_history_table_name(), "uid", how="update", Text=True)
