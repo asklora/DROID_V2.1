@@ -1359,6 +1359,7 @@ def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filt
             result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
             print(result)
             upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
+            
 def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
     print("{} : === RECSELL RECBUY Start Ingestion ===".format(datetimeNow()))
     universe = get_all_universe(ticker=ticker, currency_code=currency_code)
