@@ -637,7 +637,7 @@ class RkdStream(RkdData):
                 is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
                 logging.info('stream price')
                 data =self.bulk_get_quote(self.ticker_data,df=True)
-                split_df = np.split(data,math.ceil(len(data)/400))
+                split_df = np.array_split(data,math.ceil(len(data)/400))
                 for data_split in split_df:
                     df = data_split.copy()
                     data_split['price'] = df.drop(columns=['ticker']).to_dict("records")

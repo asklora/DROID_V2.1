@@ -24,10 +24,11 @@ class Command(BaseCommand):
         # pending_order_checker()
         # daily_hedge(currency="HKD")
         # print("Something")
-        ticker_data =list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
-                is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
-        print(len(ticker_data))
-        # rkd = RkdStream()
+        # ticker_data =list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
+        #         is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
+        # print(len(ticker_data))
+        rkd = RkdStream()
+        rkd.stream_quote()
         # data =rkd.bulk_get_quote(ticker_data,save=True)
         # data.to_csv('usd_rkd_quote.csv',index=False)
         # print(data)
