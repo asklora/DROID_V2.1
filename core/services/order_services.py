@@ -82,13 +82,14 @@ def order_executor(self, payload, recall=False):
         
         # for apps, need to change later with better logic
         if order.side == 'buy' and order.is_app_order and order.is_init:
-            if (order.amount / order.margin) > 10000:
-                order.amount = 20000
-            elif (order.amount / order.margin) < 10000:
-                order.amount = 10000
+            if order.is_bot_order:
+                order.amount = order.setup["position"]["investment_amount"]
+            else:
+                pass
         order.status = 'review'
         order.placed = False
         order.placed_at = None
+        order.qty = None
         with transaction.atomic():
             order.save()
 
