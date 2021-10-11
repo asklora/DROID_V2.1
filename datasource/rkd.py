@@ -335,7 +335,6 @@ class RkdData(Rkd):
         if save:
             self.save("universe", "Universe", df_data.to_dict("records"))
         if df:
-            # rename column match in table
             return df_data
         return formated_json
     
