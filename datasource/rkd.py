@@ -633,7 +633,7 @@ class RkdStream(RkdData):
             group="Core",is_open=True).values_list("currency_code",flat=True))
             # usd_exchange,hkd_exchange =ExchangeMarket.objects.filter(mic='XNAS'),ExchangeMarket.objects.get(mic='XHKG')
             if open_market:
-                self.ticker_data =list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
+                self.ticker_data =list(Universe.objects.filter(currency_code__in=open_market, 
                 is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
                 logging.info('stream price')
                 data =self.bulk_get_quote(self.ticker_data,df=True)
