@@ -371,7 +371,7 @@ class RkdData(Rkd):
 
     def response_to_df(self,response:dict) -> pd.DataFrame:
         formated_json_data = self.parse_response(response)
-        jsonprint(formated_json_data)
+        # jsonprint(formated_json_data)
         fields = [
             'CF_ASK',
             'CF_OPEN',
