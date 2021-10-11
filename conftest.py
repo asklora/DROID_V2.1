@@ -9,9 +9,15 @@ from environs import Env
 from firebase_admin import firestore
 
 from core.djangomodule.network.cloud import DroidDb
-from core.user.models import Accountbalance, TransactionHistory, User
-
-from tests.utils import delete_user
+from core.user.models import (
+    Accountbalance,
+    TransactionHistory,
+    User,
+    UserDepositHistory,
+)
+from general.data_process import get_uid
+from general.date_process import dateNow
+from tests.utils.user import delete_user
 
 load_dotenv()
 env = Env()
@@ -76,11 +82,17 @@ def user(django_db_setup, django_db_blocker):
             amount=0,
             currency_code_id="HKD",
         )
-        TransactionHistory.objects.create(
+        transaction = TransactionHistory.objects.create(
             balance_uid=user_balance,
             side="credit",
             amount=200000,
             transaction_detail={"event": "first deposit"},
+        )
+        UserDepositHistory.objects.create(
+            uid=get_uid(user.id, trading_day=dateNow(), replace=True),
+            user_id=user,
+            trading_day=dateNow(),
+            deposit=transaction.amount,
         )
 
         yield user
