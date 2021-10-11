@@ -85,7 +85,10 @@ def order_executor(self, payload, recall=False):
             if order.is_bot_order:
                 order.amount = order.setup["position"]["investment_amount"]
             else:
-                pass
+                if (order.amount / order.margin) > 10000:
+                    order.amount = 20000
+                else:
+                    order.amount = 10000
         order.status = 'review'
         order.placed = False
         order.placed_at = None
