@@ -167,7 +167,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         stopping any order schedule on celery
         """
         
-        if self.instance.is_init and self.instance.status == "cancel" and self.instance.canceled_at is None:#TODO disini
+        if self.instance.is_init and self.instance.status == "cancel":#TODO disini
             trans = TransactionHistory.objects.filter(
                 side="debit", transaction_detail__description="bot order", 
                 transaction_detail__order_uid=str(self.instance.order_uid),transaction_detail__event="create")
