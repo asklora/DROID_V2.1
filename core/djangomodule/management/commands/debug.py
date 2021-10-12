@@ -15,20 +15,37 @@ from django.db.models import Q
 #debug
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        ticks=['AAPL.O',
+        'ABBV.K',
+        'ABC',
+        'ABT',
+        'ACN',
+        'DXCM.O',
+        'ECL',
+        'EIX',
+        'ENPH.O',
+        'EQR',
+        'ETR',
+        'GOOGL.O',
+        'HBAN.O',
+        'HBI',]
+
         # open_market=list(ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"],
         #     group="Core",is_open=True).values_list("currency_code",flat=True))
         # univ =list(Universe.objects.filter(currency_code__in=open_market, 
         # is_active=True).exclude(entity_type='index').values_list('ticker',flat=True))
-        # rkd = RkdData()
-        # print(rkd.bulk_get_quote(["BIIB.O"],df=True))
+        rkd = RkdData()
+        res=rkd.bulk_get_quote(ticks,df=True)
+        print(res)
+        res.to_csv('example_usd.csv',index=False)
         # pending_order_checker()
         # daily_hedge(currency="HKD")
         # print("Something")
         # ticker_data =list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
         #         is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
         # print(len(ticker_data))
-        rkd = RkdStream()
-        rkd.stream_quote()
+        # rkd = RkdStream()
+        # rkd.stream_quote()
         # data =rkd.bulk_get_quote(ticker_data,save=True)
         # data.to_csv('usd_rkd_quote.csv',index=False)
         # print(data)
