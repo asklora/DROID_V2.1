@@ -39,7 +39,7 @@ class Command(BaseCommand):
         # res=rkd.bulk_get_quote(ticks,df=True)
         # print(res)
         # res.to_csv('example_usd.csv',index=False)
-        # pending_order_checker()
+        pending_order_checker()
         # daily_hedge(currency="HKD")
         # print("Something")
         # ticker_data =list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
