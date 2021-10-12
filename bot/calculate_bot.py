@@ -651,22 +651,27 @@ def populate_daily_profit(currency_code=None, user_id=None):
             profit = formatdigit(NoneToZero(np.nansum(position["daily_profit"].to_list())), currency_decimal=row["is_decimal"])
             daily_profit_pct = round(profit / NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) * 100, 4)
             daily_invested_amount = formatdigit(NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) + user_core.loc[index, "pending_amount"], currency_decimal=row["is_decimal"])
+            total_profit = formatdigit(daily_invested_amount + user_core.loc[index, "balance"] - user_core.loc[index, "deposit"])
+            total_profit_pct = (total_profit / user_core.loc[index, "deposit"]) * 100
         else:
-            
             profit = 0
             daily_profit_pct = 0
             daily_invested_amount = 0
+            total_profit = 0
+            total_profit_pct = 0
         user_core.loc[index, "daily_profit"] = profit
         user_core.loc[index, "daily_profit_pct"] = daily_profit_pct
         user_core.loc[index, "daily_invested_amount"] = daily_invested_amount
-        user_core.loc[index, "total_profit"] = (user_core.loc[index, "daily_invested_amount"] + user_core.loc[index, "balance"] + user_core.loc[index, "pending_amount"] - user_core.loc[index, "deposit"])
-        user_core.loc[index, "total_profit_pct"] = (user_core.loc[index, "total_profit"] / user_core.loc[index, "deposit"]) * 100
+        user_core.loc[index, "total_profit"] = total_profit
+        user_core.loc[index, "total_profit_pct"] = total_profit_pct
     user_core["trading_day"] =  str_to_date(dateNow())
     user_core["user_id"] = user_core["user_id"].astype(str)
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
     user_core["user_id"] = user_core["user_id"].astype(int)
+    print(user_core)
     user_core = user_core.drop(columns=["currency_code", "is_decimal", "bot_pending_amount", "stock_pending_amount", "pending_amount", "deposit", "balance"])
     user_core = user_core.replace([np.inf, -np.inf], 0).copy()
+    
     joined = user_core.loc[user_core["is_joined"] == True]
     joined = joined.loc[joined["total_position"] > 0]
     joined = joined.sort_values(by=["total_profit_pct"], ascending=[False])
