@@ -39,11 +39,11 @@ def order_signal_check(sender, instance, **kwargs):
             
     # if status not in ["filled", "placed", "pending", "cancel"] and is new order, recalculate price and share
     if not instance.status in ["filled", "placed", "pending", "cancel"] and instance.is_init:
-        # if(instance.order_type == "apps"):
-        #     from_curr = instance.user_id.user_balance.currency_code
-        #     to_curr = instance.ticker.currency_code
-        #     convert = ConvertMoney(from_curr, to_curr)
-        #     instance.amount = convert.convert(instance.amount)
+        if(instance.order_type == "apps"):
+            from_curr = instance.user_id.user_balance.currency_code
+            to_curr = instance.ticker.currency_code
+            convert = ConvertMoney(from_curr, to_curr)
+            instance.exchange_rate = convert.get_exchange_rate()
         # if bot will create setup expiry , SL and TP
         if instance.is_bot_order:
             setup = generate_hedge_setup(instance,instance.margin)

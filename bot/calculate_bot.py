@@ -610,29 +610,34 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
     user_core["deposit"] = np.where(user_core["deposit"].isnull(), 0, user_core["deposit"])
 
-    bot_order_pending = get_orders_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
-    user_core = user_core.merge(bot_order_pending, how="left", on=["user_id"])
-
     count_position = get_count_orders_position(user_id=user_core["user_id"].to_list())
     user_core = user_core.merge(count_position, how="left", on=["user_id"])
 
-    user_core["bot_pending_amount"] = np.where(user_core["bot_pending_amount"].isnull(), 0, user_core["bot_pending_amount"])
     stock_order_pending = get_orders_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=True)
+    bot_order_pending = get_orders_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
     user_core = user_core.merge(stock_order_pending, how="left", on=["user_id"])
+    user_core = user_core.merge(bot_order_pending, how="left", on=["user_id"])
+    user_core["bot_pending_amount"] = np.where(user_core["bot_pending_amount"].isnull(), 0, user_core["bot_pending_amount"])
     user_core["stock_pending_amount"] = np.where(user_core["stock_pending_amount"].isnull(), 0, user_core["stock_pending_amount"])
-
     user_core["pending_amount"] = user_core["stock_pending_amount"] + user_core["bot_pending_amount"]
-    
-    orders_position_field = "position_uid, user_id, investment_amount, margin"
+    user_core["bot_pending_amount"] = user_core["bot_pending_amount"].round(2)
+    user_core["stock_pending_amount"] = user_core["stock_pending_amount"].round(2)
+    user_core["pending_amount"] = user_core["pending_amount"].round(2)
+    print(user_core)
+    orders_position_field = "position_uid, user_id, investment_amount, margin, exchange_rate"
     orders_position = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
+    orders_position["investment_amount"] = (orders_position["investment_amount"] * orders_position["exchange_rate"]).round(2)
     if(len(orders_position)):
-        orders_performance_field = "distinct created, position_uid, current_bot_cash_balance, current_investment_amount"
+        orders_performance_field = "distinct created, position_uid, current_bot_cash_balance, current_investment_amount, exchange_rate as current_exchange_rate"
         orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)
+        orders_performance["current_bot_cash_balance"] = (orders_performance["current_bot_cash_balance"] * orders_performance["current_exchange_rate"]).round(2)
+        orders_performance["current_investment_amount"] = (orders_performance["current_investment_amount"] * orders_performance["current_exchange_rate"]).round(2)
         orders_performance["created"] = orders_performance["created"].dt.date
         orders_performance = orders_performance.drop_duplicates(subset=["created", "position_uid"], keep="first")
         orders_performance = orders_performance.drop(columns=["created"])
 
         orders_position = orders_position.merge(orders_performance, how="left", on=["position_uid"])
+    
     for index, row in user_core.iterrows():
         rounded = 0
         if(row["is_decimal"]):
@@ -654,9 +659,8 @@ def populate_daily_profit(currency_code=None, user_id=None):
         user_core.loc[index, "daily_profit"] = profit
         user_core.loc[index, "daily_profit_pct"] = daily_profit_pct
         user_core.loc[index, "daily_invested_amount"] = daily_invested_amount
-        user_core.loc[index, "total_profit"] = (user_core.loc[index, "daily_invested_amount"] + user_core.loc[index, "balance"] - user_core.loc[index, "deposit"])
+        user_core.loc[index, "total_profit"] = (user_core.loc[index, "daily_invested_amount"] + user_core.loc[index, "balance"] + user_core.loc[index, "pending_amount"] - user_core.loc[index, "deposit"])
         user_core.loc[index, "total_profit_pct"] = (user_core.loc[index, "total_profit"] / user_core.loc[index, "deposit"]) * 100
-    # print(user_core[["user_id", "balance", "deposit", "daily_invested_amount", "total_profit", "total_profit_pct"]])
     user_core["trading_day"] =  str_to_date(dateNow())
     user_core["user_id"] = user_core["user_id"].astype(str)
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
