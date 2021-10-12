@@ -623,7 +623,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core["bot_pending_amount"] = user_core["bot_pending_amount"].round(2)
     user_core["stock_pending_amount"] = user_core["stock_pending_amount"].round(2)
     user_core["pending_amount"] = user_core["pending_amount"].round(2)
-    print(user_core)
+    # print(user_core)
     orders_position_field = "position_uid, user_id, investment_amount, margin, exchange_rate"
     orders_position = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
     orders_position["investment_amount"] = (orders_position["investment_amount"] * orders_position["exchange_rate"]).round(2)
@@ -668,7 +668,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core["user_id"] = user_core["user_id"].astype(str)
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True)
     user_core["user_id"] = user_core["user_id"].astype(int)
-    print(user_core)
+    # print(user_core)
     user_core = user_core.drop(columns=["currency_code", "is_decimal", "bot_pending_amount", "stock_pending_amount", "pending_amount", "deposit", "balance"])
     user_core = user_core.replace([np.inf, -np.inf], 0).copy()
     
