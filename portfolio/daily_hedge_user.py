@@ -34,7 +34,7 @@ def user_sell_position(  live_price:float, trading_day:str,
     position.event_date = trading_day
     position.is_live = False
     position.event = "Stopped by User"
-    converter = ConvertMoney(position.user_id.currency, position.ticker.currency_code)
+    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
     position.exchange_rate = converter.get_exchange_rate()
     position_val = OrderPositionSerializer(position).data
     [position_val.pop(key) for key in ["created", "updated"]]
@@ -82,7 +82,7 @@ def populate_performance(live_price, trading_day, log_time, position, expiry=Fal
     # position.bot_cash_dividend = check_dividend_paid(position.ticker.ticker, trading_day, share_num, position.bot_cash_dividend)
     position.bot_cash_balance = round(bot_cash_balance, 2)
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
-    converter = ConvertMoney(position.user_id.currency, position.ticker.currency_code)
+    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
     performance = dict(
         position_uid=str(position.position_uid),
         share_num=share_num,
