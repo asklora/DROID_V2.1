@@ -9,7 +9,7 @@ from core.djangomodule.general import generate_id, formatdigit
 from simple_history.models import HistoricalRecords
 from core.services.notification import send_notification
 from bot.calculate_bot import populate_daily_profit
-from ingestion import firebase_user_update
+from ingestion.firestore_migration import firebase_user_update
 from core.user.convert import ConvertMoney
 
 class Order(BaseTimeStampModel):

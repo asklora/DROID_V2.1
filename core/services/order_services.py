@@ -9,7 +9,7 @@ from firebase_admin import messaging
 from datetime import datetime
 from rest_framework import serializers
 from channels.layers import get_channel_layer
-from ingestion import firebase_user_update
+from ingestion.firestore_migration import firebase_user_update
 from datasource import rkd as trkd
 import time
 import json

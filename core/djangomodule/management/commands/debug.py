@@ -1,4 +1,4 @@
-from core.universe.models import Currency,ExchangeMarket,Universe
+# from core.universe.models import Currency,ExchangeMarket,Universe
 from core.user.convert import ConvertMoney
 from core.orders.models import Order, OrderPosition
 from core.user.models import User
@@ -34,10 +34,10 @@ class Command(BaseCommand):
         #     group="Core",is_open=True).values_list("currency_code",flat=True))
         # univ =list(Universe.objects.filter(currency_code__in=open_market, 
         # is_active=True).exclude(entity_type='index').values_list('ticker',flat=True))
-        rkd = RkdData()
-        res=rkd.bulk_get_quote(ticks,df=True)
-        print(res)
-        res.to_csv('example_usd.csv',index=False)
+        # rkd = RkdData()
+        # res=rkd.bulk_get_quote(ticks,df=True)
+        # print(res)
+        # res.to_csv('example_usd.csv',index=False)
         # pending_order_checker()
         # daily_hedge(currency="HKD")
         # print("Something")
@@ -82,7 +82,7 @@ class Command(BaseCommand):
         # uno_position_check("4cad83492f4749549a21412925560f4b", to_date=None, tac=False, hedge=False, latest=True)
         # populate_daily_profit()
         # firebase_user_update(user_id=users)
-        # firebase_user_update()
+        firebase_user_update()
 
         # from_curr = Currency.objects.get(currency_code="EUR")
         # to_curr = Currency.objects.get(currency_code="USD")

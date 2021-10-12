@@ -1,6 +1,5 @@
 from abc import abstractmethod,ABC
 from core.universe.models import Currency
-
 class AbstractBaseConvert(ABC):
     
     
