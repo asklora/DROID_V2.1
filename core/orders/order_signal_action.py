@@ -116,7 +116,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         """
         if (self.instance.is_init):#TODO disini
             if self.bot.is_stock():
-                amount = self.instance.converted_amount
+                amount = self.instance.amount
             else:
                 amount = self.instance.setup["position"]["investment_amount"]
             amount = self.Converter.convert(amount)#TODO disini
@@ -167,7 +167,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         stopping any order schedule on celery
         """
         
-        if self.instance.is_init and self.instance.status == "cancel" and self.instance.canceled_at is None:#TODO disini
+        if self.instance.is_init and self.instance.status == "cancel":#TODO disini
             trans = TransactionHistory.objects.filter(
                 side="debit", transaction_detail__description="bot order", 
                 transaction_detail__order_uid=str(self.instance.order_uid),transaction_detail__event="create")

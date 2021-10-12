@@ -1,3 +1,4 @@
+from core.user.convert import ConvertMoney
 import numpy as np
 import pandas as pd
 from core.djangomodule.general import formatdigit
@@ -291,36 +292,28 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             #TOP LEVEL
             orders_position["margin"] = orders_position["margin"].astype(int)
             orders_position["status"] = "LIVE"
-            orders_position["current_values"] = (orders_position["bot_cash_balance"] + (orders_position["share_num"] * orders_position["price"])).round(rounded)
-            orders_position["current_ivt_amt"] = (orders_position["share_num"] * orders_position["price"]).round(rounded)
+            orders_position["current_values"] = (orders_position["share_num"] * orders_position["price"] * orders_position["exchange_rate"]).round(rounded)
+            orders_position["current_ivt_amt"] = (orders_position["share_num"] * orders_position["price"] * orders_position["exchange_rate"]).round(rounded)
+            orders_position["current_values"] = orders_position["bot_cash_balance"] + orders_position["current_values"]
+
             #MARGIN
-            # orders_position["margin_amount"] = (orders_position["margin"] * orders_position["investment_amount"]) - orders_position["investment_amount"]
             orders_position["margin_amount"] = (orders_position["margin"] - 1) * orders_position["investment_amount"]
             orders_position["bot_cash_balance"] = orders_position["bot_cash_balance"] + orders_position["margin_amount"]
             orders_position["threshold"] = (orders_position["margin_amount"] + orders_position["investment_amount"]) - orders_position["bot_cash_balance"]
             orders_position["margin_amount"] = orders_position["bot_cash_balance"] - orders_position["margin_amount"]
             orders_position["margin_amount"] = np.where(orders_position["margin_amount"] >= 0, float(0), orders_position["margin_amount"] * -1)
+            
             #PROFIT
-            # orders_position["profit"] = orders_position["investment_amount"] - orders_position["current_values"]
-            # orders_position["pct_profit"] =  orders_position["profit"] / orders_position["investment_amount"]
             orders_position["profit"] = (orders_position["current_values"] - orders_position["investment_amount"]).round(rounded)
             orders_position["pct_profit"] =  (orders_position["profit"] / orders_position["investment_amount"]  * 100).round(2)
 
             #BOT POSITION
-            # orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / orders_position["investment_amount"] * 100).round(0)
-            # orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
             orders_position["pct_cash"] =  (orders_position["bot_cash_balance"] / (orders_position["bot_cash_balance"] + orders_position["current_values"]) * 100).round(0)
             orders_position["pct_cash"] = np.where(orders_position["bot_id"] == "STOCK_stock_0", float(0), orders_position["pct_cash"])
             orders_position["pct_stock"] =  100 - orders_position["pct_cash"]
             
 
             #USER POSITION
-            # total_invested_amount = sum(orders_position["investment_amount"].to_list())
-            # total_bot_invested_amount	= sum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["investment_amount"].to_list())
-            # total_user_invested_amount = sum(orders_position.loc[orders_position["bot_id"] == "STOCK_stock_0"]["investment_amount"].to_list())
-            # pct_total_bot_invested_amount = int(round(total_bot_invested_amount / total_invested_amount, 0) * 100)
-            # pct_total_user_invested_amount = int(round(total_user_invested_amount / total_invested_amount, 0) * 100)
-            # total_profit_amount = sum(orders_position["profit"].to_list())
             total_invested_amount = float(NoneToZero(np.nansum(orders_position["current_values"].to_list())))
             daily_live_profit = float(NoneToZero(total_invested_amount + user_core.loc[0, "pending_amount"] - user_core.loc[0, "daily_invested_amount"]))
             total_bot_invested_amount = float(NoneToZero(np.nansum(orders_position.loc[orders_position["bot_id"] != "STOCK_stock_0"]["current_values"].to_list())))
@@ -379,6 +372,8 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
 
 
 def firebase_user_update(user_id=None, currency_code=None):
+    convert = ConvertMoney("USD", "HKD")
+    exchange_rate = convert.get_exchange_rate()
     print("Start Populate portfolio")
     bot_type = get_bot_type()
     bot_option_type = get_bot_option_type()
@@ -420,6 +415,7 @@ def firebase_user_update(user_id=None, currency_code=None):
         orders_position_field += ", target_profit_price, max_loss_price, exchange_rate"
         position_data = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
         position_data = position_data.rename(columns={"target_profit_price" : "take_profit", "max_loss_price" : "stop_loss"})
+        position_data["investment_amount"] = (position_data["investment_amount"] * position_data["exchange_rate"]).round(2)
         # print(position_data)
         position_data["expiry"]=position_data["expiry"].astype(str)
         if(len(position_data) > 0):
@@ -432,11 +428,14 @@ def firebase_user_update(user_id=None, currency_code=None):
             position_data["trading_day"] = np.where(position_data["trading_day"].isnull(), position_data["spot_date"], position_data["trading_day"])
             position_data = position_data.merge(universe, how="left", on=["ticker"])
 
-            orders_performance_field = "distinct created, position_uid, share_num, order_uid, barrier, current_bot_cash_balance as bot_cash_balance, exchange_rate as current_exchange_rate"
+            orders_performance_field = "distinct created, position_uid, share_num, order_uid, barrier, current_bot_cash_balance as bot_cash_balance"
             performance_data = get_orders_position_performance(position_uid=position_data["position_uid"].to_list(), field=orders_performance_field, latest=True)
             performance_data["created"] = performance_data["created"].dt.date
             performance_data = performance_data.drop_duplicates(subset=["created", "position_uid"], keep="first")
             performance_data = performance_data.drop(columns=["created"])
             position_data = position_data.merge(performance_data, how="left", on=["position_uid"])
             position_data = position_data.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
+            position_data["exchange_rate"] = 1
+            position_data["exchange_rate"] = np.where(position_data["currency_code"] == "USD", exchange_rate, position_data["exchange_rate"])
+            position_data["bot_cash_balance"] = (position_data["bot_cash_balance"] * position_data["exchange_rate"]).round(2)
         asyncio.run(gather_task(position_data, bot_option_type, user_core))
