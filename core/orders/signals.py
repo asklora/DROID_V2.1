@@ -54,7 +54,7 @@ def order_signal_check(sender, instance, **kwargs):
             instance.setup = None
             # amount should still
             if not instance.qty:
-                instance.qty = math.floor((instance.amount / instance.price) * instance.margin) 
+                instance.qty = math.floor((instance.converted_amount / instance.price) * instance.margin) 
             instance.amount = formatdigit((instance.qty * instance.price) / instance.margin,currency_decimal)
 
 @receiver(post_save, sender=Order)
