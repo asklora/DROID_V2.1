@@ -560,10 +560,13 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
 
     # Scale 2: Reverse value for long_large = False (i.e. recommend short larger value)
     append_df = factor_rank.loc[factor_rank['keep']]
-    for group in factor_rank["group"].dropna().unique():
-        # change ratio to negative if original factor calculation using reverse premiums
-        neg_factor = factor_rank.loc[(factor_rank["long_large"]==False)&(factor_rank["group"]==group), "factor_name"].to_list()
-        fundamentals.loc[fundamentals["currency_code"]==group, list(set(neg_factor) & set(fundamentals.columns))] *= -1
+    append_df.loc[append_df['factor_name']=='earnings_pred', 'long_large'] = factor_rank.loc[factor_rank['factor_name']=='fwd_ey', 'long_large'].values[0]
+    for group, g in factor_rank.groupby(['group']):
+        neg_factor = [x+'_score' for x in g.loc[(g['long_large'] == False), 'factor_name'].to_list()]
+        if not factor_rank.loc[factor_rank['factor_name']=='fwd_ey', 'long_large'].values[0]:
+            neg_factor += ['earnings_pred_score']
+
+        fundamentals.loc[(fundamentals['currency_code'] == group), neg_factor] *= -1
 
         # for non calculating socre -> we add same for each one
         append_df["group"] = group
