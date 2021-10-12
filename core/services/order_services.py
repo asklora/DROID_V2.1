@@ -42,7 +42,8 @@ def pending_order_checker(self):
                 
                 payload = json.dumps(payload)
                 # order_executor.apply_async(args=(payload,),kwargs={"recall":True},task_id=str(order.order_uid))
-                order_executor(payload,recall=True)
+                order_executor(payload,recall=True,request_id=str(order.order_uid))
+
                 orders_id.append(str(order.order_uid))
 
     return {'success':'order pending executed','data':orders_id}
@@ -53,7 +54,7 @@ def pending_order_checker(self):
 
 
 @app.task(bind=True)
-def order_executor(self, payload, recall=False):
+def order_executor(self, payload, recall=False,request_id=None):
     """
     #TODO: ERROR HANDLING HERE AND RETURN MESSAGE TO USER AND SOCKET
     
@@ -165,8 +166,10 @@ def order_executor(self, payload, recall=False):
         except Exception as e:
             logging.error(str(e))
 
+    if not request_id:
+        request_id =self.request.id
                 
-    asyncio.run(channel_layer.group_send(self.request.id,
+    asyncio.run(channel_layer.group_send(request_id,
                                          {
                                              'type': 'send_order_message',
                                              'message_type': messages,
