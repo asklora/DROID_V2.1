@@ -1,4 +1,4 @@
-from core.universe.models import Currency,ExchangeMarket,Universe
+# from core.universe.models import Currency,ExchangeMarket,Universe
 from core.user.convert import ConvertMoney
 from core.orders.models import Order, OrderPosition
 from core.user.models import User
@@ -11,22 +11,43 @@ from core.services.order_services import pending_order_checker
 from datasource.rkd import RkdData,RkdStream
 from core.services.tasks import daily_hedge_user
 from django.utils import timezone
+from django.db.models import Q
 #debug
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        print("Process")
+        # ticks=['AAPL.O',
+        # 'ABBV.K',
+        # 'ABC',
+        # 'ABT',
+        # 'ACN',
+        # 'DXCM.O',
+        # 'ECL',
+        # 'EIX',
+        # 'ENPH.O',
+        # 'EQR',
+        # 'ETR',
+        # 'GOOGL.O',
+        # 'HBAN.O',
+        # 'HBI',]
+
         # open_market=list(ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"],
         #     group="Core",is_open=True).values_list("currency_code",flat=True))
         # univ =list(Universe.objects.filter(currency_code__in=open_market, 
         # is_active=True).exclude(entity_type='index').values_list('ticker',flat=True))
         # rkd = RkdData()
-        # print(rkd.bulk_get_quote(["BIIB.O"],df=True))
+        # res=rkd.bulk_get_quote(ticks,df=True)
+        # print(res)
+        # res.to_csv('example_usd.csv',index=False)
         # pending_order_checker()
         # daily_hedge(currency="HKD")
         # print("Something")
-        ticker_data =list(Universe.objects.filter(currency_code__in=["USD"], 
-        is_active=True).exclude(entity_type='index').values_list('ticker',flat=True))
-        rkd = RkdStream()
-        data =rkd.bulk_get_quote(["ABC","ZION.O"],df=True)
+        # ticker_data =list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
+        #         is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
+        # print(len(ticker_data))
+        # rkd = RkdStream()
+        # rkd.stream_quote()
+        # data =rkd.bulk_get_quote(ticker_data,save=True)
         # data.to_csv('usd_rkd_quote.csv',index=False)
         # print(data)
         # data = data.set_index('ticker')
@@ -60,9 +81,10 @@ class Command(BaseCommand):
         # populate_daily_profit()
         # update_monthly_deposit(user_id = [229])
         # uno_position_check("4cad83492f4749549a21412925560f4b", to_date=None, tac=False, hedge=False, latest=True)
-        # populate_daily_profit()
+        populate_daily_profit(user_id=["1755", "1762"])
         # firebase_user_update(user_id=users)
-        # firebase_user_update()
+        # populate_daily_profit(user_id=["1755"])
+        # firebase_user_update(user_id=["1755"])
 
         # from_curr = Currency.objects.get(currency_code="EUR")
         # to_curr = Currency.objects.get(currency_code="USD")

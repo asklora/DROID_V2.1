@@ -10,8 +10,8 @@ from .data_from_dsws import (
     update_lot_size_from_dsws,
     update_mic_from_dsws,
     update_ticker_name_from_dsws,
-    update_worldscope_identifier_from_dsws)
-from .firestore_migration import firebase_user_update
+    update_worldscope_identifier_from_dsws,
+    )
 __all__=[
     'update_quandl_orats_from_quandl',
     'update_data_dss_from_dss',
@@ -26,5 +26,4 @@ __all__=[
     'update_mic_from_dsws',
     'update_ticker_name_from_dsws',
     'update_worldscope_identifier_from_dsws',
-    'firebase_user_update'
 ]

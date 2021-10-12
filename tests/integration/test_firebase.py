@@ -2,7 +2,7 @@ import time
 
 from bot.calculate_bot import populate_daily_profit
 from django.conf import settings
-from ingestion import firebase_user_update
+from ingestion.firestore_migration import firebase_user_update
 from tests.utils.firebase_schema import FIREBASE_SCHEMA
 from tests.utils.order import confirm_order, create_buy_order
 from tests.utils.user import set_user_joined

@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.models import TransactionHistory, Accountbalance,User,UserProfitHistory,UserDepositHistory
-from ingestion import firebase_user_update
+from ingestion.firestore_migration import firebase_user_update
 from bot.calculate_bot import populate_daily_profit
 from django.db import transaction
 

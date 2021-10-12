@@ -9,7 +9,7 @@ from core.djangomodule.general import generate_id, formatdigit
 from simple_history.models import HistoricalRecords
 from core.services.notification import send_notification
 from bot.calculate_bot import populate_daily_profit
-from ingestion import firebase_user_update
+from ingestion.firestore_migration import firebase_user_update
 from core.user.convert import ConvertMoney
 
 class Order(BaseTimeStampModel):
@@ -39,6 +39,8 @@ class Order(BaseTimeStampModel):
     qty = models.FloatField(null=True, blank=True)# disini x margin
     history = HistoricalRecords(table_name='order_changes_history')
     margin = models.FloatField(null=True, blank=True,default=1)
+    exchange_rate = models.FloatField(null=True, blank=True,default=1)
+
     class Meta:
         managed = True
         db_table = "orders"
@@ -131,6 +133,7 @@ class OrderPosition(BaseTimeStampModel):
     margin = models.FloatField(default=1)
     bot_cash_dividend = models.FloatField(null=True, blank=True, default=0)
     history = HistoricalRecords(table_name='order_position_history')
+    exchange_rate = models.FloatField(null=True, blank=True,default=1)
 
     class Meta:
         managed = True
@@ -236,6 +239,7 @@ class PositionPerformance(BaseTimeStampModel):
     order_summary = models.JSONField(null=True, blank=True)
     order_uid = models.ForeignKey("Order", null=True, blank=True, on_delete=models.SET_NULL, db_column="order_uid")
     status = models.CharField(null=True, blank=True, max_length=200)
+    exchange_rate = models.FloatField(null=True, blank=True,default=1)
 
     def save(self, *args, **kwargs):
         if not self.performance_uid:

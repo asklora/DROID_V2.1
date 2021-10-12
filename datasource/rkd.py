@@ -371,8 +371,8 @@ class RkdData(Rkd):
 
     def response_to_df(self,response:dict) -> pd.DataFrame:
         formated_json_data = self.parse_response(response)
-        jsonprint(formated_json_data)
-        fields = [
+        # jsonprint(formated_json_data)
+        float_fields = [
             'CF_ASK',
             'CF_OPEN',
             'CF_CLOSE',
@@ -380,14 +380,13 @@ class RkdData(Rkd):
             'CF_HIGH',
             'CF_LOW',
             'PCTCHNG',
-            'TRADE_DATE',
             'CF_VOLUME',
             'CF_LAST',
             'CF_NETCHNG']
-        for parsed_data in formated_json_data:
-            for field in fields:
-                parsed_data[field]=parsed_data.get(field,None)
 
+        for parsed_data in formated_json_data:
+            for field in float_fields:
+                parsed_data[field]=parsed_data.get(field,0)
         df_data = pd.DataFrame(formated_json_data).rename(columns={
                 "CF_ASK": "intraday_ask",
                 "CF_OPEN": "open",
@@ -634,10 +633,10 @@ class RkdStream(RkdData):
             # usd_exchange,hkd_exchange =ExchangeMarket.objects.filter(mic='XNAS'),ExchangeMarket.objects.get(mic='XHKG')
             if open_market:
                 self.ticker_data =list(Universe.objects.filter(currency_code__in=open_market, 
-                is_active=True).exclude(entity_type='index').values_list('ticker',flat=True))
+                is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
                 logging.info('stream price')
                 data =self.bulk_get_quote(self.ticker_data,df=True)
-                split_df = np.split(data,math.ceil(len(data)/400))
+                split_df = np.array_split(data,math.ceil(len(data)/400))
                 for data_split in split_df:
                     df = data_split.copy()
                     data_split['price'] = df.drop(columns=['ticker']).to_dict("records")

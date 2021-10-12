@@ -9,7 +9,7 @@ from firebase_admin import messaging
 from datetime import datetime
 from rest_framework import serializers
 from channels.layers import get_channel_layer
-from ingestion import firebase_user_update
+from ingestion.firestore_migration import firebase_user_update
 from datasource import rkd as trkd
 import time
 import json
@@ -41,7 +41,7 @@ def pending_order_checker(self):
                     payload['firebase_token'] = fb_token
                 
                 payload = json.dumps(payload)
-                order_executor.apply_async(args=(payload,),kwargs={"recall":True},task_id=str(order.order_uid))
+                order_executor(payload,recall=True)
                 orders_id.append(str(order.order_uid))
 
     return {'success':'order pending executed','data':orders_id}
