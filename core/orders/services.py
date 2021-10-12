@@ -128,6 +128,7 @@ def side_validation(validated_data):
         init = True
         if validated_data["amount"] <= 0:
             raise exceptions.NotAcceptable({"detail": "amount should not 0"})
+        #TODO currency convert here
         if validated_data["amount"] > validated_data["user_id"].user_balance.amount:
             raise exceptions.NotAcceptable({"detail": "insufficient funds"})
         if validated_data["amount"] / validated_data["price"] < 1:
