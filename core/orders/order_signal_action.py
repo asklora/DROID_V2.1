@@ -119,7 +119,7 @@ class BaseOrderConnector(AbstracOrderConnector):
                 amount = self.instance.amount
             else:
                 amount = self.instance.setup["position"]["investment_amount"]
-            amount = self.Converter.convert(amount)#TODO disini
+            # amount = self.Converter.convert(amount)#TODO disini
             print(f"amount: {amount}")
             TransactionHistory.objects.create(
                 balance_uid=self.user_wallet,
@@ -350,7 +350,7 @@ class BaseOrderConnector(AbstracOrderConnector):
             amount = self.instance.converted_amount#TODO disini
             is_decimal = self.instance.ticker.currency_code.is_decimal
         else:
-            amount = self.instance.converted_amount
+            amount = self.instance.amount
             is_decimal = self.is_decimal
 
         if(self.instance.side == "sell"):

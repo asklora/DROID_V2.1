@@ -438,4 +438,10 @@ def firebase_user_update(user_id=None, currency_code=None):
             position_data["exchange_rate"] = 1
             position_data["exchange_rate"] = np.where(position_data["currency_code"] == "USD", exchange_rate, position_data["exchange_rate"])
             position_data["bot_cash_balance"] = (position_data["bot_cash_balance"] * position_data["exchange_rate"]).round(2)
+        
+        print(position_data[['ticker', 
+       'entry_price', 'investment_amount', 'exchange_rate', 'price',
+       'currency_code', 'share_num',
+       'bot_cash_balance', 'bot_apps_name']])
+        print(position_data.columns)
         asyncio.run(gather_task(position_data, bot_option_type, user_core))
