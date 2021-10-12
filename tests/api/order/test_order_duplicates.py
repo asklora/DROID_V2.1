@@ -75,7 +75,7 @@ def test_api_create_duplicated_sell_orders(
             "amount": 100,
             "margin": 1,
             "user": user.id,
-            "side": "sell",
+            "side": "buy",
         },
         **authentication,
     )
@@ -84,7 +84,7 @@ def test_api_create_duplicated_sell_orders(
         response.status_code != 201
         or response.headers["Content-Type"] != "application/json"
     ):
-        return None
+        assert False
 
     order = response.json()
     assert order is not None
@@ -136,3 +136,63 @@ def test_api_create_duplicated_sell_orders(
 
     assert sell_response_2.status_code != 201
     assert sell_response_2.json() is None
+
+
+def test_duplicated_pending_buy_order_celery(
+    authentication,
+    client,
+    user,
+    mocker,
+) -> None:
+    def mock_order_executor(data):
+        print(data)
+
+    order_executor_mock = mocker.patch(
+        "core.orders.serializers.OrderActionSerializer.create",
+        wraps=mock_order_executor,
+    )
+
+    response = client.post(
+        path="/api/order/create/",
+        data={
+            "ticker": "1109.HK",
+            "price": 31.9,
+            "bot_id": "CLASSIC_classic_003846",
+            "amount": 20000,  # 10.000 HKD more than the user can afford
+            "margin": 2,
+            "user": user.id,
+            "side": "buy",
+        },
+        **authentication,
+    )
+
+    print(response.json())
+
+    if (
+        response.status_code != 201
+        or response.headers["Content-Type"] != "application/json"
+    ):
+        assert False
+
+    response_body = response.json()
+    assert response_body
+
+    confirmed_order = client.post(
+        path="/api/order/action/",
+        data={
+            "order_uid": response_body["order_uid"],
+            "status": "placed",
+            "firebase_token": "",
+        },
+        **authentication,
+    )
+
+    if (
+        confirmed_order.status_code != 200
+        or confirmed_order.headers["Content-Type"] != "application/json"
+    ):
+        return None
+
+    return confirmed_order.json()
+
+    assert order_executor_mock.assert_called_once()
