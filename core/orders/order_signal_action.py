@@ -116,7 +116,7 @@ class BaseOrderConnector(AbstracOrderConnector):
         """
         if (self.instance.is_init):#TODO disini
             if self.bot.is_stock():
-                amount = self.instance.converted_amount
+                amount = self.instance.amount
             else:
                 amount = self.instance.setup["position"]["investment_amount"]
             amount = self.Converter.convert(amount)#TODO disini
