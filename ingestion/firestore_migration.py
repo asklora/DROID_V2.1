@@ -4,7 +4,7 @@ from core.djangomodule.general import formatdigit
 from django.conf import settings
 from typing import List
 import asyncio
-from core.user.convert import ConvertMoney
+from asgiref.sync import sync_to_async
 from general.data_process import NoneToZero, dateNow
 from bot.data_download import get_currency_data
 from asgiref.sync import sync_to_async
