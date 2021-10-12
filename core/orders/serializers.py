@@ -477,7 +477,7 @@ class OrderActionSerializer(serializers.ModelSerializer):
                 {'detail': f'order already {instance.status}'})
        
         if not validated_data['status'] == "cancel":
-            if instance.insufficient_balance() and instance.side == "buy":
+            if instance.insufficient_balance():
                 raise exceptions.MethodNotAllowed(
                     {'detail': 'insufficient funds'})
                 
