@@ -546,7 +546,7 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
         std = np.nanstd(x)
         return np.clip(x, m - 2 * std, m + 2 * std)
 
-`    # Scale 1: log transformation for high skewness & trim outlier to +/- 2 std
+    # Scale 1: log transformation for high skewness & trim outlier to +/- 2 std
     calculate_column_score = []
     for column in calculate_column:
         column_score = column + "_score"
