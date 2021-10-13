@@ -88,7 +88,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     result = result.merge(currency, on="currency_code", how="left")
     result = result.merge(industry_group, on="industry_group_code", how="left")
     universe = result[["ticker"]]
-    print(result)
+    # print(result)
 
     # 1. static info dict of {Companies Name, Industry, Currency, Description, Lot Size}
     result = change_null_to_zero(result)
@@ -439,9 +439,9 @@ def firebase_user_update(user_id=None, currency_code=None):
             position_data["exchange_rate"] = np.where(position_data["currency_code"] == "USD", exchange_rate, position_data["exchange_rate"])
             position_data["bot_cash_balance"] = (position_data["bot_cash_balance"] * position_data["exchange_rate"]).round(2)
         
-        print(position_data[['ticker', 
-       'entry_price', 'investment_amount', 'exchange_rate', 'price',
-       'currency_code', 'share_num',
-       'bot_cash_balance', 'bot_apps_name']])
-        print(position_data.columns)
+    #     print(position_data[['ticker', 
+    #    'entry_price', 'investment_amount', 'exchange_rate', 'price',
+    #    'currency_code', 'share_num',
+    #    'bot_cash_balance', 'bot_apps_name']])
+    #     print(position_data.columns)
         asyncio.run(gather_task(position_data, bot_option_type, user_core))
