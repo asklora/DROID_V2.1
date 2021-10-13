@@ -230,7 +230,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ["ticker", "price", "bot_id", "amount", "user","exchange_rate",
+        fields = ["ticker", "price", "bot_id", "amount", "user","exchange_rate","currency",
                   "side", "status", "order_uid", "qty", "setup", "created","margin","investment_amount"]
     
     
