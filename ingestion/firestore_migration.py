@@ -346,9 +346,9 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             total_profit_amount = float(formatdigit(total_profit_amount, user_core.loc[0, "is_decimal"]))
             total_portfolio = float(formatdigit(total_invested_amount, user_core.loc[0, "is_decimal"]))
             active = pd.DataFrame({"user_id":[user], "total_invested_amount":[total_invested_amount], "total_bot_invested_amount":[total_bot_invested_amount], 
-                "total_user_invested_amount":[total_user_invested_amount], "pct_total_bot_invested_amount":[pct_total_bot_invested_amount], "pct_total_user_invested_amount":[pct_total_user_invested_amount], 
-                "total_profit_amount":[total_profit_amount], "daily_live_profit":[daily_live_profit], "total_portfolio":[total_portfolio], 
-                "active_portfolio":[active_df]}, index=[0])
+                "total_user_invested_amount":[total_user_invested_amount], "pct_total_bot_invested_amount":[pct_total_bot_invested_amount], 
+                "pct_total_user_invested_amount":[pct_total_user_invested_amount], "total_profit_amount":[total_profit_amount], "daily_live_profit":[daily_live_profit], 
+                "total_portfolio":[total_portfolio], "active_portfolio":[active_df]}, index=[0])
         else:
             zero = float(0)
             active = pd.DataFrame({"user_id":[user], "total_invested_amount":[zero], "total_bot_invested_amount":[zero], 
@@ -369,9 +369,21 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         result["current_asset"] = result["balance"] + result["total_portfolio"] + result["pending_amount"]
         result = change_date_to_str(result, exception=["rank"])
         result["rank"] = np.where(result["rank"].isnull(), None, result["rank"])
+
+        result["current_asset"]  = result["current_asset"].astype(float).round(2)
+        result["balance"]  = result["balance"].astype(float).round(2)
+        result["total_portfolio"]  = result["total_portfolio"].astype(float).round(2)
+        result["pending_amount"]  = result["pending_amount"].astype(float).round(2)
+        result["daily_profit"]  = result["daily_profit"].astype(float).round(2)
+        result["bot_pending_amount"]  = result["bot_pending_amount"].astype(float).round(2)
+        result["stock_pending_amount"]  = result["stock_pending_amount"].astype(float).round(2)
+        result["total_invested_amount"]  = result["total_invested_amount"].astype(float).round(2)
+        result["total_bot_invested_amount"]  = result["total_bot_invested_amount"].astype(float).round(2)
+        result["total_user_invested_amount"]  = result["total_user_invested_amount"].astype(float).round(2)
+        result["total_profit_amount"]  = result["total_profit_amount"].astype(float).round(2)
+        result["daily_live_profit"]  = result["daily_live_profit"].astype(float).round(2)
         await sync_to_async(update_to_firestore)(data=result, index="user_id", table=settings.FIREBASE_COLLECTION['portfolio'], dict=False)
         return active
-
 
 def firebase_user_update(user_id=None, currency_code=None):
     convert = ConvertMoney("USD", "HKD")

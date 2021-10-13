@@ -84,7 +84,7 @@ class Command(BaseCommand):
         # populate_daily_profit()
         # firebase_user_update(user_id=users)
         # populate_daily_profit(user_id=["1755"])
-        firebase_user_update(user_id=[1755])
+        firebase_user_update(user_id=[1831])
 
         # from_curr = Currency.objects.get(currency_code="EUR")
         # to_curr = Currency.objects.get(currency_code="USD")
