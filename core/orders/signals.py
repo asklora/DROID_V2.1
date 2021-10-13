@@ -33,7 +33,6 @@ def order_signal_check(sender, instance, **kwargs):
     currency_decimal =instance.user_id.user_balance.currency_code.is_decimal
     # this for locking balance before order is filled
     if instance.placed and instance.status == "placed":
-        print("PLACED")
         if instance.status != "filled":
             instance.status = "pending"
             
