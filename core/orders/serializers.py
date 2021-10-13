@@ -231,7 +231,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ["ticker", "price", "bot_id", "amount", "user","exchange_rate","currency",
-                  "side", "status", "order_uid", "qty", "setup", "created","margin","investment_amount"]
+                  "side", "status", "order_uid", "qty", "setup", "created","margin"]
     
     
     def to_internal_value(self, data):
