@@ -73,9 +73,9 @@ def test_api_create_duplicated_sell_orders(
         data={
             "ticker": "3377.HK",
             "price": 1.63,
-            "bot_id": "STOCK_stock_0",
-            "amount": 100,
-            "margin": 1,
+            "bot_id": "UCDC_ATM_007692",
+            "amount": 10000,
+            "margin": 2,
             "user": user.id,
             "side": "buy",
         },
@@ -91,15 +91,11 @@ def test_api_create_duplicated_sell_orders(
     order = response.json()
     assert order is not None
 
-    # info
-    from django.db import connection
-
-    db_name = connection.settings_dict
-    print(db_name)
-
     # we confirm the order
     buy_order = Order.objects.get(pk=order["order_uid"])
     assert buy_order is not None
+    assert str(buy_order.order_uid).replace("-", "") == order["order_uid"]
+
     confirm_order(buy_order)
 
     position, _ = get_position_performance(buy_order.order_uid)
@@ -125,9 +121,9 @@ def test_api_create_duplicated_sell_orders(
     ):
         assert False
 
-    sell_order = sell_response_1.json()
-    assert sell_order is not None
-    assert sell_order["order_uid"] is not None
+    sell_order_1 = sell_response_1.json()
+    assert sell_order_1 is not None
+    assert sell_order_1["order_uid"] is not None
 
     # this should fail and return None
     sell_response_2 = client.post(
@@ -135,6 +131,12 @@ def test_api_create_duplicated_sell_orders(
         data=sell_order_data,
         **authentication,
     )
+
+    print(sell_response_2.json())
+    sell_order_2 = sell_response_2.json()
+
+    sell_order = Order.objects.get(pk=sell_order_2["order_uid"])
+    confirm_order(sell_order)
 
     assert sell_response_2.status_code != 201
     assert sell_response_2.json() is None
@@ -145,7 +147,6 @@ def test_duplicated_pending_buy_order_celery(
     client,
     user,
     mocker,
-    monkeypatch,
 ) -> None:
     # mock all the things!
     mocker.patch(
@@ -201,7 +202,7 @@ def test_duplicated_pending_buy_order_celery(
         confirmed_order_response.status_code != 200
         or confirmed_order_response.headers["Content-Type"] != "application/json"
     ):
-        return None
+        assert False
 
     confirmed_order = confirmed_order_response.json()
 
