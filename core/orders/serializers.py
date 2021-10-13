@@ -225,7 +225,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     setup = serializers.JSONField(required=False)
     created = serializers.DateTimeField(required=False, read_only=True)
     margin = serializers.IntegerField(required=False,default=1)
-    currency = serializers.FloatField(read_only=True,source="currency")
+    currency = serializers.SerializerMethodField(read_only=True)
     exchange_rate = serializers.FloatField(read_only=True)
 
     class Meta:
