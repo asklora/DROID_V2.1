@@ -36,7 +36,6 @@ class BotHedgerSerializer(serializers.Serializer):
 
 
     def create(self, validated_data):
-        print(validated_data)
         try:
             ticker = Universe.objects.get(ticker=validated_data["ticker"])
         except Universe.DoesNotExist:
@@ -68,5 +67,6 @@ class BotHedgerSerializer(serializers.Serializer):
         data["target_profit_pct"]=setup["position"]["target_profit_pct"]
         data["target_profit_price"]=setup["position"]["target_profit_price"]
         data["target_profit_amount"]=setup["position"]["target_profit_amount"]
+        data["currency"]=ticker.currency_code.currency_code
         
         return data   
