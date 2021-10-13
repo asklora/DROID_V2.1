@@ -225,11 +225,13 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     setup = serializers.JSONField(required=False)
     created = serializers.DateTimeField(required=False, read_only=True)
     margin = serializers.IntegerField(required=False,default=1)
+    currency = serializers.FloatField(read_only=True,source="currency")
+    exchange_rate = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Order
-        fields = ["ticker", "price", "bot_id", "amount", "user",
-                  "side", "status", "order_uid", "qty", "setup", "created","margin"]
+        fields = ["ticker", "price", "bot_id", "amount", "user","exchange_rate",
+                  "side", "status", "order_uid", "qty", "setup", "created","margin","investment_amount"]
     
     
     def to_internal_value(self, data):
@@ -299,6 +301,11 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 except Exception as e:
                     raise exceptions.APIException({'detail':f'{str(e)}'})
         return order
+
+
+    def get_currency(self,obj) -> str:
+        return obj.ticker.currency_code.currency_code
+
 
 @extend_schema_serializer(
     exclude_fields=("user",), # schema ignore these field
@@ -390,14 +397,14 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
     currency = serializers.SerializerMethodField()
     bot_range= serializers.SerializerMethodField()
     ticker_name = serializers.SerializerMethodField()
-    amount = serializers.FloatField(source='user_amount')
 
+    exchange_rate = serializers.FloatField(read_only=True)
 
 
 
     class Meta:
         model = Order
-        fields = ["ticker", "price", "bot_id", "amount", "side",
+        fields = ["ticker", "price", "bot_id", "amount", "side","exchange_rate",
                   "order_uid", "status", "setup", "created", "filled_at",
                   "placed", "placed_at", "canceled_at", "qty","bot_name","currency","bot_range","ticker_name"]
     
@@ -425,13 +432,14 @@ class OrderListSerializers(serializers.ModelSerializer):
     currency = serializers.SerializerMethodField()
     bot_range= serializers.SerializerMethodField()
     ticker_name = serializers.SerializerMethodField()
-    amount = serializers.FloatField(source='user_amount')
+    exchange_rate = serializers.FloatField(read_only=True)
+
 
     
     class Meta:
         model = Order
         fields = ["ticker", "side",
-                  "order_uid", "status", "created", "filled_at",
+                  "order_uid", "status", "created", "filled_at","exchange_rate",
                   "placed", "placed_at", "qty","amount","bot_name","currency","bot_range","ticker_name","setup"]
     
     def get_ticker_name(self,obj) -> str:
