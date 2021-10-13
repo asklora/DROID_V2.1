@@ -398,6 +398,8 @@ def firebase_user_update(user_id=None, currency_code=None):
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, current_status, first_name, last_name, email, phone, birth_date, gender")
     user_core = user_core.loc[user_core["current_status"] == "verified"]
     user_core = user_core.drop(columns=["current_status"])
+    if user_core.empty:
+        return
     user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_profit, daily_profit_pct, daily_invested_amount, rank::integer, total_profit, total_profit_pct")
     # user_daily_profit["rank"]  = user_daily_profit["rank"].astype(int)
     user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, amount as balance, currency_code")
