@@ -5,6 +5,8 @@ from core.orders.models import Order
 from tests.utils.order import confirm_order
 from tests.utils.position_performance import get_position_performance
 
+from tests.utils.mocks import mock_order_serializer, mock_stub
+
 pytestmark = pytest.mark.django_db(
     databases=[
         "default",
@@ -143,44 +145,52 @@ def test_duplicated_pending_buy_order_celery(
     client,
     user,
     mocker,
+    monkeypatch,
 ) -> None:
-    def mock_order_executor(data):
-        print(data)
-
-    order_executor_mock = mocker.patch(
+    # mock all the things!
+    mocker.patch(
         "core.orders.serializers.OrderActionSerializer.create",
-        wraps=mock_order_executor,
+        wraps=mock_order_serializer,
+    )
+    mocker.patch(
+        "core.services.order_services.asyncio.run",
     )
 
-    response = client.post(
-        path="/api/order/create/",
-        data={
-            "ticker": "1109.HK",
-            "price": 31.9,
-            "bot_id": "CLASSIC_classic_003846",
-            "amount": 20000,  # 10.000 HKD more than the user can afford
-            "margin": 2,
-            "user": user.id,
-            "side": "buy",
-        },
-        **authentication,
-    )
+    # utility function to create a new order
+    # TODO: move it to utils
+    def create_order() -> Union[dict, None]:
+        response = client.post(
+            path="/api/order/create/",
+            data={
+                "ticker": "1109.HK",
+                "price": 31.9,
+                "bot_id": "CLASSIC_classic_003846",
+                "amount": 20000,  # 10.000 HKD more than the user can afford
+                "margin": 2,
+                "user": user.id,
+                "side": "buy",
+            },
+            **authentication,
+        )
 
-    print(response.json())
+        print(response.json())
 
-    if (
-        response.status_code != 201
-        or response.headers["Content-Type"] != "application/json"
-    ):
-        assert False
+        if (
+            response.status_code != 201
+            or response.headers["Content-Type"] != "application/json"
+        ):
+            return None
 
-    response_body = response.json()
-    assert response_body
+        return response.json()
 
-    confirmed_order = client.post(
+    order_1 = create_order()
+    assert order_1
+
+    # we confirm the above order
+    confirmed_order_response = client.post(
         path="/api/order/action/",
         data={
-            "order_uid": response_body["order_uid"],
+            "order_uid": order_1["order_uid"],
             "status": "placed",
             "firebase_token": "",
         },
@@ -188,11 +198,16 @@ def test_duplicated_pending_buy_order_celery(
     )
 
     if (
-        confirmed_order.status_code != 200
-        or confirmed_order.headers["Content-Type"] != "application/json"
+        confirmed_order_response.status_code != 200
+        or confirmed_order_response.headers["Content-Type"] != "application/json"
     ):
         return None
 
-    return confirmed_order.json()
+    confirmed_order = confirmed_order_response.json()
 
-    assert order_executor_mock.assert_called_once()
+    # make sure we mocked the function alright
+    assert confirmed_order["status"] == "executed in mock"
+
+    # we create a new order while it's still pending
+    order_2 = create_order()
+    assert not order_2
