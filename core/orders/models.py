@@ -46,7 +46,7 @@ class Order(BaseTimeStampModel):
         db_table = "orders"
 
     def insufficient_balance(self):
-        return (self.amount / self.margin) > self.user_id.user_balance.amount and self.side == 'buy'
+        return (self.user_amount / self.margin) > self.user_id.user_balance.amount and self.side == 'buy'
     
     @property
     def is_bot_order(self):

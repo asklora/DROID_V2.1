@@ -39,7 +39,7 @@ class Command(BaseCommand):
         # res=rkd.bulk_get_quote(ticks,df=True)
         # print(res)
         # res.to_csv('example_usd.csv',index=False)
-        # pending_order_checker()
+        pending_order_checker()
         # daily_hedge(currency="HKD")
         # print("Something")
         # ticker_data =list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
@@ -81,10 +81,10 @@ class Command(BaseCommand):
         # populate_daily_profit()
         # update_monthly_deposit(user_id = [229])
         # uno_position_check("4cad83492f4749549a21412925560f4b", to_date=None, tac=False, hedge=False, latest=True)
-        populate_daily_profit()
+        # populate_daily_profit()
         # firebase_user_update(user_id=users)
         # populate_daily_profit(user_id=["1755"])
-        firebase_user_update()
+        firebase_user_update(user_id=[1755])
 
         # from_curr = Currency.objects.get(currency_code="EUR")
         # to_curr = Currency.objects.get(currency_code="USD")

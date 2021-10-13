@@ -1,3 +1,4 @@
+from general.date_process import datetimeNow
 from core.user.convert import ConvertMoney
 import numpy as np
 import pandas as pd
@@ -9,7 +10,7 @@ from asgiref.sync import sync_to_async
 from general.data_process import NoneToZero, dateNow
 from bot.data_download import get_currency_data
 from asgiref.sync import sync_to_async
-from general.slack import report_to_slack_factor
+from general.slack import report_to_slack, report_to_slack_factor
 from general.firestore_query import (
     change_null_to_zero, 
     update_to_firestore, 
@@ -266,6 +267,7 @@ def mongo_universe_update(ticker=None, currency_code=None):
     universe = universe.reset_index(inplace=False, drop=True)
     universe = change_date_to_str(universe)
     update_to_firestore(data=universe, index="ticker", table=settings.FIREBASE_COLLECTION['universe'], dict=False)
+    report_to_slack("{} : === FIREBASE UNIVERSE UPDATED ===".format(datetimeNow()))
 
 
 async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,user_core:pd.DataFrame)-> List[pd.DataFrame]:
@@ -438,4 +440,10 @@ def firebase_user_update(user_id=None, currency_code=None):
             position_data["exchange_rate"] = 1
             position_data["exchange_rate"] = np.where(position_data["currency_code"] == "USD", exchange_rate, position_data["exchange_rate"])
             position_data["bot_cash_balance"] = (position_data["bot_cash_balance"] * position_data["exchange_rate"]).round(2)
+        
+        print(position_data[['ticker', 
+       'entry_price', 'investment_amount', 'exchange_rate', 'price',
+       'currency_code', 'share_num',
+       'bot_cash_balance', 'bot_apps_name']])
+        print(position_data.columns)
         asyncio.run(gather_task(position_data, bot_option_type, user_core))

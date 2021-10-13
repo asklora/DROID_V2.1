@@ -32,7 +32,7 @@ def generate_hedge_setup(instance: Order,margin:int) -> dict:
 def order_signal_check(sender, instance, **kwargs):
     currency_decimal =instance.user_id.user_balance.currency_code.is_decimal
     # this for locking balance before order is filled
-    if instance.placed and instance.status == 'placed':
+    if instance.placed and instance.status == "placed":
         print("PLACED")
         if instance.status != "filled":
             instance.status = "pending"
@@ -48,14 +48,14 @@ def order_signal_check(sender, instance, **kwargs):
         if instance.is_bot_order:
             setup = generate_hedge_setup(instance,instance.margin)
             instance.setup = setup
-            instance.qty = setup['performance']["share_num"]
-            instance.amount = formatdigit(setup['performance']["share_num"] * setup['price'],currency_decimal)
+            instance.qty = setup["performance"]["share_num"]
+            instance.amount = formatdigit(setup["performance"]["share_num"] * setup["price"], currency_decimal)
         else:
             instance.setup = None
             # amount should still
             if not instance.qty:
                 instance.qty = math.floor((instance.converted_amount / instance.price) * instance.margin) 
-            instance.amount = formatdigit((instance.qty * instance.price) / instance.margin,currency_decimal)
+            instance.amount = formatdigit((instance.qty * instance.price) / instance.margin, currency_decimal)
 
 @receiver(post_save, sender=Order)
 def order_signal(sender, instance, created, **kwargs):
@@ -79,9 +79,9 @@ def order_revert(sender, instance, **kwargs):
             skip=True
         if not skip:
             # return to bot cash balance
-            if order.side == 'sell':
+            if order.side == "sell":
                 position.bot_cash_balance = position.bot_cash_balance - order.amount
-            elif order.side == 'buy':
+            elif order.side == "buy":
                 position.bot_cash_balance = position.bot_cash_balance + order.amount
             if position.order_position.all().exists():
                 if not position.is_live:
