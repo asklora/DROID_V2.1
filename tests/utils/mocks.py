@@ -47,7 +47,3 @@ def mock_order_serializer(validated_data: dict):
         "order_uid": validated_data["order_uid"],
     }
     return data
-
-
-def mock_stub(*args, **kwargs):
-    print("-".join(args))

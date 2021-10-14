@@ -2,10 +2,10 @@ from typing import Union
 
 import pytest
 from core.orders.models import Order
-from tests.utils.order import confirm_order
+from tests.utils.market import check_market, close_market, open_market
+from tests.utils.mocks import mock_order_serializer
+from tests.utils.order import confirm_order, confirm_order_api
 from tests.utils.position_performance import get_position_performance
-
-from tests.utils.mocks import mock_order_serializer, mock_stub
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -63,7 +63,111 @@ def test_api_create_duplicated_buy_orders(
     assert order_2 is None
 
 
-def test_api_create_duplicated_sell_orders(
+def test_api_create_duplicated_pending_sell_orders(
+    authentication, client, user, mocker
+) -> None:
+    # mock all the things!
+    mocker.patch(
+        "core.orders.serializers.OrderActionSerializer.create",
+        wraps=mock_order_serializer,
+    )
+    mocker.patch(
+        "core.services.order_services.asyncio.run",
+    )
+
+    response = client.post(
+        path="/api/order/create/",
+        data={
+            "ticker": "3377.HK",
+            "price": 1.63,
+            "bot_id": "UCDC_ATM_007692",
+            "amount": 10000,
+            "margin": 2,
+            "user": user.id,
+            "side": "buy",
+        },
+        **authentication,
+    )
+
+    if (
+        response.status_code != 201
+        or response.headers["Content-Type"] != "application/json"
+    ):
+        assert False
+
+    order = response.json()
+    assert order is not None
+
+    # we confirm the order
+    buy_order = Order.objects.get(pk=order["order_uid"])
+    assert buy_order is not None
+    assert str(buy_order.order_uid).replace("-", "") == order["order_uid"]
+
+    # if the market is closed, the order won't be filled
+    market_is_open = check_market(buy_order.ticker.mic)
+    if not market_is_open:
+        open_market(buy_order.ticker.mic)
+
+    confirm_order_api(
+        order["order_uid"],
+        client,
+        authentication,
+    )
+
+    position, _ = get_position_performance(buy_order.order_uid)
+    assert position
+
+    # we create the sell order
+    sell_order_data = {
+        "user": user.id,
+        "side": "sell",
+        "ticker": buy_order.ticker,
+        "setup": '{{"position": "{0}"}}'.format(position.position_uid),
+    }
+
+    sell_response_1 = client.post(
+        path="/api/order/create/",
+        data=sell_order_data,
+        **authentication,
+    )
+
+    if (
+        sell_response_1.status_code != 201
+        or sell_response_1.headers["Content-Type"] != "application/json"
+    ):
+        assert False
+
+    sell_order_1 = sell_response_1.json()
+    assert sell_order_1 is not None
+    assert sell_order_1["order_uid"] is not None
+
+    # We set the market to be closed, if it's opened
+    close_market(buy_order.ticker.mic)
+
+    sell_order = Order.objects.get(pk=sell_order_1["order_uid"])
+    confirm_order(sell_order)
+
+    print(f"sell order status: {sell_order.status}")
+
+    # this should fail and return None
+    sell_response_2 = client.post(
+        path="/api/order/create/",
+        data=sell_order_data,
+        **authentication,
+    )
+
+    print(sell_response_2.json())
+
+    if market_is_open:
+        open_market(buy_order.ticker.mic)
+
+    sell_order_2 = sell_response_2.json()
+
+    assert sell_response_2.status_code != 201
+    assert sell_order_2["detail"] == "position, has been closed"
+
+
+def test_api_create_duplicated_filled_sell_orders(
     authentication,
     client,
     user,
@@ -125,6 +229,9 @@ def test_api_create_duplicated_sell_orders(
     assert sell_order_1 is not None
     assert sell_order_1["order_uid"] is not None
 
+    sell_order = Order.objects.get(pk=sell_order_1["order_uid"])
+    confirm_order(sell_order)
+
     # this should fail and return None
     sell_response_2 = client.post(
         path="/api/order/create/",
@@ -133,13 +240,11 @@ def test_api_create_duplicated_sell_orders(
     )
 
     print(sell_response_2.json())
+
     sell_order_2 = sell_response_2.json()
 
-    sell_order = Order.objects.get(pk=sell_order_2["order_uid"])
-    confirm_order(sell_order)
-
     assert sell_response_2.status_code != 201
-    assert sell_response_2.json() is None
+    assert sell_order_2["detail"] == "position, has been closed"
 
 
 def test_duplicated_pending_buy_order_celery(
@@ -187,24 +292,22 @@ def test_duplicated_pending_buy_order_celery(
     order_1 = create_order()
     assert order_1
 
+    # we confirm the order
+    buy_order = Order.objects.get(pk=order_1["order_uid"])
+    assert buy_order is not None
+    assert str(buy_order.order_uid).replace("-", "") == order_1["order_uid"]
+
+    # if the market is closed, the order won't be filled
+    market_is_open = check_market(buy_order.ticker.mic)
+    if not market_is_open:
+        open_market(buy_order.ticker.mic)
+
     # we confirm the above order
-    confirmed_order_response = client.post(
-        path="/api/order/action/",
-        data={
-            "order_uid": order_1["order_uid"],
-            "status": "placed",
-            "firebase_token": "",
-        },
-        **authentication,
+    confirmed_order = confirm_order_api(
+        order_1["order_uid"],
+        client,
+        authentication,
     )
-
-    if (
-        confirmed_order_response.status_code != 200
-        or confirmed_order_response.headers["Content-Type"] != "application/json"
-    ):
-        assert False
-
-    confirmed_order = confirmed_order_response.json()
 
     # make sure we mocked the function alright
     assert confirmed_order["status"] == "executed in mock"
