@@ -142,10 +142,10 @@ def populate_intraday_latest_price_from_rkd(ticker=None, currency_code=None,use_
             print(result)
             upsert_data_to_database(result, get_latest_price_table_name(), "ticker", how="update", Text=True)
             clean_latest_price()
-            if(type(ticker) != type(None)):
-                report_to_slack("{} : === {} Intraday Price Updated ===".format(dateNow(), ticker))
-            elif(type(currency_code) != type(None)):
+            if(type(currency_code) != type(None)):
                 report_to_slack("{} : === {} Intraday Price Updated ===".format(dateNow(), currency_code))
+            elif(type(ticker) != type(None)):
+                report_to_slack("{} : === {} Intraday Price Updated ===".format(dateNow(), ticker))
             else:
                 report_to_slack("{} : === Intraday Price Updated ===".format(dateNow()))
             # split_order_and_performance(ticker=ticker, currency_code=currency_code)
