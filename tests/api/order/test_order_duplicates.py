@@ -201,7 +201,7 @@ def test_api_create_duplicated_filled_sell_orders(
     # we confirm the order
     buy_order = Order.objects.get(pk=order["order_uid"])
     assert buy_order is not None
-    assert str(buy_order.order_uid) == order["order_uid"]
+    assert buy_order.order_uid.hex == order["order_uid"]
 
     confirm_order(buy_order)
 
