@@ -33,6 +33,7 @@ class BotHedgerSerializer(serializers.Serializer):
     target_profit_pct=serializers.FloatField(read_only=True)
     target_profit_price=serializers.FloatField(read_only=True)
     target_profit_amount=serializers.FloatField(read_only=True)
+    currency=serializers.CharField(read_only=True)
 
 
     def create(self, validated_data):
