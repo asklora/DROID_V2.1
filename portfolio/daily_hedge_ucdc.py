@@ -62,7 +62,7 @@ def ucdc_sell_position(live_price:float, trading_day:str, position:OrderPosition
             position.event = "Profit"
         else:
             position.event = "Bot Stopped"
-    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
+    converter = ConvertMoney(position.user_id.currency, position.ticker.currency_code)
     position.exchange_rate = converter.get_exchange_rate()
     order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=apps)
     return position, order
@@ -166,7 +166,7 @@ def populate_performance(live_price:float, ask_price:float,
     # position.bot_cash_dividend = check_dividend_paid(position.ticker.ticker, trading_day, share_num, position.bot_cash_dividend)
     position.bot_cash_balance = round(bot_cash_balance, 2)
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
-    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
+    converter = ConvertMoney(position.user_id.currency, position.ticker.currency_code)
     performance = dict(
         position_uid=str(position.position_uid),
         share_num=share_num,

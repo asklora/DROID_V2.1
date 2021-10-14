@@ -89,7 +89,6 @@ def mongo_universe_update(ticker=None, currency_code=None):
     result = result.merge(currency, on="currency_code", how="left")
     result = result.merge(industry_group, on="industry_group_code", how="left")
     universe = result[["ticker"]]
-    # print(result)
 
     # 1. static info dict of {Companies Name, Industry, Currency, Description, Lot Size}
     result = change_null_to_zero(result)
@@ -97,7 +96,8 @@ def mongo_universe_update(ticker=None, currency_code=None):
     for tick in universe["ticker"].unique():
         detail_data = result.loc[result["ticker"] == tick]
         detail_data = detail_data[["currency_code", "ticker_name", "ticker_fullname", "company_description",
-            "industry_code", "industry_name", "industry_group_code", "industry_group_name", "ticker_symbol", "lot_size", "mic", "country"]].to_dict("records")
+            "industry_code", "industry_name", "industry_group_code", "industry_group_name", "ticker_symbol", 
+            "schi_name", "tchi_name", "lot_size", "mic", "country"]].to_dict("records")
         details = pd.DataFrame({"ticker":[tick], "detail":[detail_data[0]]}, index=[0])
         detail_df = detail_df.append(details)
     detail_df = detail_df.reset_index(inplace=False)

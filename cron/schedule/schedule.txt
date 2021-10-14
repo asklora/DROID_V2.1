@@ -1,7 +1,9 @@
 BOT SCHEDULE IN HK TIME
 00 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/north_asia_market.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/north_asia_market.log 2>&1
-
 00 10 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/west_market.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/west_market.log 2>&1
+
+00 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/firebase_update_na.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/firebase_update_na.log 2>&1
+00 11 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/firebase_update_ws.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/firebase_update_ws.log 2>&1
 
 00 19 * * 6 /home/loratech/PycharmProjects/DROID_V2.1/cron/training.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/training.log 2>&1
 
