@@ -87,8 +87,9 @@ class Command(BaseCommand):
         parser.add_argument("-monthly", "--monthly", type=bool, help="monthly", default=False)
         parser.add_argument("-split", "--split", type=int, help="split", default=1)
         parser.add_argument("-currency_code", "--currency_code", nargs="+", help="currency_code", default=None)
-
         parser.add_argument("-month", "--month", type=bool, help="month", default=False)
+        parser.add_argument("-firebase_update", "--firebase_update", type=bool, help="firebase_update", default=False)
+
 
     def handle(self, *args, **options):
         d = str_to_date(dateNow())
@@ -96,53 +97,60 @@ class Command(BaseCommand):
         try:
             status = ""
             if (options["na"]):
-                status = "Daily Ingestion Update"
                 ticker = get_universe_by_region(region_id=["na"])["ticker"].to_list()
-                update_data_dss_from_dss(ticker=ticker)
-                update_data_dsws_from_dsws(ticker=ticker)
-                update_currency_price_from_dsws()
-                do_function("special_cases_1")
-                do_function("master_ohlcvtr_update")
-                status = "Master OHLCVTR Update"
-                master_ohlctr_update()
-                status = "Master TAC Update"
-                master_tac_update()
-                status = "Master Multiple Update"
-                master_multiple_update()
-                status = "Fundamentals Ingestion"
-                update_daily_fundamentals_score_from_dsws(ticker=ticker)
-                status = "Update AI Score"
-                update_fundamentals_quality_value()
-                status = "Update Firebase Universe"
-                populate_intraday_latest_price_from_rkd(currency_code=["HKD"])
-                mongo_universe_update(currency_code=["HKD"])
-                status = "Interest Update"
-                interest_update_from_dsws()
-                dividend_daily_update()
-                interest_daily_update()
+                if(options["firebase_update"]):
+                    status = "Fundamentals Ingestion"
+                    update_daily_fundamentals_score_from_dsws(ticker=ticker)
+                    status = "Update AI Score"
+                    update_fundamentals_quality_value()
+                    status = "Update Firebase Universe"
+                    populate_intraday_latest_price_from_rkd(currency_code=["HKD"])
+                    mongo_universe_update(currency_code=["HKD"])
+                else:
+                    status = "Daily Ingestion Update"
+                    update_data_dss_from_dss(ticker=ticker)
+                    update_data_dsws_from_dsws(ticker=ticker)
+                    update_currency_price_from_dsws()
+                    do_function("special_cases_1")
+                    do_function("master_ohlcvtr_update")
+                    status = "Master OHLCVTR Update"
+                    master_ohlctr_update()
+                    status = "Master TAC Update"
+                    master_tac_update()
+                    status = "Master Multiple Update"
+                    master_multiple_update()
+                    status = "Interest Update"
+                    interest_update_from_dsws()
+                    dividend_daily_update()
+                    interest_daily_update()
             
             if (options["ws"]):
-                status = "Daily Ingestion Update"
                 ticker = get_universe_by_region(region_id=["ws"])["ticker"].to_list()
-                update_data_dss_from_dss(ticker=ticker)
-                update_data_dsws_from_dsws(ticker=ticker)
-                update_currency_price_from_dsws()
-                do_function("special_cases_1")
-                do_function("master_ohlcvtr_update")
-                status = "Master OHLCVTR Update"
-                master_ohlctr_update()
-                status = "Master TAC Update"
-                master_tac_update()
-                status = "Master Multiple Update"
-                master_multiple_update()
-                status = "Fundamentals Ingestion"
-                update_daily_fundamentals_score_from_dsws(ticker=ticker)
-                status = "Update AI Score"
-                update_fundamentals_quality_value()
-                status = "Interest Update"
-                interest_update_from_dsws()
-                dividend_daily_update()
-                interest_daily_update()
+                if(options["firebase_update"]):
+                    status = "Fundamentals Ingestion"
+                    update_daily_fundamentals_score_from_dsws(ticker=ticker)
+                    status = "Update AI Score"
+                    update_fundamentals_quality_value()
+                    status = "Update Firebase Universe"
+                    # populate_intraday_latest_price_from_rkd(currency_code=["USD"])
+                    # mongo_universe_update(currency_code=["USD"])
+                else:
+                    status = "Daily Ingestion Update"
+                    update_data_dss_from_dss(ticker=ticker)
+                    update_data_dsws_from_dsws(ticker=ticker)
+                    update_currency_price_from_dsws()
+                    do_function("special_cases_1")
+                    do_function("master_ohlcvtr_update")
+                    status = "Master OHLCVTR Update"
+                    master_ohlctr_update()
+                    status = "Master TAC Update"
+                    master_tac_update()
+                    status = "Master Multiple Update"
+                    master_multiple_update()
+                    status = "Interest Update"
+                    interest_update_from_dsws()
+                    dividend_daily_update()
+                    interest_daily_update()
                 
         
             if(options["worldscope"]):
