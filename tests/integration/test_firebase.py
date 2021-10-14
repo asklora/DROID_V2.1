@@ -1,11 +1,10 @@
 import time
-from datetime import datetime
 
 from bot.calculate_bot import populate_daily_profit
 from django.conf import settings
 from ingestion.firestore_migration import firebase_user_update
 from tests.utils.firebase_schema import FIREBASE_SCHEMA
-from tests.utils.order import create_buy_order
+from tests.utils.order import confirm_order, create_buy_order
 from tests.utils.user import set_user_joined
 
 
@@ -60,14 +59,7 @@ def test_order_should_be_updated_to_firebase(
         bot_id="UNO_OTM_007692",
     )
 
-    order.status = "placed"
-    order.placed = True
-    order.placed_at = datetime.now()
-    order.save()
-
-    order.status = "filled"
-    order.filled_at = datetime.now()
-    order.save()
+    confirm_order(order)
 
     # update firebase
     populate_daily_profit()
