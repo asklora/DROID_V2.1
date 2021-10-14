@@ -145,7 +145,7 @@ def test_api_create_duplicated_pending_sell_orders(
     close_market(buy_order.ticker.mic)
 
     sell_order = Order.objects.get(pk=sell_order_1["order_uid"])
-    confirm_order(sell_order)
+    confirm_order_api(sell_order.order_uid, client, authentication)
 
     print(f"sell order status: {sell_order.status}")
 
@@ -164,7 +164,10 @@ def test_api_create_duplicated_pending_sell_orders(
     sell_order_2 = sell_response_2.json()
 
     assert sell_response_2.status_code != 201
-    assert sell_order_2["detail"] == "position, has been closed"
+    assert (
+        sell_order_2["detail"]
+        == f"sell order already exists for this position, order id : {sell_order_1['order_uid']}, current status pending"
+    )
 
 
 def test_api_create_duplicated_filled_sell_orders(
@@ -198,7 +201,7 @@ def test_api_create_duplicated_filled_sell_orders(
     # we confirm the order
     buy_order = Order.objects.get(pk=order["order_uid"])
     assert buy_order is not None
-    assert str(buy_order.order_uid).replace("-", "") == order["order_uid"]
+    assert str(buy_order.order_uid) == order["order_uid"]
 
     confirm_order(buy_order)
 
