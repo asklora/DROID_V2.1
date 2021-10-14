@@ -75,7 +75,7 @@ def uno_sell_position(live_price:float, trading_day:str, position:OrderPosition,
             position.event = "Profit"
         else:
             position.event = "Bot Stopped"
-    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
+    converter = ConvertMoney(position.user_id.currency, position.ticker.currency_code)
     position.exchange_rate = converter.get_exchange_rate()
     order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=apps)
     return position, order
