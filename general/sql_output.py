@@ -54,49 +54,53 @@ def insert_data_to_database(data, table, how="append"):
         print(f"error: ", ex)
 
 def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=False, Text=False, Date=False, Int=False, Bigint=False, Bool=False, debug=False):
-    print(f"=== Upsert Data to Database on Table {table} ===")
-    data = data.drop_duplicates(subset=[primary_key], keep="first", inplace=False)
-    data = data.dropna(subset=[primary_key])
-    data = data.set_index(primary_key)
-    if(Text):
-        data_type={primary_key:TEXT}
-    elif(Date):
-        data_type={primary_key:DATE}
-    elif(Int):
-        data_type={primary_key:Integer}
-    elif(Bigint):
-        data_type={primary_key:BIGINT}
-    elif(Bool):
-        data_type={primary_key:BOOLEAN}
-    else:
-        data_type={primary_key:TEXT}
-    
-    if(cpu_count):
-        engine = create_engine(db_write, pool_size=cpucount(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-    else:
-        engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    upsert(engine=engine,
-           df=data,
-           table_name=table,
-           if_row_exists=how,
-           chunksize=20000,
-           dtype=data_type)
-    print(f"DATA UPSERT TO {table}")
-    engine.dispose()
-    if(debug):
-        try:
-            engine = create_engine(get_debug_url(), pool_size=cpucount(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-            upsert(engine=engine,
-                df=data,
-                table_name=table,
-                if_row_exists=how,
-                chunksize=20000,
-                dtype=data_type)
-            print(f"DATA UPSERT TO {table}")
-            engine.dispose()
-        except Exception as e:
-            report_to_slack(f"===  ERROR IN UPSERT TEST DB ===")
-            report_to_slack(str(e))
+    try:
+        print(f"=== Upsert Data to Database on Table {table} ===")
+        data = data.drop_duplicates(subset=[primary_key], keep="first", inplace=False)
+        data = data.dropna(subset=[primary_key])
+        data = data.set_index(primary_key)
+        if(Text):
+            data_type={primary_key:TEXT}
+        elif(Date):
+            data_type={primary_key:DATE}
+        elif(Int):
+            data_type={primary_key:Integer}
+        elif(Bigint):
+            data_type={primary_key:BIGINT}
+        elif(Bool):
+            data_type={primary_key:BOOLEAN}
+        else:
+            data_type={primary_key:TEXT}
+        
+        if(cpu_count):
+            engine = create_engine(db_write, pool_size=cpucount(), max_overflow=-1, isolation_level="AUTOCOMMIT")
+        else:
+            engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
+        upsert(engine=engine,
+            df=data,
+            table_name=table,
+            if_row_exists=how,
+            chunksize=20000,
+            dtype=data_type)
+        print(f"DATA UPSERT TO {table}")
+        engine.dispose()
+        if(debug):
+            try:
+                engine = create_engine(get_debug_url(), pool_size=cpucount(), max_overflow=-1, isolation_level="AUTOCOMMIT")
+                upsert(engine=engine,
+                    df=data,
+                    table_name=table,
+                    if_row_exists=how,
+                    chunksize=20000,
+                    dtype=data_type)
+                print(f"DATA UPSERT TO {table}")
+                engine.dispose()
+            except Exception as e:
+                report_to_slack(f"===  ERROR IN UPSERT TEST DB ===")
+                report_to_slack(str(e))
+    except Exception as e:
+        report_to_slack(f"===  ERROR IN UPSERT DB === Error : {e}")
+
 
 def upsert_data_to_database_ali(data, table, primary_key, how="replace", cpu_count=False, Text=False, Date=False, Int=False,
                                 Bigint=False, Bool=False):
