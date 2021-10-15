@@ -66,7 +66,7 @@ def rolling_apply(group, field):
     group[field] = adjusted_price
     return group
 
-def mongo_universe_update(ticker=None, currency_code=None):
+def firebase_universe_update(ticker=None, currency_code=None):
     ''' update mongo for:
     1. static information
     2. price/financial ratios

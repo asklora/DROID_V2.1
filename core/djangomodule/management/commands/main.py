@@ -1,4 +1,4 @@
-from ingestion.firestore_migration import mongo_universe_update
+from ingestion.firestore_migration import firebase_universe_update
 from general.sql_query import get_universe_by_region
 from django.core.management.base import BaseCommand
 from general.date_process import dateNow, str_to_date
@@ -115,7 +115,7 @@ class Command(BaseCommand):
                 update_fundamentals_quality_value()
                 status = "Update Firebase Universe"
                 populate_intraday_latest_price_from_rkd(currency_code=["HKD"])
-                mongo_universe_update(currency_code=["HKD"])
+                firebase_universe_update(currency_code=["HKD"])
                 status = "Interest Update"
                 interest_update_from_dsws()
                 dividend_daily_update()
