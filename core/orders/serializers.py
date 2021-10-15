@@ -6,6 +6,7 @@ from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from django.db.models import Sum
 from core.Clients.models import UserClient,Client
 from core.user.models import TransactionHistory
+from core.user.convert import ConvertMoney
 from django.apps import apps
 from datasource.rkd import RkdData
 from django.db import transaction as db_transaction
@@ -52,6 +53,7 @@ class PerformanceSerializer(serializers.ModelSerializer):
     commission = serializers.SerializerMethodField()
     initial_investment_amt = serializers.SerializerMethodField()
     current_value = serializers.SerializerMethodField()
+    current_exchange_rate = serializers.SerializerMethodField()
 
     class Meta:
         model = PositionPerformance
@@ -60,6 +62,9 @@ class PerformanceSerializer(serializers.ModelSerializer):
                   "current_pnl_amt","initial_investment_amt","current_value")
 
     
+    def get_current_exchange_rate(self,obj)->float:
+        return ConvertMoney(obj.ticker.currency_code, obj.user_id.currency).get_exchange_rate()
+
     def get_current_value(self,obj)->float:
         return obj.current_bot_cash_balance + obj.current_investment_amount
     
@@ -114,11 +119,15 @@ class PositionSerializer(serializers.ModelSerializer):
     currency = serializers.SerializerMethodField()
     total_share_num = serializers.FloatField(source="share_num")
     current_share_num=serializers.SerializerMethodField()
+    current_exchange_rate = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderPosition
         exclude = ("commision_fee", "commision_fee_sell","share_num")
     
+    def get_current_exchange_rate(self,obj)->float:
+        return ConvertMoney(obj.ticker.currency_code, obj.user_id.currency).get_exchange_rate()
+
     def get_current_share_num(self,obj) -> float:
         return obj.order_position.latest("created").share_num
 
