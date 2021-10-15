@@ -106,7 +106,8 @@ def sell_position_service(price:float, trading_day:datetime, position_uid:str)->
         ticker=order.ticker
         )
     if pending_order.exists():
-        orderId = order.order_uid
+        last_order = pending_order.first()
+        orderId = last_order.order_uid.hex
         order.delete()
         raise exceptions.NotAcceptable(f"sell order already exists for this position, order id : {orderId}, current status pending")
     return positions, order

@@ -1,12 +1,11 @@
 import random
-from datetime import datetime
 from typing import List
 
 import pytest
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.universe.models import Universe
 from core.user.convert import ConvertMoney
-from tests.utils.order import create_buy_order
+from tests.utils.order import confirm_order, create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -44,14 +43,7 @@ def test_buy_order_with_conversion(user):
         bot_id="UNO_OTM_007692",
     )
 
-    order.status = "placed"
-    order.placed = True
-    order.placed_at = datetime.now()
-    order.save()
-
-    order.status = "filled"
-    order.filled_at = datetime.now()
-    order.save()
+    confirm_order(order)
 
     performance: PositionPerformance = PositionPerformance.objects.get(
         order_uid_id=order.order_uid

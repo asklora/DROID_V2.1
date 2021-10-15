@@ -110,7 +110,7 @@ MIDDLEWARE = [
     # custom midleware
     "config.middleware.HealthCheck.HealthCheckMiddleware",
     # additional
-    'drf_api_logger.middleware.api_logger_middleware.APILoggerMiddleware',
+    "config.middleware.ApiLogger.LoggerMiddleware",
 ]
 
 
