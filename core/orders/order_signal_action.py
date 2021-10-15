@@ -304,7 +304,7 @@ class BaseOrderConnector(AbstracOrderConnector):
                     setattr(position, "share_num", val)
         else:
             # without bot
-            position.investment_amount = self.instance.converted_amount
+            position.investment_amount = self.instance.amount
             position.bot_cash_balance = 0
             position.share_num = self.instance.qty
             performance.share_num = self.instance.qty
