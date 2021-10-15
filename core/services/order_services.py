@@ -24,10 +24,10 @@ class OrderDetailsServicesSerializers(serializers.ModelSerializer):
                   'placed', 'placed_at', 'canceled_at', 'qty','user_id']
 
 @app.task(bind=True)
-def pending_order_checker(self):
+def pending_order_checker(self,currency=None):
     Exchange = apps.get_model('universe', 'ExchangeMarket')
     Order = apps.get_model('orders', 'Order')
-    orders = Order.objects.prefetch_related('ticker').filter(status='pending')
+    orders = Order.objects.prefetch_related('ticker').filter(status='pending',ticker__currency_code=currency)
     orders_id=[]
     if orders.exists():
         for order in orders:
