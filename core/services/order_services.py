@@ -89,7 +89,6 @@ def order_executor(self, payload, recall=False, request_id=None):
                 else:
                     order.amount = 10000
         order.price = ticker.iloc[0]['latest_price']
-        order.setup = None
         order.status = 'review'
         order.placed = False
         order.placed_at = None
