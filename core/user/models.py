@@ -362,7 +362,8 @@ class Segments(models.Model):
         db_table = "segments"
 
 class UserSegments(models.Model):
-    # Don't set email as ForeignKey of user_core because we don't want
+    # Don't set email as ForeignKey of user_core because
+    # some users may be dropped from user_core
     email = models.EmailField(blank=True, max_length=254, null=False, verbose_name='email address')
     segment_id = models.ForeignKey(Segments, on_delete=models.CASCADE, related_name="segments_id", db_column="segment_id")
     class Meta:
