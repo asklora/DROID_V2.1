@@ -75,7 +75,7 @@ def uno_sell_position(live_price:float, trading_day:str, position:OrderPosition,
             position.event = "Profit"
         else:
             position.event = "Bot Stopped"
-    converter = ConvertMoney(position.user_id.currency, position.ticker.currency_code)
+    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
     position.exchange_rate = converter.get_exchange_rate()
     order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=apps)
     return position, order
@@ -171,7 +171,7 @@ def populate_performance(live_price, ask_price, bid_price, trading_day, log_time
     position.bot_cash_balance = round(bot_cash_balance, 2)
     position.save()
     digits = max(min(5-len(str(int(position.entry_price))), 2), -1)
-    converter = ConvertMoney(position.user_id.currency, position.ticker.currency_code)
+    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
     performance = dict(
         position_uid=str(position.position_uid),
         share_num=share_num,
