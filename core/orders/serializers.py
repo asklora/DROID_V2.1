@@ -63,7 +63,7 @@ class PerformanceSerializer(serializers.ModelSerializer):
 
     
     def get_current_exchange_rate(self,obj)->float:
-        return ConvertMoney(obj.ticker.currency_code, obj.user_id.currency).get_exchange_rate()
+        return ConvertMoney(obj.position_uid.ticker.currency_code, obj.position_uid.user_id.currency).get_exchange_rate()
 
     def get_current_value(self,obj)->float:
         return obj.current_bot_cash_balance + obj.current_investment_amount
