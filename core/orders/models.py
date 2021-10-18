@@ -60,6 +60,10 @@ class Order(BaseTimeStampModel):
     def populate_to_firebase(self):
         populate_daily_profit()
         firebase_user_update(user_id=[self.user_id.id])
+    
+    @property
+    def userconverter(self):
+        return ConvertMoney(self.ticker.currency_code,self.user_id.currency)
 
     @property
     def converted_amount(self):
