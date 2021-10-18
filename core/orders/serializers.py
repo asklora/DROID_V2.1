@@ -59,7 +59,7 @@ class PerformanceSerializer(serializers.ModelSerializer):
         model = PositionPerformance
         fields = ("created", "prev_bot_share_num", "share_num", "current_investment_amount",
                   "side", "price", "hedge_share", "stamp", "commission","current_pnl_ret",
-                  "current_pnl_amt","initial_investment_amt","current_value")
+                  "current_pnl_amt","initial_investment_amt","current_value","current_exchange_rate")
 
     
     def get_current_exchange_rate(self,obj)->float:
