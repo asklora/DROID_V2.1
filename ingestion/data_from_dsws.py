@@ -323,6 +323,18 @@ def update_vix_from_dsws(vix_id=None, history=False):
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
 def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
+    '''
+
+
+    Args:
+        ticker (List):
+        currency_code (List):
+
+    Returns:
+
+    '''
+    get_ingestion_name_source()
+
     print("{} : === Fundamentals Score Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
     start_date = backdate_by_month(12)
