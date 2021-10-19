@@ -73,7 +73,6 @@ def order_executor(self, payload, recall=False, request_id=None):
         df = rkd.get_quote([order.ticker.ticker], df=True)
         df['latest_price'] = df['latest_price'].astype(float)
         ticker = df.loc[df["ticker"] == order.ticker.ticker]
-        order.price = ticker.iloc[0]['latest_price']
         TransactionHistory = apps.get_model('user', 'TransactionHistory')
         in_wallet_transactions = TransactionHistory.objects.filter(
             transaction_detail__order_uid=str(order.order_uid))
@@ -83,12 +82,13 @@ def order_executor(self, payload, recall=False, request_id=None):
         # for apps, need to change later with better logic
         if order.side == 'buy' and order.is_app_order and order.is_init:
             if order.is_bot_order:
-                order.amount = order.setup["position"]["investment_amount"]
+                order.amount =order.userconverter.convert(order.setup["position"]["investment_amount"])
             else:
-                if (order.amount / order.margin) > 10000:
+                if (order.amount / order.margin) > 10001:
                     order.amount = 20000
                 else:
                     order.amount = 10000
+        order.price = ticker.iloc[0]['latest_price']
         order.status = 'review'
         order.placed = False
         order.placed_at = None
