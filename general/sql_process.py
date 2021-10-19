@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from dotenv import load_dotenv
 from core.djangomodule.network.cloud import DroidDb
 from environs import Env
-from global_vars import DB_URL_ALIBABA
+from global_vars import DB_URL_ALIBABA_DEV, DB_URL_ALIBABA_PROD
 env = Env()
 load_dotenv()
 db = DroidDb()
@@ -11,11 +11,13 @@ db = DroidDb()
 debug=env.bool("DROID_DEBUG")
 if debug:
     read_endpoint, write_endpoint, port = db.test_url
+    alibaba_db_url = DB_URL_ALIBABA_DEV
 else:
     read_endpoint, write_endpoint, port = db.prod_url
+    alibaba_db_url = DB_URL_ALIBABA_PROD
+
 db_read = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+read_endpoint+":"+str(port)+"/"+os.getenv("DBUSER")
 db_write = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+write_endpoint+":"+str(port)+"/"+os.getenv("DBUSER")
-alibaba_db_url = DB_URL_ALIBABA
 
 def get_debug_url():
     debug_read_endpoint, debug_write_endpoint, debug_port = db.test_url
