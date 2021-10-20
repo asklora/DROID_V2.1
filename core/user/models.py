@@ -48,6 +48,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True)
     current_status = models.CharField(max_length=255, null=True, blank=True, choices=status_choices, default=UNVERIFIED)
     is_joined = models.BooleanField(default=False)
+    is_polyu = models.BooleanField(default=False)
+    is_polyu_af = models.BooleanField(default=False)
     USERNAME_FIELD = "username"
     AUTH_FIELD_NAME = "email"
     gender = models.CharField(max_length=255, null=True, blank=True)
