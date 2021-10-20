@@ -245,12 +245,13 @@ def update_worldscope_identifier_from_dsws(ticker=None, currency_code=None):
     print("{} : === Worldscope Identifier Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe.drop(columns=["worldscope_identifier", "icb_code", "fiscal_year_end"])
+    universe["icb_code"] = universe["industry_code"]
     identifier="ticker"
-    filter_field = ["WC06035", "WC07040", "WC05352"]
+    filter_field = ["WC06035", "WC05352"]
     result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
     print(result)
     if (len(result) > 0):
-        result = result.rename(columns={"WC06035": "worldscope_identifier", "WC07040": "icb_code", "WC05352": "fiscal_year_end", "index" : "ticker"})
+        result = result.rename(columns={"WC06035": "worldscope_identifier", "WC05352": "fiscal_year_end", "index" : "ticker"})
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
