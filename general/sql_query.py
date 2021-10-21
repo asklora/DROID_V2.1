@@ -4,7 +4,7 @@ from core.djangomodule.general import get_cached_data,set_cache_data
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general import table_name
-from general.sql_process import db_read, alibaba_db_url
+from general.sql_process import db_read, alibaba_db_url, DB_URL_ALIBABA_PROD
 from general.date_process import (
     backdate_by_day,
     backdate_by_year,
@@ -99,6 +99,14 @@ def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba
     if prints:
         logging.info("Total Data = " + str(len(data)))
     return data
+
+
+def read_query_ali_prod():
+
+    with engine.connect() as conn:
+        data = pd.read_sql(query, con=conn)
+    engine.dispose()
+    data = pd.DataFrame(data)
 
 def check_start_end_date(start_date, end_date):
     if type(start_date) == type(None):

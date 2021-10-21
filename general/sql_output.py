@@ -5,7 +5,7 @@ import sqlalchemy as db
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count as cpucount
 from sqlalchemy.types import DATE, BIGINT, TEXT, INTEGER, BOOLEAN, Integer
-from general.sql_process import db_read, db_write, get_debug_url, alibaba_db_url
+from general.sql_process import db_read, db_write, get_debug_url, alibaba_db_url, DB_URL_ALIBABA_PROD
 from pangres import upsert
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
@@ -30,6 +30,15 @@ def truncate_table(table_name):
 def replace_table_datebase_ali(data, table_name):
     print(f"=== Replace Table to ALIBABA Database on Table {table_name} ===")
     engine = create_engine(alibaba_db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    with engine.connect() as conn:
+        extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 1000}
+        data.to_sql(table_name, **extra)
+    engine.dispose()
+    return True
+
+def replace_table_datebase_ali_prod(data, table_name):
+    print(f"=== Replace Table in ALIBABA Database (Prod) on Table {table_name} ===")
+    engine = create_engine(DB_URL_ALIBABA_PROD, max_overflow=-1, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
         extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 1000}
         data.to_sql(table_name, **extra)

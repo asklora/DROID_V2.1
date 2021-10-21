@@ -1465,13 +1465,16 @@ def update_ibes_currency_from_dsws(ticker=None, currency_code=None):
     update_worldscope_currency_from_dsws(ticker=ticker, currency_code=currency_code)
 
 def update_worldscope_currency_from_dsws(ticker=None, currency_code=None):
+    ''' get currency code used by worldscope: currency for the primary listing country - get nation_code from WC06027'''
     print("{} : === Worldscope Currency Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    nation_code_to_curr_dict = get_iso_currency_code_map()
     universe = universe.drop(columns=["currency_code_ws"])
     filter_field = ["WC06027"]
     identifier="ticker"
     result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
     result = result.rename(columns={"WC06027": "currency_code_ws", "index":"ticker"})
+    result["currency_code_ws"] = result["currency_code_ws"].map(nation_code_to_curr_dict)
     result = remove_null(result, "currency_code_ws")
     print(result)
     if(len(result)) > 0 :

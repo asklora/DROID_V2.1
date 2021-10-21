@@ -79,6 +79,7 @@ def populate_ticker_monthly(client=None):
     new_universe = new_universe1.append(new_universe2)
     new_universe = new_universe.append(new_universe3)
 
+    # Add new ticker added to index to "universe"
     new_universe.to_csv("/home/loratech/all_universe.csv")
     new_universe = new_universe.loc[~new_universe["origin_ticker"].isin(universe_consolidated["origin_ticker"].to_list())]
     new_universe.to_csv("/home/loratech/new_universe.csv")
