@@ -71,7 +71,12 @@ def delete_firestore_user(user_id:str,recall=False):
 def get_price_data_firebase(ticker:list) -> pd.DataFrame:
     # firebase have limitation query max 10 list
     # we need to split in here
-    db = firestore.client()
+    firebase_app = getattr(settings, 'FIREBASE_STAGGING_APP',None)
+    if firebase_app:
+        logging.warning("UNIVERSE ARE USING STAGGING PRICE")
+        db = firestore.client(app=firebase_app)
+    else:
+        db = firestore.client()
     object_list = []
     # here loop numpy split
     split = math.ceil(len(ticker) / min(len(ticker), 9))

@@ -14,6 +14,18 @@ try:
     ALLOWED_HOSTS.append(EC2_IP_LOCAL)
 except requests.exceptions.RequestException:
     pass
+
+
+
+firebase_admin.initialize_app(
+    FIREBASE_STAGGING_CREDS,
+    {
+        "databaseURL": "https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    },
+)
+
+
+
 SQLPRINT=False
 CHANNEL_LAYERS = {
     'default': {

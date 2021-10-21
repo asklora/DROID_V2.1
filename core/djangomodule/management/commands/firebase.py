@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from ingestion.firestore_migration import firebase_user_update, firebase_universe_update
+from general.firestore_query import get_price_data_firebase
 import json
 import pandas as pd
 import threading
@@ -25,6 +26,8 @@ class Command(BaseCommand):
     
 
     def handle(self, *args, **options):
+        # data= get_price_data_firebase(['MSFT.O','AAPL.O'])
+        # print(data)
         # user_id=643
         # db = firestore.client()
         # collection =db.collection(settings.FIREBASE_COLLECTION['portfolio']).document(f"{user_id}")
