@@ -163,9 +163,9 @@ class Command(BaseCommand):
                     print(ticker)
                     update_ingestion_update_time('data_worldscope_summary', finish=False)
                     update_worldscope_quarter_summary_from_dsws(ticker=ticker)
-                    update_ingestion_update_time('data_worldscope_summary', finish=True)
                     status = "Worldscope Report Date Ingestion"
                     worldscope_quarter_report_date_from_dsws(ticker = ticker)
+                    update_ingestion_update_time('data_worldscope_summary', finish=True)
                 else:
                     print(dateNow())
                     print(d)
