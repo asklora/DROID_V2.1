@@ -304,24 +304,28 @@ def update_ingestion_update_time(table_name, finish=False):
 
     '''
 
-    last_update = timestampNow()
-    print(f"=== [{table_name}] ingestion latest update_time: [{last_update}] (Finish = [{finish}]) ===")
+    try:
+        last_update = timestampNow()
+        print(f"=== [{table_name}] ingestion latest update_time: [{last_update}] (Finish = [{finish}]) ===")
 
-    ingest_dict = {'table_name': table_name,
-                   'last_update': last_update,
-                   'finish': finish,
-                   }
+        ingest_dict = {'table_name': table_name,
+                       'last_update': last_update,
+                       'finish': finish,
+                       }
 
-    engine = create_engine(DB_URL_ALIBABA_PROD, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        data = pd.read_sql('SELECT * FROM ingestion_update_time', conn)
-        r = (data['table_name']==ingest_dict['table_name'])
-        if any(r):
-            data.loc[r, 'last_update'] = ingest_dict['last_update']      # UTC time
-            data.loc[r, 'finish'] = ingest_dict['finish']
-        else:
-            data = data.append(pd.DataFrame(ingest_dict, index=[0]))
-        extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 1000}
-        data.to_sql('ingestion_update_time', **extra)
-    engine.dispose()
-    return True
+        engine = create_engine(DB_URL_ALIBABA_PROD, max_overflow=-1, isolation_level="AUTOCOMMIT")
+        with engine.connect() as conn:
+            data = pd.read_sql('SELECT * FROM ingestion_update_time', conn)
+            r = (data['table_name']==ingest_dict['table_name'])
+            if any(r):
+                data.loc[r, 'last_update'] = ingest_dict['last_update']      # UTC time
+                data.loc[r, 'finish'] = ingest_dict['finish']
+            else:
+                data = data.append(pd.DataFrame(ingest_dict, index=[0]))
+            extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 1000}
+            data.to_sql('ingestion_update_time', **extra)
+        engine.dispose()
+        return True
+    except Exception as e:
+        print(e)
+        return False

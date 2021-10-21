@@ -8,7 +8,8 @@ from ingestion.master_tac import master_tac_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
 from ingestion.data_from_quandl import update_quandl_orats_from_quandl
 from general.table_name import get_universe_client_table_name
-from general.sql_output import fill_null_quandl_symbol, insert_data_to_database, update_consolidated_activation_by_ticker
+from general.sql_output import fill_null_quandl_symbol, insert_data_to_database, \
+    update_consolidated_activation_by_ticker, update_ingestion_update_time
 from general.date_process import dateNow
 from general.sql_process import do_function
 from general.sql_query import (
@@ -70,6 +71,7 @@ def new_ticker_ingestion(ticker):
     update_rec_buy_sell_from_dsws(ticker=ticker)
 
 def populate_ticker_monthly(client=None):
+    update_ingestion_update_time('universe', finish=False)
     if(client is None):
         client = "dZzmhmoA" #Client is ASKLORA
     universe_consolidated = get_consolidated_universe_data()
@@ -127,6 +129,7 @@ def populate_ticker_monthly(client=None):
     print(new_universe_client)
     insert_data_to_database(new_universe_client, get_universe_client_table_name(), how="append")
     new_ticker_ingestion(ticker["ticker"].to_list())
+    update_ingestion_update_time('universe', finish=True)
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
