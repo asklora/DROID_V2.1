@@ -101,13 +101,6 @@ def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba
     return data
 
 
-def read_query_ali_prod():
-
-    with engine.connect() as conn:
-        data = pd.read_sql(query, con=conn)
-    engine.dispose()
-    data = pd.DataFrame(data)
-
 def check_start_end_date(start_date, end_date):
     if type(start_date) == type(None):
         start_date = str_to_date(droid_start_date())
