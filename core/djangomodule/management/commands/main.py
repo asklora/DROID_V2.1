@@ -113,7 +113,6 @@ class Command(BaseCommand):
                 status = "Master Multiple Update"
                 master_multiple_update()
                 status = "Fundamentals Ingestion"
-                update_ingestion_update_time('data_fundamental_score-na', finish=False)
                 update_daily_fundamentals_score_from_dsws(ticker=ticker)        # daily update of mkt_cap
                 update_ingestion_update_time('data_fundamental_score-na', finish=True)
                 status = "Update AI Score"
@@ -132,8 +131,11 @@ class Command(BaseCommand):
                 status = "Daily Ingestion Update"
                 ticker = get_universe_by_region(region_id=["ws"])["ticker"].to_list()
                 update_data_dss_from_dss(ticker=ticker)
+                update_ingestion_update_time('data_dss-ws', finish=True)
                 update_data_dsws_from_dsws(ticker=ticker)
+                update_ingestion_update_time('data_dsws-ws', finish=True)
                 update_currency_price_from_dsws()
+                update_ingestion_update_time('currency-ws', finish=True)
                 do_function("special_cases_1")
                 do_function("master_ohlcvtr_update")
                 status = "Master OHLCVTR Update"
@@ -144,10 +146,12 @@ class Command(BaseCommand):
                 master_multiple_update()
                 status = "Fundamentals Ingestion"
                 update_daily_fundamentals_score_from_dsws(ticker=ticker)
+                update_ingestion_update_time('data_fundamental_score-ws', finish=True)
                 status = "Update AI Score"
                 update_fundamentals_quality_value()
                 status = "Interest Update"
                 interest_update_from_dsws()
+                update_ingestion_update_time('data_interest-ws', finish=True)
                 dividend_daily_update()
                 interest_daily_update()
                 
