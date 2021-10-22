@@ -160,11 +160,11 @@ class Command(BaseCommand):
                 # if(d in ["1", "2", "3", "4", "5", "6", "7", "01", "02", "03", "04", "05", "06", "07"]):
                 update_ingestion_update_time('data_worldscope_summary', finish=False)
                 status = "Worldscope Ingestion"
-                update_worldscope_quarter_summary_from_dsws(ticker=ticker)
-                ticker = split_ticker(options["currency_code"], split=options["split"])
+                update_worldscope_quarter_summary_from_dsws(ticker=ticker)  # now report_date ingestion is also included
                 print(ticker)
-                status = "Worldscope Report Date Ingestion"
-                worldscope_quarter_report_date_from_dsws(ticker = ticker)
+                # ticker = split_ticker(options["currency_code"], split=options["split"])
+                # status = "Worldscope Report Date Ingestion"
+                # worldscope_quarter_report_date_from_dsws(ticker = ticker)
                 update_ingestion_update_time('data_worldscope_summary', finish=True)
                 # else:
                 #     print(dateNow())

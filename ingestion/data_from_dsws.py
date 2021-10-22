@@ -1183,86 +1183,104 @@ def update_macro_data_monthly_from_dsws():
     report_to_slack("{} : === Data MACRO Monthly Update Updated ===".format(datetimeNow()))
     populate_macro_table()
 
-def worldscope_quarter_report_date_from_dsws(ticker = None, currency_code=None, history=False):
-    identifier="ticker"
-    filter_field = ["WC05905A"]
-    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
-    ticker = universe[["ticker"]]
-    end_date = forwarddate_by_month(9)
-    start_date = backdate_by_month(6)
-    if(history):
-        start_date = "2000-03-31"
-    period_end_list = get_period_end_list(start_date=start_date, end_date=end_date)
-    data = []
-    for period_end in period_end_list:
-        try:
-            result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1), dsws=False)
-            if(len(result) == 0):
-                result = ticker
-                result[field_rename] = np.nan
-                result["level_1"] = str_to_date(period_end)
-            print(result)
-            data = result.copy()
-            data = data.rename(columns = {"level_1" : "period_end"})
-            data = data[["ticker", "period_end", "WC05905A"]]
-            print(data)
-            data["WC05905A"] = data["WC05905A"].astype(str)
-            data["WC05905A"] = data["WC05905A"].str.slice(6, 16)
-            data["WC05905A"] = np.where(data["WC05905A"] == "nan", np.nan, data["WC05905A"])
-            data["WC05905A"] = np.where(data["WC05905A"] == "NA", np.nan, data["WC05905A"])
-            data["WC05905A"] = np.where(data["WC05905A"] == "None", np.nan, data["WC05905A"])
-            data["WC05905A"] = np.where(data["WC05905A"] == "", np.nan, data["WC05905A"])
-            data["WC05905A"] = np.where(data["WC05905A"] == "NaN", np.nan, data["WC05905A"])
-            data["WC05905A"] = np.where(data["WC05905A"] == "NaT", np.nan, data["WC05905A"])
-            data["WC05905A"] = data["WC05905A"].astype(float)
-            data = data.dropna(subset=["WC05905A"], inplace=False)
-            if(len(data) > 0):
-                data["WC05905A"] = data["WC05905A"].astype(int)
-                data["WC05905A"] = np.where(data["WC05905A"] > 9000000000, data["WC05905A"]/10, data["WC05905A"])
-                data["report_date"] = datetime.strptime(dateNow(), "%Y-%m-%d")
-                data = data.reset_index(inplace=False, drop=True)
-                for index, row in data.iterrows():
-                    WC05905A = row["WC05905A"]
-                    report_date = datetime.fromtimestamp(WC05905A)
-                    data.loc[index, "report_date"] = report_date
-                data["report_date"] = pd.to_datetime(data["report_date"])
-                data["period_end"] = pd.to_datetime(data["period_end"])
-                data["year"] = pd.DatetimeIndex(data["period_end"]).year
-                data["month"] = pd.DatetimeIndex(data["period_end"]).month
-                data["day"] = pd.DatetimeIndex(data["period_end"]).day
-                # print(data)
-                for index, row in data.iterrows():
-                    if (data.loc[index, "month"] <= 3) and (data.loc[index, "day"] <= 31) :
-                        data.loc[index, "month"] = 3
-                        data.loc[index, "frequency_number"] = int(1)
-                    elif (data.loc[index, "month"] <= 6) and (data.loc[index, "day"] <= 31) :
-                        data.loc[index, "month"] = 6
-                        data.loc[index, "frequency_number"] = int(2)
-                    elif (data.loc[index, "month"] <= 9) and (data.loc[index, "day"] <= 31) :
-                        data.loc[index, "month"] = 9
-                        data.loc[index, "frequency_number"] = int(3)
-                    else:
-                        data.loc[index, "month"] = 12
-                        data.loc[index, "frequency_number"] = int(4)
+def worldscope_report_date_format_change(data):
+    ''' change format for report_date fetch from DSWS '''
 
-                    data.loc[index, "period_end"] = datetime(data.loc[index, "year"], data.loc[index, "month"], 1)
-                data["period_end"] = data["period_end"].dt.to_period("M").dt.to_timestamp("M")
-                data["period_end"] = pd.to_datetime(data["period_end"])
+    data["report_date"] = data["report_date"].astype(str)
+    data["report_date"] = data["report_date"].str.slice(6, 16)
+    data["report_date"] = pd.to_numeric(data["report_date"], errors='raise')
+    data = data.dropna(subset=["report_date"], inplace=False)
 
-                data = uid_maker(data, trading_day="period_end")
-                data = data.drop(columns=["WC05905A", "year", "month", "day", "frequency_number"])
-                data = data.drop_duplicates(subset=["uid"], keep="first", inplace=False)
-                print(data)
-                upsert_data_to_database(data, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
-        except Exception as e:
-            print("{} : === ERROR === : {}".format(dateNow(), e))
+    data["report_date"] = data["report_date"].astype(int)
+    data["report_date"] = np.where(data["report_date"] > 9000000000, data["report_date"] / 10, data["report_date"])
+    data["report_date"] = pd.to_datetime(data["report_date"], unit='s')
+    
+    return data
+
+# def worldscope_quarter_report_date_from_dsws(ticker = None, currency_code=None, history=False):
+#     ''' (update) ingestion "report_date" quarterly worldscope fields for missing fields only '''
+#
+#     identifier="ticker"
+#     filter_field = ["WC05905A"]
+#     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+#     ticker = universe[["ticker"]]
+#     end_date = forwarddate_by_month(9)
+#     start_date = backdate_by_month(6)
+#     if(history):
+#         start_date = "2000-03-31"
+#     period_end_list = get_period_end_list(start_date=start_date, end_date=end_date)
+#     data = []
+#     for period_end in period_end_list:
+#         try:
+#             result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field,
+#                                                               use_ticker=True, split_number=min(len(universe), 1), dsws=False)
+#             if(len(result) == 0):
+#                 result = ticker
+#                 result[field_rename] = np.nan
+#                 result["level_1"] = str_to_date(period_end)
+#             print(result)
+#             data = result.copy()
+#             data = data.rename(columns = {"level_1" : "period_end"})
+#             data = data[["ticker", "period_end", "WC05905A"]]
+#             print(data)
+#             data["WC05905A"] = data["WC05905A"].astype(str)
+#             data["WC05905A"] = data["WC05905A"].str.slice(6, 16)
+#             data["WC05905A"] = np.where(data["WC05905A"] == "nan", np.nan, data["WC05905A"])
+#             data["WC05905A"] = np.where(data["WC05905A"] == "NA", np.nan, data["WC05905A"])
+#             data["WC05905A"] = np.where(data["WC05905A"] == "None", np.nan, data["WC05905A"])
+#             data["WC05905A"] = np.where(data["WC05905A"] == "", np.nan, data["WC05905A"])
+#             data["WC05905A"] = np.where(data["WC05905A"] == "NaN", np.nan, data["WC05905A"])
+#             data["WC05905A"] = np.where(data["WC05905A"] == "NaT", np.nan, data["WC05905A"])
+#             data["WC05905A"] = data["WC05905A"].astype(float)
+#             data = data.dropna(subset=["WC05905A"], inplace=False)
+#             if(len(data) > 0):
+#                 data["WC05905A"] = data["WC05905A"].astype(int)
+#                 data["WC05905A"] = np.where(data["WC05905A"] > 9000000000, data["WC05905A"]/10, data["WC05905A"])
+#                 data["report_date"] = datetime.strptime(dateNow(), "%Y-%m-%d")
+#                 data = data.reset_index(inplace=False, drop=True)
+#                 for index, row in data.iterrows():
+#                     WC05905A = row["WC05905A"]
+#                     report_date = datetime.fromtimestamp(WC05905A)
+#                     data.loc[index, "report_date"] = report_date
+#                 data["report_date"] = pd.to_datetime(data["report_date"])
+#                 data["period_end"] = pd.to_datetime(data["period_end"])
+#                 data["year"] = pd.DatetimeIndex(data["period_end"]).year
+#                 data["month"] = pd.DatetimeIndex(data["period_end"]).month
+#                 data["day"] = pd.DatetimeIndex(data["period_end"]).day
+#                 # print(data)
+#                 for index, row in data.iterrows():
+#                     if (data.loc[index, "month"] <= 3) and (data.loc[index, "day"] <= 31) :
+#                         data.loc[index, "month"] = 3
+#                         data.loc[index, "frequency_number"] = int(1)
+#                     elif (data.loc[index, "month"] <= 6) and (data.loc[index, "day"] <= 31) :
+#                         data.loc[index, "month"] = 6
+#                         data.loc[index, "frequency_number"] = int(2)
+#                     elif (data.loc[index, "month"] <= 9) and (data.loc[index, "day"] <= 31) :
+#                         data.loc[index, "month"] = 9
+#                         data.loc[index, "frequency_number"] = int(3)
+#                     else:
+#                         data.loc[index, "month"] = 12
+#                         data.loc[index, "frequency_number"] = int(4)
+#
+#                     data.loc[index, "period_end"] = datetime(data.loc[index, "year"], data.loc[index, "month"], 1)
+#                 data["period_end"] = data["period_end"].dt.to_period("M").dt.to_timestamp("M")
+#                 data["period_end"] = pd.to_datetime(data["period_end"])
+#
+#                 data = uid_maker(data, trading_day="period_end")
+#                 data = data.drop(columns=["WC05905A", "year", "month", "day", "frequency_number"])
+#                 data = data.drop_duplicates(subset=["uid"], keep="first", inplace=False)
+#                 print(data)
+#                 upsert_data_to_database(data, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
+#         except Exception as e:
+#             print("{} : === ERROR === : {}".format(dateNow(), e))
 
 def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, history=False):
     ''' (updated) ingestion quarterly worldscope fields for missing fields only '''
 
     # Prep 1. field: get data_worldscope_summary ingestion field from Table ingesion_name
     df = get_ingestion_name_source()
-    filter_field = df.loc[df['worldscope_summary'], ['dsws_name','our_name']].values
+    filter_field = df.loc[df['worldscope_summary'], ['dsws_name','our_name']].values.tolist()
+    filter_field.append(["WC05905A", "report_date"])
 
     # Prep 2. ticker: make sure input ticker list is always active ticker
     identifier = "ticker"
@@ -1291,6 +1309,8 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
                 continue
             data_missing_data.append(missing_data)
 
+            # missing_tickers_universe = universe[["ticker"]]
+
             # fetch from dsws
             result, error_ticker = get_data_history_from_dsws(period_end, period_end, missing_tickers_universe, identifier,
                                                               [field_dsws], use_ticker=True, split_number=1, dsws=False)
@@ -1298,24 +1318,33 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
                 continue            # if no return for (period, field) -> next period_end
             data_ingest.append(result)
 
-        # concat single field ingested data for each ticker
-        result = pd.concat(data_ingest, axis=0)
-        if len(result)==0:
-            continue                # if no return for (field) -> next field
+        if len(data_missing_data)==0:
+            continue                # if no missing_field for (field) -> next field
+        else:
+            missing_data = pd.concat(data_missing_data, axis=0)
 
-        missing_data = pd.concat(data_missing_data, axis=0)
+        # concat single field ingested data for each ticker
+        if len(data_ingest)==0:
+            continue                # if no return for (field) -> next field
+        else:
+            result = pd.concat(data_ingest, axis=0)
+
         result = result.rename(columns = {"level_1" : "period_end", field_dsws: field_rename})  # rename
         result = result[["ticker", "period_end", field_rename]]
         print(result)
-        result[field_rename] = result[field_rename].astype(str)     # all missing -> NaN
-        result[field_rename] = np.where(result[field_rename] == "nan", np.nan, result[field_rename])
-        result[field_rename] = np.where(result[field_rename] == "NA", np.nan, result[field_rename])
-        result[field_rename] = np.where(result[field_rename] == "None", np.nan, result[field_rename])
-        result[field_rename] = np.where(result[field_rename] == "", np.nan, result[field_rename])
-        result[field_rename] = np.where(result[field_rename] == "NaN", np.nan, result[field_rename])
-        result[field_rename] = np.where(result[field_rename] == "NaT", np.nan, result[field_rename])
-        result[field_rename] = result[field_rename].astype(float)
-        result = result.dropna(subset=[field_rename], inplace=False)
+
+        if field_rename == "report_date":       # for report_date -> extra format_change
+            result = worldscope_report_date_format_change(result)
+        else:
+            result[field_rename] = result[field_rename].astype(str)     # all missing -> NaN
+            result[field_rename] = np.where(result[field_rename] == "nan", np.nan, result[field_rename])
+            result[field_rename] = np.where(result[field_rename] == "NA", np.nan, result[field_rename])
+            result[field_rename] = np.where(result[field_rename] == "None", np.nan, result[field_rename])
+            result[field_rename] = np.where(result[field_rename] == "", np.nan, result[field_rename])
+            result[field_rename] = np.where(result[field_rename] == "NaN", np.nan, result[field_rename])
+            result[field_rename] = np.where(result[field_rename] == "NaT", np.nan, result[field_rename])
+            result[field_rename] = result[field_rename].astype(float)
+            result = result.dropna(subset=[field_rename], inplace=False)
 
         # update ingested results to missing_data DataFrame
         missing_data['period_end'] = pd.to_datetime(missing_data['period_end'])
