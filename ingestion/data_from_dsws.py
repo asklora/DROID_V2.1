@@ -325,16 +325,7 @@ def update_vix_from_dsws(vix_id=None, history=False):
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
 def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
-    '''
-
-
-    Args:
-        ticker (List):
-        currency_code (List):
-
-    Returns:
-
-    '''
+    ''' weekly update data_fundamental_score '''
     get_ingestion_name_source()
 
     print("{} : === Fundamentals Score Start Ingestion ===".format(datetimeNow()))
@@ -369,13 +360,19 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
             "WC02401" : "ppe_depreciation", "WC18274" : "ppe_impairment", 
             "WC07211" : "mkt_cap_usd", "i0eps" : "eps_lastq"}
 
-        result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
-        result2, except_field2 = get_data_history_frequently_from_dsws(start_date2, end_date, universe, identifier, static_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
+        result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier,
+                                                                     filter_field, use_ticker=True, split_number=1,
+                                                                     quarterly=True, fundamentals_score=True)
+        result2, except_field2 = get_data_history_frequently_from_dsws(start_date2, end_date, universe, identifier,
+                                                                       static_field, use_ticker=True, split_number=1,
+                                                                       quarterly=True, fundamentals_score=True)
         print("Error Ticker = " + str(except_field))
         if len(except_field) == 0 :
             second_result = []
         else:
-            second_result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, except_field, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
+            second_result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, except_field, identifier,
+                                                                           filter_field, use_ticker=True, split_number=1,
+                                                                           quarterly=True, fundamentals_score=True)
         try:
             if(len(result) == 0):
                 result = second_result
@@ -1280,7 +1277,6 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
     period_end_list = get_period_end_list(start_date=start_date, end_date=end_date)
 
     # start ingestion
-    data = []
     for field_dsws, field_rename in filter_field:
         data_field = []
         for period_end in period_end_list:
@@ -1299,14 +1295,15 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
             result, error_ticker = get_data_history_from_dsws(period_end, period_end, missing_tickers_universe, identifier,
                                                               [field_dsws], use_ticker=True, split_number=1, dsws=False)
             if(len(result) == 0):   # if no return
-                result = missing_tickers_universe
-                result[field_rename] = np.nan
-                result["level_1"] = str_to_date(period_end)
+                # result = missing_tickers_universe
+                # result[field_dsws] = np.nan
+                # result["level_1"] = str_to_date(period_end)
+                continue
 
             data_field.append(result)
 
         # concat single field ingested data for each ticker
-        result = pd.concat(result, axis=0)
+        result = pd.concat(data_field, axis=0)
         result = result.rename(columns = {"level_1" : "period_end", field_dsws: field_rename})  # rename
         result = result[["ticker", "period_end", field_rename]]
         print(result)
@@ -1321,11 +1318,12 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
         result = result.dropna(subset=[field_rename], inplace=False)
 
         # update ingested results to missing_data DataFrame
-        missing_data.update(result)
-
+        missing_data = missing_data.set_index(["ticker", "period_end"])
+        result = result.set_index(["ticker", "period_end"])
+        missing_data[field_rename] = result[field_rename]
+        result = missing_data.reset_index(drop=False)
 
         # add Date reference columns
-        result = result.reset_index(inplace=False, drop=True)
         result["period_end"] = pd.to_datetime(result["period_end"])
         result["year"] = pd.DatetimeIndex(result["period_end"]).year
         result["month"] = pd.DatetimeIndex(result["period_end"]).month
