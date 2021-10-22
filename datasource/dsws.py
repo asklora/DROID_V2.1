@@ -174,8 +174,8 @@ def get_data_history_by_field_from_dsws(start_date, end_date, universe, identifi
     for ticker in universe:
         chunck_field = []
         for by_field in field:
-            try :
-                update_ingestion_count(source='dsws', n_ingest=1, dsws=dsws)
+            try:
+                update_ingestion_count(source='dsws', n_ingest=(end_date-start_date).days, dsws=dsws)
                 result = DS.fetch("<"+ticker+">", *[by_field], date_from=start_date, date_to=end_date)
                 print(result)
                 result[identifier] = ticker
@@ -262,7 +262,9 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
     print(data)
     return data, error_universe
 
-def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False, worldscope=False, dsws=True):
+def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, field, use_ticker=True,
+                                                   split_number=40, monthly=False, quarterly=False,
+                                                   fundamentals_score=False, worldscope=False, dsws=True):
     DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
     chunk_data = []
@@ -276,7 +278,7 @@ def get_data_history_frequently_by_field_from_dsws(start_date, end_date, univers
         chunck_field = []
         for by_field in field:
             try:
-                update_ingestion_count(source='dsws', n_ingest=1, dsws=dsws)
+                update_ingestion_count(source='dsws', n_ingest=len(date_range), dsws=dsws)
                 if(monthly):
                     result = DS.fetch("<"+ticker+">", [by_field], date_from=start_date, date_to=end_date, freq="M")
                 elif(quarterly):

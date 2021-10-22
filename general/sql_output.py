@@ -273,26 +273,29 @@ def update_ingestion_count(source='dsws', n_ingest=0, dsws=True):
     append ingestion record df to Alibaba Prod DB "ingestion_count"
 
     '''
-    ingest_dict = {'source': '{}{}'.format(source, 1-int(dsws)),       # default = #0 account
-                   'date': str_to_date(dateNow()[:-2]+'01'),
-                   'count': n_ingest,
-                   'last_update': timestampNow(),
-                   }
-    print(f"=== [{n_ingest}] new ingestion from [{ingest_dict['source']}] ===")
+    try:
+        ingest_dict = {'source': '{}{}'.format(source, 1-int(dsws)),       # default = #0 account
+                       'date': str_to_date(dateNow()[:-2]+'01'),
+                       'count': n_ingest,
+                       'last_update': timestampNow(),
+                       }
+        print(f"=== [{n_ingest}] new ingestion from [{ingest_dict['source']}] ===")
 
-    engine = create_engine(DB_URL_ALIBABA_PROD, max_overflow=-1, isolation_level="AUTOCOMMIT")
-    with engine.connect() as conn:
-        data = pd.read_sql('SELECT * FROM ingestion_count', conn)
-        r = (data['source']==ingest_dict['source']) & (data['date']==ingest_dict['date'])
-        if any(r):
-            data.loc[r, 'count'] += ingest_dict['count']
-            data.loc[r, 'last_update'] = ingest_dict['last_update']     # UTC time
-        else:
-            data = data.append(pd.DataFrame(ingest_dict, index=[0]))
-        extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 1000}
-        data.to_sql('ingestion_count', **extra)
-    engine.dispose()
-    return True
+        engine = create_engine(DB_URL_ALIBABA_PROD, max_overflow=-1, isolation_level="AUTOCOMMIT")
+        with engine.connect() as conn:
+            data = pd.read_sql('SELECT * FROM ingestion_count', conn)
+            r = (data['source']==ingest_dict['source']) & (data['date']==ingest_dict['date'])
+            if any(r):
+                data.loc[r, 'count'] += ingest_dict['count']
+                data.loc[r, 'last_update'] = ingest_dict['last_update']     # UTC time
+            else:
+                data = data.append(pd.DataFrame(ingest_dict, index=[0]))
+            extra = {'con': conn, 'index': False, 'if_exists': 'replace', 'method': 'multi', 'chunksize': 1000}
+            data.to_sql('ingestion_count', **extra)
+        engine.dispose()
+        return True
+    except Exception as e:
+        report_to_slack(f'=== update_ingestion_count ERROR === :{e}', 'U026B04RB3J')
 
 def update_ingestion_update_time(table_name, finish=False):
     ''' update last update time for tables

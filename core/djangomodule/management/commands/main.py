@@ -229,10 +229,8 @@ class Command(BaseCommand):
                 update_rec_buy_sell_from_dsws()
                 update_ingestion_update_time('universe', finish=True)
                 status = "IBES Ingestion"
-                update_ingestion_update_time('data_ibes_monthly', finish=True)
                 update_ibes_data_monthly_from_dsws()
                 update_ingestion_update_time('data_ibes_monthly', finish=True)
-                update_ingestion_update_time('data_macro_monthly', finish=True)
                 status = "Macro Ingestion"
                 update_macro_data_monthly_from_dsws()
                 status = "FRED Ingestion"
