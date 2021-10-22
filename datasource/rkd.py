@@ -179,24 +179,27 @@ class Rkd:
         return headers
 
     def parse_response(self, response):
-        json_data = response.get("RetrieveItem_Response_3",{}).get("ItemResponse",[])
-        if json_data:
-            data = json_data[0].get("Item",None)
-            if not data:
-                logging.error(response)
-                raise Exception(response)
-            formated_json_data = []
-            for index, item in enumerate(data):
-                ticker = item["RequestKey"]["Name"]
-                formated_json_data.append({"ticker": ticker})
-                if item["Status"]["StatusMsg"] == "OK":
-                    for f in item["Fields"]["F"]:
-                        field = f["n"]
-                        val = f["Value"]
-                        formated_json_data[index].update({field: val})
-                else:
-                    logging.warning(f"error status message {item['Status']['StatusMsg']} for {ticker}, there is no response data")
-        return formated_json_data
+        if response:
+            json_data = response.get("RetrieveItem_Response_3",{}).get("ItemResponse",[])
+            if json_data:
+                data = json_data[0].get("Item",None)
+                if not data:
+                    logging.error(response)
+                    raise Exception(response)
+                formated_json_data = []
+                for index, item in enumerate(data):
+                    ticker = item["RequestKey"]["Name"]
+                    formated_json_data.append({"ticker": ticker})
+                    if item["Status"]["StatusMsg"] == "OK":
+                        for f in item["Fields"]["F"]:
+                            field = f["n"]
+                            val = f["Value"]
+                            formated_json_data[index].update({field: val})
+                    else:
+                        logging.warning(f"error status message {item['Status']['StatusMsg']} for {ticker}, there is no response data")
+            return formated_json_data
+        logging.error(response)
+        raise Exception(response)
 
 
 class RkdData(Rkd):

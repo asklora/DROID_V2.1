@@ -1,3 +1,6 @@
+## Run locally
+- set `./sandbox help` see available commands
+
 ## Commands don't delete
 
 - set `testbuild` as commit message to trigger aws test
