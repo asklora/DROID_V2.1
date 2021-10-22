@@ -105,3 +105,11 @@ def update_to_firestore(data, index, table, dict=False):
     for key,val in df.items():
         doc_ref = db.collection(f"{table}").document(f"{key}")
         doc_ref.set(val)
+
+def delete_firestore_universe(ticker_list:list, index, table:str=settings.FIREBASE_COLLECTION["universe"], dict=False):
+    db = firestore.client()
+    
+    # jsonprint(df)
+    for ticker in ticker_list:
+        doc_ref = db.collection(f"{table}").document(f"{ticker}")
+        doc_ref.delete()
