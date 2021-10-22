@@ -72,6 +72,7 @@ from general.sql_query import (
     get_currency_code_ibes_ws,
     get_iso_currency_code_map,
     get_missing_field_ticker_list,
+    get_ingestion_name_macro_source
 )
 from general.date_process import (
     backdate_by_day, 
@@ -956,7 +957,7 @@ def populate_ibes_table():
 def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=False):
     ''' (Update) weekly ingestion of IBES data '''
 
-    # Prep 1. field: get data_worldscope_summary ingestion field from Table ingesion_name
+    # Prep 1. field: get data_ibes_monthly ingestion field from Table ingesion_name
     df = get_ingestion_name_source()
     filter_field = df.loc[df['ibes_monthly'], ['dsws_name', 'our_name']].values.tolist()
 
@@ -1022,6 +1023,7 @@ def get_fred_csv_monthly(start_date = backdate_by_month(6), end_date = dateNow()
         return []
 
 def populate_macro_table():
+    ''' obsolete '''
     table_name = get_data_macro_table_name()
     end_date = dateNow()
     start_date = backdate_by_month(30)
@@ -1032,142 +1034,147 @@ def populate_macro_table():
     report_to_slack("{} : === Data MACRO Update Updated ===".format(datetimeNow()))
 
 def update_macro_data_monthly_from_dsws():
+    ''' (Update) Weekly ingestion of data_macro_monthly '''
+
     print("Get Macro Data From DSWS")
+
+    # Prep 1. field: get data_macro_monthly ingestion field from Table ingesion_name_macro
+    df = get_ingestion_name_macro_source()
+    ticker_quarterly_field = df.loc[df['quarterly'], ['dsws_name', 'our_name']].set_index('dsws_name')['our_name'].to_dict()
+    ticker_monthly_field = df.loc[df['monthly'], ['dsws_name', 'our_name']].set_index('dsws_name')['our_name'].to_dict()
+
+    # Prep 2. ticker: make sure input ticker list is always active ticker
     end_date = dateNow()
     start_date_month = backdate_by_month(3)
     start_date_quarter = backdate_by_month(6)
-    ticker_quarterly_field = ["CHGDP...C", "JPGDP...D", "USGDP...D", "EMGDP...D"]
-    ticker_monthly_field = ["USINTER3", "USGBILL3", "EMIBOR3.", "JPMSHORT", "EMGBOND.", "CHGBOND."]
-    ticker_field = ["EMIBOR3.", "USGBILL3", "CHGDP...C", "EMGDP...D", "USGDP...D", "USINTER3", "EMGBOND.",
-        "JPMSHORT", "CHGBOND.", "JPGDP...D"]
-    ticker_vix = ["CBOEVIX", "VHSIVOL", "VSTOXXI", "VKOSPIX"]
-    filter_field_vix = ["PI"]
+
+    # ticker_vix = ["CBOEVIX", "VHSIVOL", "VSTOXXI", "VKOSPIX"]
+    # filter_field_vix = ["PI"]
+    # result_monthly_vix, except_field = get_data_history_frequently_from_dsws(start_date_month, end_date, ticker_vix, identifier, filter_field_vix, use_ticker=False, split_number=1, monthly=True)
+    # print(result_monthly_vix)
+    # if(len(result_monthly_vix)) > 0 :
+    #     result_monthly_vix = result_monthly_vix.reset_index(drop=True)
+    #     result_monthly_vix = result_monthly_vix.rename(columns={"index" : "trading_day"})
+    #     result_monthly_vix["year"] = pd.DatetimeIndex(result_monthly_vix["trading_day"]).year
+    #     result_monthly_vix["month"] = pd.DatetimeIndex(result_monthly_vix["trading_day"]).month
+    #     result_monthly_vix["year_month"] = result_monthly_vix["month"].astype(str) + "-" + result_monthly_vix["year"].astype(str)
+    #     data_monthly_vix = pd.DataFrame(result_monthly_vix["year_month"].unique(), columns =["year_month"])
+    #     data_monthly_vix = data_monthly_vix.set_index("year_month")
+    #     for index, row in result_monthly_vix.iterrows():
+    #         ticker_field = row["ticker"]
+    #         year_month = row["year_month"]
+    #         if (row["ticker"] == "CBOEVIX") :
+    #                 ticker_field = "cboevix"
+    #         elif (row["ticker"] == "VHSIVOL") :
+    #                 ticker_field = "vhsivol"
+    #         elif (row["ticker"] == "VSTOXXI") :
+    #                 ticker_field = "vstoxxi"
+    #         elif (row["ticker"] == "VKOSPIX") :
+    #                 ticker_field = "vkospix"
+    #         data_field = row["PI"]
+    #         data_monthly_vix.loc[year_month, ticker_field] = data_field
+    #     data_monthly_vix = data_monthly_vix.reset_index(inplace=False)
+    #     print(data_monthly_vix)
+
     filter_field = ["ESA"]
     identifier="ticker"
-    result_monthly_vix, except_field = get_data_history_frequently_from_dsws(start_date_month, end_date, ticker_vix, identifier, filter_field_vix, use_ticker=False, split_number=1, monthly=True)
-    result_monthly, except_field = get_data_history_frequently_from_dsws(start_date_month, end_date, ticker_monthly_field, identifier, filter_field, use_ticker=False, split_number=1, monthly=True)
-    result_quarterly, except_field = get_data_history_frequently_from_dsws(start_date_quarter, end_date, ticker_quarterly_field, identifier, filter_field, use_ticker=False, split_number=1, quarterly=True)
-    print(result_monthly_vix)
+    result_monthly, except_field = get_data_history_frequently_from_dsws(start_date_month, end_date, list(ticker_monthly_field.keys()), identifier, filter_field, use_ticker=False, split_number=1, monthly=True)
+    result_quarterly, except_field = get_data_history_frequently_from_dsws(start_date_quarter, end_date, list(ticker_quarterly_field.keys()), identifier, filter_field, use_ticker=False, split_number=1, quarterly=True)
     print(result_monthly)
     print(result_quarterly)
-    if(len(result_monthly_vix)) > 0 :
-        result_monthly_vix = result_monthly_vix.reset_index(drop=True)
-        result_monthly_vix = result_monthly_vix.rename(columns={"index" : "trading_day"})
-        result_monthly_vix["year"] = pd.DatetimeIndex(result_monthly_vix["trading_day"]).year
-        result_monthly_vix["month"] = pd.DatetimeIndex(result_monthly_vix["trading_day"]).month
-        result_monthly_vix["year_month"] = result_monthly_vix["month"].astype(str) + "-" + result_monthly_vix["year"].astype(str)
-        data_monthly_vix = pd.DataFrame(result_monthly_vix["year_month"].unique(), columns =["year_month"])
-        data_monthly_vix = data_monthly_vix.set_index("year_month")
-        for index, row in result_monthly_vix.iterrows():
-            ticker_field = row["ticker"]
-            year_month = row["year_month"]
-            if (row["ticker"] == "CBOEVIX") :
-                    ticker_field = "cboevix"
-            elif (row["ticker"] == "VHSIVOL") :
-                    ticker_field = "vhsivol"
-            elif (row["ticker"] == "VSTOXXI") :
-                    ticker_field = "vstoxxi"
-            elif (row["ticker"] == "VKOSPIX") :
-                    ticker_field = "vkospix"
-            data_field = row["PI"]
-            data_monthly_vix.loc[year_month, ticker_field] = data_field
-        data_monthly_vix = data_monthly_vix.reset_index(inplace=False)
-        print(data_monthly_vix)
 
-    if(len(result_monthly)) > 0 :
-        result_monthly = result_monthly.reset_index()
-        result_monthly = result_monthly.drop(columns=["level_0"])
-        result_monthly = result_monthly.rename(columns={"index" : "trading_day"})
-        result_monthly = result_monthly.dropna()
-        result_monthly["trading_day"] = pd.to_datetime(result_monthly["trading_day"])
-        result_monthly["year"] = pd.DatetimeIndex(result_monthly["trading_day"]).year
-        result_monthly["month"] = pd.DatetimeIndex(result_monthly["trading_day"]).month
-        result_monthly["year_month"] = result_monthly["month"].astype(str) + "-" + result_monthly["year"].astype(str)
-        data_monthly = pd.DataFrame(result_monthly["year_month"].unique(), columns =["year_month"])
-        data_monthly = data_monthly.set_index("year_month")
-        for index, row in result_monthly.iterrows():
-            ticker_field = row["ticker"]
-            year_month = row["year_month"]
-            month = row["month"]
-            year = row["year"]
-            trading_day = row["trading_day"]
-            if (row["ticker"] == "USGBILL3") :
-                ticker_field = "usgbill3"
-            elif (row["ticker"] == "USINTER3") :
-                ticker_field = "usinter3"
-            elif (row["ticker"] == "JPMSHORT") :
-                ticker_field = "jpmshort"
-            elif (row["ticker"] == "EMGBOND.") :
-                ticker_field = "emgbond"
-            elif (row["ticker"] == "CHGBOND.") :
-                ticker_field = "chgbond"
-            elif (row["ticker"] == "EMIBOR3.") :
-                ticker_field = "emibor3"
-            data_field = row["ESA"]
-            data_monthly.loc[year_month, ticker_field] = data_field
-            data_monthly.loc[year_month, "month"] = month
-            data_monthly.loc[year_month, "year"] = year
-            data_monthly.loc[year_month, "trading_day"] = trading_day.replace(day=15)
-        data_monthly = data_monthly.reset_index(inplace=False)
-        data_monthly = data_monthly.sort_values(by="trading_day", ascending=False)
-        fred_data = get_fred_csv_monthly(start_date = start_date_month, end_date = end_date)
-        data_monthly = data_monthly.merge(fred_data, how="left", on=["year", "month"])
-        data_monthly.loc[data_monthly["month"].isin([1, 2, 3]), "quarter"] = 1
-        data_monthly.loc[data_monthly["month"].isin([4, 5, 6]), "quarter"] = 2
-        data_monthly.loc[data_monthly["month"].isin([7, 8, 9]), "quarter"] = 3
-        data_monthly.loc[data_monthly["month"].isin([10, 11, 12]), "quarter"] = 4
-        print(data_monthly)
-
-    if(len(result_quarterly)) > 0 :
-        result_quarterly = result_quarterly.rename(columns={"index": "trading_day"})
-        data_quarterly = result_quarterly.loc[result_quarterly["ticker"] == "CHGDP...C"][["trading_day"]]
-        result_quarterly["year"] = pd.DatetimeIndex(result_quarterly["trading_day"]).year
-        result_quarterly["month"] = pd.DatetimeIndex(result_quarterly["trading_day"]).month
-        data_quarterly["year"] = pd.DatetimeIndex(data_quarterly["trading_day"]).year
-        data_quarterly["month"] = pd.DatetimeIndex(data_quarterly["trading_day"]).month
-        data_quarterly = data_quarterly.set_index("month")
-        for index, row in result_quarterly.iterrows():
-            ticker_field = row["ticker"]
-            if (row["ticker"] == "CHGDP...C") :
-                ticker_field = "chgdp"
-            elif (row["ticker"] == "JPGDP...D") :
-                ticker_field = "jpgdp"
-            elif (row["ticker"] == "USGDP...D") :
-                ticker_field = "usgdp"
-            elif (row["ticker"] == "EMGDP...D") :
-                ticker_field = "emgdp"
-            month = row["month"]
-            data_field = row["ESA"]
-            data_quarterly.loc[month, ticker_field] = data_field
-            #data_quarterly.loc[month, "period_end"] = datetime.strptime("", "%Y-%m-%d")
-        data_quarterly = data_quarterly.reset_index(inplace=False)
-        data_quarterly.loc[data_quarterly["month"].isin([1, 2, 3]), "quarter"] = 1
-        data_quarterly.loc[data_quarterly["month"].isin([4, 5, 6]), "quarter"] = 2
-        data_quarterly.loc[data_quarterly["month"].isin([7, 8, 9]), "quarter"] = 3
-        data_quarterly.loc[data_quarterly["month"].isin([10, 11, 12]), "quarter"] = 4
-        for index, row in data_quarterly.iterrows():
-            if (row["quarter"] == 1):
-                period_end = str(row["year"]) + "-" + "03-31"
-            elif (row["quarter"] == 2):
-                period_end = str(row["year"]) + "-" + "06-30"
-            elif (row["quarter"] == 3):
-                period_end = str(row["year"]) + "-" + "09-30"
-            else:
-                period_end = str(row["year"]) + "-" + "12-31"
-            data_quarterly.loc[index, "period_end"] = datetime.strptime(period_end, "%Y-%m-%d")
-        # data_quarterly["year"] = np.where(data_quarterly["month"] == 12, data_quarterly["year"] + 1, data_quarterly["year"])
-        data_quarterly = data_quarterly.drop(columns=["month", "trading_day"])
-        print(data_quarterly)
-    result = data_monthly.merge(data_quarterly, how="left", on=["year", "quarter"])
-    result = result.merge(data_monthly_vix, how="left", on=["year_month"])
-    print(result)
-    print(result.columns)
-    result = result.drop(columns=["month", "year", "quarter", "year_month"])
-    result = result.dropna(subset=["period_end"])
-    print(result)
-    upsert_data_to_database(result, get_data_macro_monthly_table_name(), "trading_day", how="update", Text=True)
-    report_to_slack("{} : === Data MACRO Monthly Update Updated ===".format(datetimeNow()))
-    populate_macro_table()
+    result = pd.concat([result_monthly, result_quarterly], axis=0).dropna(how='any')      # combine monthly, weekly ingestion
+    if(len(result)) > 0 :
+        result = result.rename(columns={"index" : "trading_day"})
+        result["trading_day"] = pd.to_datetime(result["trading_day"])
+        result['ticker'] = result['ticker'].replace(ticker_monthly_field)
+        result['ticker'] = result['ticker'].replace(ticker_quarterly_field)
+        print(result)
+        result = pd.pivot_table(data=result, index=["trading_day"], columns=["ticker"], values="ESA").reset_index()
+        # result["year"] = pd.DatetimeIndex(result["trading_day"]).year
+        # result["month"] = pd.DatetimeIndex(result["trading_day"]).month
+        # result["year_month"] = result["month"].astype(str) + "-" + result["year"].astype(str)
+        # data_monthly = pd.DataFrame(result["year_month"].unique(), columns =["year_month"])
+        # data_monthly = data_monthly.set_index("year_month")
+        # for index, row in result.iterrows():
+        #     ticker_field = row["ticker"]
+        #     year_month = row["year_month"]
+        #     month = row["month"]
+        #     year = row["year"]
+        #     trading_day = row["trading_day"]
+        #     if (row["ticker"] == "USGBILL3") :
+        #         ticker_field = "usgbill3"
+        #     elif (row["ticker"] == "USINTER3") :
+        #         ticker_field = "usinter3"
+        #     elif (row["ticker"] == "JPMSHORT") :
+        #         ticker_field = "jpmshort"
+        #     elif (row["ticker"] == "EMGBOND.") :
+        #         ticker_field = "emgbond"
+        #     elif (row["ticker"] == "CHGBOND.") :
+        #         ticker_field = "chgbond"
+        #     elif (row["ticker"] == "EMIBOR3.") :
+        #         ticker_field = "emibor3"
+        #     data_field = row["ESA"]
+        #     data_monthly.loc[year_month, ticker_field] = data_field
+        #     data_monthly.loc[year_month, "month"] = month
+        #     data_monthly.loc[year_month, "year"] = year
+        #     data_monthly.loc[year_month, "trading_day"] = trading_day.replace(day=15)
+        # data_monthly = data_monthly.reset_index(inplace=False)
+        # data_monthly = data_monthly.sort_values(by="trading_day", ascending=False)
+        # fred_data = get_fred_csv_monthly(start_date = start_date_month, end_date = end_date)
+        # data_monthly = data_monthly.merge(fred_data, how="left", on=["year", "month"])
+        # data_monthly.loc[data_monthly["month"].isin([1, 2, 3]), "quarter"] = 1
+        # data_monthly.loc[data_monthly["month"].isin([4, 5, 6]), "quarter"] = 2
+        # data_monthly.loc[data_monthly["month"].isin([7, 8, 9]), "quarter"] = 3
+        # data_monthly.loc[data_monthly["month"].isin([10, 11, 12]), "quarter"] = 4
+        # print(data_monthly)
+    # if(len(result_quarterly)) > 0 :
+    #     result_quarterly = result_quarterly.rename(columns={"index": "trading_day"})
+    #     data_quarterly = result_quarterly.loc[result_quarterly["ticker"] == "CHGDP...C"][["trading_day"]]
+    #     result_quarterly["year"] = pd.DatetimeIndex(result_quarterly["trading_day"]).year
+    #     result_quarterly["month"] = pd.DatetimeIndex(result_quarterly["trading_day"]).month
+    #     data_quarterly["year"] = pd.DatetimeIndex(data_quarterly["trading_day"]).year
+    #     data_quarterly["month"] = pd.DatetimeIndex(data_quarterly["trading_day"]).month
+    #     data_quarterly = data_quarterly.set_index("month")
+    #     for index, row in result_quarterly.iterrows():
+    #         ticker_field = row["ticker"]
+    #         if (row["ticker"] == "CHGDP...C") :
+    #             ticker_field = "chgdp"
+    #         elif (row["ticker"] == "JPGDP...D") :
+    #             ticker_field = "jpgdp"
+    #         elif (row["ticker"] == "USGDP...D") :
+    #             ticker_field = "usgdp"
+    #         elif (row["ticker"] == "EMGDP...D") :
+    #             ticker_field = "emgdp"
+    #         month = row["month"]
+    #         data_field = row["ESA"]
+    #         data_quarterly.loc[month, ticker_field] = data_field
+    #         #data_quarterly.loc[month, "period_end"] = datetime.strptime("", "%Y-%m-%d")
+    #     data_quarterly = data_quarterly.reset_index(inplace=False)
+    #     data_quarterly.loc[data_quarterly["month"].isin([1, 2, 3]), "quarter"] = 1
+    #     data_quarterly.loc[data_quarterly["month"].isin([4, 5, 6]), "quarter"] = 2
+    #     data_quarterly.loc[data_quarterly["month"].isin([7, 8, 9]), "quarter"] = 3
+    #     data_quarterly.loc[data_quarterly["month"].isin([10, 11, 12]), "quarter"] = 4
+    #     for index, row in data_quarterly.iterrows():
+    #         if (row["quarter"] == 1):
+    #             period_end = str(row["year"]) + "-" + "03-31"
+    #         elif (row["quarter"] == 2):
+    #             period_end = str(row["year"]) + "-" + "06-30"
+    #         elif (row["quarter"] == 3):
+    #             period_end = str(row["year"]) + "-" + "09-30"
+    #         else:
+    #             period_end = str(row["year"]) + "-" + "12-31"
+    #         data_quarterly.loc[index, "period_end"] = datetime.strptime(period_end, "%Y-%m-%d")
+    #     # data_quarterly["year"] = np.where(data_quarterly["month"] == 12, data_quarterly["year"] + 1, data_quarterly["year"])
+    #     data_quarterly = data_quarterly.drop(columns=["month", "trading_day"])
+    #     print(data_quarterly)
+    # result = data_monthly.merge(data_quarterly, how="left", on=["year", "quarter"])
+    # result = result.merge(data_monthly_vix, how="left", on=["year_month"])
+        # result = result.drop(columns=["month", "year", "quarter", "year_month"])
+        # result = result.dropna(subset=["period_end"])
+        upsert_data_to_database(result, get_data_macro_monthly_table_name(), "trading_day", how="update", Text=True)
+        report_to_slack("{} : === Data MACRO Monthly Update Updated ===".format(datetimeNow()))
+        # populate_macro_table()
 
 def worldscope_report_date_format_change(data):
     ''' change format for report_date fetch from DSWS '''

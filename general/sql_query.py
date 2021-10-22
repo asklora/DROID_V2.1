@@ -487,6 +487,11 @@ def get_ingestion_name_source():
     data = read_query(query, table=get_ingestion_name_source_table_name(), alibaba=True)
     return data
 
+def get_ingestion_name_macro_source():
+    query = f"SELECT * FROM {get_ingestion_name_source_table_name()}_macro"
+    data = read_query(query, table=get_ingestion_name_source_table_name()+"_macro", alibaba=True)
+    return data
+
 def get_factor_rank():
     query = f"SELECT * FROM {get_factor_rank_table_name()}"
     data = read_query(query, table=get_factor_rank_table_name(), alibaba=True)
