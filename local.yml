@@ -15,8 +15,17 @@ services:
     links:
       - redis:redis
     restart: always
-  # asklora:
-  #   image: 
+  asklora:
+    container_name: asklora
+    image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/asklora_dev
+    command: bash -c "python manage.py runserver 0.0.0.0:9000 --settings=config.settings.local"
+    ports:
+      - "9000:9000"
+  asklora-celery:
+    container_name: asklora-celery
+    image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/asklora_dev
+    command: bash -c "export DJANGO_SETTINGS_MODULE=config.settings.local && celery -A core.services worker -l  INFO --hostname=asklora@dev --concurrency=5 -Q asklora-dev"
+    
   celery:
     container_name: Celery
     image: django/backend

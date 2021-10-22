@@ -1,4 +1,26 @@
 #!/bin/bash
+dockercheck(){
+if [ -x "$(command -v docker)" ]; then
+echo "Docker installed"
+else
+echo "Docker not installed"
+if [ "$(uname)" == "Darwin" ]; then
+echo "Please install docker here https://docs.docker.com/desktop/mac/install/"
+raise "ERROR: Docker not installed"
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+	./installer/install-docker.sh
+fi
+fi
+}
+composecheck(){
+if [ -x "$(command -v docker-compose)" ]; then
+echo "Docker Compose installed"
+else
+raise "ERROR: Docker Compose not installed"
+fi
+}
+
+
 login(){
 if [ -x "$(command -v aws)" ]; then
 	aws configure set aws_access_key_id AKIA2XEOTUNGWEQ43TB6
@@ -24,12 +46,16 @@ fi
 aws ecr get-login-password --region ap-east-1 | docker login --username AWS --password-stdin 736885973837.dkr.ecr.ap-east-1.amazonaws.com
 
 }
-
+appurl(){
+    echo "droid url: http://127.0.0.1:8000"
+    echo "asklora url: http://127.0.0.1:9000"
+}
 up(){
+dockercheck
+composecheck
 login
 docker-compose -f local.yml up -d --force-recreate
-echo "droid url: http://127.0.0.1:8000"
-echo "asklora url: http://127.0.0.1:9000"
+appurl
 
 }
 
@@ -65,6 +91,9 @@ celerylogs(){
 askloralogs(){
     docker logs --follow asklora
 }
+askloracelerylogs(){
+    docker logs --follow asklora-celery
+}
 
 
 help(){
@@ -73,6 +102,9 @@ help(){
     echo "./sandbox djangologs -> log django app"
     echo "./sandbox celerylogs -> log celery app"
     echo "./sandbox askloralogs -> log asklora app"
+    echo "./sandbox askloracelerylogs -> log asklora celery app"
+    echo "./sandbox checkapps -> Check status app"
+    echo "./sandbox appurl -> log asklora app"
 
 }
 $1
