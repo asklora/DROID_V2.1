@@ -12,7 +12,8 @@ from bot.data_download import get_currency_data
 from asgiref.sync import sync_to_async
 from general.slack import report_to_slack, report_to_slack_factor
 from general.firestore_query import (
-    change_null_to_zero, 
+    change_null_to_zero,
+    delete_firestore_universe, 
     update_to_firestore, 
     change_date_to_str, 
     get_price_data_firebase
@@ -20,6 +21,7 @@ from general.firestore_query import (
 from general.sql_query import (
     get_active_currency, 
     get_active_universe,
+    get_all_universe,
     get_bot_type, 
     get_industry, 
     get_industry_group, 
@@ -37,6 +39,13 @@ from general.sql_query import (
     get_user_profit_history,
     get_factor_calculation_formula,
     get_factor_current_used)
+
+def firebase_universe_delete():
+    universe = get_all_universe(active=True)
+    universe = universe.loc[universe["is_active"] == False]["ticker"].to_list()
+    print(universe)
+    for ticker in universe:
+        delete_firestore_universe(ticker)
 
 def factor_column_name_changes():
     ''' map factor name used in DB to name shown on APP '''
@@ -74,7 +83,7 @@ def firebase_universe_update(ticker=None, currency_code=None):
     4. ai_ratings
     5. bot informations
     '''
-
+    firebase_universe_delete()
     # Populate Universe
     all_universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     currency = get_active_currency(currency_code=currency_code)
