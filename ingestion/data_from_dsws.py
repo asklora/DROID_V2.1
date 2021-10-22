@@ -945,6 +945,7 @@ def update_fred_data_from_fred():
         report_to_slack("{} : === Fred Updated ===".format(datetimeNow()))
 
 def populate_ibes_table():
+    ''' (Update) obsolete '''
     table_name = get_data_ibes_table_name()
     start_date = backdate_by_month(30)
     ibes_data = get_data_ibes_monthly(start_date)
@@ -952,69 +953,54 @@ def populate_ibes_table():
     upsert_data_to_database(ibes_data, table_name, "uid", how="update", Text=True)
     report_to_slack("{} : === Data IBES Update Updated ===".format(datetimeNow()))
 
-
 def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=False):
-    end_date = dateNow()
-    start_date = backdate_by_month(1)
-    filter_field = ["EPS1TR12", "EPS1FD12", "EBD1FD12", "CAP1FD12", "I0EPS", "EPSI1MD", "SAL1FD12"]
+    ''' (Update) weekly ingestion of IBES data '''
 
+    # Prep 1. field: get data_worldscope_summary ingestion field from Table ingesion_name
+    df = get_ingestion_name_source()
+    filter_field = df.loc[df['ibes_monthly'], ['dsws_name', 'our_name']].values.tolist()
+
+    # Prep 2. ticker: make sure input ticker list is always active ticker
+    identifier = "ticker"
+    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+    tickers = universe["ticker"].to_list()
+    print(universe)
+
+    # Prep 3. period_end: for company without Dec year_end, there could be available field in future
+    end_date = dateNow()
+    start_date = dateNow()
     if(history):
         start_date = "2000-01-01"
 
-    identifier = "ticker"
-    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
-    print(universe)
-    if len(universe) > 0:
-        result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, monthly=True)
-    print("Error Ticker = " + str(except_field))
-    if len(except_field) == 0 :
-        second_result = []
-    else:
-        second_result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, except_field, identifier, filter_field, use_ticker=True, split_number=1, monthly=True)
-    try:
-        if(len(result) == 0):
-            result = second_result
-        elif(len(second_result) == 0):
-            result = result
-        else :
-            result = result.append(second_result)
-    except Exception as e:
-        result = second_result
-    if(len(result)) > 0 :
-        result = result.reset_index()
-        result = result.drop(columns=["level_0"])
+    # start ingestion
+    data = []
+    for field_dsws, field_rename in filter_field:
+        result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, tickers, identifier, [field_dsws],
+                                                                       use_ticker=True, split_number=1, monthly=True)
+        if(len(result)) > 0:
+            result = result.rename(columns={"index": "trading_day", field_dsws: field_rename})
+            data.append(result.set_index(["ticker", "trading_day"]))
+            print(result)
+            # result["year"] = pd.DatetimeIndex(result["trading_day"]).year
+            # result["month"] = pd.DatetimeIndex(result["trading_day"]).month
+            # result.loc[result["month"].isin([1, 2, 3]), "period_end"] = result["year"].astype(str) + "-" + "03-31"
+            # result.loc[result["month"].isin([4, 5, 6]), "period_end"] = result["year"].astype(str) + "-" + "06-30"
+            # result.loc[result["month"].isin([7, 8, 9]), "period_end"] = result["year"].astype(str) + "-" + "09-30"
+            # result.loc[result["month"].isin([10, 11, 12]), "period_end"] = result["year"].astype(str) + "-" + "12-31"
+            # result["year"] = np.where(result["month"].isin([1, 2]), result["year"] - 1, result["year"])
+            # result.loc[result["month"].isin([12, 1, 2]), "period_end"] = result["year"].astype(str) + "-" + "12-31"
+            # result.loc[result["month"].isin([3, 4, 5]), "period_end"] = result["year"].astype(str) + "-" + "03-31"
+            # result.loc[result["month"].isin([6, 7, 8]), "period_end"] = result["year"].astype(str) + "-" + "06-30"
+            # result.loc[result["month"].isin([9, 10, 11]), "period_end"] = result["year"].astype(str) + "-" + "09-30"
+            # result["year"] = np.where(result["month"].isin([1, 2]), result["year"] + 1, result["year"])
+            # result = result.drop(columns=["month", "year"])
 
-        #TODO: Change Name using TABLE
-        result = result.rename(columns={"EBD1FD12": "ebd1fd12",
-            "CAP1FD12": "cap1fd12",
-            "EPS1FD12": "eps1fd12",
-            "EPS1TR12": "eps1tr12",
-            "EPSI1MD": "epsi1md",
-            "SAL1FD12" : "sal1fd12",
-            "I0EPS" : "i0eps",
-            "index" : "trading_day"
-        })
-        result = uid_maker(result)
-
-        result["year"] = pd.DatetimeIndex(result["trading_day"]).year
-        result["month"] = pd.DatetimeIndex(result["trading_day"]).month
-
-        result.loc[result["month"].isin([1, 2, 3]), "period_end"] = result["year"].astype(str) + "-" + "03-31"
-        result.loc[result["month"].isin([4, 5, 6]), "period_end"] = result["year"].astype(str) + "-" + "06-30"
-        result.loc[result["month"].isin([7, 8, 9]), "period_end"] = result["year"].astype(str) + "-" + "09-30"
-        result.loc[result["month"].isin([10, 11, 12]), "period_end"] = result["year"].astype(str) + "-" + "12-31"
-
-        # result["year"] = np.where(result["month"].isin([1, 2]), result["year"] - 1, result["year"])
-        # result.loc[result["month"].isin([12, 1, 2]), "period_end"] = result["year"].astype(str) + "-" + "12-31"
-        # result.loc[result["month"].isin([3, 4, 5]), "period_end"] = result["year"].astype(str) + "-" + "03-31"
-        # result.loc[result["month"].isin([6, 7, 8]), "period_end"] = result["year"].astype(str) + "-" + "06-30"
-        # result.loc[result["month"].isin([9, 10, 11]), "period_end"] = result["year"].astype(str) + "-" + "09-30"
-        # result["year"] = np.where(result["month"].isin([1, 2]), result["year"] + 1, result["year"])
-        result = result.drop(columns=["month", "year"])
-        print(result)
-        upsert_data_to_database(result, get_data_ibes_monthly_table_name(), "uid", how="update", Text=True)
-        report_to_slack("{} : === Data IBES Monthly Update Updated ===".format(datetimeNow()))
-        populate_ibes_table()
+    result = pd.concat(data, axis=1)
+    result = result.reset_index()
+    result = uid_maker(result)
+    upsert_data_to_database(result, get_data_ibes_monthly_table_name(), "uid", how="update", Text=True)
+    report_to_slack("{} : === Data IBES Monthly Update Updated ===".format(datetimeNow()))
+    # populate_ibes_table()
 
 def get_fred_csv_monthly(start_date = backdate_by_month(6), end_date = dateNow()):
     print(f"=== Read Fred Data ===")
