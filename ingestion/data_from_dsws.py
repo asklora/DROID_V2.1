@@ -1258,7 +1258,7 @@ def worldscope_quarter_report_date_from_dsws(ticker = None, currency_code=None, 
             print("{} : === ERROR === : {}".format(dateNow(), e))
 
 def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, history=False):
-    ''' ingestion quarterly worldscope fields '''
+    ''' (updated) ingestion quarterly worldscope fields for missing fields only '''
 
     # Prep 1. field: get data_worldscope_summary ingestion field from Table ingesion_name
     df = get_ingestion_name_source()
@@ -1270,7 +1270,7 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
     tickers = universe["ticker"].to_list()
 
     # Prep 3. period_end: for company without Dec year_end, there could be available field in future
-    end_date = forwarddate_by_month(0)       #TODO: DEBUG (9)
+    end_date = forwarddate_by_month(9)
     start_date = backdate_by_month(6)  # ingest weekly, every time lookback to 6m ago
     if (history):  # if re-ingest all
         start_date = "2000-03-31"
@@ -1278,32 +1278,32 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
 
     # start ingestion
     for field_dsws, field_rename in filter_field:
-        data_field = []
+        data_missing_data = []
+        data_ingest = []
         for period_end in period_end_list:
             print(field_dsws, period_end)
 
-            # only fetch missing field ticker       #TODO: DEBUG
+            # only fetch missing field ticker
             missing_data = get_missing_field_ticker_list(table_name=get_data_worldscope_summary_table_name(),
                                                          field=field_rename, tickers=tickers, period_end=period_end)
-            # missing_tickers_universe = universe.loc[universe['ticker'].isin(missing_data['ticker'].to_list()), ['ticker']]
-            # if len(missing_tickers_universe)==0:    # if no missing continue with next period/field
-            #     continue
-
-            missing_tickers_universe = universe[["ticker"]]      #TODO: DEBUG
+            missing_tickers_universe = universe.loc[universe['ticker'].isin(missing_data['ticker'].to_list()), ['ticker']]
+            if len(missing_tickers_universe)==0:    # if no missing continue with next period/field
+                continue
+            data_missing_data.append(missing_data)
 
             # fetch from dsws
             result, error_ticker = get_data_history_from_dsws(period_end, period_end, missing_tickers_universe, identifier,
                                                               [field_dsws], use_ticker=True, split_number=1, dsws=False)
-            if(len(result) == 0):   # if no return
-                # result = missing_tickers_universe
-                # result[field_dsws] = np.nan
-                # result["level_1"] = str_to_date(period_end)
-                continue
-
-            data_field.append(result)
+            if(len(result)==0):
+                continue            # if no return for (period, field) -> next period_end
+            data_ingest.append(result)
 
         # concat single field ingested data for each ticker
-        result = pd.concat(data_field, axis=0)
+        result = pd.concat(data_ingest, axis=0)
+        if len(result)==0:
+            continue                # if no return for (field) -> next field
+
+        missing_data = pd.concat(data_missing_data, axis=0)
         result = result.rename(columns = {"level_1" : "period_end", field_dsws: field_rename})  # rename
         result = result[["ticker", "period_end", field_rename]]
         print(result)
@@ -1318,6 +1318,7 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
         result = result.dropna(subset=[field_rename], inplace=False)
 
         # update ingested results to missing_data DataFrame
+        missing_data['period_end'] = pd.to_datetime(missing_data['period_end'])
         missing_data = missing_data.set_index(["ticker", "period_end"])
         result = result.set_index(["ticker", "period_end"])
         missing_data[field_rename] = result[field_rename]
@@ -1349,10 +1350,12 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
         # result["fiscal_quarter_end"] = result["period_end"].astype(str)
         # result["fiscal_quarter_end"] = result["fiscal_quarter_end"].str.replace("-", "", regex=True)
         result = result.drop(columns=["month", "day"])
-        worldscope_identifier = universe[["ticker", "worldscope_identifier"]]
-        result = result.merge(worldscope_identifier, how="left", on="ticker")
+        worldscope_identifier = universe[["ticker", "worldscope_identifier"]].set_index(['ticker'])['worldscope_identifier'].to_dict()
+        result['worldscope_identifier'] = result['ticker'].map(worldscope_identifier)
+        # result = result.merge(worldscope_identifier, how="left", on="ticker")
         result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
-        print(result)
+
+        # upsert to database for each field ingested
         upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
 
     report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
