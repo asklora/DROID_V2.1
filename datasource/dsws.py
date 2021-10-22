@@ -226,13 +226,13 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
         else:
             universelist = [univ]
         try:
-            update_ingestion_count(source='dsws', n_ingest=len(universelist)*len(field), dsws=dsws)
             if(monthly):
                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="M")
             elif(quarterly):
                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="Q")
             else:
                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="D")
+            update_ingestion_count(source='dsws', n_ingest=result.fillna(0).count().count(), dsws=dsws)
             if (fundamentals_score):
                 result[identifier] = universelist
                 result = result.groupby(identifier, as_index=False).last()

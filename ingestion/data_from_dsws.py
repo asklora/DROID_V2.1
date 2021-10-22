@@ -67,6 +67,7 @@ from general.sql_query import (
     get_specific_volume_avg,
     get_universe_rating, 
     get_vix,
+    get_vix_since,
     get_master_ohlcvtr_data,
     get_ingestion_name_source,
     get_currency_code_ibes_ws,
@@ -1048,6 +1049,10 @@ def update_macro_data_monthly_from_dsws():
     start_date_month = backdate_by_month(3)
     start_date_quarter = backdate_by_month(6)
 
+    result_vix = get_vix_since(date=start_date_quarter).drop(columns=["uid"])
+    result_vix = result_vix.set_index(["trading_day","vix_id"])["vix_value"].unstack()
+    result_vix.columns = [x.lower() for x in result_vix.columns.to_list()]
+    result_vix = result_vix.resample('D').ffill().reset_index()
     # ticker_vix = ["CBOEVIX", "VHSIVOL", "VSTOXXI", "VKOSPIX"]
     # filter_field_vix = ["PI"]
     # result_monthly_vix, except_field = get_data_history_frequently_from_dsws(start_date_month, end_date, ticker_vix, identifier, filter_field_vix, use_ticker=False, split_number=1, monthly=True)
@@ -1091,6 +1096,7 @@ def update_macro_data_monthly_from_dsws():
         result['ticker'] = result['ticker'].replace(ticker_quarterly_field)
         print(result)
         result = pd.pivot_table(data=result, index=["trading_day"], columns=["ticker"], values="ESA").reset_index()
+        result = result.merge(result_vix, on=["trading_day"], how='left')
         # result["year"] = pd.DatetimeIndex(result["trading_day"]).year
         # result["month"] = pd.DatetimeIndex(result["trading_day"]).month
         # result["year_month"] = result["month"].astype(str) + "-" + result["year"].astype(str)

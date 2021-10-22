@@ -41,6 +41,7 @@ from general.table_name import (
     get_user_profit_history_table_name,
     get_user_transaction_table_name,
     get_vix_table_name,
+    get_data_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
     get_universe_rating_table_name,
@@ -394,6 +395,12 @@ def get_vix(vix_id=None):
     data = read_query(query, table=get_vix_table_name())
     return data
 
+def get_vix_since(vix_id=None, date=None):
+    query = f"select * from {get_data_vix_table_name()} WHERE trading_day > '{date}'"
+    if type(vix_id) != type(None):
+        query += f" where vix_id in {tuple_data(vix_id)}"
+    data = read_query(query, table=get_data_vix_table_name())
+    return data
 
 def get_fundamentals_score(ticker=None, currency_code=None):
     query = f"select * from {get_fundamental_score_table_name()} "
