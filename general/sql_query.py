@@ -267,6 +267,44 @@ def get_worldscope_period_end_list(start_date="2000-01-01", end_date=dateNow()):
     data = read_query(query, table=table_name)
     return data["period_end"].to_list()
 
+def get_missing_field_ticker_list(table_name, field=None, tickers=None, period_end=None):
+    '''
+    select ticker with missing field & time (suitable for pivot version tables, e.g. data_worldscope_summary,
+    data_ibes_monthly, & data_fundamental_score)
+
+    Parameters
+    ----------
+    table_name :    Str, DB Table Name to search for missing (i.e. Table to be ingested)
+    field :         Str, missing field
+    ticker :        List, list of ticker where may contain missing field
+    period_end :    Date, Timestamp in DB for missing field
+
+    Returns
+    -------
+    Full dataframe (i.e. all columns) of tickers with missing fields
+    '''
+
+    # test if period_end exists in Table
+    query1 = f"SELECT ticker FROM {table_name} WHERE period_end='{period_end}'"
+    data1 = read_query(query1, table=table_name)
+
+    if len(data1) == 0:
+        # if period_end not exists
+        query_miss = f"SELECT * FROM {table_name} LIMIT 1"
+        data_miss = read_query(query_miss, table=table_name)
+        data_miss = pd.DataFrame(index=range(len(tickers)), columns=data_miss.columns.to_list())
+        data_miss['ticker'] = tickers
+        data_miss['period_end'] = period_end
+        return data_miss
+    else:
+        # if period_end exists
+        if len(tickers)==1:
+            query = f"SELECT * FROM {table_name} WHERE {field} IS NULL AND period_end='{period_end}' AND ticker='{tickers[0]}'"
+        else:
+            query = f"SELECT * FROM {table_name} WHERE {field} IS NULL AND period_end='{period_end}' AND ticker IN {tuple(tickers)}"
+        data = read_query(query, table=table_name)
+        return data
+
 def get_active_universe_by_country_code(country_code, method=True):
     if method:
         query = f"select * from {get_universe_table_name()} where is_active=True and country_code='{country_code}' order by ticker"
@@ -851,3 +889,24 @@ def get_orders_position_performance(user_id=None, ticker=None, currency_code=Non
         query += "order by created DESC;"
     data = read_query(query, table_name, cpu_counts=True)
     return data
+
+def rename_table_columns():
+    ''' obsolete '''
+    from global_vars import DB_URL_ALIBABA_DEV
+    engine = create_engine(DB_URL_ALIBABA_DEV, max_overflow=-1, isolation_level="AUTOCOMMIT")
+
+    df = get_ingestion_name_source()
+    filter_field = df.loc[df['ibes_monthly'], ['dsws_name','our_name']].values
+    table_name = 'factor_formula_ratios'
+
+    with engine.connect() as conn:
+        df = pd.read_sql(f'SELECT * From {table_name}', conn)
+        for col in ['field_num', 'field_denom']:
+            x = df[col].to_list()
+            for field_dsws, field_rename in filter_field:
+                # old_name = 'fn_'+str(int(field_dsws[2:-1]))
+                old_name = field_dsws.lower()
+                x = [i.replace(old_name, field_rename) if i else i for i in x]
+            df[col] = x
+        df.to_sql(table_name, conn, if_exists='replace', index=False)
+    engine.dispose()

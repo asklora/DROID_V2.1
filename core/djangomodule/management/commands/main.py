@@ -156,20 +156,20 @@ class Command(BaseCommand):
                 interest_daily_update()
                 
         
-            if(options["worldscope"]):
-                if(d in ["1", "2", "3", "4", "5", "6", "7", "01", "02", "03", "04", "05", "06", "07"]):
-                    status = "Worldscope Ingestion"
-                    ticker = split_ticker(options["currency_code"], split=options["split"])
-                    print(ticker)
-                    update_ingestion_update_time('data_worldscope_summary', finish=False)
-                    update_worldscope_quarter_summary_from_dsws(ticker=ticker)
-                    status = "Worldscope Report Date Ingestion"
-                    worldscope_quarter_report_date_from_dsws(ticker = ticker)
-                    update_ingestion_update_time('data_worldscope_summary', finish=True)
-                else:
-                    print(dateNow())
-                    print(d)
-                    print("Not in First MOnth Days")
+            if(options["worldscope"]):      # change to weekly but only missing
+                # if(d in ["1", "2", "3", "4", "5", "6", "7", "01", "02", "03", "04", "05", "06", "07"]):
+                update_ingestion_update_time('data_worldscope_summary', finish=False)
+                status = "Worldscope Ingestion"
+                update_worldscope_quarter_summary_from_dsws(ticker=ticker)
+                ticker = split_ticker(options["currency_code"], split=options["split"])
+                print(ticker)
+                status = "Worldscope Report Date Ingestion"
+                worldscope_quarter_report_date_from_dsws(ticker = ticker)
+                update_ingestion_update_time('data_worldscope_summary', finish=True)
+                # else:
+                #     print(dateNow())
+                #     print(d)
+                #     print("Not in First MOnth Days")
 
             if(options["fundamentals_score"]):
                 status = "Fundamentals Score Ingestion"
