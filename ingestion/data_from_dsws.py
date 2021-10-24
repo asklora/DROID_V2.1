@@ -332,15 +332,6 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
         2. other fields directly retrieved from data_fundamental_score / data_ibes_monthly in calculation
     '''
 
-    # df = get_ingestion_name_source()
-    # print(df)
-    # filter_field = ["EPS1TR12", "WC05480", "WC18100A", "WC18262A", "WC08005",
-    #                 "WC18309A", "WC18311A", "WC18199A", "WC08372", "WC05510", "WC08636A",
-    #                 "BPS1FD12", "EBD1FD12", "EVT1FD12", "EPS1FD12", "SAL1FD12", "CAP1FD12",
-    #                 "WC02999", "WC02001", "WC03101", "WC03501", "WC18312A", "WC02101",
-    #                 "WC18264", "WC18267", "WC01451", "WC18810", "WC02401", "WC18274",
-    #                 "WC07211", "i0eps"]
-
     print("{} : === Fundamentals Score Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
     # start_date = backdate_by_month(12)
@@ -1302,7 +1293,6 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
 
         # start ingestion
         for field_dsws, field_rename in filter_field:
-            data_missing_data = []
             data_ingest = []
             for period_end in period_end_list:
                 print(field_dsws, period_end)
@@ -1313,7 +1303,6 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
                 missing_tickers_universe = universe.loc[universe['ticker'].isin(missing_data['ticker'].to_list()), ['ticker']]
                 if len(missing_tickers_universe)==0:    # if no missing continue with next period/field
                     continue
-                data_missing_data.append(missing_data)
 
                 # missing_tickers_universe = universe[["ticker"]]
 
@@ -1323,11 +1312,6 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
                 if(len(result)==0):
                     continue            # if no return for (period, field) -> next period_end
                 data_ingest.append(result)
-
-            if len(data_missing_data)==0:
-                continue                # if no missing_field for (field) -> next field
-            else:
-                missing_data = pd.concat(data_missing_data, axis=0)
 
             # concat single field ingested data for each ticker
             if len(data_ingest)==0:
@@ -1352,42 +1336,19 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
                 result[field_rename] = result[field_rename].astype(float)
                 result = result.dropna(subset=[field_rename], inplace=False)
 
-            # update ingested results to missing_data DataFrame
-            missing_data['period_end'] = pd.to_datetime(missing_data['period_end'])
-            missing_data = missing_data.set_index(["ticker", "period_end"])
-            result = result.set_index(["ticker", "period_end"])
-            missing_data[field_rename] = result[field_rename]
-            result = missing_data.reset_index(drop=False)
-
             # add Date reference columns
             result["period_end"] = pd.to_datetime(result["period_end"])
             result["year"] = pd.DatetimeIndex(result["period_end"]).year
             result["month"] = pd.DatetimeIndex(result["period_end"]).month
             result["day"] = pd.DatetimeIndex(result["period_end"]).day
-            for index, row in result.iterrows():
-                if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
-                    result.loc[index, "month"] = 3
-                    result.loc[index, "frequency_number"] = int(1)
-                elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31) :
-                    result.loc[index, "month"] = 6
-                    result.loc[index, "frequency_number"] = int(2)
-                elif (result.loc[index, "month"] <= 9) and (result.loc[index, "day"] <= 31) :
-                    result.loc[index, "month"] = 9
-                    result.loc[index, "frequency_number"] = int(3)
-                else:
-                    result.loc[index, "month"] = 12
-                    result.loc[index, "frequency_number"] = int(4)
-                result.loc[index, "period_end"] = datetime(result.loc[index, "year"], result.loc[index, "month"], 1)
+            result["frequency_number"] = (result["month"]/3).astype(int)
             result["period_end"] = result["period_end"].dt.to_period("M").dt.to_timestamp("M")
             result["period_end"] = pd.to_datetime(result["period_end"])
 
             result = uid_maker(result, trading_day="period_end")
-            # result["fiscal_quarter_end"] = result["period_end"].astype(str)
-            # result["fiscal_quarter_end"] = result["fiscal_quarter_end"].str.replace("-", "", regex=True)
             result = result.drop(columns=["month", "day"])
             worldscope_identifier = universe[["ticker", "worldscope_identifier"]].set_index(['ticker'])['worldscope_identifier'].to_dict()
             result['worldscope_identifier'] = result['ticker'].map(worldscope_identifier)
-            # result = result.merge(worldscope_identifier, how="left", on="ticker")
             result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
 
             # upsert to database for each field ingested
