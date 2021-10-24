@@ -58,6 +58,8 @@ from general.sql_query import (
     get_factor_calculation_formula,
     get_factor_rank,
     get_fundamentals_score,
+    get_worldscope_summary_latest,
+    get_ibes_monthly_latest,
     get_last_close_industry_code,
     get_currency_fx_rate_dict,
     get_max_last_ingestion_from_universe, 
@@ -76,7 +78,8 @@ from general.sql_query import (
     get_ingestion_name_macro_source
 )
 from general.date_process import (
-    backdate_by_day, 
+    backdate_by_day,
+    backdate_by_week,
     backdate_by_month,
     dateNow, 
     datetimeNow, 
@@ -456,23 +459,32 @@ def score_update_vol_rs(list_of_start_end, days_in_year=256):
 
     return final_tri
 
-def score_update_stock_return(list_of_start_end):
+def score_update_stock_return(list_of_start_end_month, list_of_start_end_week):
     """ Calculate specific period stock return (months) """
 
     df = pd.DataFrame(get_active_universe()["ticker"])
 
-    for l in list_of_start_end:
-        name_col = f"stock_return_{l[0]}_{l[1]}"
+    for l in list_of_start_end_month:         # stock return (month)
+        name_col = f"stock_return_r{l[1]}_{l[0]}"
         tri_start = get_specific_tri_avg(backdate_by_month(l[0]), avg_days=7, tri_name=f"tri_{l[0]}m")
         tri_end = get_specific_tri_avg(backdate_by_month(l[1]), avg_days=7, tri_name=f"tri_{l[1]}m")
         tri = tri_start.merge(tri_end, how="left", on="ticker")
-        tri[name_col] = tri[f"tri_{l[0]}m"] / tri[f"tri_{l[1]}m"]
+        tri[name_col] = tri[f"tri_{l[0]}m"] / tri[f"tri_{l[1]}m"]-1
+        df = df.merge(tri[["ticker", name_col]], how="left", on="ticker")
+        print(df)
+
+    for l in list_of_start_end_week:         # stock return (week)
+        name_col = f"stock_return_ww{l[1]}_{l[0]}"
+        tri_start = get_specific_tri_avg(backdate_by_week(l[0]), avg_days=7, tri_name=f"tri_{l[0]}w")
+        tri_end = get_specific_tri_avg(backdate_by_week(l[1]), avg_days=7, tri_name=f"tri_{l[1]}w")
+        tri = tri_start.merge(tri_end, how="left", on="ticker")
+        tri[name_col] = tri[f"tri_{l[0]}w"] / tri[f"tri_{l[1]}w"]-1
         df = df.merge(tri[["ticker", name_col]], how="left", on="ticker")
         print(df)
 
     return df
 
-def score_update_fx_conversion(df):
+def score_update_fx_conversion(df, ingestion_source):
     """ Convert all columns to USD for factor calculation (DSS, WORLDSCOPE, IBES using different currency) """
 
     org_cols = df.columns.to_list()     # record original columns for columns to return
@@ -487,7 +499,6 @@ def score_update_fx_conversion(df):
     df['fx_ibes'] = df['currency_code_ibes'].map(fx)
     df['fx_ws'] = df['currency_code_ws'].map(fx)
 
-    ingestion_source = get_ingestion_name_source().dropna(subset=['score_name'])
     ingestion_source = ingestion_source.loc[ingestion_source['non_ratio']]     # no fx conversion for ratio items
 
     for name, g in ingestion_source.groupby(['source']):        # convert for ibes / ws
@@ -498,20 +509,20 @@ def score_update_fx_conversion(df):
 
     return df[org_cols]
 
-def score_update_factor_ratios(df):
+def score_update_factor_ratios(df, formula, ingestion_source):
     """ Calculate all factor used referring to DB ratio table """
 
-    formula = get_factor_calculation_formula()
     print(df.columns)
-
-    df = score_update_fx_conversion(df)
+    df = score_update_fx_conversion(df, ingestion_source)
 
     # Prepare for field requires add/minus
     add_minus_fields = formula[["field_num", "field_denom"]].dropna(how="any").to_numpy().flatten()
     add_minus_fields = [i for i in list(set(add_minus_fields)) if any(["-" in i, "+" in i, "*" in i])]
+    add_minus_fields_1q = formula.loc[formula['name'].str[-3:]=='_1q', ["field_num", "field_denom"]].dropna(how="any").to_numpy().flatten()
+    add_minus_fields_1y = formula.loc[formula['name'].str[-4:]=='_1yr', ["field_num", "field_denom"]].dropna(how="any").to_numpy().flatten()
 
-    for i in add_minus_fields:
-        x = [op.strip() for op in i.split()]
+    def field_calc(df, x):
+        ''' transform fields need calculation before ratio calculation '''
         if x[0] in "*+-": raise Exception("Invalid formula")
         temp = df[x[0]].copy()
         n = 1
@@ -525,7 +536,18 @@ def score_update_factor_ratios(df):
             else:
                 raise Exception(f"Unexpected operand/operator: {x[n]}")
             n += 2
-        df[i] = temp
+        return temp
+
+    for i in add_minus_fields:
+        x = [op.strip() for op in i.split()]
+        df[i] = field_calc(df, x)
+    for i in add_minus_fields_1q:
+        x = [op.strip()+'_1q'  if len(op)>1 else op.strip() for op in i.split()]
+        df[i] = field_calc(df, x)
+    for i in add_minus_fields_1y:
+        x = [op.strip()+'_1y'  if len(op)>1 else op.strip() for op in i.split()]
+        df[i] = field_calc(df, x)
+
 
     # a) Keep original values
     keep_original_mask = formula["field_denom"].isnull() & formula["field_num"].notnull()
@@ -539,9 +561,10 @@ def score_update_factor_ratios(df):
                          (formula["field_num"]!= formula["field_denom"])].to_dict(orient="records"):  # minus calculation for ratios
         df[r["name"]] = df[r["field_num"]] / df[r["field_denom"]]
 
-    return df, formula.set_index(["name"])
+    return df
 
 def score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_rank):
+    ''' scale fundamental score '''
 
     fundamentals['dummy'] = True
     groupby_col = ['currency_code']  # or 'dummy'
@@ -746,6 +769,13 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
 
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
     ''' Update: '''
+
+    # Ingest 0: table formula for calculation
+    factor_formula = get_factor_calculation_formula()       # formula for ratio calculation
+    factor_rank_1w = get_factor_rank('weekly1')             # 1w rank for current best score
+    factor_rank_1m = get_factor_rank('monthly1')            # 1m rank
+    ingestion_source = get_ingestion_name_source()          # ingestion name & source
+
     # Ingest 1: DLPA & Universe
     print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
     universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
@@ -756,10 +786,25 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         if any(universe_rating[[col]].value_counts()/len(universe_rating) > .95):
             universe_rating[[col]] = np.nan
 
-    # Ingest 2: fundamental score
+    # Ingest 2: fundamental score (Update: for mkt_cap/E/S/G only)
     print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
     fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
+    fundamentals_score = fundamentals_score.filter(['ticker', 'mkt_cap','social','governance','environment'])
     print(fundamentals_score)
+
+    # Ingest 3: worldscope_summary & data_ibes_summary (Update: for mkt_cap/E/S/G only)
+    print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
+    quarter_col = factor_formula.loc[factor_formula['name'].str[-3:]=='_1q', 'field_denom'].to_list()
+    quarter_col = [i for x in quarter_col for i in x.split(' ')  if not any(['-' in i, '+' in i, '*' in i])]
+    year_col = factor_formula.loc[factor_formula['name'].str[-4:]=='_1yr', 'field_denom'].to_list()
+    year_col = [i for x in year_col for i in x.split(' ')  if not any(['-' in i, '+' in i, '*' in i])]
+    ibes_col = ingestion_source.loc[ingestion_source['source']=='ibes','our_name'].to_list()
+    ws_col = ingestion_source.loc[ingestion_source['source']=='ws','our_name'].to_list()
+    ws_latest = get_worldscope_summary_latest(quarter_col=list(set(quarter_col) & set(ws_col)), year_col=list(set(year_col) & set(ws_col)))
+    ws_latest = ws_latest.drop(columns=['mkt_cap'])     # use daily mkt_cap from fundamental_score
+    print(ws_latest)
+    ibes_latest = get_ibes_monthly_latest(quarter_col=list(set(quarter_col) & set(ibes_col)), year_col=list(set(year_col) & set(ibes_col)))
+    print(ibes_latest)
 
     # get last trading price for factor calculation
     close_price = get_last_close_industry_code(ticker=ticker, currency_code=currency_code)
@@ -773,7 +818,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print(pred_mean)
 
     # get different period stock return
-    tri = score_update_stock_return(list_of_start_end=[[0,1],[2,6],[6,12]])
+    tri = score_update_stock_return(list_of_start_end_month=[[0,1],[2,6],[7,12]], list_of_start_end_week=[[0,1],[1,2],[2,4]])
     print(tri)
 
     # get last week average volume
@@ -784,15 +829,15 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     # merge scores used for calculation
     fundamentals_score = close_price.merge(fundamentals_score, how="left", on="ticker")
+    fundamentals_score = fundamentals_score.merge(ws_latest, how="left", on="ticker")
+    fundamentals_score = fundamentals_score.merge(ibes_latest, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(vol, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(pred_mean, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(tri, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(volume, how="left", on="ticker")
 
     # calculate ratios refering to table X
-    fundamentals_score, factor_formula = score_update_factor_ratios(fundamentals_score)
-
-    factor_rank = get_factor_rank()
+    fundamentals_score = score_update_factor_ratios(fundamentals_score, factor_formula, ingestion_source)
 
     # for currency not predicted by Factor Model -> Use factor of USD
     universe_currency_code = get_active_universe()['currency_code'].unique()

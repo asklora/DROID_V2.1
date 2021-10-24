@@ -268,6 +268,39 @@ def get_worldscope_period_end_list(start_date="2000-01-01", end_date=dateNow()):
     data = read_query(query, table=table_name)
     return data["period_end"].to_list()
 
+
+def get_worldscope_summary_latest(quarter_col, year_col):
+    ''' get latest record from data_worldscope_summary '''
+    table_name = get_data_worldscope_summary_table_name()
+    start_date = backdate_by_year(2)
+    query = f"select * from {table_name} where period_end>='{start_date}' order by ticker, period_end ASC"
+    data = read_query(query, table=table_name)
+    num_col = data.select_dtypes(float).columns.to_list()
+    data[num_col] = data.groupby('ticker')[num_col].ffill()       # ffill for missing fields
+    for col in quarter_col:
+        data[col+'_1q'] = data.groupby('ticker')[col].shift(1)      # add quarter columns for growth ratio calc
+    for col in year_col:
+        data[col+'_1y'] = data.groupby('ticker')[col].shift(4)
+    data = data.groupby('ticker').last().reset_index()
+    return data.drop(columns=['uid','worldscope_identifier','year','fiscal_quarter_end','frequency_number','period_end','report_date'])
+
+
+def get_ibes_monthly_latest(quarter_col, year_col):
+    ''' get latest record from data_ibes_monthly '''
+    table_name = get_data_ibes_monthly_table_name()
+    start_date = backdate_by_year(2)
+    query = f"select * from {table_name} where period_end>='{start_date}' order by ticker, period_end ASC"
+    data = read_query(query, table=table_name)
+    num_col = data.select_dtypes(float).columns.to_list()
+    data[num_col] = data.groupby('ticker')[num_col].ffill()  # ffill for missing fields
+    for col in quarter_col:
+        data[col + '_1q'] = data.groupby('ticker')[col].shift(1)  # add quarter columns for growth ratio calc
+    for col in year_col:
+        data[col + '_1y'] = data.groupby('ticker')[col].shift(4)
+    data = data.groupby('ticker').last().reset_index()
+    return data.drop(columns=['uid','trading_day','period_end'])
+
+
 def get_missing_field_ticker_list(table_name, field=None, tickers=None, period_end=None):
     '''
     select ticker with missing field & time (suitable for pivot version tables, e.g. data_worldscope_summary,
@@ -499,8 +532,8 @@ def get_ingestion_name_macro_source():
     data = read_query(query, table=get_ingestion_name_source_table_name()+"_macro", alibaba=True)
     return data
 
-def get_factor_rank():
-    query = f"SELECT * FROM {get_factor_rank_table_name()}"
+def get_factor_rank(score_type):
+    query = f"SELECT * FROM {get_factor_rank_table_name()}_{score_type}"
     data = read_query(query, table=get_factor_rank_table_name(), alibaba=True)
     return data
 
