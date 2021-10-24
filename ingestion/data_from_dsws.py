@@ -327,82 +327,78 @@ def update_vix_from_dsws(vix_id=None, history=False):
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
 def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
-    ''' weekly update data_fundamental_score '''
+    ''' (Update) weekly update data_fundamental_score:
+        1. now only ingest ESG score to data_fundamental_score
+        2. other fields directly retrieved from data_fundamental_score / data_ibes_monthly in calculation
+    '''
 
-    df = get_ingestion_name_source()
-    df = df.loc[df['fundamental_score']]
-    print(df)
-
-    filter_field = ["EPS1TR12", "WC05480", "WC18100A", "WC18262A", "WC08005",
-                    "WC18309A", "WC18311A", "WC18199A", "WC08372", "WC05510", "WC08636A",
-                    "BPS1FD12", "EBD1FD12", "EVT1FD12", "EPS1FD12", "SAL1FD12", "CAP1FD12",
-                    "WC02999", "WC02001", "WC03101", "WC03501", "WC18312A", "WC02101",
-                    "WC18264", "WC18267", "WC01451", "WC18810", "WC02401", "WC18274",
-                    "WC07211", "i0eps"]
-    print(df)
-
-
-
+    # df = get_ingestion_name_source()
+    # print(df)
+    # filter_field = ["EPS1TR12", "WC05480", "WC18100A", "WC18262A", "WC08005",
+    #                 "WC18309A", "WC18311A", "WC18199A", "WC08372", "WC05510", "WC08636A",
+    #                 "BPS1FD12", "EBD1FD12", "EVT1FD12", "EPS1FD12", "SAL1FD12", "CAP1FD12",
+    #                 "WC02999", "WC02001", "WC03101", "WC03501", "WC18312A", "WC02101",
+    #                 "WC18264", "WC18267", "WC01451", "WC18810", "WC02401", "WC18274",
+    #                 "WC07211", "i0eps"]
 
     print("{} : === Fundamentals Score Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
-    start_date = backdate_by_month(12)
-    start_date2 = backdate_by_month(24)
+    # start_date = backdate_by_month(12)
+    start_date = backdate_by_month(24)
     identifier = "ticker"
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
     print(universe)
     if(len(universe)):
-
-
-        static_field = ["ENSCORE","SOSCORE","CGSCORE"]
-        column_name = {"EPS1TR12": "eps", "WC05480": "bps", "WC18100A": "ev",
-            "WC18262A": "ttm_rev","WC08005": "mkt_cap","WC18309A": "ttm_ebitda",
-            "WC18311A": "ttm_capex","WC18199A": "net_debt","WC08372": "roe",
-            "WC05510": "cfps","WC08636A": "peg","BPS1FD12" : "bps1fd12",
-            "EBD1FD12" : "ebd1fd12","EVT1FD12" : "evt1fd12","EPS1FD12" : "eps1fd12",
-            "SAL1FD12" : "sal1fd12","CAP1FD12" : "cap1fd12",
-            "ENSCORE" : "environment","SOSCORE" : "social",
-            "CGSCORE" : "goverment", 
-            "WC02999" : "total_asset", "WC02001" : "cash", 
-            "WC03101" : "current_asset", "WC03501" : "equity", 
-            "WC18312A" : "ttm_cogs", "WC02101" : "inventory", 
-            "WC18264" : "ttm_eps", "WC18267" : "ttm_gm", 
-            "WC01451" : "income_tax", "WC18810" : "pension_exp", 
-            "WC02401" : "ppe_depreciation", "WC18274" : "ppe_impairment", 
-            "WC07211" : "mkt_cap_usd", "i0eps" : "eps_lastq"}
-
+        static_field = {"ENSCORE":"environment",
+                        "SOSCORE":"social",
+                        "CGSCORE":"governance"}
+        # column_name = {"EPS1TR12": "eps", "WC05480": "bps", "WC18100A": "ev",
+        #     "WC18262A": "ttm_rev","WC08005": "mkt_cap","WC18309A": "ttm_ebitda",
+        #     "WC18311A": "ttm_capex","WC18199A": "net_debt","WC08372": "roe",
+        #     "WC05510": "cfps","WC08636A": "peg","BPS1FD12" : "bps1fd12",
+        #     "EBD1FD12" : "ebd1fd12","EVT1FD12" : "evt1fd12","EPS1FD12" : "eps1fd12",
+        #     "SAL1FD12" : "sal1fd12","CAP1FD12" : "cap1fd12",
+        #     "ENSCORE" : "environment","SOSCORE" : "social",
+        #     "CGSCORE" : "goverment",
+        #     "WC02999" : "total_asset", "WC02001" : "cash",
+        #     "WC03101" : "current_asset", "WC03501" : "equity",
+        #     "WC18312A" : "ttm_cogs", "WC02101" : "inventory",
+        #     "WC18264" : "ttm_eps", "WC18267" : "ttm_gm",
+        #     "WC01451" : "income_tax", "WC18810" : "pension_exp",
+        #     "WC02401" : "ppe_depreciation", "WC18274" : "ppe_impairment",
+        #     "WC07211" : "mkt_cap_usd", "i0eps" : "eps_lastq"}
+        # result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier,
+        #                                                              filter_field, use_ticker=True, split_number=1,
+        #                                                              quarterly=True, fundamentals_score=True)
         result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier,
-                                                                     filter_field, use_ticker=True, split_number=1,
-                                                                     quarterly=True, fundamentals_score=True)
-        result2, except_field2 = get_data_history_frequently_from_dsws(start_date2, end_date, universe, identifier,
-                                                                       static_field, use_ticker=True, split_number=1,
+                                                                       list(static_field.keys()), use_ticker=True, split_number=1,
                                                                        quarterly=True, fundamentals_score=True)
-        print("Error Ticker = " + str(except_field))
-        if len(except_field) == 0 :
-            second_result = []
-        else:
-            second_result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, except_field, identifier,
-                                                                           filter_field, use_ticker=True, split_number=1,
-                                                                           quarterly=True, fundamentals_score=True)
-        try:
-            if(len(result) == 0):
-                result = second_result
-            elif(len(second_result) == 0):
-                result = result
-            else :
-                result = result.append(second_result)
-        except Exception as e:
-            result = second_result
-        print(result)
-        result = result.rename(columns=column_name)
-        result.reset_index(inplace = True)
-        result = result.drop(columns={"index", "level_0"})
-        result2 = result2.drop(columns=["index"])
-        result = result.merge(result2, how="left", on="ticker")
-        print(result)
+        # print("Error Ticker = " + str(except_field))
+        # if len(except_field) == 0 :
+        #     second_result = []
+        # else:
+        #     second_result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, except_field, identifier,
+        #                                                                    filter_field, use_ticker=True, split_number=1,
+        #                                                                    quarterly=True, fundamentals_score=True)
+        # try:
+        #     if(len(result) == 0):
+        #         result = second_result
+        #     elif(len(second_result) == 0):
+        #         result = result
+        #     else :
+        #         result = result.append(second_result)
+        # except Exception as e:
+        #     result = second_result
+        # print(result)
+        # result = result.rename(columns=column_name)
+        # result.reset_index(inplace = True)
+        # result = result.drop(columns={"index", "level_0"})
+        result = result.rename(columns=static_field)
+        result = result.drop(columns=["index"])
+        # result = result.merge(result2, how="left", on="ticker")
+        # print(result)
         if(len(universe)) > 0 :
             upsert_data_to_database(result, get_fundamental_score_table_name(), "ticker", how="update", Text=True)
-
             result["trading_day"] = find_nearest_specific_days(days=0)
             result = uid_maker(result, uid="uid", ticker="ticker", trading_day="trading_day", date=True)
             upsert_data_to_database(result, get_data_fundamental_score_history_table_name(), "uid", how="update", Text=True)
@@ -719,7 +715,7 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
 
     print("Calculate ESG Value")
     esg_cols = ["environment_minmax_currency_code", "environment_minmax_industry", "social_minmax_currency_code",
-                "social_minmax_industry", "goverment_minmax_currency_code", "goverment_minmax_industry"]
+                "social_minmax_industry", "governance_minmax_currency_code", "governance_minmax_industry"]
     fundamentals["esg"] = fundamentals[esg_cols].mean(1)
 
     print("Calculate AI Score")
@@ -820,7 +816,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     calculate_column = list(factor_formula.loc[factor_formula["scaler"].notnull()].index)
     calculate_column = sorted(set(calculate_column))
-    calculate_column += ["environment", "social", "goverment"]
+    calculate_column += ["environment", "social", "governance"]
 
     fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
     fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
