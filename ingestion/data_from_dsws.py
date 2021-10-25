@@ -781,7 +781,7 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
                   score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]].max().values)
             print(f'{cur} Cur-bef Min/Max: ', g[["ai_score", "ai_score2"]].min().values,
                   g[["ai_score", "ai_score2"]].max().values)
-            m1 = MinMaxScaler(feature_range=(0, 9)).fit(score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]])
+            m1 = MinMaxScaler(feature_range=(0, 9)).fit(score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]])     # minmax -> (0, 9) to avoid overly large score
             fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = m1.transform(g[["ai_score", "ai_score2"]])
             print(f'{cur} Cur-aft Min/Max: ', fundamentals.loc[g.index, ["ai_score", "ai_score2"]].min().values,
                   fundamentals.loc[g.index, ["ai_score", "ai_score2"]].max().values)
