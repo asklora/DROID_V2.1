@@ -740,16 +740,17 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
         #        ['ticker', "fundamentals_extra"] + score_col_detail].sort_values(by=[ f"fundamentals_extra"])
 
     replace_table_datebase_ali(pd.DataFrame(fundamentals_details_column_names).transpose().reset_index(),
-                               f"test_fundamental_score_current_names")
+                               f"test_fundamental_score_current_names_{factor_rank_name}")
 
     # manual score check output to alibaba DB
     for group, v in fundamentals_details.items():
-        pillar_df = []
-        for pillar, df in v.items():
-            pillar_df.append(df.set_index(['ticker']))
-        pillar_df = pd.concat(pillar_df, axis=1)
-        pillar_df.index = pillar_df.index.set_names(['index'])
-        replace_table_datebase_ali(pillar_df.reset_index(), f"test_fundamental_score_details_{group}")
+        if group in ['HKD', 'USD']:
+            pillar_df = []
+            for pillar, df in v.items():
+                pillar_df.append(df.set_index(['ticker']))
+            pillar_df = pd.concat(pillar_df, axis=1)
+            pillar_df.index = pillar_df.index.set_names(['index'])
+            replace_table_datebase_ali(pillar_df.reset_index(), f"test_fundamental_score_details_{group}_{factor_rank_name}")
 
     print("Calculate ESG Value")
     esg_cols = ["environment_minmax_currency_code", "environment_minmax_industry", "social_minmax_currency_code",
