@@ -385,6 +385,7 @@ class RkdData(Rkd):
                 "CF_LAST": "latest_price",
                 "CF_NETCHNG": "latest_net_change"
                 })
+                
         df_data["last_date"] = str(datetime.now().date())
         df_data["intraday_time"] = str(datetime.now())
         df_data =df_data.astype(

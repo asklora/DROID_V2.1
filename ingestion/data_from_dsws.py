@@ -1340,7 +1340,6 @@ def worldscope_report_date_format_change(data):
 
 def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, history=False):
     ''' (updated) ingestion quarterly worldscope fields for missing fields only '''
-
     # Prep 1. field: get data_worldscope_summary ingestion field from Table ingesion_name
     df = get_ingestion_name_source()
     for col in ['dsws_name', 'replace_fn1', 'replace_fn2', 'replace_fn3']:      # for fields with replacement fields -> go through & ingest each to same field
@@ -1391,7 +1390,6 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
             result = result.rename(columns = {"level_1" : "period_end", field_dsws: field_rename})  # rename
             result = result[["ticker", "period_end", field_rename]]
             print(result)
-
             if field_rename == "report_date":       # for report_date -> extra format_change
                 result = worldscope_report_date_format_change(result)
             else:
@@ -1422,8 +1420,7 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
 
             # upsert to database for each field ingested
             upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
-
-    report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
+            report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
 
 def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
     print("{} : === RECSELL RECBUY Start Ingestion ===".format(datetimeNow()))
