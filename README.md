@@ -1,5 +1,5 @@
 ## Run locally
-- set `./sandbox help` see available commands
+- set `./sandbox.sh help` see available commands
 
 ## Commands don't delete
 

@@ -6,7 +6,7 @@ else
 echo "Docker not installed"
 if [ "$(uname)" == "Darwin" ]; then
 echo "Please install docker here https://docs.docker.com/desktop/mac/install/"
-raise "ERROR: Docker not installed"
+exit 1
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	./installer/install-docker.sh
 fi
@@ -16,7 +16,8 @@ composecheck(){
 if [ -x "$(command -v docker-compose)" ]; then
 echo "Docker Compose installed"
 else
-raise "ERROR: Docker Compose not installed"
+echo "ERROR: Docker Compose not installed"
+exit 1
 fi
 }
 
@@ -30,10 +31,8 @@ else
 	echo 'Error: aws is not installed.' >&2
 	echo 'Error: aws credentials not installed' >&2
     if [ "$(uname)" == "Darwin" ]; then
-    cd /tmp
-    curl -o awscli.zip https://s3.amazonaws.com/aws-cli/awscli-bundle.zip
-    unzip awscli.zip
-    sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+    curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+    sudo installer -pkg AWSCLIV2.pkg -target /
     # Do something under Mac OS X platform        
     elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     # Do something under GNU/Linux platform
