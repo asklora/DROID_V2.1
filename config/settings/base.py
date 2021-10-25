@@ -214,7 +214,7 @@ CELERY_IMPORTS = [
     "core.services.order_services",
     "core.services.exchange_services",
 ]
-
+RUN_LOCAL=False
 
 CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 

@@ -65,6 +65,7 @@ BROADCAST_WORKER_DEFAULT_QUEUE='droid_dev'
 PORTFOLIO_WORKER_DEFAULT_QUEUE='droid_dev'
 UTILS_WORKER_DEFAULT_QUEUE='droid_dev'
 ASKLORA_QUEUE="asklora-dev"
+RUN_LOCAL=True
 print(f'using read: {read_endpoint}')
 # print(f'using write: {write_endpoint}')
 # DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
