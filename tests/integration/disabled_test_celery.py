@@ -20,7 +20,7 @@ def test_add_task(celery_app, celery_session_worker):
     assert add.apply((2, 2)).get() == 4
 
 
-def test_celery_direct_notification(celery_app, celery_worker) -> None:
+def test_celery_direct_notification(celery_app, celery_worker, user) -> None:
     data = {
         "type": "function",
         "module": "tests.utils.celery.celery_echo",
@@ -29,6 +29,8 @@ def test_celery_direct_notification(celery_app, celery_worker) -> None:
             "status": "success",
         },
     }
+
+    print(user.__dict__);
 
     task = listener.apply(args=(data,))
 
@@ -57,7 +59,7 @@ def test_celery_notification(celery_app, celery_worker) -> None:
     # FIXME: find a way to start/stop the worker automatically
     celery_worker.start()
 
-    task.get(timeout=10)
+    task.get(timeout=5)
     assert task.status == "SUCCESS"
 
 
@@ -75,13 +77,13 @@ def test_celery_direct_user(
     )
 
     user_payload = {
-        "id": 2051,
         "is_superuser": False,
         "email": "hp-14-notebook-pc-2c826ed5@tests.com",
         "username": "hp-14-notebook-pc-2c826ed5",
         "phone": "012345678",
         "first_name": "Test",
         "last_name": "on hp-14-notebook-pc-2c826ed5",
+        "password": user.password,
         "birth_date": None,
         "avatar": None,
         "is_staff": False,
@@ -100,7 +102,14 @@ def test_celery_direct_user(
         "payload": user_payload,
     }
 
-    task = listener.apply(args=(data,))
+    # task = listener.apply(args=(data,))
+    task = celery_app.send_task(
+        "config.celery.listener",
+        args=(data,),
+        queue="test_celery",
+    )
+
+    celery_worker.start()
 
     result = task.get(timeout=10)
     assert task.status == "SUCCESS"
