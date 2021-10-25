@@ -9,6 +9,7 @@ from getpass import GetPassWarning
 from collections import OrderedDict
 from general.date_process import datetimeNow
 from general.slack import report_to_slack
+from general.sql_output import update_ingestion_count
 from global_vars import (
     DSS_PASSWORD,
     DSS_PASSWORD2,
@@ -214,6 +215,7 @@ def get_data_from_dss(
         data = get_data_from_reuters(
             start_date, end_date, authToken, jsonFileName, stocks, report
         )
+        update_ingestion_count(source='dss', n_ingest=data.iloc[:,2:].fillna(0).count().count(), dsws=True)
         print(datetimeNow() + " " + "Extraction completed")
         return data
     except Exception as ex:

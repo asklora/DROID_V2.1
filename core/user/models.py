@@ -353,3 +353,19 @@ class UserDepositHistory(models.Model):
         return self.user_id.email
     class Meta:
         db_table = "user_deposit_history"
+
+class Segments(models.Model):
+    id = models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')
+    name = models.CharField(max_length=36, blank=False, editable=True, unique=True)
+    class Meta:
+        managed = True
+        db_table = "segments"
+
+class UserSegments(models.Model):
+    # Don't set email as ForeignKey of user_core because
+    # some users may be dropped from user_core
+    email = models.EmailField(blank=True, max_length=254, null=False, verbose_name='email address')
+    segment_id = models.ForeignKey(Segments, on_delete=models.CASCADE, related_name="segments_id", db_column="segment_id")
+    class Meta:
+        managed = True
+        db_table = "user_segments"

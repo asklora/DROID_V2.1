@@ -614,8 +614,12 @@ class RkdStream(RkdData):
         # FOR NOW ONLY HKD
         # TODO: Need to enhance this
         while True:
-            hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
-            if hkd_exchange.is_open:
+            open_market=(ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"],
+            group="Core",is_open=True).values_list("currency_code",flat=True))
+            # usd_exchange,hkd_exchange =ExchangeMarket.objects.filter(mic='XNAS'),ExchangeMarket.objects.get(mic='XHKG')
+            if open_market:
+                self.ticker_data =list(Universe.objects.filter(currency_code__in=open_market, 
+                is_active=True).exclude(entity_type='index').values_list('ticker',flat=True))
                 logging.info('stream price')
                 data =self.bulk_get_quote(self.ticker_data,df=True)
                 df = data.copy()
@@ -667,7 +671,7 @@ class RkdStream(RkdData):
     
     def get_list_exchange(self):
         if not self.exchange_list:
-            self.exchange_list = [exc['mic'] for exc in ExchangeMarket.objects.filter(currency_code__in=['HKD']).values('mic')]
+            self.exchange_list = [exc['mic'] for exc in ExchangeMarket.objects.filter(currency_code__in=['HKD','USD'],is_open=True).values('mic')]
             self.exchange =self.exchange_list
         return self.exchange_list
 

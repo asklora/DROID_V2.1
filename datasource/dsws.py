@@ -3,6 +3,7 @@ import numpy as np
 from pydatastream import Datastream
 from general.date_process import count_date_range_by_month
 from global_vars import DSWS_PASSWORD, DSWS_PASSWORD2, DSWS_USERNAME, DSWS_USERNAME2
+from general.sql_output import update_ingestion_count
 
 def setDataStream(DSWS=True):
     if(DSWS):
@@ -12,21 +13,35 @@ def setDataStream(DSWS=True):
     return DS
 
 def fetch_data_from_dsws(start_date, end_date, universe, *field, dsws=True):
+    ''' obsolete '''
     DS = setDataStream(DSWS=dsws)
     DS.raise_on_error = False
     result = DS.fetch(universe, *field, date_from=start_date, date_to=end_date)
     return result
 
 def fetch_data_static_from_dsws(universe, *field, dsws=True):
+    ''' obsolete '''
     DS = setDataStream(DSWS=dsws)
     DS.raise_on_error = False
     result = DS.fetch(universe, *field, static=True)
     return result
     
 def get_data_static_with_string_from_dsws(identifier, universe, *field, dsws=True):
+    ''' Ingest from DSWS where universe = String
+
+    Parameters
+    ----------
+    identifier :    Str, index columns name for our DB Table
+    universe :      Str, ticker/RIC to fetch
+    field :         Tuple, list of field to fetch
+    dsws :          Boolean, determine which EIKON-DSWS account used for ingestion (default=True)
+
+    '''
+
     DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
     try:
+        update_ingestion_count(source='dsws', n_ingest=len(universe)*len(field), dsws=dsws)
         result = DS.fetch(universe, *field, static=True)
         result = result.reset_index()
         result = result.rename(columns={"index": identifier})
@@ -53,6 +68,7 @@ def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, spl
     for universe in splitting_df:
         universelist = ",".join([str(elem) for elem in universe])
         try:
+            update_ingestion_count(source='dsws', n_ingest=len(universelist)*len(field), dsws=dsws)
             result = DS.fetch(universelist, *field, static=True)
             print(result)
             chunk_data.append(result)
@@ -75,7 +91,7 @@ def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, spl
         data = data.drop(columns="level_0")
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
-        
+
 def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, dividend=False, split_number=40, dsws=True):
     DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
@@ -92,6 +108,7 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
         universelist = ",".join([str(elem) for elem in univ])
         print(universelist)
         try:
+            update_ingestion_count(source='dsws', n_ingest=len(universelist)*len(field), dsws=dsws)
             result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date)
             if(split_number == 1):
                 result[identifier] = str(universelist)
@@ -157,7 +174,8 @@ def get_data_history_by_field_from_dsws(start_date, end_date, universe, identifi
     for ticker in universe:
         chunck_field = []
         for by_field in field:
-            try :
+            try:
+                update_ingestion_count(source='dsws', n_ingest=(end_date-start_date).days, dsws=dsws)
                 result = DS.fetch("<"+ticker+">", *[by_field], date_from=start_date, date_to=end_date)
                 print(result)
                 result[identifier] = ticker
@@ -214,6 +232,7 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="Q")
             else:
                 result = DS.fetch(universelist, *field, date_from=start_date, date_to=end_date, freq="D")
+            update_ingestion_count(source='dsws', n_ingest=result.fillna(0).count().count(), dsws=dsws)
             if (fundamentals_score):
                 result[identifier] = universelist
                 result = result.groupby(identifier, as_index=False).last()
@@ -243,7 +262,9 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
     print(data)
     return data, error_universe
 
-def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False, worldscope=False, dsws=True):
+def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, field, use_ticker=True,
+                                                   split_number=40, monthly=False, quarterly=False,
+                                                   fundamentals_score=False, worldscope=False, dsws=True):
     DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
     chunk_data = []
@@ -257,6 +278,7 @@ def get_data_history_frequently_by_field_from_dsws(start_date, end_date, univers
         chunck_field = []
         for by_field in field:
             try:
+                update_ingestion_count(source='dsws', n_ingest=len(date_range), dsws=dsws)
                 if(monthly):
                     result = DS.fetch("<"+ticker+">", [by_field], date_from=start_date, date_to=end_date, freq="M")
                 elif(quarterly):
