@@ -8,12 +8,14 @@ from ingestion.master_tac import master_tac_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
 from ingestion.data_from_quandl import update_quandl_orats_from_quandl
 from general.table_name import get_universe_client_table_name
-from general.sql_output import fill_null_quandl_symbol, insert_data_to_database, \
-    update_consolidated_activation_by_ticker, update_ingestion_update_time
+from general.sql_output import (
+    fill_null_quandl_symbol, 
+    insert_data_to_database, 
+    update_consolidated_activation_by_ticker, 
+    update_ingestion_update_time)
 from general.date_process import dateNow
 from general.sql_process import do_function
 from general.sql_query import (
-    get_active_position_ticker,
     get_active_universe,
     get_active_universe_by_created, 
     get_consolidated_universe_data, 
@@ -39,8 +41,7 @@ from ingestion.data_from_dsws import (
     update_rec_buy_sell_from_dsws, 
     update_ticker_name_from_dsws, 
     update_worldscope_identifier_from_dsws, 
-    update_worldscope_quarter_summary_from_dsws,
-    worldscope_quarter_report_date_from_dsws)
+    update_worldscope_quarter_summary_from_dsws)
 
 def new_ticker_ingestion(ticker):
     update_ticker_name_from_dsws(ticker=ticker)
@@ -67,7 +68,6 @@ def new_ticker_ingestion(ticker):
     update_fundamentals_quality_value()
     update_ibes_data_monthly_from_dsws(ticker=ticker, history=True)
     update_worldscope_quarter_summary_from_dsws(ticker=ticker, history=True)
-    worldscope_quarter_report_date_from_dsws(ticker = ticker, history=True)
     update_rec_buy_sell_from_dsws(ticker=ticker)
 
 def populate_ticker_monthly(client=None):
