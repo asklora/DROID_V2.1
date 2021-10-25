@@ -513,7 +513,7 @@ def get_specific_volume_avg(trading_day, avg_days=7, volume_name="volume"):
     return data
 
 def get_factor_calculation_formula():
-    query = f"SELECT * FROM {get_factor_calculation_table_name()}"
+    query = f"SELECT * FROM {get_factor_calculation_table_name()} WHERE is_active"
     data = read_query(query, table=get_factor_calculation_table_name(), alibaba=True)
     return data
 
@@ -523,7 +523,7 @@ def get_factor_current_used():
     return data
 
 def get_ingestion_name_source():
-    query = f"SELECT * FROM {get_ingestion_name_source_table_name()}"
+    query = f"SELECT * FROM {get_ingestion_name_source_table_name()} WHERE is_active"
     data = read_query(query, table=get_ingestion_name_source_table_name(), alibaba=True)
     return data
 

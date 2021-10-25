@@ -459,6 +459,14 @@ def score_update_vol_rs(list_of_start_end, days_in_year=256):
 
     return final_tri
 
+def score_update_skew(year=1):
+    ''' calcuate skewnesss of stock return of past 1yr '''
+    tri = get_master_ohlcvtr_data(trading_day=backdate_by_month(year*12))
+    tri["skew"] = tri['total_return_index']/tri.groupby('ticker')['total_return_index'].shift(1)-1       # update tri to 1d before (i.e. all stock ret up to 1d before)
+    tri["trading_day"] = pd.to_datetime(tri["trading_day"])
+    tri = tri.groupby('ticker')['skew'].skew().reset_index()
+    return tri
+
 def score_update_stock_return(list_of_start_end_month, list_of_start_end_week):
     """ Calculate specific period stock return (months) """
 
@@ -502,7 +510,7 @@ def score_update_fx_conversion(df, ingestion_source):
     ingestion_source = ingestion_source.loc[ingestion_source['non_ratio']]     # no fx conversion for ratio items
 
     for name, g in ingestion_source.groupby(['source']):        # convert for ibes / ws
-        cols = g['score_name'].to_list()
+        cols = g['our_name'].to_list()
         df[cols] = df[cols].div(df[f'fx_{name}'], axis="index")
 
     df['close'] = df['close']/df['fx_dss']  # convert close price
@@ -518,8 +526,10 @@ def score_update_factor_ratios(df, formula, ingestion_source):
     # Prepare for field requires add/minus
     add_minus_fields = formula[["field_num", "field_denom"]].dropna(how="any").to_numpy().flatten()
     add_minus_fields = [i for i in list(set(add_minus_fields)) if any(["-" in i, "+" in i, "*" in i])]
-    add_minus_fields_1q = formula.loc[formula['name'].str[-3:]=='_1q', ["field_num", "field_denom"]].dropna(how="any").to_numpy().flatten()
-    add_minus_fields_1y = formula.loc[formula['name'].str[-4:]=='_1yr', ["field_num", "field_denom"]].dropna(how="any").to_numpy().flatten()
+    add_minus_fields_1q = formula.loc[formula['name'].str[-3:]=='_1q', ["field_num"]].dropna(how="any").to_numpy().flatten()
+    add_minus_fields_1q = [i for i in list(set(add_minus_fields_1q)) if any(["-" in i, "+" in i, "*" in i])]
+    add_minus_fields_1y = formula.loc[formula['name'].str[-4:]=='_1yr', ["field_num"]].dropna(how="any").to_numpy().flatten()
+    add_minus_fields_1y = [i for i in list(set(add_minus_fields_1y)) if any(["-" in i, "+" in i, "*" in i])]
 
     def field_calc(df, x):
         ''' transform fields need calculation before ratio calculation '''
@@ -543,17 +553,24 @@ def score_update_factor_ratios(df, formula, ingestion_source):
         df[i] = field_calc(df, x)
     for i in add_minus_fields_1q:
         x = [op.strip()+'_1q'  if len(op)>1 else op.strip() for op in i.split()]
-        df[i] = field_calc(df, x)
+        df[i+'_1q'] = field_calc(df, x)
     for i in add_minus_fields_1y:
         x = [op.strip()+'_1y'  if len(op)>1 else op.strip() for op in i.split()]
-        df[i] = field_calc(df, x)
-
+        df[i+'_1y'] = field_calc(df, x)
 
     # a) Keep original values
     keep_original_mask = formula["field_denom"].isnull() & formula["field_num"].notnull()
     new_name = formula.loc[keep_original_mask, "name"].to_list()
     old_name = formula.loc[keep_original_mask, "field_num"].to_list()
     df[new_name] = df[old_name]
+
+    # b) Time series ratios (Calculate 1m change first)
+    print(f'      ------------------------> Calculate time-series ratio ')
+    for r in formula.loc[formula['field_num']==formula['field_denom'], ['name','field_denom']].to_dict(orient='records'):  # minus calculation for ratios
+        if r['name'][-2:] == 'yr':
+            df[r["name"]] = df[r["field_denom"]] / df[r["field_denom"]+'_1y']-1
+        elif r['name'][-1] == 'q':
+            df[r["name"]] = df[r["field_denom"]] / df[r["field_denom"]+'_1q']-1
 
     # c) Divide ratios
     print(f"      ------------------------> Calculate dividing ratios ")
@@ -563,11 +580,8 @@ def score_update_factor_ratios(df, formula, ingestion_source):
 
     return df
 
-def score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_rank):
-    ''' scale fundamental score '''
-
-    fundamentals['dummy'] = True
-    groupby_col = ['currency_code']  # or 'dummy'
+def score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name):
+    ''' scale factor original value -> (0,1) scores '''
 
     def transform_trim_outlier(x):
         s = skew(x)
@@ -582,27 +596,38 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
     calculate_column_score = []
     for column in calculate_column:
         column_score = column + "_score"
-        fundamentals[column_score] = fundamentals.dropna(subset=[column]).groupby(groupby_col)[column].transform(
+        fundamentals[column_score] = fundamentals.dropna(subset=[column]).groupby("currency_code")[column].transform(
             transform_trim_outlier)
         calculate_column_score.append(column_score)
     print(calculate_column_score)
 
-    # x1 = fundamentals.groupby("currency_code")[[x+'_score' for x in calculate_column]].skew()
-    # y1 = fundamentals.groupby("currency_code")[[x+'_score' for x in calculate_column]].apply(pd.DataFrame.kurtosis)
-
     # Scale 2: Reverse value for long_large = False (i.e. recommend short larger value)
-    append_df = factor_rank.loc[factor_rank['keep']]
-    append_df.loc[append_df['factor_name']=='earnings_pred', 'long_large'] = factor_rank.loc[factor_rank['factor_name']=='fwd_ey', 'long_large'].values[0]
+    factor_rank = get_factor_rank(factor_rank_name)
+    factor_rank = factor_rank.merge(factor_formula, left_on=['factor_name'], right_index=True, how='outer')
+
+    # for score not included in backtest (earnings_pred & wts_rating)
+    factor_rank.loc[factor_rank['factor_name']=='earnings_pred', ['group', 'long_large','pred_z','factor_weight']] = \
+        factor_rank.loc[factor_rank['factor_name']=='fwd_ey', ['group', 'long_large','pred_z','factor_weight']].values
+    if factor_rank_name[:6] == 'weekly':
+        factor_rank.loc[factor_rank['factor_name'].isin(["wts_rating"]), ['group', 'long_large','pred_z','factor_weight']] = \
+            ['USD', True, 2, 2]
+    factor_rank = factor_rank.dropna(subset=['pillar','pred_z'], how='any')
+
+    for i in set(universe_currency_code) - set(factor_rank['group'].unique()):
+        replace_rank = factor_rank.loc[factor_rank['group'] == 'USD'].copy()
+        replace_rank['group'] = i
+        factor_rank = factor_rank.append(replace_rank, ignore_index=True)
+
+    # 2.1: use USD -> other currency
+    replace_rank = factor_rank.loc[factor_rank['group'] == 'USD'].copy()
+    for i in set(universe_currency_code) - set(factor_rank['group'].unique()):
+        replace_rank['group'] = i
+        factor_rank = factor_rank.append(replace_rank, ignore_index=True)
+
+    # 2.2: reverse currency for not long_large
     for group, g in factor_rank.groupby(['group']):
         neg_factor = [x+'_score' for x in g.loc[(g['long_large'] == False), 'factor_name'].to_list()]
-        if not factor_rank.loc[factor_rank['factor_name']=='fwd_ey', 'long_large'].values[0]:
-            neg_factor += ['earnings_pred_score']
-
         fundamentals.loc[(fundamentals['currency_code'] == group), neg_factor] *= -1
-
-        # for non calculating socre -> we add same for each one
-        append_df["group"] = group
-        factor_rank = factor_rank.append(append_df, ignore_index=True)
 
     # Scale 3: apply robust scaler
     calculate_column_robust_score = []
@@ -610,7 +635,7 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
         try:
             column_score = column + "_score"
             column_robust_score = column + "_robust_score"
-            fundamentals[column_robust_score] = fundamentals.dropna(subset=[column_score]).groupby(groupby_col)[
+            fundamentals[column_robust_score] = fundamentals.dropna(subset=[column_score]).groupby("currency_code")[
                 column_score].transform(lambda x: robust_scale(x))
             calculate_column_robust_score.append(column_robust_score)
         except Exception as e:
@@ -625,14 +650,13 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
         df_currency_code = fundamentals[["currency_code", column_robust_score]]
         df_currency_code = df_currency_code.rename(columns={column_robust_score: "score"})
         fundamentals[column_minmax_currency_code] = df_currency_code.dropna(subset=["currency_code", "score"]).groupby(
-            groupby_col).score.transform(
-            lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
+            'currency_code').score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
         fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(),
                                                              fundamentals[column_minmax_currency_code].mean() * 0.9,
                                                              fundamentals[column_minmax_currency_code]) * 10
         minmax_column.append(column_minmax_currency_code)
 
-        if column in ["environment", "social", "goverment"]:  # for ESG scores also do industry partition
+        if column in ["environment", "social", "governance"]:  # for ESG scores also do industry partition
             column_minmax_industry = column + "_minmax_industry"
             df_industry = fundamentals[["industry_code", column_robust_score]]
             df_industry = df_industry.rename(columns={column_robust_score: "score"})
@@ -655,6 +679,8 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
     # tmp["variable"] = tmp["variable"] + "_quantile_currency_code"
     # tmp = tmp.pivot(["ticker"], ["variable"]).droplevel(0, axis=1)
     # fundamentals = fundamentals.merge(tmp, how="left", on="ticker")
+
+    # for currency not predicted by Factor Model -> Use factor of USD
 
     # add column for 3 pillar score
     fundamentals[[f"fundamentals_{name}" for name in factor_rank['pillar'].unique()]] = np.nan
@@ -725,8 +751,6 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
         pillar_df.index = pillar_df.index.set_names(['index'])
         replace_table_datebase_ali(pillar_df.reset_index(), f"test_fundamental_score_details_{group}")
 
-    fundamentals_factors_scores_col = fundamentals.filter(regex="^fundamentals_").columns
-
     print("Calculate ESG Value")
     esg_cols = ["environment_minmax_currency_code", "environment_minmax_industry", "social_minmax_currency_code",
                 "social_minmax_industry", "governance_minmax_currency_code", "governance_minmax_industry"]
@@ -751,29 +775,42 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
         try:
             # raise Exception('Scaling with current score')
             score_history_cur = score_history.loc[score_history['currency_code'] == cur]
+            # score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]] = score_history[["ai_score_unscaled", "ai_score2_unscaled"]]*1.1
             print(f'{cur} History Min/Max: ',
                   score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]].min().values,
                   score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]].max().values)
-            print(f'{cur} Current Min/Max: ', g[["ai_score", "ai_score2"]].min().values,
+            print(f'{cur} Cur-bef Min/Max: ', g[["ai_score", "ai_score2"]].min().values,
                   g[["ai_score", "ai_score2"]].max().values)
-            m1 = MinMaxScaler(feature_range=(0, 10)).fit(score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]])
+            m1 = MinMaxScaler(feature_range=(0, 9)).fit(score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]])
             fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = m1.transform(g[["ai_score", "ai_score2"]])
+            print(f'{cur} Cur-aft Min/Max: ', fundamentals.loc[g.index, ["ai_score", "ai_score2"]].min().values,
+                  fundamentals.loc[g.index, ["ai_score", "ai_score2"]].max().values)
         except Exception as e:
             print(e)
             print(f'{cur} Current Min/Max: ', g[["ai_score", "ai_score2"]].min().values,
                   g[["ai_score", "ai_score2"]].max().values)
             fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = MinMaxScaler(feature_range=(0, 10)).fit_transform(
                 g[["ai_score", "ai_score2"]])
+        fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = MinMaxScaler(feature_range=(0, 10)).fit_transform(
+            g[["ai_score", "ai_score2"]])
 
-    return fundamentals, minmax_column, fundamentals_factors_scores_col
+    fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].clip(0, 10)
+    fundamentals[['ai_score','ai_score2',"esg"]] = fundamentals[['ai_score','ai_score2',"esg"]].round(1)
+
+    fundamentals_factors_scores_col = ["fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "esg",
+                                       "ai_score", "ai_score2", "ai_score_unscaled", "ai_score2_unscaled",
+                                       "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]
+    fundamentals[fundamentals_factors_scores_col] = fundamentals[fundamentals_factors_scores_col].round(1)
+
+    return fundamentals.set_index('ticker')[fundamentals_factors_scores_col]
 
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
     ''' Update: '''
 
+    # --------------------------------- Data Ingestion & Factor Calculation ---------------------------------------
+
     # Ingest 0: table formula for calculation
     factor_formula = get_factor_calculation_formula()       # formula for ratio calculation
-    factor_rank_1w = get_factor_rank('weekly1')             # 1w rank for current best score
-    factor_rank_1m = get_factor_rank('monthly1')            # 1m rank
     ingestion_source = get_ingestion_name_source()          # ingestion name & source
 
     # Ingest 1: DLPA & Universe
@@ -806,32 +843,38 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     ibes_latest = get_ibes_monthly_latest(quarter_col=list(set(quarter_col) & set(ibes_col)), year_col=list(set(year_col) & set(ibes_col)))
     print(ibes_latest)
 
-    # get last trading price for factor calculation
+    # Ingest 4.1: get last trading price for factor calculation
     close_price = get_last_close_industry_code(ticker=ticker, currency_code=currency_code)
     print(close_price)
 
-    # get volatility
+    # Ingest 4.2: get volatility
     vol = score_update_vol_rs(list_of_start_end=[[0,1]])     # calculate RS volatility -> list_of_start_end in ascending sequence (start_month, end_month)
     print(vol)
 
-    pred_mean = get_ai_value_pred_final()
-    print(pred_mean)
+    # Ingest 4.3: get skewness
+    skew = score_update_skew(year=1)     # calculate RS volatility -> list_of_start_end in ascending sequence (start_month, end_month)
+    print(skew)
 
-    # get different period stock return
+    # Ingest 4.4: get different period stock return
     tri = score_update_stock_return(list_of_start_end_month=[[0,1],[2,6],[7,12]], list_of_start_end_week=[[0,1],[1,2],[2,4]])
     print(tri)
 
-    # get last week average volume
+    #Ingest 4.5:  get last week average volume
     volume1 = get_specific_volume_avg(backdate_by_month(0), avg_days=7).set_index('ticker')
     volume2 = get_specific_volume_avg(backdate_by_month(0), avg_days=91).set_index('ticker')
     volume = (volume1/volume2).reset_index()
     print(volume)
+
+    # Ingest 5: get earning_prediction from ai_value
+    pred_mean = get_ai_value_pred_final()
+    print(pred_mean)
 
     # merge scores used for calculation
     fundamentals_score = close_price.merge(fundamentals_score, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(ws_latest, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(ibes_latest, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(vol, how="left", on="ticker")
+    fundamentals_score = fundamentals_score.merge(skew, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(pred_mean, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(tri, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(volume, how="left", on="ticker")
@@ -839,17 +882,9 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # calculate ratios refering to table X
     fundamentals_score = score_update_factor_ratios(fundamentals_score, factor_formula, ingestion_source)
 
-    # for currency not predicted by Factor Model -> Use factor of USD
-    universe_currency_code = get_active_universe()['currency_code'].unique()
-    for i in set(universe_currency_code) - set(factor_rank['group'].unique()):
-        replace_rank = factor_rank.loc[factor_rank['group']=='USD'].copy()
-        replace_rank['group'] = i
-        factor_rank = factor_rank.append(replace_rank, ignore_index=True)
+    # ------------------------------------ Factor Score Scaling ------------------------------------------
 
-    factor_rank = factor_rank.merge(factor_formula, left_on=['factor_name'], right_index=True, how='outer')
-    factor_rank['long_large'] = factor_rank['long_large'].fillna(True)
-    factor_rank = factor_rank.dropna(subset=['pillar'])
-
+    factor_formula = factor_formula.set_index('name')
     calculate_column = list(factor_formula.loc[factor_formula["scaler"].notnull()].index)
     calculate_column = sorted(set(calculate_column))
     calculate_column += ["environment", "social", "governance"]
@@ -862,24 +897,15 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print(fundamentals)
 
     # Scale original fundamental score
-    fundamentals, minmax_column, fundamentals_factors_scores_col = score_update_scale(fundamentals, calculate_column,
-                                                                                      universe_currency_code, factor_rank)
+    universe_currency_code = get_active_universe()['currency_code'].unique()
+    fundamentals_1w = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='weekly1')
+    fundamentals_1m = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='monthly1')
 
-    # print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
-
-    fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].clip(0, 10)
-    fundamentals[['ai_score','ai_score2',"esg"]] = fundamentals[['ai_score','ai_score2',"esg"]].round(1)
-    fundamentals[fundamentals_factors_scores_col] = fundamentals[fundamentals_factors_scores_col].round(1)
-
+    fundamentals = (fundamentals_1w + fundamentals_1m)/2  # currently we use simple average of weekly score & monthly score
+    fundamentals = fundamentals.reset_index()
     fundamentals["trading_day"] = dateNow()
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
-
-    universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
-                                            "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
-                                            "dlp_3m", "wts_rating2", "classic_vol", "fundamentals_extra",
-                                            "ai_score_unscaled", "ai_score2_unscaled"]]
-
-    universe_rating_detail_history = fundamentals[minmax_column]
+    universe_rating_history = fundamentals.copy()
 
     print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
     if(len(fundamentals)) > 0 :
@@ -889,14 +915,12 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         result["updated"] = dateNow()
         print(result)
         print(universe_rating_history)
-        print(universe_rating_detail_history)
         upsert_data_to_database(result, get_universe_rating_table_name(), "ticker", how="update", Text=True)
-        upsert_data_to_database(universe_rating_history, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
-        upsert_data_to_database(universe_rating_detail_history, get_universe_rating_detail_history_table_name(), "uid", how="update", Text=True)
-
+        upsert_data_to_database(fundamentals, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
         delete_data_on_database(get_universe_rating_table_name(), f"ticker is not null", delete_ticker=True)
         delete_data_on_database(get_universe_rating_history_table_name(), f"ticker is not null", delete_ticker=True)
-        delete_data_on_database(get_universe_rating_detail_history_table_name(), f"ticker is not null", delete_ticker=True)
+        # upsert_data_to_database(universe_rating_detail_history, get_universe_rating_detail_history_table_name(), "uid", how="update", Text=True)
+        # delete_data_on_database(get_universe_rating_detail_history_table_name(), f"ticker is not null", delete_ticker=True)
         report_to_slack("{} : === Universe Fundamentals Quality & Value Updated ===".format(datetimeNow()))
 
 def dividend_updated_from_dsws(ticker=None, currency_code=None):
