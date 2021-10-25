@@ -13,11 +13,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         try:
             user = User.objects.get(username=options['username'])
+            PositionPerformance.objects.filter(position_uid__user_id=user).delete()
+            Order.objects.filter(user_id=user).delete()
+            OrderPosition.objects.filter(user_id=user).delete()
+            TransactionHistory.objects.filter(balance_uid__user=user).delete()
+            Accountbalance.objects.filter(user=user).delete()
+            user.delete()
         except User.DoesNotExist:
             logging.error("user not found, skip delete")
-        PositionPerformance.objects.filter(position_uid__user_id=user).delete()
-        Order.objects.filter(user_id=user).delete()
-        OrderPosition.objects.filter(user_id=user).delete()
-        TransactionHistory.objects.filter(balance_uid__user=user).delete()
-        Accountbalance.objects.filter(user=user).delete()
-        user.delete()
