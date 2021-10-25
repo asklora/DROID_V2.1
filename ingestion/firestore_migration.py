@@ -395,6 +395,8 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         return active
 
 def firebase_user_update(user_id=None, currency_code=None):
+    if not user_id and not currency_code:
+        return
     convert = ConvertMoney("USD", "HKD")
     exchange_rate = convert.get_exchange_rate()
     print("Start Populate portfolio")
