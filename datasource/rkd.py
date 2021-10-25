@@ -476,7 +476,7 @@ class RkdData(Rkd):
         quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
         split = len(ticker)/50
         collected_data =[]
-        if split < 1:
+        if split < 2:
             split = math.ceil(split)
         splitting_df = np.array_split(ticker, split)
         for universe in splitting_df:
