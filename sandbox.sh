@@ -94,16 +94,26 @@ askloracelerylogs(){
     docker logs --follow asklora-celery
 }
 
+droidrun(){
+    docker exec -it django bash -c "$commands"
+}
+asklorarun(){
+    docker exec -it asklora bash -c "$commands"
+}
+
 
 help(){
-    echo "./sandbox up -> run aplication"
-    echo "./sandbox down -> stop aplication and destroy"
-    echo "./sandbox djangologs -> log django app"
-    echo "./sandbox celerylogs -> log celery app"
-    echo "./sandbox askloralogs -> log asklora app"
-    echo "./sandbox askloracelerylogs -> log asklora celery app"
-    echo "./sandbox checkapps -> Check status app"
-    echo "./sandbox appurl -> log asklora app"
+    echo "./sandbox.sh up -> run aplication"
+    echo "./sandbox.sh down -> stop aplication and destroy"
+    echo "./sandbox.sh djangologs -> log django app"
+    echo "./sandbox.sh celerylogs -> log celery app"
+    echo "./sandbox.sh askloralogs -> log asklora app"
+    echo "./sandbox.sh askloracelerylogs -> log asklora celery app"
+    echo "./sandbox.sh checkapps -> Check status app"
+    echo "./sandbox.sh appurl -> log asklora app"
+    echo "./sandbox.sh droidrun 'your command' -> run command inside container droid"
+    echo "./sandbox.sh asklorarun 'your command' -> run command inside container asklora"
 
 }
+commands=$2
 $1

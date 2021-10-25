@@ -65,9 +65,10 @@ BROADCAST_WORKER_DEFAULT_QUEUE='droid_dev'
 PORTFOLIO_WORKER_DEFAULT_QUEUE='droid_dev'
 UTILS_WORKER_DEFAULT_QUEUE='droid_dev'
 ASKLORA_QUEUE="asklora-dev"
+RUN_LOCAL=True
 print(f'using read: {read_endpoint}')
 # print(f'using write: {write_endpoint}')
-# DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
+DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
 DATABASES = {
     "default": {
         "ENGINE": DB_ENGINE,
@@ -101,41 +102,41 @@ FIREBASE_COLLECTION={
     'universe':'dev_universe'
 }
 
-CELERY_TASK_ROUTES = {
-    # ===== SHORT INTERVAL =====
-    #websocket ping
-    'core.services.tasks.ping_available_presence': {'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
-    #prune inactive channel
-    'core.services.tasks.channel_prune':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
-    #realtime ranking and portfolio
-   ' core.services.order_services.update_rtdb_user_porfolio':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
-    #market price realtime
-    'datasource.rkd.update_rtdb':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
-    'datasource.rkd.bulk_update_rtdb':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
-    # ===== SHORT INTERVAL =====
+# CELERY_TASK_ROUTES = {
+#     # ===== SHORT INTERVAL =====
+#     #websocket ping
+#     'core.services.tasks.ping_available_presence': {'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
+#     #prune inactive channel
+#     'core.services.tasks.channel_prune':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
+#     #realtime ranking and portfolio
+#    ' core.services.order_services.update_rtdb_user_porfolio':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
+#     #market price realtime
+#     'datasource.rkd.update_rtdb':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
+#     'datasource.rkd.bulk_update_rtdb':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
+#     # ===== SHORT INTERVAL =====
 
-    # ===== ORDER & PORTFOLIO =====
-    # order executor
-    'core.services.order_services.order_executor':{'queue': PORTFOLIO_WORKER_DEFAULT_QUEUE},
-    # ===== ORDER & PORTFOLIO =====
+#     # ===== ORDER & PORTFOLIO =====
+#     # order executor
+#     'core.services.order_services.order_executor':{'queue': PORTFOLIO_WORKER_DEFAULT_QUEUE},
+#     # ===== ORDER & PORTFOLIO =====
     
-    # ===== HEDGE BOT RELATED =====
-    # weekly topstock and hedge
-    'core.services.tasks.populate_client_top_stock_weekly':{'queue': HEDGE_WORKER_DEFAULT_QUEUE},
-    'core.services.tasks.daily_hedge':{'queue': HEDGE_WORKER_DEFAULT_QUEUE},
-    # ===== HEDGE BOT RELATED =====
+#     # ===== HEDGE BOT RELATED =====
+#     # weekly topstock and hedge
+#     'core.services.tasks.populate_client_top_stock_weekly':{'queue': HEDGE_WORKER_DEFAULT_QUEUE},
+#     'core.services.tasks.daily_hedge':{'queue': HEDGE_WORKER_DEFAULT_QUEUE},
+#     # ===== HEDGE BOT RELATED =====
 
-    # ===== UTILITY =====
-    # update ticker weekly
-    'core.services.tasks.weekly_universe_firebase_update':{'queue': UTILS_WORKER_DEFAULT_QUEUE},
-    # exchange hours updater
-    'core.services.exchange_services.init_exchange_check':{'queue': UTILS_WORKER_DEFAULT_QUEUE},
-    'core.services.exchange_services.market_check_routines':{'queue': UTILS_WORKER_DEFAULT_QUEUE},
-    # ===== UTILITY =====
+#     # ===== UTILITY =====
+#     # update ticker weekly
+#     'core.services.tasks.weekly_universe_firebase_update':{'queue': UTILS_WORKER_DEFAULT_QUEUE},
+#     # exchange hours updater
+#     'core.services.exchange_services.init_exchange_check':{'queue': UTILS_WORKER_DEFAULT_QUEUE},
+#     'core.services.exchange_services.market_check_routines':{'queue': UTILS_WORKER_DEFAULT_QUEUE},
+#     # ===== UTILITY =====
 
-    # ===== CELERY DEFAULT =====
-    # contains celery beat, user sync, micro service cross language
-    #   . config.celery.app_publish -> for cross language/app producer
-    #   . config.celery.listener  -> for cross language/app consumer
+#     # ===== CELERY DEFAULT =====
+#     # contains celery beat, user sync, micro service cross language
+#     #   . config.celery.app_publish -> for cross language/app producer
+#     #   . config.celery.listener  -> for cross language/app consumer
 
-    }
+#     }

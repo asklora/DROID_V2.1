@@ -12,7 +12,12 @@
 #             'message':'PONG',
 #             'user':'python-client'
 #         }))
-import os
+import requests
 
-var=os.getenv('myvar')
-print(var)
+import math
+
+a=math.ceil(1.54)
+print(a)
+def widget(symbols):
+    url = f'https://www.tradingview.com/mediumwidgetembed/?symbols={symbols}'
+    return url

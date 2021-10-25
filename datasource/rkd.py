@@ -476,7 +476,7 @@ class RkdData(Rkd):
         quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
         split = len(ticker)/50
         collected_data =[]
-        if split < 1:
+        if split < 2:
             split = math.ceil(split)
         splitting_df = np.array_split(ticker, split)
         for universe in splitting_df:
@@ -630,34 +630,35 @@ class RkdStream(RkdData):
     def stream_quote(self):
         # FOR NOW ONLY HKD
         # TODO: Need to enhance this
-        while True:
-            open_market=(ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"],
-            group="Core",is_open=True).values_list("currency_code",flat=True))
-            # usd_exchange,hkd_exchange =ExchangeMarket.objects.filter(mic='XNAS'),ExchangeMarket.objects.get(mic='XHKG')
-            if open_market:
-                self.ticker_data =list(Universe.objects.filter(currency_code__in=open_market, 
-                is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
-                logging.info('stream price')
-                data =self.bulk_get_quote(self.ticker_data,df=True)
-                split_df = np.array_split(data,math.ceil(len(data)/400))
-                for data_split in split_df:
-                    df = data_split.copy()
-                    data_split['price'] = df.drop(columns=['ticker']).to_dict("records")
-                    del df
-                    data_split = data_split[['ticker','price']]
-                    data_split = data_split.set_index('ticker')
-                    records = data_split.to_dict("index")
-                    # logging.info(records)
-                    
-                    bulk_update_rtdb(records)
-                    del records
-                    del data_split
-                del data
-                del split_df
-                gc.collect()
-            else:
-                break
-            time.sleep(15)
+        if not settings.RUN_LOCAL:
+            while True:
+                open_market=(ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"],
+                group="Core",is_open=True).values_list("currency_code",flat=True))
+                # usd_exchange,hkd_exchange =ExchangeMarket.objects.filter(mic='XNAS'),ExchangeMarket.objects.get(mic='XHKG')
+                if open_market:
+                    self.ticker_data =list(Universe.objects.filter(currency_code__in=open_market, 
+                    is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
+                    logging.info('stream price')
+                    data =self.bulk_get_quote(self.ticker_data,df=True)
+                    split_df = np.array_split(data,math.ceil(len(data)/400))
+                    for data_split in split_df:
+                        df = data_split.copy()
+                        data_split['price'] = df.drop(columns=['ticker']).to_dict("records")
+                        del df
+                        data_split = data_split[['ticker','price']]
+                        data_split = data_split.set_index('ticker')
+                        records = data_split.to_dict("index")
+                        # logging.info(records)
+                        
+                        bulk_update_rtdb(records)
+                        del records
+                        del data_split
+                    del data
+                    del split_df
+                    gc.collect()
+                else:
+                    break
+                time.sleep(15)
         if self.is_thread:
                 sys.exit()
         
