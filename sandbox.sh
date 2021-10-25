@@ -94,6 +94,13 @@ askloracelerylogs(){
     docker logs --follow asklora-celery
 }
 
+droidrun(){
+    docker exec -it django bash -c "$commands"
+}
+asklorarun(){
+    docker exec -it asklora bash -c "$commands"
+}
+
 
 help(){
     echo "./sandbox up -> run aplication"
@@ -104,6 +111,9 @@ help(){
     echo "./sandbox askloracelerylogs -> log asklora celery app"
     echo "./sandbox checkapps -> Check status app"
     echo "./sandbox appurl -> log asklora app"
+    echo "./sandbox droidrun 'your command' -> run command inside container droid"
+    echo "./sandbox asklorarun 'your command' -> run command inside container asklora"
 
 }
+commands=$2
 $1
