@@ -58,6 +58,8 @@ from general.sql_query import (
     get_factor_calculation_formula,
     get_factor_rank,
     get_fundamentals_score,
+    get_worldscope_summary_latest,
+    get_ibes_monthly_latest,
     get_last_close_industry_code,
     get_currency_fx_rate_dict,
     get_max_last_ingestion_from_universe, 
@@ -67,13 +69,17 @@ from general.sql_query import (
     get_specific_volume_avg,
     get_universe_rating, 
     get_vix,
+    get_vix_since,
     get_master_ohlcvtr_data,
     get_ingestion_name_source,
     get_currency_code_ibes_ws,
     get_iso_currency_code_map,
+    get_missing_field_ticker_list,
+    get_ingestion_name_macro_source
 )
 from general.date_process import (
-    backdate_by_day, 
+    backdate_by_day,
+    backdate_by_week,
     backdate_by_month,
     dateNow, 
     datetimeNow, 
@@ -245,12 +251,13 @@ def update_worldscope_identifier_from_dsws(ticker=None, currency_code=None):
     print("{} : === Worldscope Identifier Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe.drop(columns=["worldscope_identifier", "icb_code", "fiscal_year_end"])
+    universe["icb_code"] = universe["industry_code"]
     identifier="ticker"
-    filter_field = ["WC06035", "WC07040", "WC05352"]
+    filter_field = ["WC06035", "WC05352"]
     result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
     print(result)
     if (len(result) > 0):
-        result = result.rename(columns={"WC06035": "worldscope_identifier", "WC07040": "icb_code", "WC05352": "fiscal_year_end", "index" : "ticker"})
+        result = result.rename(columns={"WC06035": "worldscope_identifier", "WC05352": "fiscal_year_end", "index" : "ticker"})
         result = universe.merge(result, how="left", on=["ticker"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
@@ -323,64 +330,69 @@ def update_vix_from_dsws(vix_id=None, history=False):
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
 def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
+    ''' (Update) weekly update data_fundamental_score:
+        1. now only ingest ESG score to data_fundamental_score
+        2. other fields directly retrieved from data_fundamental_score / data_ibes_monthly in calculation
+    '''
+
     print("{} : === Fundamentals Score Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
-    start_date = backdate_by_month(12)
-    start_date2 = backdate_by_month(24)
+    # start_date = backdate_by_month(12)
+    start_date = backdate_by_month(24)
     identifier = "ticker"
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
     print(universe)
     if(len(universe)):
-        filter_field = ["EPS1TR12","WC05480","WC18100A","WC18262A","WC08005",
-            "WC18309A","WC18311A","WC18199A","WC08372","WC05510","WC08636A",
-            "BPS1FD12","EBD1FD12","EVT1FD12","EPS1FD12","SAL1FD12","CAP1FD12",
-            "WC02999", "WC02001", "WC03101", "WC03501", "WC18312A", "WC02101", 
-            "WC18264", "WC18267", "WC01451", "WC18810", "WC02401", "WC18274", 
-            "WC07211", "i0eps"]
-
-        static_field = ["ENSCORE","SOSCORE","CGSCORE"]
-        column_name = {"EPS1TR12": "eps", "WC05480": "bps", "WC18100A": "ev",
-            "WC18262A": "ttm_rev","WC08005": "mkt_cap","WC18309A": "ttm_ebitda",
-            "WC18311A": "ttm_capex","WC18199A": "net_debt","WC08372": "roe",
-            "WC05510": "cfps","WC08636A": "peg","BPS1FD12" : "bps1fd12",
-            "EBD1FD12" : "ebd1fd12","EVT1FD12" : "evt1fd12","EPS1FD12" : "eps1fd12",
-            "SAL1FD12" : "sal1fd12","CAP1FD12" : "cap1fd12",
-            "ENSCORE" : "environment","SOSCORE" : "social",
-            "CGSCORE" : "goverment", 
-            "WC02999" : "total_asset", "WC02001" : "cash", 
-            "WC03101" : "current_asset", "WC03501" : "equity", 
-            "WC18312A" : "ttm_cogs", "WC02101" : "inventory", 
-            "WC18264" : "ttm_eps", "WC18267" : "ttm_gm", 
-            "WC01451" : "income_tax", "WC18810" : "pension_exp", 
-            "WC02401" : "ppe_depreciation", "WC18274" : "ppe_impairment", 
-            "WC07211" : "mkt_cap_usd", "i0eps" : "eps_lastq"}
-
-        result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
-        result2, except_field2 = get_data_history_frequently_from_dsws(start_date2, end_date, universe, identifier, static_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
-        print("Error Ticker = " + str(except_field))
-        if len(except_field) == 0 :
-            second_result = []
-        else:
-            second_result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, except_field, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
-        try:
-            if(len(result) == 0):
-                result = second_result
-            elif(len(second_result) == 0):
-                result = result
-            else :
-                result = result.append(second_result)
-        except Exception as e:
-            result = second_result
-        print(result)
-        result = result.rename(columns=column_name)
-        result.reset_index(inplace = True)
-        result = result.drop(columns={"index", "level_0"})
-        result2 = result2.drop(columns=["index"])
-        result = result.merge(result2, how="left", on="ticker")
-        print(result)
+        static_field = {"ENSCORE":"environment",
+                        "SOSCORE":"social",
+                        "CGSCORE":"governance"}
+        # column_name = {"EPS1TR12": "eps", "WC05480": "bps", "WC18100A": "ev",
+        #     "WC18262A": "ttm_rev","WC08005": "mkt_cap","WC18309A": "ttm_ebitda",
+        #     "WC18311A": "ttm_capex","WC18199A": "net_debt","WC08372": "roe",
+        #     "WC05510": "cfps","WC08636A": "peg","BPS1FD12" : "bps1fd12",
+        #     "EBD1FD12" : "ebd1fd12","EVT1FD12" : "evt1fd12","EPS1FD12" : "eps1fd12",
+        #     "SAL1FD12" : "sal1fd12","CAP1FD12" : "cap1fd12",
+        #     "ENSCORE" : "environment","SOSCORE" : "social",
+        #     "CGSCORE" : "goverment",
+        #     "WC02999" : "total_asset", "WC02001" : "cash",
+        #     "WC03101" : "current_asset", "WC03501" : "equity",
+        #     "WC18312A" : "ttm_cogs", "WC02101" : "inventory",
+        #     "WC18264" : "ttm_eps", "WC18267" : "ttm_gm",
+        #     "WC01451" : "income_tax", "WC18810" : "pension_exp",
+        #     "WC02401" : "ppe_depreciation", "WC18274" : "ppe_impairment",
+        #     "WC07211" : "mkt_cap_usd", "i0eps" : "eps_lastq"}
+        # result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier,
+        #                                                              filter_field, use_ticker=True, split_number=1,
+        #                                                              quarterly=True, fundamentals_score=True)
+        result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier,
+                                                                       list(static_field.keys()), use_ticker=True, split_number=1,
+                                                                       quarterly=True, fundamentals_score=True)
+        # print("Error Ticker = " + str(except_field))
+        # if len(except_field) == 0 :
+        #     second_result = []
+        # else:
+        #     second_result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, except_field, identifier,
+        #                                                                    filter_field, use_ticker=True, split_number=1,
+        #                                                                    quarterly=True, fundamentals_score=True)
+        # try:
+        #     if(len(result) == 0):
+        #         result = second_result
+        #     elif(len(second_result) == 0):
+        #         result = result
+        #     else :
+        #         result = result.append(second_result)
+        # except Exception as e:
+        #     result = second_result
+        # print(result)
+        # result = result.rename(columns=column_name)
+        # result.reset_index(inplace = True)
+        # result = result.drop(columns={"index", "level_0"})
+        result = result.rename(columns=static_field)
+        result = result.drop(columns=["index"])
+        # result = result.merge(result2, how="left", on="ticker")
+        # print(result)
         if(len(universe)) > 0 :
             upsert_data_to_database(result, get_fundamental_score_table_name(), "ticker", how="update", Text=True)
-
             result["trading_day"] = find_nearest_specific_days(days=0)
             result = uid_maker(result, uid="uid", ticker="ticker", trading_day="trading_day", date=True)
             upsert_data_to_database(result, get_data_fundamental_score_history_table_name(), "uid", how="update", Text=True)
@@ -447,23 +459,40 @@ def score_update_vol_rs(list_of_start_end, days_in_year=256):
 
     return final_tri
 
-def score_update_stock_return(list_of_start_end):
+def score_update_skew(year=1):
+    ''' calcuate skewnesss of stock return of past 1yr '''
+    tri = get_master_ohlcvtr_data(trading_day=backdate_by_month(year*12))
+    tri["skew"] = tri['total_return_index']/tri.groupby('ticker')['total_return_index'].shift(1)-1       # update tri to 1d before (i.e. all stock ret up to 1d before)
+    tri["trading_day"] = pd.to_datetime(tri["trading_day"])
+    tri = tri.groupby('ticker')['skew'].skew().reset_index()
+    return tri
+
+def score_update_stock_return(list_of_start_end_month, list_of_start_end_week):
     """ Calculate specific period stock return (months) """
 
     df = pd.DataFrame(get_active_universe()["ticker"])
 
-    for l in list_of_start_end:
-        name_col = f"stock_return_{l[0]}_{l[1]}"
+    for l in list_of_start_end_month:         # stock return (month)
+        name_col = f"stock_return_r{l[1]}_{l[0]}"
         tri_start = get_specific_tri_avg(backdate_by_month(l[0]), avg_days=7, tri_name=f"tri_{l[0]}m")
         tri_end = get_specific_tri_avg(backdate_by_month(l[1]), avg_days=7, tri_name=f"tri_{l[1]}m")
         tri = tri_start.merge(tri_end, how="left", on="ticker")
-        tri[name_col] = tri[f"tri_{l[0]}m"] / tri[f"tri_{l[1]}m"]
+        tri[name_col] = tri[f"tri_{l[0]}m"] / tri[f"tri_{l[1]}m"]-1
+        df = df.merge(tri[["ticker", name_col]], how="left", on="ticker")
+        print(df)
+
+    for l in list_of_start_end_week:         # stock return (week)
+        name_col = f"stock_return_ww{l[1]}_{l[0]}"
+        tri_start = get_specific_tri_avg(backdate_by_week(l[0]), avg_days=7, tri_name=f"tri_{l[0]}w")
+        tri_end = get_specific_tri_avg(backdate_by_week(l[1]), avg_days=7, tri_name=f"tri_{l[1]}w")
+        tri = tri_start.merge(tri_end, how="left", on="ticker")
+        tri[name_col] = tri[f"tri_{l[0]}w"] / tri[f"tri_{l[1]}w"]-1
         df = df.merge(tri[["ticker", name_col]], how="left", on="ticker")
         print(df)
 
     return df
 
-def score_update_fx_conversion(df):
+def score_update_fx_conversion(df, ingestion_source):
     """ Convert all columns to USD for factor calculation (DSS, WORLDSCOPE, IBES using different currency) """
 
     org_cols = df.columns.to_list()     # record original columns for columns to return
@@ -478,31 +507,32 @@ def score_update_fx_conversion(df):
     df['fx_ibes'] = df['currency_code_ibes'].map(fx)
     df['fx_ws'] = df['currency_code_ws'].map(fx)
 
-    ingestion_source = get_ingestion_name_source().dropna(subset=['score_name'])
     ingestion_source = ingestion_source.loc[ingestion_source['non_ratio']]     # no fx conversion for ratio items
 
     for name, g in ingestion_source.groupby(['source']):        # convert for ibes / ws
-        cols = g['score_name'].to_list()
+        cols = g['our_name'].to_list()
         df[cols] = df[cols].div(df[f'fx_{name}'], axis="index")
 
     df['close'] = df['close']/df['fx_dss']  # convert close price
 
     return df[org_cols]
 
-def score_update_factor_ratios(df):
+def score_update_factor_ratios(df, formula, ingestion_source):
     """ Calculate all factor used referring to DB ratio table """
 
-    formula = get_factor_calculation_formula()
     print(df.columns)
-
-    df = score_update_fx_conversion(df)
+    df = score_update_fx_conversion(df, ingestion_source)
 
     # Prepare for field requires add/minus
     add_minus_fields = formula[["field_num", "field_denom"]].dropna(how="any").to_numpy().flatten()
     add_minus_fields = [i for i in list(set(add_minus_fields)) if any(["-" in i, "+" in i, "*" in i])]
+    add_minus_fields_1q = formula.loc[formula['name'].str[-3:]=='_1q', ["field_num"]].dropna(how="any").to_numpy().flatten()
+    add_minus_fields_1q = [i for i in list(set(add_minus_fields_1q)) if any(["-" in i, "+" in i, "*" in i])]
+    add_minus_fields_1y = formula.loc[formula['name'].str[-4:]=='_1yr', ["field_num"]].dropna(how="any").to_numpy().flatten()
+    add_minus_fields_1y = [i for i in list(set(add_minus_fields_1y)) if any(["-" in i, "+" in i, "*" in i])]
 
-    for i in add_minus_fields:
-        x = [op.strip() for op in i.split()]
+    def field_calc(df, x):
+        ''' transform fields need calculation before ratio calculation '''
         if x[0] in "*+-": raise Exception("Invalid formula")
         temp = df[x[0]].copy()
         n = 1
@@ -516,7 +546,17 @@ def score_update_factor_ratios(df):
             else:
                 raise Exception(f"Unexpected operand/operator: {x[n]}")
             n += 2
-        df[i] = temp
+        return temp
+
+    for i in add_minus_fields:
+        x = [op.strip() for op in i.split()]
+        df[i] = field_calc(df, x)
+    for i in add_minus_fields_1q:
+        x = [op.strip()+'_1q'  if len(op)>1 else op.strip() for op in i.split()]
+        df[i+'_1q'] = field_calc(df, x)
+    for i in add_minus_fields_1y:
+        x = [op.strip()+'_1y'  if len(op)>1 else op.strip() for op in i.split()]
+        df[i+'_1y'] = field_calc(df, x)
 
     # a) Keep original values
     keep_original_mask = formula["field_denom"].isnull() & formula["field_num"].notnull()
@@ -524,18 +564,24 @@ def score_update_factor_ratios(df):
     old_name = formula.loc[keep_original_mask, "field_num"].to_list()
     df[new_name] = df[old_name]
 
+    # b) Time series ratios (Calculate 1m change first)
+    print(f'      ------------------------> Calculate time-series ratio ')
+    for r in formula.loc[formula['field_num']==formula['field_denom'], ['name','field_denom']].to_dict(orient='records'):  # minus calculation for ratios
+        if r['name'][-2:] == 'yr':
+            df[r["name"]] = df[r["field_denom"]] / df[r["field_denom"]+'_1y']-1
+        elif r['name'][-1] == 'q':
+            df[r["name"]] = df[r["field_denom"]] / df[r["field_denom"]+'_1q']-1
+
     # c) Divide ratios
     print(f"      ------------------------> Calculate dividing ratios ")
     for r in formula.loc[(formula["field_denom"].notnull())&
                          (formula["field_num"]!= formula["field_denom"])].to_dict(orient="records"):  # minus calculation for ratios
         df[r["name"]] = df[r["field_num"]] / df[r["field_denom"]]
 
-    return df, formula.set_index(["name"])
+    return df
 
-def score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_rank):
-
-    fundamentals['dummy'] = True
-    groupby_col = ['currency_code']  # or 'dummy'
+def score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name):
+    ''' scale factor original value -> (0,1) scores '''
 
     def transform_trim_outlier(x):
         s = skew(x)
@@ -550,27 +596,38 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
     calculate_column_score = []
     for column in calculate_column:
         column_score = column + "_score"
-        fundamentals[column_score] = fundamentals.dropna(subset=[column]).groupby(groupby_col)[column].transform(
+        fundamentals[column_score] = fundamentals.dropna(subset=[column]).groupby("currency_code")[column].transform(
             transform_trim_outlier)
         calculate_column_score.append(column_score)
     print(calculate_column_score)
 
-    # x1 = fundamentals.groupby("currency_code")[[x+'_score' for x in calculate_column]].skew()
-    # y1 = fundamentals.groupby("currency_code")[[x+'_score' for x in calculate_column]].apply(pd.DataFrame.kurtosis)
-
     # Scale 2: Reverse value for long_large = False (i.e. recommend short larger value)
-    append_df = factor_rank.loc[factor_rank['keep']]
-    append_df.loc[append_df['factor_name']=='earnings_pred', 'long_large'] = factor_rank.loc[factor_rank['factor_name']=='fwd_ey', 'long_large'].values[0]
+    factor_rank = get_factor_rank(factor_rank_name)
+    factor_rank = factor_rank.merge(factor_formula, left_on=['factor_name'], right_index=True, how='outer')
+
+    # for score not included in backtest (earnings_pred & wts_rating)
+    factor_rank.loc[factor_rank['factor_name']=='earnings_pred', ['group', 'long_large','pred_z','factor_weight']] = \
+        factor_rank.loc[factor_rank['factor_name']=='fwd_ey', ['group', 'long_large','pred_z','factor_weight']].values
+    if factor_rank_name[:6] == 'weekly':
+        factor_rank.loc[factor_rank['factor_name'].isin(["wts_rating"]), ['group', 'long_large','pred_z','factor_weight']] = \
+            ['USD', True, 2, 2]
+    factor_rank = factor_rank.dropna(subset=['pillar','pred_z'], how='any')
+
+    for i in set(universe_currency_code) - set(factor_rank['group'].unique()):
+        replace_rank = factor_rank.loc[factor_rank['group'] == 'USD'].copy()
+        replace_rank['group'] = i
+        factor_rank = factor_rank.append(replace_rank, ignore_index=True)
+
+    # 2.1: use USD -> other currency
+    replace_rank = factor_rank.loc[factor_rank['group'] == 'USD'].copy()
+    for i in set(universe_currency_code) - set(factor_rank['group'].unique()):
+        replace_rank['group'] = i
+        factor_rank = factor_rank.append(replace_rank, ignore_index=True)
+
+    # 2.2: reverse currency for not long_large
     for group, g in factor_rank.groupby(['group']):
         neg_factor = [x+'_score' for x in g.loc[(g['long_large'] == False), 'factor_name'].to_list()]
-        if not factor_rank.loc[factor_rank['factor_name']=='fwd_ey', 'long_large'].values[0]:
-            neg_factor += ['earnings_pred_score']
-
         fundamentals.loc[(fundamentals['currency_code'] == group), neg_factor] *= -1
-
-        # for non calculating socre -> we add same for each one
-        append_df["group"] = group
-        factor_rank = factor_rank.append(append_df, ignore_index=True)
 
     # Scale 3: apply robust scaler
     calculate_column_robust_score = []
@@ -578,7 +635,7 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
         try:
             column_score = column + "_score"
             column_robust_score = column + "_robust_score"
-            fundamentals[column_robust_score] = fundamentals.dropna(subset=[column_score]).groupby(groupby_col)[
+            fundamentals[column_robust_score] = fundamentals.dropna(subset=[column_score]).groupby("currency_code")[
                 column_score].transform(lambda x: robust_scale(x))
             calculate_column_robust_score.append(column_robust_score)
         except Exception as e:
@@ -593,14 +650,13 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
         df_currency_code = fundamentals[["currency_code", column_robust_score]]
         df_currency_code = df_currency_code.rename(columns={column_robust_score: "score"})
         fundamentals[column_minmax_currency_code] = df_currency_code.dropna(subset=["currency_code", "score"]).groupby(
-            groupby_col).score.transform(
-            lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
+            'currency_code').score.transform(lambda x: minmax_scale(x.astype(float)) if x.notnull().sum() else np.full_like(x, np.nan))
         fundamentals[column_minmax_currency_code] = np.where(fundamentals[column_minmax_currency_code].isnull(),
                                                              fundamentals[column_minmax_currency_code].mean() * 0.9,
                                                              fundamentals[column_minmax_currency_code]) * 10
         minmax_column.append(column_minmax_currency_code)
 
-        if column in ["environment", "social", "goverment"]:  # for ESG scores also do industry partition
+        if column in ["environment", "social", "governance"]:  # for ESG scores also do industry partition
             column_minmax_industry = column + "_minmax_industry"
             df_industry = fundamentals[["industry_code", column_robust_score]]
             df_industry = df_industry.rename(columns={column_robust_score: "score"})
@@ -623,6 +679,8 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
     # tmp["variable"] = tmp["variable"] + "_quantile_currency_code"
     # tmp = tmp.pivot(["ticker"], ["variable"]).droplevel(0, axis=1)
     # fundamentals = fundamentals.merge(tmp, how="left", on="ticker")
+
+    # for currency not predicted by Factor Model -> Use factor of USD
 
     # add column for 3 pillar score
     fundamentals[[f"fundamentals_{name}" for name in factor_rank['pillar'].unique()]] = np.nan
@@ -693,11 +751,9 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
         pillar_df.index = pillar_df.index.set_names(['index'])
         replace_table_datebase_ali(pillar_df.reset_index(), f"test_fundamental_score_details_{group}")
 
-    fundamentals_factors_scores_col = fundamentals.filter(regex="^fundamentals_").columns
-
     print("Calculate ESG Value")
     esg_cols = ["environment_minmax_currency_code", "environment_minmax_industry", "social_minmax_currency_code",
-                "social_minmax_industry", "goverment_minmax_currency_code", "goverment_minmax_industry"]
+                "social_minmax_industry", "governance_minmax_currency_code", "governance_minmax_industry"]
     fundamentals["esg"] = fundamentals[esg_cols].mean(1)
 
     print("Calculate AI Score")
@@ -719,24 +775,44 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
         try:
             # raise Exception('Scaling with current score')
             score_history_cur = score_history.loc[score_history['currency_code'] == cur]
+            # score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]] = score_history[["ai_score_unscaled", "ai_score2_unscaled"]]*1.1
             print(f'{cur} History Min/Max: ',
                   score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]].min().values,
                   score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]].max().values)
-            print(f'{cur} Current Min/Max: ', g[["ai_score", "ai_score2"]].min().values,
+            print(f'{cur} Cur-bef Min/Max: ', g[["ai_score", "ai_score2"]].min().values,
                   g[["ai_score", "ai_score2"]].max().values)
-            m1 = MinMaxScaler(feature_range=(0, 10)).fit(score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]])
+            m1 = MinMaxScaler(feature_range=(0, 9)).fit(score_history_cur[["ai_score_unscaled", "ai_score2_unscaled"]])     # minmax -> (0, 9) to avoid overly large score
             fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = m1.transform(g[["ai_score", "ai_score2"]])
+            print(f'{cur} Cur-aft Min/Max: ', fundamentals.loc[g.index, ["ai_score", "ai_score2"]].min().values,
+                  fundamentals.loc[g.index, ["ai_score", "ai_score2"]].max().values)
         except Exception as e:
             print(e)
             print(f'{cur} Current Min/Max: ', g[["ai_score", "ai_score2"]].min().values,
                   g[["ai_score", "ai_score2"]].max().values)
             fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = MinMaxScaler(feature_range=(0, 10)).fit_transform(
                 g[["ai_score", "ai_score2"]])
+        fundamentals.loc[g.index, ["ai_score", "ai_score2"]] = MinMaxScaler(feature_range=(0, 10)).fit_transform(
+            g[["ai_score", "ai_score2"]])
 
-    return fundamentals, minmax_column, fundamentals_factors_scores_col
+    fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].clip(0, 10)
+    fundamentals[['ai_score','ai_score2',"esg"]] = fundamentals[['ai_score','ai_score2',"esg"]].round(1)
+
+    fundamentals_factors_scores_col = ["fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "esg",
+                                       "ai_score", "ai_score2", "ai_score_unscaled", "ai_score2_unscaled",
+                                       "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]
+    fundamentals[fundamentals_factors_scores_col] = fundamentals[fundamentals_factors_scores_col].round(1)
+
+    return fundamentals.set_index('ticker')[fundamentals_factors_scores_col]
 
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
     ''' Update: '''
+
+    # --------------------------------- Data Ingestion & Factor Calculation ---------------------------------------
+
+    # Ingest 0: table formula for calculation
+    factor_formula = get_factor_calculation_formula()       # formula for ratio calculation
+    ingestion_source = get_ingestion_name_source()          # ingestion name & source
+
     # Ingest 1: DLPA & Universe
     print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
     universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
@@ -747,58 +823,71 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         if any(universe_rating[[col]].value_counts()/len(universe_rating) > .95):
             universe_rating[[col]] = np.nan
 
-    # Ingest 2: fundamental score
+    # Ingest 2: fundamental score (Update: for mkt_cap/E/S/G only)
     print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
     fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
+    fundamentals_score = fundamentals_score.filter(['ticker', 'mkt_cap','social','governance','environment'])
     print(fundamentals_score)
 
-    # get last trading price for factor calculation
+    # Ingest 3: worldscope_summary & data_ibes_summary (Update: for mkt_cap/E/S/G only)
+    print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
+    quarter_col = factor_formula.loc[factor_formula['name'].str[-3:]=='_1q', 'field_denom'].to_list()
+    quarter_col = [i for x in quarter_col for i in x.split(' ')  if not any(['-' in i, '+' in i, '*' in i])]
+    year_col = factor_formula.loc[factor_formula['name'].str[-4:]=='_1yr', 'field_denom'].to_list()
+    year_col = [i for x in year_col for i in x.split(' ')  if not any(['-' in i, '+' in i, '*' in i])]
+    ibes_col = ingestion_source.loc[ingestion_source['source']=='ibes','our_name'].to_list()
+    ws_col = ingestion_source.loc[ingestion_source['source']=='ws','our_name'].to_list()
+    ws_latest = get_worldscope_summary_latest(quarter_col=list(set(quarter_col) & set(ws_col)), year_col=list(set(year_col) & set(ws_col)))
+    ws_latest = ws_latest.drop(columns=['mkt_cap'])     # use daily mkt_cap from fundamental_score
+    print(ws_latest)
+    ibes_latest = get_ibes_monthly_latest(quarter_col=list(set(quarter_col) & set(ibes_col)), year_col=list(set(year_col) & set(ibes_col)))
+    print(ibes_latest)
+
+    # Ingest 4.1: get last trading price for factor calculation
     close_price = get_last_close_industry_code(ticker=ticker, currency_code=currency_code)
     print(close_price)
 
-    # get volatility
+    # Ingest 4.2: get volatility
     vol = score_update_vol_rs(list_of_start_end=[[0,1]])     # calculate RS volatility -> list_of_start_end in ascending sequence (start_month, end_month)
     print(vol)
 
-    pred_mean = get_ai_value_pred_final()
-    print(pred_mean)
+    # Ingest 4.3: get skewness
+    skew = score_update_skew(year=1)     # calculate RS volatility -> list_of_start_end in ascending sequence (start_month, end_month)
+    print(skew)
 
-    # get different period stock return
-    tri = score_update_stock_return(list_of_start_end=[[0,1],[2,6],[6,12]])
+    # Ingest 4.4: get different period stock return
+    tri = score_update_stock_return(list_of_start_end_month=[[0,1],[2,6],[7,12]], list_of_start_end_week=[[0,1],[1,2],[2,4]])
     print(tri)
 
-    # get last week average volume
+    #Ingest 4.5:  get last week average volume
     volume1 = get_specific_volume_avg(backdate_by_month(0), avg_days=7).set_index('ticker')
     volume2 = get_specific_volume_avg(backdate_by_month(0), avg_days=91).set_index('ticker')
     volume = (volume1/volume2).reset_index()
     print(volume)
 
+    # Ingest 5: get earning_prediction from ai_value
+    pred_mean = get_ai_value_pred_final()
+    print(pred_mean)
+
     # merge scores used for calculation
     fundamentals_score = close_price.merge(fundamentals_score, how="left", on="ticker")
+    fundamentals_score = fundamentals_score.merge(ws_latest, how="left", on="ticker")
+    fundamentals_score = fundamentals_score.merge(ibes_latest, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(vol, how="left", on="ticker")
+    fundamentals_score = fundamentals_score.merge(skew, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(pred_mean, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(tri, how="left", on="ticker")
     fundamentals_score = fundamentals_score.merge(volume, how="left", on="ticker")
 
     # calculate ratios refering to table X
-    fundamentals_score, factor_formula = score_update_factor_ratios(fundamentals_score)
+    fundamentals_score = score_update_factor_ratios(fundamentals_score, factor_formula, ingestion_source)
 
-    factor_rank = get_factor_rank()
+    # ------------------------------------ Factor Score Scaling ------------------------------------------
 
-    # for currency not predicted by Factor Model -> Use factor of USD
-    universe_currency_code = get_active_universe()['currency_code'].unique()
-    for i in set(universe_currency_code) - set(factor_rank['group'].unique()):
-        replace_rank = factor_rank.loc[factor_rank['group']=='USD'].copy()
-        replace_rank['group'] = i
-        factor_rank = factor_rank.append(replace_rank, ignore_index=True)
-
-    factor_rank = factor_rank.merge(factor_formula, left_on=['factor_name'], right_index=True, how='outer')
-    factor_rank['long_large'] = factor_rank['long_large'].fillna(True)
-    factor_rank = factor_rank.dropna(subset=['pillar'])
-
+    factor_formula = factor_formula.set_index('name')
     calculate_column = list(factor_formula.loc[factor_formula["scaler"].notnull()].index)
     calculate_column = sorted(set(calculate_column))
-    calculate_column += ["environment", "social", "goverment"]
+    calculate_column += ["environment", "social", "governance"]
 
     fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
     fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
@@ -808,24 +897,15 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print(fundamentals)
 
     # Scale original fundamental score
-    fundamentals, minmax_column, fundamentals_factors_scores_col = score_update_scale(fundamentals, calculate_column,
-                                                                                      universe_currency_code, factor_rank)
+    universe_currency_code = get_active_universe()['currency_code'].unique()
+    fundamentals_1w = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='weekly1')
+    fundamentals_1m = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='monthly1')
 
-    # print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
-
-    fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].clip(0, 10)
-    fundamentals[['ai_score','ai_score2',"esg"]] = fundamentals[['ai_score','ai_score2',"esg"]].round(1)
-    fundamentals[fundamentals_factors_scores_col] = fundamentals[fundamentals_factors_scores_col].round(1)
-
+    fundamentals = (fundamentals_1w + fundamentals_1m)/2  # currently we use simple average of weekly score & monthly score
+    fundamentals = fundamentals.reset_index()
     fundamentals["trading_day"] = dateNow()
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
-
-    universe_rating_history = fundamentals[["uid", "ticker", "trading_day", "fundamentals_value", "fundamentals_quality",
-                                            "fundamentals_momentum", "esg", "ai_score", "ai_score2", "wts_rating", "dlp_1m",
-                                            "dlp_3m", "wts_rating2", "classic_vol", "fundamentals_extra",
-                                            "ai_score_unscaled", "ai_score2_unscaled"]]
-
-    universe_rating_detail_history = fundamentals[minmax_column]
+    universe_rating_history = fundamentals.copy()
 
     print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
     if(len(fundamentals)) > 0 :
@@ -835,14 +915,12 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         result["updated"] = dateNow()
         print(result)
         print(universe_rating_history)
-        print(universe_rating_detail_history)
         upsert_data_to_database(result, get_universe_rating_table_name(), "ticker", how="update", Text=True)
-        upsert_data_to_database(universe_rating_history, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
-        upsert_data_to_database(universe_rating_detail_history, get_universe_rating_detail_history_table_name(), "uid", how="update", Text=True)
-
+        upsert_data_to_database(fundamentals, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
         delete_data_on_database(get_universe_rating_table_name(), f"ticker is not null", delete_ticker=True)
         delete_data_on_database(get_universe_rating_history_table_name(), f"ticker is not null", delete_ticker=True)
-        delete_data_on_database(get_universe_rating_detail_history_table_name(), f"ticker is not null", delete_ticker=True)
+        # upsert_data_to_database(universe_rating_detail_history, get_universe_rating_detail_history_table_name(), "uid", how="update", Text=True)
+        # delete_data_on_database(get_universe_rating_detail_history_table_name(), f"ticker is not null", delete_ticker=True)
         report_to_slack("{} : === Universe Fundamentals Quality & Value Updated ===".format(datetimeNow()))
 
 def dividend_updated_from_dsws(ticker=None, currency_code=None):
@@ -934,6 +1012,7 @@ def update_fred_data_from_fred():
         report_to_slack("{} : === Fred Updated ===".format(datetimeNow()))
 
 def populate_ibes_table():
+    ''' (Update) obsolete '''
     table_name = get_data_ibes_table_name()
     start_date = backdate_by_month(30)
     ibes_data = get_data_ibes_monthly(start_date)
@@ -941,68 +1020,54 @@ def populate_ibes_table():
     upsert_data_to_database(ibes_data, table_name, "uid", how="update", Text=True)
     report_to_slack("{} : === Data IBES Update Updated ===".format(datetimeNow()))
 
-
 def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=False):
-    end_date = dateNow()
-    start_date = backdate_by_month(1)
-    filter_field = ["EPS1TR12", "EPS1FD12", "EBD1FD12", "CAP1FD12", "I0EPS", "EPSI1MD", "SAL1FD12"]
+    ''' (Update) weekly ingestion of IBES data '''
 
+    # Prep 1. field: get data_ibes_monthly ingestion field from Table ingesion_name
+    df = get_ingestion_name_source()
+    filter_field = df.loc[df['ibes_monthly'], ['dsws_name', 'our_name']].values.tolist()
+
+    # Prep 2. ticker: make sure input ticker list is always active ticker
+    identifier = "ticker"
+    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+    tickers = universe["ticker"].to_list()
+    print(universe)
+
+    # Prep 3. period_end: for company without Dec year_end, there could be available field in future
+    end_date = dateNow()
+    start_date = dateNow()
     if(history):
         start_date = "2000-01-01"
 
-    identifier = "ticker"
-    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
-    print(universe)
-    if len(universe) > 0:
-        result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, monthly=True)
-    print("Error Ticker = " + str(except_field))
-    if len(except_field) == 0 :
-        second_result = []
-    else:
-        second_result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, except_field, identifier, filter_field, use_ticker=True, split_number=1, monthly=True)
-    try:
-        if(len(result) == 0):
-            result = second_result
-        elif(len(second_result) == 0):
-            result = result
-        else :
-            result = result.append(second_result)
-    except Exception as e:
-        result = second_result
-    if(len(result)) > 0 :
-        result = result.reset_index()
-        result = result.drop(columns=["level_0"])
-        
-        result = result.rename(columns={"EBD1FD12": "ebd1fd12",
-            "CAP1FD12": "cap1fd12",
-            "EPS1FD12": "eps1fd12",
-            "EPS1TR12": "eps1tr12",
-            "EPSI1MD": "epsi1md",
-            "SAL1FD12" : "sal1fd12",
-            "I0EPS" : "i0eps",
-            "index" : "trading_day"
-        })
-        result = uid_maker(result)
+    # start ingestion
+    data = []
+    for field_dsws, field_rename in filter_field:
+        result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, tickers, identifier, [field_dsws],
+                                                                       use_ticker=True, split_number=1, monthly=True)
+        if(len(result)) > 0:
+            result = result.rename(columns={"index": "trading_day", field_dsws: field_rename})
+            data.append(result.set_index(["ticker", "trading_day"]))
+            print(result)
+            # result["year"] = pd.DatetimeIndex(result["trading_day"]).year
+            # result["month"] = pd.DatetimeIndex(result["trading_day"]).month
+            # result.loc[result["month"].isin([1, 2, 3]), "period_end"] = result["year"].astype(str) + "-" + "03-31"
+            # result.loc[result["month"].isin([4, 5, 6]), "period_end"] = result["year"].astype(str) + "-" + "06-30"
+            # result.loc[result["month"].isin([7, 8, 9]), "period_end"] = result["year"].astype(str) + "-" + "09-30"
+            # result.loc[result["month"].isin([10, 11, 12]), "period_end"] = result["year"].astype(str) + "-" + "12-31"
+            # result["year"] = np.where(result["month"].isin([1, 2]), result["year"] - 1, result["year"])
+            # result.loc[result["month"].isin([12, 1, 2]), "period_end"] = result["year"].astype(str) + "-" + "12-31"
+            # result.loc[result["month"].isin([3, 4, 5]), "period_end"] = result["year"].astype(str) + "-" + "03-31"
+            # result.loc[result["month"].isin([6, 7, 8]), "period_end"] = result["year"].astype(str) + "-" + "06-30"
+            # result.loc[result["month"].isin([9, 10, 11]), "period_end"] = result["year"].astype(str) + "-" + "09-30"
+            # result["year"] = np.where(result["month"].isin([1, 2]), result["year"] + 1, result["year"])
+            # result = result.drop(columns=["month", "year"])
 
-        result["year"] = pd.DatetimeIndex(result["trading_day"]).year
-        result["month"] = pd.DatetimeIndex(result["trading_day"]).month
-
-        result.loc[result["month"].isin([1, 2, 3]), "period_end"] = result["year"].astype(str) + "-" + "03-31"
-        result.loc[result["month"].isin([4, 5, 6]), "period_end"] = result["year"].astype(str) + "-" + "06-30"
-        result.loc[result["month"].isin([7, 8, 9]), "period_end"] = result["year"].astype(str) + "-" + "09-30"
-        result.loc[result["month"].isin([10, 11, 12]), "period_end"] = result["year"].astype(str) + "-" + "12-31"
-
-        # result["year"] = np.where(result["month"].isin([1, 2]), result["year"] - 1, result["year"])
-        # result.loc[result["month"].isin([12, 1, 2]), "period_end"] = result["year"].astype(str) + "-" + "12-31"
-        # result.loc[result["month"].isin([3, 4, 5]), "period_end"] = result["year"].astype(str) + "-" + "03-31"
-        # result.loc[result["month"].isin([6, 7, 8]), "period_end"] = result["year"].astype(str) + "-" + "06-30"
-        # result.loc[result["month"].isin([9, 10, 11]), "period_end"] = result["year"].astype(str) + "-" + "09-30"
-        # result["year"] = np.where(result["month"].isin([1, 2]), result["year"] + 1, result["year"])
-        result = result.drop(columns=["month", "year"])
-        print(result)
-        upsert_data_to_database(result, get_data_ibes_monthly_table_name(), "uid", how="update", Text=True)
-        report_to_slack("{} : === Data IBES Monthly Update Updated ===".format(datetimeNow()))
-        populate_ibes_table()
+    result = pd.concat(data, axis=1)
+    result = result.reset_index()
+    result = uid_maker(result)
+    upsert_data_to_database(result, get_data_ibes_monthly_table_name(), "uid", how="update", Text=True)
+    report_to_slack("{} : === Data IBES Monthly Update Updated ===".format(datetimeNow()))
+    # populate_ibes_table()
 
 def get_fred_csv_monthly(start_date = backdate_by_month(6), end_date = dateNow()):
     print(f"=== Read Fred Data ===")
@@ -1024,6 +1089,7 @@ def get_fred_csv_monthly(start_date = backdate_by_month(6), end_date = dateNow()
         return []
 
 def populate_macro_table():
+    ''' obsolete '''
     table_name = get_data_macro_table_name()
     end_date = dateNow()
     start_date = backdate_by_month(30)
@@ -1034,335 +1100,331 @@ def populate_macro_table():
     report_to_slack("{} : === Data MACRO Update Updated ===".format(datetimeNow()))
 
 def update_macro_data_monthly_from_dsws():
+    ''' (Update) Weekly ingestion of data_macro_monthly '''
+
     print("Get Macro Data From DSWS")
+
+    # Prep 1. field: get data_macro_monthly ingestion field from Table ingesion_name_macro
+    df = get_ingestion_name_macro_source()
+    ticker_quarterly_field = df.loc[df['quarterly'], ['dsws_name', 'our_name']].set_index('dsws_name')['our_name'].to_dict()
+    ticker_monthly_field = df.loc[df['monthly'], ['dsws_name', 'our_name']].set_index('dsws_name')['our_name'].to_dict()
+
+    # Prep 2. ticker: make sure input ticker list is always active ticker
     end_date = dateNow()
     start_date_month = backdate_by_month(3)
     start_date_quarter = backdate_by_month(6)
-    ticker_quarterly_field = ["CHGDP...C", "JPGDP...D", "USGDP...D", "EMGDP...D"]
-    ticker_monthly_field = ["USINTER3", "USGBILL3", "EMIBOR3.", "JPMSHORT", "EMGBOND.", "CHGBOND."]
-    ticker_field = ["EMIBOR3.", "USGBILL3", "CHGDP...C", "EMGDP...D", "USGDP...D", "USINTER3", "EMGBOND.",
-        "JPMSHORT", "CHGBOND.", "JPGDP...D"]
-    ticker_vix = ["CBOEVIX", "VHSIVOL", "VSTOXXI", "VKOSPIX"]
-    filter_field_vix = ["PI"]
+
+    result_vix = get_vix_since(date=start_date_quarter).drop(columns=["uid"])
+    result_vix = result_vix.set_index(["trading_day","vix_id"])["vix_value"].unstack()
+    result_vix.columns = [x.lower() for x in result_vix.columns.to_list()]
+    result_vix = result_vix.resample('D').ffill().reset_index()
+    # ticker_vix = ["CBOEVIX", "VHSIVOL", "VSTOXXI", "VKOSPIX"]
+    # filter_field_vix = ["PI"]
+    # result_monthly_vix, except_field = get_data_history_frequently_from_dsws(start_date_month, end_date, ticker_vix, identifier, filter_field_vix, use_ticker=False, split_number=1, monthly=True)
+    # print(result_monthly_vix)
+    # if(len(result_monthly_vix)) > 0 :
+    #     result_monthly_vix = result_monthly_vix.reset_index(drop=True)
+    #     result_monthly_vix = result_monthly_vix.rename(columns={"index" : "trading_day"})
+    #     result_monthly_vix["year"] = pd.DatetimeIndex(result_monthly_vix["trading_day"]).year
+    #     result_monthly_vix["month"] = pd.DatetimeIndex(result_monthly_vix["trading_day"]).month
+    #     result_monthly_vix["year_month"] = result_monthly_vix["month"].astype(str) + "-" + result_monthly_vix["year"].astype(str)
+    #     data_monthly_vix = pd.DataFrame(result_monthly_vix["year_month"].unique(), columns =["year_month"])
+    #     data_monthly_vix = data_monthly_vix.set_index("year_month")
+    #     for index, row in result_monthly_vix.iterrows():
+    #         ticker_field = row["ticker"]
+    #         year_month = row["year_month"]
+    #         if (row["ticker"] == "CBOEVIX") :
+    #                 ticker_field = "cboevix"
+    #         elif (row["ticker"] == "VHSIVOL") :
+    #                 ticker_field = "vhsivol"
+    #         elif (row["ticker"] == "VSTOXXI") :
+    #                 ticker_field = "vstoxxi"
+    #         elif (row["ticker"] == "VKOSPIX") :
+    #                 ticker_field = "vkospix"
+    #         data_field = row["PI"]
+    #         data_monthly_vix.loc[year_month, ticker_field] = data_field
+    #     data_monthly_vix = data_monthly_vix.reset_index(inplace=False)
+    #     print(data_monthly_vix)
+
     filter_field = ["ESA"]
     identifier="ticker"
-    result_monthly_vix, except_field = get_data_history_frequently_from_dsws(start_date_month, end_date, ticker_vix, identifier, filter_field_vix, use_ticker=False, split_number=1, monthly=True)
-    result_monthly, except_field = get_data_history_frequently_from_dsws(start_date_month, end_date, ticker_monthly_field, identifier, filter_field, use_ticker=False, split_number=1, monthly=True)
-    result_quarterly, except_field = get_data_history_frequently_from_dsws(start_date_quarter, end_date, ticker_quarterly_field, identifier, filter_field, use_ticker=False, split_number=1, quarterly=True)
-    print(result_monthly_vix)
+    result_monthly, except_field = get_data_history_frequently_from_dsws(start_date_month, end_date, list(ticker_monthly_field.keys()), identifier, filter_field, use_ticker=False, split_number=1, monthly=True)
+    result_quarterly, except_field = get_data_history_frequently_from_dsws(start_date_quarter, end_date, list(ticker_quarterly_field.keys()), identifier, filter_field, use_ticker=False, split_number=1, quarterly=True)
     print(result_monthly)
     print(result_quarterly)
-    if(len(result_monthly_vix)) > 0 :
-        result_monthly_vix = result_monthly_vix.reset_index(drop=True)
-        result_monthly_vix = result_monthly_vix.rename(columns={"index" : "trading_day"})
-        result_monthly_vix["year"] = pd.DatetimeIndex(result_monthly_vix["trading_day"]).year
-        result_monthly_vix["month"] = pd.DatetimeIndex(result_monthly_vix["trading_day"]).month
-        result_monthly_vix["year_month"] = result_monthly_vix["month"].astype(str) + "-" + result_monthly_vix["year"].astype(str)
-        data_monthly_vix = pd.DataFrame(result_monthly_vix["year_month"].unique(), columns =["year_month"])
-        data_monthly_vix = data_monthly_vix.set_index("year_month")
-        for index, row in result_monthly_vix.iterrows():
-            ticker_field = row["ticker"]
-            year_month = row["year_month"]
-            if (row["ticker"] == "CBOEVIX") :
-                    ticker_field = "cboevix"
-            elif (row["ticker"] == "VHSIVOL") :
-                    ticker_field = "vhsivol"
-            elif (row["ticker"] == "VSTOXXI") :
-                    ticker_field = "vstoxxi"
-            elif (row["ticker"] == "VKOSPIX") :
-                    ticker_field = "vkospix"
-            data_field = row["PI"]
-            data_monthly_vix.loc[year_month, ticker_field] = data_field
-        data_monthly_vix = data_monthly_vix.reset_index(inplace=False)
-        print(data_monthly_vix)
 
-    if(len(result_monthly)) > 0 :
-        result_monthly = result_monthly.reset_index()
-        result_monthly = result_monthly.drop(columns=["level_0"])
-        result_monthly = result_monthly.rename(columns={"index" : "trading_day"})
-        result_monthly = result_monthly.dropna()
-        result_monthly["trading_day"] = pd.to_datetime(result_monthly["trading_day"])
-        result_monthly["year"] = pd.DatetimeIndex(result_monthly["trading_day"]).year
-        result_monthly["month"] = pd.DatetimeIndex(result_monthly["trading_day"]).month
-        result_monthly["year_month"] = result_monthly["month"].astype(str) + "-" + result_monthly["year"].astype(str)
-        data_monthly = pd.DataFrame(result_monthly["year_month"].unique(), columns =["year_month"])
-        data_monthly = data_monthly.set_index("year_month")
-        for index, row in result_monthly.iterrows():
-            ticker_field = row["ticker"]
-            year_month = row["year_month"]
-            month = row["month"]
-            year = row["year"]
-            trading_day = row["trading_day"]
-            if (row["ticker"] == "USGBILL3") :
-                ticker_field = "usgbill3"
-            elif (row["ticker"] == "USINTER3") :
-                ticker_field = "usinter3"
-            elif (row["ticker"] == "JPMSHORT") :
-                ticker_field = "jpmshort"
-            elif (row["ticker"] == "EMGBOND.") :
-                ticker_field = "emgbond"
-            elif (row["ticker"] == "CHGBOND.") :
-                ticker_field = "chgbond"
-            elif (row["ticker"] == "EMIBOR3.") :
-                ticker_field = "emibor3"
-            data_field = row["ESA"]
-            data_monthly.loc[year_month, ticker_field] = data_field
-            data_monthly.loc[year_month, "month"] = month
-            data_monthly.loc[year_month, "year"] = year
-            data_monthly.loc[year_month, "trading_day"] = trading_day.replace(day=15)
-        data_monthly = data_monthly.reset_index(inplace=False)
-        data_monthly = data_monthly.sort_values(by="trading_day", ascending=False)
-        fred_data = get_fred_csv_monthly(start_date = start_date_month, end_date = end_date)
-        data_monthly = data_monthly.merge(fred_data, how="left", on=["year", "month"])
-        data_monthly.loc[data_monthly["month"].isin([1, 2, 3]), "quarter"] = 1
-        data_monthly.loc[data_monthly["month"].isin([4, 5, 6]), "quarter"] = 2
-        data_monthly.loc[data_monthly["month"].isin([7, 8, 9]), "quarter"] = 3
-        data_monthly.loc[data_monthly["month"].isin([10, 11, 12]), "quarter"] = 4
-        print(data_monthly)
+    result = pd.concat([result_monthly, result_quarterly], axis=0).dropna(how='any')      # combine monthly, weekly ingestion
+    if(len(result)) > 0 :
+        result = result.rename(columns={"index" : "trading_day"})
+        result["trading_day"] = pd.to_datetime(result["trading_day"])
+        result['ticker'] = result['ticker'].replace(ticker_monthly_field)
+        result['ticker'] = result['ticker'].replace(ticker_quarterly_field)
+        print(result)
+        result = pd.pivot_table(data=result, index=["trading_day"], columns=["ticker"], values="ESA").reset_index()
+        result = result.merge(result_vix, on=["trading_day"], how='left')
+        # result["year"] = pd.DatetimeIndex(result["trading_day"]).year
+        # result["month"] = pd.DatetimeIndex(result["trading_day"]).month
+        # result["year_month"] = result["month"].astype(str) + "-" + result["year"].astype(str)
+        # data_monthly = pd.DataFrame(result["year_month"].unique(), columns =["year_month"])
+        # data_monthly = data_monthly.set_index("year_month")
+        # for index, row in result.iterrows():
+        #     ticker_field = row["ticker"]
+        #     year_month = row["year_month"]
+        #     month = row["month"]
+        #     year = row["year"]
+        #     trading_day = row["trading_day"]
+        #     if (row["ticker"] == "USGBILL3") :
+        #         ticker_field = "usgbill3"
+        #     elif (row["ticker"] == "USINTER3") :
+        #         ticker_field = "usinter3"
+        #     elif (row["ticker"] == "JPMSHORT") :
+        #         ticker_field = "jpmshort"
+        #     elif (row["ticker"] == "EMGBOND.") :
+        #         ticker_field = "emgbond"
+        #     elif (row["ticker"] == "CHGBOND.") :
+        #         ticker_field = "chgbond"
+        #     elif (row["ticker"] == "EMIBOR3.") :
+        #         ticker_field = "emibor3"
+        #     data_field = row["ESA"]
+        #     data_monthly.loc[year_month, ticker_field] = data_field
+        #     data_monthly.loc[year_month, "month"] = month
+        #     data_monthly.loc[year_month, "year"] = year
+        #     data_monthly.loc[year_month, "trading_day"] = trading_day.replace(day=15)
+        # data_monthly = data_monthly.reset_index(inplace=False)
+        # data_monthly = data_monthly.sort_values(by="trading_day", ascending=False)
+        # fred_data = get_fred_csv_monthly(start_date = start_date_month, end_date = end_date)
+        # data_monthly = data_monthly.merge(fred_data, how="left", on=["year", "month"])
+        # data_monthly.loc[data_monthly["month"].isin([1, 2, 3]), "quarter"] = 1
+        # data_monthly.loc[data_monthly["month"].isin([4, 5, 6]), "quarter"] = 2
+        # data_monthly.loc[data_monthly["month"].isin([7, 8, 9]), "quarter"] = 3
+        # data_monthly.loc[data_monthly["month"].isin([10, 11, 12]), "quarter"] = 4
+        # print(data_monthly)
+    # if(len(result_quarterly)) > 0 :
+    #     result_quarterly = result_quarterly.rename(columns={"index": "trading_day"})
+    #     data_quarterly = result_quarterly.loc[result_quarterly["ticker"] == "CHGDP...C"][["trading_day"]]
+    #     result_quarterly["year"] = pd.DatetimeIndex(result_quarterly["trading_day"]).year
+    #     result_quarterly["month"] = pd.DatetimeIndex(result_quarterly["trading_day"]).month
+    #     data_quarterly["year"] = pd.DatetimeIndex(data_quarterly["trading_day"]).year
+    #     data_quarterly["month"] = pd.DatetimeIndex(data_quarterly["trading_day"]).month
+    #     data_quarterly = data_quarterly.set_index("month")
+    #     for index, row in result_quarterly.iterrows():
+    #         ticker_field = row["ticker"]
+    #         if (row["ticker"] == "CHGDP...C") :
+    #             ticker_field = "chgdp"
+    #         elif (row["ticker"] == "JPGDP...D") :
+    #             ticker_field = "jpgdp"
+    #         elif (row["ticker"] == "USGDP...D") :
+    #             ticker_field = "usgdp"
+    #         elif (row["ticker"] == "EMGDP...D") :
+    #             ticker_field = "emgdp"
+    #         month = row["month"]
+    #         data_field = row["ESA"]
+    #         data_quarterly.loc[month, ticker_field] = data_field
+    #         #data_quarterly.loc[month, "period_end"] = datetime.strptime("", "%Y-%m-%d")
+    #     data_quarterly = data_quarterly.reset_index(inplace=False)
+    #     data_quarterly.loc[data_quarterly["month"].isin([1, 2, 3]), "quarter"] = 1
+    #     data_quarterly.loc[data_quarterly["month"].isin([4, 5, 6]), "quarter"] = 2
+    #     data_quarterly.loc[data_quarterly["month"].isin([7, 8, 9]), "quarter"] = 3
+    #     data_quarterly.loc[data_quarterly["month"].isin([10, 11, 12]), "quarter"] = 4
+    #     for index, row in data_quarterly.iterrows():
+    #         if (row["quarter"] == 1):
+    #             period_end = str(row["year"]) + "-" + "03-31"
+    #         elif (row["quarter"] == 2):
+    #             period_end = str(row["year"]) + "-" + "06-30"
+    #         elif (row["quarter"] == 3):
+    #             period_end = str(row["year"]) + "-" + "09-30"
+    #         else:
+    #             period_end = str(row["year"]) + "-" + "12-31"
+    #         data_quarterly.loc[index, "period_end"] = datetime.strptime(period_end, "%Y-%m-%d")
+    #     # data_quarterly["year"] = np.where(data_quarterly["month"] == 12, data_quarterly["year"] + 1, data_quarterly["year"])
+    #     data_quarterly = data_quarterly.drop(columns=["month", "trading_day"])
+    #     print(data_quarterly)
+    # result = data_monthly.merge(data_quarterly, how="left", on=["year", "quarter"])
+    # result = result.merge(data_monthly_vix, how="left", on=["year_month"])
+        # result = result.drop(columns=["month", "year", "quarter", "year_month"])
+        # result = result.dropna(subset=["period_end"])
+        upsert_data_to_database(result, get_data_macro_monthly_table_name(), "trading_day", how="update", Text=True)
+        report_to_slack("{} : === Data MACRO Monthly Update Updated ===".format(datetimeNow()))
+        # populate_macro_table()
 
-    if(len(result_quarterly)) > 0 :
-        result_quarterly = result_quarterly.rename(columns={"index": "trading_day"})
-        data_quarterly = result_quarterly.loc[result_quarterly["ticker"] == "CHGDP...C"][["trading_day"]]
-        result_quarterly["year"] = pd.DatetimeIndex(result_quarterly["trading_day"]).year
-        result_quarterly["month"] = pd.DatetimeIndex(result_quarterly["trading_day"]).month
-        data_quarterly["year"] = pd.DatetimeIndex(data_quarterly["trading_day"]).year
-        data_quarterly["month"] = pd.DatetimeIndex(data_quarterly["trading_day"]).month
-        data_quarterly = data_quarterly.set_index("month")
-        for index, row in result_quarterly.iterrows():
-            ticker_field = row["ticker"]
-            if (row["ticker"] == "CHGDP...C") :
-                ticker_field = "chgdp"
-            elif (row["ticker"] == "JPGDP...D") :
-                ticker_field = "jpgdp"
-            elif (row["ticker"] == "USGDP...D") :
-                ticker_field = "usgdp"
-            elif (row["ticker"] == "EMGDP...D") :
-                ticker_field = "emgdp"
-            month = row["month"]
-            data_field = row["ESA"]
-            data_quarterly.loc[month, ticker_field] = data_field
-            #data_quarterly.loc[month, "period_end"] = datetime.strptime("", "%Y-%m-%d")
-        data_quarterly = data_quarterly.reset_index(inplace=False)
-        data_quarterly.loc[data_quarterly["month"].isin([1, 2, 3]), "quarter"] = 1
-        data_quarterly.loc[data_quarterly["month"].isin([4, 5, 6]), "quarter"] = 2
-        data_quarterly.loc[data_quarterly["month"].isin([7, 8, 9]), "quarter"] = 3
-        data_quarterly.loc[data_quarterly["month"].isin([10, 11, 12]), "quarter"] = 4
-        for index, row in data_quarterly.iterrows():
-            if (row["quarter"] == 1):
-                period_end = str(row["year"]) + "-" + "03-31"
-            elif (row["quarter"] == 2):
-                period_end = str(row["year"]) + "-" + "06-30"
-            elif (row["quarter"] == 3):
-                period_end = str(row["year"]) + "-" + "09-30"
-            else:
-                period_end = str(row["year"]) + "-" + "12-31"
-            data_quarterly.loc[index, "period_end"] = datetime.strptime(period_end, "%Y-%m-%d")
-        # data_quarterly["year"] = np.where(data_quarterly["month"] == 12, data_quarterly["year"] + 1, data_quarterly["year"])
-        data_quarterly = data_quarterly.drop(columns=["month", "trading_day"])
-        print(data_quarterly)
-    result = data_monthly.merge(data_quarterly, how="left", on=["year", "quarter"])
-    result = result.merge(data_monthly_vix, how="left", on=["year_month"])
-    print(result)
-    print(result.columns)
-    result = result.drop(columns=["month", "year", "quarter", "year_month"])
-    result = result.dropna(subset=["period_end"])
-    print(result)
-    upsert_data_to_database(result, get_data_macro_monthly_table_name(), "trading_day", how="update", Text=True)
-    report_to_slack("{} : === Data MACRO Monthly Update Updated ===".format(datetimeNow()))
-    populate_macro_table()
+def worldscope_report_date_format_change(data):
+    ''' change format for report_date fetch from DSWS '''
+
+    data["report_date"] = data["report_date"].astype(str)
+    data["report_date"] = data["report_date"].str.slice(6, 16)
+    data["report_date"] = pd.to_numeric(data["report_date"], errors='raise')
+    data = data.dropna(subset=["report_date"], inplace=False)
+
+    data["report_date"] = data["report_date"].astype(int)
+    data["report_date"] = np.where(data["report_date"] > 9000000000, data["report_date"] / 10, data["report_date"])
+    data["report_date"] = pd.to_datetime(data["report_date"], unit='s')
+    
+    return data
+
+# def worldscope_quarter_report_date_from_dsws(ticker = None, currency_code=None, history=False):
+#     ''' (update) ingestion "report_date" quarterly worldscope fields for missing fields only '''
+#
+#     identifier="ticker"
+#     filter_field = ["WC05905A"]
+#     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+#     ticker = universe[["ticker"]]
+#     end_date = forwarddate_by_month(9)
+#     start_date = backdate_by_month(6)
+#     if(history):
+#         start_date = "2000-03-31"
+#     period_end_list = get_period_end_list(start_date=start_date, end_date=end_date)
+#     data = []
+#     for period_end in period_end_list:
+#         try:
+#             result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field,
+#                                                               use_ticker=True, split_number=min(len(universe), 1), dsws=False)
+#             if(len(result) == 0):
+#                 result = ticker
+#                 result[field_rename] = np.nan
+#                 result["level_1"] = str_to_date(period_end)
+#             print(result)
+#             data = result.copy()
+#             data = data.rename(columns = {"level_1" : "period_end"})
+#             data = data[["ticker", "period_end", "WC05905A"]]
+#             print(data)
+#             data["WC05905A"] = data["WC05905A"].astype(str)
+#             data["WC05905A"] = data["WC05905A"].str.slice(6, 16)
+#             data["WC05905A"] = np.where(data["WC05905A"] == "nan", np.nan, data["WC05905A"])
+#             data["WC05905A"] = np.where(data["WC05905A"] == "NA", np.nan, data["WC05905A"])
+#             data["WC05905A"] = np.where(data["WC05905A"] == "None", np.nan, data["WC05905A"])
+#             data["WC05905A"] = np.where(data["WC05905A"] == "", np.nan, data["WC05905A"])
+#             data["WC05905A"] = np.where(data["WC05905A"] == "NaN", np.nan, data["WC05905A"])
+#             data["WC05905A"] = np.where(data["WC05905A"] == "NaT", np.nan, data["WC05905A"])
+#             data["WC05905A"] = data["WC05905A"].astype(float)
+#             data = data.dropna(subset=["WC05905A"], inplace=False)
+#             if(len(data) > 0):
+#                 data["WC05905A"] = data["WC05905A"].astype(int)
+#                 data["WC05905A"] = np.where(data["WC05905A"] > 9000000000, data["WC05905A"]/10, data["WC05905A"])
+#                 data["report_date"] = datetime.strptime(dateNow(), "%Y-%m-%d")
+#                 data = data.reset_index(inplace=False, drop=True)
+#                 for index, row in data.iterrows():
+#                     WC05905A = row["WC05905A"]
+#                     report_date = datetime.fromtimestamp(WC05905A)
+#                     data.loc[index, "report_date"] = report_date
+#                 data["report_date"] = pd.to_datetime(data["report_date"])
+#                 data["period_end"] = pd.to_datetime(data["period_end"])
+#                 data["year"] = pd.DatetimeIndex(data["period_end"]).year
+#                 data["month"] = pd.DatetimeIndex(data["period_end"]).month
+#                 data["day"] = pd.DatetimeIndex(data["period_end"]).day
+#                 # print(data)
+#                 for index, row in data.iterrows():
+#                     if (data.loc[index, "month"] <= 3) and (data.loc[index, "day"] <= 31) :
+#                         data.loc[index, "month"] = 3
+#                         data.loc[index, "frequency_number"] = int(1)
+#                     elif (data.loc[index, "month"] <= 6) and (data.loc[index, "day"] <= 31) :
+#                         data.loc[index, "month"] = 6
+#                         data.loc[index, "frequency_number"] = int(2)
+#                     elif (data.loc[index, "month"] <= 9) and (data.loc[index, "day"] <= 31) :
+#                         data.loc[index, "month"] = 9
+#                         data.loc[index, "frequency_number"] = int(3)
+#                     else:
+#                         data.loc[index, "month"] = 12
+#                         data.loc[index, "frequency_number"] = int(4)
+#
+#                     data.loc[index, "period_end"] = datetime(data.loc[index, "year"], data.loc[index, "month"], 1)
+#                 data["period_end"] = data["period_end"].dt.to_period("M").dt.to_timestamp("M")
+#                 data["period_end"] = pd.to_datetime(data["period_end"])
+#
+#                 data = uid_maker(data, trading_day="period_end")
+#                 data = data.drop(columns=["WC05905A", "year", "month", "day", "frequency_number"])
+#                 data = data.drop_duplicates(subset=["uid"], keep="first", inplace=False)
+#                 print(data)
+#                 upsert_data_to_database(data, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
+#         except Exception as e:
+#             print("{} : === ERROR === : {}".format(dateNow(), e))
 
 def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, history=False):
-    filter_field = [
-        "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
-        "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
-        "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
-        "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
-        "WC02001A", "WC05575A", "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A"]
-    for field in filter_field:
-        worldscope_quarter_summary_from_dsws(ticker=ticker, currency_code=currency_code, filter_field=[field], history=history)
-    report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
+    ''' (updated) ingestion quarterly worldscope fields for missing fields only '''
 
-def worldscope_quarter_report_date_from_dsws(ticker = None, currency_code=None, history=False):
-    identifier="ticker"
-    filter_field = ["WC05905A"]
-    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
-    ticker = universe[["ticker"]]
-    end_date = forwarddate_by_month(9)
-    start_date = backdate_by_month(6)
-    if(history):
-        start_date = "2000-03-31"
-    period_end_list = get_period_end_list(start_date=start_date, end_date=end_date)
-    data = []
-    for period_end in period_end_list:
-        try:
-            result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1), dsws=False)
-            if(len(result) == 0):
-                result = ticker
-                result[filter_field[0]] = np.nan
-                result["level_1"] = str_to_date(period_end)
+    # Prep 1. field: get data_worldscope_summary ingestion field from Table ingesion_name
+    df = get_ingestion_name_source()
+    for col in ['dsws_name', 'replace_fn1', 'replace_fn2', 'replace_fn3']:      # for fields with replacement fields -> go through & ingest each to same field
+        filter_field = df.loc[df['worldscope_summary'], [col, 'our_name']].dropna(how='any').values.tolist()
+        if col=='dsws_name':    # only ingest report_date on first original column ingestion
+            filter_field.append(["WC05905A", "report_date"])
+
+        # Prep 2. ticker: make sure input ticker list is always active ticker
+        identifier = "ticker"
+        universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+        tickers = universe["ticker"].to_list()
+
+        # Prep 3. period_end: for company without Dec year_end, there could be available field in future
+        end_date = forwarddate_by_month(9)
+        start_date = backdate_by_month(6)  # ingest weekly, every time lookback to 6m ago
+        if (history):  # if re-ingest all
+            start_date = "2000-03-31"
+        period_end_list = get_period_end_list(start_date=start_date, end_date=end_date)
+
+        # start ingestion
+        for field_dsws, field_rename in filter_field:
+            data_ingest = []
+            for period_end in period_end_list:
+                print(field_dsws, period_end)
+
+                # only fetch missing field ticker
+                missing_data = get_missing_field_ticker_list(table_name=get_data_worldscope_summary_table_name(),
+                                                             field=field_rename, tickers=tickers, period_end=period_end)
+                missing_tickers_universe = universe.loc[universe['ticker'].isin(missing_data['ticker'].to_list()), ['ticker']]
+                if len(missing_tickers_universe)==0:    # if no missing continue with next period/field
+                    continue
+
+                # missing_tickers_universe = universe[["ticker"]]
+
+                # fetch from dsws
+                result, error_ticker = get_data_history_from_dsws(period_end, period_end, missing_tickers_universe, identifier,
+                                                                  [field_dsws], use_ticker=True, split_number=1, dsws=False)
+                if(len(result)==0):
+                    continue            # if no return for (period, field) -> next period_end
+                data_ingest.append(result)
+
+            # concat single field ingested data for each ticker
+            if len(data_ingest)==0:
+                continue                # if no return for (field) -> next field
+            else:
+                result = pd.concat(data_ingest, axis=0)
+
+            result = result.rename(columns = {"level_1" : "period_end", field_dsws: field_rename})  # rename
+            result = result[["ticker", "period_end", field_rename]]
             print(result)
-            data = result.copy()
-            data = data.rename(columns = {"level_1" : "period_end"})
-            data = data[["ticker", "period_end", "WC05905A"]]
-            print(data)
-            data["WC05905A"] = data["WC05905A"].astype(str)
-            data["WC05905A"] = data["WC05905A"].str.slice(6, 16)
-            data["WC05905A"] = np.where(data["WC05905A"] == "nan", np.nan, data["WC05905A"])
-            data["WC05905A"] = np.where(data["WC05905A"] == "NA", np.nan, data["WC05905A"])
-            data["WC05905A"] = np.where(data["WC05905A"] == "None", np.nan, data["WC05905A"])
-            data["WC05905A"] = np.where(data["WC05905A"] == "", np.nan, data["WC05905A"])
-            data["WC05905A"] = np.where(data["WC05905A"] == "NaN", np.nan, data["WC05905A"])
-            data["WC05905A"] = np.where(data["WC05905A"] == "NaT", np.nan, data["WC05905A"])
-            data["WC05905A"] = data["WC05905A"].astype(float)
-            data = data.dropna(subset=["WC05905A"], inplace=False)
-            if(len(data) > 0):
-                data["WC05905A"] = data["WC05905A"].astype(int)
-                data["WC05905A"] = np.where(data["WC05905A"] > 9000000000, data["WC05905A"]/10, data["WC05905A"])
-                data["report_date"] = datetime.strptime(dateNow(), "%Y-%m-%d")
-                data = data.reset_index(inplace=False, drop=True)
-                for index, row in data.iterrows():
-                    WC05905A = row["WC05905A"]
-                    report_date = datetime.fromtimestamp(WC05905A)
-                    data.loc[index, "report_date"] = report_date
-                data["report_date"] = pd.to_datetime(data["report_date"])
-                data["period_end"] = pd.to_datetime(data["period_end"])
-                data["year"] = pd.DatetimeIndex(data["period_end"]).year
-                data["month"] = pd.DatetimeIndex(data["period_end"]).month
-                data["day"] = pd.DatetimeIndex(data["period_end"]).day
-                # print(data)
-                for index, row in data.iterrows():
-                    if (data.loc[index, "month"] <= 3) and (data.loc[index, "day"] <= 31) :
-                        data.loc[index, "month"] = 3
-                        data.loc[index, "frequency_number"] = int(1)
-                    elif (data.loc[index, "month"] <= 6) and (data.loc[index, "day"] <= 31) :
-                        data.loc[index, "month"] = 6
-                        data.loc[index, "frequency_number"] = int(2)
-                    elif (data.loc[index, "month"] <= 9) and (data.loc[index, "day"] <= 31) :
-                        data.loc[index, "month"] = 9
-                        data.loc[index, "frequency_number"] = int(3)
-                    else:
-                        data.loc[index, "month"] = 12
-                        data.loc[index, "frequency_number"] = int(4)
 
-                    data.loc[index, "period_end"] = datetime(data.loc[index, "year"], data.loc[index, "month"], 1)
-                data["period_end"] = data["period_end"].dt.to_period("M").dt.to_timestamp("M")
-                data["period_end"] = pd.to_datetime(data["period_end"])
+            if field_rename == "report_date":       # for report_date -> extra format_change
+                result = worldscope_report_date_format_change(result)
+            else:
+                result[field_rename] = result[field_rename].astype(str)     # all missing -> NaN
+                result[field_rename] = np.where(result[field_rename] == "nan", np.nan, result[field_rename])
+                result[field_rename] = np.where(result[field_rename] == "NA", np.nan, result[field_rename])
+                result[field_rename] = np.where(result[field_rename] == "None", np.nan, result[field_rename])
+                result[field_rename] = np.where(result[field_rename] == "", np.nan, result[field_rename])
+                result[field_rename] = np.where(result[field_rename] == "NaN", np.nan, result[field_rename])
+                result[field_rename] = np.where(result[field_rename] == "NaT", np.nan, result[field_rename])
+                result[field_rename] = result[field_rename].astype(float)
+                result = result.dropna(subset=[field_rename], inplace=False)
 
-                data = uid_maker(data, trading_day="period_end")
-                data = data.drop(columns=["WC05905A", "year", "month", "day", "frequency_number"])
-                data = data.drop_duplicates(subset=["uid"], keep="first", inplace=False)
-                print(data)
-                upsert_data_to_database(data, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
-        except Exception as e:
-            print("{} : === ERROR === : {}".format(dateNow(), e))
-
-def worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, filter_field=None, history=False):
-    identifier="ticker"
-    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
-    ticker = universe[["ticker"]]
-    end_date = forwarddate_by_month(9)
-    start_date = backdate_by_month(6)
-    if(history):
-        start_date = "2000-03-31"
-    period_end_list = get_period_end_list(start_date=start_date, end_date=end_date)
-    data = []
-    for period_end in period_end_list:
-        print(period_end)
-        result, error_ticker = get_data_history_from_dsws(period_end, period_end, ticker, identifier, filter_field, use_ticker=True, split_number=1, dsws=False)
-        if(len(result) == 0):
-            result = ticker
-            result[filter_field[0]] = np.nan
-            result["level_1"] = str_to_date(period_end)
-        print(result)
-        result = result.rename(columns = {"level_1" : "period_end"})
-        result = result[["ticker", "period_end", filter_field[0]]]
-        print(result)
-        result[filter_field[0]] = result[filter_field[0]].astype(str)
-        result[filter_field[0]] = np.where(result[filter_field[0]] == "nan", np.nan, result[filter_field[0]])
-        result[filter_field[0]] = np.where(result[filter_field[0]] == "NA", np.nan, result[filter_field[0]])
-        result[filter_field[0]] = np.where(result[filter_field[0]] == "None", np.nan, result[filter_field[0]])
-        result[filter_field[0]] = np.where(result[filter_field[0]] == "", np.nan, result[filter_field[0]])
-        result[filter_field[0]] = np.where(result[filter_field[0]] == "NaN", np.nan, result[filter_field[0]])
-        result[filter_field[0]] = np.where(result[filter_field[0]] == "NaT", np.nan, result[filter_field[0]])
-        result[filter_field[0]] = result[filter_field[0]].astype(float)
-        result = result.dropna(subset=[filter_field[0]], inplace=False)
-        if(len(result) > 0):
-            result = result.rename(columns={
-                #"WC06035": "identifier",
-                #     "WC05192A", "WC18271A", "WC02999A", "WC03255A", "WC03501A", "WC18313A", "WC18312A",
-                "WC05192A": "fn_5192",
-                "WC18271A": "fn_18271",
-                "WC02999A": "fn_2999",
-                "WC03255A": "fn_3255",
-                "WC03501A" : "fn_3501",
-                "WC18313A" : "fn_18313",
-                "WC18312A": "fn_18312",
-                #     "WC18310A", "WC18311A", "WC18309A", "WC18308A", "WC18269A", "WC18304A", "WC18266A",
-                "WC18310A": "fn_18310",
-                "WC18311A" : "fn_18311",
-                "WC18309A" : "fn_18309",
-                "WC18308A": "fn_18308",
-                "WC18269A": "fn_18269",
-                "WC18304A" : "fn_18304",
-                "WC18266A" : "fn_18266",
-                #     "WC18267A", "WC18265A", "WC18264A", "WC18263A", "WC18262A", "WC18199A", "WC18158A",
-                "WC18267A": "fn_18267",
-                "WC18265A": "fn_18265",
-                "WC18264A" : "fn_18264",
-                "WC18263A" : "fn_18263",
-                "WC18262A": "fn_18262",
-                "WC18199A": "fn_18199",
-                "WC18158A" : "fn_18158",
-                #     "WC18100A", "WC08001A", "WC05085A", "WC03101A", "WC02501A", "WC02201A", "WC02101A",
-                "WC18100A": "fn_18100",
-                "WC08001A": "fn_8001",
-                "WC05085A" : "fn_5085",
-                "WC03101A" : "fn_3101",
-                "WC02501A": "fn_2501",
-                "WC02201A": "fn_2201",
-                "WC02101A" : "fn_2101",
-                #     "WC02001A", "WC05575A"]
-                "WC02001A" : "fn_2001",
-                "WC05575A" : "fn_5575",
-                "index" : "period_end",
-                # "WC01451A", "WC18810A", "WC02401A", "WC18274A", "WC03040A"
-                "WC01451A" : "fn_1451",
-                "WC18810A" : "fn_18810",
-                "WC02401A" : "fn_2401",
-                "WC18274A" : "fn_18274",
-                "WC03040A" : "fn_3040"
-            })
-            result = result.reset_index(inplace=False, drop=True)
+            # add Date reference columns
             result["period_end"] = pd.to_datetime(result["period_end"])
             result["year"] = pd.DatetimeIndex(result["period_end"]).year
             result["month"] = pd.DatetimeIndex(result["period_end"]).month
             result["day"] = pd.DatetimeIndex(result["period_end"]).day
-            for index, row in result.iterrows():
-                if (result.loc[index, "month"] <= 3) and (result.loc[index, "day"] <= 31) :
-                    result.loc[index, "month"] = 3
-                    result.loc[index, "frequency_number"] = int(1)
-                elif (result.loc[index, "month"] <= 6) and (result.loc[index, "day"] <= 31) :
-                    result.loc[index, "month"] = 6
-                    result.loc[index, "frequency_number"] = int(2)
-                elif (result.loc[index, "month"] <= 9) and (result.loc[index, "day"] <= 31) :
-                    result.loc[index, "month"] = 9
-                    result.loc[index, "frequency_number"] = int(3)
-                else:
-                    result.loc[index, "month"] = 12
-                    result.loc[index, "frequency_number"] = int(4)
-                result.loc[index, "period_end"] = datetime(result.loc[index, "year"], result.loc[index, "month"], 1)
+            result["frequency_number"] = (result["month"]/3).astype(int)
             result["period_end"] = result["period_end"].dt.to_period("M").dt.to_timestamp("M")
             result["period_end"] = pd.to_datetime(result["period_end"])
 
             result = uid_maker(result, trading_day="period_end")
-            result["fiscal_quarter_end"] = result["period_end"].astype(str)
-            result["fiscal_quarter_end"] = result["fiscal_quarter_end"].str.replace("-", "", regex=True)
             result = result.drop(columns=["month", "day"])
-            worldscope_identifier = universe[["ticker", "worldscope_identifier"]]
-            result = result.merge(worldscope_identifier, how="left", on="ticker")
+            worldscope_identifier = universe[["ticker", "worldscope_identifier"]].set_index(['ticker'])['worldscope_identifier'].to_dict()
+            result['worldscope_identifier'] = result['ticker'].map(worldscope_identifier)
             result = result.drop_duplicates(subset=["uid"], keep="first", inplace=False)
-            print(result)
+
+            # upsert to database for each field ingested
             upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
+
+    report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
+
 def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
     print("{} : === RECSELL RECBUY Start Ingestion ===".format(datetimeNow()))
     universe = get_all_universe(ticker=ticker, currency_code=currency_code)
@@ -1452,13 +1514,16 @@ def update_ibes_currency_from_dsws(ticker=None, currency_code=None):
     update_worldscope_currency_from_dsws(ticker=ticker, currency_code=currency_code)
 
 def update_worldscope_currency_from_dsws(ticker=None, currency_code=None):
+    ''' get currency code used by worldscope: currency for the primary listing country - get nation_code from WC06027'''
     print("{} : === Worldscope Currency Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
+    nation_code_to_curr_dict = get_iso_currency_code_map()
     universe = universe.drop(columns=["currency_code_ws"])
     filter_field = ["WC06027"]
     identifier="ticker"
     result, error_ticker = get_data_static_from_dsws(universe[["ticker"]], identifier, filter_field, use_ticker=True, split_number=min(len(universe), 1))
     result = result.rename(columns={"WC06027": "currency_code_ws", "index":"ticker"})
+    result["currency_code_ws"] = result["currency_code_ws"].map(nation_code_to_curr_dict)
     result = remove_null(result, "currency_code_ws")
     print(result)
     if(len(result)) > 0 :

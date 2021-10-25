@@ -170,9 +170,9 @@ def mongo_universe_update(ticker=None, currency_code=None):
             #     positive = temp.nsmallest(1,'score')
 
             for index, row in positive.iterrows():
-                positive_factor.append(row["factor_name"])
+                positive_factor.append(row["factor_name"][:5])      # positive/negative only first 5 factor
             for index, row in negative.iterrows():
-                negative_factor.append(row["factor_name"])
+                negative_factor.append(row["factor_name"][:5])
             positive_negative_result = pd.DataFrame({"ticker":[tick], "positive_factor":[positive_factor], "negative_factor":[negative_factor]}, index=[0])
             universe_rating_positive_negative = universe_rating_positive_negative.append(positive_negative_result)
 
