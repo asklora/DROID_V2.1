@@ -578,6 +578,7 @@ class RkdData(Rkd):
                             attribs_modifier[f"{attr}_id"] = val
                         else:
                             attribs_modifier[attr]=val
+                    
                     obj =Model(**attribs_modifier)
             list_obj.append(obj)
         if create and model != "LatestPrice":
@@ -586,6 +587,9 @@ class RkdData(Rkd):
             except Exception:
                 pass
         elif not create and model == "LatestPrice":
+            for key in key_set:
+                if not hasattr(Model,attr):
+                    key_set.remove(key)
             Model.objects.bulk_update(list_obj, key_set)
 
 class RkdStream(RkdData):
