@@ -1,3 +1,4 @@
+from core.user.convert import ConvertMoney
 from general.date_process import to_date
 from pandas.core.base import DataError
 from bot.calculate_bot import check_dividend_paid
@@ -60,7 +61,8 @@ def classic_sell_position(live_price:float, trading_day:str,
             position.event = "Profit"
         else:
             position.event = "Bot Stopped"
-            
+    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
+    position.exchange_rate = converter.get_exchange_rate()
     # serializing -> make dictionary position instance
     position_val = OrderPositionSerializer(position).data
     # remove created and updated from position
@@ -82,7 +84,8 @@ def classic_sell_position(live_price:float, trading_day:str,
         qty=position.share_num,
         setup=setup,
         order_type=order_type,
-        margin=position.margin
+        margin=position.margin,
+        exchange_rate = converter.get_exchange_rate()
     )
     # only for none apps
     if order and not apps:
@@ -115,7 +118,7 @@ def populate_performance(live_price, trading_day, log_time, position, expiry=Fal
     # position.bot_cash_dividend = check_dividend_paid(position.ticker.ticker, trading_day, share_num, position.bot_cash_dividend)
     position.bot_cash_balance = round(bot_cash_balance, 2)
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
-
+    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
     performance = dict(
         position_uid=str(position.position_uid),
         share_num=share_num,
@@ -128,7 +131,8 @@ def populate_performance(live_price, trading_day, log_time, position, expiry=Fal
         updated=str(log_time),
         created=str(log_time),
         last_hedge_delta=1,
-        status="Hedge"
+        status="Hedge",
+        exchange_rate = converter.get_exchange_rate()
     )
     return performance, position
 

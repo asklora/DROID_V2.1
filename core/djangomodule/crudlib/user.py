@@ -2,7 +2,7 @@ from core.user.models import User,Accountbalance,TransactionHistory,UserDepositH
 from core.orders.models import OrderPosition,PositionPerformance, Order
 from ..general import is_hashed
 from django.contrib.auth.hashers import make_password
-from ingestion import firebase_user_update
+from ingestion.firestore_migration import firebase_user_update
 from bot.calculate_bot import populate_daily_profit
 from django.db import IntegrityError
 from general.firestore_query import delete_firestore_user

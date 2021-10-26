@@ -1,7 +1,7 @@
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.models import Accountbalance, TransactionHistory, User
 from general.firestore_query import delete_firestore_user
-from ingestion import firebase_user_update
+from ingestion.firestore_migration import firebase_user_update
 
 
 def set_user_joined(mocker, user: User) -> None:

@@ -4,7 +4,7 @@ import pytest
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.orders.services import sell_position_service
 from core.user.models import Accountbalance, User
-from tests.utils.order import create_buy_order
+from tests.utils.order import confirm_order, create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -26,14 +26,7 @@ def test_create_new_sell_order_for_user_with_classic_bot(user) -> None:
         bot_id="CLASSIC_classic_007692",
     )
 
-    buy_order.status = "placed"
-    buy_order.placed = True
-    buy_order.placed_at = datetime.now()
-    buy_order.save()
-
-    buy_order.status = "filled"
-    buy_order.filled_at = datetime.now()
-    buy_order.save()
+    confirm_order(buy_order)
 
     confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
 
@@ -52,22 +45,14 @@ def test_create_new_sell_order_for_user_with_classic_bot(user) -> None:
         position.position_uid,
     )
 
-    confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
-    assert sell_order.order_uid is not None
-
-    confirmed_sell_order.status = "placed"
-    confirmed_sell_order.placed = True
-    confirmed_sell_order.placed_at = datetime.now()
-    confirmed_sell_order.save()
-
     # We get previous user balance
     user = User.objects.get(pk=user.id)
     previous_user_balance = Accountbalance.objects.get(user=user).amount
 
     # We accept the order and set it as filled
-    confirmed_sell_order.status = "filled"
-    confirmed_sell_order.filled_at = datetime.now()
-    confirmed_sell_order.save()
+    confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
+    assert sell_order.order_uid is not None
+    confirm_order(confirmed_sell_order)
 
     # We confirm that the selling is successfully finished
     # by checking the user balance
@@ -86,14 +71,7 @@ def test_create_new_sell_order_for_user_with_uno_bot(user) -> None:
         bot_id="UNO_OTM_007692",
     )
 
-    buy_order.status = "placed"
-    buy_order.placed = True
-    buy_order.placed_at = datetime.now()
-    buy_order.save()
-
-    buy_order.status = "filled"
-    buy_order.filled_at = datetime.now()
-    buy_order.save()
+    confirm_order(buy_order)
 
     confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
 
@@ -111,22 +89,14 @@ def test_create_new_sell_order_for_user_with_uno_bot(user) -> None:
         position.position_uid,
     )
 
-    confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
-    assert sell_order.order_uid is not None
-
-    confirmed_sell_order.status = "placed"
-    confirmed_sell_order.placed = True
-    confirmed_sell_order.placed_at = datetime.now()
-    confirmed_sell_order.save()
-
     # We get previous user balance
     user = User.objects.get(pk=user.id)
     previous_user_balance = Accountbalance.objects.get(user=user).amount
 
     # We accept the order and set it as filled
-    confirmed_sell_order.status = "filled"
-    confirmed_sell_order.filled_at = datetime.now()
-    confirmed_sell_order.save()
+    confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
+    assert sell_order.order_uid is not None
+    confirm_order(confirmed_sell_order)
 
     # We confirm that the selling is successfully finished
     # by checking the user balance
@@ -145,14 +115,7 @@ def test_create_new_sell_order_for_user_with_ucdc_bot(user) -> None:
         bot_id="UCDC_ATM_007692",
     )
 
-    buy_order.status = "placed"
-    buy_order.placed = True
-    buy_order.placed_at = datetime.now()
-    buy_order.save()
-
-    buy_order.status = "filled"
-    buy_order.filled_at = datetime.now()
-    buy_order.save()
+    confirm_order(buy_order)
 
     confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
 
@@ -170,22 +133,14 @@ def test_create_new_sell_order_for_user_with_ucdc_bot(user) -> None:
         position.position_uid,
     )
 
-    confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
-    assert sell_order.order_uid is not None
-
-    confirmed_sell_order.status = "placed"
-    confirmed_sell_order.placed = True
-    confirmed_sell_order.placed_at = datetime.now()
-    confirmed_sell_order.save()
-
     # We get previous user balance
     user = User.objects.get(pk=user.id)
     previous_user_balance = Accountbalance.objects.get(user=user).amount
 
     # We accept the order and set it as filled
-    confirmed_sell_order.status = "filled"
-    confirmed_sell_order.filled_at = datetime.now()
-    confirmed_sell_order.save()
+    confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
+    assert sell_order.order_uid is not None
+    confirm_order(confirmed_sell_order)
 
     # We confirm that the selling is successfully finished
     # by checking the user balance

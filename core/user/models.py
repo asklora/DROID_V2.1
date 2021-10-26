@@ -12,7 +12,7 @@ import base64
 from core.djangomodule.models import BaseTimeStampModel
 from core.djangomodule.general import nonetozero
 from simple_history.models import HistoricalRecords
-
+from django.core.validators import MinValueValidator
 
 def generate_balance_id():
     r_id = base64.b64encode(uuid.uuid4().bytes).replace("=", "").decode()
@@ -48,6 +48,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True)
     current_status = models.CharField(max_length=255, null=True, blank=True, choices=status_choices, default=UNVERIFIED)
     is_joined = models.BooleanField(default=False)
+    is_polyu = models.BooleanField(default=False)
+    is_polyu_af = models.BooleanField(default=False)
     USERNAME_FIELD = "username"
     AUTH_FIELD_NAME = "email"
     gender = models.CharField(max_length=255, null=True, blank=True)
@@ -271,7 +273,7 @@ class Accountbalance(BaseTimeStampModel):
         primary_key=True, max_length=300, blank=True, editable=False, unique=True)
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="user_balance", db_column="user_id")
-    amount = models.FloatField(default=0)
+    amount = models.FloatField(default=0,validators=[MinValueValidator(0)])
     currency_code = models.ForeignKey(
         Currency, on_delete=models.DO_NOTHING, related_name="user_currency", default="USD", db_column="currency_code")
     history = HistoricalRecords(table_name="user_account_history")

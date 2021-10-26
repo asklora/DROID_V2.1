@@ -1,3 +1,4 @@
+from core.user.convert import ConvertMoney
 from bot.calculate_bot import check_dividend_paid
 from datetime import datetime
 from general.date_process import to_date
@@ -33,6 +34,8 @@ def user_sell_position(  live_price:float, trading_day:str,
     position.event_date = trading_day
     position.is_live = False
     position.event = "Stopped by User"
+    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
+    position.exchange_rate = converter.get_exchange_rate()
     position_val = OrderPositionSerializer(position).data
     [position_val.pop(key) for key in ["created", "updated"]]
     setup = {"performance": performance, "position": position_val}
@@ -51,7 +54,8 @@ def user_sell_position(  live_price:float, trading_day:str,
         qty=position.share_num,
         setup=setup,
         order_type=order_type,
-        margin=position.margin
+        margin=position.margin,
+        exchange_rate = converter.get_exchange_rate()
     )
 
     return position, order
@@ -78,6 +82,7 @@ def populate_performance(live_price, trading_day, log_time, position, expiry=Fal
     # position.bot_cash_dividend = check_dividend_paid(position.ticker.ticker, trading_day, share_num, position.bot_cash_dividend)
     position.bot_cash_balance = round(bot_cash_balance, 2)
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
+    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
     performance = dict(
         position_uid=str(position.position_uid),
         share_num=share_num,
@@ -90,7 +95,8 @@ def populate_performance(live_price, trading_day, log_time, position, expiry=Fal
         updated=str(log_time),
         created=str(log_time),
         last_hedge_delta=1,
-        status="Hedge"
+        status="Hedge",
+        exchange_rate = converter.get_exchange_rate()
     )
     return performance, position
     

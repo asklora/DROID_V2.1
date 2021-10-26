@@ -1489,6 +1489,7 @@ def update_mic_from_dsws(ticker=None, currency_code=None):
         result["mic"] = np.where(result["mic"] == "MTAA", "XMIL", result["mic"])
         result["mic"] = np.where(result["mic"] == "WBAH", "XEUR", result["mic"])
         result = universe.merge(result, how="left", on=["ticker"])
+        result["mic"] = np.where(result["currency_code"] == "USD", "XNAS", result["mic"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), "ticker", how="update", Text=True)
         report_to_slack("{} : === MIC Updated ===".format(datetimeNow()))

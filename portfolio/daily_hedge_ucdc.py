@@ -1,3 +1,4 @@
+from core.user.convert import ConvertMoney
 from core.bot.models import BotOptionType
 from datetime import datetime
 from general.date_process import to_date
@@ -61,6 +62,8 @@ def ucdc_sell_position(live_price:float, trading_day:str, position:OrderPosition
             position.event = "Profit"
         else:
             position.event = "Bot Stopped"
+    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
+    position.exchange_rate = converter.get_exchange_rate()
     order, performance, position = populate_order(status, hedge_shares, log_time, live_price, bot, performance, position, apps=apps)
     return position, order
 
@@ -68,10 +71,6 @@ def populate_order(status:str, hedge_shares:int,
                     log_time:datetime, live_price:float,
                     bot:BotOptionType,performance:dict, 
                     position:dict, apps:bool=False) -> Tuple[Optional[Union[Order,None]],dict,dict]:
-
-
-
-
     position_val = OrderPositionSerializer(position).data
     # remove created and updated from position
     [position_val.pop(key) for key in ["created", "updated"]]
@@ -95,7 +94,8 @@ def populate_order(status:str, hedge_shares:int,
             qty=hedge_shares,
             setup=setup,
             order_type=order_type,
-            margin=position.margin
+            margin=position.margin,
+            exchange_rate = position.exchange_rate
         )
         if order and not apps:
             order.status = "placed"
@@ -166,6 +166,7 @@ def populate_performance(live_price:float, ask_price:float,
     # position.bot_cash_dividend = check_dividend_paid(position.ticker.ticker, trading_day, share_num, position.bot_cash_dividend)
     position.bot_cash_balance = round(bot_cash_balance, 2)
     digits = max(min(5 - len(str(int(position.entry_price))), 2), -1)
+    converter = ConvertMoney(position.ticker.currency_code, position.user_id.currency)
     performance = dict(
         position_uid=str(position.position_uid),
         share_num=share_num,
@@ -188,7 +189,8 @@ def populate_performance(live_price:float, ask_price:float,
         order_summary={
             "hedge_shares": hedge_shares
         },
-        status="Hedge"
+        status="Hedge",
+        exchange_rate = converter.get_exchange_rate()
     )
     return performance, position, status, hedge_shares
     

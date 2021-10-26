@@ -175,7 +175,19 @@ class DroidDb(Cloud):
         #     DBSnapshotIdentifier='droid-v2-snapshot',
         #     DBInstanceClass='db.t3.medium'
         # )
-
+    @property
+    def dev_url(self):
+        """
+        return 
+        -> endpoint
+        -> Reader endpoint
+        -> port
+        """
+        db = self.rds_client.describe_db_clusters(
+                    DBClusterIdentifier='droid-dev-cluster',
+                )
+        return db['DBClusters'][0]['Endpoint'],db['DBClusters'][0]['ReaderEndpoint'], db['DBClusters'][0]['Port']
+    
     @property
     def prod_url(self):
         """

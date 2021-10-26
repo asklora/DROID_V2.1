@@ -4,7 +4,7 @@ import pytest
 from core.master.models import MasterOhlcvtr
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from portfolio import ucdc_position_check
-from tests.utils.order import create_buy_order
+from tests.utils.order import confirm_order, create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -33,14 +33,7 @@ def test_should_create_hedge_order_for_ucdc_bot(user) -> None:
         bot_id="UCDC_ATM_007692",
     )
 
-    buy_order.status = "placed"
-    buy_order.placed = True
-    buy_order.placed_at = log_time
-    buy_order.save()
-
-    buy_order.status = "filled"
-    buy_order.filled_at = log_time
-    buy_order.save()
+    confirm_order(buy_order, log_time)
 
     confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
 
@@ -88,14 +81,7 @@ def test_should_create_hedge_order_for_ucdc_bot_with_margin(user) -> None:
         bot_id="UCDC_ATM_007692",
     )
 
-    buy_order.status = "placed"
-    buy_order.placed = True
-    buy_order.placed_at = log_time
-    buy_order.save()
-
-    buy_order.status = "filled"
-    buy_order.filled_at = log_time
-    buy_order.save()
+    confirm_order(buy_order, log_time)
 
     confirmed_buy_order = Order.objects.get(pk=buy_order.pk)
 

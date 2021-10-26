@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
-from ingestion.firestore_migration import firebase_user_update, mongo_universe_update
+from ingestion.firestore_migration import firebase_user_update, firebase_universe_update
+from general.firestore_query import get_price_data_firebase
 import json
 import pandas as pd
 import threading
@@ -25,6 +26,8 @@ class Command(BaseCommand):
     
 
     def handle(self, *args, **options):
+        # data= get_price_data_firebase(['MSFT.O','AAPL.O'])
+        # print(data)
         # user_id=643
         # db = firestore.client()
         # collection =db.collection(settings.FIREBASE_COLLECTION['portfolio']).document(f"{user_id}")
@@ -35,7 +38,7 @@ class Command(BaseCommand):
         # for data in user_data.get():
         #     print(data.id)
         # firebase_user_update(user_id=[119])
-        mongo_universe_update(currency_code=["HKD","USD"])
+        firebase_universe_update(currency_code=["HKD","USD"])
         # db = firestore.client()
         # univ = Universe.objects.prefetch_related("currency_code").filter(currency_code="USD")
         # for ticker in univ:
