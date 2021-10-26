@@ -58,15 +58,6 @@ def django_db_setup():
     }
 
 
-# test-scoped celery fixtures
-@pytest.fixture(scope="session")
-def celery_config():
-    return {
-        "result_backend": "rpc",
-        "default_task_queue": "test_queue",
-    }
-
-
 @pytest.fixture(scope="session")
 def user(django_db_setup, django_db_blocker):
     # Creating unique user for each computer and invocation
