@@ -385,7 +385,9 @@ class RkdData(Rkd):
             'PCTCHNG',
             'CF_VOLUME',
             'CF_LAST',
-            'CF_NETCHNG']
+            'CF_NETCHNG',
+            'YIELD'
+            ]
 
         for parsed_data in formated_json_data:
             for field in float_fields:
@@ -401,7 +403,8 @@ class RkdData(Rkd):
                 "TRADE_DATE": "last_date",
                 "CF_VOLUME": "volume",
                 "CF_LAST": "latest_price",
-                "CF_NETCHNG": "latest_net_change"
+                "CF_NETCHNG": "latest_net_change",
+                "YIELD": "dividen_yield",
                 })
         df_data["last_date"] = str(datetime.now().date())
         df_data["intraday_time"] = str(datetime.now())
@@ -455,7 +458,7 @@ class RkdData(Rkd):
             ticker = universe.tolist()
             payload = self.retrive_template(ticker, fields=[
                                             "CF_ASK","CF_OPEN", "CF_CLOSE", "CF_BID", "PCTCHNG", "CF_HIGH", "CF_LOW", "CF_LAST", 
-                                            "CF_VOLUME", "TRADE_DATE","CF_NETCHNG"])
+                                            "CF_VOLUME", "TRADE_DATE","CF_NETCHNG","YIELD"])
             bulk_payload.append(payload)
         
         self.validate_token()
@@ -484,7 +487,7 @@ class RkdData(Rkd):
             print(len(ticker))
             payload = self.retrive_template(ticker, fields=[
                                             "CF_ASK","CF_OPEN", "CF_CLOSE", "CF_BID", "PCTCHNG", "CF_HIGH", "CF_LOW", "CF_LAST", 
-                                            "CF_VOLUME", "TRADE_DATE","CF_NETCHNG"])
+                                            "CF_VOLUME", "TRADE_DATE","CF_NETCHNG","YIELD"])
             response = self.send_request(quote_url, payload, self.auth_headers())
 
             formated_json_data = self.parse_response(response)
@@ -499,7 +502,8 @@ class RkdData(Rkd):
                 "TRADE_DATE": "last_date",
                 "CF_VOLUME": "volume",
                 "CF_LAST": "latest_price",
-                "CF_NETCHNG": "latest_net_change"
+                "CF_NETCHNG": "latest_net_change",
+                "YIELD":"dividen_yield"
             })
             df_data["last_date"] = str(datetime.now().date())
             df_data["intraday_time"] = str(datetime.now())
