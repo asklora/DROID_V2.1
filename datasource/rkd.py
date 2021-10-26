@@ -419,7 +419,8 @@ class RkdData(Rkd):
                 "latest_price_change":"float",
                 "volume":"float",
                 "latest_price":"float",
-                "latest_net_change":"float"
+                "latest_net_change":"float",
+                "dividen_yield":"float",
             }
         )
         return df_data
