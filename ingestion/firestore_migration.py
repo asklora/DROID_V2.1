@@ -38,6 +38,7 @@ from general.sql_query import (
     get_user_profit_history,
     get_factor_calculation_formula,
     get_factor_current_used)
+from core.user.convert import ConvertMoney
 
 def firebase_universe_delete():
     universe = get_all_universe(active=True)
@@ -82,7 +83,7 @@ def firebase_universe_update(ticker=None, currency_code=None):
     4. ai_ratings
     5. bot informations
     '''
-    firebase_universe_delete()
+    # firebase_universe_delete()
     # Populate Universe
     all_universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     currency = get_active_currency(currency_code=currency_code)
@@ -97,6 +98,7 @@ def firebase_universe_update(ticker=None, currency_code=None):
     result = result.merge(currency, on="currency_code", how="left")
     result = result.merge(industry_group, on="industry_group_code", how="left")
     universe = result[["ticker"]]
+    print(result)
 
     # 1. static info dict of {Companies Name, Industry, Currency, Description, Lot Size}
     result = change_null_to_zero(result)
@@ -275,7 +277,7 @@ def firebase_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
     universe = change_date_to_str(universe)
-    update_to_firestore(data=universe, index="ticker", table=settings.FIREBASE_COLLECTION['universe'], dict=False)
+    update_to_firestore(data=universe, index="ticker", table="dev_universe", dict=False)
     report_to_slack("{} : === FIREBASE UNIVERSE UPDATED ===".format(datetimeNow()))
 
 
