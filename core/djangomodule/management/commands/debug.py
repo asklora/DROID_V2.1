@@ -7,7 +7,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Process")
         rkd = RkdData()
-        print(rkd.get_quote(['MSFT.O','0586.HK'], df=True))
+        print(rkd.get_quote(['MSFT.O','0586.HK'], df=True,save=True))
         # populate_daily_profit()
         # firebase_user_update()
         # firebase_universe_update(currency_code=["HKD"])

@@ -589,7 +589,7 @@ class RkdData(Rkd):
                 pass
         elif not create and model == "LatestPrice":
             for key in key_set:
-                if not hasattr(Model,attr):
+                if not hasattr(Model,key):
                     key_set.remove(key)
             Model.objects.bulk_update(list_obj, key_set)
 
