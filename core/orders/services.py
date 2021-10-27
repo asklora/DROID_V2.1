@@ -130,7 +130,7 @@ def side_validation(validated_data):
         
         validation=OrderPositionValidation(validated_data["ticker"],validated_data.get("bot_id",None),validated_data["user_id"].id)
         init = True
-        converter = ConvertMoney(validated_data["user_id"].user_balance.currencey_code,validated_data["ticker"].currency_code)
+        converter = ConvertMoney(validated_data["user_id"].user_balance.currency_code,validated_data["ticker"].currency_code)
         if validated_data["amount"] <= 0:
             raise exceptions.NotAcceptable({"detail": "amount should not 0"})
         if validated_data["amount"] > validated_data["user_id"].user_balance.amount:
