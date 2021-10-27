@@ -9,6 +9,9 @@ from portfolio import (
     )
 from typing import Union,Optional,Tuple
 from datetime import datetime
+from core.user.convert import ConvertMoney
+
+
 
 class OrderPositionValidation:
     def __init__(self,ticker:str,bot_id:Union[str,list,None],user_id:Union[str,int]):
@@ -127,13 +130,13 @@ def side_validation(validated_data):
         
         validation=OrderPositionValidation(validated_data["ticker"],validated_data.get("bot_id",None),validated_data["user_id"].id)
         init = True
+        converter = ConvertMoney(validated_data["user_id"].user_balance.currencey_code,validated_data["ticker"].currency_code)
         if validated_data["amount"] <= 0:
             raise exceptions.NotAcceptable({"detail": "amount should not 0"})
-        #TODO currency convert here
         if validated_data["amount"] > validated_data["user_id"].user_balance.amount:
             raise exceptions.NotAcceptable({"detail": "insufficient funds"})
-        if validated_data["amount"] / validated_data["price"] < 1:
-            raise exceptions.NotAcceptable({"detail":"share should not below one"})
+        if (converter.convert(validated_data["amount"]) / validated_data["price"]) < 1:
+            raise exceptions.NotAcceptable({"detail":"share should not below one / price to high insufficient funds"})
         if validation.validate_buy():
             raise exceptions.NotAcceptable({"detail": f"user already has position for {validated_data['ticker']} in current options"})
 

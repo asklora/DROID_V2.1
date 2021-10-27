@@ -124,6 +124,7 @@ class PositionSerializer(serializers.ModelSerializer):
     current_exchange_rate = serializers.SerializerMethodField()
     current_values=serializers.SerializerMethodField()
     current_returns=serializers.SerializerMethodField()
+    current_inv_ret = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderPosition
@@ -144,6 +145,9 @@ class PositionSerializer(serializers.ModelSerializer):
 
     def get_current_share_num(self,obj) -> float:
         return obj.order_position.latest("created").share_num
+    
+    def get_current_inv_ret(self,obj) -> float:
+        return round(obj.current_inv_ret * 100,2)
 
 
     def get_bot_details(self,obj) -> BotDetailSerializer:
