@@ -79,7 +79,7 @@ class Rkd:
                     "Error": response,
                     "AREVPS": None,
                     "MKTCAP": None,
-                    "APEEXCLXOR": None,
+                    "PEEXCLXOR": None,
                     "ProjPE": None,
                     "APRICE2BK": None,
                     "AEBITD": None,
@@ -272,7 +272,7 @@ class RkdData(Rkd):
                     formated_json["ticker"] = base_response["Issues"]["Issue"][0]["IssueID"][2]["Value"]
                     fields = ["AREVPS",
                               "MKTCAP",
-                              "APEEXCLXOR",
+                              "PEEXCLXOR",
                               "ProjPE",
                               "APRICE2BK",
                               "AEBITD",
@@ -308,7 +308,7 @@ class RkdData(Rkd):
             formated_json["ticker"] = base_response["Issues"]["Issue"][0]["IssueID"][2]["Value"]
             fields = ["AREVPS",
                       "MKTCAP",
-                      "APEEXCLXOR",
+                      "PEEXCLXOR",
                       "ProjPE",
                       "APRICE2BK",
                       "AEBITD",
@@ -327,7 +327,7 @@ class RkdData(Rkd):
         df_data = pd.DataFrame(list_formated_json).rename(columns={
             "AREVPS": "revenue_per_share",
             "MKTCAP": "market_cap",
-            "APEEXCLXOR": "pe_ratio",
+            "PEEXCLXOR": "pe_ratio",
             "ProjPE": "pe_forecast",
             "APRICE2BK": "pb",
             "AEBITD": "ebitda",
