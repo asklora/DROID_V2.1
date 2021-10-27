@@ -391,7 +391,7 @@ class RkdData(Rkd):
 
         for parsed_data in formated_json_data:
             for field in float_fields:
-                parsed_data[field]=parsed_data.get(field,0)
+                parsed_data[field]=parsed_data.get(field,parsed_data["CF_LAST"])
         df_data = pd.DataFrame(formated_json_data).rename(columns={
                 "CF_ASK": "intraday_ask",
                 "CF_OPEN": "open",
