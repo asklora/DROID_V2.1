@@ -377,7 +377,6 @@ class RkdData(Rkd):
         # jsonprint(formated_json_data)
         float_fields = [
             'CF_ASK',
-            'CF_OPEN',
             'CF_CLOSE',
             'CF_BID',
             'CF_HIGH',
@@ -386,13 +385,10 @@ class RkdData(Rkd):
             'CF_VOLUME',
             'CF_LAST',
             'CF_NETCHNG',
+            'CF_OPEN',
             'YIELD'
             ]
-
-        for parsed_data in formated_json_data:
-            for field in float_fields:
-                parsed_data[field]=parsed_data.get(field,parsed_data["CF_LAST"])
-        df_data = pd.DataFrame(formated_json_data).rename(columns={
+        parser_data ={
                 "CF_ASK": "intraday_ask",
                 "CF_OPEN": "open",
                 "CF_CLOSE": "close",
@@ -405,11 +401,8 @@ class RkdData(Rkd):
                 "CF_LAST": "latest_price",
                 "CF_NETCHNG": "latest_net_change",
                 "YIELD": "dividen_yield",
-                })
-        df_data["last_date"] = str(datetime.now().date())
-        df_data["intraday_time"] = str(datetime.now())
-        df_data =df_data.astype(
-            {
+                }
+        float_data = {
                 "intraday_ask":"float",
                 "close":"float",
                 "open":"float",
@@ -422,6 +415,23 @@ class RkdData(Rkd):
                 "latest_net_change":"float",
                 "dividen_yield":"float",
             }
+        
+        for parsed_data in formated_json_data:
+            for field in float_fields:
+                values=parsed_data.get(field,0)
+                if field == "CF_LAST" and float(values) == 0:
+                    values=parsed_data.get("CF_CLOSE",0)
+                if field == "CF_OPEN" and float(values) == 0:
+                    values=parsed_data.get("CF_LAST",0)
+                if float(values) != 0:
+                    parsed_data[field]=values
+        df_data = pd.DataFrame(formated_json_data)
+        df_data = df_data.rename(columns={k: v for k, v in parser_data.items() if k  in df_data})
+        # print(df_data)
+        df_data["last_date"] = str(datetime.now().date())
+        df_data["intraday_time"] = str(datetime.now())
+        df_data =df_data.astype(
+            {k: v for k, v in float_data.items() if k  in df_data}
         )
         return df_data
 
