@@ -448,7 +448,7 @@ def firebase_user_update(user_id=None, currency_code=None):
         # print(position_data)
         position_data["expiry"]=position_data["expiry"].astype(str)
         if(len(position_data) > 0):
-            universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "currency_code"]]
+            universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "ticker_fullname", "schi_name", "tchi_name", "currency_code"]]
             latest_price = get_price_data_firebase(position_data["ticker"].unique().tolist())
             latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})
 
