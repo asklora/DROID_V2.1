@@ -41,6 +41,7 @@ def pending_order_checker(self,currency=None):
                     payload['firebase_token'] = fb_token
                 
                 payload = json.dumps(payload)
+                # order_executor.apply_async(args=(payload,),kwargs={"recall":True},task_id=str(order.order_uid))
                 order_executor(payload,recall=True,request_id=str(order.order_uid))
                 orders_id.append(str(order.order_uid))
 
@@ -53,6 +54,7 @@ def pending_order_checker(self,currency=None):
 
 @app.task(bind=True)
 def order_executor(self, payload, recall=False, request_id=None):
+
     """
     #TODO: ERROR HANDLING HERE AND RETURN MESSAGE TO USER AND SOCKET
     

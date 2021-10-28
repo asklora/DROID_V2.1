@@ -16,12 +16,25 @@ from general.table_name import get_data_vol_surface_inferred_table_name
 from global_vars import random_state, saved_model_path, model_filename, X_columns, Y_columns, time_to_expiry, bots_list, max_vol, min_vol
 
 def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, train_model=False, daily=False, history=False):
+    '''
+
+    Parameters
+    ----------
+    start_date : Date, bot_data sample start date = 4yr ago
+    end_date : Date, bot_data sample end date = now
+    ticker / currency_code : List, default = None
+    train_model : production will sets as True
+    daily : production will sets as False
+    history : production will sets as False
+
+    '''
     cols_temp_1 = X_columns.copy()
     cols_temp_1.extend(Y_columns[0])
     cols_temp_1.extend(Y_columns[1])
 
     cols_temp_2 = X_columns.copy()
 
+    # get training sample from AWS TABLE bot_date (4yr ago - Now)
     main_df = get_executive_data_download(start_date, end_date, ticker=ticker, currency_code=currency_code)
     temp_y_rf = []
     

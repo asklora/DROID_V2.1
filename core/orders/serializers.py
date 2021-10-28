@@ -526,7 +526,6 @@ class OrderActionSerializer(serializers.ModelSerializer):
         if instance.status == validated_data['status']:
             raise exceptions.MethodNotAllowed(
                 {'detail': f'order already {instance.status}'})
-       
         if not validated_data['status'] == "cancel":
             if instance.insufficient_balance():
                 raise exceptions.MethodNotAllowed(

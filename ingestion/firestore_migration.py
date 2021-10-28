@@ -144,9 +144,10 @@ def firebase_universe_update(ticker=None, currency_code=None):
     name_map = factor_column_name_changes()
 
     # factor currently used in ai_score calculation
-    factor_use = get_factor_current_used().set_index('index').transpose().to_dict(orient='list')
+    factor_use = get_factor_current_used().transpose().to_dict(orient='list')
     for cur, v in factor_use.items():   # work on different currency separately -> can use different factors
         lst = [x for x in ','.join(v).split(',') if len(x) > 0]
+        lst = list(set(lst))
         lst += [x + '_minmax_currency_code' for x in lst]
 
         # select dataframe for given industry
@@ -170,17 +171,17 @@ def firebase_universe_update(ticker=None, currency_code=None):
             temp = curr_details.loc[curr_details["ticker"] == tick]
 
             positive = temp.loc[temp["score"] > temp["factor_name"].map(curr_pos)]
-            positive = positive.sort_values(by=["score"], ascending=False)
+            positive = positive.sort_values(by=["score"], ascending=False).head(5)
             # if len(positive) == 0:
             #     positive = temp.nlargest(1,'score')     # if no factor > mean + 0.4*std -> use highest score one as pos
 
             negative = temp.loc[temp["score"] < temp["factor_name"].map(curr_neg)]
-            negative = negative.sort_values(by=["score"])
+            negative = negative.sort_values(by=["score"]).head(5)
             # if len(negative) == 0:
             #     positive = temp.nsmallest(1,'score')
 
             for index, row in positive.iterrows():
-                positive_factor.append(row["factor_name"])
+                positive_factor.append(row["factor_name"])      # positive/negative only first 5 factor
             for index, row in negative.iterrows():
                 negative_factor.append(row["factor_name"])
             positive_negative_result = pd.DataFrame({"ticker":[tick], "positive_factor":[positive_factor], "negative_factor":[negative_factor]}, index=[0])

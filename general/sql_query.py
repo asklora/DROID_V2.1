@@ -4,7 +4,7 @@ from core.djangomodule.general import get_cached_data,set_cache_data
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general import table_name
-from general.sql_process import db_read, alibaba_db_url
+from general.sql_process import db_read, alibaba_db_url, DB_URL_ALIBABA_PROD
 from general.date_process import (
     backdate_by_day,
     backdate_by_year,
@@ -41,6 +41,7 @@ from general.table_name import (
     get_user_profit_history_table_name,
     get_user_transaction_table_name,
     get_vix_table_name,
+    get_data_vix_table_name,
     get_currency_table_name,
     get_universe_table_name,
     get_universe_rating_table_name,
@@ -99,6 +100,7 @@ def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba
     if prints:
         logging.info("Total Data = " + str(len(data)))
     return data
+
 
 def check_start_end_date(start_date, end_date):
     if type(start_date) == type(None):
@@ -266,6 +268,77 @@ def get_worldscope_period_end_list(start_date="2000-01-01", end_date=dateNow()):
     data = read_query(query, table=table_name)
     return data["period_end"].to_list()
 
+
+def get_worldscope_summary_latest(quarter_col, year_col):
+    ''' get latest record from data_worldscope_summary '''
+    table_name = get_data_worldscope_summary_table_name()
+    start_date = backdate_by_year(2)
+    query = f"select * from {table_name} where period_end>='{start_date}' order by ticker, period_end ASC"
+    data = read_query(query, table=table_name)
+    num_col = data.select_dtypes(float).columns.to_list()
+    data[num_col] = data.groupby('ticker')[num_col].ffill()       # ffill for missing fields
+    for col in quarter_col:
+        data[col+'_1q'] = data.groupby('ticker')[col].shift(1)      # add quarter columns for growth ratio calc
+    for col in year_col:
+        data[col+'_1y'] = data.groupby('ticker')[col].shift(4)
+    data = data.groupby('ticker').last().reset_index()
+    return data.drop(columns=['uid','worldscope_identifier','year','fiscal_quarter_end','frequency_number','period_end','report_date'])
+
+
+def get_ibes_monthly_latest(quarter_col, year_col):
+    ''' get latest record from data_ibes_monthly '''
+    table_name = get_data_ibes_monthly_table_name()
+    start_date = backdate_by_year(2)
+    query = f"select * from {table_name} where period_end>='{start_date}' order by ticker, period_end ASC"
+    data = read_query(query, table=table_name)
+    num_col = data.select_dtypes(float).columns.to_list()
+    data[num_col] = data.groupby('ticker')[num_col].ffill()  # ffill for missing fields
+    for col in quarter_col:
+        data[col + '_1q'] = data.groupby('ticker')[col].shift(1)  # add quarter columns for growth ratio calc
+    for col in year_col:
+        data[col + '_1y'] = data.groupby('ticker')[col].shift(4)
+    data = data.groupby('ticker').last().reset_index()
+    return data.drop(columns=['uid','trading_day','period_end'])
+
+
+def get_missing_field_ticker_list(table_name, field=None, tickers=None, period_end=None):
+    '''
+    select ticker with missing field & time (suitable for pivot version tables, e.g. data_worldscope_summary,
+    data_ibes_monthly, & data_fundamental_score)
+
+    Parameters
+    ----------
+    table_name :    Str, DB Table Name to search for missing (i.e. Table to be ingested)
+    field :         Str, missing field
+    ticker :        List, list of ticker where may contain missing field
+    period_end :    Date, Timestamp in DB for missing field
+
+    Returns
+    -------
+    Full dataframe (i.e. all columns) of tickers with missing fields
+    '''
+
+    # test if period_end exists in Table
+    query1 = f"SELECT ticker FROM {table_name} WHERE period_end='{period_end}'"
+    data1 = read_query(query1, table=table_name)
+
+    if len(data1) == 0:
+        # if period_end not exists
+        query_miss = f"SELECT * FROM {table_name} LIMIT 1"
+        data_miss = read_query(query_miss, table=table_name)
+        data_miss = pd.DataFrame(index=range(len(tickers)), columns=data_miss.columns.to_list())
+        data_miss['ticker'] = tickers
+        data_miss['period_end'] = period_end
+        return data_miss
+    else:
+        # if period_end exists
+        if len(tickers)==1:
+            query = f"SELECT * FROM {table_name} WHERE {field} IS NULL AND period_end='{period_end}' AND ticker='{tickers[0]}'"
+        else:
+            query = f"SELECT * FROM {table_name} WHERE {field} IS NULL AND period_end='{period_end}' AND ticker IN {tuple(tickers)}"
+        data = read_query(query, table=table_name)
+        return data
+
 def get_active_universe_by_country_code(country_code, method=True):
     if method:
         query = f"select * from {get_universe_table_name()} where is_active=True and country_code='{country_code}' order by ticker"
@@ -355,6 +428,12 @@ def get_vix(vix_id=None):
     data = read_query(query, table=get_vix_table_name())
     return data
 
+def get_vix_since(vix_id=None, date=None):
+    query = f"select * from {get_data_vix_table_name()} WHERE trading_day > '{date}'"
+    if type(vix_id) != type(None):
+        query += f" where vix_id in {tuple_data(vix_id)}"
+    data = read_query(query, table=get_data_vix_table_name())
+    return data
 
 def get_fundamentals_score(ticker=None, currency_code=None):
     query = f"select * from {get_fundamental_score_table_name()} "
@@ -434,22 +513,29 @@ def get_specific_volume_avg(trading_day, avg_days=7, volume_name="volume"):
     return data
 
 def get_factor_calculation_formula():
-    query = f"SELECT * FROM {get_factor_calculation_table_name()}"
+    query = f"SELECT * FROM {get_factor_calculation_table_name()} WHERE is_active"
     data = read_query(query, table=get_factor_calculation_table_name(), alibaba=True)
     return data
 
 def get_factor_current_used():
     query = f"SELECT * FROM {get_factor_current_use_table_name()}"
-    data = read_query(query, table=get_factor_current_use_table_name(), alibaba=True)
+    data1 = read_query(query+"_weekly1", table=get_factor_current_use_table_name(), alibaba=True).set_index('index')
+    data2 = read_query(query+"_monthly1", table=get_factor_current_use_table_name(), alibaba=True).set_index('index')
+    data = data1+','+data2
     return data
 
 def get_ingestion_name_source():
-    query = f"SELECT * FROM {get_ingestion_name_source_table_name()}"
+    query = f"SELECT * FROM {get_ingestion_name_source_table_name()} WHERE is_active"
     data = read_query(query, table=get_ingestion_name_source_table_name(), alibaba=True)
     return data
 
-def get_factor_rank():
-    query = f"SELECT * FROM {get_factor_rank_table_name()}"
+def get_ingestion_name_macro_source():
+    query = f"SELECT * FROM {get_ingestion_name_source_table_name()}_macro"
+    data = read_query(query, table=get_ingestion_name_source_table_name()+"_macro", alibaba=True)
+    return data
+
+def get_factor_rank(score_type):
+    query = f"SELECT * FROM {get_factor_rank_table_name()}_{score_type}"
     data = read_query(query, table=get_factor_rank_table_name(), alibaba=True)
     return data
 
@@ -854,3 +940,24 @@ def get_orders_position_performance(user_id=None, ticker=None, currency_code=Non
         query += "order by created DESC;"
     data = read_query(query, table_name, cpu_counts=True)
     return data
+
+def rename_table_columns():
+    ''' obsolete '''
+    from global_vars import DB_URL_ALIBABA_DEV
+    engine = create_engine(DB_URL_ALIBABA_DEV, max_overflow=-1, isolation_level="AUTOCOMMIT")
+
+    df = get_ingestion_name_source()
+    filter_field = df.loc[df['ibes_monthly'], ['dsws_name','our_name']].values
+    table_name = 'factor_formula_ratios'
+
+    with engine.connect() as conn:
+        df = pd.read_sql(f'SELECT * From {table_name}', conn)
+        for col in ['field_num', 'field_denom']:
+            x = df[col].to_list()
+            for field_dsws, field_rename in filter_field:
+                # old_name = 'fn_'+str(int(field_dsws[2:-1]))
+                old_name = field_dsws.lower()
+                x = [i.replace(old_name, field_rename) if i else i for i in x]
+            df[col] = x
+        df.to_sql(table_name, conn, if_exists='replace', index=False)
+    engine.dispose()

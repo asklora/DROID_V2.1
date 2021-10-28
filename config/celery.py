@@ -62,7 +62,7 @@ app.autodiscover_tasks()
 def at_start(sender, **k):
     if role == 'master':
         with sender.app.connection() as conn:
-            sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn,queue=settings.UTILS_WORKER_DEFAULT_QUEUE)
+            sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn,queue=settings.BROADCAST_WORKER_DEFAULT_QUEUE)
 
 
 
