@@ -19,12 +19,11 @@ def sync_user(payload):
     if 'id' in payload:
         user_id =payload.pop('id')
     
-
+    print("CREATING STATUS",create)
     if not create:
-        if user.is_joined:
-            join =payload.get('is_joined',None)
-            if join:
-                payload.pop('is_joined')
+        join =payload.get('is_joined',False)
+        if join:
+            payload.pop('is_joined')
         for attrib, val in payload.items():
             if hasattr(user,attrib):
                 if attrib == 'password':
