@@ -9,7 +9,7 @@ from firebase_admin import messaging
 from datetime import datetime
 from rest_framework import serializers
 from channels.layers import get_channel_layer
-from ingestion import firebase_user_update
+from ingestion.firestore_migration import firebase_user_update
 from datasource import rkd as trkd
 import time
 import json
@@ -24,10 +24,10 @@ class OrderDetailsServicesSerializers(serializers.ModelSerializer):
                   'placed', 'placed_at', 'canceled_at', 'qty','user_id']
 
 @app.task(bind=True)
-def pending_order_checker(self):
+def pending_order_checker(self,currency=None):
     Exchange = apps.get_model('universe', 'ExchangeMarket')
     Order = apps.get_model('orders', 'Order')
-    orders = Order.objects.prefetch_related('ticker').filter(status='pending')
+    orders = Order.objects.prefetch_related('ticker').filter(status='pending',ticker__currency_code=currency)
     orders_id=[]
     if orders.exists():
         for order in orders:
@@ -43,7 +43,6 @@ def pending_order_checker(self):
                 payload = json.dumps(payload)
                 # order_executor.apply_async(args=(payload,),kwargs={"recall":True},task_id=str(order.order_uid))
                 order_executor(payload,recall=True,request_id=str(order.order_uid))
-
                 orders_id.append(str(order.order_uid))
 
     return {'success':'order pending executed','data':orders_id}
@@ -54,7 +53,8 @@ def pending_order_checker(self):
 
 
 @app.task(bind=True)
-def order_executor(self, payload, recall=False,request_id=None):
+def order_executor(self, payload, recall=False, request_id=None):
+
     """
     #TODO: ERROR HANDLING HERE AND RETURN MESSAGE TO USER AND SOCKET
     
@@ -75,7 +75,6 @@ def order_executor(self, payload, recall=False,request_id=None):
         df = rkd.get_quote([order.ticker.ticker], df=True)
         df['latest_price'] = df['latest_price'].astype(float)
         ticker = df.loc[df["ticker"] == order.ticker.ticker]
-        order.price = ticker.iloc[0]['latest_price']
         TransactionHistory = apps.get_model('user', 'TransactionHistory')
         in_wallet_transactions = TransactionHistory.objects.filter(
             transaction_detail__order_uid=str(order.order_uid))
@@ -85,12 +84,13 @@ def order_executor(self, payload, recall=False,request_id=None):
         # for apps, need to change later with better logic
         if order.side == 'buy' and order.is_app_order and order.is_init:
             if order.is_bot_order:
-                order.amount = order.setup["position"]["investment_amount"]
+                order.amount =order.userconverter.convert(order.setup["position"]["investment_amount"])
             else:
-                if (order.amount / order.margin) > 10000:
+                if (order.amount / order.margin) > 10001:
                     order.amount = 20000
                 else:
                     order.amount = 10000
+        order.price = ticker.iloc[0]['latest_price']
         order.status = 'review'
         order.placed = False
         order.placed_at = None

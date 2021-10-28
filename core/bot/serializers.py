@@ -33,10 +33,10 @@ class BotHedgerSerializer(serializers.Serializer):
     target_profit_pct=serializers.FloatField(read_only=True)
     target_profit_price=serializers.FloatField(read_only=True)
     target_profit_amount=serializers.FloatField(read_only=True)
+    currency=serializers.CharField(read_only=True)
 
 
     def create(self, validated_data):
-        print(validated_data)
         try:
             ticker = Universe.objects.get(ticker=validated_data["ticker"])
         except Universe.DoesNotExist:
@@ -68,5 +68,6 @@ class BotHedgerSerializer(serializers.Serializer):
         data["target_profit_pct"]=setup["position"]["target_profit_pct"]
         data["target_profit_price"]=setup["position"]["target_profit_price"]
         data["target_profit_amount"]=setup["position"]["target_profit_amount"]
+        data["currency"]=ticker.currency_code.currency_code
         
         return data   

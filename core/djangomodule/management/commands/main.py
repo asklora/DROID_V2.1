@@ -1,4 +1,4 @@
-from ingestion.firestore_migration import mongo_universe_update
+from ingestion.firestore_migration import firebase_universe_update
 from general.sql_query import get_universe_by_region
 from django.core.management.base import BaseCommand
 from general.date_process import dateNow, str_to_date
@@ -124,7 +124,6 @@ class Command(BaseCommand):
                     update_ingestion_update_time("data_interest-na", finish=True)
                     dividend_daily_update()
                     interest_daily_update()
-
             if (options["ws"]):
                 ticker = get_universe_by_region(region_id=["ws"])["ticker"].to_list()
                 if(options["firebase_update"]):

@@ -1423,6 +1423,7 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
             upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
             report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
 
+
 def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
     print("{} : === RECSELL RECBUY Start Ingestion ===".format(datetimeNow()))
     universe = get_all_universe(ticker=ticker, currency_code=currency_code)
@@ -1489,6 +1490,7 @@ def update_mic_from_dsws(ticker=None, currency_code=None):
         result["mic"] = np.where(result["mic"] == "MTAA", "XMIL", result["mic"])
         result["mic"] = np.where(result["mic"] == "WBAH", "XEUR", result["mic"])
         result = universe.merge(result, how="left", on=["ticker"])
+        result["mic"] = np.where(result["currency_code"] == "USD", "XNAS", result["mic"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), "ticker", how="update", Text=True)
         report_to_slack("{} : === MIC Updated ===".format(datetimeNow()))

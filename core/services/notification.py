@@ -18,6 +18,7 @@ def send_notification(username:str,title:str,body:str):
 
 
 def send_bulk_notification(title:str,body:str):
+    # TODO: need to check bulk message
     data={
                 "type":"function",
                 "module":"core.djangomodule.crudlib.notification.send_notif",

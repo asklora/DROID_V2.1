@@ -48,7 +48,7 @@ class BotPerformanceViews(views.APIView):
         },
     )
     def get(self, request, position_uid):
-        perf = PositionPerformance.objects.filter(position_uid=position_uid).order_by(
+        perf = PositionPerformance.objects.filter(position_uid=position_uid).exclude(order_uid=None).order_by(
             "created"
         )
         if not perf.exists():

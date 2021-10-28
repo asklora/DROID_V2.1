@@ -892,12 +892,16 @@ def get_orders_group_by_user_id(user_id=None, ticker=None, currency_code=None, s
 
     table_name = get_orders_table_name()
     if(stock):
-        query = f"select user_id, sum(amount) as stock_pending_amount from {table_name} where status='pending' and side='buy' and canceled_at is null and bot_id = 'STOCK_stock_0' {filter} group by user_id"
+        query = f"select user_id, sum(stock_pending_amount) as stock_pending_amount from ("
+        query += f"select user_id, amount * exchange_rate as stock_pending_amount from {table_name} where status='pending' "
+        query += f"and side='buy' and canceled_at is null and bot_id = 'STOCK_stock_0' {filter}) as result2 group by user_id; "
     else:
-        query = f"select user_id, (sum((performance ->> 'current_bot_cash_balance')::double precision) + sum(amount))  as bot_pending_amount from ( "
-        query += f"select user_id, (setup ->> 'performance')::json as performance, amount "
-        query += f"from {table_name} where status='pending' and side='buy' and canceled_at is null and bot_id != 'STOCK_stock_0' {filter}) as result "
-        query += f"group by user_id; "
+        query = f"select user_id ,sum(bot_pending_amount) as bot_pending_amount from ("
+        query += f"select user_id, ((performance ->> 'current_bot_cash_balance')::double precision + amount) "
+        query += f"* exchange_rate  as bot_pending_amount from ( "
+        query += f"select user_id, (setup ->> 'performance')::json as performance, amount, exchange_rate "
+        query += f"from {table_name} where status='pending' and side='buy' and canceled_at is null  "
+        query += f"and bot_id != 'STOCK_stock_0' {filter}) as result) as result2 group by user_id ;"
     data = read_query(query, table_name, cpu_counts=True)
     return data
 

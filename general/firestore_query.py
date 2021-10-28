@@ -7,7 +7,6 @@ from django.conf import settings
 import time
 import threading
 
-
 def change_null_to_zero(data):
     for col in data.columns:
         if(type(data.loc[0, col]) == str):
@@ -37,9 +36,6 @@ def change_date_to_str(data, exception=None):
                 data[col] = np.where(data[col].isnull(), 0, data[col])
     return data
 
-
-
-
 def delete_firestore_user(user_id:str,recall=False):
     if recall:
         logging.info('run thread')
@@ -61,17 +57,17 @@ def delete_firestore_user(user_id:str,recall=False):
             target=delete_firestore_user,args=(user_id,),
             kwargs={'recall':True}, daemon=True)
         run_background.start()
-
     # user_data =db.collection(settings.FIREBASE_COLLECTION['portfolio']).where("id","==",f"{user_id}")
-
-
-
-
 
 def get_price_data_firebase(ticker:list) -> pd.DataFrame:
     # firebase have limitation query max 10 list
     # we need to split in here
-    db = firestore.client()
+    firebase_app = getattr(settings, 'FIREBASE_STAGGING_APP',None)
+    if firebase_app:
+        logging.warning("UNIVERSE ARE USING STAGGING PRICE")
+        db = firestore.client(app=firebase_app)
+    else:
+        db = firestore.client()
     object_list = []
     # here loop numpy split
     split = math.ceil(len(ticker) / min(len(ticker), 9))
@@ -100,3 +96,20 @@ def update_to_firestore(data, index, table, dict=False):
     for key,val in df.items():
         doc_ref = db.collection(f"{table}").document(f"{key}")
         doc_ref.set(val)
+
+def delete_firestore_universe(ticker:str):
+    firebase_app = getattr(settings, "FIREBASE_STAGGING_APP",None)
+    if firebase_app:
+        logging.warning("UNIVERSE ARE USING STAGGING PRICE")
+        db = firestore.client(app=firebase_app)
+    else:
+        db = firestore.client()
+    collection=db.collection(settings.FIREBASE_COLLECTION["universe"]).document(ticker).delete()
+    logging.info(f"{ticker} deleted")
+    time.sleep(0.5)
+
+# def delete_firestore_universe(ticker_list:list, table:str=settings.FIREBASE_COLLECTION["universe"]):
+#     db = firestore.client()
+#     for ticker in ticker_list:
+#         doc_ref = db.collection(f"{table}").document(f"{ticker}")
+#         doc_ref.delete()

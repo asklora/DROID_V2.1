@@ -7,6 +7,23 @@ You can use this configuration file by running:
 """
 
 SQLPRINT=True
+
+firebase_admin.initialize_app(
+    FIREBASE_DEV_CREDS,
+    {
+        "databaseURL": "https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    },
+)
+FIREBASE_STAGGING_APP=firebase_admin.initialize_app(
+    FIREBASE_STAGGING_CREDS,
+    {
+        "databaseURL": "https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    },
+    name="stagging-client"
+)
+
+
+
 CHANNEL_LAYERS = {
     "default": {
         # Method 1: Via redis lab

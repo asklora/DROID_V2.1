@@ -20,8 +20,8 @@ import numpy as np
 from firebase_admin import firestore
 import multiprocessing as mp
 import gc
-from core.djangomodule.general import logging
-
+from core.djangomodule.general import logging,jsonprint
+from django.conf import settings
 
 
 db = firestore.client()
@@ -32,7 +32,7 @@ def bulk_update_rtdb(data):
     batch = db.batch()
     for ticker,val in data.items():
         if not ticker == 'price':
-            ref = db.collection("universe").document(ticker)
+            ref = db.collection(settings.FIREBASE_COLLECTION['universe']).document(ticker)
             batch.set(ref,val,merge=True)
     try:
         batch.commit()
@@ -79,7 +79,7 @@ class Rkd:
                     "Error": response,
                     "AREVPS": None,
                     "MKTCAP": None,
-                    "APEEXCLXOR": None,
+                    "PEEXCLXOR": None,
                     "ProjPE": None,
                     "APRICE2BK": None,
                     "AEBITD": None,
@@ -179,24 +179,27 @@ class Rkd:
         return headers
 
     def parse_response(self, response):
-        json_data = response.get("RetrieveItem_Response_3",{}).get("ItemResponse",[])
-        if json_data:
-            data = json_data[0].get("Item",None)
-            if not data:
-                logging.error(response)
-                raise Exception(response)
-            formated_json_data = []
-            for index, item in enumerate(data):
-                ticker = item["RequestKey"]["Name"]
-                formated_json_data.append({"ticker": ticker})
-                if item["Status"]["StatusMsg"] == "OK":
-                    for f in item["Fields"]["F"]:
-                        field = f["n"]
-                        val = f["Value"]
-                        formated_json_data[index].update({field: val})
-                else:
-                    logging.warning(f"error status message {item['Status']['StatusMsg']} for {ticker}, there is no response data")
-        return formated_json_data
+        if response:
+            json_data = response.get("RetrieveItem_Response_3",{}).get("ItemResponse",[])
+            if json_data:
+                data = json_data[0].get("Item",None)
+                if not data:
+                    logging.error(response)
+                    raise Exception(response)
+                formated_json_data = []
+                for index, item in enumerate(data):
+                    ticker = item["RequestKey"]["Name"]
+                    formated_json_data.append({"ticker": ticker})
+                    if item["Status"]["StatusMsg"] == "OK":
+                        for f in item["Fields"]["F"]:
+                            field = f["n"]
+                            val = f["Value"]
+                            formated_json_data[index].update({field: val})
+                    else:
+                        logging.warning(f"error status message {item['Status']['StatusMsg']} for {ticker}, there is no response data")
+            return formated_json_data
+        logging.error(response)
+        raise Exception(response)
 
 
 class RkdData(Rkd):
@@ -269,7 +272,7 @@ class RkdData(Rkd):
                     formated_json["ticker"] = base_response["Issues"]["Issue"][0]["IssueID"][2]["Value"]
                     fields = ["AREVPS",
                               "MKTCAP",
-                              "APEEXCLXOR",
+                              "PEEXCLXOR",
                               "ProjPE",
                               "APRICE2BK",
                               "AEBITD",
@@ -305,7 +308,7 @@ class RkdData(Rkd):
             formated_json["ticker"] = base_response["Issues"]["Issue"][0]["IssueID"][2]["Value"]
             fields = ["AREVPS",
                       "MKTCAP",
-                      "APEEXCLXOR",
+                      "PEEXCLXOR",
                       "ProjPE",
                       "APRICE2BK",
                       "AEBITD",
@@ -324,7 +327,7 @@ class RkdData(Rkd):
         df_data = pd.DataFrame(list_formated_json).rename(columns={
             "AREVPS": "revenue_per_share",
             "MKTCAP": "market_cap",
-            "APEEXCLXOR": "pe_ratio",
+            "PEEXCLXOR": "pe_ratio",
             "ProjPE": "pe_forecast",
             "APRICE2BK": "pb",
             "AEBITD": "ebitda",
@@ -335,7 +338,6 @@ class RkdData(Rkd):
         if save:
             self.save("universe", "Universe", df_data.to_dict("records"))
         if df:
-            # rename column match in table
             return df_data
         return formated_json
     
@@ -372,7 +374,21 @@ class RkdData(Rkd):
 
     def response_to_df(self,response:dict) -> pd.DataFrame:
         formated_json_data = self.parse_response(response)
-        df_data = pd.DataFrame(formated_json_data).rename(columns={
+        # jsonprint(formated_json_data)
+        float_fields = [
+            'CF_ASK',
+            'CF_CLOSE',
+            'CF_BID',
+            'CF_HIGH',
+            'CF_LOW',
+            'PCTCHNG',
+            'CF_VOLUME',
+            'CF_LAST',
+            'CF_NETCHNG',
+            'CF_OPEN',
+            'YIELD'
+            ]
+        parser_data ={
                 "CF_ASK": "intraday_ask",
                 "CF_OPEN": "open",
                 "CF_CLOSE": "close",
@@ -383,13 +399,10 @@ class RkdData(Rkd):
                 "TRADE_DATE": "last_date",
                 "CF_VOLUME": "volume",
                 "CF_LAST": "latest_price",
-                "CF_NETCHNG": "latest_net_change"
-                })
-                
-        df_data["last_date"] = str(datetime.now().date())
-        df_data["intraday_time"] = str(datetime.now())
-        df_data =df_data.astype(
-            {
+                "CF_NETCHNG": "latest_net_change",
+                "YIELD": "dividen_yield",
+                }
+        float_data = {
                 "intraday_ask":"float",
                 "close":"float",
                 "open":"float",
@@ -399,8 +412,26 @@ class RkdData(Rkd):
                 "latest_price_change":"float",
                 "volume":"float",
                 "latest_price":"float",
-                "latest_net_change":"float"
+                "latest_net_change":"float",
+                "dividen_yield":"float",
             }
+        
+        for parsed_data in formated_json_data:
+            for field in float_fields:
+                values=parsed_data.get(field,0)
+                if field == "CF_LAST" and float(values) == 0:
+                    values=parsed_data.get("CF_CLOSE",0)
+                if field == "CF_OPEN" and float(values) == 0:
+                    values=parsed_data.get("CF_LAST",0)
+                if float(values) != 0:
+                    parsed_data[field]=values
+        df_data = pd.DataFrame(formated_json_data)
+        df_data = df_data.rename(columns={k: v for k, v in parser_data.items() if k  in df_data})
+        # print(df_data)
+        df_data["last_date"] = str(datetime.now().date())
+        df_data["intraday_time"] = str(datetime.now())
+        df_data =df_data.astype(
+            {k: v for k, v in float_data.items() if k  in df_data}
         )
         return df_data
 
@@ -438,7 +469,7 @@ class RkdData(Rkd):
             ticker = universe.tolist()
             payload = self.retrive_template(ticker, fields=[
                                             "CF_ASK","CF_OPEN", "CF_CLOSE", "CF_BID", "PCTCHNG", "CF_HIGH", "CF_LOW", "CF_LAST", 
-                                            "CF_VOLUME", "TRADE_DATE","CF_NETCHNG"])
+                                            "CF_VOLUME", "TRADE_DATE","CF_NETCHNG","YIELD"])
             bulk_payload.append(payload)
         
         self.validate_token()
@@ -467,7 +498,7 @@ class RkdData(Rkd):
             print(len(ticker))
             payload = self.retrive_template(ticker, fields=[
                                             "CF_ASK","CF_OPEN", "CF_CLOSE", "CF_BID", "PCTCHNG", "CF_HIGH", "CF_LOW", "CF_LAST", 
-                                            "CF_VOLUME", "TRADE_DATE","CF_NETCHNG"])
+                                            "CF_VOLUME", "TRADE_DATE","CF_NETCHNG","YIELD"])
             response = self.send_request(quote_url, payload, self.auth_headers())
 
             formated_json_data = self.parse_response(response)
@@ -482,7 +513,8 @@ class RkdData(Rkd):
                 "TRADE_DATE": "last_date",
                 "CF_VOLUME": "volume",
                 "CF_LAST": "latest_price",
-                "CF_NETCHNG": "latest_net_change"
+                "CF_NETCHNG": "latest_net_change",
+                "YIELD":"dividen_yield"
             })
             df_data["last_date"] = str(datetime.now().date())
             df_data["intraday_time"] = str(datetime.now())
@@ -557,6 +589,7 @@ class RkdData(Rkd):
                             attribs_modifier[f"{attr}_id"] = val
                         else:
                             attribs_modifier[attr]=val
+                    
                     obj =Model(**attribs_modifier)
             list_obj.append(obj)
         if create and model != "LatestPrice":
@@ -565,6 +598,9 @@ class RkdData(Rkd):
             except Exception:
                 pass
         elif not create and model == "LatestPrice":
+            for key in key_set:
+                if not hasattr(Model,key):
+                    key_set.remove(key)
             Model.objects.bulk_update(list_obj, key_set)
 
 class RkdStream(RkdData):
@@ -613,30 +649,35 @@ class RkdStream(RkdData):
     def stream_quote(self):
         # FOR NOW ONLY HKD
         # TODO: Need to enhance this
-        while True:
-            open_market=(ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"],
-            group="Core",is_open=True).values_list("currency_code",flat=True))
-            # usd_exchange,hkd_exchange =ExchangeMarket.objects.filter(mic='XNAS'),ExchangeMarket.objects.get(mic='XHKG')
-            if open_market:
-                self.ticker_data =list(Universe.objects.filter(currency_code__in=open_market, 
-                is_active=True).exclude(entity_type='index').values_list('ticker',flat=True))
-                logging.info('stream price')
-                data =self.bulk_get_quote(self.ticker_data,df=True)
-                df = data.copy()
-                data['price'] = df.drop(columns=['ticker']).to_dict("records")
-                del df
-                data = data[['ticker','price']]
-                data = data.set_index('ticker')
-                records = data.to_dict("index")
-                # logging.info(records)
-
-                bulk_update_rtdb(records)
-                del records
-                del data
-                gc.collect()
-            else:
-                break
-            time.sleep(15)
+        if not settings.RUN_LOCAL:
+            while True:
+                open_market=(ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"],
+                group="Core",is_open=True).values_list("currency_code",flat=True))
+                # usd_exchange,hkd_exchange =ExchangeMarket.objects.filter(mic='XNAS'),ExchangeMarket.objects.get(mic='XHKG')
+                if open_market:
+                    self.ticker_data =list(Universe.objects.filter(currency_code__in=open_market, 
+                    is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
+                    logging.info('stream price')
+                    data =self.bulk_get_quote(self.ticker_data,df=True)
+                    split_df = np.array_split(data,math.ceil(len(data)/400))
+                    for data_split in split_df:
+                        df = data_split.copy()
+                        data_split['price'] = df.drop(columns=['ticker']).to_dict("records")
+                        del df
+                        data_split = data_split[['ticker','price']]
+                        data_split = data_split.set_index('ticker')
+                        records = data_split.to_dict("index")
+                        # logging.info(records)
+                        
+                        bulk_update_rtdb(records)
+                        del records
+                        del data_split
+                    del data
+                    del split_df
+                    gc.collect()
+                else:
+                    break
+                time.sleep(15)
         if self.is_thread:
                 sys.exit()
         
@@ -880,7 +921,7 @@ class RkdStream(RkdData):
         data = data[0]
         ticker = data.pop("ticker")
         logging.info(ticker)
-        ref = db.collection("universe").document(ticker)
+        ref = db.collection(settings.FIREBASE_COLLECTION['universe']).document(ticker)
         try:
             ref.set({"price":data},merge=True)
         except Exception as e:
@@ -897,7 +938,7 @@ class RkdStream(RkdData):
         logging.info(data)
         for ticker,val in data.items():
             if not ticker == 'price':
-                ref = db.collection("universe").document(ticker)
+                ref = db.collection(settings.FIREBASE_COLLECTION['universe']).document(ticker)
                 batch.set(ref,val,merge=True)
         try:
             batch.commit()
