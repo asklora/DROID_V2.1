@@ -59,22 +59,22 @@ def sync_user(payload):
             pass
         else:
             user.set_password(payload['password'])
-        user.save()
         wallet =Accountbalance.objects.create(user_id=user.id,currency_code_id='HKD',amount=0)
         transaction =TransactionHistory.objects.create(balance_uid=wallet,side='credit',amount=100000,
         transaction_detail={
             'event':'first deposit'
         })
-        try:
-            deposit_history =UserDepositHistory.objects.create(
-                uid = get_uid(user.id, trading_day=dateNow(), replace=True),
-                user_id = user,
-                trading_day = dateNow(),
-                deposit = transaction.amount)
+        # try:
+        #     deposit_history =UserDepositHistory.objects.create(
+        #         uid = get_uid(user.id, trading_day=dateNow(), replace=True),
+        #         user_id = user,
+        #         trading_day = dateNow(),
+        #         deposit = transaction.amount)
         
-        except Exception as e:
-            return {"err": str(e)}
+        # except Exception as e:
+        #     return {"err": str(e)}
         
+        user.save()
         parsed_payload['balance_info'] = { 'balance_uid':wallet.balance_uid,'currency_code':'HKD','transaction_id':transaction.id,'transaction_amount':transaction.amount}
         firebase_user_update(user_id=[user.id])
         populate_daily_profit(user_id=[user.id])
