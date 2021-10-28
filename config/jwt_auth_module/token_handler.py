@@ -25,3 +25,17 @@ class AuthJwt(JWTAuthentication):
             raise NeedRegister()
 
         return user
+    
+    def get_user_from_token(self,validated_token):
+        try:
+            user_id = validated_token[api_settings.USER_ID_CLAIM]
+        except KeyError:
+            return None
+
+        try:
+            user = self.user_model.objects.get(**{api_settings.USER_ID_FIELD: user_id})
+        except self.user_model.DoesNotExist:
+            return None
+
+
+        return user

@@ -110,7 +110,7 @@ MIDDLEWARE = [
     # custom midleware
     "config.middleware.HealthCheck.HealthCheckMiddleware",
     # additional
-    'drf_api_logger.middleware.api_logger_middleware.APILoggerMiddleware',
+    "config.middleware.ApiLogger.LoggerMiddleware",
 ]
 
 
@@ -214,7 +214,7 @@ CELERY_IMPORTS = [
     "core.services.order_services",
     "core.services.exchange_services",
 ]
-
+RUN_LOCAL=False
 
 CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
@@ -309,14 +309,16 @@ SIMPLE_JWT = {
 """
 Settings for firebase backend
 """
-credentials = firebase_admin.credentials.Certificate(
+# FIREBASE CREDENTIALS
+FIREBASE_DEV_CREDS = firebase_admin.credentials.Certificate(
+    "files/file_json/dev-asklora-firebase.json"
+)
+FIREBASE_STAGGING_CREDS = firebase_admin.credentials.Certificate(
+    "files/file_json/stagging-asklora-firebase.json"
+)
+FIREBASE_PROD_CREDS = firebase_admin.credentials.Certificate(
     "files/file_json/asklora-firebase.json"
 )
-firebase_admin.initialize_app(
-    credentials,
-    {
-        "databaseURL": "https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/"
-    },
-)
+
 # additional logger
 DRF_API_LOGGER_DATABASE = True

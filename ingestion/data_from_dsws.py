@@ -401,14 +401,14 @@ def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
 def update_daily_fundamentals_score_from_dsws(ticker=None, currency_code=None):
     print("{} : === Fundamentals Daily Score Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
-    start_date = backdate_by_month(12)
+    start_date = end_date
     identifier = "ticker"
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
     print(universe)
     if(len(universe)):
         filter_field = ["WC08005"]
         column_name = {"WC08005": "mkt_cap"}
-        result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, quarterly=True, fundamentals_score=True)
+        result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, split_number=1, fundamentals_score=True)
         print(result)
         result = result.rename(columns=column_name)
         result = result.drop(columns=["index"])
@@ -765,8 +765,15 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
     ai_score_cols2 = ["fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "esg"]
     fundamentals["ai_score2"] = fundamentals[ai_score_cols2].mean(1)
 
-    print(fundamentals[["fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra",
-                        'esg']].describe())
+    print(fundamentals[["fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", 'esg']].describe())
+
+    fundamentals_factors_scores_col = ["fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "esg",
+                                       "ai_score", "ai_score2", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol", "currency_code"]
+    fundamentals[fundamentals_factors_scores_col] = fundamentals[fundamentals_factors_scores_col].round(1)
+
+    return fundamentals.set_index('ticker')[fundamentals_factors_scores_col]
+
+def score_update_final_scale(fundamentals):
 
     # Scale 6: scale ai_score with history min / max
     # print(fundamentals.groupby(['currency_code'])[["ai_score", "ai_score2"]].agg(['min','mean','median','max']).transpose()[['HKD','USD','CNY','EUR']])
@@ -798,12 +805,7 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
     fundamentals[['ai_score','ai_score2']] = fundamentals[['ai_score','ai_score2']].clip(0, 10)
     fundamentals[['ai_score','ai_score2',"esg"]] = fundamentals[['ai_score','ai_score2',"esg"]].round(1)
 
-    fundamentals_factors_scores_col = ["fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "esg",
-                                       "ai_score", "ai_score2", "ai_score_unscaled", "ai_score2_unscaled",
-                                       "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]
-    fundamentals[fundamentals_factors_scores_col] = fundamentals[fundamentals_factors_scores_col].round(1)
-
-    return fundamentals.set_index('ticker')[fundamentals_factors_scores_col]
+    return fundamentals.drop(columns=['currency_code'])
 
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
     ''' Update: '''
@@ -899,11 +901,16 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     # Scale original fundamental score
     universe_currency_code = get_active_universe()['currency_code'].unique()
+    fundamentals_factors_scores_col_diff = ["fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "ai_score", "ai_score2"]
     fundamentals_1w = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='weekly1')
+    fundamentals_1w = fundamentals_1w[fundamentals_factors_scores_col_diff]  # for only scores
     fundamentals_1m = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='monthly1')
 
-    fundamentals = (fundamentals_1w + fundamentals_1m)/2  # currently we use simple average of weekly score & monthly score
+    fundamentals = fundamentals_1w.merge(fundamentals_1m, left_index=True, right_index=True, suffixes=('_weekly1','_monthly1'))
+    for i in ['ai_score', 'ai_score2']:  # currently we use simple average of weekly score & monthly score
+        fundamentals[i] = (fundamentals[i+'_weekly1'] + fundamentals[i+'_monthly1'])/2
     fundamentals = fundamentals.reset_index()
+    fundamentals = score_update_final_scale(fundamentals)
     fundamentals["trading_day"] = dateNow()
     fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
     universe_rating_history = fundamentals.copy()
@@ -911,8 +918,9 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
     if(len(fundamentals)) > 0 :
         print(fundamentals)
-        result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "esg",
-                               "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
+        # result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "esg",
+        #                        "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
+        result = fundamentals.copy()
         result["updated"] = dateNow()
         print(result)
         print(universe_rating_history)
@@ -1423,6 +1431,7 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
             upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
             report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
 
+
 def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
     print("{} : === RECSELL RECBUY Start Ingestion ===".format(datetimeNow()))
     universe = get_all_universe(ticker=ticker, currency_code=currency_code)
@@ -1489,6 +1498,7 @@ def update_mic_from_dsws(ticker=None, currency_code=None):
         result["mic"] = np.where(result["mic"] == "MTAA", "XMIL", result["mic"])
         result["mic"] = np.where(result["mic"] == "WBAH", "XEUR", result["mic"])
         result = universe.merge(result, how="left", on=["ticker"])
+        result["mic"] = np.where(result["currency_code"] == "USD", "XNAS", result["mic"])
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), "ticker", how="update", Text=True)
         report_to_slack("{} : === MIC Updated ===".format(datetimeNow()))

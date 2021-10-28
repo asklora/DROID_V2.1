@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "stagging-asklora",
+  "private_key_id": "718f43ed8f9b13fde2a85cfc2355f4c3ba1c5ffc",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQD4VrQZLTb1Ky31\nXyOCOr/nbEAcLO94PQLE6gkNgMztxyEqbtKaCAx8XbXuzeXg1bJxndLIHicswyd6\n59myh1xS0+qGOT/03U9mgKXSFWnRKg8q1+QZz16hWRVGH2+Ant51dobQEs/AfdKa\n1TolCXpWpjPAkO/dPAGTJZczLt17dg0DCASBuexN45WHnZlYGrchof1pmOCKqwKw\nOvU2wQpBu0xBhMDTy3SxBY50SbDQh2sbkn84IO68Q2LbJKKET+d7i35XQD8y6lWp\nvBEfhgTrJpi2UHRkyKjQyk/RNHA+7x+uIIm0OoKRMBq6surpN01OvE55+FTn0Cb7\n2Xm7svgnAgMBAAECggEAE8BtpZz7hIdxKdVt0RNUJRduh+8pAsKzgC7vFmRaqETQ\nxfu3g2nFeHTJnhtBP98vSKsZUzJWwlApSTS8k18BwFK7kf5msFaT1J7B0ZJDbs/u\nEeXG7iiYqbOYphGlADFilywcr9r3LCO1xvvTmpOE5/RjJFtCwLFfnLD+NCNzmTiT\n105HuN0yElkJ+RHYwg4O0Rzv6MLuEpKJa1k4tqT/JvScPmPfSOdU4f3lEi6qS94t\nHRZ1iylmz0tG5jGIw+VxdmKcqeQzqS/S8WxJe11Ss26e2mz93AtDqrDKI3IXNGW8\nrKQJoM85+kjzerHH+itLyK0AGaT2v1aNpMofBKrbSQKBgQD92aYT4lSl2p2D9FLQ\nL3HAfcPEZG6S71ZFvDREk1m+apzdAP5ibImqZps/SbX5LbtdW8ZDj3V3tLjROv55\nii5K8qNUHGR9VCL4IqgrxIkOlnPmf46K45RFTjobowfxkSrHEavNiW+M80+XMN3h\nSVfwRcEsmPnT0GJ2LV312EjjHwKBgQD6cRsRpNOcLKTqAn3+hk1sc/7IitVYqDFz\ndjFEhfM6dO3/6dwcaCjs01o4xGLsxjVtChoLscIhwpt6i0eIwBHgti9mikfA6wIy\nLG3NKPOtPRVmD/dO5Wm9RAU5J1xGLNlWmoFxJ65pLahwTbrga9+P6s/TcFOSom1f\nT87LlCcR+QKBgCvkqnbdt81F096xLHCbA4xJMsSOqR/3Cm/cbx08bVQjkyQTu+jA\n47z3KPj0geaoJbGq4Mll0OX19c8X6FCTuBV1hxBQKIATQEivlWyb+ybulPPSMo+J\ncmXZdOq6cfEvLLpnL9HGZed1WtnFtVfzGqWNKi3P9cLOUXgluA1+bHv5AoGBAJ4S\nR8iSJXI8h3agThAZisK6UAUaA+DqgBPldOFQPp4V8aaGYASaBcK9AAQ2iE30KQKC\nzr+02dhfMa1ePa9ls6MGutJY00ND0eYDPuawQ2WD2X7K8wicKmpohXd2jXpJkoBk\nEvFt31rJk7gWh65gyAHZboWBL26tEKWJBPhfsW1ZAoGAdE84hs7/OVon2DOujw72\n2+GTeGyiEY4FlpKQzf0nibEcm2YHiOeQvA57XSF29LgFLyJVZowlOJknbW0LWqfE\nAVz24GWhE+gkWyivAQhICFHfnMR/NR4tnlJIlxYGE5fV8pZE8YahNrKFWuxaSL+G\niW3Cxu6HwMwRc0oiM9EcAwU=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-eljnv@stagging-asklora.iam.gserviceaccount.com",
+  "client_id": "103332602173230752041",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-eljnv%40stagging-asklora.iam.gserviceaccount.com"
+}

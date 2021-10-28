@@ -9,7 +9,7 @@ from core.djangomodule.general import generate_id, formatdigit
 from simple_history.models import HistoricalRecords
 from core.services.notification import send_notification
 from bot.calculate_bot import populate_daily_profit
-from ingestion import firebase_user_update
+from ingestion.firestore_migration import firebase_user_update
 from core.user.convert import ConvertMoney
 
 class Order(BaseTimeStampModel):
@@ -39,12 +39,14 @@ class Order(BaseTimeStampModel):
     qty = models.FloatField(null=True, blank=True)# disini x margin
     history = HistoricalRecords(table_name='order_changes_history')
     margin = models.FloatField(null=True, blank=True,default=1)
+    exchange_rate = models.FloatField(null=True, blank=True,default=1)
+
     class Meta:
         managed = True
         db_table = "orders"
 
     def insufficient_balance(self):
-        return (self.amount / self.margin) > self.user_id.user_balance.amount and self.side == 'buy'
+        return (self.user_amount / self.margin) > self.user_id.user_balance.amount and self.side == 'buy'
     
     @property
     def is_bot_order(self):
@@ -58,11 +60,19 @@ class Order(BaseTimeStampModel):
     def populate_to_firebase(self):
         populate_daily_profit()
         firebase_user_update(user_id=[self.user_id.id])
+    
+    @property
+    def userconverter(self):
+        return ConvertMoney(self.ticker.currency_code,self.user_id.currency)
 
     @property
     def converted_amount(self):
         converter = ConvertMoney(self.user_id.currency, self.ticker.currency_code)
         return converter.convert(self.amount)
+    
+    @property
+    def user_amount(self):
+        return formatdigit(self.amount * self.exchange_rate,self.user_id.user_balance.currency_code.is_decimal)
 
     def save(self, *args, **kwargs):
 
@@ -114,10 +124,10 @@ class OrderPosition(BaseTimeStampModel):
     final_price = models.FloatField(null=True, blank=True)
     final_return = models.FloatField(null=True, blank=True)
     final_pnl_amount = models.FloatField(null=True, blank=True)
-    current_inv_ret = models.FloatField(null=True, blank=True)
-    current_inv_amt = models.FloatField(null=True, blank=True)
+    current_inv_ret = models.FloatField(null=True, blank=True,default=0)
+    current_inv_amt = models.FloatField(null=True, blank=True,default=0)
     is_live = models.BooleanField(default=False)
-    share_num = models.FloatField(null=True, blank=True)
+    share_num = models.FloatField(null=True, blank=True,default=0)
     current_returns = models.FloatField(null=True, blank=True, default=0)
     current_values = models.FloatField(null=True, blank=True, default=0)
     commision_fee = models.FloatField(null=True, blank=True, default=0)
@@ -126,6 +136,7 @@ class OrderPosition(BaseTimeStampModel):
     margin = models.FloatField(default=1)
     bot_cash_dividend = models.FloatField(null=True, blank=True, default=0)
     history = HistoricalRecords(table_name='order_position_history')
+    exchange_rate = models.FloatField(null=True, blank=True,default=1)
 
     class Meta:
         managed = True
@@ -231,6 +242,7 @@ class PositionPerformance(BaseTimeStampModel):
     order_summary = models.JSONField(null=True, blank=True)
     order_uid = models.ForeignKey("Order", null=True, blank=True, on_delete=models.SET_NULL, db_column="order_uid")
     status = models.CharField(null=True, blank=True, max_length=200)
+    exchange_rate = models.FloatField(null=True, blank=True,default=1)
 
     def save(self, *args, **kwargs):
         if not self.performance_uid:

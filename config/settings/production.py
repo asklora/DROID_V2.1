@@ -15,6 +15,16 @@ try:
 except requests.exceptions.RequestException:
     pass
 
+## GCP
+
+firebase_admin.initialize_app(
+    FIREBASE_PROD_CREDS,
+    {
+        "databaseURL": "https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    },
+)
+
+
 SQLPRINT=False
 CHANNEL_LAYERS = {
     'default': {

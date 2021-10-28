@@ -277,7 +277,8 @@ class BaseOrderConnector(AbstracOrderConnector):
                     spot_date=self.instance.filled_at.date(),
                     entry_price=self.instance.price,
                     is_live=True,
-                    margin=margin
+                    margin=margin,
+                    exchange_rate=self.instance.exchange_rate
                 )
         performance = PositionPerformance.objects.create(
             created=self.instance.filled_at.date(),
@@ -285,7 +286,8 @@ class BaseOrderConnector(AbstracOrderConnector):
             last_spot_price=self.instance.price,
             last_live_price=self.instance.price,
             order_uid=self.instance,
-            status="Populate"
+            status="Populate",
+            exchange_rate=self.instance.exchange_rate
         )
         
         # if bot
@@ -344,8 +346,7 @@ class BaseOrderConnector(AbstracOrderConnector):
     # def calculate_fee(self, position_uid):
         user_client = UserClient.objects.get(user_id=self.instance.user_id)
         if(convert):
-            convert = ConvertMoney(self.instance.ticker.currency_code, self.user_wallet_currency)#TODO disini
-            amount = convert.convert(self.instance.amount)#TODO disini
+            amount = self.instance.converted_amount#TODO disini
             is_decimal = self.instance.ticker.currency_code.is_decimal
         else:
             amount = self.instance.amount

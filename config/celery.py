@@ -7,9 +7,10 @@ from environs import Env
 from celery.signals import worker_ready
 from django.conf import settings
 from celery.backends.rpc import RPCBackend as CeleryRpcBackend
-from django.conf import settings
 from dotenv import load_dotenv
 from django import db
+from core.djangomodule.general import logging
+
 
 env = Env()
 load_dotenv()
@@ -19,7 +20,7 @@ if not debug:
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.local')
 dbdebug = env.bool("DROID_DEBUG")
 db.connections.close_all()
-print(role)
+logging.warning(f'celery role using -> {role}')
 #NOTE AVALAIBLE TASK 13-09-2021
 #   . channels_presence.tasks.prune_presence
 #   . channels_presence.tasks.prune_rooms

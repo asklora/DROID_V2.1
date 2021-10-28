@@ -1,4 +1,6 @@
 from rest_framework import serializers, exceptions
+
+from core.djangomodule.general import formatdigit
 from .models import OrderPosition, PositionPerformance, OrderFee, Order
 from core.bot.serializers import BotDetailSerializer
 from core.bot.models import BotOptionType
@@ -6,6 +8,7 @@ from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from django.db.models import Sum
 from core.Clients.models import UserClient,Client
 from core.user.models import TransactionHistory
+from core.user.convert import ConvertMoney
 from django.apps import apps
 from datasource.rkd import RkdData
 from django.db import transaction as db_transaction
@@ -52,14 +55,19 @@ class PerformanceSerializer(serializers.ModelSerializer):
     commission = serializers.SerializerMethodField()
     initial_investment_amt = serializers.SerializerMethodField()
     current_value = serializers.SerializerMethodField()
+    current_exchange_rate = serializers.SerializerMethodField()
+    amount = serializers.SerializerMethodField()
 
     class Meta:
         model = PositionPerformance
         fields = ("created", "prev_bot_share_num", "share_num", "current_investment_amount",
                   "side", "price", "hedge_share", "stamp", "commission","current_pnl_ret",
-                  "current_pnl_amt","initial_investment_amt","current_value")
+                  "current_pnl_amt","initial_investment_amt","current_value","current_exchange_rate","amount")
 
     
+    def get_current_exchange_rate(self,obj)->float:
+        return ConvertMoney(obj.position_uid.ticker.currency_code, obj.position_uid.user_id.currency).get_exchange_rate()
+
     def get_current_value(self,obj)->float:
         return obj.current_bot_cash_balance + obj.current_investment_amount
     
@@ -77,6 +85,11 @@ class PerformanceSerializer(serializers.ModelSerializer):
         if obj.order_uid:
             return obj.order_uid.side
         return "hold"
+    
+    def get_amount(self,obj)->float:
+        if obj.order_uid:
+            return obj.order_uid.amount
+        return 0
 
     def get_stamp(self, obj) -> float:
         if obj.order_uid:
@@ -114,13 +127,33 @@ class PositionSerializer(serializers.ModelSerializer):
     currency = serializers.SerializerMethodField()
     total_share_num = serializers.FloatField(source="share_num")
     current_share_num=serializers.SerializerMethodField()
+    current_exchange_rate = serializers.SerializerMethodField()
+    current_values=serializers.SerializerMethodField()
+    current_returns=serializers.SerializerMethodField()
+    current_inv_ret = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderPosition
         exclude = ("commision_fee", "commision_fee_sell","share_num")
     
+    def get_current_values(self,obj):
+        latest_perf = obj.order_position.latest("created")
+        return formatdigit(obj.current_values * latest_perf.exchange_rate,obj.user_id.user_balance.currency_code.is_decimal)
+
+
+    def get_current_returns(self,obj):
+        latest_perf = obj.order_position.latest("created")
+        return formatdigit(obj.current_returns * latest_perf.exchange_rate,obj.user_id.user_balance.currency_code.is_decimal)
+
+
+    def get_current_exchange_rate(self,obj)->float:
+        return ConvertMoney(obj.ticker.currency_code, obj.user_id.currency).get_exchange_rate()
+
     def get_current_share_num(self,obj) -> float:
         return obj.order_position.latest("created").share_num
+    
+    def get_current_inv_ret(self,obj) -> float:
+        return round(obj.current_inv_ret * 100,2)
 
 
     def get_bot_details(self,obj) -> BotDetailSerializer:
@@ -181,7 +214,7 @@ class PositionSerializer(serializers.ModelSerializer):
         return obj.ticker.ticker_fullname
     
     def get_currency(self,obj)->str:
-        return obj.ticker.currency_code.currency_code
+        return obj.user_id.user_balance.currency_code.currency_code
 
     def get_last_price(self, obj) -> float:
         return obj.ticker.latest_price_ticker.close
@@ -225,11 +258,14 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     setup = serializers.JSONField(required=False)
     created = serializers.DateTimeField(required=False, read_only=True)
     margin = serializers.IntegerField(required=False,default=1)
+    currency = serializers.SerializerMethodField(read_only=True)
+    exchange_rate = serializers.FloatField(read_only=True)
+    user_currency = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
-        fields = ["ticker", "price", "bot_id", "amount", "user",
-                  "side", "status", "order_uid", "qty", "setup", "created","margin"]
+        fields = ["ticker", "price", "bot_id", "amount", "user","exchange_rate","currency",
+                  "side", "status", "order_uid", "qty", "setup", "created","margin","user_currency"]
     
     
     def to_internal_value(self, data):
@@ -246,7 +282,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return super(OrderCreateSerializer, self).to_internal_value(data)
    
         
-
+    def get_user_currency(self,obj)-> str:
+        return obj.user_id.user_balance.currency_code.currency_code
 
     def create(self, validated_data):
         if not "price" in validated_data:
@@ -299,6 +336,11 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 except Exception as e:
                     raise exceptions.APIException({'detail':f'{str(e)}'})
         return order
+
+
+    def get_currency(self,obj) -> str:
+        return obj.ticker.currency_code.currency_code
+
 
 @extend_schema_serializer(
     exclude_fields=("user",), # schema ignore these field
@@ -391,14 +433,16 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
     bot_range= serializers.SerializerMethodField()
     ticker_name = serializers.SerializerMethodField()
 
+    exchange_rate = serializers.FloatField(read_only=True)
+    user_currency = serializers.SerializerMethodField(read_only=True)
 
 
 
     class Meta:
         model = Order
-        fields = ["ticker", "price", "bot_id", "amount", "side",
+        fields = ["ticker", "price", "bot_id", "amount", "side","exchange_rate",
                   "order_uid", "status", "setup", "created", "filled_at",
-                  "placed", "placed_at", "canceled_at", "qty","bot_name","currency","bot_range","ticker_name"]
+                  "placed", "placed_at", "canceled_at", "qty","bot_name","currency","bot_range","ticker_name","user_currency"]
     
     
     def get_ticker_name(self,obj) -> str:
@@ -414,6 +458,9 @@ class OrderDetailsSerializers(serializers.ModelSerializer):
     def get_currency(self,obj) -> str:
         return obj.ticker.currency_code.currency_code
     
+    def get_user_currency(self,obj)-> str:
+        return obj.user_id.user_balance.currency_code.currency_code
+    
     def get_bot_range(self,obj)-> str:
         bot =BotOptionType.objects.get(bot_id=obj.bot_id)
         return bot.duration
@@ -424,12 +471,17 @@ class OrderListSerializers(serializers.ModelSerializer):
     currency = serializers.SerializerMethodField()
     bot_range= serializers.SerializerMethodField()
     ticker_name = serializers.SerializerMethodField()
+    exchange_rate = serializers.FloatField(read_only=True)
+    user_currency = serializers.SerializerMethodField(read_only=True)
+
+
+
     
     class Meta:
         model = Order
         fields = ["ticker", "side",
-                  "order_uid", "status", "created", "filled_at",
-                  "placed", "placed_at", "qty","amount","bot_name","currency","bot_range","ticker_name","setup"]
+                  "order_uid", "status", "created", "filled_at","exchange_rate",
+                  "placed", "placed_at", "qty","amount","bot_name","currency","bot_range","ticker_name","setup","user_currency"]
     
     def get_ticker_name(self,obj) -> str:
         return obj.ticker.ticker_name
@@ -439,6 +491,8 @@ class OrderListSerializers(serializers.ModelSerializer):
         if not bot.is_stock():
             return bot.bot_type.bot_apps_name
         return "Unassisted Trade"
+    def get_user_currency(self,obj)-> str:
+        return obj.user_id.user_balance.currency_code.currency_code
 
     def get_currency(self,obj)-> str:
         return obj.ticker.currency_code.currency_code
