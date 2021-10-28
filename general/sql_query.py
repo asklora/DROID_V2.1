@@ -519,7 +519,9 @@ def get_factor_calculation_formula():
 
 def get_factor_current_used():
     query = f"SELECT * FROM {get_factor_current_use_table_name()}"
-    data = read_query(query, table=get_factor_current_use_table_name(), alibaba=True)
+    data1 = read_query(query+"_weekly1", table=get_factor_current_use_table_name(), alibaba=True).set_index('index')
+    data2 = read_query(query+"_monthly1", table=get_factor_current_use_table_name(), alibaba=True).set_index('index')
+    data = data1+','+data2
     return data
 
 def get_ingestion_name_source():
