@@ -7,7 +7,7 @@ import numpy as np
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
-from general.data_process import tuple_data, NoneToZero, uid_maker
+from general.data_process import tuple_data, NoneToZero, uid_maker, divide
 from general.sql_query import (
     get_active_universe,
     get_count_orders_position, 
@@ -626,10 +626,12 @@ def populate_daily_profit(currency_code=None, user_id=None):
     # print(user_core)
     orders_position_field = "position_uid, user_id, investment_amount, margin, exchange_rate"
     orders_position = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
+    orders_position["exchange_rate"] = np.where(orders_position["exchange_rate"].isnull(), 1, orders_position["exchange_rate"])
     orders_position["investment_amount"] = (orders_position["investment_amount"] * orders_position["exchange_rate"]).round(2)
     if(len(orders_position)):
         orders_performance_field = "distinct created, position_uid, current_bot_cash_balance, current_investment_amount, exchange_rate as current_exchange_rate"
         orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)
+        orders_performance["current_exchange_rate"] = np.where(orders_performance["current_exchange_rate"].isnull(), 1, orders_performance["current_exchange_rate"])
         orders_performance["current_bot_cash_balance"] = (orders_performance["current_bot_cash_balance"] * orders_performance["current_exchange_rate"]).round(2)
         orders_performance["current_investment_amount"] = (orders_performance["current_investment_amount"] * orders_performance["current_exchange_rate"]).round(2)
         orders_performance["created"] = orders_performance["created"].dt.date
@@ -648,20 +650,9 @@ def populate_daily_profit(currency_code=None, user_id=None):
             # position["margin_invested_amount"] = position["investment_amount"] * position["margin"]
             position["crr_ivt_amt"] = (position["current_investment_amount"] + position["current_bot_cash_balance"])
             position["daily_profit"] = position["crr_ivt_amt"] - position["investment_amount"]
-            try:
-                profit = formatdigit(NoneToZero(np.nansum(position["daily_profit"].to_list())), currency_decimal=row["is_decimal"])
-            except ZeroDivisionError:
-                profit=0
-            try:
-                daily_profit_pct = round(profit / NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) * 100, 4)
-            except ZeroDivisionError:
-                daily_profit_pct=0
-            try:
-                daily_invested_amount = formatdigit(NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) + user_core.loc[index, "pending_amount"], currency_decimal=row["is_decimal"])
-            except ZeroDivisionError:
-                daily_invested_amount=0
-
-                
+            profit = formatdigit(NoneToZero(np.nansum(position["daily_profit"].to_list())), currency_decimal=row["is_decimal"])
+            daily_profit_pct = round(divide(profit, NoneToZero(np.nansum(position["crr_ivt_amt"].to_list()))) * 100, 4)
+            daily_invested_amount = formatdigit(NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) + user_core.loc[index, "pending_amount"], currency_decimal=row["is_decimal"])
             total_profit = formatdigit(daily_invested_amount + user_core.loc[index, "balance"] - user_core.loc[index, "deposit"])
             total_profit_pct = (total_profit / user_core.loc[index, "deposit"]) * 100
         else:
