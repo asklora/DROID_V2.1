@@ -648,9 +648,20 @@ def populate_daily_profit(currency_code=None, user_id=None):
             # position["margin_invested_amount"] = position["investment_amount"] * position["margin"]
             position["crr_ivt_amt"] = (position["current_investment_amount"] + position["current_bot_cash_balance"])
             position["daily_profit"] = position["crr_ivt_amt"] - position["investment_amount"]
-            profit = formatdigit(NoneToZero(np.nansum(position["daily_profit"].to_list())), currency_decimal=row["is_decimal"])
-            daily_profit_pct = round(profit / NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) * 100, 4)
-            daily_invested_amount = formatdigit(NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) + user_core.loc[index, "pending_amount"], currency_decimal=row["is_decimal"])
+            try:
+                profit = formatdigit(NoneToZero(np.nansum(position["daily_profit"].to_list())), currency_decimal=row["is_decimal"])
+            except ZeroDivisionError:
+                profit=0
+            try:
+                daily_profit_pct = round(profit / NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) * 100, 4)
+            except ZeroDivisionError:
+                daily_profit_pct=0
+            try:
+                daily_invested_amount = formatdigit(NoneToZero(np.nansum(position["crr_ivt_amt"].to_list())) + user_core.loc[index, "pending_amount"], currency_decimal=row["is_decimal"])
+            except ZeroDivisionError:
+                daily_invested_amount=0
+
+                
             total_profit = formatdigit(daily_invested_amount + user_core.loc[index, "balance"] - user_core.loc[index, "deposit"])
             total_profit_pct = (total_profit / user_core.loc[index, "deposit"]) * 100
         else:
