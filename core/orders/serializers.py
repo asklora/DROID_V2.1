@@ -56,12 +56,13 @@ class PerformanceSerializer(serializers.ModelSerializer):
     initial_investment_amt = serializers.SerializerMethodField()
     current_value = serializers.SerializerMethodField()
     current_exchange_rate = serializers.SerializerMethodField()
+    amount = serializers.SerializerMethodField()
 
     class Meta:
         model = PositionPerformance
         fields = ("created", "prev_bot_share_num", "share_num", "current_investment_amount",
                   "side", "price", "hedge_share", "stamp", "commission","current_pnl_ret",
-                  "current_pnl_amt","initial_investment_amt","current_value","current_exchange_rate")
+                  "current_pnl_amt","initial_investment_amt","current_value","current_exchange_rate","amount")
 
     
     def get_current_exchange_rate(self,obj)->float:
@@ -84,6 +85,11 @@ class PerformanceSerializer(serializers.ModelSerializer):
         if obj.order_uid:
             return obj.order_uid.side
         return "hold"
+    
+    def get_amount(self,obj)->float:
+        if obj.order_uid:
+            return obj.order_uid.amount
+        return 0
 
     def get_stamp(self, obj) -> float:
         if obj.order_uid:

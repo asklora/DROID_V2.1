@@ -10,7 +10,7 @@ class Command(BaseCommand):
         ticker = list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
                     is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
         rkd = RkdData()
-        print(rkd.get_snapshot(ticker,save=True))
+        print(rkd.bulk_get_quote(['ALK',],df=True))
         # populate_daily_profit()
         # firebase_user_update()
         # firebase_universe_update(currency_code=["HKD"])
