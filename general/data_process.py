@@ -5,7 +5,14 @@ from pandas.core.series import Series
 from datetime import datetime, date
 from pandas._libs.tslibs.timestamps import Timestamp
 
-
+def divide(value1, value2):
+    try:
+        return value1 / value2
+    except ZeroDivisionError:
+        return 0
+    except Exception as e:
+        print(e)
+        return 0
 
 def nonetozero(value):
     if value:

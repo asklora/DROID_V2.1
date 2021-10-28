@@ -231,7 +231,6 @@ def timeit(func):
 
     return newfunc
 
-
 def date_interval(date: Union[date, datetime]) -> int:
     week = date.isocalendar()[1]
     year = date.isocalendar()[0]
