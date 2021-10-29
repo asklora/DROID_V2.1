@@ -427,6 +427,8 @@ class RkdData(Rkd):
         df_data = df_data.rename(columns={k: v for k, v in parser_data.items() if k  in df_data})
         # print(df_data)
         df_data["last_date"] = str(datetime.now().date())
+        df_data["intraday_date"] = str(datetime.now().date())
+
         df_data["intraday_time"] = str(datetime.now())
         df_data =df_data.astype(
             {k: v for k, v in float_data.items() if k  in df_data}
