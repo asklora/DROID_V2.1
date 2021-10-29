@@ -4,7 +4,7 @@ from bot.calculate_bot import populate_daily_profit
 from django.conf import settings
 from ingestion.firestore_migration import firebase_user_update
 from tests.utils.firebase_schema import FIREBASE_SCHEMA
-from tests.utils.order import confirm_order, create_buy_order
+from tests.utils.order import confirm_order, create_buy_order, get_random_ticker
 from tests.utils.user import set_user_joined
 
 
@@ -49,11 +49,14 @@ def test_order_should_be_updated_to_firebase(
     # just in case if the user is still not joined the competition
     if not user.is_joined:
         set_user_joined(mocker, user)
+    
+    # get random ticker
+    ticker: str = get_random_ticker()
 
     # we create a new order here
     order = create_buy_order(
         price=7.13,
-        ticker="6837.HK",
+        ticker=ticker,
         margin=2,
         user_id=user.id,
         bot_id="UNO_OTM_007692",
@@ -82,7 +85,7 @@ def test_order_should_be_updated_to_firebase(
     print(doc_dict)
 
     # whether the data in the firebase is structured correctly
-    #assert FIREBASE_SCHEMA.validate(doc_dict)
+    assert FIREBASE_SCHEMA.validate(doc_dict)
 
     active_portfolios = doc_dict["active_portfolio"]
 
@@ -98,10 +101,7 @@ def test_order_should_be_updated_to_firebase(
         )
         == order.order_uid
     )
-    assert (
-        active_portfolios[len(active_portfolios) - 1]["share_num"]
-        == order.qty
-    )
+    assert active_portfolios[len(active_portfolios) - 1]["share_num"] == order.qty
 
     # time.sleep(600)
 

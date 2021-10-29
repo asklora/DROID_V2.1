@@ -1,9 +1,25 @@
+from random import choice
 from datetime import datetime
 
 from core.orders.models import Order
+from core.universe.models import Universe
 from core.user.models import User
 from django.test.client import Client
 from django.utils import timezone
+
+
+def get_random_ticker(currency: str = "HKD") -> str:
+    # We get the tickers
+    tickers = Universe.objects.filter(
+        currency_code=currency,
+        is_active=True,
+    ).values_list("ticker", flat=True)
+
+    # We turn them into list of tickers
+    tickers_list = [str(elem) for elem in list(tickers)]
+
+    # we return a random ticker
+    return choice(tickers_list)
 
 
 def create_buy_order(

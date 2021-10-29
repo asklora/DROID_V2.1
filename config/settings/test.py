@@ -1,4 +1,4 @@
-from .local import *
+from .development import *
 
 """
 This Django configuration file in used in the local development environment, we are using it for tests.
