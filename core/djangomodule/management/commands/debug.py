@@ -11,7 +11,7 @@ class Command(BaseCommand):
         #             is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
         # rkd = RkdData()
         # print(rkd.bulk_get_quote(['ALK',],df=True))
-        populate_daily_profit()
+        populate_daily_profit(user_id=[1846])
         # firebase_user_update(currency_code=["USD"])
         # firebase_universe_update(currency_code=["HKD"])
         # daily_hedge_user(currency=["HKD"],ingest=True)
