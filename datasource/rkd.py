@@ -1,5 +1,4 @@
 from datetime import datetime
-from general.slack import report_to_slack
 import requests
 import json
 import math
@@ -8,7 +7,6 @@ from typing import List,Optional,Union
 from core.services.models import ThirdpartyCredentials,ErrorLog
 from core.universe.models import ExchangeMarket,Universe
 from core.djangomodule.calendar import TradingHours
-from core.services.order_services import update_rtdb_user_porfolio
 import sys
 import websocket
 import aiohttp
