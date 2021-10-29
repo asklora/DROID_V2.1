@@ -457,12 +457,10 @@ class RkdData(Rkd):
     def bulk_get_quote(self, ticker:list, df=False, save=False,**options)->Optional[Union[pd.DataFrame, dict]] :
         quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
         split = len(ticker)/50
-        collected_data =[]
-        if split < 1:
+        if split < 2:
             split = math.ceil(split)
         splitting_df = np.array_split(ticker, split)
         bulk_payload=[]
-        print(len(ticker))
         for universe in splitting_df:
             ticker = universe.tolist()
             payload = self.retrive_template(ticker, fields=[
@@ -515,6 +513,7 @@ class RkdData(Rkd):
                 "YIELD":"dividen_yield"
             })
             df_data["last_date"] = str(datetime.now().date())
+            df_data["intraday_date"] = str(datetime.now().date())
             df_data["intraday_time"] = str(datetime.now())
             collected_data.append(df_data)
         collected_data = pd.concat(collected_data,ignore_index=True)

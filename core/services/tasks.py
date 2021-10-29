@@ -190,7 +190,7 @@ app.conf.beat_schedule = {
     # },
     "HKD-Latestprice-update": {
         "task": "core.services.tasks.get_latest_price",
-        "schedule": crontab(minute=HKD_CUR.ingestion_time.minute, hour=HKD_CUR.ingestion_time.hour, day_of_week="1-5"),
+        "schedule": crontab(minute=HKD_CUR.hedge_schedule.minute+15, hour=HKD_CUR.ingestion_time.hour, day_of_week="1-5"),
         "kwargs": {"currency": "HKD"},
         "options": {
             "expires": 5*60,
@@ -212,14 +212,14 @@ app.conf.beat_schedule = {
     #         "expires": 5*60,
     #     }
     # },
-    # "USD-Latestprice-update": {
-    #     "task": "core.services.tasks.get_latest_price",
-    #     "schedule": crontab(minute=USD_CUR.ingestion_time.minute, hour=USD_CUR.ingestion_time.hour, day_of_week="1-5"),
-    #     "kwargs": {"currency": "USD"},
-    #     "options": {
-    #         "expires": 5*60,
-    #     }
-    # },
+    "USD-Latestprice-update": {
+        "task": "core.services.tasks.get_latest_price",
+        "schedule": crontab(minute=USD_CUR.hedge_schedule.minute+15 , hour=USD_CUR.ingestion_time.hour, day_of_week="1-5"),
+        "kwargs": {"currency": "USD"},
+        "options": {
+            "expires": 5*60,
+        }
+    },
 
     "Firebase-Universe-update": {
     "task": "core.services.tasks.weekly_universe_firebase_update",
