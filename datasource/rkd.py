@@ -472,6 +472,9 @@ class RkdData(Rkd):
         
         response:List[pd.DataFrame] = asyncio.run(self.quote_gather_request(quote_url,bulk_payload,self.auth_headers()))
         data : pd.DataFrame = pd.concat(response,ignore_index=True)
+        if save:
+            print("saving....")
+            self.save("master", "LatestPrice", data.to_dict("records"))
         if df:
             return data
         return data.to_dict("records")
