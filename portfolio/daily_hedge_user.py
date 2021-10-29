@@ -103,15 +103,15 @@ def populate_performance(live_price, trading_day, log_time, position, expiry=Fal
 def create_performance(price_data, position, latest=False, hedge=False, tac=False):
     bot = position.bot
     if(latest):
-        live_price = price_data.close
+        live_price = round(price_data.close, 2)
         if price_data.latest_price:
-            live_price = price_data.latest_price
+            live_price = round(price_data.latest_price, 2)
         trading_day = price_data.last_date
     elif(hedge):
-        live_price = price_data.latest_price
+        live_price = round(price_data.latest_price, 2)
         trading_day = price_data.last_date
     else:
-        live_price = price_data.close
+        live_price = round(price_data.close, 2)
         trading_day = price_data.trading_day
 
     log_time = pd.Timestamp(trading_day)

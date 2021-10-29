@@ -304,9 +304,11 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
             #TOP LEVEL
             orders_position["margin"] = orders_position["margin"].astype(int)
             orders_position["status"] = "LIVE"
-            orders_position["current_values"] = (orders_position["share_num"] * orders_position["price"] * orders_position["exchange_rate"]).round(rounded)
-            orders_position["current_ivt_amt"] = (orders_position["share_num"] * orders_position["price"] * orders_position["exchange_rate"]).round(rounded)
-            orders_position["current_values"] = orders_position["bot_cash_balance"] + orders_position["current_values"]
+            orders_position["current_ivt_amt"] = (orders_position["share_num"] * orders_position["price"]).round(rounded)
+            orders_position["current_values"] = orders_position["bot_cash_balance"] + orders_position["current_ivt_amt"]
+            orders_position["current_ivt_amt"] = (orders_position["current_ivt_amt"] * orders_position["exchange_rate"]).round(2)
+            orders_position["current_values"] = (orders_position["current_values"] * orders_position["exchange_rate"]).round(2)
+            orders_position["bot_cash_balance"] = (orders_position["bot_cash_balance"] * orders_position["exchange_rate"]).round(2)
 
             #MARGIN
             orders_position["margin_amount"] = (orders_position["margin"] - 1) * orders_position["investment_amount"]
@@ -462,5 +464,4 @@ def firebase_user_update(user_id=None, currency_code=None):
             position_data = position_data.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
             position_data["exchange_rate"] = 1
             position_data["exchange_rate"] = np.where(position_data["currency_code"] == "USD", exchange_rate, position_data["exchange_rate"])
-            position_data["bot_cash_balance"] = (position_data["bot_cash_balance"] * position_data["exchange_rate"]).round(2)
         asyncio.run(gather_task(position_data, bot_option_type, user_core))

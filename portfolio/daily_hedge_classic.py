@@ -141,22 +141,22 @@ def create_performance(price_data, position, latest=False, hedge=False, tac=Fals
     if position.user_id.current_status == "verified":
         apps =True
     if(latest):
-        live_price = price_data.close
+        live_price = round(price_data.close, 2)
         if price_data.latest_price:
-            live_price = price_data.latest_price
+            live_price = round(price_data.latest_price, 2)
         trading_day = price_data.last_date
-        high = price_data.high
-        low = price_data.low
+        high = round(price_data.high, 2)
+        low = round(price_data.low, 2)
     elif(hedge):
-        live_price = price_data.latest_price
+        live_price = round(price_data.latest_price, 2)
         trading_day = price_data.last_date
-        high = price_data.high
-        low = price_data.low
+        high = round(price_data.high, 2)
+        low = round(price_data.low, 2)
     else:
-        live_price = price_data.close
+        live_price = round(price_data.close, 2)
         trading_day = price_data.trading_day
-        high = price_data.high
-        low = price_data.low
+        high = round(price_data.high, 2)
+        low = round(price_data.low, 2)
 
     if high == 0 or high == None:
         high = live_price

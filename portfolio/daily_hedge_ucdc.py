@@ -202,22 +202,22 @@ def create_performance(price_data:Optional[Union[HedgeLatestPriceHistory,MasterO
     if position.user_id.current_status == "verified":
         apps =True
     if(latest):
-        live_price = price_data.close
+        live_price = round(price_data.close, 2)
         if price_data.latest_price:
-            live_price = price_data.latest_price
+            live_price = round(price_data.latest_price, 2)
         trading_day = price_data.last_date
-        bid_price = price_data.intraday_bid
-        ask_price = price_data.intraday_ask
+        bid_price = round(price_data.intraday_bid, 2)
+        ask_price = round(price_data.intraday_ask, 2)
     elif(hedge):
-        live_price = price_data.latest_price
+        live_price = round(price_data.latest_price, 2)
         trading_day = price_data.last_date
-        bid_price = price_data.latest_price
-        ask_price = price_data.latest_price
+        bid_price = round(price_data.latest_price, 2)
+        ask_price = round(price_data.latest_price, 2)
     else:
-        live_price = price_data.close
+        live_price = round(price_data.close, 2)
         trading_day = price_data.trading_day
-        bid_price = price_data.close
-        ask_price = price_data.close
+        bid_price = round(price_data.close, 2)
+        ask_price = round(price_data.close, 2)
 
     if ask_price == 0 or ask_price == None:
         ask_price = live_price
