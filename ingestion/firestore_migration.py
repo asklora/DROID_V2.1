@@ -452,6 +452,7 @@ def firebase_user_update(user_id=None, currency_code=None):
             latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})
             position_data = position_data.merge(latest_price, how="left", on=["ticker"])
             position_data["price"] = np.where(position_data["price"].isnull(), position_data["entry_price"], position_data["price"])
+            position_data["price"]  = position_data["price"].astype(float).round(2)
             position_data["trading_day"] = np.where(position_data["trading_day"].isnull(), position_data["spot_date"], position_data["trading_day"])
             position_data = position_data.merge(universe, how="left", on=["ticker"])
             position_data["exchange_rate"] = np.where((position_data["exchange_rate"] == 1) & (position_data["currency_code"] == "USD"), exchange_rate, position_data["exchange_rate"])
