@@ -537,7 +537,7 @@ class RkdData(Rkd):
         """getting all data from RKD and save,function has no return"""
 
         self.get_snapshot(ticker,save=save)
-        self.get_quote(ticker,save=save)
+        self.bulk_get_quote(ticker,save=save)
 
 
     @app.task(bind=True,ignore_result=True)
