@@ -10,7 +10,8 @@ from pandas.tseries.offsets import BDay
 from general.data_process import tuple_data, NoneToZero, uid_maker, divide
 from general.sql_query import (
     get_active_universe,
-    get_count_orders_position, 
+    get_count_orders_position,
+    get_latest_price_data, 
     get_orders_group_by_user_id, 
     get_orders_position, 
     get_orders_position_performance, 
@@ -624,22 +625,25 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core["stock_pending_amount"] = user_core["stock_pending_amount"].astype(float).round(2)
     user_core["pending_amount"] = user_core["pending_amount"].astype(float).round(2)
     # print(user_core)
-    orders_position_field = "position_uid, user_id, investment_amount, margin, exchange_rate"
+    orders_position_field = "position_uid, user_id, ticker, investment_amount, margin, exchange_rate"
     orders_position = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
     orders_position["exchange_rate"] = np.where(orders_position["exchange_rate"].isnull(), 1, orders_position["exchange_rate"])
     orders_position["investment_amount"] = (orders_position["investment_amount"] * orders_position["exchange_rate"]).round(2)
     if(len(orders_position)):
-        orders_performance_field = "distinct created, position_uid, current_bot_cash_balance, current_investment_amount, exchange_rate as current_exchange_rate"
+        orders_performance_field = "distinct created, share_num, last_live_price, position_uid, current_bot_cash_balance, current_investment_amount, exchange_rate as current_exchange_rate"
         orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)
         orders_performance["current_exchange_rate"] = np.where(orders_performance["current_exchange_rate"].isnull(), 1, orders_performance["current_exchange_rate"])
         orders_performance["current_bot_cash_balance"] = (orders_performance["current_bot_cash_balance"] * orders_performance["current_exchange_rate"]).round(2)
-        orders_performance["current_investment_amount"] = (orders_performance["current_investment_amount"] * orders_performance["current_exchange_rate"]).round(2)
         orders_performance["created"] = orders_performance["created"].dt.date
         orders_performance = orders_performance.drop_duplicates(subset=["created", "position_uid"], keep="first")
         orders_performance = orders_performance.drop(columns=["created"])
-
         orders_position = orders_position.merge(orders_performance, how="left", on=["position_uid"])
-    
+
+        latest_price = get_latest_price_data(ticker=orders_position["ticker"].to_list(), active=True)
+        orders_position = orders_position.merge(latest_price[["ticker", "latest_price"]], how="left", on=["ticker"])
+        orders_position["latest_price"] = np.where(orders_position["latest_price"].isnull(), orders_position["last_live_price"], orders_position["latest_price"])
+        orders_position["current_investment_amount"] = (orders_position["share_num"] * orders_position["latest_price"]).round(2)
+        orders_position["current_investment_amount"] = (orders_position["current_investment_amount"] * orders_position["current_exchange_rate"]).round(2)
     for index, row in user_core.iterrows():
         rounded = 0
         if(row["is_decimal"]):
