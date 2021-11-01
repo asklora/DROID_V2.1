@@ -1,5 +1,4 @@
 from datetime import datetime
-from random import choice
 
 import pytest
 from core.master.models import MasterOhlcvtr
@@ -16,13 +15,9 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_should_create_hedge_order_for_ucdc_bot(
-    user,
-    tickers,
-) -> None:
-    ticker, _ = choice(tickers).values()
-
+def test_should_create_hedge_order_for_ucdc_bot(user) -> None:
     # step 1: create a new order
+    ticker = "2282.HK"
     master = MasterOhlcvtr.objects.get(
         ticker=ticker,
         trading_day="2021-06-01",
@@ -67,13 +62,9 @@ def test_should_create_hedge_order_for_ucdc_bot(
     assert len(performance) > 1
 
 
-def test_should_create_hedge_order_for_ucdc_bot_with_margin(
-    user,
-    tickers,
-) -> None:
-    ticker, _ = choice(tickers).values()
-
+def test_should_create_hedge_order_for_ucdc_bot_with_margin(user) -> None:
     # step 1: create a new order
+    ticker = "2282.HK"
     master = MasterOhlcvtr.objects.get(
         ticker=ticker,
         trading_day="2021-06-01",
