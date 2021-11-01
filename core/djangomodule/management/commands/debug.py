@@ -11,7 +11,7 @@ class Command(BaseCommand):
         #             is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
         # rkd = RkdData()
         # print(rkd.bulk_get_quote(['1797.HK',],df=True))
-        update_season_monthly()
+        # update_season_monthly()
         # update_monthly_deposit()
         # populate_daily_profit(user_id=[1846])
         # firebase_user_update(currency_code=["USD"])
