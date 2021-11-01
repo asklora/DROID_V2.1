@@ -32,6 +32,7 @@ from general.table_name import (
     get_orders_position_table_name,
     get_orders_table_name,
     get_region_table_name,
+    get_season_table_name,
     get_universe_client_table_name,
     get_universe_rating_detail_history_table_name,
     get_universe_rating_history_table_name,
@@ -961,3 +962,9 @@ def rename_table_columns():
             df[col] = x
         df.to_sql(table_name, conn, if_exists='replace', index=False)
     engine.dispose()
+
+def get_latest_season():
+    table_name = get_season_table_name()
+    query = f"select max(season_id) as season_id, max(end_date) as end_date from {table_name}"
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
