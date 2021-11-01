@@ -965,6 +965,6 @@ def rename_table_columns():
 
 def get_latest_season():
     table_name = get_season_table_name()
-    query = f"select max(season_id) as season_id, max(end_date) as end_date from {table_name}"
+    query = f"select * from {table_name} where end_date = (select max(end_date) as end_date from {table_name})"
     data = read_query(query, table_name, cpu_counts=True)
     return data

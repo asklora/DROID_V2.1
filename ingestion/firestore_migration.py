@@ -398,6 +398,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         return active
 
 def firebase_user_update(user_id=None, currency_code=None):
+    firebase_ranking_update()
     if not user_id and not currency_code:
         return
     convert = ConvertMoney("USD", "HKD")
@@ -466,3 +467,12 @@ def firebase_user_update(user_id=None, currency_code=None):
             position_data["exchange_rate"] = 1
             position_data["exchange_rate"] = np.where(position_data["currency_code"] == "USD", exchange_rate, position_data["exchange_rate"])
         asyncio.run(gather_task(position_data, bot_option_type, user_core))
+
+def firebase_ranking_update():
+    rank = get_user_profit_history(field="user_id, rank::integer as ranking, rank::integer, total_profit_pct")
+    rank = rank.sort_values(by=["rank"], ascending=True).head(6)
+    user_core = get_user_core(user_id=rank["user_id"].to_list(), field="id as user_id, username, current_status, first_name, last_name, email")
+    user_core = user_core.loc[user_core["current_status"] == "verified"]
+    user_core = user_core.drop(columns=["current_status"])
+    rank = rank.merge(user_core, how="left", on=["user_id"])
+    update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)

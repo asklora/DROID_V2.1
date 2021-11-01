@@ -97,7 +97,8 @@ DATABASES = {
 }
 FIREBASE_COLLECTION={
     'portfolio':'prod_portfolio',
-    'universe':'universe'
+    'universe':'universe',
+    'ranking':'ranking'
 }
 CELERY_TASK_ROUTES = {
     # ===== SHORT INTERVAL =====
