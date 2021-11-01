@@ -21,7 +21,14 @@ def delete_collection(coll_ref, batch_size):
 
     if deleted >= batch_size:
         return delete_collection(coll_ref, batch_size)
-
+def randomize_rank(data):
+    import random
+    r = random.randint(1,6)
+    print(r,data)
+    if r not in data:
+        return r
+        
+    return randomize_rank(data)
 class Command(BaseCommand):
     
 
@@ -29,7 +36,25 @@ class Command(BaseCommand):
         # data= get_price_data_firebase(['MSFT.O','AAPL.O'])
         # print(data)
         # user_id=643
-        # db = firestore.client()
+        db = firestore.client()
+        rank =db.collection(settings.FIREBASE_COLLECTION['ranking'])
+        queryset = rank.get()
+        while True:
+            try:
+                selected_rank =[]
+                for data in queryset:
+                    ref = rank.document()
+                    print(ref)
+                    num = randomize_rank(selected_rank)
+                    ref.set({'rank':float(num)},merge=True)
+                    selected_rank.append(float(num))
+                    # print(selected_rank)
+                selected_rank=[]
+                print(selected_rank)
+
+                time.sleep(5)
+            except KeyboardInterrupt:
+                break
         # collection =db.collection(settings.FIREBASE_COLLECTION['portfolio']).document(f"{user_id}")
         # while collection.get().exists:
         #     collection.delete()
@@ -38,7 +63,7 @@ class Command(BaseCommand):
         # for data in user_data.get():
         #     print(data.id)
         # firebase_user_update(user_id=[119])
-        firebase_universe_update(currency_code=["HKD","USD"])
+        # firebase_universe_update(currency_code=["HKD","USD"])
         # db = firestore.client()
         # univ = Universe.objects.prefetch_related("currency_code").filter(currency_code="USD")
         # for ticker in univ:
