@@ -1,7 +1,7 @@
 from bot.data_download import get_currency_data
 from core.djangomodule.general import formatdigit
 from general.sql_output import upsert_data_to_database
-from general.date_process import dateNow, str_to_date
+from general.date_process import dateNow, date_plus_day, forwarddate_by_day, str_to_date
 import math
 import numpy as np
 from datetime import datetime
@@ -10,7 +10,9 @@ from pandas.tseries.offsets import BDay
 from general.data_process import tuple_data, NoneToZero, uid_maker, divide
 from general.sql_query import (
     get_active_universe,
-    get_count_orders_position, 
+    get_count_orders_position,
+    get_latest_price_data,
+    get_latest_season, 
     get_orders_group_by_user_id, 
     get_orders_position, 
     get_orders_position_performance, 
@@ -28,6 +30,8 @@ from general.table_name import (
     get_latest_price_table_name,
     get_latest_vol_table_name,
     get_master_tac_table_name,
+    get_season_result_table_name,
+    get_season_table_name,
     get_user_deposit_history_table_name,
     get_user_profit_history_table_name)
 from datasource.dsws import get_data_static_from_dsws
@@ -624,22 +628,26 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core["stock_pending_amount"] = user_core["stock_pending_amount"].astype(float).round(2)
     user_core["pending_amount"] = user_core["pending_amount"].astype(float).round(2)
     # print(user_core)
-    orders_position_field = "position_uid, user_id, investment_amount, margin, exchange_rate"
+    orders_position_field = "position_uid, user_id, ticker, investment_amount, margin, exchange_rate"
     orders_position = get_orders_position(user_id=user_core["user_id"].to_list(), active=True, field=orders_position_field)
     orders_position["exchange_rate"] = np.where(orders_position["exchange_rate"].isnull(), 1, orders_position["exchange_rate"])
     orders_position["investment_amount"] = (orders_position["investment_amount"] * orders_position["exchange_rate"]).round(2)
     if(len(orders_position)):
-        orders_performance_field = "distinct created, position_uid, current_bot_cash_balance, current_investment_amount, exchange_rate as current_exchange_rate"
+        orders_performance_field = "distinct created, share_num, last_live_price, position_uid, current_bot_cash_balance, current_investment_amount, exchange_rate as current_exchange_rate, status"
         orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)
         orders_performance["current_exchange_rate"] = np.where(orders_performance["current_exchange_rate"].isnull(), 1, orders_performance["current_exchange_rate"])
         orders_performance["current_bot_cash_balance"] = (orders_performance["current_bot_cash_balance"] * orders_performance["current_exchange_rate"]).round(2)
-        orders_performance["current_investment_amount"] = (orders_performance["current_investment_amount"] * orders_performance["current_exchange_rate"]).round(2)
         orders_performance["created"] = orders_performance["created"].dt.date
         orders_performance = orders_performance.drop_duplicates(subset=["created", "position_uid"], keep="first")
         orders_performance = orders_performance.drop(columns=["created"])
-
         orders_position = orders_position.merge(orders_performance, how="left", on=["position_uid"])
-    
+
+        latest_price = get_latest_price_data(ticker=orders_position["ticker"].to_list(), active=True)
+        orders_position = orders_position.merge(latest_price[["ticker", "latest_price"]], how="left", on=["ticker"])
+        orders_position["latest_price"] = np.where(orders_position["latest_price"].isnull(), orders_position["last_live_price"], orders_position["latest_price"])
+        orders_position["latest_price"] = np.where(orders_position["status"] == "Populate", orders_position["last_live_price"], orders_position["latest_price"])
+        orders_position["current_investment_amount"] = (orders_position["share_num"] * orders_position["latest_price"]).round(2)
+        orders_position["current_investment_amount"] = (orders_position["current_investment_amount"] * orders_position["current_exchange_rate"]).round(2)
     for index, row in user_core.iterrows():
         rounded = 0
         if(row["is_decimal"]):
@@ -691,7 +699,43 @@ def populate_daily_profit(currency_code=None, user_id=None):
     not_joined["total_profit_pct"] = not_joined["total_profit_pct"].round(4)
     upsert_data_to_database(not_joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
+def update_season_monthly(currency_code=None, user_id=None) -> None:
+    last_season = get_latest_season()
+    print(last_season)
+    new_season = pd.DataFrame({"season_id":[last_season.loc[0, "season_id"] + 1], "start_date":[date_plus_day(last_season.loc[0, "end_date"])], 
+        "end_date":[dateNow()]}, index=[0])
+    print(new_season)
+    upsert_data_to_database(new_season, get_season_table_name(), "season_id", how="update", cpu_count=False, Int=True)
+    # new_season = pd.DataFrame({"season_id":[1], "start_date":[date_plus_day("2021-10-01")], "end_date":["2021-11-01"]}, index=[0])
+    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined")[["user_id", "is_joined"]]
+    if user_core.empty:
+        return
+    user_core = user_core.loc[user_core["is_joined"] == True]
+    user_id = user_core["user_id"].to_list()
+
+    user_balance = get_user_account_balance(user_id=user_id, field="user_id, amount as balance, currency_code")
+    user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_invested_amount as invested_amount , rank, total_profit_pct, total_profit")
+    user_deposit = get_user_deposit(user_id=user_id)
+    currency = get_currency_data(currency_code=currency_code)[["currency_code", "is_decimal"]]
+
+    user_core = user_core.merge(user_deposit, how="left", on=["user_id"])
+    user_core = user_core.merge(user_balance, how="left", on=["user_id"])
+    user_core = user_core.merge(user_daily_profit, how="left", on=["user_id"])
+    user_core = user_core.merge(currency, how="left", on=["currency_code"])
+
+    user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
+    user_core["deposit"] = np.where(user_core["deposit"].isnull(), 0, user_core["deposit"])
+    user_core["invested_amount"] = np.where(user_core["invested_amount"].isnull(), 0, user_core["invested_amount"])
+
+    user_core["trading_day"] = str_to_date(dateNow())
+    user_core["season_id"] = new_season.loc[0, "season_id"]
+    user_core["uid"] = user_core["season_id"].astype(str) + "-" + user_core["user_id"].astype(str)
+    user_core = user_core[["uid", "season_id", "user_id", "trading_day", "rank", "total_profit", "total_profit_pct", "invested_amount", "balance", "deposit"]]
+    user_core = user_core.sort_values(by=["rank"], ascending=[True])
+    upsert_data_to_database(user_core, get_season_result_table_name(), "uid", how="update", cpu_count=False, Text=True)
+
 def update_monthly_deposit(currency_code=None, user_id=None) -> None:
+    update_season_monthly(currency_code=currency_code, user_id=user_id)
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined")[["user_id", "is_joined"]]
     if user_core.empty:
         return
@@ -710,5 +754,5 @@ def update_monthly_deposit(currency_code=None, user_id=None) -> None:
     user_core["trading_day"] = str_to_date(dateNow())
     user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True, ticker_int=True, replace=True)
     user_core = user_core[["uid", "user_id", "trading_day", "deposit"]]
-    # print(user_core)
+    print(user_core)
     upsert_data_to_database(user_core, get_user_deposit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)

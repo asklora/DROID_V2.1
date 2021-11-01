@@ -427,6 +427,8 @@ class RkdData(Rkd):
         df_data = df_data.rename(columns={k: v for k, v in parser_data.items() if k  in df_data})
         # print(df_data)
         df_data["last_date"] = str(datetime.now().date())
+        df_data["intraday_date"] = str(datetime.now().date())
+
         df_data["intraday_time"] = str(datetime.now())
         df_data =df_data.astype(
             {k: v for k, v in float_data.items() if k  in df_data}
@@ -457,12 +459,10 @@ class RkdData(Rkd):
     def bulk_get_quote(self, ticker:list, df=False, save=False,**options)->Optional[Union[pd.DataFrame, dict]] :
         quote_url = f'{self.credentials.base_url}Quotes/Quotes.svc/REST/Quotes_1/RetrieveItem_3'
         split = len(ticker)/50
-        collected_data =[]
-        if split < 1:
+        if split < 2:
             split = math.ceil(split)
         splitting_df = np.array_split(ticker, split)
         bulk_payload=[]
-        print(len(ticker))
         for universe in splitting_df:
             ticker = universe.tolist()
             payload = self.retrive_template(ticker, fields=[
@@ -474,6 +474,9 @@ class RkdData(Rkd):
         
         response:List[pd.DataFrame] = asyncio.run(self.quote_gather_request(quote_url,bulk_payload,self.auth_headers()))
         data : pd.DataFrame = pd.concat(response,ignore_index=True)
+        if save:
+            print("saving....")
+            self.save("master", "LatestPrice", data.to_dict("records"))
         if df:
             return data
         return data.to_dict("records")
@@ -515,6 +518,7 @@ class RkdData(Rkd):
                 "YIELD":"dividen_yield"
             })
             df_data["last_date"] = str(datetime.now().date())
+            df_data["intraday_date"] = str(datetime.now().date())
             df_data["intraday_time"] = str(datetime.now())
             collected_data.append(df_data)
         collected_data = pd.concat(collected_data,ignore_index=True)
@@ -538,7 +542,7 @@ class RkdData(Rkd):
         """getting all data from RKD and save,function has no return"""
 
         self.get_snapshot(ticker,save=save)
-        self.get_quote(ticker,save=save)
+        self.bulk_get_quote(ticker,save=save)
 
 
     @app.task(bind=True,ignore_result=True)
@@ -675,7 +679,7 @@ class RkdStream(RkdData):
                     gc.collect()
                 else:
                     break
-                time.sleep(15)
+                time.sleep(250)
         if self.is_thread:
                 sys.exit()
         
