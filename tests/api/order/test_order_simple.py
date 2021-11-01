@@ -48,8 +48,6 @@ def test_api_create_buy_order(
 
     assert order is not None
     assert order["order_uid"] is not None
-    # amount is adjusted to the maximum purchasable stocks
-    assert order["amount"] == 99.43
 
     # we check it from the backend side
     order = Order.objects.get(pk=order["order_uid"])
@@ -89,8 +87,6 @@ def test_api_create_sell_order(
 
     assert buy_order is not None
     assert buy_order["order_uid"] is not None
-    # amount is adjusted to the maximum purchasable stocks
-    assert buy_order["amount"] == 99.43
 
     # we check it from the backend side
     buy_order = Order.objects.get(pk=buy_order["order_uid"])
