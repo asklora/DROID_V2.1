@@ -1,4 +1,5 @@
 import socket
+from random import choice
 from typing import List, Union
 
 import pytest
@@ -17,8 +18,8 @@ from core.user.models import (
 )
 from general.data_process import get_uid
 from general.date_process import dateNow
-from tests.utils.user import delete_user
 from tests.utils.order import get_random_ticker_and_price
+from tests.utils.user import delete_user
 
 load_dotenv()
 env = Env()
@@ -133,12 +134,26 @@ def authentication(client, user) -> Union[dict, None]:
 
 
 @pytest.fixture
-def order(authentication, client, user) -> Union[dict, None]:
+def tickers() -> List[dict]:
+    tickers: List = []
+
+    for i in range(10):
+        # get random ticker
+        ticker, price = get_random_ticker_and_price()
+        tickers.append({"ticker": ticker, "price": price})
+
+    return tickers
+
+
+@pytest.fixture
+def order(authentication, client, user, tickers) -> Union[dict, None]:
+    ticker, price = choice(tickers).values()
+
     data = {
-        "ticker": "3377.HK",
-        "price": 1.63,
+        "ticker": ticker,
+        "price": price,
         "bot_id": "STOCK_stock_0",
-        "amount": 100,
+        "amount": 10000,
         "user": user.id,
         "side": "buy",
     }
@@ -156,15 +171,3 @@ def order(authentication, client, user) -> Union[dict, None]:
         return None
 
     return response.json()
-
-
-@pytest.fixture
-def tickers() -> List[dict]:
-    tickers: List = []
-
-    for i in range(10):
-        # get random ticker
-        ticker, price = get_random_ticker_and_price()
-        tickers.append({"ticker": ticker, "price": price})
-    
-    return tickers

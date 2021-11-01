@@ -29,7 +29,7 @@ def test_user_values(mocker, firestore_client, user, tickers):
         set_user_joined(mocker, user)
 
     # get random ticker
-    ticker, price = tickers[2].values()
+    ticker, price = tickers[4].values()
 
     # we create a new order here
     order = create_buy_order(
@@ -47,12 +47,12 @@ def test_user_values(mocker, firestore_client, user, tickers):
     sell_position, sell_order = create_sell_order(order)
     confirm_order(sell_order)
 
-    # it takes a while to propagate to firebase so give it a second
-    time.sleep(90)
-
-    # update firebase
+    # update firebases
     populate_daily_profit()
     firebase_user_update([user.id])
+
+    # it takes a while to propagate to firebase so give it a second
+    time.sleep(90)
 
     doc_ref = firestore_client.collection(
         settings.FIREBASE_COLLECTION["portfolio"],

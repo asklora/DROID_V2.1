@@ -1,3 +1,5 @@
+from random import choice
+
 import pytest
 from core.orders.models import Order
 from tests.utils.order import confirm_order
@@ -12,12 +14,19 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_api_create_buy_order(authentication, client, user) -> None:
+def test_api_create_buy_order(
+    authentication,
+    client,
+    user,
+    tickers,
+) -> None:
+    ticker, price = choice(tickers).values()
+
     data = {
-        "ticker": "3377.HK",
-        "price": 1.63,
+        "ticker": ticker,
+        "price": price,
         "bot_id": "STOCK_stock_0",
-        "amount": 100,
+        "amount": 10000,
         "user": user.id,
         "side": "buy",
     }
@@ -47,12 +56,19 @@ def test_api_create_buy_order(authentication, client, user) -> None:
     assert order is not None
 
 
-def test_api_create_sell_order(authentication, client, user) -> None:
+def test_api_create_sell_order(
+    authentication,
+    client,
+    user,
+    tickers,
+) -> None:
+    ticker, price = choice(tickers).values()
+
     data = {
-        "ticker": "3377.HK",
-        "price": 1.63,
+        "ticker": ticker,
+        "price": price,
         "bot_id": "STOCK_stock_0",
-        "amount": 100,
+        "amount": 10000,
         "user": user.id,
         "side": "buy",
     }

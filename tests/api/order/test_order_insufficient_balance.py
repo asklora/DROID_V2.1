@@ -1,3 +1,4 @@
+from random import choice
 from typing import Union
 
 import pytest
@@ -15,12 +16,15 @@ def test_api_create_order_with_insufficient_balance(
     authentication,
     client,
     user,
+    tickers,
 ) -> None:
+    ticker, price = choice(tickers).values()
+
     response = client.post(
         path="/api/order/create/",
         data={
-            "ticker": "1109.HK",
-            "price": 31.9,
+            "ticker": ticker,
+            "price": price,
             "bot_id": "CLASSIC_classic_003846",
             "amount": 210000,  # 10.000 HKD more than the user can afford
             "margin": 2,
@@ -44,13 +48,16 @@ def test_api_multiple_order_insufficient_balance(
     authentication,
     client,
     user,
+    tickers,
 ) -> None:
     def create_order() -> Union[dict, None]:
+        ticker, price = choice(tickers).values()
+
         response = client.post(
             path="/api/order/create/",
             data={
-                "ticker": "3377.HK",
-                "price": 1.63,
+                "ticker": ticker,
+                "price": price,
                 "bot_id": "UCDC_ATM_007692",
                 "amount": 20000,
                 "margin": 2,
@@ -100,14 +107,15 @@ def test_api_multiple_order_insufficient_balance(
         assert order["order_uid"] == placed_order["order_uid"]
         assert placed_order["status"] == "executed"
 
+    ticker, price = choice(tickers).values()
     last_order = client.post(
         path="/api/order/create/",
         data={
-            "ticker": "3377.HK",
-            "price": 1.63,
+            "ticker": ticker,
+            "price": price,
             "bot_id": "STOCK_stock_0",
             "amount": 20000,
-            "margin": 1,
+            "margin": 2,
             "user": user.id,
             "side": "buy",
         },

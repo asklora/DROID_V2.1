@@ -1,4 +1,6 @@
 from datetime import datetime
+from typing import List
+from random import choice
 
 import pytest
 from core.master.models import MasterOhlcvtr
@@ -16,9 +18,10 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
+def test_bot_and_user_balance_movements_for_ucdc_bot(user, tickers) -> None:
     # step 1: create a new order
-    ticker = "9901.HK"
+    ticker, _ = choice(tickers).values()
+
     master = MasterOhlcvtr.objects.get(
         ticker=ticker,
         trading_day="2021-06-01",
@@ -68,7 +71,7 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     balance = Accountbalance.objects.get(user=user)
 
     # get user transaction history
-    transactions: list[TransactionHistory] = TransactionHistory.objects.filter(
+    transactions: List[TransactionHistory] = TransactionHistory.objects.filter(
         balance_uid=balance
     )
 

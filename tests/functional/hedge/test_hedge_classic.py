@@ -1,4 +1,5 @@
 from datetime import datetime
+from random import choice
 
 import pytest
 from core.master.models import MasterOhlcvtr
@@ -15,9 +16,14 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_should_create_hedge_order_for_classic_bot(user) -> None:
+def test_should_create_hedge_order_for_classic_bot(
+    user,
+    tickers,
+) -> None:
+    ticker, _ = choice(tickers).values()
+
     # step 1: create a new order
-    ticker = "6606.HK"
+    ticker = ticker
     master = MasterOhlcvtr.objects.get(
         ticker=ticker,
         trading_day="2021-06-01",

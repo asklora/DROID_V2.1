@@ -2,6 +2,7 @@ from datetime import datetime
 
 import pytest
 from core.orders.models import Order
+from tests.utils.order import confirm_order
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -70,10 +71,7 @@ def test_api_get_user_orders(authentication, client, order) -> None:
 
     assert currentOrder is not None
 
-    currentOrder.status = "placed"
-    currentOrder.placed = True
-    currentOrder.placed_at = datetime.now()
-    currentOrder.save()
+    confirm_order(currentOrder)
 
     response = client.get(
         path="/api/order/getall/",
@@ -99,11 +97,7 @@ def test_api_get_user_positions(
 
     assert currentOrder is not None
 
-    currentOrder.placed = True
-    currentOrder.status = "filled"
-    currentOrder.placed_at = datetime.now()
-    currentOrder.filled_at = datetime.now()
-    currentOrder.save()
+    confirm_order(currentOrder)
 
     response = client.get(
         path=f"/api/order/position/{user.id}/",
@@ -131,11 +125,7 @@ def test_api_get_order_position_details(
 
     assert currentOrder is not None
 
-    currentOrder.placed = True
-    currentOrder.status = "filled"
-    currentOrder.placed_at = datetime.now()
-    currentOrder.filled_at = datetime.now()
-    currentOrder.save()
+    confirm_order(currentOrder)
 
     response = client.get(
         path=f"/api/order/position/{user.id}/",
@@ -175,11 +165,7 @@ def test_api_get_order_performance(
 
     assert currentOrder is not None
 
-    currentOrder.placed = True
-    currentOrder.status = "filled"
-    currentOrder.placed_at = datetime.now()
-    currentOrder.filled_at = datetime.now()
-    currentOrder.save()
+    confirm_order(currentOrder)
 
     response = client.get(
         path=f"/api/order/position/{user.id}/",
