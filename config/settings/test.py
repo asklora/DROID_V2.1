@@ -6,6 +6,7 @@ You can use this configuration file by running:
 `python manage.py runserver --settings=config.settings.test`
 """
 TESTDEBUG = True
+DATABASE_ROUTERS = []
 LOGGING = {
     'version': 1,
     'filters': {
