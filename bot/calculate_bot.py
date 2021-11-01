@@ -630,7 +630,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
     orders_position["exchange_rate"] = np.where(orders_position["exchange_rate"].isnull(), 1, orders_position["exchange_rate"])
     orders_position["investment_amount"] = (orders_position["investment_amount"] * orders_position["exchange_rate"]).round(2)
     if(len(orders_position)):
-        orders_performance_field = "distinct created, share_num, last_live_price, position_uid, current_bot_cash_balance, current_investment_amount, exchange_rate as current_exchange_rate"
+        orders_performance_field = "distinct created, share_num, last_live_price, position_uid, current_bot_cash_balance, current_investment_amount, exchange_rate as current_exchange_rate, status"
         orders_performance = get_orders_position_performance(position_uid=orders_position["position_uid"].to_list(), field=orders_performance_field, latest=True)
         orders_performance["current_exchange_rate"] = np.where(orders_performance["current_exchange_rate"].isnull(), 1, orders_performance["current_exchange_rate"])
         orders_performance["current_bot_cash_balance"] = (orders_performance["current_bot_cash_balance"] * orders_performance["current_exchange_rate"]).round(2)
@@ -642,6 +642,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
         latest_price = get_latest_price_data(ticker=orders_position["ticker"].to_list(), active=True)
         orders_position = orders_position.merge(latest_price[["ticker", "latest_price"]], how="left", on=["ticker"])
         orders_position["latest_price"] = np.where(orders_position["latest_price"].isnull(), orders_position["last_live_price"], orders_position["latest_price"])
+        orders_position["latest_price"] = np.where(orders_position["status"] == "Populate", orders_position["last_live_price"], orders_position["latest_price"])
         orders_position["current_investment_amount"] = (orders_position["share_num"] * orders_position["latest_price"]).round(2)
         orders_position["current_investment_amount"] = (orders_position["current_investment_amount"] * orders_position["current_exchange_rate"]).round(2)
     for index, row in user_core.iterrows():
