@@ -412,6 +412,7 @@ def firebase_user_update(user_id=None, currency_code=None):
 
     user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, current_status, first_name, last_name, email, phone, birth_date, gender")
     user_core = user_core.loc[user_core["current_status"] == "verified"]
+    user_core = user_core.loc[user_core["is_joined"] == True]
     user_core = user_core.drop(columns=["current_status"])
     if user_core.empty:
         return
@@ -471,8 +472,9 @@ def firebase_user_update(user_id=None, currency_code=None):
 def firebase_ranking_update():
     rank = get_user_profit_history(field="user_id, rank::integer as ranking, rank::integer, total_profit_pct")
     rank = rank.sort_values(by=["rank"], ascending=True).head(6)
-    user_core = get_user_core(user_id=rank["user_id"].to_list(), field="id as user_id, username, current_status, first_name, last_name, email")
+    user_core = get_user_core(user_id=rank["user_id"].to_list(), field="id as user_id, username, current_status, is_joined, first_name, last_name, email")
     user_core = user_core.loc[user_core["current_status"] == "verified"]
-    user_core = user_core.drop(columns=["current_status"])
+    user_core = user_core.loc[user_core["is_joined"] == True]
+    user_core = user_core.drop(columns=["current_status", "is_joined"])
     rank = rank.merge(user_core, how="left", on=["user_id"])
     update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
