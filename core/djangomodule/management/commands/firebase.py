@@ -43,8 +43,7 @@ class Command(BaseCommand):
             try:
                 selected_rank =[]
                 for data in queryset:
-                    ref = rank.document()
-                    print(ref)
+                    ref = rank.document(data.to_dict()['ranking'])
                     num = randomize_rank(selected_rank)
                     ref.set({'rank':float(num)},merge=True)
                     selected_rank.append(float(num))
