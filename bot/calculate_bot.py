@@ -1,7 +1,7 @@
 from bot.data_download import get_currency_data
 from core.djangomodule.general import formatdigit
 from general.sql_output import upsert_data_to_database
-from general.date_process import dateNow, date_plus_day, date_to_string, forwarddate_by_day, str_to_date
+from general.date_process import dateNow, date_to_string, str_to_date
 import math
 import numpy as np
 from datetime import datetime
@@ -30,8 +30,7 @@ from general.table_name import (
     get_latest_price_table_name,
     get_latest_vol_table_name,
     get_master_tac_table_name,
-    get_season_result_table_name,
-    get_season_table_name,
+    get_season_history_table_name,
     get_user_deposit_history_table_name,
     get_user_profit_history_table_name)
 from datasource.dsws import get_data_static_from_dsws
@@ -729,7 +728,7 @@ def update_season_monthly(currency_code=None, user_id=None) -> None:
         user_core["uid"] = user_core["season_id"].astype(str) + "-" + user_core["user_id"].astype(str)
         user_core = user_core[["uid", "season_id", "user_id", "trading_day", "rank", "total_profit", "total_profit_pct", "invested_amount", "balance", "deposit"]]
         user_core = user_core.sort_values(by=["rank"], ascending=[True])
-        upsert_data_to_database(user_core, get_season_result_table_name(), "uid", how="update", cpu_count=False, Text=True)
+        upsert_data_to_database(user_core, get_season_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
 def update_monthly_deposit(currency_code=None, user_id=None) -> None:
     update_season_monthly(currency_code=currency_code, user_id=user_id)
