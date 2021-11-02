@@ -231,8 +231,8 @@ def get_user_deposit_history_table_name():
 def get_season_table_name():
     return "season"
 
-def get_season_result_table_name():
-    return "season_result"
+def get_season_history_table_name():
+    return "season_history"
 # from appschema.universe.models import Universe, Currency
 # from appschema.datasource.models import ReportDatapoint, MasterOhlcvtr
 
