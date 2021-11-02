@@ -36,12 +36,11 @@ def test_market_opening_check(mocker) -> None:
     # we pick one exchange
     usd_exchange: ExchangeMarket = ExchangeMarket.objects.get(currency_code="USD")
 
-    # we save the original date to be tested later
-    until_time: datetime = usd_exchange.until_time
-
-    # we change the time so it triggers worker restart
-    usd_exchange.until_time = usd_exchange.until_time - timedelta(days=1)
-    usd_exchange.save()
+    # we check if the saved data is correct
+    if usd_exchange.until_time > timezone.now():
+        # and we change the time so it triggers worker restart
+        usd_exchange.until_time = usd_exchange.until_time - timedelta(days=1)
+        usd_exchange.save()
 
     # we run the function here
     market_task_checker.apply()
@@ -52,5 +51,4 @@ def test_market_opening_check(mocker) -> None:
     # we confirm if the data is correct
     # we need to get the exchange again to see the changes
     usd_exchange = ExchangeMarket.objects.get(currency_code="USD")
-    assert usd_exchange.until_time == until_time
     assert usd_exchange.until_time > timezone.now()
