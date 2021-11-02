@@ -286,6 +286,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return obj.user_id.user_balance.currency_code.currency_code
 
     def create(self, validated_data):
+        if not validated_data["ticker"].ticker.is_active and validated_data["side"]=="buy":
+            # TODO: quick fix, need to update
+            raise exceptions.NotAcceptable({'detail':f'fail to buy, {validated_data["ticker"].ticker} is inactive'})
         if not "price" in validated_data:
             rkd = RkdData()
 
