@@ -21,6 +21,8 @@ def delete_collection(coll_ref, batch_size):
 
     if deleted >= batch_size:
         return delete_collection(coll_ref, batch_size)
+
+
 def randomize_rank(data):
     import random
     r = random.randint(1,6)
@@ -43,16 +45,15 @@ class Command(BaseCommand):
             try:
                 selected_rank =[]
                 for data in queryset:
-                    ref = rank.document()
-                    print(ref)
+                    ref = rank.document(data.to_dict()['ranking'])
                     num = randomize_rank(selected_rank)
-                    ref.set({'rank':float(num)},merge=True)
-                    selected_rank.append(float(num))
+                    ref.set({'rank':num},merge=True)
+                    selected_rank.append(num)
                     # print(selected_rank)
                 selected_rank=[]
                 print(selected_rank)
 
-                time.sleep(5)
+                time.sleep(20)
             except KeyboardInterrupt:
                 break
         # collection =db.collection(settings.FIREBASE_COLLECTION['portfolio']).document(f"{user_id}")
