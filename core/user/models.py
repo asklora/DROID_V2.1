@@ -371,3 +371,28 @@ class UserSegments(models.Model):
     class Meta:
         managed = True
         db_table = "user_segments"
+    
+class Season(models.Model):
+    season_id = models.CharField(primary_key=True, max_length=300, editable=True, unique=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    
+    class Meta:
+        managed = True
+        db_table = "season"
+    
+class SeasonHistory(models.Model):
+    uid = models.CharField(primary_key=True, max_length=300, editable=True, unique=True)
+    season_id = models.ForeignKey(Season, on_delete=models.CASCADE, related_name="season_history_season_id", db_column="season_id")
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="season_history_user_id", db_column="user_id")
+    trading_day = models.DateField(null=True, blank=True)
+    total_profit = models.FloatField(null=True, blank=True)
+    total_profit_pct = models.FloatField(null=True, blank=True)
+    rank = models.IntegerField(null=True, blank=True)
+    invested_amount = models.FloatField(null=True, blank=True)
+    deposit = models.FloatField(null=True, blank=True)
+    balance = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        managed = True
+        db_table = "season_history"

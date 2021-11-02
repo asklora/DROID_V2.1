@@ -1,5 +1,6 @@
 from general.date_process import datetimeNow
 from core.user.convert import ConvertMoney
+import random
 import numpy as np
 import pandas as pd
 from core.djangomodule.general import formatdigit
@@ -477,5 +478,27 @@ def firebase_ranking_update():
     user_core = user_core.loc[user_core["is_joined"] == True]
     user_core = user_core.drop(columns=["current_status", "is_joined"])
     rank = rank.merge(user_core, how="left", on=["user_id"])
+    rank["ranking"] = (rank["ranking"].astype(int).astype(str) * 4)
+    update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
+
+def firebase_ranking_update_random():
+    user_core = get_user_core(field="id as user_id, username, current_status, is_joined, first_name, last_name, email")
+    user_core = user_core.loc[user_core["current_status"] == "verified"]
+    user_core = user_core.loc[user_core["is_joined"] == True]
+    user_core = user_core.drop(columns=["current_status", "is_joined"])
+    rank = get_user_profit_history(field="user_id, total_profit_pct")
+    rank = rank.merge(user_core, how="left", on=["user_id"])
+    rank = rank.loc[~rank["username"].isnull()]
+    for index, row in rank.iterrows():
+        rank.loc[index, "total_profit_pct"] = abs(row["total_profit_pct"]) * (random.random() * 2)
+    rank = rank.sort_values(by=["total_profit_pct"], ascending=[False])
+    rank = rank.reset_index(inplace=False, drop=True)
+    rank = rank.reset_index(inplace=False)
+    rank = rank.rename(columns={"index" : "rank"})
+    rank["rank"] = rank["rank"] + 1
+    rank["ranking"] = rank["rank"]
+    rank["total_profit_pct"] = rank["total_profit_pct"].round(4)
+    rank = rank.sort_values(by=["rank"], ascending=True)
+    rank = rank.head(6)
     rank["ranking"] = (rank["ranking"].astype(int).astype(str) * 4)
     update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
