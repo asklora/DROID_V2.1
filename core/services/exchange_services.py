@@ -1,10 +1,9 @@
 from config.celery import app
 from core.djangomodule.calendar import TradingHours
 from core.universe.models import ExchangeMarket
-from datetime import datetime
+from django.utils import timezone
 import subprocess
 import os
-from django.conf import settings
 
 def restart_worker():
     # tidak perlu conditional lagi karena bisa di mock di test
@@ -20,8 +19,6 @@ def restart_worker():
 
 
 def update_due(exchange: ExchangeMarket) -> bool:
-    # harus dijadikan fungsi sendiri agar bisa di mock
-    from django.utils import timezone  # jare luih aman nganggo iki
     return exchange.until_time < timezone.now()
 
 

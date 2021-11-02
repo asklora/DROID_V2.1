@@ -5,6 +5,8 @@ from core.services.tasks import daily_hedge_user
 from core.services.exchange_services import market_task_checker
 from datasource.rkd import RkdData
 from core.universe.models import Universe
+
+
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Process")
