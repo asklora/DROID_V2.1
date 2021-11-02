@@ -14,7 +14,6 @@ from datasource import rkd as trkd
 import time
 import json
 import asyncio
-
 class OrderDetailsServicesSerializers(serializers.ModelSerializer):
 
     class Meta:

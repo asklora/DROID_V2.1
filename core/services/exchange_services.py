@@ -1,8 +1,34 @@
 from config.celery import app
 from core.djangomodule.calendar import TradingHours
 from core.universe.models import ExchangeMarket
+from datetime import datetime
+import subprocess
+import os
+
+def restart_worker():
+    envrion = os.environ.get('DJANGO_SETTINGS_MODULE', False)
+    if envrion in ['config.settings.production','config.settings.prodtest']:
+        subprocess.Popen(['docker', 'restart', 'Celery','CeleryBroadcaster'])
+        return {'response':'restart celery prod'}
+    else:
+        subprocess.Popen(['docker', 'restart', 'Celery'])
+        return {'response':'restart celery staging'}
 
 
+
+
+
+@app.task(ignore_result=True)
+def market_task_checker():
+    exchanges = ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"])
+    exchanges = exchanges.filter(group='Core')
+    fail = []
+    for exchange in exchanges:
+        if exchange.until < datetime.now():
+            fail.append(exchange.mic)
+    if fail:
+        restart_worker()
+    return {'message':fail}
 
 
 @app.task(ignore_result=True)
