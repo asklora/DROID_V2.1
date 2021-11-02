@@ -477,4 +477,4 @@ def firebase_ranking_update():
     user_core = user_core.loc[user_core["is_joined"] == True]
     user_core = user_core.drop(columns=["current_status", "is_joined"])
     rank = rank.merge(user_core, how="left", on=["user_id"])
-    update_to_firestore(data=rank, index="user_id", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
+    update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
