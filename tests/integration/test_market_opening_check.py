@@ -1,3 +1,8 @@
+import os
+
+from datetime import datetime, timedelta
+from django.utils import timezone
+
 import pytest
 from core.djangomodule.calendar import TradingHours
 
@@ -14,23 +19,38 @@ pytestmark = pytest.mark.django_db(
 
 
 def test_market_opening_check(mocker) -> None:
-
     def mock_worker_update() -> None:
-        exchanges = ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"])
-        exchanges = exchanges.filter(group='Core')
-        for exchange in exchanges:
-            market = TradingHours(mic=exchange.mic)
-            market.run_market_check()
+        exchange = ExchangeMarket.objects.get(currency_code="USD")
+        market = TradingHours(mic=exchange.mic)
+        market.run_market_check()
 
+    # we mock the worker restartion
     worker_restarted = mocker.patch(
         "core.services.exchange_services.restart_worker",
-         wraps=mock_worker_update,
+        wraps=mock_worker_update,
     )
 
-    mocker.patch(
-        "core.services.exchange_services.update_due",
-        return_value=True,  # bisa diganti logic sendiri
-    )
+    # we turn off slack report
+    os.environ["USE_SLACK"] = 'False'
 
+    # we pick one exchange
+    usd_exchange: ExchangeMarket = ExchangeMarket.objects.get(currency_code="USD")
+
+    # we save the original date to be tested later
+    until_time: datetime = usd_exchange.until_time
+
+    # we change the time so it triggers worker restart
+    usd_exchange.until_time = usd_exchange.until_time - timedelta(days=1)
+    usd_exchange.save()
+
+    # we run the function here
     market_task_checker.apply()
+
+    # we confirm if the function will restart the worker
     worker_restarted.assert_called()
+
+    # we confirm if the data is correct
+    # we need to get the exchange again to see the changes
+    usd_exchange = ExchangeMarket.objects.get(currency_code="USD")
+    assert usd_exchange.until_time == until_time
+    assert usd_exchange.until_time > timezone.now()
