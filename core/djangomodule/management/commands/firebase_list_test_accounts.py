@@ -7,13 +7,6 @@ from firebase_admin import firestore
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
-            "-l",
-            "--list",
-            action="store_true",
-            default=True,
-            help="List all test accounts in firebase",
-        )
-        parser.add_argument(
             "-s",
             "--staging",
             action="store_true",
@@ -29,7 +22,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        list = options["list"]
         staging = options["staging"]
         delete = options["delete"]
 
@@ -51,7 +43,19 @@ class Command(BaseCommand):
             else:
                 print("No staging app available")
 
-        if list:
+        elif delete:
+            for id in delete:
+                query = db.collection(collection_name).document(id)
+                document = query.get()
+
+                if document.exists:
+                    self.stdout.write(self.style.WARNING(f"Deleting user {id}"))
+                    query.delete()
+                    self.stdout.write(self.style.SUCCESS("User deleted"))
+                else:
+                    self.stdout.write(self.style.NOTICE(f"User {id} not found"))
+
+        else:
             result = query.get()
 
             self.stdout.write(
@@ -59,18 +63,4 @@ class Command(BaseCommand):
             )
 
             for doc in result:
-                print(f"{doc.id} => {doc.to_dict()['email']}")
-
-        elif delete:
-            query = db.collection(collection_name).document(delete)
-            document = query.get()
-
-            if document.exists:
-                self.stdout.write(self.style.WARNING(f"Deleting user {delete}"))
-                document.delete()
-                self.stdout.write(self.style.SUCCESS("User deleted"))
-            else:
-                self.stdout.write(self.style.NOTICE(f"User {delete} not found"))
-
-        else:
-            self.stdout.write(self.style.NOTICE(f"Doing nothing..."))
+                print(f"{doc.id} => {doc.to_dict()['profile']['email']}")
