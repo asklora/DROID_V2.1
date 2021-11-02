@@ -1,7 +1,7 @@
 version: "2.1"
 services:
   backend:
-    container_name: django
+    container_name: droid
     build:
       context: .
       dockerfile: deployment/jenkins/bastion/Dockerfile
@@ -15,19 +15,9 @@ services:
     links:
       - redis:redis
     restart: always
-  asklora:
-    container_name: asklora
-    image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/asklora_dev
-    command: bash -c "python manage.py runserver 0.0.0.0:9000 --settings=config.settings.local"
-    ports:
-      - "9000:9000"
-  asklora-celery:
-    container_name: asklora-celery
-    image: 736885973837.dkr.ecr.ap-east-1.amazonaws.com/asklora_dev
-    command: bash -c "export DJANGO_SETTINGS_MODULE=config.settings.local && celery -A core.services worker -l  INFO --hostname=asklora@dev --concurrency=5 -Q asklora-dev"
-    
+
   celery:
-    container_name: Celery
+    container_name: CeleryDroid
     image: django/backend
     command: sh deployment/script/localcelery.sh
     env_file: .env

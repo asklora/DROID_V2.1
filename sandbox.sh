@@ -47,7 +47,6 @@ aws ecr get-login-password --region ap-east-1 | docker login --username AWS --pa
 }
 appurl(){
     echo "droid url: http://127.0.0.1:8000"
-    echo "asklora url: http://127.0.0.1:9000"
 }
 up(){
 dockercheck
@@ -60,17 +59,10 @@ appurl
 
 checkapps(){
     droidresponse=$(curl --write-out '%{http_code}' --silent --output /dev/null http://0.0.0.0:8000)
-    askloraresponse=$(curl --write-out '%{http_code}' --silent --output /dev/null http://0.0.0.0:9000)
     if [ $droidresponse == 200 ]; then
     echo "droid response: $droidresponse Ready"
     else
     echo "droid response: $droidresponse app not running"
-    fi
-
-    if [ $askloraresponse == 200 ]; then
-    echo "asklora response: $askloraresponse Ready"
-    else
-    echo "asklora response: $askloraresponse app not running"
     fi
 }
 
@@ -82,24 +74,17 @@ docker-compose -f local.yml down
 }
 
 djangologs(){
-    docker logs --follow django
+    docker logs --follow droid
 }
 celerylogs(){
     docker logs --follow Celery
 }
-askloralogs(){
-    docker logs --follow asklora
-}
-askloracelerylogs(){
-    docker logs --follow asklora-celery
-}
+
 
 droidrun(){
     docker exec -it django bash -c "$commands"
 }
-asklorarun(){
-    docker exec -it asklora bash -c "$commands"
-}
+
 
 
 help(){
@@ -107,12 +92,9 @@ help(){
     echo "./sandbox.sh down -> stop aplication and destroy"
     echo "./sandbox.sh djangologs -> log django app"
     echo "./sandbox.sh celerylogs -> log celery app"
-    echo "./sandbox.sh askloralogs -> log asklora app"
-    echo "./sandbox.sh askloracelerylogs -> log asklora celery app"
     echo "./sandbox.sh checkapps -> Check status app"
     echo "./sandbox.sh appurl -> log asklora app"
     echo "./sandbox.sh droidrun 'your command' -> run command inside container droid"
-    echo "./sandbox.sh asklorarun 'your command' -> run command inside container asklora"
 
 }
 commands=$2
