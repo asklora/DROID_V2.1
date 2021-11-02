@@ -10,6 +10,7 @@ services:
     image: django/backend
     volumes:
       - ~/DROID_V2.1:/code
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8000:8000"
     links:
@@ -35,6 +36,7 @@ services:
     env_file: ~/DROID_V2.1/.env
     volumes:
       - ~/DROID_V2.1:/code
+      - /var/run/docker.sock:/var/run/docker.sock
     restart: always
     depends_on:
       - backend
