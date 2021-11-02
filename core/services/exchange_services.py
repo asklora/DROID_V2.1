@@ -5,32 +5,24 @@ from datetime import datetime
 import subprocess
 import os
 from django.conf import settings
+
 def restart_worker():
+    # tidak perlu conditional lagi karena bisa di mock di test
     envrion = os.environ.get('DJANGO_SETTINGS_MODULE', False)
     if envrion in ['config.settings.production','config.settings.prodtest']:
-        if settings.TESTDEBUG:
-            exchanges = ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"])
-            exchanges = exchanges.filter(group='Core')
-            for exchange in exchanges:
-                market = TradingHours(mic=exchange.mic)
-                market.run_market_check()
-        else:
-            subprocess.Popen(['docker', 'restart', 'Celery','CeleryBroadcaster'])
+        subprocess.Popen(['docker', 'restart', 'Celery','CeleryBroadcaster'])
         return {'response':'restart celery prod','code':200}
     elif envrion in ['config.settings.local','config.settings.test','config.settings.development'] :
-        if settings.TESTDEBUG:
-            exchanges = ExchangeMarket.objects.filter(currency_code__in=["HKD","USD"])
-            exchanges = exchanges.filter(group='Core')
-            for exchange in exchanges:
-                market = TradingHours(mic=exchange.mic)
-                market.run_market_check()
-        else:
-            subprocess.Popen(['docker', 'restart', 'Celery'])
+        subprocess.Popen(['docker', 'restart', 'Celery'])
         return {'response':'restart celery staging','code':200}
     return {'response':'both function not executed','code':400}
 
 
 
+def update_due(exchange: ExchangeMarket) -> bool:
+    # harus dijadikan fungsi sendiri agar bisa di mock
+    from django.utils import timezone  # jare luih aman nganggo iki
+    return exchange.until_time < timezone.now()
 
 
 @app.task(ignore_result=True)
@@ -39,7 +31,7 @@ def market_task_checker():
     exchanges = exchanges.filter(group='Core')
     fail = []
     for exchange in exchanges:
-        if exchange.until_time < datetime.now():
+        if update_due(exchange):
             fail.append(exchange.mic)
     if fail:
         restart_worker()
