@@ -20,7 +20,7 @@ def test_create_new_buy_order_for_classic_bot(user) -> None:
     order = create_buy_order(
         bot_id=bot_id,
         price=1317,
-        ticker="3377.HK",
+        ticker="0005.HK",
         user_id=user.id,
     )
 
@@ -42,7 +42,7 @@ def test_create_new_buy_order_for_uno_bot(user) -> None:
     order = create_buy_order(
         bot_id=bot_id,
         price=1317,
-        ticker="3377.HK",
+        ticker="0005.HK",
         user_id=user.id,
     )
 
@@ -62,7 +62,7 @@ def test_create_new_buy_order_for_ucdc_bot(user) -> None:
     order = create_buy_order(
         bot_id=bot_id,
         price=1317,
-        ticker="3377.HK",
+        ticker="0005.HK",
         user_id=user.id,
     )
 

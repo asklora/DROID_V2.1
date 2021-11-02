@@ -17,7 +17,7 @@ def test_api_create_order_with_classic_bot(
     user,
 ) -> None:
     data = {
-        "ticker": "3377.HK",
+        "ticker": "0005.HK",
         "price": 1.63,
         "bot_id": "CLASSIC_classic_003846",
         "amount": 100,
@@ -64,7 +64,7 @@ def test_api_create_order_with_uno_bot(
     user,
 ) -> None:
     data = {
-        "ticker": "3377.HK",
+        "ticker": "0005.HK",
         "price": 1.63,
         "bot_id": "UNO_ITM_003846",
         "amount": 100,
@@ -113,7 +113,7 @@ def test_api_create_order_with_ucdc_bot(
     user,
 ) -> None:
     data = {
-        "ticker": "3377.HK",
+        "ticker": "0005.HK",
         "price": 1.63,
         "bot_id": "UCDC_ATM_003846",
         "amount": 100,

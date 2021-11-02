@@ -14,7 +14,7 @@ pytestmark = pytest.mark.django_db(
 
 def test_api_create_buy_order(authentication, client, user) -> None:
     data = {
-        "ticker": "3377.HK",
+        "ticker": "0005.HK",
         "price": 1.63,
         "bot_id": "STOCK_stock_0",
         "amount": 100,
@@ -49,7 +49,7 @@ def test_api_create_buy_order(authentication, client, user) -> None:
 
 def test_api_create_sell_order(authentication, client, user) -> None:
     data = {
-        "ticker": "3377.HK",
+        "ticker": "0005.HK",
         "price": 1.63,
         "bot_id": "STOCK_stock_0",
         "amount": 100,

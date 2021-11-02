@@ -44,7 +44,7 @@ def test_create_new_buy_order_for_user(user) -> None:
     """
 
     order = create_buy_order(
-        ticker="3377.HK",
+        ticker="0005.HK",
         price=1317,
         user_id=user.id,
         bot_id="STOCK_stock_0",
@@ -62,7 +62,7 @@ def test_update_new_buy_order_for_user(user) -> None:
     """
 
     side = "buy"
-    ticker = "3377.HK"
+    ticker = "0005.HK"
     qty = 3
     price = 1317
     bot_id = "STOCK_stock_0"

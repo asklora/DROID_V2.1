@@ -130,11 +130,10 @@ def authentication(client, user) -> Union[dict, None]:
     response_body = response.json()
     return {"HTTP_AUTHORIZATION": "Bearer " + response_body["access"]}
 
-
 @pytest.fixture
 def order(authentication, client, user) -> Union[dict, None]:
     data = {
-        "ticker": "3377.HK",
+        "ticker": "0005.HK",
         "price": 1.63,
         "bot_id": "STOCK_stock_0",
         "amount": 100,

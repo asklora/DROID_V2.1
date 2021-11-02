@@ -25,7 +25,7 @@ def test_api_create_duplicated_buy_orders(
         response = client.post(
             path="/api/order/create/",
             data={
-                "ticker": "3377.HK",
+                "ticker": "0005.HK",
                 "price": 1.63,
                 "bot_id": "STOCK_stock_0",
                 "amount": 100,
@@ -78,7 +78,7 @@ def test_api_create_duplicated_pending_sell_orders(
     response = client.post(
         path="/api/order/create/",
         data={
-            "ticker": "3377.HK",
+            "ticker": "0005.HK",
             "price": 1.63,
             "bot_id": "UCDC_ATM_007692",
             "amount": 10000,
@@ -178,7 +178,7 @@ def test_api_create_duplicated_filled_sell_orders(
     response = client.post(
         path="/api/order/create/",
         data={
-            "ticker": "3377.HK",
+            "ticker": "0005.HK",
             "price": 1.63,
             "bot_id": "UCDC_ATM_007692",
             "amount": 10000,

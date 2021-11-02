@@ -67,7 +67,7 @@ def test_check_if_user_balance_is_cut_accordingly_with_margin(user) -> None:
     """
 
     side = "buy"
-    ticker = "3377.HK"
+    ticker = "0005.HK"
     amount = 131700
     price = 1317
     margin = 2

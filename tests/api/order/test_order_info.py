@@ -54,7 +54,7 @@ def test_api_get_order_detail(authentication, client, order) -> None:
 
     response_body = response.json()
     assert response_body["order_uid"] is not None
-    assert response_body["ticker"] == "3377.HK"
+    assert response_body["ticker"] == "0005.HK"
     assert response_body["price"] == 1.63
     assert (
         # Amount was cut to fit maximum share number

@@ -49,7 +49,7 @@ def test_api_multiple_order_insufficient_balance(
         response = client.post(
             path="/api/order/create/",
             data={
-                "ticker": "3377.HK",
+                "ticker": "0005.HK",
                 "price": 1.63,
                 "bot_id": "UCDC_ATM_007692",
                 "amount": 20000,
@@ -103,7 +103,7 @@ def test_api_multiple_order_insufficient_balance(
     last_order = client.post(
         path="/api/order/create/",
         data={
-            "ticker": "3377.HK",
+            "ticker": "0005.HK",
             "price": 1.63,
             "bot_id": "STOCK_stock_0",
             "amount": 20000,
