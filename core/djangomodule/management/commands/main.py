@@ -103,7 +103,7 @@ class Command(BaseCommand):
                     update_fundamentals_quality_value()
                     status = "Update Firebase Universe"
                     populate_intraday_latest_price_from_rkd(currency_code=["HKD"])
-                    mongo_universe_update(currency_code=["HKD"])
+                    firebase_universe_update(currency_code=["HKD"])
                 else:
                     update_data_dss_from_dss(ticker=ticker)
                     update_ingestion_update_time("data_dss-na", finish=True)
@@ -133,8 +133,8 @@ class Command(BaseCommand):
                     status = "Update AI Score"
                     update_fundamentals_quality_value()
                     status = "Update Firebase Universe"
-                    # populate_intraday_latest_price_from_rkd(currency_code=["USD"])
-                    # mongo_universe_update(currency_code=["USD"])
+                    populate_intraday_latest_price_from_rkd(currency_code=["USD"])
+                    firebase_universe_update(currency_code=["USD"])
                 else:
                     status = "Daily Ingestion Update"
                     update_data_dss_from_dss(ticker=ticker)
