@@ -77,7 +77,7 @@ def sync_user(payload):
         user.save()
         parsed_payload['balance_info'] = { 'balance_uid':wallet.balance_uid,'currency_code':'HKD','transaction_id':transaction.id,'transaction_amount':transaction.amount}
         firebase_user_update(user_id=[user.id])
-        populate_daily_profit(user_id=[user.id])
+        populate_daily_profit()
         return parsed_payload
 
 
