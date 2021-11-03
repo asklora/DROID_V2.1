@@ -40,7 +40,7 @@ def market_task_checker():
     return {"message": fail}
 
 
-@app.task(ignore_result=True)
+@app.task(ignore_result=True,base=Singleton)
 def init_exchange_check():
     exchanges = ExchangeMarket.objects.filter(currency_code__in=["HKD", "USD"])
     exchanges = exchanges.filter(group="Core")
