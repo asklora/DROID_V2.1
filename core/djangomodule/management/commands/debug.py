@@ -10,7 +10,7 @@ from core.universe.models import Universe
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Process")
-        firebase_ranking_update_random()
+        # firebase_ranking_update_random()
         # ticker = list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
         #             is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
         # rkd = RkdData()
