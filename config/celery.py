@@ -57,7 +57,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
-
+app.control.discard_all()
 @worker_ready.connect
 def at_start(sender, **k):
     if role == 'master':
