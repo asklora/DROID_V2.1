@@ -44,19 +44,21 @@ def market_task_checker():
 def init_exchange_check():
     exchanges = ExchangeMarket.objects.filter(currency_code__in=["HKD", "USD"])
     exchanges = exchanges.filter(group="Core")
+    print(exchanges.count(),"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+
     for exchange in exchanges:
         market = TradingHours(mic=exchange.mic)
         market.run_market_check()
         if market.time_to_check:
-            market_check_routines.apply_async(
+            market_check_routines.apply(
                 args=(exchange.mic,), eta=market.time_to_check
             )
 
 
 @app.task(ignore_result=True,base=Singleton)
 def market_check_routines(mic):
-    print(mic)
+    print(mic,"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
     market = TradingHours(mic=mic)
     market.run_market_check()
     if market.time_to_check:
-        market_check_routines.apply_async(args=(mic,), eta=market.time_to_check)
+        market_check_routines.apply(args=(mic,), eta=market.time_to_check)
