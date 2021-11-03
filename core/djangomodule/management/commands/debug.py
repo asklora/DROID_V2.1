@@ -10,7 +10,7 @@ from core.universe.models import Universe
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Process")
-        firebase_ranking_update_random()
+        # firebase_ranking_update_random()
         # ticker = list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
         #             is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
         # rkd = RkdData()
@@ -18,6 +18,6 @@ class Command(BaseCommand):
         # update_season_monthly()
         # update_monthly_deposit()
         # populate_daily_profit(user_id=[1846])
-        # firebase_user_update(currency_code=["USD"])
+        # firebase_user_update(currency_code=["HKD"])
         # firebase_universe_update(currency_code=["HKD"])
         # daily_hedge_user(currency=["HKD"],ingest=True)

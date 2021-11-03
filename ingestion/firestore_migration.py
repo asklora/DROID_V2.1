@@ -468,6 +468,10 @@ def firebase_user_update(user_id=None, currency_code=None):
             position_data = position_data.merge(bot_option_type[["bot_id", "bot_apps_name", "duration"]], how="left", on=["bot_id"])
             position_data["exchange_rate"] = 1
             position_data["exchange_rate"] = np.where(position_data["currency_code"] == "USD", exchange_rate, position_data["exchange_rate"])
+        position_data["expiry"] = position_data["expiry"].astype(str)
+        position_data["spot_date"] = position_data["spot_date"].astype(str)
+        position_data["trading_day"] = position_data["trading_day"].astype(str)
+        user_core["birth_date"] = user_core["birth_date"].astype(str)
         asyncio.run(gather_task(position_data, bot_option_type, user_core))
 
 def firebase_ranking_update():
