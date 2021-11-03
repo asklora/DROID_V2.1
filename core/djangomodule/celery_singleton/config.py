@@ -12,7 +12,7 @@ class Config:
     @property
     def backend_class(self):
         path_or_class = self.app.conf.get(
-            "singleton_backend_class", "celery_singleton.backends.redis.RedisBackend"
+            "singleton_backend_class", "core.djangomodule.celery_singleton.backends.redis.RedisBackend"
         )
         if isinstance(path_or_class, str):
             path = path_or_class.split(".")
