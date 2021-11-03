@@ -61,14 +61,14 @@ def new_ticker_ingestion(ticker):
     dividend_updated_from_dsws(ticker=ticker)
     do_function("special_cases_1")
     do_function("master_ohlcvtr_update")
-    master_ohlctr_update()
+    master_ohlctr_update(history=True)
     master_tac_update()
     master_multiple_update()
-    update_fundamentals_score_from_dsws(ticker=ticker)
-    update_fundamentals_quality_value()
     update_ibes_data_monthly_from_dsws(ticker=ticker, history=True)
     update_worldscope_quarter_summary_from_dsws(ticker=ticker, history=True)
     update_rec_buy_sell_from_dsws(ticker=ticker)
+    update_fundamentals_score_from_dsws(ticker=ticker)
+    update_fundamentals_quality_value()
 
 def populate_ticker_monthly(client=None):
     update_ingestion_update_time('universe', finish=False)
