@@ -2,8 +2,11 @@ from ingestion.firestore_migration import firebase_ranking_update_random, fireba
 from bot.calculate_bot import populate_daily_profit, update_monthly_deposit, update_season_monthly
 from django.core.management.base import BaseCommand
 from core.services.tasks import daily_hedge_user
+from core.services.exchange_services import market_task_checker
 from datasource.rkd import RkdData
 from core.universe.models import Universe
+
+
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Process")
