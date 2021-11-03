@@ -64,15 +64,15 @@ def sync_user(payload):
         transaction_detail={
             'event':'first deposit'
         })
-        # try:
-        #     deposit_history =UserDepositHistory.objects.create(
-        #         uid = get_uid(user.id, trading_day=dateNow(), replace=True),
-        #         user_id = user,
-        #         trading_day = dateNow(),
-        #         deposit = transaction.amount)
+        try:
+             deposit_history,created =UserDepositHistory.objects.get_or_create(
+                uid = get_uid(user.id, trading_day=dateNow(), replace=True),
+                user_id = user,
+                trading_day = dateNow(),
+                deposit = transaction.amount)
         
-        # except Exception as e:
-        #     return {"err": str(e)}
+        except Exception as e:
+            return {"err": str(e)}
         
         user.save()
         parsed_payload['balance_info'] = { 'balance_uid':wallet.balance_uid,'currency_code':'HKD','transaction_id':transaction.id,'transaction_amount':transaction.amount}

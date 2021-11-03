@@ -132,7 +132,6 @@ def authentication(client, user) -> Union[dict, None]:
     response_body = response.json()
     return {"HTTP_AUTHORIZATION": "Bearer " + response_body["access"]}
 
-
 @pytest.fixture
 def tickers() -> List[dict]:
     tickers: List = []
