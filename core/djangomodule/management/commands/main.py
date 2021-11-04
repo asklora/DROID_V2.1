@@ -25,7 +25,7 @@ from ingestion.data_from_dsws import (
     update_entity_type_from_dsws, 
     update_fred_data_from_fred, 
     update_fundamentals_quality_value, 
-    update_fundamentals_score_from_dsws, 
+    update_fundamentals_score_from_dsws_multi,
     update_ibes_data_monthly_from_dsws, 
     update_industry_from_dsws, 
     update_macro_data_monthly_from_dsws,
@@ -33,7 +33,7 @@ from ingestion.data_from_dsws import (
     update_ticker_name_from_dsws, 
     update_vix_from_dsws, 
     update_worldscope_identifier_from_dsws, 
-    update_worldscope_quarter_summary_from_dsws,
+    update_worldscope_quarter_summary_from_dsws_multi,
     update_currency_code_from_dsws,
     update_lot_size_from_dsws,
     update_mic_from_dsws)
@@ -160,16 +160,13 @@ class Command(BaseCommand):
             if(options["worldscope"]):      # change to weekly but only missing
                 update_ingestion_update_time("data_worldscope_summary", finish=False)
                 status = "Worldscope Ingestion"
-                ticker = split_ticker(options["currency_code"], split=options["split"])
-                update_worldscope_quarter_summary_from_dsws(ticker=ticker)  # now report_date ingestion is also included
+                update_worldscope_quarter_summary_from_dsws_multi(split=options["split"], ticker=None)  # now report_date ingestion is also included
                 update_ingestion_update_time("data_worldscope_summary", finish=True)
 
             if(options["fundamentals_score"]):
                 status = "Fundamentals Score Ingestion"
-                ticker = split_ticker(options["currency_code"], split=options["split"])
-                print(ticker)
                 update_ingestion_update_time("data_fundamental_score", finish=False)
-                update_fundamentals_score_from_dsws(ticker=ticker)
+                update_fundamentals_score_from_dsws_multi(ticker=None)
                 update_ingestion_update_time("data_fundamental_score", finish=True)
                 status = "Fundamentals Quality Update"
                 update_fundamentals_quality_value()

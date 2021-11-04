@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import skew
 import pandas as pd
+import multiprocessing as mp
 from datetime import datetime
 from pandas.tseries.offsets import BDay
 from dateutil.relativedelta import relativedelta
@@ -329,68 +330,38 @@ def update_vix_from_dsws(vix_id=None, history=False):
         upsert_data_to_database(result, get_data_vix_table_name(), "uid", how="update", Text=True)
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
-def update_fundamentals_score_from_dsws(ticker=None, currency_code=None):
+def update_fundamentals_score_from_dsws_multi(split=1, ticker=None, currency_code=None):
+
+    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+    tickers = universe["ticker"].to_list()
+    all_groups = [tuple([e]) for e in tickers]
+    with mp.Pool(processes=split) as pool:
+        pool.starmap(update_fundamentals_score_from_dsws, all_groups)
+
+def update_fundamentals_score_from_dsws(*args):
     ''' (Update) weekly update data_fundamental_score:
         1. now only ingest ESG score to data_fundamental_score
         2. other fields directly retrieved from data_fundamental_score / data_ibes_monthly in calculation
     '''
 
+    ticker = args
+    print(ticker)
+
     print("{} : === Fundamentals Score Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
-    # start_date = backdate_by_month(12)
     start_date = backdate_by_month(24)
     identifier = "ticker"
-    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+    universe = get_active_universe_by_entity_type(ticker=ticker)
     print(universe)
     if(len(universe)):
         static_field = {"ENSCORE":"environment",
                         "SOSCORE":"social",
                         "CGSCORE":"governance"}
-        # column_name = {"EPS1TR12": "eps", "WC05480": "bps", "WC18100A": "ev",
-        #     "WC18262A": "ttm_rev","WC08005": "mkt_cap","WC18309A": "ttm_ebitda",
-        #     "WC18311A": "ttm_capex","WC18199A": "net_debt","WC08372": "roe",
-        #     "WC05510": "cfps","WC08636A": "peg","BPS1FD12" : "bps1fd12",
-        #     "EBD1FD12" : "ebd1fd12","EVT1FD12" : "evt1fd12","EPS1FD12" : "eps1fd12",
-        #     "SAL1FD12" : "sal1fd12","CAP1FD12" : "cap1fd12",
-        #     "ENSCORE" : "environment","SOSCORE" : "social",
-        #     "CGSCORE" : "goverment",
-        #     "WC02999" : "total_asset", "WC02001" : "cash",
-        #     "WC03101" : "current_asset", "WC03501" : "equity",
-        #     "WC18312A" : "ttm_cogs", "WC02101" : "inventory",
-        #     "WC18264" : "ttm_eps", "WC18267" : "ttm_gm",
-        #     "WC01451" : "income_tax", "WC18810" : "pension_exp",
-        #     "WC02401" : "ppe_depreciation", "WC18274" : "ppe_impairment",
-        #     "WC07211" : "mkt_cap_usd", "i0eps" : "eps_lastq"}
-        # result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier,
-        #                                                              filter_field, use_ticker=True, split_number=1,
-        #                                                              quarterly=True, fundamentals_score=True)
         result, except_field = get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier,
                                                                        list(static_field.keys()), use_ticker=True, split_number=1,
                                                                        quarterly=True, fundamentals_score=True)
-        # print("Error Ticker = " + str(except_field))
-        # if len(except_field) == 0 :
-        #     second_result = []
-        # else:
-        #     second_result = get_data_history_frequently_by_field_from_dsws(start_date, end_date, except_field, identifier,
-        #                                                                    filter_field, use_ticker=True, split_number=1,
-        #                                                                    quarterly=True, fundamentals_score=True)
-        # try:
-        #     if(len(result) == 0):
-        #         result = second_result
-        #     elif(len(second_result) == 0):
-        #         result = result
-        #     else :
-        #         result = result.append(second_result)
-        # except Exception as e:
-        #     result = second_result
-        # print(result)
-        # result = result.rename(columns=column_name)
-        # result.reset_index(inplace = True)
-        # result = result.drop(columns={"index", "level_0"})
         result = result.rename(columns=static_field)
         result = result.drop(columns=["index"])
-        # result = result.merge(result2, how="left", on="ticker")
-        # print(result)
         if(len(universe)) > 0 :
             upsert_data_to_database(result, get_fundamental_score_table_name(), "ticker", how="update", Text=True)
             result["trading_day"] = find_nearest_specific_days(days=0)
@@ -1347,8 +1318,20 @@ def worldscope_report_date_format_change(data):
 #         except Exception as e:
 #             print("{} : === ERROR === : {}".format(dateNow(), e))
 
-def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=None, history=False):
+def update_worldscope_quarter_summary_from_dsws_multi(split=1, ticker=None, currency_code=None, history=False):
+
+    universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+    tickers = universe["ticker"].to_list()
+    all_groups = [tuple([[e], history]) for e in tickers]
+    with mp.Pool(processes=split) as pool:
+        pool.starmap(update_worldscope_quarter_summary_from_dsws, all_groups)
+
+def update_worldscope_quarter_summary_from_dsws(*args):
     ''' (updated) ingestion quarterly worldscope fields for missing fields only '''
+
+    ticker, history = args
+    print(ticker, history)
+
     # Prep 1. field: get data_worldscope_summary ingestion field from Table ingesion_name
     df = get_ingestion_name_source()
     for col in ['dsws_name', 'replace_fn1', 'replace_fn2', 'replace_fn3']:      # for fields with replacement fields -> go through & ingest each to same field
@@ -1358,7 +1341,7 @@ def update_worldscope_quarter_summary_from_dsws(ticker = None, currency_code=Non
 
         # Prep 2. ticker: make sure input ticker list is always active ticker
         identifier = "ticker"
-        universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
+        universe = get_active_universe_by_entity_type(ticker=ticker)
         tickers = universe["ticker"].to_list()
 
         # Prep 3. period_end: for company without Dec year_end, there could be available field in future
