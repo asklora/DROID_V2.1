@@ -10,7 +10,7 @@ from celery.backends.rpc import RPCBackend as CeleryRpcBackend
 from dotenv import load_dotenv
 from django import db
 from core.djangomodule.general import logging
-
+from core.djangomodule.celery_singleton import clear_locks
 
 env = Env()
 load_dotenv()
@@ -57,10 +57,11 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
-
+app.control.discard_all()
 @worker_ready.connect
 def at_start(sender, **k):
     if role == 'master':
+        clear_locks(app)
         with sender.app.connection() as conn:
             sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn,queue=settings.BROADCAST_WORKER_DEFAULT_QUEUE)
 
