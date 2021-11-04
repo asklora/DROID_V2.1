@@ -1,3 +1,4 @@
+from ingestion.firestore_migration import firebase_universe_update
 import pandas as pd
 import numpy as np
 from django.utils import timezone
@@ -44,31 +45,57 @@ from ingestion.data_from_dsws import (
     update_worldscope_quarter_summary_from_dsws)
 
 def new_ticker_ingestion(ticker):
-    update_ticker_name_from_dsws(ticker=ticker)
-    update_ticker_symbol_from_dss(ticker=ticker)
-    update_entity_type_from_dsws(ticker=ticker)
-    update_lot_size_from_dsws(ticker=ticker)
-    update_currency_code_from_dsws(ticker=ticker)
-    update_ibes_currency_from_dsws(ticker=ticker)
-    update_industry_from_dsws(ticker=ticker)
-    update_company_desc_from_dsws(ticker=ticker)
-    update_mic_from_dsws(ticker=ticker)
-    update_worldscope_identifier_from_dsws(ticker=ticker)
-    fill_null_quandl_symbol()
-    update_quandl_orats_from_quandl(ticker=ticker)
-    update_data_dss_from_dss(ticker=ticker, history=True)
-    update_data_dsws_from_dsws(ticker=ticker, history=True)
-    dividend_updated_from_dsws(ticker=ticker)
-    do_function("special_cases_1")
-    do_function("master_ohlcvtr_update")
-    master_ohlctr_update(history=True)
-    master_tac_update()
-    master_multiple_update()
-    update_ibes_data_monthly_from_dsws(ticker=ticker, history=True)
-    update_worldscope_quarter_summary_from_dsws(ticker=ticker, history=True)
-    update_rec_buy_sell_from_dsws(ticker=ticker)
-    update_fundamentals_score_from_dsws(ticker=ticker)
-    update_fundamentals_quality_value()
+    try:
+        status = "Ticker Name Update"
+        update_ticker_name_from_dsws(ticker=ticker)
+        status = "Ticker Symbols Update"
+        update_ticker_symbol_from_dss(ticker=ticker)
+        status = "Entity Type Update"
+        update_entity_type_from_dsws(ticker=ticker)
+        status = "Lot Size Update"
+        update_lot_size_from_dsws(ticker=ticker)
+        status = "Currency Code Update"
+        update_currency_code_from_dsws(ticker=ticker)
+        status = "Ticker Name Update"
+        update_ibes_currency_from_dsws(ticker=ticker)
+        status = "Industry Update"
+        update_industry_from_dsws(ticker=ticker)
+        status = "Comapny Description Update"
+        update_company_desc_from_dsws(ticker=ticker)
+        status = "Ticker Name Update"
+        update_mic_from_dsws(ticker=ticker)
+        status = "Worldscope Identifier Update"
+        update_worldscope_identifier_from_dsws(ticker=ticker)
+        status = "Quandl Symbol Update"
+        fill_null_quandl_symbol()
+        status = "Quandl Orats Update"
+        update_quandl_orats_from_quandl(ticker=ticker)
+        status = "DSS Data Update"
+        update_data_dss_from_dss(ticker=ticker, history=True)
+        status = "DSWS Data Update"
+        update_data_dsws_from_dsws(ticker=ticker, history=True)
+        status = "Dividend Update"
+        dividend_updated_from_dsws(ticker=ticker)
+        status = "OHLCVTR Update"
+        do_function("special_cases_1")
+        do_function("master_ohlcvtr_update")
+        master_ohlctr_update(history=True)
+        status = "TAC Update"
+        master_tac_update()
+        status = "Multiple Update"
+        master_multiple_update()
+        status = "IBES Data Update"
+        update_ibes_data_monthly_from_dsws(ticker=ticker, history=True)
+        status = "Worldscope Quarter Update"
+        update_worldscope_quarter_summary_from_dsws(ticker=ticker, history=True)
+        status = "Rec Buy Sell Update"
+        update_rec_buy_sell_from_dsws(ticker=ticker)
+        status = "Fundamentals Score Update"
+        update_fundamentals_score_from_dsws(ticker=ticker)
+        status = "Fundamentals Quality Update"
+        update_fundamentals_quality_value()
+    except Exception as e:
+        print("{} : === {} New Ticker Ingestion ERROR === : {}".format(dateNow(), status, e))
 
 def populate_ticker_monthly(client=None):
     update_ingestion_update_time('universe', finish=False)
@@ -134,3 +161,5 @@ def populate_ticker_monthly(client=None):
 class Command(BaseCommand):
     def add_arguments(self, parser):
         populate_ticker_monthly(client=None)
+        firebase_universe_update(currency_code=["HKD"])
+        firebase_universe_update(currency_code=["USD"])
