@@ -58,6 +58,7 @@ CACHES = {
 print("using dev db")
 read_endpoint, write_endpoint, port = db.dev_url
 CELERY_BROKER_URL="redis://redis:6379/0"
+CELERY_SINGLETON_BACKEND_URL = 'redis://localhost:6379/1'
 # CELERY_BROKER_URL = "amqp://rabbitmq:rabbitmq@16.162.110.123:5672"
 CELERY_TASK_DEFAULT_QUEUE ='droid_dev'
 HEDGE_WORKER_DEFAULT_QUEUE ='droid_dev'

@@ -2,8 +2,10 @@ from config.celery import app
 from core.djangomodule.calendar import TradingHours
 from core.universe.models import ExchangeMarket
 from django.utils import timezone
+from core.djangomodule.celery_singleton import Singleton
 import subprocess
 import os
+
 
 
 def restart_worker():
@@ -38,20 +40,22 @@ def market_task_checker():
     return {"message": fail}
 
 
-@app.task(ignore_result=True)
+@app.task(base=Singleton)
 def init_exchange_check():
     exchanges = ExchangeMarket.objects.filter(currency_code__in=["HKD", "USD"])
     exchanges = exchanges.filter(group="Core")
+
     for exchange in exchanges:
         market = TradingHours(mic=exchange.mic)
         market.run_market_check()
         if market.time_to_check:
+            print('me')
             market_check_routines.apply_async(
                 args=(exchange.mic,), eta=market.time_to_check
             )
 
 
-@app.task(ignore_result=True)
+@app.task(base=Singleton)
 def market_check_routines(mic):
     market = TradingHours(mic=mic)
     market.run_market_check()
