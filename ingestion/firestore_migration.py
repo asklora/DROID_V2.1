@@ -281,19 +281,19 @@ def firebase_universe_update(ticker=None, currency_code=None):
     report_to_slack("{} : === FIREBASE UNIVERSE UPDATED ===".format(datetimeNow()))
 
 
-async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,user_core:pd.DataFrame)-> List[pd.DataFrame]:
+async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,user_core:pd.DataFrame, update_firebase=True)-> List[pd.DataFrame]:
     tasks=[]
     users= user_core["user_id"].unique().tolist()
     for user in users:
         tasks.append(
             asyncio.ensure_future(
-            do_task(position_data, bot_option_type, user, user_core)
+            do_task(position_data, bot_option_type, user, user_core, update_firebase=update_firebase)
             ))
     active_portfolio = await asyncio.gather(*tasks)
     return active_portfolio
         
 
-async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user:str, user_core:pd.DataFrame)->pd.DataFrame:
+async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user:str, user_core:pd.DataFrame, update_firebase=True)->pd.DataFrame:
         user_core =  user_core.loc[user_core["user_id"] == user]
         user_core = user_core.reset_index(inplace=False, drop=True)
         rounded = 0
@@ -395,10 +395,11 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         result["total_user_invested_amount"]  = result["total_user_invested_amount"].astype(float).round(2)
         result["total_profit_amount"]  = result["total_profit_amount"].astype(float).round(2)
         result["daily_live_profit"]  = result["daily_live_profit"].astype(float).round(2)
-        await sync_to_async(update_to_firestore)(data=result, index="user_id", table=settings.FIREBASE_COLLECTION['portfolio'], dict=False)
-        return active
+        if(update_firebase):
+            await sync_to_async(update_to_firestore)(data=result, index="user_id", table=settings.FIREBASE_COLLECTION['portfolio'], dict=False)
+        return result
 
-def firebase_user_update(user_id=None, currency_code=None):
+def firebase_user_update(user_id=None, currency_code=None, update_firebase=True):
     firebase_ranking_update()
     if not user_id and not currency_code:
         return
@@ -472,7 +473,17 @@ def firebase_user_update(user_id=None, currency_code=None):
             position_data["spot_date"] = position_data["spot_date"].astype(str)
             position_data["trading_day"] = position_data["trading_day"].astype(str)
         user_core["birth_date"] = user_core["birth_date"].astype(str)
-        asyncio.run(gather_task(position_data, bot_option_type, user_core))
+        result = asyncio.run(gather_task(position_data, bot_option_type, user_core, update_firebase=update_firebase))
+        if(not update_firebase):
+            portfolio = []
+            for pst_result in result:
+                if(len(portfolio) == 0):
+                    portfolio = pst_result
+                else:
+                    portfolio = portfolio.append(pst_result)
+            print(portfolio)
+            print(type(portfolio))
+            return portfolio
 
 def firebase_ranking_update():
     rank = get_user_profit_history(field="user_id, rank::integer as ranking, rank::integer, total_profit_pct")
