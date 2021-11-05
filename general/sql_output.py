@@ -307,7 +307,7 @@ def update_ingestion_count(source='dsws', n_ingest=0, dsws=True):
         print(e)
         report_to_slack(f'=== update_ingestion_count ERROR === :{e}', 'U026B04RB3J')
 
-def update_ingestion_update_time(table, finish=False):
+def __update_ingestion_update_time(table, finish=False):
     ''' update last update time for tables
 
     Parameters
@@ -335,3 +335,14 @@ def update_ingestion_update_time(table, finish=False):
     except Exception as e:
         print(e)
         return False
+
+def update_ingestion_update_time(table):
+    ''' decorator for update update_ingestion_update_time '''
+
+    def decorator(func):
+        def inner(*args, **kwargs):
+            __update_ingestion_update_time(table, finish=False)
+            func(*args, **kwargs)
+            __update_ingestion_update_time(table, finish=True)
+        return inner
+    return decorator

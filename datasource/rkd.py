@@ -669,7 +669,7 @@ class RkdStream(RkdData):
                         data_split = data_split[['ticker','price']]
                         data_split = data_split.set_index('ticker')
                         records = data_split.to_dict("index")
-                        # logging.info(records)
+                        # es_logging.info(records)
                         
                         bulk_update_rtdb(records)
                         del records
@@ -859,7 +859,7 @@ class RkdStream(RkdData):
 
         ws.send(json.dumps(mp_req_json))
         logging.info("SENT:")
-        # logging.info(json.dumps(mp_req_json, sort_keys=True,
+        # es_logging.info(json.dumps(mp_req_json, sort_keys=True,
         #                  indent=2, separators=(",", ":")))
 
     def send_login_request(self, ws, *args, **options):

@@ -15,6 +15,7 @@ from general.sql_output import (
     fill_null_company_desc_with_ticker_name,
     update_universe_where_currency_code_null, 
     upsert_data_to_database,
+    update_ingestion_update_time,
     upsert_data_to_database_ali,
     replace_table_datebase_ali)
 from general.table_name import (
@@ -185,6 +186,7 @@ def update_ticker_name_from_dsws(ticker=None, currency_code=None):
         do_function("universe_populate")
         report_to_slack("{} : === Ticker Name Updated ===".format(datetimeNow()))
 
+@update_ingestion_update_time(get_universe_table_name())
 def update_entity_type_from_dsws(ticker=None, currency_code=None):
     print("{} : === Entity Type Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -201,6 +203,7 @@ def update_entity_type_from_dsws(ticker=None, currency_code=None):
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Entity Type Updated ===".format(datetimeNow()))
 
+@update_ingestion_update_time(get_universe_table_name())
 def update_company_desc_from_dsws(ticker=None, currency_code=None):
     print("{} : === Company Description Ingestion ===".format(datetimeNow()))
     universe = get_active_universe_company_description_null(ticker=ticker)
@@ -218,6 +221,7 @@ def update_company_desc_from_dsws(ticker=None, currency_code=None):
             fill_null_company_desc_with_ticker_name()
             report_to_slack("{} : === Company Description Updated ===".format(datetimeNow()))
 
+@update_ingestion_update_time(get_universe_table_name())
 def update_industry_from_dsws(ticker=None, currency_code=None):
     print("{} : === Country & Industry Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -247,7 +251,8 @@ def update_industry_from_dsws(ticker=None, currency_code=None):
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Country & Industry Updated ===".format(datetimeNow()))
-    
+
+@update_ingestion_update_time(get_universe_table_name())
 def update_worldscope_identifier_from_dsws(ticker=None, currency_code=None):
     print("{} : === Worldscope Identifier Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -263,7 +268,8 @@ def update_worldscope_identifier_from_dsws(ticker=None, currency_code=None):
         print(result)
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Worldscope Identifier Updated ===".format(datetimeNow()))
-        
+
+@update_ingestion_update_time(get_data_dsws_table_name())
 def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, manual=False):
     print("{} : === DSWS Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
@@ -311,6 +317,7 @@ def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, m
         upsert_data_to_database(result, get_data_dsws_table_name(), "dsws_id", how="update", Text=True)
         report_to_slack("{} : === DSWS Updated ===".format(datetimeNow()))
 
+@update_ingestion_update_time(get_data_vix_table_name())
 def update_vix_from_dsws(vix_id=None, history=False):
     print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
@@ -330,6 +337,7 @@ def update_vix_from_dsws(vix_id=None, history=False):
         upsert_data_to_database(result, get_data_vix_table_name(), "uid", how="update", Text=True)
         report_to_slack("{} : === VIX Updated ===".format(datetimeNow()))
 
+@update_ingestion_update_time(get_fundamental_score_table_name())
 def update_fundamentals_score_from_dsws_multi(split=1, ticker=None, currency_code=None):
 
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
@@ -778,6 +786,7 @@ def score_update_final_scale(fundamentals):
 
     return fundamentals.drop(columns=['currency_code'])
 
+@update_ingestion_update_time(get_universe_rating_table_name())
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
     ''' Update: '''
 
@@ -923,6 +932,7 @@ def dividend_updated_from_dsws(ticker=None, currency_code=None):
         upsert_data_to_database(result, get_data_dividend_table_name(), "uid", how="update", Text=True)
         report_to_slack("{} : === Dividens Updated ===".format(datetimeNow()))
 
+@update_ingestion_update_time(get_data_interest_table_name())
 def interest_update_from_dsws():
     print("{} : === Interest Update ===".format(datetimeNow()))
     universe = get_data_by_table_name(get_data_interest_table_name())
@@ -980,6 +990,7 @@ def interest_update_from_dsws():
     upsert_data_to_database(data, get_data_interest_table_name(), "ticker_interest", how="update", Text=True)
     report_to_slack("{} : === Interest Updated ===".format(datetimeNow()))
 
+@update_ingestion_update_time(get_data_fred_table_name())
 def update_fred_data_from_fred():
     print("{} : === Fred Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
@@ -1000,6 +1011,7 @@ def populate_ibes_table():
     upsert_data_to_database(ibes_data, table_name, "uid", how="update", Text=True)
     report_to_slack("{} : === Data IBES Update Updated ===".format(datetimeNow()))
 
+@update_ingestion_update_time(get_data_ibes_monthly_table_name())
 def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=False):
     ''' (Update) weekly ingestion of IBES data '''
 
@@ -1079,6 +1091,7 @@ def populate_macro_table():
     upsert_data_to_database(macro_data, table_name, "period_end", how="update", Text=True)
     report_to_slack("{} : === Data MACRO Update Updated ===".format(datetimeNow()))
 
+@update_ingestion_update_time(get_data_macro_monthly_table_name())
 def update_macro_data_monthly_from_dsws():
     ''' (Update) Weekly ingestion of data_macro_monthly '''
 
@@ -1318,6 +1331,7 @@ def worldscope_report_date_format_change(data):
 #         except Exception as e:
 #             print("{} : === ERROR === : {}".format(dateNow(), e))
 
+@update_ingestion_update_time(get_data_worldscope_summary_table_name())
 def update_worldscope_quarter_summary_from_dsws_multi(split=1, ticker=None, currency_code=None, history=False):
 
     universe = get_active_universe_by_entity_type(ticker=ticker, currency_code=currency_code)
@@ -1326,6 +1340,8 @@ def update_worldscope_quarter_summary_from_dsws_multi(split=1, ticker=None, curr
     with mp.Pool(processes=split) as pool:
         pool.starmap(update_worldscope_quarter_summary_from_dsws, all_groups)
 
+# from es_logging.logger import log_ingestion
+# @log_ingestion
 def update_worldscope_quarter_summary_from_dsws(*args):
     ''' (updated) ingestion quarterly worldscope fields for missing fields only '''
 
@@ -1414,7 +1430,7 @@ def update_worldscope_quarter_summary_from_dsws(*args):
             upsert_data_to_database(result, get_data_worldscope_summary_table_name(), "uid", how="update", Text=True)
             report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
 
-
+@update_ingestion_update_time(get_universe_rating_history_table_name())
 def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
     print("{} : === RECSELL RECBUY Start Ingestion ===".format(datetimeNow()))
     universe = get_all_universe(ticker=ticker, currency_code=currency_code)
@@ -1523,6 +1539,7 @@ def update_worldscope_currency_from_dsws(ticker=None, currency_code=None):
         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Worldscope Currency Updated ===".format(datetimeNow()))
 
+@update_ingestion_update_time(get_currency_price_history_table_name())
 def update_currency_price_from_dsws(currency_code=None):
     print("{} : === Currency Price Start Ingestion ===".format(datetimeNow()))
     currency = get_active_currency_ric_not_null(currency_code=currency_code)

@@ -10,7 +10,19 @@ import logging
 import os
 import uuid
 from datetime import datetime, timedelta
+from general.date_process import dateNow
 
+def log_ingestion(func):
+    ''' record log '''
+    def inner(*args, **kwargs):
+        logger = ESLogger()
+        start_time = dateNow()
+        try:
+            func(*args, **kwargs)
+            logger.log("Ingestion", func.__name__, start_time, kwargs['ticker'], kwargs['currency_code'], dateNow())
+        except Exception as e:
+            logger.log("Ingestion", func.__name__, dateNow(), kwargs['ticker'], kwargs['currency_code'], severity=1, error_message=e)
+    return inner
 
 class ESLogger():
     """
@@ -32,7 +44,7 @@ class ESLogger():
 
     def log(self, task, subtask, start_time, ticker, currency, end_time=None, severity=None, error_message=None):
         """
-        Builds and sends a log to the ES cluster. Times are stored in UTC+8.
+        Builds and sends a log to the ES cluster. Times are stored in UTC+0.
 
         Args:
             task (str): The task that's being done. (e.g. Ingestion)
