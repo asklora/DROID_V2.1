@@ -1,6 +1,6 @@
 # Log class that writes to elastic search
 
-__author__ = "William Gazleey"
+__author__ = "William Gazeley"
 __email__ = "william.gazeley@loratechai.com"
 
 import json
