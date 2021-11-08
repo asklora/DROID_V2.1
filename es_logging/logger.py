@@ -10,19 +10,27 @@ import logging
 import os
 import uuid
 from datetime import datetime, timedelta
-from general.date_process import dateNow
+from functools import wraps
+from general.slack import report_to_slack
+import inspect
 
-def log_ingestion(func):
-    ''' record log '''
-    def inner(*args, **kwargs):
-        logger = ESLogger()
-        start_time = dateNow()
-        try:
-            func(*args, **kwargs)
-            logger.log("Ingestion", func.__name__, start_time, kwargs['ticker'], kwargs['currency_code'], dateNow())
-        except Exception as e:
-            logger.log("Ingestion", func.__name__, dateNow(), kwargs['ticker'], kwargs['currency_code'], severity=1, error_message=e)
-    return inner
+def log2es(task):
+    ''' record log for multi-thread ingestion of data_worldscope_summary & data_fundamental_score (i.e. separate ticker) '''
+    def __log_multitread(func):
+        @wraps(func)
+        def inner(*args, **kwargs):
+            logger = ESLogger()
+            start_time = datetime.timestamp(datetime.now())
+            ticker = kwargs["ticker"] if "ticker" in kwargs.keys() else args[0][0] if len(args)>0 else None
+            currency = kwargs["currency"] if "currency" in kwargs.keys() else None
+            try:
+                func(*args, **kwargs)
+                logger.log(task, func.__name__, start_time, ticker=ticker, currency=currency, end_time=datetime.timestamp(datetime.now()))
+            except Exception as e:
+                logger.log(task, func.__name__, start_time, ticker=ticker, currency=currency, severity=1, error_message=str(e))
+                report_to_slack(f"*ES Log Ingestion Error*: {str(e)}", channel="U026B04RB3J")
+        return inner
+    return __log_multitread
 
 class ESLogger():
     """
@@ -42,7 +50,7 @@ class ESLogger():
             self.log_template = json.load(f)
             self.log_template["id"] = str(uuid.uuid4())
 
-    def log(self, task, subtask, start_time, ticker, currency, end_time=None, severity=None, error_message=None):
+    def log(self, task, subtask, start_time, ticker=None, currency=None, end_time=None, severity=None, error_message=None):
         """
         Builds and sends a log to the ES cluster. Times are stored in UTC+0.
 
@@ -50,8 +58,8 @@ class ESLogger():
             task (str): The task that's being done. (e.g. Ingestion)
             subtask (str): The subtask that's being done. (e.g. update_data_dsws_from_dsws)
             start_time (float): Time of when the subtask started in iso format.
-            ticker (str): Ticker.
-            currency (str): Currency type.
+            ticker (str, optional): Ticker. Defaults to None.
+            currency (str, optional): Currency type. Defaults to None.
             end_time (float, optional): Datetime of when the subtask ended in epoch time. If None, task never finished. Defaults to None.
             severity (int, optional): Severity of error. 1-4. Defaults to None.
             error_message (str, optional): Error message. Defaults to None.

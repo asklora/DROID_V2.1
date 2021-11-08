@@ -6,8 +6,10 @@ from general.sql_output import upsert_data_to_database, update_ingestion_update_
 from general.sql_query import get_active_universe_by_quandl_symbol
 from general.date_process import dateNow, datetimeNow, droid_start_date
 from datasource.quandl import read_quandl_csv
+from es_logging.logger import log2es
 
 @update_ingestion_update_time(get_quandl_table_name())
+@log2es("ingestion")
 def update_quandl_orats_from_quandl(ticker=None, quandl_symbol=None):
     print("{} : === Quandl Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()

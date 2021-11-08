@@ -10,10 +10,10 @@ from general.data_process import remove_null, uid_maker
 from general.sql_process import do_function
 from general.slack import report_to_slack
 from general.sql_output import (
-    delete_data_on_database, 
-    delete_old_dividends_on_database, 
+    delete_data_on_database,
+    delete_old_dividends_on_database,
     fill_null_company_desc_with_ticker_name,
-    update_universe_where_currency_code_null, 
+    update_universe_where_currency_code_null,
     upsert_data_to_database,
     update_ingestion_update_time,
     upsert_data_to_database_ali,
@@ -21,39 +21,39 @@ from general.sql_output import (
 from general.table_name import (
     get_currency_price_history_table_name,
     get_currency_table_name,
-    get_data_dividend_table_name, 
+    get_data_dividend_table_name,
     get_data_dsws_table_name,
     get_data_fred_table_name,
     get_data_fundamental_score_history_table_name,
     get_data_ibes_monthly_table_name,
-    get_data_ibes_table_name, 
+    get_data_ibes_table_name,
     get_data_interest_table_name,
     get_data_macro_monthly_table_name,
-    get_data_macro_table_name, 
+    get_data_macro_table_name,
     get_data_vix_table_name,
-    get_data_worldscope_summary_table_name, 
-    get_fundamental_score_table_name, 
-    get_industry_table_name, 
-    get_industry_worldscope_table_name, 
-    get_universe_consolidated_table_name, 
-    get_universe_rating_detail_history_table_name, 
-    get_universe_rating_history_table_name, 
-    get_universe_rating_table_name, 
+    get_data_worldscope_summary_table_name,
+    get_fundamental_score_table_name,
+    get_industry_table_name,
+    get_industry_worldscope_table_name,
+    get_universe_consolidated_table_name,
+    get_universe_rating_detail_history_table_name,
+    get_universe_rating_history_table_name,
+    get_universe_rating_table_name,
     get_universe_table_name)
 from datasource.dsws import (
     fetch_data_from_dsws,
     get_data_history_by_field_from_dsws,
     get_data_history_frequently_by_field_from_dsws,
-    get_data_history_frequently_from_dsws, 
-    get_data_history_from_dsws, 
-    get_data_static_from_dsws, 
+    get_data_history_frequently_from_dsws,
+    get_data_history_from_dsws,
+    get_data_static_from_dsws,
     get_data_static_with_string_from_dsws)
 from general.sql_query import (
     get_active_currency_ric_not_null,
-    get_active_universe, 
-    get_active_universe_by_entity_type, 
-    get_active_universe_company_description_null, 
-    get_active_universe_consolidated_by_field, 
+    get_active_universe,
+    get_active_universe_by_entity_type,
+    get_active_universe_company_description_null,
+    get_active_universe_consolidated_by_field,
     get_all_universe, get_data_by_table_name,
     get_data_ibes_monthly,
     get_data_macro_monthly,
@@ -64,12 +64,12 @@ from general.sql_query import (
     get_ibes_monthly_latest,
     get_last_close_industry_code,
     get_currency_fx_rate_dict,
-    get_max_last_ingestion_from_universe, 
+    get_max_last_ingestion_from_universe,
     get_ai_value_pred_final,
     get_ai_score_testing_history,
     get_specific_tri_avg,
     get_specific_volume_avg,
-    get_universe_rating, 
+    get_universe_rating,
     get_vix,
     get_vix_since,
     get_master_ohlcvtr_data,
@@ -83,9 +83,9 @@ from general.date_process import (
     backdate_by_day,
     backdate_by_week,
     backdate_by_month,
-    dateNow, 
-    datetimeNow, 
-    dlp_start_date, 
+    dateNow,
+    datetimeNow,
+    dlp_start_date,
     droid_start_date,
     find_nearest_specific_days,
     forwarddate_by_day,
@@ -93,6 +93,7 @@ from general.date_process import (
     get_period_end_list,
     str_to_date)
 from datasource.fred import read_fred_csv
+from es_logging.logger import log2es
 
 def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None, manual_universe=None, universe=None):
     print("{} : === Ticker ISIN Start Ingestion ===".format(datetimeNow()))
@@ -167,6 +168,7 @@ def populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=None, manual_u
     report_to_slack("{} : === Ticker ISIN Updated ===".format(datetimeNow()))
     return result
 
+@log2es("ingestion")
 def update_ticker_name_from_dsws(ticker=None, currency_code=None):
     print("{} : === Ticker Name Start Ingestion ===".format(datetimeNow()))
     universe = get_all_universe(ticker=ticker, currency_code=currency_code)
@@ -187,6 +189,7 @@ def update_ticker_name_from_dsws(ticker=None, currency_code=None):
         report_to_slack("{} : === Ticker Name Updated ===".format(datetimeNow()))
 
 @update_ingestion_update_time(get_universe_table_name())
+@log2es("ingestion")
 def update_entity_type_from_dsws(ticker=None, currency_code=None):
     print("{} : === Entity Type Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -204,6 +207,7 @@ def update_entity_type_from_dsws(ticker=None, currency_code=None):
         report_to_slack("{} : === Entity Type Updated ===".format(datetimeNow()))
 
 @update_ingestion_update_time(get_universe_table_name())
+@log2es("ingestion")
 def update_company_desc_from_dsws(ticker=None, currency_code=None):
     print("{} : === Company Description Ingestion ===".format(datetimeNow()))
     universe = get_active_universe_company_description_null(ticker=ticker)
@@ -222,6 +226,7 @@ def update_company_desc_from_dsws(ticker=None, currency_code=None):
             report_to_slack("{} : === Company Description Updated ===".format(datetimeNow()))
 
 @update_ingestion_update_time(get_universe_table_name())
+@log2es("ingestion")
 def update_industry_from_dsws(ticker=None, currency_code=None):
     print("{} : === Country & Industry Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -253,6 +258,7 @@ def update_industry_from_dsws(ticker=None, currency_code=None):
         report_to_slack("{} : === Country & Industry Updated ===".format(datetimeNow()))
 
 @update_ingestion_update_time(get_universe_table_name())
+@log2es("ingestion")
 def update_worldscope_identifier_from_dsws(ticker=None, currency_code=None):
     print("{} : === Worldscope Identifier Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -270,6 +276,7 @@ def update_worldscope_identifier_from_dsws(ticker=None, currency_code=None):
         report_to_slack("{} : === Worldscope Identifier Updated ===".format(datetimeNow()))
 
 @update_ingestion_update_time(get_data_dsws_table_name())
+@log2es("ingestion")
 def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, manual=False):
     print("{} : === DSWS Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
@@ -318,6 +325,7 @@ def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, m
         report_to_slack("{} : === DSWS Updated ===".format(datetimeNow()))
 
 @update_ingestion_update_time(get_data_vix_table_name())
+@log2es("ingestion")
 def update_vix_from_dsws(vix_id=None, history=False):
     print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
@@ -346,6 +354,7 @@ def update_fundamentals_score_from_dsws_multi(split=1, ticker=None, currency_cod
     with mp.Pool(processes=split) as pool:
         pool.starmap(update_fundamentals_score_from_dsws, all_groups)
 
+@log2es("ingestion")
 def update_fundamentals_score_from_dsws(*args):
     ''' (Update) weekly update data_fundamental_score:
         1. now only ingest ESG score to data_fundamental_score
@@ -377,6 +386,7 @@ def update_fundamentals_score_from_dsws(*args):
             upsert_data_to_database(result, get_data_fundamental_score_history_table_name(), "uid", how="update", Text=True)
             report_to_slack("{} : === Fundamentals Score Updated ===".format(datetimeNow()))
 
+@log2es("ingestion")
 def update_daily_fundamentals_score_from_dsws(ticker=None, currency_code=None):
     print("{} : === Fundamentals Daily Score Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
@@ -787,6 +797,7 @@ def score_update_final_scale(fundamentals):
     return fundamentals.drop(columns=['currency_code'])
 
 @update_ingestion_update_time(get_universe_rating_table_name())
+@log2es("ai_score")
 def update_fundamentals_quality_value(ticker=None, currency_code=None):
     ''' Update: '''
 
@@ -912,6 +923,7 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         # delete_data_on_database(get_universe_rating_detail_history_table_name(), f"ticker is not null", delete_ticker=True)
         report_to_slack("{} : === Universe Fundamentals Quality & Value Updated ===".format(datetimeNow()))
 
+@log2es("ingestion")
 def dividend_updated_from_dsws(ticker=None, currency_code=None):
     print("{} : === Dividens Update ===".format(datetimeNow()))
     end_date = dateNow()
@@ -933,7 +945,9 @@ def dividend_updated_from_dsws(ticker=None, currency_code=None):
         report_to_slack("{} : === Dividens Updated ===".format(datetimeNow()))
 
 @update_ingestion_update_time(get_data_interest_table_name())
+@log2es("ingestion")
 def interest_update_from_dsws():
+    return
     print("{} : === Interest Update ===".format(datetimeNow()))
     universe = get_data_by_table_name(get_data_interest_table_name())
     print(universe)
@@ -991,6 +1005,7 @@ def interest_update_from_dsws():
     report_to_slack("{} : === Interest Updated ===".format(datetimeNow()))
 
 @update_ingestion_update_time(get_data_fred_table_name())
+@log2es("ingestion")
 def update_fred_data_from_fred():
     print("{} : === Fred Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
@@ -1012,6 +1027,7 @@ def populate_ibes_table():
     report_to_slack("{} : === Data IBES Update Updated ===".format(datetimeNow()))
 
 @update_ingestion_update_time(get_data_ibes_monthly_table_name())
+@log2es("ingestion")
 def update_ibes_data_monthly_from_dsws(ticker=None, currency_code=None, history=False):
     ''' (Update) weekly ingestion of IBES data '''
 
@@ -1092,6 +1108,7 @@ def populate_macro_table():
     report_to_slack("{} : === Data MACRO Update Updated ===".format(datetimeNow()))
 
 @update_ingestion_update_time(get_data_macro_monthly_table_name())
+@log2es("ingestion")
 def update_macro_data_monthly_from_dsws():
     ''' (Update) Weekly ingestion of data_macro_monthly '''
 
@@ -1340,8 +1357,7 @@ def update_worldscope_quarter_summary_from_dsws_multi(split=1, ticker=None, curr
     with mp.Pool(processes=split) as pool:
         pool.starmap(update_worldscope_quarter_summary_from_dsws, all_groups)
 
-# from es_logging.logger import log_ingestion
-# @log_ingestion
+@log2es("ingestion")
 def update_worldscope_quarter_summary_from_dsws(*args):
     ''' (updated) ingestion quarterly worldscope fields for missing fields only '''
 
@@ -1431,6 +1447,7 @@ def update_worldscope_quarter_summary_from_dsws(*args):
             report_to_slack("{} : === Quarter Summary Data Updated ===".format(datetimeNow()))
 
 @update_ingestion_update_time(get_universe_rating_history_table_name())
+@log2es("ingestion")
 def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
     print("{} : === RECSELL RECBUY Start Ingestion ===".format(datetimeNow()))
     universe = get_all_universe(ticker=ticker, currency_code=currency_code)
@@ -1450,6 +1467,7 @@ def update_rec_buy_sell_from_dsws(ticker=None, currency_code=None):
         upsert_data_to_database(result2, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
         report_to_slack("{} : === RECSELL RECBUY Updated ===".format(datetimeNow()))
 
+@log2es("ingestion")
 def update_currency_code_from_dsws(ticker=None, currency_code=None):
     print("{} : === CURRENCY CODE Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -1467,6 +1485,7 @@ def update_currency_code_from_dsws(ticker=None, currency_code=None):
         report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
         update_universe_where_currency_code_null()
 
+@log2es("ingestion")
 def update_lot_size_from_dsws(ticker=None, currency_code=None):
     print("{} : === LOT SIZE Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -1482,6 +1501,7 @@ def update_lot_size_from_dsws(ticker=None, currency_code=None):
         upsert_data_to_database(result, get_universe_table_name(), "ticker", how="update", Text=True)
         report_to_slack("{} : === Lot Size Updated ===".format(datetimeNow()))
 
+@log2es("ingestion")
 def update_mic_from_dsws(ticker=None, currency_code=None):
     print("{} : === MIC Start Ingestion ===".format(datetimeNow()))
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
@@ -1540,6 +1560,7 @@ def update_worldscope_currency_from_dsws(ticker=None, currency_code=None):
         report_to_slack("{} : === Worldscope Currency Updated ===".format(datetimeNow()))
 
 @update_ingestion_update_time(get_currency_price_history_table_name())
+@log2es("ingestion")
 def update_currency_price_from_dsws(currency_code=None):
     print("{} : === Currency Price Start Ingestion ===".format(datetimeNow()))
     currency = get_active_currency_ric_not_null(currency_code=currency_code)
