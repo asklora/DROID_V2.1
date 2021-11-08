@@ -14,6 +14,7 @@ from general.sql_output import (
     insert_data_to_database, 
     update_consolidated_activation_by_ticker, 
     update_ingestion_update_time)
+from general.data_process import tuple_data
 from general.date_process import dateNow
 from general.sql_process import do_function
 from general.sql_query import (
@@ -44,63 +45,113 @@ from ingestion.data_from_dsws import (
     update_worldscope_identifier_from_dsws, 
     update_worldscope_quarter_summary_from_dsws)
 
+def firebase_update():
+    firebase_universe_update(currency_code=["HKD"])
+    firebase_universe_update(currency_code=["USD"])
+
 def new_ticker_ingestion(ticker):
     try:
-        status = "Ticker Name Update"
+        status = f"Ticker Name Update"
         update_ticker_name_from_dsws(ticker=ticker)
-        status = "Ticker Symbols Update"
+        status = f"Ticker Symbols Update"
         update_ticker_symbol_from_dss(ticker=ticker)
-        status = "Entity Type Update"
+        status = f"Entity Type Update"
         update_entity_type_from_dsws(ticker=ticker)
-        status = "Lot Size Update"
+        status = f"Lot Size Update"
         update_lot_size_from_dsws(ticker=ticker)
-        status = "Currency Code Update"
+        status = f"Currency Code Update"
         update_currency_code_from_dsws(ticker=ticker)
-        status = "Ticker Name Update"
+        status = f"Ticker Name Update"
         update_ibes_currency_from_dsws(ticker=ticker)
-        status = "Industry Update"
+        status = f"Industry Update"
         update_industry_from_dsws(ticker=ticker)
-        status = "Comapny Description Update"
+        status = f"Comapny Description Update"
         update_company_desc_from_dsws(ticker=ticker)
-        status = "Ticker Name Update"
+        status = f"Ticker Name Update"
         update_mic_from_dsws(ticker=ticker)
-        status = "Worldscope Identifier Update"
+        status = f"Worldscope Identifier Update"
         update_worldscope_identifier_from_dsws(ticker=ticker)
-        status = "Quandl Symbol Update"
+        status = f"Quandl Symbol Update"
         fill_null_quandl_symbol()
-        status = "Quandl Orats Update"
+        status = f"Quandl Orats Update"
         update_quandl_orats_from_quandl(ticker=ticker)
-        status = "DSS Data Update"
+        status = f"DSS Data Update"
         update_data_dss_from_dss(ticker=ticker, history=True)
-        status = "DSWS Data Update"
+        status = f"DSWS Data Update"
         update_data_dsws_from_dsws(ticker=ticker, history=True)
-        status = "Dividend Update"
+        status = f"Dividend Update"
         dividend_updated_from_dsws(ticker=ticker)
-        status = "OHLCVTR Update"
+        status = f"OHLCVTR Update"
         do_function("special_cases_1")
         do_function("master_ohlcvtr_update")
         master_ohlctr_update(history=True)
-        status = "TAC Update"
+        status = f"TAC Update"
         master_tac_update()
-        status = "Multiple Update"
+        status = f"Multiple Update"
         master_multiple_update()
-        status = "IBES Data Update"
+        status = f"IBES Data Update"
         update_ibes_data_monthly_from_dsws(ticker=ticker, history=True)
-        status = "Worldscope Quarter Update"
+        status = f"Worldscope Quarter Update"
         update_worldscope_quarter_summary_from_dsws(ticker=ticker, history=True)
-        status = "Rec Buy Sell Update"
+        status = f"Rec Buy Sell Update"
         update_rec_buy_sell_from_dsws(ticker=ticker)
-        status = "Fundamentals Score Update"
+        status = f"Fundamentals Score Update"
         update_fundamentals_score_from_dsws(ticker=ticker)
-        status = "Fundamentals Quality Update"
+        status = f"Fundamentals Quality Update"
         update_fundamentals_quality_value()
     except Exception as e:
         print("{} : === {} New Ticker Ingestion ERROR === : {}".format(dateNow(), status, e))
 
+def delete_old_ticker(ticker):
+    try:
+        status = f"OHLCVTR Update"
+        do_function("special_cases_1")
+        do_function("master_ohlcvtr_update")
+        master_ohlctr_update(history=True)
+        status = f"TAC Update"
+        master_tac_update()
+        status = f"Multiple Update"
+        master_multiple_update()
+
+        query = f"delete from data_vol_surface where ticker in {tuple_data(ticker)}; "
+        query += f"delete from data_vol_surface_inferred where ticker in {tuple_data(ticker)}; "
+        query += f"delete from data_quandl where ticker in {tuple_data(ticker)}; "
+        query += f"delete from data_fundamental_score where ticker in {tuple_data(ticker)}; "
+        query += f"delete from universe_rating where ticker in {tuple_data(ticker)}; "
+        query += f"delete from master_ohlcvtr where ticker in {tuple_data(ticker)}; "
+        query += f"delete from master_tac where ticker in {tuple_data(ticker)}; "
+        query += f"delete from master_multiple where ticker in {tuple_data(ticker)}; "
+        query += f"delete from data_dividend where ticker in {tuple_data(ticker)}; "
+        query += f"delete from data_dividend_daily_rates where ticker in {tuple_data(ticker)}; "
+        query += f"delete from universe_client where ticker in {tuple_data(ticker)}; "
+        query += f"delete from data_ibes where ticker in {tuple_data(ticker)}; "
+        query += f"delete from data_ibes_monthly where ticker in {tuple_data(ticker)}; "
+        query += f"delete from data_worldscope_summary where ticker in {tuple_data(ticker)}; "
+        query += f"delete from latest_bot_data where ticker in {tuple_data(ticker)}; "
+        query += f"delete from latest_bot_ranking where ticker in {tuple_data(ticker)}; "
+        query += f"delete from latest_bot_update where ticker in {tuple_data(ticker)}; "
+        query += f"delete from latest_price where ticker in {tuple_data(ticker)}; "
+        query += f"delete from latest_vol where ticker in {tuple_data(ticker)}; "
+        query += f"delete from bot_ranking where ticker in {tuple_data(ticker)}; "
+        query += f"delete from bot_statistic where ticker in {tuple_data(ticker)}; "
+        query += f"delete from bot_data where ticker in {tuple_data(ticker)}; "
+        query += f"delete from bot_backtest where ticker in {tuple_data(ticker)}; "
+        query += f"delete from bot_uno_backtest where ticker in {tuple_data(ticker)}; "
+        query += f"delete from bot_classic_backtest where ticker in {tuple_data(ticker)}; "
+        query += f"delete from bot_ucdc_backtest where ticker in {tuple_data(ticker)}; "
+        query += f"delete from universe_rating_detail_history where ticker in {tuple_data(ticker)}; "
+        query += f"delete from universe_rating_history where ticker in {tuple_data(ticker)}; "
+        query += f"delete from dlpa_model_stock where ticker in {tuple_data(ticker)}; "
+        query += f"delete from universe_consolidated where universe_consolidated.origin_ticker in {tuple_data(ticker)}; "
+        query += f"delete from universe_consolidated where universe_consolidated.consolidated_ticker in {tuple_data(ticker)}; "
+        query += f"delete from universe where ticker in {tuple_data(ticker)}; "
+    except Exception as e:
+        print("{} : === {} Old Ticker Deletion ERROR === : {}".format(dateNow(), status, e))
+
 def populate_ticker_monthly(client=None):
     update_ingestion_update_time('universe', finish=False)
     if(client is None):
-        client = "dZzmhmoA" #Client is ASKLORA
+        client = f"dZzmhmoA" #Client is ASKLORA
     universe_consolidated = get_consolidated_universe_data()
     new_universe1 = populate_ticker_from_dss(index_list=["0#.HSLMI"], manual=1)
     new_universe2 =  populate_ticker_from_dss(index_list=["0#.SPX", "0#.NDX"], isin=1)
@@ -134,7 +185,7 @@ def populate_ticker_monthly(client=None):
     new_universe["created"] = timezone.now().date()
     new_universe["updated"] = timezone.now().date()
     new_universe["has_data"] = False
-    new_universe["source_id"] = "DSS"
+    new_universe["source_id"] = f"DSS"
     new_universe["is_active"] = True
     new_universe["isin"] = None
     new_universe["cusip"] = None
@@ -158,8 +209,19 @@ def populate_ticker_monthly(client=None):
     new_ticker_ingestion(ticker["ticker"].to_list())
     update_ingestion_update_time('universe', finish=True)
 
+def check_universe():
+    old_universe = get_active_universe()
+    do_function("universe_populate")
+    new_universe = get_active_universe()
+    new_ticker = new_universe.loc[~new_universe["origin_ticker"].isin(old_universe["ticker"].to_list())]
+    deleted_ticker = old_universe.loc[~old_universe["ticker"].isin(new_universe["ticker"].to_list())]
+    if(len(new_ticker)):
+        new_ticker_ingestion(new_ticker["ticker"].to_list())
+    if(len(deleted_ticker)):
+        delete_old_ticker(deleted_ticker["ticker"].to_list())
+    firebase_update()
+
 class Command(BaseCommand):
     def add_arguments(self, parser):
         populate_ticker_monthly(client=None)
-        firebase_universe_update(currency_code=["HKD"])
-        firebase_universe_update(currency_code=["USD"])
+        firebase_update()
