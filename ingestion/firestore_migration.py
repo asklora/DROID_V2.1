@@ -76,7 +76,7 @@ def rolling_apply(group, field):
     group[field] = adjusted_price
     return group
 
-def firebase_universe_update(ticker=None, currency_code=None):
+def firebase_universe_update(ticker=None, currency_code=None, update_firebase=True):
     ''' update mongo for:
     1. static information
     2. price/financial ratios
@@ -84,7 +84,8 @@ def firebase_universe_update(ticker=None, currency_code=None):
     4. ai_ratings
     5. bot informations
     '''
-    firebase_universe_delete()
+    if(update_firebase):
+        firebase_universe_delete()
     # Populate Universe
     all_universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     currency = get_active_currency(currency_code=currency_code)
@@ -220,8 +221,9 @@ def firebase_universe_update(ticker=None, currency_code=None):
         for i in ['positive_factor', 'negative_factor']:
             df = df_cur.loc[df_cur[i].astype(str) == '[]']
             if cur in ['USD', 'HKD']:
-                report_to_slack_factor("*{} : === [{}] without {}: {}/{} ===*".format(dateNow(), cur, i, len(df), len(df_cur)))
-                report_to_slack_factor('```'+', '.join(["{0:<10}: {1:<5}".format(x,y) for x, y in df[['ticker', 'ai_score']].values])+'```')
+                if(update_firebase):
+                    report_to_slack_factor("*{} : === [{}] without {}: {}/{} ===*".format(dateNow(), cur, i, len(df), len(df_cur)))
+                    report_to_slack_factor('```'+', '.join(["{0:<10}: {1:<5}".format(x,y) for x, y in df[['ticker', 'ai_score']].values])+'```')
 
     # 5. bot ranking & statistics
     ranking = result[["ticker"]]
@@ -277,8 +279,11 @@ def firebase_universe_update(ticker=None, currency_code=None):
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
     universe = change_date_to_str(universe)
-    update_to_firestore(data=universe, index="ticker", table=settings.FIREBASE_COLLECTION['universe'], dict=False)
-    report_to_slack("{} : === FIREBASE UNIVERSE UPDATED ===".format(datetimeNow()))
+    if(update_firebase):
+        update_to_firestore(data=universe, index="ticker", table=settings.FIREBASE_COLLECTION['universe'], dict=False)
+        report_to_slack("{} : === FIREBASE UNIVERSE UPDATED ===".format(datetimeNow()))
+    else:
+        return universe
 
 
 async def gather_task(position_data:pd.DataFrame,bot_option_type:pd.DataFrame,user_core:pd.DataFrame, update_firebase=True)-> List[pd.DataFrame]:
@@ -481,11 +486,9 @@ def firebase_user_update(user_id=None, currency_code=None, update_firebase=True)
                     portfolio = pst_result
                 else:
                     portfolio = portfolio.append(pst_result)
-            print(portfolio)
-            print(type(portfolio))
             return portfolio
 
-def firebase_ranking_update():
+def firebase_ranking_update(update_firebase=True):
     rank = get_user_profit_history(field="user_id, rank::integer as ranking, rank::integer, total_profit_pct")
     rank = rank.sort_values(by=["rank"], ascending=True).head(6)
     user_core = get_user_core(user_id=rank["user_id"].to_list(), field="id as user_id, username, current_status, is_joined, first_name, last_name, email")
@@ -494,9 +497,12 @@ def firebase_ranking_update():
     user_core = user_core.drop(columns=["current_status", "is_joined"])
     rank = rank.merge(user_core, how="left", on=["user_id"])
     rank["ranking"] = (rank["ranking"].astype(int).astype(str) * 4)
-    update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
+    if(update_firebase):
+        update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
+    else:
+        return rank
 
-def firebase_ranking_update_random():
+def firebase_ranking_update_random(update_firebase=True):
     user_core = get_user_core(field="id as user_id, username, current_status, is_joined, first_name, last_name, email")
     user_core = user_core.loc[user_core["current_status"] == "verified"]
     user_core = user_core.loc[user_core["is_joined"] == True]
@@ -516,4 +522,7 @@ def firebase_ranking_update_random():
     rank = rank.sort_values(by=["rank"], ascending=True)
     rank = rank.head(6)
     rank["ranking"] = (rank["ranking"].astype(int).astype(str) * 4)
-    update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
+    if(update_firebase):
+        update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
+    else:
+        return rank
