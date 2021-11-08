@@ -499,6 +499,8 @@ def firebase_ranking_update(update_firebase=True):
     rank["ranking"] = (rank["ranking"].astype(int).astype(str) * 4)
     if(update_firebase):
         update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
+    else:
+        return rank
 
 def firebase_ranking_update_random(update_firebase=True):
     user_core = get_user_core(field="id as user_id, username, current_status, is_joined, first_name, last_name, email")
@@ -522,3 +524,5 @@ def firebase_ranking_update_random(update_firebase=True):
     rank["ranking"] = (rank["ranking"].astype(int).astype(str) * 4)
     if(update_firebase):
         update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
+    else:
+        return rank
