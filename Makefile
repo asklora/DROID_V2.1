@@ -77,101 +77,101 @@ gbp_uno:
 gbp_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code GBP --ucdc True --infer True
 
-worldscope_1:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code GBP --split 1
+worldscope:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --split 16
 
-worldscope_2:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code KRW --split 1
+#worldscope_2:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code KRW --split 1
+#
+#worldscope_3:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code HKD --split 1
+#
+#worldscope_4:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code HKD --split 2
+#
+#worldscope_5:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code HKD --split 3
+#
+#worldscope_6:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code EUR --split 1
+#
+#worldscope_7:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code EUR --split 2
+#
+#worldscope_8:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code EUR --split 3
+#
+#worldscope_9:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code CNY --split 1
+#
+#worldscope_10:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code CNY --split 2
+#
+#worldscope_11:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code CNY --split 3
+#
+#worldscope_12:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code USD --split 1
+#
+#worldscope_13:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code USD --split 2
+#
+#worldscope_14:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code USD --split 3
+#
+#worldscope_15:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code USD --split 4
+#
+#worldscope_16:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code USD --split 5
 
-worldscope_3:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code HKD --split 1
+fundamentals:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --split 16
 
-worldscope_4:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code HKD --split 2
-
-worldscope_5:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code HKD --split 3
-
-worldscope_6:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code EUR --split 1
-
-worldscope_7:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code EUR --split 2
-
-worldscope_8:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code EUR --split 3
-
-worldscope_9:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code CNY --split 1
-
-worldscope_10:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code CNY --split 2
-
-worldscope_11:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code CNY --split 3
-
-worldscope_12:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code USD --split 1
-
-worldscope_13:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code USD --split 2
-
-worldscope_14:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code USD --split 3
-
-worldscope_15:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code USD --split 4
-
-worldscope_16:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code USD --split 5
-
-fundamentals_1:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code GBP --split 1
-
-fundamentals_2:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code KRW --split 1
-
-fundamentals_3:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code HKD --split 1
-
-fundamentals_4:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code HKD --split 2
-
-fundamentals_5:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code HKD --split 3
-
-fundamentals_6:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code EUR --split 1
-
-fundamentals_7:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code EUR --split 2
-
-fundamentals_8:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code EUR --split 3
-
-fundamentals_9:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code CNY --split 1
-
-fundamentals_10:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code CNY --split 2
-
-fundamentals_11:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code CNY --split 3
-
-fundamentals_12:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code USD --split 1
-
-fundamentals_13:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code USD --split 2
-
-fundamentals_14:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code USD --split 3
-
-fundamentals_15:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code USD --split 4
-
-fundamentals_16:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code USD --split 5
+#fundamentals_2:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code KRW --split 1
+#
+#fundamentals_3:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code HKD --split 1
+#
+#fundamentals_4:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code HKD --split 2
+#
+#fundamentals_5:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code HKD --split 3
+#
+#fundamentals_6:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code EUR --split 1
+#
+#fundamentals_7:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code EUR --split 2
+#
+#fundamentals_8:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code EUR --split 3
+#
+#fundamentals_9:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code CNY --split 1
+#
+#fundamentals_10:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code CNY --split 2
+#
+#fundamentals_11:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code CNY --split 3
+#
+#fundamentals_12:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code USD --split 1
+#
+#fundamentals_13:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code USD --split 2
+#
+#fundamentals_14:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code USD --split 3
+#
+#fundamentals_15:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code USD --split 4
+#
+#fundamentals_16:
+#	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code USD --split 5
 
 fundamentals_monthly_factor:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_rating True
