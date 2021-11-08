@@ -1,7 +1,7 @@
 import time
 
 from django.conf import settings
-from tests.utils.firebase_schema import FIREBASE_SCHEMA
+from tests.utils.firebase_schema import FIREBASE_PORTFOLIO_SCHEMA
 from tests.utils.user import set_user_joined
 
 
@@ -27,7 +27,7 @@ def test_creating_new_user_should_update_firebase(
     assert doc.exists
 
     doc_dict = doc.to_dict()
-    assert FIREBASE_SCHEMA.validate(doc_dict)
+    assert FIREBASE_PORTFOLIO_SCHEMA.validate(doc_dict)
 
     print("Firebase doc: " + str(doc_dict))
 

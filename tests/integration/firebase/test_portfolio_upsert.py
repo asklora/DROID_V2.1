@@ -3,7 +3,7 @@ import time
 from bot.calculate_bot import populate_daily_profit
 from django.conf import settings
 from ingestion.firestore_migration import firebase_user_update
-from tests.utils.firebase_schema import FIREBASE_SCHEMA
+from tests.utils.firebase_schema import FIREBASE_PORTFOLIO_SCHEMA
 from tests.utils.order import confirm_order, create_buy_order
 from tests.utils.user import set_user_joined
 
@@ -53,7 +53,7 @@ def test_order_should_be_updated_to_firebase(
     print(doc_dict)
 
     # whether the data in the firebase is structured correctly
-    assert FIREBASE_SCHEMA.validate(doc_dict)
+    assert FIREBASE_PORTFOLIO_SCHEMA.validate(doc_dict)
 
     active_portfolios = doc_dict["active_portfolio"]
 
