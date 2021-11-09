@@ -3,6 +3,7 @@ from general.date_process import datetimeNow, get_time_by_timezone, string_to_ti
 from general.table_name import get_currency_table_name
 from general.sql_query import get_active_currency
 from general.sql_output import upsert_data_to_database
+from es_logging.logger import log2es
 
 def calculate_minutes_hours_to_time(time1, time2, minus=False):
     time1 = time1.split(":")
@@ -50,6 +51,7 @@ def calculate_timezone(data):
             data["utc_offset"].loc[i] = result
     return data
 
+@log2es("db")
 def update_utc_offset_from_timezone():
     currency = get_active_currency()
     print(currency)
