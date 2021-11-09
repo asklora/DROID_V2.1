@@ -1,4 +1,5 @@
 from datetime import datetime
+from random import choice
 
 import pytest
 from core.orders.models import Order, OrderPosition, PositionPerformance
@@ -15,16 +16,16 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_create_new_sell_order_for_user(user) -> None:
+def test_create_new_sell_order_for_user(user, tickers) -> None:
     """
     A new SELL order should be created from a buy order
     """
 
-    price = 10.52
+    ticker, price = choice(tickers).values()
 
     # We create an order
     buy_order = create_buy_order(
-        ticker="9997.HK",
+        ticker=ticker,
         price=price,
         user_id=user.id,
     )
@@ -56,7 +57,7 @@ def test_create_new_sell_order_for_user(user) -> None:
 
     # We create the sell order
     sellPosition, sell_order = sell_position_service(
-        price + 13,  # Selling in different price point (1317 + 13 = 1330 here)
+        buy_order.price + (buy_order.price * 0.25),  # Selling in different price point
         datetime.now(),
         position.position_uid,
     )

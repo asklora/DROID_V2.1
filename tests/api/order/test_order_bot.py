@@ -1,3 +1,5 @@
+from random import choice
+
 import pytest
 from bot.calculate_bot import check_date, get_expiry_date
 from core.bot.models import BotOptionType
@@ -15,12 +17,15 @@ def test_api_create_order_with_classic_bot(
     authentication,
     client,
     user,
+    tickers,
 ) -> None:
+    ticker, price = choice(tickers).values()
+
     data = {
-        "ticker": "0005.HK",
-        "price": 1.63,
+        "ticker": ticker,
+        "price": price,
         "bot_id": "CLASSIC_classic_003846",
-        "amount": 100,
+        "amount": 10000,
         "user": user.id,
         "side": "buy",
     }
@@ -62,12 +67,15 @@ def test_api_create_order_with_uno_bot(
     authentication,
     client,
     user,
+    tickers,
 ) -> None:
+    ticker, price = choice(tickers).values()
+
     data = {
-        "ticker": "0005.HK",
-        "price": 1.63,
+        "ticker": ticker,
+        "price": price,
         "bot_id": "UNO_ITM_003846",
-        "amount": 100,
+        "amount": 10000,
         "user": user.id,
         "side": "buy",
         "margin": 2,
@@ -107,16 +115,14 @@ def test_api_create_order_with_uno_bot(
     assert order["setup"]["position"]["expiry"] == expiry_date
 
 
-def test_api_create_order_with_ucdc_bot(
-    authentication,
-    client,
-    user,
-) -> None:
+def test_api_create_order_with_ucdc_bot(authentication, client, user, tickers) -> None:
+    ticker, price = choice(tickers).values()
+
     data = {
-        "ticker": "0005.HK",
-        "price": 1.63,
+        "ticker": ticker,
+        "price": price,
         "bot_id": "UCDC_ATM_003846",
-        "amount": 100,
+        "amount": 10000,
         "user": user.id,
         "side": "buy",
         "margin": 2,

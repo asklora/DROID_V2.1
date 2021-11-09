@@ -1,5 +1,6 @@
 import socket
-from typing import Union
+from random import choice
+from typing import List, Union
 
 import pytest
 from django.conf import settings
@@ -17,6 +18,7 @@ from core.user.models import (
 )
 from general.data_process import get_uid
 from general.date_process import dateNow
+from tests.utils.order import get_random_ticker_and_price
 from tests.utils.user import delete_user
 
 load_dotenv()
@@ -60,7 +62,7 @@ def django_db_setup():
 
 @pytest.fixture(scope="session")
 def user(django_db_setup, django_db_blocker):
-    # Creating unique user for each computer and invocation
+    # Creating unique user for each computer
     computer_name = socket.gethostname().lower()
     unique_email = f"{computer_name}@tests.com"
 
@@ -131,12 +133,26 @@ def authentication(client, user) -> Union[dict, None]:
     return {"HTTP_AUTHORIZATION": "Bearer " + response_body["access"]}
 
 @pytest.fixture
-def order(authentication, client, user) -> Union[dict, None]:
+def tickers() -> List[dict]:
+    tickers: List = []
+
+    for i in range(10):
+        # get random ticker
+        ticker, price = get_random_ticker_and_price()
+        tickers.append({"ticker": ticker, "price": price})
+
+    return tickers
+
+
+@pytest.fixture
+def order(authentication, client, user, tickers) -> Union[dict, None]:
+    ticker, price = choice(tickers).values()
+
     data = {
-        "ticker": "0005.HK",
-        "price": 1.63,
+        "ticker": ticker,
+        "price": price,
         "bot_id": "STOCK_stock_0",
-        "amount": 100,
+        "amount": 10000,
         "user": user.id,
         "side": "buy",
     }

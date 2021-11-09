@@ -1,4 +1,5 @@
 from datetime import datetime
+from random import choice
 
 import numpy as np
 import pandas as pd
@@ -17,9 +18,13 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_hedge_values_for_ucdc_bot(user) -> None:
+def test_hedge_values_for_ucdc_bot(
+    user,
+    tickers,
+) -> None:
+    ticker, _ = choice(tickers).values()
+
     # step 1: create a new order
-    ticker = "2020.HK"
     master = MasterOhlcvtr.objects.get(
         ticker=ticker,
         trading_day="2021-05-03",
