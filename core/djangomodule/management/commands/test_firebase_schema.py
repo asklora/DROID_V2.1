@@ -45,42 +45,42 @@ class Command(BaseCommand):
         """
         Universe: upsert command assertion
         """
-        print_divider("Check universe upsert command")
-        result = firebase_universe_update(
-            currency_code=["HKD"],
-            update_firebase=False,
-        )
+        # print_divider("Check universe upsert command")
+        # result = firebase_universe_update(
+        #     currency_code=["HKD"],
+        #     update_firebase=False,
+        # )
 
-        assert type(result) is not str
+        # assert type(result) is not str
 
-        records = result.to_dict("records")
+        # records = result.to_dict("records")
 
-        for portfolio in records:
-            assert FIREBASE_PORTFOLIO_SCHEMA.validate(portfolio)
+        # for portfolio in records:
+        #     assert FIREBASE_PORTFOLIO_SCHEMA.validate(portfolio)
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"HKD universe upsert command has the correct schema, {len(records)} checked",
-            )
-        )
+        # self.stdout.write(
+        #     self.style.SUCCESS(
+        #         f"HKD universe upsert command has the correct schema, {len(records)} checked",
+        #     )
+        # )
 
-        result = firebase_universe_update(
-            currency_code=["USD"],
-            update_firebase=False,
-        )
+        # result = firebase_universe_update(
+        #     currency_code=["USD"],
+        #     update_firebase=False,
+        # )
 
-        assert type(result) is not str
+        # assert type(result) is not str
 
-        records = result.to_dict("records")
+        # records = result.to_dict("records")
 
-        for portfolio in records:
-            assert FIREBASE_PORTFOLIO_SCHEMA.validate(portfolio)
+        # for portfolio in records:
+        #     assert FIREBASE_PORTFOLIO_SCHEMA.validate(portfolio)
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"USD universe upsert command has the correct schema, {len(records)} checked",
-            )
-        )
+        # self.stdout.write(
+        #     self.style.SUCCESS(
+        #         f"USD universe upsert command has the correct schema, {len(records)} checked",
+        #     )
+        # )
 
         """
         Portfolio: firebase data assertion
