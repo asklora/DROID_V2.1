@@ -7,6 +7,7 @@ You can use this configuration file by running:
 """
 TESTDEBUG = True
 DATABASE_ROUTERS = []
+
 LOGGING = {
     'version': 1,
     'filters': {

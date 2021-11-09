@@ -18,6 +18,7 @@ from general.table_name import (
     get_data_interest_table_name)
 
 from global_vars import null_per, r_days, q_days
+from es_logging.logger import log2es
 
 def make_multiples(prices_df):
     # This function will make multiples.
@@ -266,6 +267,7 @@ def cal_q(row, dividends_data, dates_temp, prices_temp):
     dates_temp2["amount"] = dates_temp2["amount"] / prices_temp
     return dates_temp2["amount"].values
 
+@log2es("db")
 def dividend_daily_update():
     print("{} : === Dividens Daily Update ===".format(datetimeNow()))
     dividend_data = get_data_by_table_name(get_data_dividend_table_name())
@@ -308,7 +310,8 @@ def dividend_daily_update():
     #insert_data_to_database(result, get_data_dividend_daily_table_name, how="replace")
     upsert_data_to_database(result, get_data_dividend_daily_rates_table_name(), "uid", how="update", Text=True)
     report_to_slack("{} : === Dividens Daily Updated ===".format(datetimeNow()))
-    
+
+@log2es("db")
 def interest_daily_update(currency_code=None):
     def cal_interest_rate(interest_rate_data, days_to_expiry):
         unique_horizons = pd.DataFrame(days_to_expiry)

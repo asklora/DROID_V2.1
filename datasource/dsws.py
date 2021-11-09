@@ -4,6 +4,7 @@ from pydatastream import Datastream
 from general.date_process import count_date_range_by_month
 from global_vars import DSWS_PASSWORD, DSWS_PASSWORD2, DSWS_USERNAME, DSWS_USERNAME2
 from general.sql_output import update_ingestion_count
+from retry import retry
 
 def setDataStream(DSWS=True):
     if(DSWS):
@@ -25,7 +26,8 @@ def fetch_data_static_from_dsws(universe, *field, dsws=True):
     DS.raise_on_error = False
     result = DS.fetch(universe, *field, static=True)
     return result
-    
+
+@retry(ConnectionError, tries=3, delay=1)
 def get_data_static_with_string_from_dsws(identifier, universe, *field, dsws=True):
     ''' Ingest from DSWS where universe = String
 
@@ -52,6 +54,7 @@ def get_data_static_with_string_from_dsws(identifier, universe, *field, dsws=Tru
     print("== Getting Data From DSWS Done ==")
     return result
 
+@retry(ConnectionError, tries=3, delay=1)
 def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, split_number=40, dsws=True):
     DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
@@ -94,6 +97,7 @@ def get_data_static_from_dsws(universe, identifier, *field, use_ticker=True, spl
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
 
+@retry(ConnectionError, tries=3, delay=1)
 def get_data_history_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, dividend=False, split_number=40, dsws=True):
     DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
@@ -169,6 +173,7 @@ def get_data_history_from_dsws(start_date, end_date, universe, identifier, *fiel
     print("== Getting Data From DSWS Done ==")
     return data, error_universe
 
+@retry(ConnectionError, tries=3, delay=1)
 def get_data_history_by_field_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, dividend=False, split_number=40, dsws=True):
     DS = setDataStream(DSWS=dsws)
     chunk_data = []
@@ -209,6 +214,7 @@ def get_data_history_by_field_from_dsws(start_date, end_date, universe, identifi
     print(data)
     return data, error_universe
 
+@retry(ConnectionError, tries=3, delay=1)
 def get_data_history_frequently_from_dsws(start_date, end_date, universe, identifier, *field, use_ticker=True, split_number=40, monthly=False, quarterly=False, fundamentals_score=False, dsws=True):
     DS = setDataStream(DSWS=dsws)
     print("== Getting Data From DSWS ==")
@@ -267,6 +273,7 @@ def get_data_history_frequently_from_dsws(start_date, end_date, universe, identi
     print(data)
     return data, error_universe
 
+@retry(ConnectionError, tries=3, delay=1)
 def get_data_history_frequently_by_field_from_dsws(start_date, end_date, universe, identifier, field, use_ticker=True,
                                                    split_number=40, monthly=False, quarterly=False,
                                                    fundamentals_score=False, worldscope=False, dsws=True):
