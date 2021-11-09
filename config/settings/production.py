@@ -129,8 +129,8 @@ CELERY_TASK_ROUTES = {
     # update ticker weekly
     'core.services.tasks.weekly_universe_firebase_update':{'queue': UTILS_WORKER_DEFAULT_QUEUE},
     # exchange hours updater
-    'core.services.exchange_services.init_exchange_check':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
-    'core.services.exchange_services.market_check_routines':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
+    'core.services.exchange_services.init_exchange_check':{'queue': CELERY_TASK_DEFAULT_QUEUE},
+    'core.services.exchange_services.market_check_routines':{'queue': CELERY_TASK_DEFAULT_QUEUE},
     # ===== UTILITY =====
 
     # ===== CELERY DEFAULT =====
