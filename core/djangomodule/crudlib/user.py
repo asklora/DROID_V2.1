@@ -22,7 +22,7 @@ def sync_user(payload):
     print("CREATING STATUS",create)
     if not create:
         join =payload.get('is_joined',False)
-        if join:
+        if user.is_join:
             payload.pop('is_joined')
         for attrib, val in payload.items():
             if hasattr(user,attrib):
@@ -40,7 +40,7 @@ def sync_user(payload):
         for key in unused_key:
             payload.pop(key)
         firebase_user_update(user_id=[user.id])
-        populate_daily_profit(user_id=[user.id])
+        populate_daily_profit()
         return payload
 
 
