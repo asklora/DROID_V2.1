@@ -191,7 +191,7 @@ def fill_null_quandl_symbol():
 
 def update_consolidated_activation_by_ticker(ticker=None, is_active=True):
     query = f"update {get_universe_consolidated_table_name()} set is_active={is_active} "
-    query += f"WHERE origin_ticker in {tuple_data(ticker)}"
+    query += f"WHERE origin_ticker in {tuple_data(ticker)} or consolidated_ticker in {tuple_data(ticker)}"
     data = execute_query(query, table=get_universe_consolidated_table_name())
     return data
     

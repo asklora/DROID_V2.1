@@ -106,39 +106,52 @@ def new_ticker_ingestion(ticker):
 
 def delete_old_ticker(ticker):
     try:
-        status = f"OHLCVTR Update"
-        # do_function("special_cases_1")
-        # do_function("master_ohlcvtr_update")
-        # master_ohlctr_update(history=True)
-        # status = f"TAC Update"
-        # master_tac_update()
-        # status = f"Multiple Update"
-        # master_multiple_update()
-        status = f"Remove Data From Database"
-        query = f"delete from data_vol_surface where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from data_vol_surface_inferred where ticker in {tuple_data(ticker)}; "
-        query += f"delete from data_quandl where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from data_fundamental_score where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from universe_rating where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from data_dividend where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from data_dividend_daily_rates where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from universe_client where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from latest_bot_data where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from latest_bot_ranking where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from latest_bot_update where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from latest_price where ticker in {tuple_data(ticker)}; "
-        query += f"delete from latest_vol where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from bot_ranking where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from bot_statistic where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from bot_data where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from bot_backtest where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from bot_uno_backtest where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from bot_classic_backtest where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from bot_ucdc_backtest where ticker in {tuple_data(ticker)}; "
-        # query += f"delete from universe_consolidated where universe_consolidated.origin_ticker in {tuple_data(ticker)}; "
-        # query += f"delete from universe_consolidated where universe_consolidated.consolidated_ticker in {tuple_data(ticker)}; "
-        print(query)
-        execute_query(query)
+        universe_consolidated = get_consolidated_universe_data()
+        origin_ticker = universe_consolidated.loc[universe_consolidated["origin_ticker"].isin(ticker)][["consolidated_ticker"]]
+        consolidated_ticker = universe_consolidated.loc[universe_consolidated["consolidated_ticker"].isin(ticker)][["consolidated_ticker"]]
+        delete_ticker = origin_ticker.append(consolidated_ticker)
+        delete_ticker = delete_ticker.drop_duplicates(subset=["consolidated_ticker"])["consolidated_ticker"].to_list()
+        print(delete_ticker)
+        old_universe = get_active_universe()
+        update_consolidated_activation_by_ticker(ticker=ticker, is_active=False)
+        do_function("universe_populate")
+        new_universe = get_active_universe()
+        deleted_ticker = old_universe.loc[~old_universe["ticker"].isin(new_universe["ticker"].to_list())]
+        deleted_ticker = deleted_ticker.loc[deleted_ticker["ticker"].isin(delete_ticker)]["ticker"].to_list()
+        print(deleted_ticker)
+        if(len(deleted_ticker)):
+            status = f"OHLCVTR Update"
+            do_function("special_cases_1")
+            do_function("master_ohlcvtr_update")
+            master_ohlctr_update(history=True)
+            status = f"TAC Update"
+            master_tac_update()
+            status = f"Multiple Update"
+            master_multiple_update()
+            status = f"Remove Data From Database"
+            query = f"delete from data_vol_surface where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from data_vol_surface_inferred where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from data_quandl where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from data_fundamental_score where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from universe_rating where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from data_dividend where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from data_dividend_daily_rates where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from universe_client where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from latest_bot_data where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from latest_bot_ranking where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from latest_bot_update where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from latest_price where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from latest_vol where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from bot_ranking where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from bot_statistic where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from bot_data where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from bot_backtest where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from bot_uno_backtest where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from bot_classic_backtest where ticker in {tuple_data(deleted_ticker)}; "
+            query += f"delete from bot_ucdc_backtest where ticker in {tuple_data(deleted_ticker)}; "
+            print(query)
+            execute_query(query)
+            report_to_slack("{} : === {} Ticker Deleted ===".format(dateNow(), deleted_ticker))
     except Exception as e:
         report_to_slack("{} : === {} Old Ticker Deletion ERROR === : {}".format(dateNow(), status, e))
 
