@@ -40,6 +40,7 @@ from general.sql_query import (
     get_user_profit_history,
     get_factor_calculation_formula,
     get_factor_current_used)
+from es_logging.logger import log2es
 
 def firebase_universe_delete():
     universe = get_all_universe(active=True)
@@ -76,7 +77,10 @@ def rolling_apply(group, field):
     group[field] = adjusted_price
     return group
 
-def firebase_universe_update(ticker=None, currency_code=None, update_firebase=True):
+
+@log2es("ai_score")
+def firebase_universe_update(ticker=None, currency_code=None,update_firebase=True):
+
     ''' update mongo for:
     1. static information
     2. price/financial ratios

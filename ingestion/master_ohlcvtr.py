@@ -9,6 +9,7 @@ from general.sql_output import delete_data_on_database, upsert_data_to_database
 from general.table_name import get_master_ohlcvtr_table_name
 from ingestion.data_from_dsws import update_currency_code_from_dsws, update_data_dsws_from_dsws
 from ingestion.data_from_dss import update_data_dss_from_dss
+from es_logging.logger import log2es
 
 #New Ticker Categories is When Datapoint Less Than 1000 Datapoint
 def FindNewTicker(fulldatapoint):
@@ -88,6 +89,7 @@ def FillDayStatus(data):
     data["day_status"] = np.select(conditions, choices, default="missing")
     return data
 
+@log2es("db")
 def master_ohlctr_update(history=False):
     # do_function("master_ohlcvtr_update")
     print("Get Start Date")

@@ -36,39 +36,8 @@ BOT SCHEDULE IN HK TIME
 36 11 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/gbp_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/gbp_ucdc.log 2>&1
 
 
-40 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_1.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_1.log 2>&1
-41 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_2.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_2.log 2>&1
-42 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_3.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_3.log 2>&1
-43 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_4.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_4.log 2>&1
-44 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_5.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_5.log 2>&1
-45 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_6.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_6.log 2>&1
-46 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_7.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_7.log 2>&1
-47 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_8.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_8.log 2>&1
-48 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_9.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_9.log 2>&1
-49 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_10.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_10.log 2>&1
-50 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_11.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_11.log 2>&1
-51 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_12.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_12.log 2>&1
-52 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_13.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_13.log 2>&1
-53 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_14.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_14.log 2>&1
-54 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_15.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_15.log 2>&1
-55 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals_16.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals_16.log 2>&1
-
-56 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_1.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_1.log 2>&1
-57 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_2.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_2.log 2>&1
-58 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_3.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_3.log 2>&1
-59 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_4.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_4.log 2>&1
-00 11 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_5.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_5.log 2>&1
-01 11 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_6.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_6.log 2>&1
-02 11 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_7.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_7.log 2>&1
-03 11 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_8.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_8.log 2>&1
-04 11 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_9.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_9.log 2>&1
-05 11 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_10.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_10.log 2>&1
-06 11 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_11.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_11.log 2>&1
-07 11 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_12.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_12.log 2>&1
-08 11 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_13.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_13.log 2>&1
-09 11 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_14.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_14.log 2>&1
-10 11 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_15.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_15.log 2>&1
-11 11 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope_16.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope_16.log 2>&1
+40 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals.log 2>&1
+56 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope.log 2>&1
 
 00 04 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/monthly.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/monthly.log 2>&1
 

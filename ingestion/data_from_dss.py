@@ -5,7 +5,8 @@ from general.slack import report_to_slack
 from general.sql_output import (
     clean_latest_price, 
     update_all_data_by_capital_change, 
-    update_capital_change, 
+    update_capital_change,
+    update_ingestion_update_time,
     upsert_data_to_database)
 from general.table_name import (
     get_data_dss_table_name, 
@@ -26,7 +27,9 @@ from general.date_process import (
     dlp_start_date, 
     str_to_date)
 from global_vars import REPORT_HISTORY, REPORT_INDEXMEMBER
+from es_logging.logger import log2es
 
+@log2es("ingestion")
 def update_ticker_symbol_from_dss(ticker=None, currency_code=None):
     print("{} : === Ticker Symbol Start Ingestion ===".format(datetimeNow()))
     identifier="ticker"
@@ -57,6 +60,8 @@ def update_ticker_symbol_from_dss(ticker=None, currency_code=None):
             upsert_data_to_database(result2, get_universe_table_name(), identifier, how="update", Text=True)
         report_to_slack("{} : === Ticker Symbol Updated ===".format(datetimeNow()))
 
+@update_ingestion_update_time(get_data_dss_table_name())
+@log2es("ingestion")
 def update_data_dss_from_dss(ticker=None, currency_code=None, history=False, manual=False):
     print("{} : === DSS Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
