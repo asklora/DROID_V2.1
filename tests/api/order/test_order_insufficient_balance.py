@@ -1,3 +1,5 @@
+import time
+
 from random import choice
 from typing import Union
 
@@ -106,6 +108,7 @@ def test_api_multiple_order_insufficient_balance(
         placed_order = confirm_order(order["order_uid"])
         assert order["order_uid"] == placed_order["order_uid"]
         assert placed_order["status"] == "executed"
+        time.sleep(3)
 
     ticker, price = choice(tickers).values()
     last_order = client.post(
