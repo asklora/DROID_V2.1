@@ -56,7 +56,7 @@ CACHES = {
 
 
 print("using test db changes local")
-read_endpoint, write_endpoint, port = db.test_url
+read_endpoint, write_endpoint, port = db.dev_url
 CELERY_BROKER_URL = "amqp://rabbitmq:rabbitmq@16.162.110.123:5672"
 CELERY_SINGLETON_BACKEND_URL = 'redis://localhost:6379/1'
 CELERY_TASK_DEFAULT_QUEUE ='droid_dev'

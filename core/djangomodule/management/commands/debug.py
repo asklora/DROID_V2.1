@@ -18,6 +18,6 @@ class Command(BaseCommand):
         # update_season_monthly()
         # update_monthly_deposit()
         # populate_daily_profit(user_id=[1846])
-        # firebase_user_update(currency_code=["HKD"])
+        # firebase_user_update(currency_code=["HKD"], update_firebase=False)
         # firebase_universe_update(currency_code=["HKD"])
         # daily_hedge_user(currency=["HKD"],ingest=True)

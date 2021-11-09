@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 import pytest
 from core.master.models import MasterOhlcvtr
@@ -68,7 +69,7 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     balance = Accountbalance.objects.get(user=user)
 
     # get user transaction history
-    transactions: list[TransactionHistory] = TransactionHistory.objects.filter(
+    transactions: List[TransactionHistory] = TransactionHistory.objects.filter(
         balance_uid=balance
     )
 

@@ -1,9 +1,9 @@
 from datetime import datetime
+from random import choice
 
 import pytest
 from core.orders.models import Order
 from core.user.models import Accountbalance
-
 from tests.utils.order import create_buy_order
 
 pytestmark = pytest.mark.django_db(
@@ -15,16 +15,18 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_create_simple_order(user) -> None:
+def test_create_simple_order(user, tickers) -> None:
     """
     A new order should be created with default values for is_init, placed,
     status, dates, etc.
     """
 
+    ticker, price = choice(tickers).values()
+
     order = create_buy_order(
         user_id=user.id,
-        ticker="0780.HK",
-        price=1317,
+        ticker=ticker,
+        price=price,
     )
 
     assert order.is_init is True
@@ -33,9 +35,9 @@ def test_create_simple_order(user) -> None:
     assert order.placed_at is None
     assert order.filled_at is None
     assert order.canceled_at is None
-    assert order.amount == 131700
-    assert order.price == 1317
-    assert order.qty == 100  # from order.amount divided by order.price
+    assert order.amount == price * 10000
+    assert order.price == price
+    assert order.qty == 10000  # from order.amount divided by order.price
 
 
 def test_create_new_buy_order_for_user(user) -> None:
@@ -54,7 +56,7 @@ def test_create_new_buy_order_for_user(user) -> None:
     assert order.setup is None  # should be empty
 
 
-def test_update_new_buy_order_for_user(user) -> None:
+def test_update_new_buy_order_for_user(user, tickers) -> None:
     """
     A new BUY order's status will be set to PENDING and the price is deducted
     from USER balance
@@ -62,9 +64,8 @@ def test_update_new_buy_order_for_user(user) -> None:
     """
 
     side = "buy"
-    ticker = "0005.HK"
-    qty = 3
-    price = 1317
+    ticker, price = choice(tickers).values()
+    qty = 10000
     bot_id = "STOCK_stock_0"
 
     order = Order.objects.create(
@@ -93,5 +94,5 @@ def test_update_new_buy_order_for_user(user) -> None:
 
     order = Order.objects.get(pk=order.order_uid)
 
-    assert order.amount == price * qty
-    assert user_balance.amount == previous_user_balance.amount - order.amount
+    assert order.amount == round(price * qty)
+    assert user_balance.amount == round(previous_user_balance.amount - order.amount)

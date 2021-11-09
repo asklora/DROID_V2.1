@@ -1,3 +1,5 @@
+from random import choice
+
 import pytest
 from core.orders.models import Order
 from tests.utils.order import confirm_order
@@ -12,12 +14,19 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_api_create_buy_order(authentication, client, user) -> None:
+def test_api_create_buy_order(
+    authentication,
+    client,
+    user,
+    tickers,
+) -> None:
+    ticker, price = choice(tickers).values()
+
     data = {
-        "ticker": "0005.HK",
-        "price": 1.63,
+        "ticker": ticker,
+        "price": price,
         "bot_id": "STOCK_stock_0",
-        "amount": 100,
+        "amount": 10000,
         "user": user.id,
         "side": "buy",
     }
@@ -39,20 +48,25 @@ def test_api_create_buy_order(authentication, client, user) -> None:
 
     assert order is not None
     assert order["order_uid"] is not None
-    # amount is adjusted to the maximum purchasable stocks
-    assert order["amount"] == 99.43
 
     # we check it from the backend side
     order = Order.objects.get(pk=order["order_uid"])
     assert order is not None
 
 
-def test_api_create_sell_order(authentication, client, user) -> None:
+def test_api_create_sell_order(
+    authentication,
+    client,
+    user,
+    tickers,
+) -> None:
+    ticker, price = choice(tickers).values()
+
     data = {
-        "ticker": "0005.HK",
-        "price": 1.63,
+        "ticker": ticker,
+        "price": price,
         "bot_id": "STOCK_stock_0",
-        "amount": 100,
+        "amount": 10000,
         "user": user.id,
         "side": "buy",
     }
@@ -73,8 +87,6 @@ def test_api_create_sell_order(authentication, client, user) -> None:
 
     assert buy_order is not None
     assert buy_order["order_uid"] is not None
-    # amount is adjusted to the maximum purchasable stocks
-    assert buy_order["amount"] == 99.43
 
     # we check it from the backend side
     buy_order = Order.objects.get(pk=buy_order["order_uid"])

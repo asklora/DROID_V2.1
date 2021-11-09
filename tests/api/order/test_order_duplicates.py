@@ -1,3 +1,4 @@
+from random import choice
 from typing import Union
 
 import pytest
@@ -20,16 +21,19 @@ def test_api_create_duplicated_buy_orders(
     authentication,
     client,
     user,
+    tickers,
 ) -> None:
+    ticker, price = choice(tickers).values()
+
     def create_order() -> Union[dict, None]:
         response = client.post(
             path="/api/order/create/",
             data={
-                "ticker": "0005.HK",
-                "price": 1.63,
+                "ticker": ticker,
+                "price": price,
                 "bot_id": "STOCK_stock_0",
-                "amount": 100,
-                "margin": 1,
+                "amount": 10000,
+                "margin": 2,
                 "user": user.id,
                 "side": "buy",
             },
@@ -64,7 +68,11 @@ def test_api_create_duplicated_buy_orders(
 
 
 def test_api_create_duplicated_pending_sell_orders(
-    authentication, client, user, mocker
+    authentication,
+    client,
+    mocker,
+    user,
+    tickers,
 ) -> None:
     # mock all the things!
     mocker.patch(
@@ -75,11 +83,13 @@ def test_api_create_duplicated_pending_sell_orders(
         "core.services.order_services.asyncio.run",
     )
 
+    ticker, price = choice(tickers).values()
+
     response = client.post(
         path="/api/order/create/",
         data={
-            "ticker": "0005.HK",
-            "price": 1.63,
+            "ticker": ticker,
+            "price": price,
             "bot_id": "UCDC_ATM_007692",
             "amount": 10000,
             "margin": 2,
@@ -174,12 +184,15 @@ def test_api_create_duplicated_filled_sell_orders(
     authentication,
     client,
     user,
+    tickers,
 ) -> None:
+    ticker, price = choice(tickers).values()
+
     response = client.post(
         path="/api/order/create/",
         data={
-            "ticker": "0005.HK",
-            "price": 1.63,
+            "ticker": ticker,
+            "price": price,
             "bot_id": "UCDC_ATM_007692",
             "amount": 10000,
             "margin": 2,
@@ -253,8 +266,9 @@ def test_api_create_duplicated_filled_sell_orders(
 def test_duplicated_pending_buy_order_celery(
     authentication,
     client,
-    user,
     mocker,
+    user,
+    tickers,
 ) -> None:
     # mock all the things!
     mocker.patch(
@@ -266,13 +280,14 @@ def test_duplicated_pending_buy_order_celery(
     )
 
     # utility function to create a new order
-    # TODO: move it to utils
+    ticker, price = choice(tickers).values()
+
     def create_order() -> Union[dict, None]:
         response = client.post(
             path="/api/order/create/",
             data={
-                "ticker": "1109.HK",
-                "price": 31.9,
+                "ticker": ticker,
+                "price": price,
                 "bot_id": "CLASSIC_classic_003846",
                 "amount": 20000,  # 10.000 HKD more than the user can afford
                 "margin": 2,

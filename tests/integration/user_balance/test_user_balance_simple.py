@@ -1,4 +1,5 @@
 from datetime import datetime
+from random import choice
 
 import pytest
 from core.orders.models import Order
@@ -13,7 +14,10 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_check_if_user_balance_is_cut_accordingly(user) -> None:
+def test_check_if_user_balance_is_cut_accordingly(
+    user,
+    tickers,
+) -> None:
     """
     A new buy order will be created and filled, and user balance is deducted
     with the same nominal as the order amount.
@@ -21,8 +25,7 @@ def test_check_if_user_balance_is_cut_accordingly(user) -> None:
     """
 
     side = "buy"
-    ticker = "3333.HK"
-    price = 2.95
+    ticker, price = choice(tickers).values()
     qty = 20000
     bot_id = "STOCK_stock_0"
 
@@ -56,10 +59,13 @@ def test_check_if_user_balance_is_cut_accordingly(user) -> None:
     user_balance = Accountbalance.objects.get(user=user)
     print("User balance after order is filled: ", user_balance.amount)
 
-    assert user_balance.amount == initial_user_balance - order.amount
+    assert user_balance.amount == round(initial_user_balance - order.amount)
 
 
-def test_check_if_user_balance_is_cut_accordingly_with_margin(user) -> None:
+def test_check_if_user_balance_is_cut_accordingly_with_margin(
+    user,
+    tickers,
+) -> None:
     """
     A new buy order will be created and filled, and user balance is deducted
     with the same nominal as the order amount.
@@ -67,9 +73,8 @@ def test_check_if_user_balance_is_cut_accordingly_with_margin(user) -> None:
     """
 
     side = "buy"
-    ticker = "0005.HK"
-    amount = 131700
-    price = 1317
+    ticker, price = choice(tickers).values()
+    amount = 20000 * price
     margin = 2
     bot_id = "UNO_OTM_007692"
 
