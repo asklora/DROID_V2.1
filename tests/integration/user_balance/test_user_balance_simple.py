@@ -59,7 +59,7 @@ def test_check_if_user_balance_is_cut_accordingly(
     user_balance = Accountbalance.objects.get(user=user)
     print("User balance after order is filled: ", user_balance.amount)
 
-    assert user_balance.amount == initial_user_balance - order.amount
+    assert user_balance.amount == round(initial_user_balance - order.amount)
 
 
 def test_check_if_user_balance_is_cut_accordingly_with_margin(

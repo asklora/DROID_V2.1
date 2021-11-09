@@ -94,5 +94,5 @@ def test_update_new_buy_order_for_user(user, tickers) -> None:
 
     order = Order.objects.get(pk=order.order_uid)
 
-    assert order.amount == price * qty
-    assert user_balance.amount == previous_user_balance.amount - order.amount
+    assert order.amount == round(price * qty)
+    assert user_balance.amount == round(previous_user_balance.amount - order.amount)
