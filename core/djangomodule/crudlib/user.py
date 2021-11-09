@@ -22,7 +22,7 @@ def sync_user(payload):
     print("CREATING STATUS",create)
     if not create:
         join =payload.get('is_joined',False)
-        if user.is_join:
+        if user.is_joined:
             payload.pop('is_joined')
         for attrib, val in payload.items():
             if hasattr(user,attrib):
