@@ -1,3 +1,4 @@
+from general.slack import report_to_slack
 from ingestion.firestore_migration import firebase_universe_update
 import pandas as pd
 import numpy as np
@@ -10,6 +11,7 @@ from ingestion.master_ohlcvtr import master_ohlctr_update
 from ingestion.data_from_quandl import update_quandl_orats_from_quandl
 from general.table_name import get_universe_client_table_name
 from general.sql_output import (
+    execute_query,
     fill_null_quandl_symbol, 
     insert_data_to_database, 
     update_consolidated_activation_by_ticker, 
@@ -51,105 +53,97 @@ def firebase_update():
 
 def new_ticker_ingestion(ticker):
     try:
-        status = f"Ticker Name Update"
-        update_ticker_name_from_dsws(ticker=ticker)
-        status = f"Ticker Symbols Update"
-        update_ticker_symbol_from_dss(ticker=ticker)
-        status = f"Entity Type Update"
-        update_entity_type_from_dsws(ticker=ticker)
-        status = f"Lot Size Update"
-        update_lot_size_from_dsws(ticker=ticker)
-        status = f"Currency Code Update"
-        update_currency_code_from_dsws(ticker=ticker)
-        status = f"Ticker Name Update"
-        update_ibes_currency_from_dsws(ticker=ticker)
-        status = f"Industry Update"
-        update_industry_from_dsws(ticker=ticker)
-        status = f"Comapny Description Update"
-        update_company_desc_from_dsws(ticker=ticker)
-        status = f"Ticker Name Update"
-        update_mic_from_dsws(ticker=ticker)
-        status = f"Worldscope Identifier Update"
-        update_worldscope_identifier_from_dsws(ticker=ticker)
+        # status = f"Ticker Name Update"
+        # update_ticker_name_from_dsws(ticker=ticker)
+        # status = f"Ticker Symbols Update"
+        # update_ticker_symbol_from_dss(ticker=ticker)
+        # status = f"Entity Type Update"
+        # update_entity_type_from_dsws(ticker=ticker)
+        # status = f"Lot Size Update"
+        # update_lot_size_from_dsws(ticker=ticker)
+        # status = f"Currency Code Update"
+        # update_currency_code_from_dsws(ticker=ticker)
+        # status = f"Ticker Name Update"
+        # update_ibes_currency_from_dsws(ticker=ticker)
+        # status = f"Industry Update"
+        # update_industry_from_dsws(ticker=ticker)
+        # status = f"Comapny Description Update"
+        # update_company_desc_from_dsws(ticker=ticker)
+        # status = f"Ticker Name Update"
+        # update_mic_from_dsws(ticker=ticker)
+        # status = f"Worldscope Identifier Update"
+        # update_worldscope_identifier_from_dsws(ticker=ticker)
         status = f"Quandl Symbol Update"
         fill_null_quandl_symbol()
         status = f"Quandl Orats Update"
         update_quandl_orats_from_quandl(ticker=ticker)
-        status = f"DSS Data Update"
-        update_data_dss_from_dss(ticker=ticker, history=True)
-        status = f"DSWS Data Update"
-        update_data_dsws_from_dsws(ticker=ticker, history=True)
-        status = f"Dividend Update"
-        dividend_updated_from_dsws(ticker=ticker)
-        status = f"OHLCVTR Update"
-        do_function("special_cases_1")
-        do_function("master_ohlcvtr_update")
-        master_ohlctr_update(history=True)
-        status = f"TAC Update"
-        master_tac_update()
-        status = f"Multiple Update"
-        master_multiple_update()
-        status = f"IBES Data Update"
-        update_ibes_data_monthly_from_dsws(ticker=ticker, history=True)
-        status = f"Worldscope Quarter Update"
-        update_worldscope_quarter_summary_from_dsws(ticker=ticker, history=True)
-        status = f"Rec Buy Sell Update"
-        update_rec_buy_sell_from_dsws(ticker=ticker)
-        status = f"Fundamentals Score Update"
-        update_fundamentals_score_from_dsws(ticker=ticker)
-        status = f"Fundamentals Quality Update"
-        update_fundamentals_quality_value()
+        # status = f"DSS Data Update"
+        # update_data_dss_from_dss(ticker=ticker, history=True)
+        # status = f"DSWS Data Update"
+        # update_data_dsws_from_dsws(ticker=ticker, history=True)
+        # status = f"Dividend Update"
+        # dividend_updated_from_dsws(ticker=ticker)
+        # status = f"OHLCVTR Update"
+        # do_function("special_cases_1")
+        # do_function("master_ohlcvtr_update")
+        # master_ohlctr_update(history=True)
+        # status = f"TAC Update"
+        # master_tac_update()
+        # status = f"Multiple Update"
+        # master_multiple_update()
+        # status = f"IBES Data Update"
+        # update_ibes_data_monthly_from_dsws(ticker=ticker, history=True)
+        # status = f"Worldscope Quarter Update"
+        # update_worldscope_quarter_summary_from_dsws(ticker=ticker, history=True)
+        # status = f"Rec Buy Sell Update"
+        # update_rec_buy_sell_from_dsws(ticker=ticker)
+        # status = f"Fundamentals Score Update"
+        # update_fundamentals_score_from_dsws(ticker=ticker)
+        # status = f"Fundamentals Quality Update"
+        # update_fundamentals_quality_value()
     except Exception as e:
-        print("{} : === {} New Ticker Ingestion ERROR === : {}".format(dateNow(), status, e))
+        report_to_slack("{} : === {} New Ticker Ingestion ERROR === : {}".format(dateNow(), status, e))
 
 def delete_old_ticker(ticker):
     try:
         status = f"OHLCVTR Update"
-        do_function("special_cases_1")
-        do_function("master_ohlcvtr_update")
-        master_ohlctr_update(history=True)
-        status = f"TAC Update"
-        master_tac_update()
-        status = f"Multiple Update"
-        master_multiple_update()
-
+        # do_function("special_cases_1")
+        # do_function("master_ohlcvtr_update")
+        # master_ohlctr_update(history=True)
+        # status = f"TAC Update"
+        # master_tac_update()
+        # status = f"Multiple Update"
+        # master_multiple_update()
+        status = f"Remove Data From Database"
         query = f"delete from data_vol_surface where ticker in {tuple_data(ticker)}; "
-        query += f"delete from data_vol_surface_inferred where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from data_vol_surface_inferred where ticker in {tuple_data(ticker)}; "
         query += f"delete from data_quandl where ticker in {tuple_data(ticker)}; "
-        query += f"delete from data_fundamental_score where ticker in {tuple_data(ticker)}; "
-        query += f"delete from universe_rating where ticker in {tuple_data(ticker)}; "
-        query += f"delete from master_ohlcvtr where ticker in {tuple_data(ticker)}; "
-        query += f"delete from master_tac where ticker in {tuple_data(ticker)}; "
-        query += f"delete from master_multiple where ticker in {tuple_data(ticker)}; "
-        query += f"delete from data_dividend where ticker in {tuple_data(ticker)}; "
-        query += f"delete from data_dividend_daily_rates where ticker in {tuple_data(ticker)}; "
-        query += f"delete from universe_client where ticker in {tuple_data(ticker)}; "
-        query += f"delete from data_ibes where ticker in {tuple_data(ticker)}; "
-        query += f"delete from data_ibes_monthly where ticker in {tuple_data(ticker)}; "
-        query += f"delete from data_worldscope_summary where ticker in {tuple_data(ticker)}; "
-        query += f"delete from latest_bot_data where ticker in {tuple_data(ticker)}; "
-        query += f"delete from latest_bot_ranking where ticker in {tuple_data(ticker)}; "
-        query += f"delete from latest_bot_update where ticker in {tuple_data(ticker)}; "
-        query += f"delete from latest_price where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from data_fundamental_score where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from universe_rating where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from data_dividend where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from data_dividend_daily_rates where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from universe_client where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from latest_bot_data where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from latest_bot_ranking where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from latest_bot_update where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from latest_price where ticker in {tuple_data(ticker)}; "
         query += f"delete from latest_vol where ticker in {tuple_data(ticker)}; "
-        query += f"delete from bot_ranking where ticker in {tuple_data(ticker)}; "
-        query += f"delete from bot_statistic where ticker in {tuple_data(ticker)}; "
-        query += f"delete from bot_data where ticker in {tuple_data(ticker)}; "
-        query += f"delete from bot_backtest where ticker in {tuple_data(ticker)}; "
-        query += f"delete from bot_uno_backtest where ticker in {tuple_data(ticker)}; "
-        query += f"delete from bot_classic_backtest where ticker in {tuple_data(ticker)}; "
-        query += f"delete from bot_ucdc_backtest where ticker in {tuple_data(ticker)}; "
-        query += f"delete from universe_rating_detail_history where ticker in {tuple_data(ticker)}; "
-        query += f"delete from universe_rating_history where ticker in {tuple_data(ticker)}; "
-        query += f"delete from dlpa_model_stock where ticker in {tuple_data(ticker)}; "
-        query += f"delete from universe_consolidated where universe_consolidated.origin_ticker in {tuple_data(ticker)}; "
-        query += f"delete from universe_consolidated where universe_consolidated.consolidated_ticker in {tuple_data(ticker)}; "
-        query += f"delete from universe where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from bot_ranking where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from bot_statistic where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from bot_data where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from bot_backtest where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from bot_uno_backtest where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from bot_classic_backtest where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from bot_ucdc_backtest where ticker in {tuple_data(ticker)}; "
+        # query += f"delete from universe_consolidated where universe_consolidated.origin_ticker in {tuple_data(ticker)}; "
+        # query += f"delete from universe_consolidated where universe_consolidated.consolidated_ticker in {tuple_data(ticker)}; "
+        print(query)
+        execute_query(query)
     except Exception as e:
-        print("{} : === {} Old Ticker Deletion ERROR === : {}".format(dateNow(), status, e))
+        report_to_slack("{} : === {} Old Ticker Deletion ERROR === : {}".format(dateNow(), status, e))
 
 def populate_ticker_monthly(client=None):
-    update_ingestion_update_time('universe', finish=False)
+    update_ingestion_update_time("universe", finish=False)
     if(client is None):
         client = f"dZzmhmoA" #Client is ASKLORA
     universe_consolidated = get_consolidated_universe_data()
@@ -207,13 +201,80 @@ def populate_ticker_monthly(client=None):
     print(new_universe_client)
     insert_data_to_database(new_universe_client, get_universe_client_table_name(), how="append")
     new_ticker_ingestion(ticker["ticker"].to_list())
-    update_ingestion_update_time('universe', finish=True)
+    update_ingestion_update_time("universe", finish=True)
+
+def add_new_ticker(ticker, isin=False, manual=False):
+    client = f"dZzmhmoA" #Client is ASKLORA
+    # update_ingestion_update_time("universe", finish=False)
+    old_universe = get_active_universe()
+
+    universe_consolidated = get_consolidated_universe_data()
+    new_universe = pd.DataFrame(ticker, columns =["origin_ticker"])
+    new_universe["source_id"] = "DSS"
+    if(isin):
+        new_universe["use_isin"] = 1
+        new_universe["use_manual"] = 0
+    else:
+        new_universe["use_isin"] = 0
+        new_universe["use_manual"] = 1
+
+    # Update New Ticker in Consolidated
+    active_ticker = universe_consolidated.loc[universe_consolidated["origin_ticker"].isin(new_universe["origin_ticker"].to_list())]
+    if(len(active_ticker)):
+        update_consolidated_activation_by_ticker(ticker=active_ticker["origin_ticker"].to_list(), is_active=True)
+        report_to_slack("{} : === {} Ticker Activated ===".format(dateNow(), active_ticker["origin_ticker"].to_list()))
+    active_ticker = universe_consolidated.loc[universe_consolidated["consolidated_ticker"].isin(new_universe["origin_ticker"].to_list())]
+    if(len(active_ticker)):
+        update_consolidated_activation_by_ticker(ticker=active_ticker["origin_ticker"].to_list(), is_active=True)
+        report_to_slack("{} : === {} Ticker Activated ===".format(dateNow(), active_ticker["origin_ticker"].to_list()))
+    
+    # Get New Ticker
+    new_ticker = new_universe.loc[~new_universe["origin_ticker"].isin(universe_consolidated["origin_ticker"].to_list())]
+    new_ticker = new_ticker.loc[~new_ticker["origin_ticker"].isin(universe_consolidated["consolidated_ticker"].to_list())]
+    if(len(new_ticker)):
+        new_ticker = new_ticker[["origin_ticker", "source_id", "use_isin", "use_manual"]]
+        new_ticker["use_manual"] = np.where(new_ticker["use_manual"] == 1, True, False)
+        new_ticker["use_isin"] = np.where(new_ticker["use_isin"] == 1, True, False)
+        new_ticker["uid"] = new_ticker["origin_ticker"]
+        for index, row in new_ticker.iterrows():
+            new_ticker.loc[index, "uid"] = generate_id(8)
+        new_ticker["created"] = timezone.now().date()
+        new_ticker["updated"] = timezone.now().date()
+        new_ticker["has_data"] = False
+        new_ticker["source_id"] = f"DSS"
+        new_ticker["is_active"] = True
+        new_ticker["isin"] = None
+        new_ticker["cusip"] = None
+        new_ticker["use_cusip"] = False
+        new_ticker["sedol"] = None
+        new_ticker["use_sedol"] = False
+        new_ticker["permid"] = None
+        new_ticker["consolidated_ticker"] = new_ticker["origin_ticker"]
+        print(new_ticker)
+        populate_universe_consolidated_by_isin_sedol_from_dsws(manual_universe=new_ticker.loc[new_ticker["use_manual"] == True], 
+            universe=new_universe.loc[new_ticker["use_isin"] == True])
+        report_to_slack("{} : === {} New Ticker Added ===".format(dateNow(), new_ticker["origin_ticker"].to_list()))
+    do_function("universe_populate")
+
+    new_universe = get_active_universe()
+    new_ticker = new_universe.loc[~new_universe["ticker"].isin(old_universe["ticker"].to_list())]
+    if(len(new_ticker)):
+        universe_client = get_universe_client(client_uid=[client])
+        new_universe_client = new_ticker.loc[~new_ticker["ticker"].isin(universe_client["ticker"].to_list())][["ticker"]]
+        new_universe_client["client_uid"] = client
+        new_universe_client["created"] = timezone.now()
+        new_universe_client["updated"] = timezone.now()
+        print(new_universe_client)
+        insert_data_to_database(new_universe_client, get_universe_client_table_name(), how="append")
+        new_ticker_ingestion(new_ticker["ticker"].to_list())
+    firebase_update()
+    update_ingestion_update_time("universe", finish=True)
 
 def check_universe():
     old_universe = get_active_universe()
     do_function("universe_populate")
     new_universe = get_active_universe()
-    new_ticker = new_universe.loc[~new_universe["origin_ticker"].isin(old_universe["ticker"].to_list())]
+    new_ticker = new_universe.loc[~new_universe["ticker"].isin(old_universe["ticker"].to_list())]
     deleted_ticker = old_universe.loc[~old_universe["ticker"].isin(new_universe["ticker"].to_list())]
     if(len(new_ticker)):
         new_ticker_ingestion(new_ticker["ticker"].to_list())
@@ -222,6 +283,8 @@ def check_universe():
     firebase_update()
 
 class Command(BaseCommand):
-    def add_arguments(self, parser):
-        populate_ticker_monthly(client=None)
-        firebase_update()
+    def handle(self, *args, **options):
+        print("Process")
+        # add_new_ticker(ticker = ["MSFT.O"])
+        # populate_ticker_monthly(client=None)
+        # firebase_update()
