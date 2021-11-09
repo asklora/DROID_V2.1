@@ -57,6 +57,7 @@ def init_exchange_check():
 
 @app.task(base=Singleton)
 def market_check_routines(mic):
+    # TODO: prevent duplicate check
     market = TradingHours(mic=mic)
     market.run_market_check()
     if market.time_to_check:
