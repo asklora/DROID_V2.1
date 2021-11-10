@@ -11,7 +11,7 @@ import os
 def restart_worker():
     envrion = os.environ.get("DJANGO_SETTINGS_MODULE", False)
     if envrion in ["config.settings.production", "config.settings.prodtest"]:
-        subprocess.Popen(["docker", "restart", "Celery", "CeleryBroadcaster"])
+        subprocess.Popen(["docker", "restart", "CeleryBroadcaster" , "Celery"])
         return {"response": "restart celery prod", "code": 200}
     elif envrion in [
         "config.settings.local",
