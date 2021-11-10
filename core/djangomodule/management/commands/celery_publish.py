@@ -20,7 +20,7 @@ class Command(BaseCommand):
         #     time.sleep(5)
         # payload ={
         #     "type":"function",
-        #     "module":"djangomodule.crudlib.notification.send_notif",
+        #     "module":"core.djangomodule.crudlib.winner_email.send_winner_emails",
         #     "payload":{
         #     "username":"babebo",
         #     "title":"notif",
@@ -38,9 +38,9 @@ class Command(BaseCommand):
         # print(r.get())
         # while True:
         #     print(r.status)
-        celery = app.control.inspect(['master@af20902c052c'])
+        # celery = app.control.inspect(['master@af20902c052c'])
         # task = app.task.A
-        print(celery.registered())
+        # print(celery.registered())
         # res = celery.result.AsyncResult('ooo')
         # print(res.status)
 
