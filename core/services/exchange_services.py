@@ -5,7 +5,7 @@ from django.utils import timezone
 from core.djangomodule.celery_singleton import Singleton
 import subprocess
 import os
-
+from django_celery_results.models import TaskResult
 
 
 def restart_worker():
@@ -66,5 +66,6 @@ def market_check_routines(mic,taskid):
     market = TradingHours(mic=mic)
     market.run_market_check()
     task_id = task_id_maker(mic, market.time_to_check)
-    if market.time_to_check :
+    task =TaskResult.objects.filter(task_id=task_id)
+    if market.time_to_check and not task.exists():
         market_check_routines.apply_async(args=(mic,task_id), eta=market.time_to_check,task_id=task_id)
