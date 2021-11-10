@@ -5,13 +5,13 @@ from django.utils import timezone
 from core.djangomodule.celery_singleton import Singleton
 import subprocess
 import os
-
+from django_celery_results.models import TaskResult
 
 
 def restart_worker():
     envrion = os.environ.get("DJANGO_SETTINGS_MODULE", False)
     if envrion in ["config.settings.production", "config.settings.prodtest"]:
-        subprocess.Popen(["docker", "restart", "Celery", "CeleryBroadcaster"])
+        subprocess.Popen(["docker", "restart", "CeleryBroadcaster" , "Celery"])
         return {"response": "restart celery prod", "code": 200}
     elif envrion in [
         "config.settings.local",
@@ -48,21 +48,19 @@ def task_id_maker(mic,time):
 def init_exchange_check():
     exchanges = ExchangeMarket.objects.filter(currency_code__in=["HKD", "USD"])
     exchanges = exchanges.filter(group="Core")
-
+    initial_id_task=[]
     for exchange in exchanges:
-        market = TradingHours(mic=exchange.mic)
-        market.run_market_check()
-        if market.time_to_check:
-            task_id = task_id_maker(exchange.mic, market.time_to_check)
-            market_check_routines.apply_async(
-                args=(exchange.mic,task_id), eta=market.time_to_check,request_id=task_id
-            )
+        market_check_routines.apply_async(
+            args=(exchange.mic)
+        )
+        initial_id_task.append(exchange.mic)
+    return {"message": initial_id_task}
 
 
-@app.task(base=Singleton,unique_on=['taskid',])
-def market_check_routines(mic,taskid):
+@app.task(base=Singleton,unique_on=['taskid',],acks_late=True)
+def market_check_routines(mic):
     market = TradingHours(mic=mic)
     market.run_market_check()
     task_id = task_id_maker(mic, market.time_to_check)
     if market.time_to_check:
-        market_check_routines.apply_async(args=(mic,task_id), eta=market.time_to_check,request_id=task_id)
+        market_check_routines.apply_async(args=(mic,task_id), eta=market.time_to_check,task_id=task_id)
