@@ -59,7 +59,7 @@ def init_exchange_check():
             )
 
 
-@app.task(base=Singleton,unique_on=['taskid',],acks_late=True)
+@app.task(base=Singleton,unique_on=['taskid',])
 def market_check_routines(mic,taskid):
     market = TradingHours(mic=mic)
     market.run_market_check()
