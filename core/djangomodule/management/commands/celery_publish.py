@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 import time
-from config.celery import app,_RPC,app_publish
+from config.celery import app,app_publish
 from django.conf import settings
 import celery
 def callback(message):

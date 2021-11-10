@@ -99,7 +99,7 @@ def sync_delete_user(payload):
     except User.DoesNotExist:
         return {'message':f'{payload["username"]} doesnt exist, nothing perform'}
     except KeyError:
-        return {'message':'payload error'}
+        return {'err':'payload error'}
     except User.MultipleObjectsReturned:
         User.objects.filter(username=payload['username']).delete()
         return {'message':f'{payload["username"]} found multiple and deleted successfully'}
