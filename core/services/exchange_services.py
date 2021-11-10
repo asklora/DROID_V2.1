@@ -50,22 +50,17 @@ def init_exchange_check():
     exchanges = exchanges.filter(group="Core")
     initial_id_task=[]
     for exchange in exchanges:
-        market = TradingHours(mic=exchange.mic)
-        market.run_market_check()
-        if market.time_to_check:
-            task_id = task_id_maker(exchange.mic, market.time_to_check)
-            market_check_routines.apply_async(
-                args=(exchange.mic,task_id),task_id=task_id
-            )
-            initial_id_task.append(task_id)
+        market_check_routines.apply_async(
+            args=(exchange.mic)
+        )
+        initial_id_task.append(exchange.mic)
     return {"message": initial_id_task}
 
 
 @app.task(base=Singleton,unique_on=['taskid',],acks_late=True)
-def market_check_routines(mic,taskid):
+def market_check_routines(mic):
     market = TradingHours(mic=mic)
-    if update_due(market.exchange):
-        market.run_market_check()
-        task_id = task_id_maker(mic, market.time_to_check)
-        if market.time_to_check:
-            market_check_routines.apply_async(args=(mic,task_id), eta=market.time_to_check,task_id=task_id)
+    market.run_market_check()
+    task_id = task_id_maker(mic, market.time_to_check)
+    if market.time_to_check:
+        market_check_routines.apply_async(args=(mic,task_id), eta=market.time_to_check,task_id=task_id)
