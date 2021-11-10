@@ -48,15 +48,17 @@ def task_id_maker(mic,time):
 def init_exchange_check():
     exchanges = ExchangeMarket.objects.filter(currency_code__in=["HKD", "USD"])
     exchanges = exchanges.filter(group="Core")
-
+    initial_id_task=[]
     for exchange in exchanges:
         market = TradingHours(mic=exchange.mic)
         market.run_market_check()
         if market.time_to_check:
             task_id = task_id_maker(exchange.mic, market.time_to_check)
             market_check_routines.apply_async(
-                args=(exchange.mic,task_id), eta=market.time_to_check,task_id=task_id
+                args=(exchange.mic,task_id),task_id=task_id
             )
+            initial_id_task.append(task_id)
+    return {"message": initial_id_task}
 
 
 @app.task(base=Singleton,unique_on=['taskid',])
