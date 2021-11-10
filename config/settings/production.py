@@ -32,7 +32,7 @@ CHANNEL_LAYERS = {
         # Method 2: Via local Redis
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('redis', 6379)],
+            "hosts": [('localhost', 6379)],
             "capacity": 1500,  # default 100
             "expiry": 2,
         },
@@ -45,7 +45,7 @@ CHANNEL_LAYERS = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
+        "LOCATION": "redis://localhost:6379/1",
 }
 }
 
@@ -56,7 +56,7 @@ read_endpoint, write_endpoint, port = db.prod_url
 MQPASS="NjI0NkZFQzVBQkQwNUE2RERCRjY1QzJGMzA2OUFFMjE1MjAyMkRFMjoxNjMxNjA0MjEwOTY5"
 MQUSER="MjphbXFwLXNnLTZ3cjJjbG1hbzAwMzpMVEFJNXRTaGR4VUhxV3ZCVm9MNVR5amE="
 CELERY_BROKER_URL = f'amqp://{MQUSER}:{MQPASS}@amqp-sg-6wr2clmao003.mq-amqp.cn-hongkong-3568556-b.aliyuncs.com:5672/master'
-CELERY_SINGLETON_BACKEND_URL = 'redis://redis:6379/1'
+CELERY_SINGLETON_BACKEND_URL = 'redis://localhost:6379/1'
 CELERY_TASK_DEFAULT_QUEUE ='celery'
 HEDGE_WORKER_DEFAULT_QUEUE ='hedger'
 BROADCAST_WORKER_DEFAULT_QUEUE='broadcaster'

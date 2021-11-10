@@ -61,7 +61,7 @@ app.control.discard_all()
 @worker_ready.connect
 def at_start(sender, **k):
     if role == 'master':
-        clear_locks(app)
+        # clear_locks(app)
         with sender.app.connection() as conn:
             sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn)
 

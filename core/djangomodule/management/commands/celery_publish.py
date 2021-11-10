@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 import time
 from config.celery import app,_RPC,app_publish
 from django.conf import settings
+import celery
 def callback(message):
     print(message)
 
@@ -33,8 +34,13 @@ class Command(BaseCommand):
         #     time.sleep(2)
         #     print(task.backend)
         # r.get(on_message=callback, propagate=False)
-        r=app_publish.delay()
-        print(r.get())
+        # r=app_publish.delay()
+        # print(r.get())
         # while True:
         #     print(r.status)
+        celery = app.control.inspect(['master@af20902c052c'])
+        # task = app.task.A
+        print(celery.registered())
+        # res = celery.result.AsyncResult('ooo')
+        # print(res.status)
 
