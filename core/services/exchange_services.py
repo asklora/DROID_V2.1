@@ -40,6 +40,10 @@ def market_task_checker():
     return {"message": fail}
 
 
+def task_id_maker(mic,time):
+    return f"{mic}-{time.strftime('%s')}"
+
+
 @app.task(base=Singleton)
 def init_exchange_check():
     exchanges = ExchangeMarket.objects.filter(currency_code__in=["HKD", "USD"])
@@ -49,16 +53,16 @@ def init_exchange_check():
         market = TradingHours(mic=exchange.mic)
         market.run_market_check()
         if market.time_to_check:
-            print('me')
+            task_id = task_id_maker(exchange.mic, market.time_to_check)
             market_check_routines.apply_async(
-                args=(exchange.mic,), eta=market.time_to_check
+                args=(exchange.mic,task_id), eta=market.time_to_check,request_id=task_id
             )
 
 
-@app.task(base=Singleton)
-def market_check_routines(mic):
-    # TODO: prevent duplicate check
+@app.task(base=Singleton,unique_on=['taskid',])
+def market_check_routines(mic,taskid):
     market = TradingHours(mic=mic)
     market.run_market_check()
+    task_id = task_id_maker(mic, market.time_to_check)
     if market.time_to_check:
-        market_check_routines.apply_async(args=(mic,), eta=market.time_to_check)
+        market_check_routines.apply_async(args=(mic,task_id), eta=market.time_to_check,request_id=task_id)
