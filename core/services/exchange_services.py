@@ -6,7 +6,8 @@ from core.djangomodule.celery_singleton import Singleton
 import subprocess
 import os
 from django_celery_results.models import TaskResult
-
+import uuid
+import base64
 
 def restart_worker():
     envrion = os.environ.get("DJANGO_SETTINGS_MODULE", False)
@@ -51,16 +52,21 @@ def init_exchange_check():
     initial_id_task=[]
     for exchange in exchanges:
         market_check_routines.apply_async(
-            args=(exchange.mic)
+            args=(exchange.mic,),
+            kwargs={"task_id":uuid.uuid4().hex}
         )
         initial_id_task.append(exchange.mic)
     return {"message": initial_id_task}
 
 
-@app.task(base=Singleton,unique_on=['taskid',],acks_late=True)
-def market_check_routines(mic):
+@app.task(base=Singleton,unique_on=['task_id',])
+def market_check_routines(mic,task_id=None,init=False):
     market = TradingHours(mic=mic)
     market.run_market_check()
-    task_id = task_id_maker(mic, market.time_to_check)
+    task_id_market = task_id_maker(mic, market.time_to_check)
     if market.time_to_check:
-        market_check_routines.apply_async(args=(mic,task_id), eta=market.time_to_check,task_id=task_id)
+        market_check_routines.apply_async(
+            args=(mic,),kwargs={"task_id":task_id_market},
+            eta=market.time_to_check,
+            request_id=task_id
+            )
