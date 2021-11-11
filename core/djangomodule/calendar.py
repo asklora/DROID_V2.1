@@ -107,6 +107,7 @@ class TradingHours:
             try:
                 until_time = self.normalize_datetime(resp['data'][self.fin_id]['until'])
                 local_time_extend = self.normalize_datetime(resp['data'][self.fin_id]['next_bell'])
+                reason = resp['data'][self.fin_id]['reason']
                 self.next_bell = self.timezone_to_utc(local_time_extend, self.market_timezone)
                 self.until = self.timezone_to_utc(until_time, self.market_timezone)
             except Exception as e:
@@ -119,7 +120,8 @@ class TradingHours:
                 self.exchange.until_time = self.time_to_check
                 self.exchange.is_open = market_status
                 self.exchange.save()
-                slack.report_to_slack(f"===== market check updated {self.exchange.mic} - next market check in UTC {self.exchange.until_time} , status code response: {req.status_code} - market status : {'Open' if self.exchange.is_open else 'Close'} =====",channel="#droid_v2_report")
+                slack.report_to_slack(f"===== market check updated {self.exchange.mic} - next market check in UTC {self.exchange.until_time} , status code response: {req.status_code}  - market status : {'Open' if self.exchange.is_open else 'Close'} =====",channel="#droid_v2_report")
+                slack.report_to_slack(f"===== market event :  {reason} =====")
 
         else:
             slack.report_to_slack(f"===== error market check {self.exchange.mic} , {req.status_code} =====",channel="#error-log")
