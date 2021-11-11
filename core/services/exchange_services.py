@@ -63,4 +63,4 @@ def market_check_routines(mic):
     market.run_market_check()
     task_id = task_id_maker(mic, market.time_to_check)
     if market.time_to_check:
-        market_check_routines.apply_async(args=(mic,task_id), eta=market.time_to_check,task_id=task_id)
+        market_check_routines.apply_async(args=(mic), eta=market.time_to_check,request_id=task_id)
