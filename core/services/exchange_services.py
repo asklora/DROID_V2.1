@@ -70,7 +70,7 @@ def market_check_routines(mic,task_id=None):
         task_id = task_id_maker(mic, market.time_to_check)
     if market.time_to_check:
         init_exchange_check.apply_async(
-            kwargs={"currency":[market.exchange.currency.currency_code]},
+            kwargs={"currency":[market.exchange.currency_code.currency_code]},
             eta=market.time_to_check,
             request_id=task_id
             )
