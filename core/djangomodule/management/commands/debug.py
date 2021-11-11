@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from core.services.tasks import daily_hedge_user
 from core.services.exchange_services import market_task_checker
 from core.services.notification import send_winner_email
+from core.services.healthcheck import check_firebase_schema, check_api, check_updater_schema, daily_health_check, check_market
 from datasource.rkd import RkdData
 from core.universe.models import Universe
 import pandas as pd
@@ -13,7 +14,12 @@ from core.services.order_services import pending_order_checker
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Process")
-        pending_order_checker()
+        # print(check_firebase_schema())
+        # print(check_api())
+        # print(check_updater_schema())
+        # print(check_market())
+        daily_health_check.apply()
+        # pending_order_checker()
         # firebase_ranking_update_random()
         # ticker = list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
         #             is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
