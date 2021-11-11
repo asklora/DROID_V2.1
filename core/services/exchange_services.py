@@ -62,7 +62,7 @@ def market_check_routines(mic,task_id=None):
     if task_id:
         existed_tasks=TaskResult.objects.filter(task_id=task_id).exists()
         if existed_tasks:
-            return {"message": "task {task_id} already existed"}
+            return {"message": f"task {task_id} already existed"}
     market = TradingHours(mic=mic)
     market.run_market_check()
     if not task_id:
@@ -73,4 +73,4 @@ def market_check_routines(mic,task_id=None):
             eta=market.time_to_check,
             request_id=task_id
             )
-        return {"message": "task {task_id} scheduled"}
+        return {"message": f"task {task_id} scheduled"}
