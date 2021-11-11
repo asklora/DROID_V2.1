@@ -51,7 +51,7 @@ def init_exchange_check():
     initial_id_task=[]
     for exchange in exchanges:
         market_check_routines.apply_async(
-            args=(exchange.mic)
+            args=(exchange.mic,)
         )
         initial_id_task.append(exchange.mic)
     return {"message": initial_id_task}
@@ -63,4 +63,4 @@ def market_check_routines(mic):
     market.run_market_check()
     task_id = task_id_maker(mic, market.time_to_check)
     if market.time_to_check:
-        market_check_routines.apply_async(args=(mic), eta=market.time_to_check,request_id=task_id)
+        market_check_routines.apply_async(args=(mic,), eta=market.time_to_check,request_id=task_id)
