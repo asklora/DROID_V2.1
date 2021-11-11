@@ -53,7 +53,7 @@ def init_exchange_check():
     for exchange in exchanges:
         market_check_routines.apply_async(
             args=(exchange.mic,),
-            kwargs={"task_id":base64.b64encode(uuid.uuid4().bytes).replace("=", "").decode()}
+            kwargs={"task_id":uuid.uuid4().hex}
         )
         initial_id_task.append(exchange.mic)
     return {"message": initial_id_task}
