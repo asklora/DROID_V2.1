@@ -5,8 +5,6 @@ from importlib import import_module
 import time
 from environs import Env
 from celery.signals import worker_ready
-from django.conf import settings
-from celery.backends.rpc import RPCBackend as CeleryRpcBackend
 from dotenv import load_dotenv
 from django import db
 from core.djangomodule.general import logging
@@ -61,14 +59,10 @@ app.control.discard_all()
 @worker_ready.connect
 def at_start(sender, **k):
     if role == 'master':
-        clear_locks(app)
+        # clear_locks(app)
         with sender.app.connection() as conn:
             sender.app.send_task('core.services.exchange_services.init_exchange_check',connection=conn)
 
-
-
-
-_RPC = CeleryRpcBackend(app=app)
 
 
 

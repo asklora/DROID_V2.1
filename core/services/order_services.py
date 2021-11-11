@@ -193,7 +193,7 @@ def cancel_pending_order(self,from_date:datetime=datetime.now(),run_async=False)
                 order_executor(payload)
     return {'success':'order pending canceled'}
 
-@app.task
+@app.task(ignore_result=True)
 def update_rtdb_user_porfolio():
     
     try:

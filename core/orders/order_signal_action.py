@@ -326,7 +326,11 @@ class BaseOrderConnector(AbstracOrderConnector):
         # update the transaction
         trans = TransactionHistory.objects.filter(side="debit", transaction_detail__description="bot order", transaction_detail__order_uid=str(self.instance.order_uid))
         if trans.exists():
-            trans = trans.get()
+            try:
+                trans = trans.get()
+            except TransactionHistory.MultipleObjectsReturned:
+                trans.first('created').delete()
+                trans = trans.latest('created')
             trans.transaction_detail["position"] = position_uid
             trans.save()
         # update fee transaction
