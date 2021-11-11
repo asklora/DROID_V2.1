@@ -60,14 +60,13 @@ def init_exchange_check():
 
 
 @app.task(base=Singleton,unique_on=['task_id',])
-def market_check_routines(mic,task_id=None):
+def market_check_routines(mic,task_id=None,init=False):
     market = TradingHours(mic=mic)
     market.run_market_check()
-    if not task_id:
-        task_id = task_id_maker(mic, market.time_to_check)
+    task_id_market = task_id_maker(mic, market.time_to_check)
     if market.time_to_check:
         market_check_routines.apply_async(
-            args=(mic,),kwargs={"task_id":task_id},
+            args=(mic,),kwargs={"task_id":task_id_market},
             eta=market.time_to_check,
             request_id=task_id
             )
