@@ -45,8 +45,9 @@ def task_id_maker(mic,time):
 
 
 @app.task(base=Singleton)
-def init_exchange_check():
-    exchanges = ExchangeMarket.objects.filter(currency_code__in=["HKD", "USD"])
+def init_exchange_check(currency:list=None):
+    currency_list = ["HKD", "USD"] if not currency else currency
+    exchanges = ExchangeMarket.objects.filter(currency_code__in=currency_list)
     exchanges = exchanges.filter(group="Core")
     initial_id_task=[]
     for exchange in exchanges:
@@ -68,8 +69,8 @@ def market_check_routines(mic,task_id=None):
     if not task_id:
         task_id = task_id_maker(mic, market.time_to_check)
     if market.time_to_check:
-        market_check_routines.apply_async(
-            args=(mic,),kwargs={"task_id":task_id},
+        init_exchange_check.apply_async(
+            kwargs={"currency":[market.exchange.currency.currency_code]},
             eta=market.time_to_check,
             request_id=task_id
             )
