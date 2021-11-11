@@ -120,8 +120,7 @@ class TradingHours:
                 self.exchange.until_time = self.time_to_check
                 self.exchange.is_open = market_status
                 self.exchange.save()
-                slack.report_to_slack(f"===== market check updated {self.exchange.mic} - next market check in UTC {self.exchange.until_time} , status code response: {req.status_code}  - market status : {'Open' if self.exchange.is_open else 'Close'} =====",channel="#droid_v2_report")
-                slack.report_to_slack(f"===== market event :  {reason} =====")
+                slack.report_to_slack(f"===== market check updated {self.exchange.mic} - next in UTC {self.exchange.until_time} , response: {req.status_code}  - market status : {'Open' if self.exchange.is_open else 'Close'} - Reason : {reason} =====",channel="#droid_v2_report")
 
         else:
             slack.report_to_slack(f"===== error market check {self.exchange.mic} , {req.status_code} =====",channel="#error-log")
