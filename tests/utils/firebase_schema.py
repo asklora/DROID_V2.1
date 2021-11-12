@@ -1,4 +1,4 @@
-from schema import Or, Schema
+from schema import Optional, Or, Schema
 
 
 FIREBASE_PORTFOLIO_SCHEMA = Schema(
@@ -137,6 +137,8 @@ FIREBASE_UNIVERSE_SCHEMA = Schema(
             "volume": Or(float, int),
             "wk52_high": Or(float, int),
             "wk52_low": Or(float, int),
+            Optional("dividen_yield"): Or(float, int),
+            Optional("latest_net_change"): Or(float, int),
         },
         "ranking": Or(
             [
