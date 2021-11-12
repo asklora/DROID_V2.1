@@ -173,14 +173,14 @@ def check_market() -> dict:
 
 
 def run_tests() -> dict:
-    retcode = pytest.main(["tests/unit/test_currency_conversion.py"])
+    retcode = pytest.main()
     if retcode == pytest.ExitCode.OK:
         return {"status": "success"}
     else:
         return {"status": "error"}
 
 
-def send_email(data: dict) -> None:
+def send_report(data: dict) -> None:
     date, asklora_report, droid_report = data.values()
     api_status, firebase_schema, market_status, tests = droid_report.values()
 
@@ -222,19 +222,19 @@ def send_email(data: dict) -> None:
     )
     droid_report: str = (
         (
-            f"- Droid API is {api_status['droid']}, Droid dev is {api_status['droid_dev']}\n"
-            f"- Data in firebase {'is correct' if not schema_has_issues else 'has some issues'}{schema_issues}"
-            f"- USD market status {'is correct' if usd_market_is_correct else 'is incorrect'}\n"
-            f"- HKD market status {'is correct' if hkd_market_is_correct else 'is incorrect'}\n"
-            f"- Tests {'are successful' if tests['status'] == 'success' else 'have some error'}\n"
+            f"- Droid API is *{api_status['droid']}*, Droid dev is *{api_status['droid_dev']}*\n"
+            f"- Data in firebase *{'is correct' if not schema_has_issues else 'have some issues'}*{schema_issues}"
+            f"- USD market status *{'is correct' if usd_market_is_correct else 'is incorrect'}*\n"
+            f"- HKD market status *{'is correct' if hkd_market_is_correct else 'is incorrect'}*\n"
+            f"- Tests *{'are successful' if tests['status'] == 'success' else 'have some errors'}*\n"
         )
         if data["droid_report"]
         else "- No reports yet."
     )
     template = (
         f"Health check for {date}\n"
-        f"Asklora report:\n{asklora_report}"
-        f"Droid report:\n{droid_report}"
+        f"*Asklora report*:\n{asklora_report}"
+        f"*Droid report*:\n{droid_report}"
     )
     report_to_slack(template, channel="#healthcheck")
 
@@ -250,7 +250,7 @@ def daily_health_check():
         "tests": run_tests(),
     }
 
-    send_email(
+    send_report(
         {
             "date": str(timezone.now()),
             "asklora_report": asklora_report,
