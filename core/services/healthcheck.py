@@ -1,5 +1,5 @@
 from typing import List
-
+import pytest
 import requests
 from config.celery import app
 from core.universe.models import ExchangeMarket
@@ -67,7 +67,7 @@ def check_updater_schema() -> dict:
 
 
 def check_firebase_schema() -> dict:
-    # staging_app = getattr(settings, "FIREBASE_STAGGING_APP", None)
+    staging_app = getattr(settings, "FIREBASE_STAGGING_APP", None)
     portfolio_collection = settings.FIREBASE_COLLECTION["portfolio"]
     universe_collection = settings.FIREBASE_COLLECTION["universe"]
 
@@ -80,7 +80,7 @@ def check_firebase_schema() -> dict:
             try:
                 FIREBASE_PORTFOLIO_SCHEMA.validate(portfolio.to_dict())
             except:
-                portfolio_fails.append(portfolio.to_dict()["user_id"])
+                portfolio_fails.append(str(portfolio.to_dict()["user_id"]))
 
         return {
             "portfolio_fails": portfolio_fails,
@@ -113,13 +113,29 @@ def check_firebase_schema() -> dict:
     portfolio_fails, portfolio_num = portfolio_check.values()
     universe_fails, universe_num = universe_check.values()
 
+    if staging_app:
+        staging_portfolio_check: dict = check_portfolio_schema(
+            firestore.client(app=staging_app).collection(portfolio_collection).stream()
+        )
+        staging_universe_check: dict = check_universe_schema(
+            firestore.client(app=staging_app).collection(universe_collection).stream()
+        )
+
+        (
+            staging_portfolio_fails,
+            staging_portfolio_num,
+        ) = staging_portfolio_check.values()
+        staging_universe_fails, staging_universe_num = staging_universe_check.values()
+
     return {
         "portfolio_num": portfolio_num,
         "universe_num": universe_num,
-        "portfolio_updater": "functional" if not portfolio_fails else "error",
-        "universe_updater": "functional" if not universe_fails else "error",
         "invalid_portfolios": portfolio_fails,
         "invalid_tickers": universe_fails,
+        "staging_portfolio_num": staging_portfolio_num if staging_app else [],
+        "staging_universe_num": staging_universe_num if staging_app else [],
+        "staging_invalid_portfolios": staging_portfolio_fails if staging_app else [],
+        "staging_invalid_tickers": staging_universe_fails if staging_app else [],
     }
 
 
@@ -156,8 +172,71 @@ def check_market() -> dict:
     }
 
 
+def run_tests() -> dict:
+    retcode = pytest.main(["tests/unit/test_currency_conversion.py"])
+    if retcode == pytest.ExitCode.OK:
+        return {"status": "success"}
+    else:
+        return {"status": "error"}
+
+
 def send_email(data: dict) -> None:
-    report_to_slack(data, channel="#droid_v2_test_report")
+    date, asklora_report, droid_report = data.values()
+    api_status, firebase_schema, market_status, tests = droid_report.values()
+
+    schema_has_issues: bool = (
+        len(firebase_schema["invalid_portfolios"]) > 0
+        or len(firebase_schema["invalid_tickers"]) > 0
+        or len(firebase_schema["staging_invalid_portfolios"]) > 0
+        or len(firebase_schema["staging_invalid_tickers"]) > 0
+    )
+    schema_issues: str = (
+        f". These users have wrong schema: "
+        f"{', '.join(firebase_schema['invalid_portfolios'])}\n"
+        if firebase_schema["invalid_portfolios"]
+        else ""
+        f". These tickers have wrong schema: "
+        f"{', '.join(firebase_schema['invalid_tickers'])}\n"
+        if firebase_schema["invalid_tickers"]
+        else ""
+        f". These users have wrong schema in staging: "
+        f"{', '.join(firebase_schema['staging_invalid_portfolios'])}\n"
+        if firebase_schema["staging_invalid_portfolios"]
+        else ""
+        f". These tickers have wrong schema in staging: "
+        f"{', '.join(firebase_schema['staging_invalid_tickers'])}\n"
+        if firebase_schema["staging_invalid_tickers"]
+        else "\n"
+    )
+    usd_market_is_correct: bool = (
+        market_status["usd_market_api"] == market_status["usd_market_db"]
+    )
+    hkd_market_is_correct: bool = (
+        market_status["hkd_market_api"] == market_status["hkd_market_db"]
+    )
+
+    asklora_report: str = (
+        (f"- Api is {'up' if asklora_report['api_status']['asklora'] else 'down'}\n")
+        if asklora_report
+        else "- No reports yet.\n"
+    )
+    droid_report: str = (
+        (
+            f"- Droid API is {api_status['droid']}, Droid dev is {api_status['droid_dev']}\n"
+            f"- Data in firebase {'is correct' if not schema_has_issues else 'has some issues'}{schema_issues}"
+            f"- USD market status {'is correct' if usd_market_is_correct else 'is incorrect'}\n"
+            f"- HKD market status {'is correct' if hkd_market_is_correct else 'is incorrect'}\n"
+            f"- Tests {'are successful' if tests['status'] == 'success' else 'have some error'}\n"
+        )
+        if data["droid_report"]
+        else "- No reports yet."
+    )
+    template = (
+        f"Health check for {date}\n"
+        f"Asklora report:\n{asklora_report}"
+        f"Droid report:\n{droid_report}"
+    )
+    report_to_slack(template, channel="#healthcheck")
 
 
 @app.task(ignore_result=True)
@@ -168,6 +247,7 @@ def daily_health_check():
         # "updater_schema": check_updater_schema(),
         "firebase_schema": check_firebase_schema(),
         "market_status": check_market(),
+        "tests": run_tests(),
     }
 
     send_email(
