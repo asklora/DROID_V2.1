@@ -48,12 +48,12 @@ class UniverseConsumer(WebsocketConsumer):
                 try:
                     connection_list = Presence.objects.filter(
                         room=self.room_id)
-                    if not connection_list.exists():
-                        print(t.name, 'terminated')
-                        t.terminate()
-                        if t.is_alive():
-                            print(t.pid, '<<<pid')
-                            os.kill(t.pid, signal.SIGKILL)
+                    # if not connection_list.exists():
+                    #     print(t.name, 'terminated')
+                    #     t.terminate()
+                    #     if t.is_alive():
+                    #         print(t.pid, '<<<pid')
+                    #         os.kill(t.pid, signal.SIGKILL)
                 except Room.DoesNotExist:
                     pass
 

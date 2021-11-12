@@ -289,7 +289,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         if not validated_data["ticker"].is_active and validated_data["side"]=="buy":
             # TODO: quick fix, need to update
             raise exceptions.NotAcceptable({'detail':f'fail to buy, {validated_data["ticker"].ticker} is inactive'})
-        if not "price" in validated_data:
+        if not "price" in validated_data or validated_data["side"] == "sell":
             rkd = RkdData()
 
             df = rkd.get_quote([validated_data["ticker"].ticker],save=True, df=True)
