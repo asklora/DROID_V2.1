@@ -173,7 +173,7 @@ def check_market() -> dict:
 
 
 def run_tests() -> dict:
-    retcode = pytest.main()
+    retcode = pytest.main(['--ds=config.settings.prodtest'])
     if retcode == pytest.ExitCode.OK:
         return {"status": "success"}
     else:
