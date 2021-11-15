@@ -281,8 +281,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return super(OrderCreateSerializer, self).to_internal_value(data)
    
         
-    def get_user_currency(self,obj)-> str:
-        return obj.user_id.user_balance.currency_code.currency_code
+    
 
     def create(self, validated_data):  
         if not "user" in validated_data:
@@ -316,6 +315,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     def get_currency(self,obj) -> str:
         return obj.ticker.currency_code.currency_code
 
+    def get_user_currency(self,obj)-> str:
+        return obj.user_id.user_balance.currency_code.currency_code
 
 @extend_schema_serializer(
     exclude_fields=("user",), # schema ignore these field
