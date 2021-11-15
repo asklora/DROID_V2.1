@@ -1,5 +1,5 @@
 from rest_framework import serializers, exceptions
-
+from .factory import *
 from core.djangomodule.general import formatdigit
 from .models import OrderPosition, PositionPerformance, OrderFee, Order
 from core.bot.serializers import BotDetailSerializer
@@ -19,7 +19,6 @@ from .services import (
     side_validation
     )
 from datetime import datetime
-from threading import Thread
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
@@ -286,16 +285,16 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return obj.user_id.user_balance.currency_code.currency_code
 
     def create(self, validated_data):
-        if not validated_data["ticker"].is_active and validated_data["side"]=="buy":
-            # TODO: quick fix, need to update
-            raise exceptions.NotAcceptable({'detail':f'fail to buy, {validated_data["ticker"].ticker} is inactive'})
-        if not "price" in validated_data or validated_data["side"] == "sell":
-            rkd = RkdData()
+        # if not validated_data["ticker"].is_active and validated_data["side"]=="buy":
+        #     # TODO: quick fix, need to update
+        #     raise exceptions.NotAcceptable({'detail':f'fail to buy, {validated_data["ticker"].ticker} is inactive'})
+        # if not "price" in validated_data or validated_data["side"] == "sell":
+        #     rkd = RkdData()
 
-            df = rkd.get_quote([validated_data["ticker"].ticker],save=True, df=True)
-            df["latest_price"] = df["latest_price"].astype(float)
-            ticker = df.loc[df["ticker"] == validated_data["ticker"].ticker]
-            validated_data["price"] = ticker.iloc[0]["latest_price"]
+        #     df = rkd.get_quote([validated_data["ticker"].ticker],save=True, df=True)
+        #     df["latest_price"] = df["latest_price"].astype(float)
+        #     ticker = df.loc[df["ticker"] == validated_data["ticker"].ticker]
+        #     validated_data["price"] = ticker.iloc[0]["latest_price"]
 
 
             
@@ -316,6 +315,11 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 raise exceptions.NotFound(error)
             validated_data["user_id"] = user
         
+        controller = OrderController()
+        if validated_data["side"] == "buy":
+            controller.process(BuyOrderProcessor(validated_data))
+        else:
+            controller.process(SellOrderProcessor(validated_data))
         
         order_type = "apps"
         if user.id == 135:

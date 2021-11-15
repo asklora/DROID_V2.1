@@ -136,7 +136,7 @@ def side_validation(validated_data):
         if validated_data["amount"] > validated_data["user_id"].user_balance.amount:
             raise exceptions.NotAcceptable({"detail": "insufficient funds"})
         if (converter.convert(validated_data["amount"]) / validated_data["price"]) < 1:
-            raise exceptions.NotAcceptable({"detail":"share should not below one / price to high insufficient funds"})
+            raise exceptions.NotAcceptable({"detail":"insufficient funds"})
         if validation.validate_buy():
             raise exceptions.NotAcceptable({"detail": f"user already has position for {validated_data['ticker']} in current options"})
 
