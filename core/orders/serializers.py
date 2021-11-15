@@ -10,15 +10,11 @@ from core.Clients.models import UserClient,Client
 from core.user.models import TransactionHistory
 from core.user.convert import ConvertMoney
 from django.apps import apps
-from datasource.rkd import RkdData
 from django.db import transaction as db_transaction
 import json
-from .services import (
-    OrderPositionValidation, 
-    sell_position_service,
-    side_validation
-    )
-from datetime import datetime
+from .services import OrderPositionValidation
+
+
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
