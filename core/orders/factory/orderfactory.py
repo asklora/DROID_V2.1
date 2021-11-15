@@ -16,7 +16,18 @@ from portfolio import (
     user_sell_position
 )
 
+class BaseOrderProcessor:
+    response: Order = None
 
+    def get_price(self, ticker:list)->float:
+        rkd = RkdData()
+        df = rkd.get_quote(
+            ticker, save=True, df=True)
+        df["latest_price"] = df["latest_price"].astype(float)
+        return df.iloc[0]["latest_price"]
+
+
+        
 @dataclass
 class SellPayload:
     setup: dict
@@ -149,15 +160,7 @@ class BuyValidator:
         self.is_insufficient_funds()
 
 
-class BaseOrderProcessor:
-    response: Order = None
 
-    def get_price(self, ticker:list)->float:
-        rkd = RkdData()
-        df = rkd.get_quote(
-            ticker, save=True, df=True)
-        df["latest_price"] = df["latest_price"].astype(float)
-        return df.iloc[0]["latest_price"]
 
 
 class SellOrderProcessor(BaseOrderProcessor):
