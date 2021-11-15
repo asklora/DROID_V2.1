@@ -62,7 +62,7 @@ def init_exchange_check(currency:list=None,task_id:str=None):
 @app.task()
 def market_check_routines(mic,task_id=None):
     if task_id:
-        existed_tasks=TaskResult.objects.filter(task_id=task_id).exists()
+        existed_tasks=TaskResult.objects.filter(task_id=task_id,status='SUCCESS').exists()
         if existed_tasks:
             return {"message": f"task {task_id} already existed"}
     market = TradingHours(mic=mic)
