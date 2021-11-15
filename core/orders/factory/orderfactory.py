@@ -146,7 +146,6 @@ class BuyValidator:
         self.is_order_exist()
         self.is_portfolio_exist()
         self.is_zero_amount()
-        self.is_below_one()
         self.is_insufficient_funds()
 
 
