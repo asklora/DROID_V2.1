@@ -9,7 +9,6 @@ from django.utils import timezone
 from firebase_admin import firestore
 from general.slack import report_to_slack
 from ingestion.firestore_migration import firebase_universe_update, firebase_user_update
-from requests import api
 from tests.utils.firebase_schema import (
     FIREBASE_PORTFOLIO_SCHEMA,
     FIREBASE_UNIVERSE_SCHEMA,
