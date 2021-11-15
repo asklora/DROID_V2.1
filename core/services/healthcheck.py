@@ -1,5 +1,6 @@
+from datetime import date, datetime
 from typing import List
-import pytest
+
 import requests
 from config.celery import app
 from core.universe.models import ExchangeMarket
@@ -8,6 +9,7 @@ from django.utils import timezone
 from firebase_admin import firestore
 from general.slack import report_to_slack
 from ingestion.firestore_migration import firebase_universe_update, firebase_user_update
+from requests import api
 from tests.utils.firebase_schema import (
     FIREBASE_PORTFOLIO_SCHEMA,
     FIREBASE_UNIVERSE_SCHEMA,
@@ -172,17 +174,42 @@ def check_market() -> dict:
     }
 
 
-def run_tests() -> dict:
-    retcode = pytest.main(['--ds=config.settings.prodtest'])
-    if retcode == pytest.ExitCode.OK:
-        return {"status": "success"}
-    else:
-        return {"status": "error"}
+def check_testproject() -> dict:
+    status: dict = {}
+    api_key: str = "okSRWQSYYFAr7LZvVkczgvyEpm5h1TkYWvSAEm-GAz41"
+    project_id: str = "GGUk2NYP4k2YZVYIVSVlUg"
+    job_id: str = "YaTSnhGMxESupCgfkNO08g"
+    url: str = (
+        "https://api.testproject.io/v2/projects/"
+        + project_id
+        + "/jobs/"
+        + job_id
+        + "/reports/latest?format=TestProject"
+    )
+    response = requests.get(url, headers={"Authorization": api_key})
+    if response.status_code == 200:
+        response_body = response.json()
+
+        latest_test_date: datetime = datetime.strptime(
+            response_body["executionEnd"].split(".")[0],
+            "%Y-%m-%dT%H:%M:%S",
+        )
+
+        if latest_test_date.date() == date.today():
+            status["date"] = latest_test_date
+            status["status"] = response_body["testResults"][0]["result"]
+
+    return status
 
 
 def send_report(data: dict) -> None:
     date, asklora_report, droid_report = data.values()
-    api_status, firebase_schema, market_status, tests = droid_report.values()
+    (
+        api_status,
+        firebase_schema,
+        market_status,
+        testproject_status,
+    ) = droid_report.values()
 
     schema_has_issues: bool = (
         len(firebase_schema["invalid_portfolios"]) > 0
@@ -191,28 +218,39 @@ def send_report(data: dict) -> None:
         or len(firebase_schema["staging_invalid_tickers"]) > 0
     )
     schema_issues: str = (
-        f". These users have wrong schema: "
+        f". These users' data have the wrong schema: "
         f"{', '.join(firebase_schema['invalid_portfolios'])}\n"
         if firebase_schema["invalid_portfolios"]
         else ""
-        f". These tickers have wrong schema: "
+        f". These tickers' data have the wrong schema: "
         f"{', '.join(firebase_schema['invalid_tickers'])}\n"
         if firebase_schema["invalid_tickers"]
         else ""
-        f". These users have wrong schema in staging: "
+        f". These users' data have the wrong schema in staging: "
         f"{', '.join(firebase_schema['staging_invalid_portfolios'])}\n"
         if firebase_schema["staging_invalid_portfolios"]
         else ""
-        f". These tickers have wrong schema in staging: "
+        f". These tickers' data have the wrong schema in staging: "
         f"{', '.join(firebase_schema['staging_invalid_tickers'])}\n"
         if firebase_schema["staging_invalid_tickers"]
         else "\n"
     )
+
     usd_market_is_correct: bool = (
         market_status["usd_market_api"] == market_status["usd_market_db"]
     )
     hkd_market_is_correct: bool = (
         market_status["hkd_market_api"] == market_status["hkd_market_db"]
+    )
+    usd_market_difference: str = (
+        "(TradingHours API indicates that the market is "
+        f"*{market_status['usd_market_api']}*"
+        f" but the market status in the db is *{market_status['usd_market_db']}*)"
+    )
+    hkd_market_difference: str = (
+        "(TradingHours API indicates that the market is "
+        f"*{market_status['hkd_market_api']}*"
+        f" but the market status in the db is *{market_status['hkd_market_db']}*)"
     )
 
     asklora_report: str = (
@@ -224,17 +262,20 @@ def send_report(data: dict) -> None:
         (
             f"- Droid API is *{api_status['droid']}*, Droid dev is *{api_status['droid_dev']}*\n"
             f"- Data in firebase *{'is correct' if not schema_has_issues else 'have some issues'}*{schema_issues}"
-            f"- USD market status *{'is correct' if usd_market_is_correct else 'is incorrect'}*\n"
-            f"- HKD market status *{'is correct' if hkd_market_is_correct else 'is incorrect'}*\n"
-            f"- Tests *{'are successful' if tests['status'] == 'success' else 'have some errors'}*\n"
+            f"- USD market status {'*is correct*' if usd_market_is_correct else '*is incorrect* ' + usd_market_difference}\n"
+            f"- HKD market status {'*is correct*' if hkd_market_is_correct else '*is incorrect* ' + hkd_market_difference}\n"
+            f"- {'Latest TestProject test is *' + testproject_status['status'].lower() + '*' if testproject_status else '*No* TestProject test runs yet today'}\n"
         )
         if data["droid_report"]
         else "- No reports yet."
     )
     template = (
-        f"Health check for {date}\n"
+        f"Health check for *{date}*\n"
+        f"{'=' * 25}\n"
         f"*Asklora report*:\n{asklora_report}"
+        f"{'=' * 25}\n"
         f"*Droid report*:\n{droid_report}"
+        f"{'=' * 25}\n"
     )
     report_to_slack(template, channel="#healthcheck")
 
@@ -247,12 +288,12 @@ def daily_health_check():
         # "updater_schema": check_updater_schema(),
         "firebase_schema": check_firebase_schema(),
         "market_status": check_market(),
-        "tests": run_tests(),
+        "testproject_status": check_testproject(),
     }
 
     send_report(
         {
-            "date": str(timezone.now()),
+            "date": timezone.now().strftime("%A, %d %B %Y"),
             "asklora_report": asklora_report,
             "droid_report": droid_report,
         }
