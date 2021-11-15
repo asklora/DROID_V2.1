@@ -28,7 +28,7 @@ class SellPayload:
 
 @dataclass
 class BuyPayload:
-    amount: str
+    amount: float
     bot_id: str
     price: float
     side: str
