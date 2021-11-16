@@ -1,3 +1,4 @@
+from schema import SchemaError
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from firebase_admin import firestore
@@ -23,24 +24,24 @@ class Command(BaseCommand):
         """
         Portfolio: upsert command assertion
         """
-        print_divider("Check portfolio upsert command")
-        result = firebase_user_update(
-            currency_code=["HKD"],
-            update_firebase=False,
-        )
+        # print_divider("Check portfolio upsert command")
+        # result = firebase_user_update(
+        #     currency_code=["HKD"],
+        #     update_firebase=False,
+        # )
 
-        assert type(result) is not str
+        # assert type(result) is not str
 
-        records = result.to_dict("records")
+        # records = result.to_dict("records")
 
-        for portfolio in records:
-            assert FIREBASE_PORTFOLIO_SCHEMA.validate(portfolio)
+        # for portfolio in records:
+        #     assert FIREBASE_PORTFOLIO_SCHEMA.validate(portfolio)
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Portfolio upsert command has the correct schema, {len(records)} checked",
-            )
-        )
+        # self.stdout.write(
+        #     self.style.SUCCESS(
+        #         f"Portfolio upsert command has the correct schema, {len(records)} checked",
+        #     )
+        # )
 
         """
         Universe: upsert command assertion
@@ -148,10 +149,14 @@ class Command(BaseCommand):
         Universe: firebase data assertion
         """
         print_divider("Check universe data on Firebase")
-        portfolios = firestore.client().collection(universe_collection).stream()
+        tickers = firestore.client().collection(universe_collection).stream()
 
-        for portfolio in portfolios:
-            assert FIREBASE_UNIVERSE_SCHEMA.validate(portfolio.to_dict())
+        for ticker in tickers:
+            print(ticker.to_dict()["ticker"])
+            try:
+                assert FIREBASE_UNIVERSE_SCHEMA.validate(ticker.to_dict())
+            except SchemaError as e:
+                print(e)
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -160,14 +165,15 @@ class Command(BaseCommand):
         )
 
         if staging_app:
-            portfolios = (
+            tickers = (
                 firestore.client(app=staging_app)
                 .collection(universe_collection)
                 .stream()
             )
 
-            for portfolio in portfolios:
-                assert FIREBASE_UNIVERSE_SCHEMA.validate(portfolio.to_dict())
+            for ticker in tickers:
+                print(ticker.to_dict()["ticker"])
+                assert FIREBASE_UNIVERSE_SCHEMA.validate(ticker.to_dict())
 
             self.stdout.write(
                 self.style.SUCCESS(

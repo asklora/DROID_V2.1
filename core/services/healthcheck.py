@@ -3,12 +3,14 @@ from typing import List
 
 import requests
 from config.celery import app
+from core.services.order_services import pending_order_checker
 from core.universe.models import ExchangeMarket
 from django.conf import settings
 from django.utils import timezone
 from firebase_admin import firestore
 from general.slack import report_to_slack
 from ingestion.firestore_migration import firebase_universe_update, firebase_user_update
+from schema import SchemaError
 from tests.utils.firebase_schema import (
     FIREBASE_PORTFOLIO_SCHEMA,
     FIREBASE_UNIVERSE_SCHEMA,
@@ -40,8 +42,13 @@ def check_updater_schema() -> dict:
     for portfolio in portfolios:
         try:
             FIREBASE_PORTFOLIO_SCHEMA.validate(portfolio)
-        except:
-            invalid_portfolios.append(portfolio["user_id"])
+        except SchemaError as e:
+            portfolio_data = portfolio.to_dict()
+            error: dict = {
+                "user_id": portfolio_data["user_id"],
+                "error": e,
+            }
+            invalid_portfolios.append(error)
 
     invalid_tickers: List[str] = []
     universe_df = firebase_universe_update(
@@ -54,8 +61,13 @@ def check_updater_schema() -> dict:
     for ticker in universe:
         try:
             FIREBASE_UNIVERSE_SCHEMA.validate(ticker)
-        except:
-            invalid_tickers.append(ticker["ticker"])
+        except SchemaError as e:
+            ticker_data = ticker.to_dict()
+            error: dict = {
+                "ticker": ticker_data["ticker"],
+                "error": e,
+            }
+            invalid_tickers.append(error)
 
     return {
         "portfolio_num": len(portfolios),
@@ -73,34 +85,44 @@ def check_firebase_schema() -> dict:
     universe_collection = settings.FIREBASE_COLLECTION["universe"]
 
     def check_portfolio_schema(portfolios_collection) -> dict:
-        portfolio_fails: List[str] = []
+        invalid_portfolios: List[str] = []
         portfolios_num: int = 0
 
         for portfolio in portfolios_collection:
             portfolios_num += 1
             try:
                 FIREBASE_PORTFOLIO_SCHEMA.validate(portfolio.to_dict())
-            except:
-                portfolio_fails.append(str(portfolio.to_dict()["user_id"]))
+            except SchemaError as e:
+                portfolio_data = portfolio.to_dict()
+                error: dict = {
+                    "user_id": portfolio_data["user_id"],
+                    "error": e,
+                }
+                invalid_portfolios.append(error)
 
         return {
-            "portfolio_fails": portfolio_fails,
+            "invalid_portfolios": invalid_portfolios,
             "portfolio_num": portfolios_num,
         }
 
     def check_universe_schema(universe_collection) -> dict:
-        universe_fails: List[str] = []
+        invalid_tickers: List[str] = []
         universe_num: int = 0
 
         for ticker in universe_collection:
             universe_num += 1
             try:
                 FIREBASE_UNIVERSE_SCHEMA.validate(ticker.to_dict())
-            except:
-                universe_fails.append(ticker.to_dict()["ticker"])
+            except SchemaError as e:
+                ticker_data = ticker.to_dict()
+                error: dict = {
+                    "ticker": ticker_data["ticker"],
+                    "error": e,
+                }
+                invalid_tickers.append(error)
 
         return {
-            "universe_fails": universe_fails,
+            "invalid_tickers": invalid_tickers,
             "universe_num": universe_num,
         }
 
@@ -111,8 +133,8 @@ def check_firebase_schema() -> dict:
         firestore.client().collection(universe_collection).stream()
     )
 
-    portfolio_fails, portfolio_num = portfolio_check.values()
-    universe_fails, universe_num = universe_check.values()
+    invalid_portfolios, portfolio_num = portfolio_check.values()
+    invalid_tickers, universe_num = universe_check.values()
 
     if staging_app:
         staging_portfolio_check: dict = check_portfolio_schema(
@@ -123,7 +145,7 @@ def check_firebase_schema() -> dict:
         )
 
         (
-            staging_portfolio_fails,
+            staging_invalid_portfolios,
             staging_portfolio_num,
         ) = staging_portfolio_check.values()
         staging_universe_fails, staging_universe_num = staging_universe_check.values()
@@ -131,45 +153,74 @@ def check_firebase_schema() -> dict:
     return {
         "portfolio_num": portfolio_num,
         "universe_num": universe_num,
-        "invalid_portfolios": portfolio_fails,
-        "invalid_tickers": universe_fails,
+        "invalid_portfolios": invalid_portfolios,
+        "invalid_tickers": invalid_tickers,
         "staging_portfolio_num": staging_portfolio_num if staging_app else [],
         "staging_universe_num": staging_universe_num if staging_app else [],
-        "staging_invalid_portfolios": staging_portfolio_fails if staging_app else [],
+        "staging_invalid_portfolios": staging_invalid_portfolios if staging_app else [],
         "staging_invalid_tickers": staging_universe_fails if staging_app else [],
     }
 
 
 def check_market() -> dict:
-    def check_market_status() -> dict:
-        status: dict = {}
-        markets: List[str] = ["US.NASDAQ", "HK.HKEX"]
-        token: str = "1M1a35Qhk8gUbCsOSl6XRY2z3Qjj0of7y5ZEfE5MasUYm5b9YsoooA7RSxW7"
-        url: str = (
-            "http://api.tradinghours.com/v3/markets/status?fin_id="
-            + ",".join(markets)
-            + "&token="
-            + token
-        )
-        response = requests.get(url)
-        if response.status_code == 200:
-            response_body = response.json()
-            for market in markets:
-                status[market] = response_body["data"][market]["status"].lower()
+    def force_open_market(market: dict) -> dict:
+        try:
+            market: ExchangeMarket = ExchangeMarket.objects.get(
+                fin_id=market.get("fin_id")
+            )
+            market.is_open = True
+            market.save()
 
-        return status
+            pending_order_checker.apply(args=(market.get("currency")))
+        except:
+            print("Market not found")
 
-    status = check_market_status()
+    status: dict = {}
+    us_market: dict = {"currency": "USD", "fin_id": "US.NASDAQ"}
+    hk_market: dict = {"currency": "HKD", "fin_id": "HK.HKEX"}
+
+    # get data from TradingHours
+    markets: List[str] = [market.get("fin_id") for market in [us_market, hk_market]]
+    token: str = "1M1a35Qhk8gUbCsOSl6XRY2z3Qjj0of7y5ZEfE5MasUYm5b9YsoooA7RSxW7"
+    url: str = (
+        "http://api.tradinghours.com/v3/markets/status?fin_id="
+        + ",".join(markets)
+        + "&token="
+        + token
+    )
+    response = requests.get(url)
+    if response.status_code == 200:
+        response_body = response.json()
+        for market in markets:
+            status[market] = response_body["data"][market]["status"].lower()
+
+    us_market_status_api: str = status.get(us_market["fin_id"])
+    hk_market_status_api: str = status.get(hk_market["fin_id"])
+
+    us_market_status_db: str = (
+        "open"
+        if ExchangeMarket.objects.get(fin_id=us_market["fin_id"]).is_open
+        else "closed"
+    )
+    hk_market_status_db: str = (
+        "open"
+        if ExchangeMarket.objects.get(fin_id=hk_market["fin_id"]).is_open
+        else "closed"
+    )
+
+    # if either of the market status from API doesn't match
+    # the data in the db, force open it if it's closed
+    if us_market_status_api == "open" and us_market_status_db != us_market_status_api:
+        force_open_market(market=us_market)
+
+    if hk_market_status_api == "open" and hk_market_status_db != hk_market_status_api:
+        force_open_market(market=hk_market)
 
     return {
-        "usd_market_api": status["US.NASDAQ"],
-        "hkd_market_api": status["HK.HKEX"],
-        "usd_market_db": "open"
-        if ExchangeMarket.objects.get(currency_code="USD").is_open
-        else "closed",
-        "hkd_market_db": "open"
-        if ExchangeMarket.objects.get(currency_code="HKD").is_open
-        else "closed",
+        "us_market_api": us_market_status_api,
+        "hk_market_api": hk_market_status_api,
+        "us_market_db": us_market_status_db,
+        "hk_market_db": hk_market_status_db,
     }
 
 
@@ -216,40 +267,42 @@ def send_report(data: dict) -> None:
         or len(firebase_schema["staging_invalid_portfolios"]) > 0
         or len(firebase_schema["staging_invalid_tickers"]) > 0
     )
-    schema_issues: str = (
-        f". These users' data have the wrong schema: "
-        f"{', '.join(firebase_schema['invalid_portfolios'])}\n"
-        if firebase_schema["invalid_portfolios"]
-        else ""
-        f". These tickers' data have the wrong schema: "
-        f"{', '.join(firebase_schema['invalid_tickers'])}\n"
-        if firebase_schema["invalid_tickers"]
-        else ""
-        f". These users' data have the wrong schema in staging: "
-        f"{', '.join(firebase_schema['staging_invalid_portfolios'])}\n"
-        if firebase_schema["staging_invalid_portfolios"]
-        else ""
-        f". These tickers' data have the wrong schema in staging: "
-        f"{', '.join(firebase_schema['staging_invalid_tickers'])}\n"
-        if firebase_schema["staging_invalid_tickers"]
-        else "\n"
-    )
+    schema_issues: str = ""
+    if schema_has_issues:
+        if firebase_schema["invalid_portfolios"]:
+            schema_issues += f"\nThese users' data have the wrong schema:"
+            for error in firebase_schema["invalid_portfolios"]:
+                schema_issues += f"\n{error['user_id']} ```{error['error']}```"
+        if firebase_schema["invalid_tickers"]:
+            schema_issues += f"\nThese tickers' data have the wrong schema: "
+            for error in firebase_schema["invalid_tickers"]:
+                schema_issues += f"\n{error['ticker']} ```{error['error']}```"
+        if firebase_schema["staging_invalid_portfolios"]:
+            schema_issues += f"\nThese users' data have the wrong schema in staging: "
+            for error in firebase_schema["staging_invalid_portfolios"]:
+                schema_issues += f"\n{error['user_id']} ```{error['error']}```"
+        if firebase_schema["staging_invalid_tickers"]:
+            schema_issues += f"\nThese tickers' data have the wrong schema in staging: "
+            for error in firebase_schema["staging_invalid_tickers"]:
+                schema_issues += f"\n{error['ticker']} ```{error['error']}```"
 
-    usd_market_is_correct: bool = (
-        market_status["usd_market_api"] == market_status["usd_market_db"]
+    us_market_is_correct: bool = (
+        market_status["us_market_api"] == market_status["us_market_db"]
     )
-    hkd_market_is_correct: bool = (
-        market_status["hkd_market_api"] == market_status["hkd_market_db"]
+    hk_market_is_correct: bool = (
+        market_status["hk_market_api"] == market_status["hk_market_db"]
     )
-    usd_market_difference: str = (
-        "(TradingHours API indicates that the market is "
-        f"*{market_status['usd_market_api']}*"
-        f" but the market status in the db is *{market_status['usd_market_db']}*)"
+    us_market_difference: str = (
+        "TradingHours API indicates that the market is "
+        f"*{market_status['us_market_api']}* "
+        f"but the market status in the db is *{market_status['us_market_db']}* "
+        "(fixed)"
     )
-    hkd_market_difference: str = (
-        "(TradingHours API indicates that the market is "
-        f"*{market_status['hkd_market_api']}*"
-        f" but the market status in the db is *{market_status['hkd_market_db']}*)"
+    hk_market_difference: str = (
+        "TradingHours API indicates that the market is "
+        f"*{market_status['hk_market_api']}* "
+        f"but the market status in the db is *{market_status['hk_market_db']}* "
+        "(fixed)"
     )
 
     asklora_report: str = (
@@ -261,8 +314,8 @@ def send_report(data: dict) -> None:
         (
             f"- Droid API is *{api_status['droid']}*, Droid dev is *{api_status['droid_dev']}*\n"
             f"- Data in firebase *{'is correct' if not schema_has_issues else 'have some issues'}*{schema_issues}"
-            f"- USD market status {'*is correct*' if usd_market_is_correct else '*is incorrect* ' + usd_market_difference}\n"
-            f"- HKD market status {'*is correct*' if hkd_market_is_correct else '*is incorrect* ' + hkd_market_difference}\n"
+            f"- US market status {'*is correct*' if us_market_is_correct else '*is incorrect* ,' + us_market_difference}\n"
+            f"- HK market status {'*is correct*' if hk_market_is_correct else '*is incorrect* ,' + hk_market_difference}\n"
             f"- {'Latest TestProject test is *' + testproject_status['status'].lower() + '*' if testproject_status else '*No* TestProject test runs yet today'}\n"
         )
         if data["droid_report"]
