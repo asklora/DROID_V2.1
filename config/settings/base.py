@@ -201,7 +201,7 @@ USE_TZ = False
 """
 Settings for Redis and Celery
 """
-CELERY_TIMEZONE = "UTC"
+# CELERY_TIMEZONE = "UTC"
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_RESULT_SERIALIZER = "json"
