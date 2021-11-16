@@ -118,7 +118,24 @@ def delete_firestore_user(user_id:str):
     collection=db.collection(settings.FIREBASE_COLLECTION["portfolio"]).document(user_id).delete()
     logging.info(f"{user_id} deleted")
     time.sleep(0.5)
-        
+
+def get_all_universe_from_firestore():
+    firebase_app = getattr(settings, 'FIREBASE_STAGGING_APP',None)
+    if firebase_app:
+        logging.warning("UNIVERSE ARE USING STAGGING PRICE")
+        db = firestore.client(app=firebase_app)
+    else:
+        db = firestore.client()
+    object_list = []
+    doc_ref = db.collection(settings.FIREBASE_COLLECTION['universe']).get()
+    for data in doc_ref:
+        format_data = {}
+        data = data.to_dict()
+        format_data['ticker'] = data.get('ticker')
+        object_list.append(format_data)
+    result = pd.DataFrame(object_list)
+    return result
+
 def get_all_portfolio_from_firestore():
     firebase_app = getattr(settings, 'FIREBASE_STAGGING_APP',None)
     if firebase_app:
