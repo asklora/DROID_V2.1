@@ -44,7 +44,7 @@ def task_id_maker(mic,time):
     return f"{mic}-{time.strftime('%s')}"
 
 
-@app.task(base=Singleton,unique_on=['task_id',])
+@app.task()
 def init_exchange_check(currency:list=None,task_id:str=None):
     currency_list = ["HKD", "USD"] if not currency else currency
     exchanges = ExchangeMarket.objects.filter(currency_code__in=currency_list)
