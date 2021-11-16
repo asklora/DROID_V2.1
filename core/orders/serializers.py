@@ -10,15 +10,11 @@ from core.Clients.models import UserClient,Client
 from core.user.models import TransactionHistory
 from core.user.convert import ConvertMoney
 from django.apps import apps
-from datasource.rkd import RkdData
 from django.db import transaction as db_transaction
 import json
-from .services import (
-    OrderPositionValidation, 
-    sell_position_service,
-    side_validation
-    )
-from datetime import datetime
+from .services import OrderPositionValidation
+
+
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
@@ -281,23 +277,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return super(OrderCreateSerializer, self).to_internal_value(data)
    
         
-    def get_user_currency(self,obj)-> str:
-        return obj.user_id.user_balance.currency_code.currency_code
+    
 
-    def create(self, validated_data):
-        # if not validated_data["ticker"].is_active and validated_data["side"]=="buy":
-        #     # TODO: quick fix, need to update
-        #     raise exceptions.NotAcceptable({'detail':f'fail to buy, {validated_data["ticker"].ticker} is inactive'})
-        # if not "price" in validated_data or validated_data["side"] == "sell":
-        #     rkd = RkdData()
-
-        #     df = rkd.get_quote([validated_data["ticker"].ticker],save=True, df=True)
-        #     df["latest_price"] = df["latest_price"].astype(float)
-        #     ticker = df.loc[df["ticker"] == validated_data["ticker"].ticker]
-        #     validated_data["price"] = ticker.iloc[0]["latest_price"]
-
-
-            
+    def create(self, validated_data):  
         if not "user" in validated_data:
             request = self.context.get("request", None)
             if request:
@@ -317,37 +299,20 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         
         controller = OrderController()
         if validated_data["side"] == "buy":
-            controller.process(BuyOrderProcessor(validated_data))
+            return controller.process(
+                BuyOrderProcessor(validated_data)
+                )
         else:
-            controller.process(SellOrderProcessor(validated_data))
-        
-        order_type = "apps"
-        if user.id == 135:
-            order_type = None
-        
-        init = side_validation(validated_data)
-        
-        with db_transaction.atomic():
-            if validated_data["side"]=="buy":
-                order = Order.objects.create(
-                    **validated_data, order_type=order_type,is_init=init)
-            else:
-                try:
-                    position, order = sell_position_service(validated_data["price"],
-                                                datetime.now(), 
-                                                validated_data.get("setup",{}).get("position",None))
-                except OrderPosition.DoesNotExist:
-                    raise exceptions.NotFound({'detail':'live position not found error'})
-                except exceptions.NotAcceptable as reason:
-                    raise exceptions.NotAcceptable({'detail':f'{reason}'})
-                except Exception as e:
-                    raise exceptions.APIException({'detail':f'{str(e)}'})
-        return order
+            return controller.process(
+                SellOrderProcessor(validated_data)
+                )
 
 
     def get_currency(self,obj) -> str:
         return obj.ticker.currency_code.currency_code
 
+    def get_user_currency(self,obj)-> str:
+        return obj.user_id.user_balance.currency_code.currency_code
 
 @extend_schema_serializer(
     exclude_fields=("user",), # schema ignore these field
@@ -413,8 +378,6 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
         if not validated_data.get("bot_id",None):
             validated_data["bot_id"] = instance.bot_id
         
-        side_validation(validated_data)
-            
         for keys, value in validated_data.items():
             setattr(instance, keys, value)
         if user.id == 135:
