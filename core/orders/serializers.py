@@ -13,8 +13,10 @@ from django.apps import apps
 from django.db import transaction as db_transaction
 import json
 from .services import OrderPositionValidation
-
-
+from asgiref.sync import sync_to_async,async_to_sync
+@sync_to_async
+def get_bot():
+    return BotOptionType.objects.all()
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
@@ -214,6 +216,10 @@ class PositionSerializer(serializers.ModelSerializer):
     def get_last_price(self, obj) -> float:
         return obj.ticker.latest_price_ticker.close
 
+
+
+
+
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
@@ -279,7 +285,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         
     
 
-    def create(self, validated_data):  
+    def create(self, validated_data):
         if not "user" in validated_data:
             request = self.context.get("request", None)
             if request:
@@ -298,6 +304,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             validated_data["user_id"] = user
         
         controller = OrderController()
+        
         if validated_data["side"] == "buy":
             return controller.process(
                 BuyOrderProcessor(validated_data)

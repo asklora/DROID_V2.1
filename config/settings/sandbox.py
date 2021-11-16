@@ -54,7 +54,6 @@ CACHES = {
     }
 }
 
-
 print("using dev db")
 read_endpoint, write_endpoint, port = db.dev_url
 CELERY_BROKER_URL="redis://localhost:6379/0"
@@ -69,7 +68,7 @@ ASKLORA_QUEUE="asklora-dev"
 RUN_LOCAL=True
 print(f'using read: {read_endpoint}')
 # print(f'using write: {write_endpoint}')
-DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
+# DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
 DATABASES = {
     "default": {
         "ENGINE": DB_ENGINE,
