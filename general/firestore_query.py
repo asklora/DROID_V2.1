@@ -108,6 +108,17 @@ def delete_firestore_universe(ticker:str):
     logging.info(f"{ticker} deleted")
     time.sleep(0.5)
 
+def delete_firestore_user(user_id:str):
+    firebase_app = getattr(settings, "FIREBASE_STAGGING_APP",None)
+    if firebase_app:
+        logging.warning("UNIVERSE ARE USING STAGGING PRICE")
+        db = firestore.client(app=firebase_app)
+    else:
+        db = firestore.client()
+    collection=db.collection(settings.FIREBASE_COLLECTION["portfolio"]).document(user_id).delete()
+    logging.info(f"{user_id} deleted")
+    time.sleep(0.5)
+    
 # def delete_firestore_universe(ticker_list:list, table:str=settings.FIREBASE_COLLECTION["universe"]):
 #     db = firestore.client()
 #     for ticker in ticker_list:
