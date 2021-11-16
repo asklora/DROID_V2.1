@@ -7,7 +7,6 @@ import subprocess
 import os
 from django_celery_results.models import TaskResult
 
-
 def restart_worker():
     envrion = os.environ.get("DJANGO_SETTINGS_MODULE", False)
     if envrion in ["config.settings.production", "config.settings.prodtest"]:
@@ -50,10 +49,15 @@ def init_exchange_check(currency:list=None,task_id:str=None):
     exchanges = ExchangeMarket.objects.filter(currency_code__in=currency_list)
     exchanges = exchanges.filter(group="Core")
     initial_id_task=[]
+    if task_id:
+        task_id = f"routines-{task_id}"
+    else:
+        task_id = f"routines-{timezone.now().strftime('%S')}"
     for exchange in exchanges:
         market_check_routines.apply_async(
             args=(exchange.mic,),
             kwargs={"task_id": task_id},
+            task_id=task_id
         )
         initial_id_task.append(exchange.mic)
     return {"message": initial_id_task}
@@ -62,7 +66,7 @@ def init_exchange_check(currency:list=None,task_id:str=None):
 @app.task()
 def market_check_routines(mic,task_id=None):
     if task_id:
-        existed_tasks=TaskResult.objects.filter(task_id=task_id,status='SUCCESS').exists()
+        existed_tasks=TaskResult.objects.filter(task_id=f"routines-{task_id}",status='SUCCESS').exists()
         if existed_tasks:
             return {"message": f"task {task_id} already existed"}
     market = TradingHours(mic=mic)
