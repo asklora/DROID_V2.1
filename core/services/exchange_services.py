@@ -7,7 +7,6 @@ import subprocess
 import os
 from django_celery_results.models import TaskResult
 
-
 def restart_worker():
     envrion = os.environ.get("DJANGO_SETTINGS_MODULE", False)
     if envrion in ["config.settings.production", "config.settings.prodtest"]:
@@ -44,16 +43,21 @@ def task_id_maker(mic,time):
     return f"{mic}-{time.strftime('%s')}"
 
 
-@app.task(base=Singleton,unique_on=['task_id',])
+@app.task(acks_late=True)
 def init_exchange_check(currency:list=None,task_id:str=None):
     currency_list = ["HKD", "USD"] if not currency else currency
     exchanges = ExchangeMarket.objects.filter(currency_code__in=currency_list)
     exchanges = exchanges.filter(group="Core")
     initial_id_task=[]
+    if task_id:
+        task_id = f"routines-{task_id}"
+    else:
+        task_id = f"routines-{timezone.now().strftime('%s')}"
     for exchange in exchanges:
         market_check_routines.apply_async(
             args=(exchange.mic,),
             kwargs={"task_id": task_id},
+            task_id=task_id
         )
         initial_id_task.append(exchange.mic)
     return {"message": initial_id_task}
