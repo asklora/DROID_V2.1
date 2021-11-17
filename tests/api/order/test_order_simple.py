@@ -2,8 +2,7 @@ from random import choice
 
 import pytest
 from core.orders.models import Order
-from tests.utils.order import confirm_order
-from tests.utils.position_performance import get_position_performance
+from tests.utils.order import confirm_order, get_position_performance
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -96,7 +95,7 @@ def test_api_create_sell_order(
     confirm_order(buy_order)
 
     # we get the position uid from the database
-    position, _ = get_position_performance(buy_order.order_uid)
+    position, _ = get_position_performance(buy_order)
     assert position
 
     # we create the sell order

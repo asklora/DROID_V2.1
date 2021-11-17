@@ -2,10 +2,10 @@ from datetime import datetime
 from random import choice
 
 import pytest
+from core.orders.factory.orderfactory import OrderController, SellOrderProcessor
 from core.orders.models import Order, OrderPosition, PositionPerformance
-from core.orders.services import sell_position_service
 from core.user.models import Accountbalance, User
-from tests.utils.order import confirm_order, create_buy_order
+from tests.utils.order import MockGetterPrice, confirm_order, create_buy_order
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -56,10 +56,25 @@ def test_create_new_sell_order_for_user(user, tickers) -> None:
     assert position is not None
 
     # We create the sell order
-    sellPosition, sell_order = sell_position_service(
-        buy_order.price + (buy_order.price * 0.25),  # Selling in different price point
-        datetime.now(),
-        position.position_uid,
+    latest_price: float = buy_order.price + (buy_order.price * 0.25)
+
+    order_payload: dict = {
+        "setup": {"position": position.position_uid},
+        "side": "sell",
+        "ticker": buy_order.ticker,
+        "user_id": buy_order.user_id,
+        "margin": buy_order.margin,
+    }
+
+    controller: OrderController = OrderController()
+
+    sell_order: Order = controller.process(
+        SellOrderProcessor(
+            order_payload,
+            getterprice=MockGetterPrice(
+                price=latest_price,
+            ),
+        ),
     )
 
     # We get previous user balance
