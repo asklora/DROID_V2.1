@@ -6,7 +6,7 @@ from datasource.rkd import RkdData
 from django.utils import timezone
 from core.orders.models import Order, OrderPosition
 from core.bot.models import BotOptionType
-from .order_protocol import ValidatorProtocol, OrderProtocol
+from .order_protocol import ValidatorProtocol, OrderProtocol,GetPriceProtocol
 from rest_framework import exceptions
 from django.db import transaction as db_transaction
 from portfolio import (
@@ -17,7 +17,7 @@ from portfolio import (
 )
 import asyncio
 
-class BaseOrderProcessor:
+class RkdGetterPrice:
     response: Order = None
 
     def get_price(self, ticker:list)->float:
@@ -185,15 +185,18 @@ class BuyValidator:
 
 
 
-class SellOrderProcessor(BaseOrderProcessor):
+class SellOrderProcessor:
+    getter_price = RkdGetterPrice()
+    
 
-    def __init__(self, payload: dict):
+    def __init__(self, payload: dict,getterprice:GetPriceProtocol=None):
         self.payload = SellPayload(**payload)
-
         self.validator: ValidatorProtocol = SellValidator(self.payload)
+        if getterprice:
+            self.getter_price = getterprice
 
     def execute(self):
-        self.payload.price = self.get_price([self.payload.ticker.ticker])
+        self.payload.price = self.getterprice.get_price([self.payload.ticker.ticker])
         with db_transaction.atomic():
             position = self.validator.position
             bot = position.bot
@@ -208,15 +211,19 @@ class SellOrderProcessor(BaseOrderProcessor):
                 positions, self.response=user_sell_position(self.payload.price, trading_day, position, apps=True)
 
 
-class BuyOrderProcessor(BaseOrderProcessor):
+class BuyOrderProcessor:
+    getter_price = RkdGetterPrice()
 
-    def __init__(self, payload: dict):
+    def __init__(self, payload: dict, getterprice:GetPriceProtocol=None):
         self.raw_payload=payload
         self.payload = BuyPayload(**payload)
         self.validator: ValidatorProtocol = BuyValidator(self.payload)
+        if getterprice:
+            self.getter_price = getterprice
+     
 
     def execute(self):
-        self.raw_payload["price"] = self.get_price([self.payload.ticker.ticker])
+        self.raw_payload["price"] = self.getterprice.get_price([self.payload.ticker.ticker])
         with db_transaction.atomic():
             self.response = Order.objects.create(
                 **self.raw_payload, order_type='apps', is_init=True)

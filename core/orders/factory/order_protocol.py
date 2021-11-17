@@ -8,7 +8,16 @@ class ValidatorProtocol(Protocol):
         ...
 
 
+
+class GetPriceProtocol(Protocol):
+    
+    def get_price(self,ticker:list)->float:
+        ...
+        
+        
 class OrderProtocol(Protocol):
+    validator = ValidatorProtocol
+    getter_price =GetPriceProtocol
     
     def execute(self):
         ...
