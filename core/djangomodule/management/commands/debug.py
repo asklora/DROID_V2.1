@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from core.services.tasks import daily_hedge_user
 from core.services.exchange_services import market_task_checker
 from core.services.notification import send_winner_email
+from core.services.healthcheck import check_firebase_schema, check_api, check_updater_schema, daily_health_check, check_market
 from datasource.rkd import RkdData
 from core.universe.models import Universe
 from core.bot.models import BotOptionType
@@ -18,10 +19,8 @@ async def main():
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        # print("Process")
-        # pending_order_checker()
-        data = asyncio.run(main())
-        print(data)
+
+        pending_order_checker(currency="USD")
         # firebase_ranking_update_random()
         # ticker = list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
         #             is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))

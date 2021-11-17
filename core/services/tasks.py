@@ -230,20 +230,26 @@ app.conf.beat_schedule = {
         }
     },
     "USD-MARKET-CHECKER":{
-        "taks":"core.services.exchange_services.market_task_checker",
+        "task":"core.services.exchange_services.market_task_checker",
         "schedule": crontab(minute=00, hour=4, day_of_week=5),
         "options": {
             "expires": 5*60,
             }
     },
     "HKD-MARKET-CHECKER":{
-        "taks":"core.services.exchange_services.market_task_checker",
+        "task":"core.services.exchange_services.market_task_checker",
         "schedule": crontab(minute=00, hour=16, day_of_week=5),
         "options": {
             "expires": 5*60,
             }
-    }
-
+    },
+    "HealthCheck": {
+        "task": "core.services.healthcheck.daily_health_check",
+        "schedule": crontab(minute=5, hour=4),
+        "options": {
+            "expires": 5*60,
+        },
+    },
 }
 # END TASK SCHEDULE
 

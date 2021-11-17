@@ -63,7 +63,7 @@ def init_exchange_check(currency:list=None,task_id:str=None):
     return {"message": initial_id_task}
 
 
-@app.task()
+@app.task(acks_late=True)
 def market_check_routines(mic,task_id=None):
     if task_id:
         existed_tasks=TaskResult.objects.filter(task_id=task_id,status='SUCCESS').exists()
