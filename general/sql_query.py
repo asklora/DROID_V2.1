@@ -824,6 +824,12 @@ def get_data_from_table_name(table_name, ticker=None, currency_code=None, active
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+def get_all_user_core():
+    table_name = get_user_core_table_name()
+    query = f"select * from {table_name} "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
 def get_user_core(currency_code=None, user_id=None, field="*", ):
     table_name = get_user_core_table_name()
     query = f"select {field} from {table_name} where is_active=True and is_superuser=False and is_test=False " #is_active=True and is_joined=True and current_status='verified' and is_test=False

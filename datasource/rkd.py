@@ -51,6 +51,7 @@ class Rkd:
     def __init__(self, *args, **kwargs):
         self.credentials = ThirdpartyCredentials.objects.get(services="RKD")
         self.headers = {"content-type": "application/json;charset=utf-8"}
+        self.timeout =kwargs.get('timeout',10)
         self.validate_token()
 
     async def snapshot_gather_request(self, url, payload, headers):
@@ -102,7 +103,7 @@ class Rkd:
 
         try:
             result = requests.post(
-                url, data=json.dumps(payload), headers=headers)
+                url, data=json.dumps(payload), headers=headers,timeout=self.timeout)
             if result.status_code != 200:
 
                 logging.warning("Request fail")
@@ -113,16 +114,14 @@ class Rkd:
                     resp = result.json()
                     logging.warning("Error: %s" % (json.dumps(result.json(),indent=2)))
                     err = json.dumps(result.json(),indent=2)
-                    # report =ErrorLog.objects.create(error_description=resp['Fault']['Reason']['Text']['Value'],error_traceback='err',
-                    # error_message='Token Invalid',
-                    # error_function='RKD DATA')
-                    # report.send_report_error()
                     return None
         except requests.exceptions.RequestException as e:
-            logging.warning("error : {str(e)}")
+            logging.warning(f"error : {str(e)}")
             error_log =ErrorLog.objects.create_log(error_description="TRKD REQUEST ERROR",error_message=str(e))
             error_log.send_report()
             raise Exception("request error")
+        except requests.Timeout:
+            raise Exception("cannot get price data, waited to loong")
         return result.json()
 
     def get_token(self):
@@ -496,7 +495,7 @@ class RkdData(Rkd):
         splitting_df = np.array_split(ticker, split)
         for universe in splitting_df:
             ticker = universe.tolist()
-            print(len(ticker))
+            # print(len(ticker))
             payload = self.retrive_template(ticker, fields=[
                                             "CF_ASK","CF_OPEN", "CF_CLOSE", "CF_BID", "PCTCHNG", "CF_HIGH", "CF_LOW", "CF_LAST", 
                                             "CF_VOLUME", "TRADE_DATE","CF_NETCHNG","YIELD"])

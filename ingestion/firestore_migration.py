@@ -14,7 +14,9 @@ from asgiref.sync import sync_to_async
 from general.slack import report_to_slack, report_to_slack_factor
 from general.firestore_query import (
     change_null_to_zero,
-    delete_firestore_universe, 
+    delete_firestore_universe,
+    delete_firestore_user,
+    get_all_portfolio_from_firestore, 
     update_to_firestore, 
     change_date_to_str, 
     get_price_data_firebase
@@ -23,6 +25,7 @@ from general.sql_query import (
     get_active_currency, 
     get_active_universe,
     get_all_universe,
+    get_all_user_core,
     get_bot_type, 
     get_industry, 
     get_industry_group, 
@@ -41,6 +44,24 @@ from general.sql_query import (
     get_factor_calculation_formula,
     get_factor_current_used)
 from es_logging.logger import log2es
+
+def firebase_user_delete():
+    all_user = get_all_user_core()
+    user = get_user_core()
+    user = user.loc[user["is_joined"] == True]
+    user = user.loc[user["current_status"] == "verified"]
+    user = user["id"].to_list()
+    firebase_portfolio = get_all_portfolio_from_firestore()
+    firebase_delete = firebase_portfolio.loc[~firebase_portfolio["user_id"].isin(user)]["user_id"].to_list()
+    deleted_user = all_user.loc[~all_user["id"].isin(user)]["id"].to_list()
+    print(user)
+    print(firebase_delete)
+    for user_id in deleted_user:
+        print(user_id)
+        delete_firestore_user(str(user_id))
+    for user_id in firebase_delete:
+        print(user_id)
+        delete_firestore_user(str(user_id))
 
 def firebase_universe_delete():
     universe = get_all_universe(active=True)
