@@ -14,6 +14,7 @@ from datasource import rkd as trkd
 import time
 import json
 import asyncio
+from general.slack import report_to_slack
 class OrderDetailsServicesSerializers(serializers.ModelSerializer):
 
     class Meta:
@@ -26,7 +27,24 @@ class OrderDetailsServicesSerializers(serializers.ModelSerializer):
 def pending_order_checker(self,currency=None):
     Exchange = apps.get_model('universe', 'ExchangeMarket')
     Order = apps.get_model('orders', 'Order')
-    orders = Order.objects.prefetch_related('ticker').filter(status='pending',ticker__currency_code=currency)
+    orders_to_check = Order.objects.prefetch_related('ticker').filter(status='pending',ticker__currency_code=currency)
+    duplicate_order_id=[]
+    for user in orders_to_check:
+        user_order = orders_to_check.filter(user_id=user.user_id,status='pending',ticker=user.ticker,bot_id=user.bot_id)
+        if user_order.count() > 1:
+            for duplicate in user_order:
+                if not str(duplicate.order_uid) in duplicate_order_id:
+                    duplicate_order_id.append(str(duplicate.order_uid))
+    
+    if duplicate_order_id:
+        report_to_slack(f'duplicate order found and skip to execute, \n {tuple(duplicate_order_id)}',"#error-log")
+        
+        
+    orders = Order.objects.prefetch_related('ticker').filter(
+        status='pending',ticker__currency_code=currency
+        ).exclude(order_uid__in=duplicate_order_id)
+    
+    
     orders_id=[]
     if orders.exists():
         for order in orders:
