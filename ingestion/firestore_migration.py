@@ -114,6 +114,7 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
 
     all_universe = all_universe.loc[~all_universe["ticker"].isin(currency["index_ticker"].to_list())]
     all_universe = all_universe.loc[~all_universe["ticker"].isin(currency["etf_ticker"].to_list())]
+    all_universe = all_universe.loc[~all_universe["ticker"].isin([".NDX"])]
     
     currency = currency[["currency_code", "country"]]
     industry = get_industry()
