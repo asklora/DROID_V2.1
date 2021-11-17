@@ -196,7 +196,7 @@ class SellOrderProcessor:
             self.getter_price = getterprice
 
     def execute(self):
-        self.payload.price = self.getterprice.get_price([self.payload.ticker.ticker])
+        self.payload.price = self.getter_price.get_price([self.payload.ticker.ticker])
         with db_transaction.atomic():
             position = self.validator.position
             bot = position.bot
@@ -223,7 +223,7 @@ class BuyOrderProcessor:
      
 
     def execute(self):
-        self.raw_payload["price"] = self.getterprice.get_price([self.payload.ticker.ticker])
+        self.raw_payload["price"] = self.getter_price.get_price([self.payload.ticker.ticker])
         with db_transaction.atomic():
             self.response = Order.objects.create(
                 **self.raw_payload, order_type='apps', is_init=True)
