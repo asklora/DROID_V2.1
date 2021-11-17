@@ -28,11 +28,14 @@ def test_create_new_sell_order_for_user_with_classic_bot(
         bot_id="CLASSIC_classic_007692",
     )
 
+    assert buy_order
+
     # we confirm the order
     confirm_order(buy_order)
 
     # create sell order here
-    sell_position, sell_order = create_sell_order(buy_order)
+    sell_order = create_sell_order(buy_order)
+    print(sell_order.price)
 
     # We get previous user balance
     user = User.objects.get(pk=user.id)
@@ -67,7 +70,7 @@ def test_create_new_sell_order_for_user_with_uno_bot(
     confirm_order(buy_order)
 
     # create sell order here
-    sell_position, sell_order = create_sell_order(buy_order)
+    sell_order = create_sell_order(buy_order)
 
     # We get previous user balance
     user = User.objects.get(pk=user.id)
@@ -102,7 +105,7 @@ def test_create_new_sell_order_for_user_with_ucdc_bot(
     confirm_order(buy_order)
 
     # create sell order here
-    sell_position, sell_order = create_sell_order(buy_order)
+    sell_order = create_sell_order(buy_order)
 
     # We get previous user balance
     user = User.objects.get(pk=user.id)

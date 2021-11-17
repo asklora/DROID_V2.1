@@ -89,29 +89,34 @@ class SellValidator:
         return
 
     async def has_order(self):
+        print(">>>>>Has order<<<<<")
         pending_order =await Order.objects.async_filter(
             user_id=self.position.user_id,
             status='pending',
             bot_id=self.position.bot_id,
             ticker=self.position.ticker
         )
+        print(f">>>>>{pending_order}<<<<<")
         if await pending_order.async_exists():
             last_order = await pending_order.async_first()
             orderId = last_order.order_uid.hex
             raise exceptions.NotAcceptable(
                 f"sell order already exists for this position, order id : {orderId}, current status pending")
     async def validation_tasks(self):
+        print(">>>>>Validation tasks<<<<<")
         task =[
             asyncio.ensure_future(self.is_user_position()),
             asyncio.ensure_future(self.has_order()),
             asyncio.ensure_future(self.is_closed()),
         ]
-        await asyncio.gather(*task)
+        validation = await asyncio.gather(*task)
+        print(validation)
     
     def validate(self):
         self.is_position_uid_valid
         self.position = self.is_position_exists()
         asyncio.run(self.validation_tasks())
+        print(f">>>>>{self.position}<<<<<")
         # self.is_user_position()
         # self.is_closed()
         # self.has_order()

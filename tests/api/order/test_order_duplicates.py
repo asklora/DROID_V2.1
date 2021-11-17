@@ -5,8 +5,7 @@ import pytest
 from core.orders.models import Order
 from tests.utils.market import check_market, close_market, open_market
 from tests.utils.mocks import mock_order_serializer
-from tests.utils.order import confirm_order, confirm_order_api
-from tests.utils.position_performance import get_position_performance
+from tests.utils.order import confirm_order, confirm_order_api, get_position_performance
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -60,7 +59,11 @@ def test_api_create_duplicated_buy_orders(
     # we confirm the order
     buy_order = Order.objects.get(pk=order_1["order_uid"])
     assert buy_order is not None
-    confirm_order(buy_order)
+    confirm_order_api(
+        buy_order.order_uid,
+        client,
+        authentication,
+    )
 
     # This should fail and return None
     order_2 = create_order()
@@ -124,7 +127,7 @@ def test_api_create_duplicated_pending_sell_orders(
         authentication,
     )
 
-    position, _ = get_position_performance(buy_order.order_uid)
+    position, _ = get_position_performance(buy_order)
     assert position
 
     # we create the sell order
@@ -154,10 +157,11 @@ def test_api_create_duplicated_pending_sell_orders(
     # We set the market to be closed, if it's opened
     close_market(buy_order.ticker.mic)
 
-    sell_order = Order.objects.get(pk=sell_order_1["order_uid"])
-    confirm_order_api(sell_order.order_uid, client, authentication)
+    confirm_order_api(sell_order_1["order_uid"], client, authentication)
 
+    sell_order = Order.objects.get(pk=sell_order_1["order_uid"])
     print(f"sell order status: {sell_order.status}")
+    assert sell_order.status == "pending"
 
     # this should fail and return None
     sell_response_2 = client.post(
@@ -218,7 +222,7 @@ def test_api_create_duplicated_filled_sell_orders(
 
     confirm_order(buy_order)
 
-    position, _ = get_position_performance(buy_order.order_uid)
+    position, _ = get_position_performance(buy_order)
     assert position
 
     # we create the sell order
