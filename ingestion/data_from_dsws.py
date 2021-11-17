@@ -632,7 +632,7 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
     print(calculate_column_robust_score)
 
     # Scale 4a: apply maxmin scaler on Currency / Industry
-    minmax_column = ["uid", "ticker", "trading_day"]
+    minmax_column = []
     for column in calculate_column:
         column_robust_score = column + "_robust_score"
         column_minmax_currency_code = column + "_minmax_currency_code"
@@ -760,7 +760,7 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
                                        "ai_score", "ai_score2", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol", "currency_code"]
     fundamentals[fundamentals_factors_scores_col] = fundamentals[fundamentals_factors_scores_col].round(1)
 
-    return fundamentals.set_index('ticker')[fundamentals_factors_scores_col]
+    return fundamentals.set_index('ticker')[fundamentals_factors_scores_col], fundamentals.set_index('ticker')[minmax_column]
 
 def score_update_final_scale(fundamentals):
 
@@ -893,9 +893,14 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
     # Scale original fundamental score
     universe_currency_code = get_active_universe()['currency_code'].unique()
     fundamentals_factors_scores_col_diff = ["fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "ai_score", "ai_score2"]
-    fundamentals_1w = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='weekly1')
+    fundamentals_1w, fundamentals_details_1w = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='weekly1')
     fundamentals_1w = fundamentals_1w[fundamentals_factors_scores_col_diff]  # for only scores
-    fundamentals_1m = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='monthly1')
+    fundamentals_1m, fundamentals_details_1m = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='monthly1')
+
+    # details history table = average score of 1w + 1m
+    universe_rating_detail_history = (fundamentals_details_1w + fundamentals_details_1m)/2
+    universe_rating_detail_history["trading_day"] = dateNow()
+    universe_rating_detail_history = uid_maker(universe_rating_detail_history.reset_index(), uid="uid", ticker="ticker", trading_day="trading_day")
 
     fundamentals = fundamentals_1w.merge(fundamentals_1m, left_index=True, right_index=True, suffixes=('_weekly1','_monthly1'))
     for i in ['ai_score', 'ai_score2']:  # currently we use simple average of weekly score & monthly score
@@ -917,10 +922,10 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
         print(universe_rating_history)
         upsert_data_to_database(result, get_universe_rating_table_name(), "ticker", how="update", Text=True)
         upsert_data_to_database(fundamentals, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
+        upsert_data_to_database(universe_rating_detail_history, get_universe_rating_detail_history_table_name(), "uid", how="update", Text=True)
         delete_data_on_database(get_universe_rating_table_name(), f"ticker is not null", delete_ticker=True)
         delete_data_on_database(get_universe_rating_history_table_name(), f"ticker is not null", delete_ticker=True)
-        # upsert_data_to_database(universe_rating_detail_history, get_universe_rating_detail_history_table_name(), "uid", how="update", Text=True)
-        # delete_data_on_database(get_universe_rating_detail_history_table_name(), f"ticker is not null", delete_ticker=True)
+        delete_data_on_database(get_universe_rating_detail_history_table_name(), f"ticker is not null", delete_ticker=True)
         report_to_slack("{} : === Universe Fundamentals Quality & Value Updated ===".format(datetimeNow()))
 
 @log2es("ingestion")
