@@ -17,7 +17,7 @@ class UniverseConsumer(WebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['subscribe']
         self.room_group_name = self.room_name
         if self.room_name != 'market':
-            self.close()
+            self.disconnect(400)
         # Join room group
         asyncio.run(self.channel_layer.group_add(
             self.room_group_name,
@@ -64,7 +64,7 @@ class UniverseConsumer(WebsocketConsumer):
             room=self.room_id).values('channel_name')])
 
     def force_close_connection(self, event):
-        self.close()
+        self.disconnect(400)
 
     # Receive message from WebSocket
     def receive(self, text_data):
@@ -198,7 +198,7 @@ class OrderConsumer(AsyncWebsocketConsumer):
                 self.channel_name,
                 self.payload
             )
-            await self.close()
+            await self.disconnect(403)
             # Receive message from room group
 
     async def send_message(self, event):
@@ -212,7 +212,7 @@ class OrderConsumer(AsyncWebsocketConsumer):
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps(event))
-        await self.close()
+        await self.disconnect(400)
 
 class TestConsumer(AsyncWebsocketConsumer):
     
