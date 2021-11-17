@@ -3,6 +3,7 @@ from typing import List
 
 import requests
 from config.celery import app
+from core.services.models import ErrorLog
 from core.services.order_services import pending_order_checker
 from core.universe.models import ExchangeMarket
 from django.conf import settings
@@ -100,6 +101,13 @@ def check_firebase_schema() -> dict:
                 }
                 invalid_portfolios.append(error)
 
+        # if invalid_portfolios:
+        #     err = ErrorLog.objects.create_log(
+        #         error_description="⚠️ Portfolio schema error",
+        #         error_message=str(invalid_portfolios),
+        #     )
+        #     err.send_report_error()
+
         return {
             "invalid_portfolios": invalid_portfolios,
             "portfolio_num": portfolios_num,
@@ -120,6 +128,13 @@ def check_firebase_schema() -> dict:
                     "error": e,
                 }
                 invalid_tickers.append(error)
+
+        # if invalid_tickers:
+        #     err = ErrorLog.objects.create_log(
+        #         error_description="⚠️ Universe schema error",
+        #         error_message=str(invalid_tickers),
+        #     )
+        #     err.send_report_error()
 
         return {
             "invalid_tickers": invalid_tickers,
@@ -270,21 +285,21 @@ def send_report(data: dict) -> None:
     schema_issues: str = ""
     if schema_has_issues:
         if firebase_schema["invalid_portfolios"]:
-            schema_issues += f"\nThese users' data have the wrong schema:"
+            schema_issues += "\nThese users' data have the wrong schema:"
             for error in firebase_schema["invalid_portfolios"]:
-                schema_issues += f"\n{error['user_id']} ```{error['error']}```"
+                schema_issues += f" `{error['user_id']}`"
         if firebase_schema["invalid_tickers"]:
-            schema_issues += f"\nThese tickers' data have the wrong schema: "
+            schema_issues += "\nThese tickers' data have the wrong schema: "
             for error in firebase_schema["invalid_tickers"]:
-                schema_issues += f"\n{error['ticker']} ```{error['error']}```"
+                schema_issues += f" `{error['ticker']}`"
         if firebase_schema["staging_invalid_portfolios"]:
-            schema_issues += f"\nThese users' data have the wrong schema in staging: "
+            schema_issues += "\nThese users' data have the wrong schema in staging:"
             for error in firebase_schema["staging_invalid_portfolios"]:
-                schema_issues += f"\n{error['user_id']} ```{error['error']}```"
+                schema_issues += f" `{error['user_id']}`"
         if firebase_schema["staging_invalid_tickers"]:
-            schema_issues += f"\nThese tickers' data have the wrong schema in staging: "
+            schema_issues += "\nThese tickers' data have the wrong schema in staging: "
             for error in firebase_schema["staging_invalid_tickers"]:
-                schema_issues += f"\n{error['ticker']} ```{error['error']}```"
+                schema_issues += f" `{error['ticker']}`"
 
     us_market_is_correct: bool = (
         market_status["us_market_api"] == market_status["us_market_db"]
@@ -313,7 +328,7 @@ def send_report(data: dict) -> None:
     droid_report: str = (
         (
             f"- Droid API is *{api_status['droid']}*, Droid dev is *{api_status['droid_dev']}*\n"
-            f"- Data in firebase *{'is correct' if not schema_has_issues else 'have some issues'}*{schema_issues}"
+            f"- Data in firebase *{'is correct' if not schema_has_issues else 'have some issues'}*{schema_issues}\n"
             f"- US market status {'*is correct*' if us_market_is_correct else '*is incorrect* ,' + us_market_difference}\n"
             f"- HK market status {'*is correct*' if hk_market_is_correct else '*is incorrect* ,' + hk_market_difference}\n"
             f"- {'Latest TestProject test is *' + testproject_status['status'].lower() + '*' if testproject_status else '*No* TestProject test runs yet today'}\n"
