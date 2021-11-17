@@ -1,7 +1,9 @@
+import logging
 from datetime import date, datetime
 from typing import List
 
 import requests
+from celery.result import AsyncResult
 from config.celery import app
 from core.services.order_services import pending_order_checker
 from core.universe.models import ExchangeMarket
@@ -48,7 +50,7 @@ def check_updater_schema() -> dict:
                 "user_id": portfolio_data["user_id"],
                 "error": e,
             }
-            invalid_portfolios.append(error)
+            invalid_portfolios.append(str(portfolio_data["user_id"]))
 
     invalid_tickers: List[str] = []
     universe_df = firebase_universe_update(
@@ -67,7 +69,7 @@ def check_updater_schema() -> dict:
                 "ticker": ticker_data["ticker"],
                 "error": e,
             }
-            invalid_tickers.append(error)
+            invalid_tickers.append(str(portfolio_data["user_id"]))
 
     return {
         "portfolio_num": len(portfolios),
@@ -98,7 +100,9 @@ def check_firebase_schema() -> dict:
                     "user_id": portfolio_data["user_id"],
                     "error": e,
                 }
-                invalid_portfolios.append(error)
+                logging.warning("Porfolio scheme mismatch")
+                print(error)
+                invalid_portfolios.append(str(portfolio_data["user_id"]))
 
         return {
             "invalid_portfolios": invalid_portfolios,
@@ -119,7 +123,9 @@ def check_firebase_schema() -> dict:
                     "ticker": ticker_data["ticker"],
                     "error": e,
                 }
-                invalid_tickers.append(error)
+                logging.warning("Universe scheme mismatch")
+                print(error)
+                invalid_tickers.append(str(ticker_data["ticker"]))
 
         return {
             "invalid_tickers": invalid_tickers,
@@ -252,6 +258,24 @@ def check_testproject() -> dict:
     return status
 
 
+def check_asklora() -> dict:
+    # payload = {
+    #     "type": "function",
+    #     "module": "tests.healthcheck.check_asklora",
+    #     "payload": {"date": date.today()},
+    # }
+    payload = {
+        "type": "function",
+        "module": "core.djangomodule.crudlib.user.get_user",
+        "payload": {"username": "agustian"},
+    }
+    task = app.send_task(
+        "config.celery.listener", args=(payload,), queue=settings.ASKLORA_QUEUE
+    )
+    celery_result = AsyncResult(task.id, app=app)
+    return celery_result.get()
+
+
 def send_report(data: dict) -> None:
     date, asklora_report, droid_report = data.values()
     (
@@ -261,6 +285,15 @@ def send_report(data: dict) -> None:
         testproject_status,
     ) = droid_report.values()
 
+    # reports from asklora
+    print(asklora_report.get("celery_status"))
+    asklora_report: str = (
+        f"- Celery is {'working' if asklora_report.get('celery_status') else 'having a problem'}\n"
+        if asklora_report
+        else "- No reports yet.\n"
+    )
+
+    # reports from droid
     schema_has_issues: bool = (
         len(firebase_schema["invalid_portfolios"]) > 0
         or len(firebase_schema["invalid_tickers"]) > 0
@@ -270,21 +303,25 @@ def send_report(data: dict) -> None:
     schema_issues: str = ""
     if schema_has_issues:
         if firebase_schema["invalid_portfolios"]:
-            schema_issues += f"\nThese users' data have the wrong schema:"
-            for error in firebase_schema["invalid_portfolios"]:
-                schema_issues += f"\n{error['user_id']} ```{error['error']}```"
+            schema_issues += (
+                "\nThese users' data have inconsistent schema: "
+                f"{', '.join(firebase_schema['invalid_portfolios'])}"
+            )
         if firebase_schema["invalid_tickers"]:
-            schema_issues += f"\nThese tickers' data have the wrong schema: "
-            for error in firebase_schema["invalid_tickers"]:
-                schema_issues += f"\n{error['ticker']} ```{error['error']}```"
+            schema_issues += (
+                "\nThese tickers' data have inconsistent schema: "
+                f"{', '.join(firebase_schema['invalid_tickers'])}"
+            )
         if firebase_schema["staging_invalid_portfolios"]:
-            schema_issues += f"\nThese users' data have the wrong schema in staging: "
-            for error in firebase_schema["staging_invalid_portfolios"]:
-                schema_issues += f"\n{error['user_id']} ```{error['error']}```"
+            schema_issues += (
+                "\nThese users' data have inconsistent schema in staging: "
+                f"{', '.join(firebase_schema['staging_invalid_portfolios'])}"
+            )
         if firebase_schema["staging_invalid_tickers"]:
-            schema_issues += f"\nThese tickers' data have the wrong schema in staging: "
-            for error in firebase_schema["staging_invalid_tickers"]:
-                schema_issues += f"\n{error['ticker']} ```{error['error']}```"
+            schema_issues += (
+                "\nThese tickers' data have inconsistent schema in staging: "
+                f"{', '.join(firebase_schema['staging_invalid_tickers'])}"
+            )
 
     us_market_is_correct: bool = (
         market_status["us_market_api"] == market_status["us_market_db"]
@@ -305,15 +342,10 @@ def send_report(data: dict) -> None:
         "(fixed)"
     )
 
-    asklora_report: str = (
-        (f"- Api is {'up' if asklora_report['api_status']['asklora'] else 'down'}\n")
-        if asklora_report
-        else "- No reports yet.\n"
-    )
     droid_report: str = (
         (
             f"- Droid API is *{api_status['droid']}*, Droid dev is *{api_status['droid_dev']}*\n"
-            f"- Data in firebase *{'is correct' if not schema_has_issues else 'have some issues'}*{schema_issues}"
+            f"- Data in firebase *{'is correct' if not schema_has_issues else 'has schema mismatch'}*{schema_issues}\n"
             f"- US market status {'*is correct*' if us_market_is_correct else '*is incorrect* ,' + us_market_difference}\n"
             f"- HK market status {'*is correct*' if hk_market_is_correct else '*is incorrect* ,' + hk_market_difference}\n"
             f"- {'Latest TestProject test is *' + testproject_status['status'].lower() + '*' if testproject_status else '*No* TestProject test runs yet today'}\n"
@@ -334,7 +366,7 @@ def send_report(data: dict) -> None:
 
 @app.task(ignore_result=True)
 def daily_health_check():
-    asklora_report: dict = {}
+    asklora_report: dict = {"celery_status": check_asklora()}
     droid_report: dict = {
         "api_status": check_api(),
         # "updater_schema": check_updater_schema(),
