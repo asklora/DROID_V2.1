@@ -18,8 +18,8 @@ class Command(BaseCommand):
         # print(check_api())
         # print(check_updater_schema())
         # print(check_market())
-        daily_health_check.apply()
-        # pending_order_checker()
+        # daily_health_check.apply()
+        pending_order_checker(currency="USD")
         # firebase_ranking_update_random()
         # ticker = list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
         #             is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
