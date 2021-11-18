@@ -94,6 +94,16 @@ def sell_position_service(price:float, trading_day:datetime, position_uid:str)->
     if not position.is_live:
         raise exceptions.NotAcceptable(f"position, has been closed")
     bot = position.bot
+    pending_order = Order.objects.prefetch_related("ticker").filter(
+        user_id=position.user_id,
+        status='pending',
+        bot_id=position.bot_id,
+        ticker=position.ticker
+        )
+    if pending_order.exists():
+        last_order = pending_order.first()
+        orderId = last_order.order_uid.hex
+        raise exceptions.NotAcceptable(f"sell order already exists for this position, order id : {orderId}, current status pending")
     if bot.is_ucdc():
        positions, order= ucdc_sell_position(price, trading_day, position,apps=True)
     elif bot.is_uno():
@@ -102,17 +112,6 @@ def sell_position_service(price:float, trading_day:datetime, position_uid:str)->
         positions, order=classic_sell_position(price, trading_day, position,apps=True)
     elif bot.is_stock():
         positions, order=user_sell_position(price, trading_day, position, apps=True)
-    pending_order = Order.objects.prefetch_related("ticker").filter(
-        user_id=order.user_id,
-        status='pending',
-        bot_id=order.bot_id,
-        ticker=order.ticker
-        )
-    if pending_order.exists():
-        last_order = pending_order.first()
-        orderId = last_order.order_uid.hex
-        order.delete()
-        raise exceptions.NotAcceptable(f"sell order already exists for this position, order id : {orderId}, current status pending")
     return positions, order
 
 
