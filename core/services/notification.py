@@ -42,7 +42,7 @@ def send_winner_email():
     Season = apps.get_model("user", "Season")
     SeasonHistory = apps.get_model("user", "SeasonHistory")
     try:
-        last_season = Season.objects.latest("end_date")
+        last_season: Season = Season.objects.latest("end_date")
     except Season.DoesNotExist:
         return
     winners = list(

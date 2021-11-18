@@ -34,8 +34,10 @@ def test_sending_winner_email(mocker) -> None:
                 ),
             }
         ).validate(payload["payload"])
-
-        last_season: Season = Season.objects.latest("end_date")
+        try:
+            last_season: Season = Season.objects.latest("end_date")
+        except Season.DoesNotExist:
+            return
         winners: List[SeasonHistory] = list(
             SeasonHistory.objects.filter(season_id=last_season, rank__gt=0)
         )
