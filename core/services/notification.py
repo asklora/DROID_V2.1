@@ -41,7 +41,10 @@ def send_bulk_notification(title: str, body: str):
 def send_winner_email():
     Season = apps.get_model("user", "Season")
     SeasonHistory = apps.get_model("user", "SeasonHistory")
-    last_season = Season.objects.latest("end_date")
+    try:
+        last_season = Season.objects.latest("end_date")
+    except Season.DoesNotExist:
+        return
     winners = list(
         SeasonHistory.objects.filter(season_id=last_season, rank__gt=0)
         .order_by("rank")
