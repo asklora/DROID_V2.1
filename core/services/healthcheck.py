@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import date, datetime
 from typing import List
 
@@ -270,10 +271,16 @@ def check_asklora() -> dict:
         "payload": {"username": "agustian"},
     }
     task = app.send_task(
-        "config.celery.listener", args=(payload,), queue=settings.ASKLORA_QUEUE
+        "config.celery.listener",
+        args=(payload,),
+        queue=settings.ASKLORA_QUEUE,
     )
     celery_result = AsyncResult(task.id, app=app)
-    return celery_result.get()
+
+    while celery_result.state == "PENDING":
+        time.sleep(2)
+
+    return celery_result.result
 
 
 def send_report(data: dict) -> None:
