@@ -43,7 +43,7 @@ def task_id_maker(mic,time):
     return f"{mic}-{time.strftime('%s')}"
 
 
-@app.task(acks_late=True)
+@app.task()
 def init_exchange_check(currency:list=None,task_id:str=None):
     currency_list = ["HKD", "USD"] if not currency else currency
     exchanges = ExchangeMarket.objects.filter(currency_code__in=currency_list)
@@ -63,7 +63,7 @@ def init_exchange_check(currency:list=None,task_id:str=None):
     return {"message": initial_id_task}
 
 
-@app.task(acks_late=True)
+@app.task()
 def market_check_routines(mic,task_id=None):
     if task_id:
         existed_tasks=TaskResult.objects.filter(task_id=task_id,status='SUCCESS').exists()
