@@ -38,42 +38,42 @@ def send_bulk_notification(title: str, body: str):
     app.send_task("config.celery.listener", args=(data,), queue=settings.ASKLORA_QUEUE)
 
 
-# def send_winner_email():
-#     Season = apps.get_model("user", "Season")
-#     SeasonHistory = apps.get_model("user", "SeasonHistory")
-#     try:
-#         last_season: Season = Season.objects.latest("end_date")
-#     except Season.DoesNotExist:
-#         return
-#     winners = list(
-#         SeasonHistory.objects.filter(season_id=last_season, rank__gt=0)
-#         .order_by("rank")
-#         .values(
-#             "user_id__email",
-#             "rank",
-#             "user_id__first_name",
-#             "user_id__last_name",
-#             "user_id__username",
-#         )
-#     )
-#     data = pd.DataFrame(winners)
-#     data = data.rename(
-#         columns={
-#             "user_id__email": "email",
-#             "rank": "ranks",
-#             "user_id__first_name": "first_name",
-#             "user_id__last_name": "last_name",
-#             "user_id__username": "username",
-#         }
-#     )
+def send_winner_email():
+    Season = apps.get_model("user", "Season")
+    SeasonHistory = apps.get_model("user", "SeasonHistory")
+    try:
+        last_season: Season = Season.objects.latest("end_date")
+    except Season.DoesNotExist:
+        return
+    winners = list(
+        SeasonHistory.objects.filter(season_id=last_season, rank__gt=0)
+        .order_by("rank")
+        .values(
+            "user_id__email",
+            "rank",
+            "user_id__first_name",
+            "user_id__last_name",
+            "user_id__username",
+        )
+    )
+    data = pd.DataFrame(winners)
+    data = data.rename(
+        columns={
+            "user_id__email": "email",
+            "rank": "ranks",
+            "user_id__first_name": "first_name",
+            "user_id__last_name": "last_name",
+            "user_id__username": "username",
+        }
+    )
 
-#     payload = {
-#         "type": "function",
-#         "module": "core.djangomodule.crudlib.winner_email.send_winner_emails",
-#         "payload": {
-#             "session": f"{last_season.end_date.year} - {last_season.season_id}",
-#             "winner": data.to_dict(orient="records"),
-#         },
-#     }
+    payload = {
+        "type": "function",
+        "module": "core.djangomodule.crudlib.winner_email.send_winner_emails",
+        "payload": {
+            "session": f"{last_season.end_date.year} - {last_season.season_id}",
+            "winner": data.to_dict(orient="records"),
+        },
+    }
 
-#     send_to_asklora(payload=payload)
+    send_to_asklora(payload=payload)
