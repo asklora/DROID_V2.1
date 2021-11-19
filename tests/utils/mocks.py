@@ -28,7 +28,6 @@ def mock_order_serializer(validated_data: dict):
         raise exceptions.MethodNotAllowed(
             {"detail": f"order already {instance.status}"}
         )
-
     if not validated_data["status"] == "cancel":
         if instance.insufficient_balance():
             raise exceptions.MethodNotAllowed({"detail": "insufficient funds"})

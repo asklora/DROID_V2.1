@@ -57,28 +57,25 @@ def create_buy_order(
     ticker: str,
     amount: float = None,
     bot_id: str = "STOCK_stock_0",
+    created: datetime = timezone.now(),
     margin: int = 1,
     qty: int = 10000,
     user_id: int = None,
     user: User = None,
 ) -> Order:
-    order_payload: dict = {
-        "amount": amount if amount is not None else price * qty,
-        "bot_id": bot_id,
-        "price": price,
-        "side": "buy",
-        "ticker": Universe.objects.get(ticker=ticker),
-        "user_id": user if user else User.objects.get(pk=user_id),
-        "margin": margin,
-    }
-
-    controller: OrderController = OrderController()
-
-    order: Order = controller.process(
-        BuyOrderProcessor(order_payload),
+    return Order.objects.create(
+        amount=amount if amount is not None else price * qty,
+        bot_id=bot_id,
+        created=created,
+        margin=margin,
+        order_type="apps",  # to differentiate itself from FELS's orders
+        price=price,
+        qty=qty,
+        side="buy",
+        ticker_id=ticker,
+        user_id_id=user_id,
+        user_id=user,
     )
-
-    return order
 
 
 def create_sell_order(order: Order) -> Order:

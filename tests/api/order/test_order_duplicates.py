@@ -1,3 +1,5 @@
+import time
+import os
 from random import choice
 from typing import Union
 
@@ -16,7 +18,104 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_api_create_duplicated_buy_orders(
+def test_duplicated_pending_buy_order(
+    authentication,
+    client,
+    mocker,
+    user,
+    tickers,
+) -> None:
+    # mock all the things!
+    mocker.patch(
+        "core.orders.serializers.OrderActionSerializer.create",
+        wraps=mock_order_serializer,
+    )
+    mocker.patch(
+        "core.services.order_services.asyncio.run",
+    )
+
+    # utility function to create a new order
+    ticker, price = choice(tickers).values()
+
+    def create_order() -> Union[dict, None]:
+        response = client.post(
+            path="/api/order/create/",
+            data={
+                "ticker": ticker,
+                "price": price,
+                "bot_id": "CLASSIC_classic_003846",
+                "amount": 20000,  # 10.000 HKD more than the user can afford
+                "margin": 2,
+                "user": user.id,
+                "side": "buy",
+            },
+            **authentication,
+        )
+
+        print(response.json())
+
+        if (
+            response.status_code != 201
+            or response.headers["Content-Type"] != "application/json"
+        ):
+            return None
+
+        return response.json()
+
+    order_1 = create_order()
+    assert order_1
+
+    # we confirm the order
+    first_order = Order.objects.get(pk=order_1.get("order_uid"))
+    assert first_order is not None
+    assert first_order.order_uid.hex == order_1.get("order_uid")
+
+    # we close the market to make it pending
+    market_is_initially_open: bool = check_market(first_order.ticker.mic)
+    if market_is_initially_open:
+        close_market(first_order.ticker.mic)
+
+    # we confirm the above order
+    confirmed_first_order = confirm_order_api(
+        order_1.get("order_uid"),
+        client,
+        authentication,
+    )
+
+    # make sure we mocked the function alright
+    assert confirmed_first_order.get("status") == "executed in mock"
+
+    # we see if its really pending
+    first_order = Order.objects.get(pk=order_1.get("order_uid"))
+    assert first_order.status == "pending"
+
+    time.sleep(30)
+
+    # we create a new order while it's still pending
+    order_2 = create_order()
+    assert order_2
+
+    assert order_1.get("ticker") == order_2.get("ticker")
+
+    # we confirm the second order
+    confirmed_second_order = confirm_order_api(
+        order_2.get("order_uid"),
+        client,
+        authentication,
+    )
+
+    print(confirmed_second_order)
+    assert confirmed_second_order.get("status") == "executed in mock"
+
+    second_order = Order.objects.get(pk=order_2.get("order_uid"))
+    print(second_order)
+    assert not second_order
+
+    if market_is_initially_open:
+        open_market(first_order.ticker.mic)
+
+
+def test_duplicated_filled_buy_order(
     authentication,
     client,
     user,
@@ -48,29 +147,23 @@ def test_api_create_duplicated_buy_orders(
         return response.json()
 
     order_1 = create_order()
+    print(order_1)
     assert order_1 is not None
-
-    # info
-    from django.db import connection
-
-    db_name = connection.settings_dict
-    print(db_name)
 
     # we confirm the order
     buy_order = Order.objects.get(pk=order_1["order_uid"])
     assert buy_order is not None
-    confirm_order_api(
-        buy_order.order_uid,
-        client,
-        authentication,
-    )
+    confirm_order(buy_order)
+
+    time.sleep(25)
 
     # This should fail and return None
     order_2 = create_order()
+    print(order_2)
     assert order_2 is None
 
 
-def test_api_create_duplicated_pending_sell_orders(
+def test_duplicated_pending_sell_order(
     authentication,
     client,
     mocker,
@@ -82,9 +175,9 @@ def test_api_create_duplicated_pending_sell_orders(
         "core.orders.serializers.OrderActionSerializer.create",
         wraps=mock_order_serializer,
     )
-    mocker.patch(
-        "core.services.order_services.asyncio.run",
-    )
+    # mocker.patch(
+    #     "core.services.order_services.asyncio.run",
+    # )
 
     ticker, price = choice(tickers).values()
 
@@ -114,11 +207,11 @@ def test_api_create_duplicated_pending_sell_orders(
     # we confirm the order
     buy_order = Order.objects.get(pk=order["order_uid"])
     assert buy_order is not None
-    assert str(buy_order.order_uid).replace("-", "") == order["order_uid"]
+    assert buy_order.order_uid.hex == order["order_uid"]
 
     # if the market is closed, the order won't be filled
-    market_is_open = check_market(buy_order.ticker.mic)
-    if not market_is_open:
+    market_is_initially_open = check_market(buy_order.ticker.mic)
+    if not market_is_initially_open:
         open_market(buy_order.ticker.mic)
 
     confirm_order_api(
@@ -132,7 +225,6 @@ def test_api_create_duplicated_pending_sell_orders(
 
     # we create the sell order
     sell_order_data = {
-        "user": user.id,
         "side": "sell",
         "ticker": buy_order.ticker,
         "setup": '{{"position": "{0}"}}'.format(position.position_uid),
@@ -172,7 +264,7 @@ def test_api_create_duplicated_pending_sell_orders(
 
     print(sell_response_2.json())
 
-    if market_is_open:
+    if market_is_initially_open:
         open_market(buy_order.ticker.mic)
 
     sell_order_2 = sell_response_2.json()
@@ -184,7 +276,7 @@ def test_api_create_duplicated_pending_sell_orders(
     )
 
 
-def test_api_create_duplicated_filled_sell_orders(
+def test_duplicated_filled_sell_order(
     authentication,
     client,
     user,
@@ -266,74 +358,70 @@ def test_api_create_duplicated_filled_sell_orders(
     assert sell_response_2.status_code != 201
     assert sell_order_2["detail"] == "position, has been closed"
 
-
-def test_duplicated_pending_buy_order_celery(
+@pytest.mark.asyncio
+def test_order_creation_should_return_error(
     authentication,
     client,
     mocker,
-    user,
     tickers,
+    user,
 ) -> None:
     # mock all the things!
     mocker.patch(
         "core.orders.serializers.OrderActionSerializer.create",
         wraps=mock_order_serializer,
     )
-    mocker.patch(
-        "core.services.order_services.asyncio.run",
-    )
 
-    # utility function to create a new order
+    print(os.getpid())
+
     ticker, price = choice(tickers).values()
 
-    def create_order() -> Union[dict, None]:
-        response = client.post(
-            path="/api/order/create/",
-            data={
-                "ticker": ticker,
-                "price": price,
-                "bot_id": "CLASSIC_classic_003846",
-                "amount": 20000,  # 10.000 HKD more than the user can afford
-                "margin": 2,
-                "user": user.id,
-                "side": "buy",
-            },
-            **authentication,
-        )
-
-        print(response.json())
-
-        if (
-            response.status_code != 201
-            or response.headers["Content-Type"] != "application/json"
-        ):
-            return None
-
-        return response.json()
-
-    order_1 = create_order()
-    assert order_1
-
-    # we confirm the order
-    buy_order = Order.objects.get(pk=order_1["order_uid"])
-    assert buy_order is not None
-    assert str(buy_order.order_uid).replace("-", "") == order_1["order_uid"]
-
-    # if the market is closed, the order won't be filled
-    market_is_open = check_market(buy_order.ticker.mic)
-    if not market_is_open:
-        open_market(buy_order.ticker.mic)
-
-    # we confirm the above order
-    confirmed_order = confirm_order_api(
-        order_1["order_uid"],
-        client,
-        authentication,
+    order_1 = client.post(
+        path="/api/order/create/"    ,
+        data={
+            "ticker": ticker,
+            "price": price,
+            "bot_id": "UCDC_ATM_007692",
+            "amount": 10000,
+            "margin": 2,
+            "user": user.id,
+            "side": "buy",
+        },
+        **authentication,
     )
 
-    # make sure we mocked the function alright
-    assert confirmed_order["status"] == "executed in mock"
+    if (
+        order_1.status_code != 201
+        or order_1.headers["Content-Type"] != "application/json"
+    ):
+        assert False
 
-    # we create a new order while it's still pending
-    order_2 = create_order()
-    assert not order_2
+    order = order_1.json()
+    assert order is not None
+
+    # we confirm the order
+    first_order = Order.objects.get(pk=order["order_uid"])
+    assert first_order is not None
+    assert first_order.order_uid.hex == order["order_uid"]
+
+    confirm_order_api(first_order.order_uid.hex, client, authentication)
+
+    position, _ = get_position_performance(first_order)
+    assert position
+
+    order_2 = client.post(
+        path="/api/order/create/",
+        data={
+            "ticker": ticker,
+            "price": price,
+            "bot_id": "UCDC_ATM_007692",
+            "amount": 10000,
+            "margin": 2,
+            "user": user.id,
+            "side": "buy",
+        },
+        **authentication,
+    )
+
+    print(order_2.json())
+    assert order_2.status_code != 201

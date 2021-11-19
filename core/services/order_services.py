@@ -186,14 +186,14 @@ def order_executor(self, payload, recall=False, request_id=None):
     if not request_id:
         request_id =self.request.id
                 
-    asyncio.run(channel_layer.group_send(request_id,
-                                         {
-                                             'type': 'send_order_message',
-                                             'message_type': messages,
-                                             'message': 'order update',
-                                             'payload': payload_serializer,
-                                             'status_code': 200
-                                         }))
+    # asyncio.run(channel_layer.group_send(request_id,
+    #                                      {
+    #                                          'type': 'send_order_message',
+    #                                          'message_type': messages,
+    #                                          'message': 'order update',
+    #                                          'payload': payload_serializer,
+    #                                          'status_code': 200
+    #                                      }))
     return payload_serializer
 
 
