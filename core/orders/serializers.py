@@ -13,10 +13,9 @@ from django.apps import apps
 from django.db import transaction as db_transaction
 import json
 from .services import OrderPositionValidation
-from asgiref.sync import sync_to_async,async_to_sync
-@sync_to_async
-def get_bot():
-    return BotOptionType.objects.all()
+
+
+
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
@@ -304,14 +303,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             validated_data["user_id"] = user
         
         controller = OrderController()
+        processor = OrderProcessor[validated_data["side"]]
         
-        if validated_data["side"] == "buy":
-            return controller.process(
-                BuyOrderProcessor(validated_data)
-                )
-        else:
-            return controller.process(
-                SellOrderProcessor(validated_data)
+        return controller.process(
+                processor(validated_data)
                 )
 
 
@@ -489,37 +484,8 @@ class OrderActionSerializer(serializers.ModelSerializer):
         fields = ["order_uid", "status", "action_id", "firebase_token"]
 
     def create(self, validated_data):
-        try:
-            instance = OrderActionSerializer.Meta.model.objects.get(
-                order_uid=validated_data["order_uid"])
-        except Order.DoesNotExist:
-            raise exceptions.NotFound({'detail':'order not found'})
-            
-        if validated_data["status"] == "cancel" and instance.status not in ["pending","review"]:
-            raise exceptions.MethodNotAllowed({'detail': f'cannot cancel order in {instance.status}'})
-        if instance.status == "filled":
-            raise exceptions.MethodNotAllowed(
-                {'detail': 'order already filled, you cannot cancel / confirm'})
-        if instance.status == validated_data['status']:
-            raise exceptions.MethodNotAllowed(
-                {'detail': f'order already {instance.status}'})
-        if not validated_data['status'] == "cancel":
-            if instance.insufficient_balance():
-                raise exceptions.MethodNotAllowed(
-                    {'detail': 'insufficient funds'})
-                
-        from core.services.order_services import order_executor
-        payload = json.dumps(validated_data)
-        print(payload)
-        # NOTE: you need to run celery in your local machine and docker redis installed
-        # if having problem install docker.. run ./installer/install-docker.sh
-        # ===run redis command===
-        # docker run -p 6379:6379 -d redis:5
-        # ===run celery command===
-        # celery -A core.services worker -l  INFO --hostname=localdev@%h -Q localdev
-        task = order_executor.apply_async(args=(payload,),task_id=validated_data["order_uid"])
-        data = {"action_id": task.id, "status": "executed",
-                "order_uid": validated_data["order_uid"]}
-        return data
+        processor = OrderProcessor["action"]
+        controller = OrderController()
+        return controller.process(processor(validated_data))
 
 

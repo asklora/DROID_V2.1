@@ -1,5 +1,5 @@
 from .order_protocol import OrderProtocol,ValidatorProtocol
-from .orderfactory import OrderController,SellOrderProcessor,BuyOrderProcessor,SellPayload,BuyPayload
+from .orderfactory import OrderController,SellOrderProcessor,BuyOrderProcessor,SellPayload,BuyPayload,OrderProcessor
 __all__ = [
     'OrderProtocol',
     'ValidatorProtocol',
@@ -7,5 +7,6 @@ __all__ = [
     'BuyOrderProcessor',
     'OrderController',
     'SellPayload',
-    'BuyPayload'
+    'BuyPayload',
+    'OrderProcessor'
     ]

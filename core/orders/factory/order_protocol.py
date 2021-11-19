@@ -1,7 +1,7 @@
 
 from typing_extensions import Protocol
-
-
+from core.orders.models import Order
+from typing import Union
 class ValidatorProtocol(Protocol):
     
     def validate(self):
@@ -16,8 +16,9 @@ class GetPriceProtocol(Protocol):
         
         
 class OrderProtocol(Protocol):
-    validator = ValidatorProtocol
-    getter_price =GetPriceProtocol
+    validator:ValidatorProtocol
+    getter_price:GetPriceProtocol
+    response:Union[Order,dict]
     
     def execute(self):
         ...
