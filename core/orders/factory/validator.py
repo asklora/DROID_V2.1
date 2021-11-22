@@ -100,7 +100,6 @@ class BuyValidator:
     async def is_portfolio_exist(self):
         portfolios = await OrderPosition.objects.async_filter(
             user_id=self.payload.user_id, ticker=self.payload.ticker, bot_id=self.payload.bot_id, is_live=True)
-        print(portfolios)
         if await portfolios.async_exists():
             raise exceptions.NotAcceptable(
                 {"detail": f"cannot have multiple position for {self.payload.ticker.ticker} in current options"})
