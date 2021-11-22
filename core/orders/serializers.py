@@ -11,7 +11,6 @@ from core.user.models import TransactionHistory
 from core.user.convert import ConvertMoney
 from django.apps import apps
 from django.db import transaction as db_transaction
-import json
 from .services import OrderPositionValidation
 
 

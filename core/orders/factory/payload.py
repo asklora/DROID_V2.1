@@ -11,6 +11,7 @@ class ActionPayload:
     order_uid:str
     firebase_token:str or None
     status:str
+    
 
   
 @dataclass

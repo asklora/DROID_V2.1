@@ -144,7 +144,7 @@ class ActionValidator:
     
     def is_actioned(self):
         if self.order.status == self.payload.status:
-            raise exceptions.NotAcceptable({"detail": "order is already {self.payload.status}"})
+            raise exceptions.NotAcceptable({"detail": f"order is already {self.payload.status}"})
 
     def is_insufficient_funds(self):
         if not self.payload.status == "cancel":

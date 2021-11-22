@@ -21,3 +21,11 @@ print(a)
 def widget(symbols):
     url = f'https://www.tradingview.com/mediumwidgetembed/?symbols={symbols}'
     return url
+
+{
+  "ticker": "1211.HK",
+  "bot_id": "UNO_OTM_003846",
+  "amount": 10000,
+  "side": "buy",
+  "margin": 2
+}
