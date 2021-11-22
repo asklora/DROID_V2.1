@@ -1,4 +1,3 @@
-import os
 from core.services.notification import send_notification
 from django.utils import timezone
 import logging
@@ -228,8 +227,8 @@ class BaseAction:
 class BuyActionProcessor(BaseAction):
     
 
-    def __init__(self, payload: dict, getterprice:GetPriceProtocol=None):
-        self.raw_payload=payload
+    def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
+        self.raw_payload = payload
         self.payload = ActionPayload(**payload)
         self.validator: ValidatorProtocol = ActionValidator(self.payload)
         if getterprice:
@@ -241,8 +240,8 @@ class BuyActionProcessor(BaseAction):
             
 class CancelActionProcessor(BaseAction):
 
-    def __init__(self, payload: dict, getterprice:GetPriceProtocol=None):
-        self.raw_payload=payload
+    def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
+        self.raw_payload = payload
         self.payload = ActionPayload(**payload)
         self.validator: ValidatorProtocol = ActionValidator(self.payload)
         if getterprice:
@@ -256,8 +255,8 @@ class CancelActionProcessor(BaseAction):
 class SellActionProcessor(BaseAction):
     
 
-    def __init__(self, payload: dict, getterprice:GetPriceProtocol=None):
-        self.raw_payload=payload
+    def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
+        self.raw_payload = payload
         self.payload = ActionPayload(**payload)
         self.validator: ValidatorProtocol = ActionValidator(self.payload)
         if getterprice:
@@ -268,19 +267,17 @@ class SellActionProcessor(BaseAction):
 
 
 
-
 class ActionProcessor:
     getter_price = RkdGetterPrice()
     response: dict
 
-    def __init__(self, payload: dict, getterprice:GetPriceProtocol=None):
-        self.raw_payload=payload
-        self.payload = ActionPayload(**payload)
+    def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
+        self.raw_payload = payload
+        self.payload =  ActionPayload(**payload)
         self.validator: ValidatorProtocol = ActionValidator(self.payload)
         self.raw_payload['side']=self.validator.order.side
         if getterprice:
             self.getter_price = getterprice
-     
 
     def execute(self):
         
@@ -290,12 +287,12 @@ class ActionProcessor:
                 "order_uid": self.payload.order_uid}
 
 class ActionOrderController:
-    PROCESSOR={
-        "sell":SellActionProcessor,
-        "buy":BuyActionProcessor,
-        "cancel":CancelActionProcessor
+    PROCESSOR = {
+        "sell": SellActionProcessor,
+        "buy": BuyActionProcessor,
+        "cancel": CancelActionProcessor,
     }
-    protocol:OrderProtocol
+    protocol: OrderProtocol
 
     def select_process_class(self,payload:dict):
         protocol = self.PROCESSOR[payload.pop('side')]
@@ -308,6 +305,7 @@ class ActionOrderController:
         except Exception as e:
             raise Exception({"detail": str(e)})
         return self.protocol.response
+
 
 class OrderController:
     
@@ -322,8 +320,8 @@ class OrderController:
  
 
 
-OrderProcessor:dict={
-    "buy":BuyOrderProcessor,
-    "sell":SellOrderProcessor,
-    "action":ActionProcessor
-    }
+OrderProcessor: dict = {
+    "buy": BuyOrderProcessor,
+    "sell": SellOrderProcessor,
+    "action": ActionProcessor,
+}

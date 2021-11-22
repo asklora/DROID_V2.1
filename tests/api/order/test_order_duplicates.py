@@ -1,12 +1,18 @@
-import time
 import os
+import time
 from random import choice
 from typing import Union
 
 import pytest
-from core.orders.models import Order
+from core.orders.models import Order, OrderPosition
+from rest_framework import exceptions
 from tests.utils.market import check_market, close_market, open_market
-from tests.utils.mocks import mock_order_serializer
+from tests.utils.mocks import (
+    mock_has_order,
+    mock_order_serializer,
+    mock_buy_validate,
+    mock_sell_validate,
+)
 from tests.utils.order import confirm_order, confirm_order_api, get_position_performance
 
 pytestmark = pytest.mark.django_db(
@@ -25,26 +31,28 @@ def test_duplicated_pending_buy_order(
     user,
     tickers,
 ) -> None:
+    ticker, price = choice(tickers).values()
+    bot_id: str = "CLASSIC_classic_003846"
+
     # mock all the things!
     mocker.patch(
         "core.orders.serializers.OrderActionSerializer.create",
         wraps=mock_order_serializer,
     )
+
     mocker.patch(
         "core.services.order_services.asyncio.run",
     )
 
     # utility function to create a new order
-    ticker, price = choice(tickers).values()
-
     def create_order() -> Union[dict, None]:
         response = client.post(
             path="/api/order/create/",
             data={
                 "ticker": ticker,
                 "price": price,
-                "bot_id": "CLASSIC_classic_003846",
-                "amount": 20000,  # 10.000 HKD more than the user can afford
+                "bot_id": bot_id,
+                "amount": 20000,
                 "margin": 2,
                 "user": user.id,
                 "side": "buy",
@@ -89,39 +97,33 @@ def test_duplicated_pending_buy_order(
     first_order = Order.objects.get(pk=order_1.get("order_uid"))
     assert first_order.status == "pending"
 
-    time.sleep(30)
+    with pytest.raises(exceptions.NotAcceptable):
+        mock_BuyValidator = mocker.patch(
+            "core.orders.factory.orderfactory.BuyValidator"
+        )
+        mock_BuyValidator.validate = mock_buy_validate(
+            user=user,
+            ticker=ticker,
+            bot_id=bot_id,
+        )
 
-    # we create a new order while it's still pending
-    order_2 = create_order()
-    assert order_2
+        # we create a new order while it's still pending
+        order_2 = create_order()
+        assert not order_2
 
-    assert order_1.get("ticker") == order_2.get("ticker")
-
-    # we confirm the second order
-    confirmed_second_order = confirm_order_api(
-        order_2.get("order_uid"),
-        client,
-        authentication,
-    )
-
-    print(confirmed_second_order)
-    assert confirmed_second_order.get("status") == "executed in mock"
-
-    second_order = Order.objects.get(pk=order_2.get("order_uid"))
-    print(second_order)
-    assert not second_order
-
-    if market_is_initially_open:
-        open_market(first_order.ticker.mic)
+        if market_is_initially_open:
+            open_market(first_order.ticker.mic)
 
 
 def test_duplicated_filled_buy_order(
     authentication,
     client,
-    user,
+    mocker,
     tickers,
+    user,
 ) -> None:
     ticker, price = choice(tickers).values()
+    bot_id: str = "STOCK_stock_0"
 
     def create_order() -> Union[dict, None]:
         response = client.post(
@@ -129,7 +131,7 @@ def test_duplicated_filled_buy_order(
             data={
                 "ticker": ticker,
                 "price": price,
-                "bot_id": "STOCK_stock_0",
+                "bot_id": bot_id,
                 "amount": 10000,
                 "margin": 2,
                 "user": user.id,
@@ -155,38 +157,46 @@ def test_duplicated_filled_buy_order(
     assert buy_order is not None
     confirm_order(buy_order)
 
-    time.sleep(25)
+    with pytest.raises(exceptions.NotAcceptable):
+        mock_BuyValidator = mocker.patch(
+            "core.orders.factory.orderfactory.BuyValidator"
+        )
+        mock_BuyValidator.validate = mock_buy_validate(
+            user=user,
+            ticker=ticker,
+            bot_id=bot_id,
+        )
 
-    # This should fail and return None
-    order_2 = create_order()
-    print(order_2)
-    assert order_2 is None
+        # we create a new order while it's still pending
+        order_2 = create_order()
+        assert order_2 is None
 
 
 def test_duplicated_pending_sell_order(
     authentication,
     client,
     mocker,
-    user,
     tickers,
+    user,
 ) -> None:
+    ticker, price = choice(tickers).values()
+    bot_id: str = "UCDC_ATM_007692"
+
     # mock all the things!
     mocker.patch(
         "core.orders.serializers.OrderActionSerializer.create",
         wraps=mock_order_serializer,
     )
-    # mocker.patch(
-    #     "core.services.order_services.asyncio.run",
-    # )
-
-    ticker, price = choice(tickers).values()
+    mocker.patch(
+        "core.services.order_services.asyncio.run",
+    )
 
     response = client.post(
         path="/api/order/create/",
         data={
             "ticker": ticker,
             "price": price,
-            "bot_id": "UCDC_ATM_007692",
+            "bot_id": bot_id,
             "amount": 10000,
             "margin": 2,
             "user": user.id,
@@ -255,25 +265,35 @@ def test_duplicated_pending_sell_order(
     print(f"sell order status: {sell_order.status}")
     assert sell_order.status == "pending"
 
-    # this should fail and return None
-    sell_response_2 = client.post(
-        path="/api/order/create/",
-        data=sell_order_data,
-        **authentication,
-    )
+    with pytest.raises(exceptions.NotAcceptable):
+        mock_BuyValidator = mocker.patch(
+            "core.orders.factory.orderfactory.BuyValidator"
+        )
+        mock_BuyValidator.validate = mock_sell_validate(
+            user=user,
+            ticker=ticker,
+            bot_id=bot_id,
+        )
 
-    print(sell_response_2.json())
+        # this should fail and return None
+        sell_response_2 = client.post(
+            path="/api/order/create/",
+            data=sell_order_data,
+            **authentication,
+        )
 
-    if market_is_initially_open:
-        open_market(buy_order.ticker.mic)
+        print(sell_response_2.json())
 
-    sell_order_2 = sell_response_2.json()
+        if market_is_initially_open:
+            open_market(buy_order.ticker.mic)
 
-    assert sell_response_2.status_code != 201
-    assert (
-        sell_order_2["detail"]
-        == f"sell order already exists for this position, order id : {sell_order_1['order_uid']}, current status pending"
-    )
+        sell_order_2 = sell_response_2.json()
+
+        assert sell_response_2.status_code != 201
+        assert (
+            sell_order_2["detail"]
+            == f"sell order already exists for this position, order id : {sell_order_1['order_uid']}, current status pending"
+        )
 
 
 def test_duplicated_filled_sell_order(
@@ -357,71 +377,3 @@ def test_duplicated_filled_sell_order(
 
     assert sell_response_2.status_code != 201
     assert sell_order_2["detail"] == "position, has been closed"
-
-@pytest.mark.asyncio
-def test_order_creation_should_return_error(
-    authentication,
-    client,
-    mocker,
-    tickers,
-    user,
-) -> None:
-    # mock all the things!
-    mocker.patch(
-        "core.orders.serializers.OrderActionSerializer.create",
-        wraps=mock_order_serializer,
-    )
-
-    print(os.getpid())
-
-    ticker, price = choice(tickers).values()
-
-    order_1 = client.post(
-        path="/api/order/create/"    ,
-        data={
-            "ticker": ticker,
-            "price": price,
-            "bot_id": "UCDC_ATM_007692",
-            "amount": 10000,
-            "margin": 2,
-            "user": user.id,
-            "side": "buy",
-        },
-        **authentication,
-    )
-
-    if (
-        order_1.status_code != 201
-        or order_1.headers["Content-Type"] != "application/json"
-    ):
-        assert False
-
-    order = order_1.json()
-    assert order is not None
-
-    # we confirm the order
-    first_order = Order.objects.get(pk=order["order_uid"])
-    assert first_order is not None
-    assert first_order.order_uid.hex == order["order_uid"]
-
-    confirm_order_api(first_order.order_uid.hex, client, authentication)
-
-    position, _ = get_position_performance(first_order)
-    assert position
-
-    order_2 = client.post(
-        path="/api/order/create/",
-        data={
-            "ticker": ticker,
-            "price": price,
-            "bot_id": "UCDC_ATM_007692",
-            "amount": 10000,
-            "margin": 2,
-            "user": user.id,
-            "side": "buy",
-        },
-        **authentication,
-    )
-
-    print(order_2.json())
-    assert order_2.status_code != 201
