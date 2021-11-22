@@ -94,7 +94,12 @@ class SellValidator:
 
     async def has_order(self):
         print(f">>>>>Has order: {self.position.pk}<<<<<")
-        pending_order = await Order.objects.async_filter(user_id=self.userid)
+        pending_order = await Order.objects.async_filter(
+            user_id=self.position.user_id,
+            status="pending",
+            bot_id=self.position.bot_id,
+            ticker=self.position.ticker,
+        )
         print(f">>>{self.userid}???")
         print(f">>>>>{pending_order}<<<<<")
         if await pending_order.async_exists():
@@ -271,74 +276,78 @@ class BuyOrderProcessor:
             )
 
 
-
 class BuyActionProcessor:
-    
+
     getter_price = RkdGetterPrice()
     response: dict
 
-    def __init__(self, payload: dict, getterprice:GetPriceProtocol=None):
-        self.raw_payload=payload
+    def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
+        self.raw_payload = payload
         self.payload = ActionPayload(**payload)
         self.validator: ValidatorProtocol = ActionValidator(self.payload)
         if getterprice:
             self.getter_price = getterprice
-            
-            
+
+
 class CancelActionProcessor:
     getter_price = RkdGetterPrice()
     response: dict
 
-    def __init__(self, payload: dict, getterprice:GetPriceProtocol=None):
-        self.raw_payload=payload
+    def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
+        self.raw_payload = payload
         self.payload = ActionPayload(**payload)
         self.validator: ValidatorProtocol = ActionValidator(self.payload)
         if getterprice:
             self.getter_price = getterprice
 
+
 class SellActionProcessor:
-    
+
     getter_price = RkdGetterPrice()
     response: dict
 
-    def __init__(self, payload: dict, getterprice:GetPriceProtocol=None):
-        self.raw_payload=payload
+    def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
+        self.raw_payload = payload
         self.payload = ActionPayload(**payload)
         self.validator: ValidatorProtocol = ActionValidator(self.payload)
         if getterprice:
             self.getter_price = getterprice
-
 
 
 class ActionProcessor:
     getter_price = RkdGetterPrice()
     response: dict
 
-    def __init__(self, payload: dict, getterprice:GetPriceProtocol=None):
-        self.raw_payload=payload
-        self.payload = ActionPayload(**payload)
+    def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
+        self.raw_payload = payload
+        self.payload =  (**payload)
         self.validator: ValidatorProtocol = ActionValidator(self.payload)
         if getterprice:
             self.getter_price = getterprice
-     
 
     def execute(self):
-        task_payload:str = json.dumps(self.raw_payload)
-        task=order_executor.apply_async(args=(task_payload,),task_id=self.payload.order_uid)
-        self.response={"action_id": task.id, "status": "executed",
-                "order_uid": self.payload.order_uid}
+        task_payload: str = json.dumps(self.raw_payload)
+        task = order_executor.apply_async(
+            args=(task_payload,), task_id=self.payload.order_uid
+        )
+        self.response = {
+            "action_id": task.id,
+            "status": "executed",
+            "order_uid": self.payload.order_uid,
+        }
+
 
 class ActionOrderController:
-    PROCESSOR={
-        "sell":SellActionProcessor,
-        "buy":BuyActionProcessor,
-        "cancel":CancelActionProcessor
+    PROCESSOR = {
+        "sell": SellActionProcessor,
+        "buy": BuyActionProcessor,
+        "cancel": CancelActionProcessor,
     }
-    protocol:OrderProtocol
+    protocol: OrderProtocol
 
-    def select_process_class(self,classname):
+    def select_process_class(self, classname):
         self.protocol = self.PROCESSOR[classname]
-    
+
     def process(self):
         self.processor.validator.validate()
         try:
@@ -346,6 +355,7 @@ class ActionOrderController:
         except Exception as e:
             raise exceptions.APIException({"detail": str(e)})
         return self.processor.response
+
 
 class OrderController:
     def process(self, processor: OrderProtocol):
@@ -355,12 +365,10 @@ class OrderController:
         except Exception as e:
             raise exceptions.APIException({"detail": str(e)})
         return processor.response
-    
- 
 
 
-OrderProcessor:dict={
-    "buy":BuyOrderProcessor,
-    "sell":SellOrderProcessor,
-    "action":ActionProcessor
-    }
+OrderProcessor: dict = {
+    "buy": BuyOrderProcessor,
+    "sell": SellOrderProcessor,
+    "action": ActionProcessor,
+}
