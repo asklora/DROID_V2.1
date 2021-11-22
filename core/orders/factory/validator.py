@@ -80,7 +80,7 @@ class BuyValidator:
     
     async def is_bot_exist(self):
         try:
-            await BotOptionType.objects.async_filter(bot_id=self.payload.bot_id)
+            await BotOptionType.objects.async_get(bot_id=self.payload.bot_id)
         except BotOptionType.DoesNotExist:
             raise exceptions.NotFound({"detail": "bot not found"})
 
@@ -100,6 +100,7 @@ class BuyValidator:
     async def is_portfolio_exist(self):
         portfolios = await OrderPosition.objects.async_filter(
             user_id=self.payload.user_id, ticker=self.payload.ticker, bot_id=self.payload.bot_id, is_live=True)
+        print(portfolios)
         if await portfolios.async_exists():
             raise exceptions.NotAcceptable(
                 {"detail": f"cannot have multiple position for {self.payload.ticker.ticker} in current options"})
@@ -144,7 +145,7 @@ class ActionValidator:
     
     def is_actioned(self):
         if self.order.status == self.payload.status:
-            raise exceptions.NotAcceptable({"detail": f"order is already {self.payload.status}"})
+            raise exceptions.NotAcceptable({"detail": f"order is already {self.order.status}"})
 
     def is_insufficient_funds(self):
         if not self.payload.status == "cancel":
@@ -155,3 +156,26 @@ class ActionValidator:
     def validate(self):
         self.is_actioned()
         self.is_insufficient_funds()
+
+class ExecutorValidator(ActionValidator):
+
+    def is_actioned(self):
+        if self.order.status == self.payload.status:
+            raise Exception(f"order is already {self.order.status}")
+
+    def is_insufficient_funds(self):
+        if not self.payload.status == "cancel":
+            if self.order.insufficient_balance():
+                Exception(
+                    'insufficient funds')
+
+class CancelExecutorValidator(ExecutorValidator):
+    def is_on_pending(self):
+        if self.order.status != 'pending':
+            raise Exception(f"cannot cancel, for order with status {self.order.status}")
+        
+    def validate(self):
+        super().validate()
+        self.is_on_pending()
+            
+        

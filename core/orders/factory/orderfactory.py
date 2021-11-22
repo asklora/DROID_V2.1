@@ -1,10 +1,12 @@
 from core.services.notification import send_notification
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+
 from django.utils import timezone
 import logging
 from core.orders.models import Order
 from .order_protocol import ValidatorProtocol, OrderProtocol, GetPriceProtocol
 from .payload import ActionPayload, SellPayload,BuyPayload
-from .validator import BuyValidator,SellValidator,ActionValidator
+from .validator import BuyValidator, CancelExecutorValidator, ExecutorValidator,SellValidator,ActionValidator
 from rest_framework import exceptions
 from django.db import transaction as db_transaction
 from datetime import datetime
@@ -130,13 +132,14 @@ class BaseAction:
         self.update_order()
         self.exchange_executor()
         self.send_response()
-        self.validator.order.populate_to_firebase()
+        
     
     def exchange_executor(self):
         ExchangeModel = apps.get_model('universe', 'ExchangeMarket')
         try:
             exchange = ExchangeModel.objects.get(mic=self.validator.order.ticker.mic)
         except ExchangeModel.DoesNotExist as e:
+            logging.error(e)
             self.message_error(f'{self.validator.order.ticker.mic} is not supported')
             self.send_response()
             raise ValueError(f'{self.validator.order.ticker.mic} is not supported')
@@ -154,10 +157,13 @@ class BaseAction:
         with db_transaction.atomic():
             try:
                 self.validator.order.save()
+                self.validator.order.populate_to_firebase()
                 return self.message_filled()
             except Exception as e:
                 logging.error(str(e))
-                return self.message_error(str(e))
+                self.message_error(str(e))
+                raise ValueError(f'{self.validator.order.ticker} is not executed')
+                
             
     def message_error(self, error:str):
         self.response = {
@@ -174,6 +180,18 @@ class BaseAction:
                         'title': 'order pending',
                         'message':f'{self.validator.order.side} order {self.validator.order.qty} \
                             stocks {self.validator.order.ticker.ticker} is received, status pending',
+                        # 'payload': payload_serializer,
+                        'status_code': 200
+                }
+    
+    def message_cancel(self):
+        print('cancel')
+        self.response = {
+                        'type': 'send_order_message',
+                        'message_type': 'order_cancel',
+                        'title': 'order cancel',
+                        'message':f'{self.validator.order.side} order {self.validator.order.qty} \
+                            stocks {self.validator.order.ticker.ticker} is received, status canceled',
                         # 'payload': payload_serializer,
                         'status_code': 200
                 }
@@ -210,7 +228,7 @@ class BaseAction:
     
     def update_order(self):
         self.validator.order.status = self.payload.status
-        self.validator.order.canceled_at = datetime.now()
+        self.validator.order.placed_at = datetime.now()
         with db_transaction.atomic():
             try:
                 self.validator.order.save()
@@ -230,7 +248,7 @@ class BuyActionProcessor(BaseAction):
     def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
         self.raw_payload = payload
         self.payload = ActionPayload(**payload)
-        self.validator: ValidatorProtocol = ActionValidator(self.payload)
+        self.validator: ValidatorProtocol = ExecutorValidator(self.payload)
         if getterprice:
             self.getter_price = getterprice
     
@@ -243,22 +261,39 @@ class CancelActionProcessor(BaseAction):
     def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
         self.raw_payload = payload
         self.payload = ActionPayload(**payload)
-        self.validator: ValidatorProtocol = ActionValidator(self.payload)
+        self.validator: ValidatorProtocol = CancelExecutorValidator(self.payload)
         if getterprice:
             self.getter_price = getterprice
     
     def execute(self):
-        super().execute()
+        self.update_order()
+        self.message_cancel()
+        self.send_response()
+        self.send_notification()
 
     
-    
+    def update_order(self):
+        self.validator.order.status = self.payload.status
+        self.validator.order.canceled_at = datetime.now()
+        with db_transaction.atomic():
+            try:
+                self.validator.order.save()
+            except Exception as e:
+                logging.error(str(e))
+                self.message_error(f'{self.validator.order.pk} update failed')
+                self.send_response()
+                raise ValueError(f'{self.validator.order.pk} update failed')
+            
+            
+            
+            
 class SellActionProcessor(BaseAction):
     
 
     def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
         self.raw_payload = payload
         self.payload = ActionPayload(**payload)
-        self.validator: ValidatorProtocol = ActionValidator(self.payload)
+        self.validator: ValidatorProtocol = ExecutorValidator(self.payload)
         if getterprice:
             self.getter_price = getterprice
     
@@ -275,7 +310,10 @@ class ActionProcessor:
         self.raw_payload = payload
         self.payload =  ActionPayload(**payload)
         self.validator: ValidatorProtocol = ActionValidator(self.payload)
-        self.raw_payload['side']=self.validator.order.side
+        if self.raw_payload["status"] == "cancel":
+            self.raw_payload['side']="cancel"
+        else:
+            self.raw_payload['side']=self.validator.order.side
         if getterprice:
             self.getter_price = getterprice
 
@@ -299,10 +337,16 @@ class ActionOrderController:
         self.protocol = protocol(payload)
     
     def process(self):
-        self.protocol.validator.validate()
+        try:
+            self.protocol.validator.validate()
+        except Exception as e:
+            self.protocol.message_error(str(e))
+            self.protocol.send_response()
+            return
         try:
             self.protocol.execute()
         except Exception as e:
+            logging.error(str(e))
             raise Exception({"detail": str(e)})
         return self.protocol.response
 

@@ -99,7 +99,8 @@ DATABASES = {
 
 FIREBASE_COLLECTION={
     'portfolio':'dev_portfolio',
-    'universe':'dev_universe'
+    'universe':'dev_universe',
+    'ranking':'dev_ranking'
 }
 
 # CELERY_TASK_ROUTES = {

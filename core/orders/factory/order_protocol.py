@@ -11,7 +11,10 @@ class ValidatorProtocol(Protocol):
 
 class GetPriceProtocol(Protocol):
     
-    def get_price(self,ticker:list)->float:
+    def get_price(self,ticker:any)->float:
+        """
+        get price should always have one arguments for ticker
+        """
         ...
         
         
