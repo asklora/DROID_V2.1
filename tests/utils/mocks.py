@@ -1,56 +1,54 @@
 import json
 
+from core.orders.factory.order_protocol import GetPriceProtocol, ValidatorProtocol
+from core.orders.factory.orderfactory import (
+    ActionProcessor,
+    OrderController,
+    order_executor,
+)
+from core.orders.factory.payload import ActionPayload
+from core.orders.factory.validator import ActionValidator
 from core.orders.models import Order, OrderPosition
-from core.orders.serializers import OrderActionSerializer
-from core.user.models import User
+from datasource.getterprice import RkdGetterPrice
 from rest_framework import exceptions
 
 
-def mock_order_serializer(validated_data: dict):
-    try:
-        instance = OrderActionSerializer.Meta.model.objects.get(
-            order_uid=validated_data["order_uid"]
-        )
-    except Order.DoesNotExist:
-        raise exceptions.NotFound({"detail": "order not found"})
+class MockActionProcessor:
+    getter_price = RkdGetterPrice()
+    response: dict
 
-    if validated_data["status"] == "cancel" and instance.status not in [
-        "pending",
-        "review",
-    ]:
-        raise exceptions.MethodNotAllowed(
-            {"detail": f"cannot cancel order in {instance.status}"}
-        )
-    if instance.status == "filled":
-        raise exceptions.MethodNotAllowed(
-            {"detail": "order already filled, you cannot cancel / confirm"}
-        )
-    if instance.status == validated_data["status"]:
-        raise exceptions.MethodNotAllowed(
-            {"detail": f"order already {instance.status}"}
-        )
-    if not validated_data["status"] == "cancel":
-        if instance.insufficient_balance():
-            raise exceptions.MethodNotAllowed({"detail": "insufficient funds"})
+    def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
+        self.raw_payload = payload
+        self.payload = ActionPayload(**payload)
+        self.validator: ValidatorProtocol = ActionValidator(self.payload)
+        if self.raw_payload["status"] == "cancel":
+            self.raw_payload["side"] = "cancel"
+        else:
+            self.raw_payload["side"] = self.validator.order.side
+        if getterprice:
+            self.getter_price = getterprice
 
-    from core.services.order_services import order_executor
+    def execute(self):
 
-    payload = json.dumps(validated_data)
-    print("Function is mocked")
-    task = order_executor.apply(
-        args=(payload,),
-        task_id=validated_data["order_uid"],
-    )
-    data = {
-        "action_id": task.id,
-        "status": "executed in mock",
-        "order_uid": validated_data["order_uid"],
-    }
-    return data
+        task_payload: str = json.dumps(self.raw_payload)
+        task = order_executor.apply(
+            args=(task_payload,), task_id=self.payload.order_uid
+        )
+        self.response = {
+            "action_id": task.id,
+            "status": "executed",
+            "order_uid": self.payload.order_uid,
+        }
+
+
+def mock_order_action_serializer(validated_data: dict):
+    print("----action serializer is mocked----")
+    controller = OrderController()
+    return controller.process(MockActionProcessor(validated_data))
 
 
 def mock_buy_validate(user, ticker, bot_id):
-    print(f"----mocked----")
+    print("----buy validation is mocked----")
 
     def is_order_exist():
         orders = Order.objects.filter(
@@ -94,17 +92,18 @@ def mock_sell_validate(user, ticker, bot_id):
         )
         if pending_order.exists():
             last_order = pending_order.first()
-            orderId = last_order.order_uid.hex
+            order_id = last_order.order_uid.hex
             raise exceptions.NotAcceptable(
-                f"sell order already exists for this position, order id : {orderId}, current status pending"
+                f"sell order already exists for this position, order id : {order_id}, current status pending"
             )
 
     def is_position_exists(self) -> OrderPosition:
         print(f">>>{self.payload.setup['position']}<<<")
         try:
-            position = OrderPosition.objects.select_related("user_id", "ticker").get(
-                pk=self.payload.setup["position"]
-            )
+            position = OrderPosition.objects.select_related(
+                "user_id",
+                "ticker",
+            ).get(pk=self.payload.setup["position"])
         except OrderPosition.DoesNotExist:
             raise exceptions.NotFound({"detail": "position not found error"})
 

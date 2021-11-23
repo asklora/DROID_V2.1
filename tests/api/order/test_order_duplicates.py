@@ -1,16 +1,16 @@
-import os
 import time
 from random import choice
 from typing import Union
 
 import pytest
-from core.orders.models import Order, OrderPosition
+from core.orders.models import Order
+
+# from core.orders.factory.orderfactory import
 from rest_framework import exceptions
 from tests.utils.market import check_market, close_market, open_market
 from tests.utils.mocks import (
-    mock_has_order,
-    mock_order_serializer,
     mock_buy_validate,
+    mock_order_action_serializer,
     mock_sell_validate,
 )
 from tests.utils.order import confirm_order, confirm_order_api, get_position_performance
@@ -33,16 +33,6 @@ def test_duplicated_pending_buy_order(
 ) -> None:
     ticker, price = choice(tickers).values()
     bot_id: str = "CLASSIC_classic_003846"
-
-    # mock all the things!
-    mocker.patch(
-        "core.orders.serializers.OrderActionSerializer.create",
-        wraps=mock_order_serializer,
-    )
-
-    mocker.patch(
-        "core.services.order_services.asyncio.run",
-    )
 
     # utility function to create a new order
     def create_order() -> Union[dict, None]:
@@ -84,24 +74,27 @@ def test_duplicated_pending_buy_order(
         close_market(first_order.ticker.mic)
 
     # we confirm the above order
-    confirmed_first_order = confirm_order_api(
+    mocker.patch(
+        "core.orders.serializers.OrderActionSerializer.create",
+        wraps=mock_order_action_serializer,
+    )
+    confirm_order_api(
         order_1.get("order_uid"),
         client,
         authentication,
     )
 
-    # make sure we mocked the function alright
-    assert confirmed_first_order.get("status") == "executed in mock"
+    time.sleep(30)
 
     # we see if its really pending
     first_order = Order.objects.get(pk=order_1.get("order_uid"))
     assert first_order.status == "pending"
 
     with pytest.raises(exceptions.NotAcceptable):
-        mock_BuyValidator = mocker.patch(
+        mock_buy_validator = mocker.patch(
             "core.orders.factory.orderfactory.BuyValidator"
         )
-        mock_BuyValidator.validate = mock_buy_validate(
+        mock_buy_validator.validate = mock_buy_validate(
             user=user,
             ticker=ticker,
             bot_id=bot_id,
@@ -158,10 +151,10 @@ def test_duplicated_filled_buy_order(
     confirm_order(buy_order)
 
     with pytest.raises(exceptions.NotAcceptable):
-        mock_BuyValidator = mocker.patch(
+        mock_buy_validator = mocker.patch(
             "core.orders.factory.orderfactory.BuyValidator"
         )
-        mock_BuyValidator.validate = mock_buy_validate(
+        mock_buy_validator.validate = mock_buy_validate(
             user=user,
             ticker=ticker,
             bot_id=bot_id,
@@ -181,15 +174,6 @@ def test_duplicated_pending_sell_order(
 ) -> None:
     ticker, price = choice(tickers).values()
     bot_id: str = "UCDC_ATM_007692"
-
-    # mock all the things!
-    mocker.patch(
-        "core.orders.serializers.OrderActionSerializer.create",
-        wraps=mock_order_serializer,
-    )
-    mocker.patch(
-        "core.services.order_services.asyncio.run",
-    )
 
     response = client.post(
         path="/api/order/create/",
@@ -224,6 +208,10 @@ def test_duplicated_pending_sell_order(
     if not market_is_initially_open:
         open_market(buy_order.ticker.mic)
 
+    mocker.patch(
+        "core.orders.serializers.OrderActionSerializer.create",
+        wraps=mock_order_action_serializer,
+    )
     confirm_order_api(
         order["order_uid"],
         client,
@@ -266,10 +254,10 @@ def test_duplicated_pending_sell_order(
     assert sell_order.status == "pending"
 
     with pytest.raises(exceptions.NotAcceptable):
-        mock_BuyValidator = mocker.patch(
+        mock_buy_validator = mocker.patch(
             "core.orders.factory.orderfactory.BuyValidator"
         )
-        mock_BuyValidator.validate = mock_sell_validate(
+        mock_buy_validator.validate = mock_sell_validate(
             user=user,
             ticker=ticker,
             bot_id=bot_id,

@@ -126,7 +126,7 @@ def confirm_order_api(order_uid: str, client: Client, authentication: dict):
         data={
             "order_uid": order_uid,
             "status": "placed",
-            "firebase_token": "",
+            "firebase_token": "test",
         },
         **authentication,
     )

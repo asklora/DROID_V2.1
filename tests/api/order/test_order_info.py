@@ -23,7 +23,7 @@ def test_api_edit_order_status(
     data = {
         "order_uid": order["order_uid"],
         "status": "placed",
-        "firebase_token": "",
+        "firebase_token": "test",
     }
 
     response = client.post(
