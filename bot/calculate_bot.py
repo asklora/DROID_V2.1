@@ -1,7 +1,8 @@
+from general.slack import report_to_slack
 from bot.data_download import get_currency_data
 from core.djangomodule.general import formatdigit
 from general.sql_output import upsert_data_to_database
-from general.date_process import dateNow, date_to_string, str_to_date
+from general.date_process import dateNow, date_to_string, datetimeNow, str_to_date
 import math
 import numpy as np
 from datetime import datetime
@@ -31,6 +32,7 @@ from general.table_name import (
     get_latest_vol_table_name,
     get_master_tac_table_name,
     get_season_history_table_name,
+    get_season_table_name,
     get_user_deposit_history_table_name,
     get_user_profit_history_table_name)
 from datasource.dsws import get_data_static_from_dsws
@@ -698,6 +700,20 @@ def populate_daily_profit(currency_code=None, user_id=None):
     not_joined["total_profit_pct"] = not_joined["total_profit_pct"].round(4)
     upsert_data_to_database(not_joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
+def update_season():
+    month_list = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    period = str_to_date(dateNow())
+    months = period.month
+    years = period.year
+    season_id = f"{month_list[months - 1]}{years}"
+    start_date = str_to_date(f"{years}-{months}-01")
+    season = pd.DataFrame({"season_id":[season_id], "start_date":[start_date], "end_date":[period]}, index=[0])
+    season["end_date"] = pd.to_datetime(season["end_date"])
+    season["end_date"] = season["end_date"].dt.to_period("M").dt.to_timestamp("M")
+    season["end_date"] = pd.to_datetime(season["end_date"])
+    upsert_data_to_database(season, get_season_table_name(), "season_id", how="update", cpu_count=False, Text=True)
+    
+
 def update_season_monthly(currency_code=None, user_id=None) -> None:
     new_season = get_latest_season()
     if(date_to_string(new_season.loc[0, "end_date"]) == dateNow()):
@@ -731,6 +747,7 @@ def update_season_monthly(currency_code=None, user_id=None) -> None:
         upsert_data_to_database(user_core, get_season_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
 def update_monthly_deposit(currency_code=None, user_id=None) -> None:
+    update_season()
     update_season_monthly(currency_code=currency_code, user_id=user_id)
     new_season = get_latest_season()
     if(date_to_string(new_season.loc[0, "end_date"]) == dateNow()):
@@ -756,3 +773,4 @@ def update_monthly_deposit(currency_code=None, user_id=None) -> None:
         user_core = user_core[["uid", "user_id", "trading_day", "deposit"]]
         print(user_core)
         upsert_data_to_database(user_core, get_user_deposit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
+        report_to_slack("{} === USER DEPOSIT RESET ===".format(datetimeNow()))
