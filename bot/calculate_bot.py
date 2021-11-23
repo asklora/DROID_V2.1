@@ -718,13 +718,14 @@ def update_season_monthly(currency_code=None, user_id=None) -> None:
     new_season = get_latest_season()
     if(date_to_string(new_season.loc[0, "end_date"]) == dateNow()):
         user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, current_status")[["user_id", "is_joined", "current_status"]]
-        if user_core.empty:
-            return
         user_core = user_core.loc[user_core["is_joined"] == True]
         user_core = user_core.loc[user_core["current_status"] == "verified"]
         user_core = user_core.drop(columns=["current_status"])
-        user_id = user_core["user_id"].to_list()
 
+        if user_core.empty:
+            return
+
+        user_id = user_core["user_id"].to_list()
         user_balance = get_user_account_balance(user_id=user_id, field="user_id, amount as balance, currency_code")
         user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_invested_amount as invested_amount , rank, total_profit_pct, total_profit")
         user_deposit = get_user_deposit(user_id=user_id)
@@ -752,11 +753,13 @@ def update_monthly_deposit(currency_code=None, user_id=None) -> None:
     new_season = get_latest_season()
     if(date_to_string(new_season.loc[0, "end_date"]) == dateNow()):
         user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, current_status")[["user_id", "is_joined", "current_status"]]
-        if user_core.empty:
-            return
         user_core = user_core.loc[user_core["is_joined"] == True]
         user_core = user_core.loc[user_core["current_status"] == "verified"]
         user_core = user_core.drop(columns=["current_status"])
+
+        if user_core.empty:
+            return
+
         user_balance = get_user_account_balance(user_id=user_id, field="user_id, amount as balance, currency_code")
         user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_invested_amount")
         currency = get_currency_data(currency_code=currency_code)
