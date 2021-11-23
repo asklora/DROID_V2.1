@@ -29,13 +29,14 @@ from django.apps import apps
 
 
 @app.task(bind=True)
-def order_executor(self, payload:str, recall=False):
-    if isinstance(payload,str):
+def order_executor(self, payload: str, recall=False):
+    if isinstance(payload, str):
         payload = json.loads(payload)
 
     controller = ActionOrderController()
     controller.select_process_class(payload)
     controller.process()
+
 
 class SellOrderProcessor:
     getter_price = RkdGetterPrice()
@@ -89,7 +90,6 @@ class BuyOrderProcessor:
             self.response = Order.objects.create(
                 **self.raw_payload, order_type="apps", is_init=True
             )
-    
 
 
 class BaseAction:
@@ -165,26 +165,25 @@ class BaseAction:
 
     def message_filled(self):
         self.response = {
-                        'type': 'send_order_message',
-                        'message_type': 'order_filled',
-                        'title': 'order filled',
-                        'message':f'{self.validator.order.side} order {self.validator.order.qty} \
-                            stocks {self.validator.order.ticker.ticker} was executed, status filled',
-                        
-                        # 'payload': payload_serializer,
-                        'status_code': 200
-                }
-        
+            "type": "send_order_message",
+            "message_type": "order_filled",
+            "title": "order filled",
+            "message": f"{self.validator.order.side} order {self.validator.order.qty} \
+                            stocks {self.validator.order.ticker.ticker} was executed, status filled",
+            # 'payload': payload_serializer,
+            "status_code": 200,
+        }
+
     def order_in_pending(self):
-        return self.validator.order.status == 'pending'
-        
+        return self.validator.order.status == "pending"
+
     def send_notification(self):
-        return firebase_send_notification(self.validator.order.user_id.username, 
-                                 self.response.get('title'),
-                                 self.response.get('message')
-                                 )        
-    
-    
+        return firebase_send_notification(
+            self.validator.order.user_id.username,
+            self.response.get("title"),
+            self.response.get("message"),
+        )
+
     def send_response(self):
         return asyncio.run(
             self.channel_layer.group_send(str(self.validator.order.pk), self.response)
@@ -202,7 +201,8 @@ class BaseAction:
                 logging.error(str(e))
                 self.message_error(f"{self.validator.order.pk} update failed")
                 self.send_response()
-                raise ValueError(f'{self.validator.order.pk} update failed')
+                raise ValueError(f"{self.validator.order.pk} update failed")
+
 
 class BuyActionProcessor(BaseAction):
     def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
@@ -216,41 +216,46 @@ class BuyActionProcessor(BaseAction):
         if self.order_in_pending():
             self.recalculate_buy_order()
         super().execute()
-    
-    
-    
+
     def refund_pending(self):
         """
         [summary]
             function will trigered buy recall
-            
-        """ 
-        TransactionHistory = apps.get_model('user', 'TransactionHistory')
+
+        """
+        TransactionHistory = apps.get_model("user", "TransactionHistory")
         in_wallet_transactions = TransactionHistory.objects.filter(
-            transaction_detail__order_uid=str(self.validator.order.pk))
+            transaction_detail__order_uid=str(self.validator.order.pk)
+        )
         if in_wallet_transactions.exists():
             with db_transaction.atomic():
                 try:
                     in_wallet_transactions.delete()
                 except Exception as e:
                     logging.error(str(e))
-                    err_msg=f'{self.validator.order.pk} refund pending buy order failed'
+                    err_msg = (
+                        f"{self.validator.order.pk} refund pending buy order failed"
+                    )
                     self.message_error(err_msg)
                     self.send_response()
                     raise ValueError(err_msg)
-                
+
         return self.reset_buy_order()
-    
+
     def reset_buy_order(self):
         if self.validator.order.is_bot_order:
-            self.validator.order.amount =self.validator.order.userconverter.convert(self.validator.order.setup["position"]["investment_amount"])
+            self.validator.order.amount = self.validator.order.userconverter.convert(
+                self.validator.order.setup["position"]["investment_amount"]
+            )
         else:
             if (self.validator.order.amount / self.validator.order.margin) > 11000:
                 self.validator.order.amount = 20000
             else:
                 self.validator.order.amount = 10000
-        self.validator.order.price = self.getter_price.get_price([self.validator.order.ticker])
-        self.validator.order.status = 'review'
+        self.validator.order.price = self.getter_price.get_price(
+            [self.validator.order.ticker]
+        )
+        self.validator.order.status = "review"
         self.validator.order.placed = False
         self.validator.order.placed_at = None
         self.validator.order.qty = None
@@ -259,13 +264,15 @@ class BuyActionProcessor(BaseAction):
                 self.validator.order.save()
             except Exception as e:
                 logging.error(str(e))
-                self.message_error(f'{self.validator.order.pk} recalculate order failed')
+                self.message_error(
+                    f"{self.validator.order.pk} recalculate order failed"
+                )
                 self.send_response()
-                raise ValueError(f'{self.validator.order.pk} recalculate order failed')
-            
+                raise ValueError(f"{self.validator.order.pk} recalculate order failed")
+
     def recalculate_buy_order(self):
         return self.refund_pending()
-        
+
 
 class CancelActionProcessor(BaseAction):
     def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
