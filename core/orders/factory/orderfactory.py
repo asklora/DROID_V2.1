@@ -1,4 +1,4 @@
-from core.services.notification import send_notification
+from core.services.notification import send_notification as firebase_send_notification
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 from django.utils import timezone
@@ -6,7 +6,7 @@ import logging
 from core.orders.models import Order
 from .order_protocol import ValidatorProtocol, OrderProtocol, GetPriceProtocol
 from .payload import ActionPayload, SellPayload,BuyPayload
-from .validator import BuyValidator, CancelExecutorValidator, ExecutorValidator,SellValidator,ActionValidator
+from .validator import BuyValidator, CancelExecutorValidator, ExecutorValidator, PendingBuyValidator,SellValidator,ActionValidator
 from rest_framework import exceptions
 from django.db import transaction as db_transaction
 from datetime import datetime
@@ -25,7 +25,7 @@ from django.apps import apps
 
 
 @app.task(bind=True)
-def order_executor(self, payload:str, recall=False, request_id=None):
+def order_executor(self, payload:str, recall=False):
     if isinstance(payload,str):
         payload = json.loads(payload)
     
@@ -40,28 +40,28 @@ def order_executor(self, payload:str, recall=False, request_id=None):
     #     df = rkd.get_quote([order.ticker.ticker], df=True)
     #     df['latest_price'] = df['latest_price'].astype(float)
     #     ticker = df.loc[df["ticker"] == order.ticker.ticker]
-    #     TransactionHistory = apps.get_model('user', 'TransactionHistory')
-    #     in_wallet_transactions = TransactionHistory.objects.filter(
-    #         transaction_detail__order_uid=str(order.order_uid))
-    #     if in_wallet_transactions.exists():
-    #         in_wallet_transactions.delete()
+        # TransactionHistory = apps.get_model('user', 'TransactionHistory')
+        # in_wallet_transactions = TransactionHistory.objects.filter(
+        #     transaction_detail__order_uid=str(order.order_uid))
+        # if in_wallet_transactions.exists():
+        #     in_wallet_transactions.delete()
         
-    #     # for apps, need to change later with better logic
-    #     if order.side == 'buy' and order.is_app_order and order.is_init:
-    #         if order.is_bot_order:
-    #             order.amount =order.userconverter.convert(order.setup["position"]["investment_amount"])
-    #         else:
-    #             if (order.amount / order.margin) > 10001:
-    #                 order.amount = 20000
-    #             else:
-    #                 order.amount = 10000
-    #     order.price = ticker.iloc[0]['latest_price']
-    #     order.status = 'review'
-    #     order.placed = False
-    #     order.placed_at = None
-    #     order.qty = None
-    #     with transaction.atomic():
-    #         order.save()
+        # # for apps, need to change later with better logic
+        # if order.side == 'buy' and order.is_app_order and order.is_init:
+        #     if order.is_bot_order:
+        #         order.amount =order.userconverter.convert(order.setup["position"]["investment_amount"])
+        #     else:
+        #         if (order.amount / order.margin) > 10001:
+        #             order.amount = 20000
+        #         else:
+        #             order.amount = 10000
+        # order.price = ticker.iloc[0]['latest_price']
+        # order.status = 'review'
+        # order.placed = False
+        # order.placed_at = None
+        # order.qty = None
+        # with transaction.atomic():
+        #     order.save()
 
 
 
@@ -121,6 +121,7 @@ class BuyOrderProcessor:
             self.response = Order.objects.create(
                 **self.raw_payload, order_type="apps", is_init=True
             )
+    
 
 class BaseAction:
     channel_layer =get_channel_layer()
@@ -185,7 +186,6 @@ class BaseAction:
                 }
     
     def message_cancel(self):
-        print('cancel')
         self.response = {
                         'type': 'send_order_message',
                         'message_type': 'order_cancel',
@@ -208,10 +208,11 @@ class BaseAction:
                         'status_code': 200
                 }
         
-        
+    def order_in_pending(self):
+        return self.validator.order.status == 'pending'
         
     def send_notification(self):
-        return send_notification(self.validator.order.user_id.username, 
+        return firebase_send_notification(self.validator.order.user_id.username, 
                                  self.response.get('title'),
                                  self.response.get('message')
                                  )        
@@ -228,6 +229,7 @@ class BaseAction:
     
     def update_order(self):
         self.validator.order.status = self.payload.status
+        self.validator.order.placed = True
         self.validator.order.placed_at = datetime.now()
         with db_transaction.atomic():
             try:
@@ -237,6 +239,11 @@ class BaseAction:
                 self.message_error(f'{self.validator.order.pk} update failed')
                 self.send_response()
                 raise ValueError(f'{self.validator.order.pk} update failed')
+    
+    
+    
+    
+    
     
     
             
@@ -253,8 +260,60 @@ class BuyActionProcessor(BaseAction):
             self.getter_price = getterprice
     
     def execute(self):
+        if self.order_in_pending():
+            self.recalculate_buy_order()
         super().execute()
-             
+    
+    
+    
+    def refund_pending(self):
+        """
+        [summary]
+            function will trigered buy recall
+            
+        """ 
+        TransactionHistory = apps.get_model('user', 'TransactionHistory')
+        in_wallet_transactions = TransactionHistory.objects.filter(
+            transaction_detail__order_uid=str(self.validator.order.pk))
+        if in_wallet_transactions.exists():
+            with db_transaction.atomic():
+                try:
+                    in_wallet_transactions.delete()
+                except Exception as e:
+                    logging.error(str(e))
+                    err_msg=f'{self.validator.order.pk} refund pending buy order failed'
+                    self.message_error(err_msg)
+                    self.send_response()
+                    raise ValueError(err_msg)
+                
+        return self.reset_buy_order()
+    
+    def reset_buy_order(self):
+        if self.validator.order.is_bot_order:
+            self.validator.order.amount =self.validator.order.userconverter.convert(self.validator.order.setup["position"]["investment_amount"])
+        else:
+            if (self.validator.order.amount / self.validator.order.margin) > 11000:
+                self.validator.order.amount = 20000
+            else:
+                self.validator.order.amount = 10000
+        self.validator.order.price = self.getter_price.get_price([self.validator.order.ticker])
+        self.validator.order.status = 'review'
+        self.validator.order.placed = False
+        self.validator.order.placed_at = None
+        self.validator.order.qty = None
+        with db_transaction.atomic():
+            try:
+                self.validator.order.save()
+            except Exception as e:
+                logging.error(str(e))
+                self.message_error(f'{self.validator.order.pk} recalculate order failed')
+                self.send_response()
+                raise ValueError(f'{self.validator.order.pk} recalculate order failed')
+            
+    def recalculate_buy_order(self):
+        return self.refund_pending()
+        
+                 
             
 class CancelActionProcessor(BaseAction):
 
@@ -298,7 +357,19 @@ class SellActionProcessor(BaseAction):
             self.getter_price = getterprice
     
     def execute(self):
-        super().execute()
+        """
+        #TODO: this need recalculate, but sell functionality need to revamp
+        because of this function only create new order for now
+        classic_sell_position
+        ucdc_sell_position
+        uno_sell_position
+        user_sell_position
+        """
+        if self.order_in_pending():
+            self.exchange_executor()
+            self.send_response()
+        else:
+            super().execute()
 
 
 

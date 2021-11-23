@@ -128,7 +128,8 @@ class BuyValidator:
 
     def validate(self):
         asyncio.run(self.validation_tasks())
-        
+
+
         
 class ActionValidator:
     
@@ -152,7 +153,12 @@ class ActionValidator:
                 raise exceptions.MethodNotAllowed(
                     {'detail': 'insufficient funds'})
     
+    def is_incorrect_status(self):
+        if not self.payload.status in ['placed', 'cancel']:
+            raise exceptions.MethodNotAllowed({"detail": "status should placed or cancel"})
+    
     def validate(self):
+        self.is_incorrect_status()
         self.is_actioned()
         self.is_insufficient_funds()
 
