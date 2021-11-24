@@ -1,11 +1,27 @@
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.exceptions import InvalidToken,TokenError
 from core.djangomodule.general import NeedRegister
 from rest_framework_simplejwt.settings import api_settings
 from django.utils.translation import gettext_lazy as _
 
 
 class AuthJwt(JWTAuthentication):
+    
+    def get_validated_token(self, raw_token):
+        """
+        Validates an encoded JSON web token and returns a validated token
+        wrapper object.
+        """
+        messages = []
+        for AuthToken in api_settings.AUTH_TOKEN_CLASSES:
+            try:
+                return AuthToken(raw_token)
+            except TokenError as e:
+                messages.append({'token_class': AuthToken.__name__,
+                                 'token_type': AuthToken.token_type,
+                                 'message': e.args[0]})
+
+        raise NeedRegister(detail={"detail":"Token invalid"},code=400)
 
     def get_user(self, validated_token):
         """

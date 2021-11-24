@@ -37,7 +37,7 @@ CHANNEL_LAYERS = {
         # Method 2: Via local Redis
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("redis", 6379)],
+            "hosts": [("localhost", 6379)],
             "capacity": 1500,  # default 100
             "expiry": 2,
         },
@@ -50,15 +50,14 @@ CHANNEL_LAYERS = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
+        "LOCATION": "redis://localhost:6379/1",
     }
 }
 
-
 print("using dev db")
 read_endpoint, write_endpoint, port = db.dev_url
-CELERY_BROKER_URL="redis://redis:6379/0"
-CELERY_SINGLETON_BACKEND_URL = 'redis://localhost:6379/1'
+CELERY_BROKER_URL="redis://localhost:6379/0"
+CELERY_SINGLETON_BACKEND_URL = 'localhost://localhost:6379/1'
 # CELERY_BROKER_URL = "amqp://rabbitmq:rabbitmq@16.162.110.123:5672"
 CELERY_TASK_DEFAULT_QUEUE ='droid_dev'
 HEDGE_WORKER_DEFAULT_QUEUE ='droid_dev'
@@ -69,7 +68,7 @@ ASKLORA_QUEUE="asklora-dev"
 RUN_LOCAL=True
 print(f'using read: {read_endpoint}')
 # print(f'using write: {write_endpoint}')
-DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
+# DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
 DATABASES = {
     "default": {
         "ENGINE": DB_ENGINE,
@@ -100,7 +99,8 @@ DATABASES = {
 
 FIREBASE_COLLECTION={
     'portfolio':'dev_portfolio',
-    'universe':'dev_universe'
+    'universe':'dev_universe',
+    'ranking':'dev_ranking'
 }
 
 # CELERY_TASK_ROUTES = {

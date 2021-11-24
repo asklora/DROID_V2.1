@@ -281,7 +281,7 @@ class BaseOrderConnector(AbstracOrderConnector):
                     exchange_rate=self.instance.exchange_rate
                 )
         performance = PositionPerformance.objects.create(
-            created=self.instance.filled_at.date(),
+            created=self.instance.filled_at,
             position_uid=position,
             last_spot_price=self.instance.price,
             last_live_price=self.instance.price,
