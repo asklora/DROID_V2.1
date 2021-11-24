@@ -116,4 +116,4 @@ def test_check_if_user_balance_is_cut_accordingly_with_margin(
 
     order = Order.objects.get(pk=order.order_uid)
 
-    assert user_balance.amount == initial_user_balance - amount
+    assert user_balance.amount == round(initial_user_balance - amount)

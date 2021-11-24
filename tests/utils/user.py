@@ -24,4 +24,4 @@ def delete_user(user: User) -> None:
     TransactionHistory.objects.filter(balance_uid__user=user).delete()
     Accountbalance.objects.filter(user=user).delete()
     user.delete()
-    delete_firestore_user(user_id)
+    delete_firestore_user(str(user_id))

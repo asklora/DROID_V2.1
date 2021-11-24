@@ -1,12 +1,16 @@
-from datetime import datetime
+import math
 
 import pytest
-from core.djangomodule.general import formatdigit, jsonprint
+from core.djangomodule.general import jsonprint
+from core.orders.factory.orderfactory import OrderController, SellOrderProcessor
 from core.orders.models import Order, OrderPosition, PositionPerformance
-from core.orders.services import sell_position_service
 from core.user.convert import ConvertMoney
 from core.user.models import Accountbalance
-from tests.utils.order import confirm_order, create_buy_order
+from tests.utils.order import (
+    confirm_order,
+    create_buy_order,
+    get_position_performance,
+)
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -18,8 +22,8 @@ pytestmark = pytest.mark.django_db(
 
 
 def test_sell_order_with_conversion(user):
-    ticker: str = "XOM"
-    price: float = 60.93
+    ticker: str = "EA.O"
+    price: float = 128.41
     amount: float = 10000
 
     # converter to usd
@@ -29,7 +33,7 @@ def test_sell_order_with_conversion(user):
     print(f"conversion result: {usd_conversion_result}")
 
     wallet = Accountbalance.objects.get(user=user)
-    user_balance = formatdigit(wallet.amount, wallet.currency_code.is_decimal)
+    user_balance = math.floor(wallet.amount)
 
     order: Order = create_buy_order(
         price=price,
@@ -44,14 +48,11 @@ def test_sell_order_with_conversion(user):
 
     # check if user balance is deducted
     wallet = Accountbalance.objects.get(user=user)
-    user_balance_2 = formatdigit(wallet.amount, False)
+    user_balance_2 = math.floor(wallet.amount)
     print(f"buy order amount: {order.amount}")
-    print(f"user balance after order: {user_balance_2}")
+    print(f"user balance after order: {wallet.amount}")
     assert user_balance != user_balance_2
-    assert (
-        formatdigit(user_balance - amount, wallet.currency_code.is_decimal)
-        == user_balance_2
-    )
+    assert math.floor(user_balance - amount) == user_balance_2
 
     performance: PositionPerformance = PositionPerformance.objects.get(
         order_uid=order.order_uid,
@@ -65,10 +66,20 @@ def test_sell_order_with_conversion(user):
     print(f"position amount: {position.investment_amount}")
 
     # We create the sell order
-    sell_position, sell_order = sell_position_service(
-        price - 2.0,
-        datetime.now(),
-        position.position_uid,
+    buy_position, _ = get_position_performance(order)
+
+    order_payload: dict = {
+        "setup": {"position": buy_position.position_uid},
+        "side": "sell",
+        "ticker": order.ticker,
+        "user_id": order.user_id,
+        "margin": order.margin,
+    }
+
+    controller: OrderController = OrderController()
+
+    sell_order: Order = controller.process(
+        SellOrderProcessor(order_payload),
     )
 
     confirmed_sell_order = Order.objects.get(pk=sell_order.pk)
@@ -76,9 +87,7 @@ def test_sell_order_with_conversion(user):
 
     confirm_order(confirmed_sell_order)
 
-    sell_position = OrderPosition.objects.get(
-        position_uid=sell_position.position_uid,
-    )
+    sell_position, _ = get_position_performance(sell_order)
     assert not sell_position.is_live
 
     jsonprint(confirmed_sell_order.setup)
@@ -87,12 +96,12 @@ def test_sell_order_with_conversion(user):
 
     print(f"final pnl amount: {sell_position.final_pnl_amount}")
 
-    assert (
+    assert round(
         abs(
             confirmed_sell_order.setup["performance"]["last_live_price"]
             * confirmed_sell_order.setup["performance"]["order_summary"]["hedge_shares"]
         )
-    ) == confirmed_sell_order.amount
+    ) == round(confirmed_sell_order.amount)
 
     hkd_conversion = ConvertMoney("USD", user.currency)
     hkd_conversion_result = hkd_conversion.convert(
@@ -101,6 +110,6 @@ def test_sell_order_with_conversion(user):
     print(hkd_conversion_result)
 
     wallet = Accountbalance.objects.get(user=user)
-    user_balance_3 = formatdigit(wallet.amount, False)
+    user_balance_3 = math.floor(wallet.amount)
 
-    assert formatdigit(user_balance_2 + hkd_conversion_result, False) == user_balance_3
+    assert math.ceil(user_balance_2 + hkd_conversion_result) == user_balance_3

@@ -13,7 +13,7 @@ def send_to_asklora(payload: dict) -> None:
 
 
 def send_notification(username: str, title: str, body: str):
-    data = {
+    payload = {
         "type": "function",
         "module": "core.djangomodule.crudlib.notification.send_notif",
         "payload": {
@@ -22,12 +22,12 @@ def send_notification(username: str, title: str, body: str):
             "body": f"{body}",
         },
     }
-    app.send_task("config.celery.listener", args=(data,), queue=settings.ASKLORA_QUEUE)
+    send_to_asklora(payload)
 
 
 def send_bulk_notification(title: str, body: str):
     # TODO: need to check bulk message
-    data = {
+    payload = {
         "type": "function",
         "module": "core.djangomodule.crudlib.notification.send_notif",
         "payload": {
@@ -35,7 +35,7 @@ def send_bulk_notification(title: str, body: str):
             "body": f"{body}",
         },
     }
-    app.send_task("config.celery.listener", args=(data,), queue=settings.ASKLORA_QUEUE)
+    send_to_asklora(payload)
 
 
 def send_winner_email():

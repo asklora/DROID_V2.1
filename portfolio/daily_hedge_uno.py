@@ -27,7 +27,7 @@ from typing import Optional,Union,Tuple
 
 
 
-def uno_sell_position(live_price:float, trading_day:str, position:OrderPosition, apps:bool=False)-> Tuple[OrderPosition,Optional[Union[Order,None]]]:
+def uno_sell_position(live_price:float, trading_day:datetime, position:OrderPosition, apps:bool=False)-> Tuple[OrderPosition,Optional[Union[Order,None]]]:
     bot = position.bot
     latest = LatestPrice.objects.get(ticker=position.ticker)
     ask_price = latest.intraday_ask
