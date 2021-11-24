@@ -74,9 +74,9 @@ def test_duplicated_pending_buy_order(
         close_market(first_order.ticker.mic)
 
     # we confirm the above order
-    mocker.patch(
-        "core.orders.serializers.OrderActionSerializer.create",
-        wraps=mock_order_action_serializer,
+    mock_buy_validator = mocker.patch(
+        "core.orders.factory.orderfactory.ActionProcessor.execute_task"
+        wraps=mock_execute_task,
     )
     mock_buy_validator = mocker.patch(
         "core.orders.factory.orderfactory.BaseAction.send_notification"
