@@ -1,7 +1,7 @@
 
 from typing_extensions import Protocol
-from core.orders.models import Order
-from typing import Union
+from core.orders.models import Order,OrderPosition
+from typing import Union,Optional
 class ValidatorProtocol(Protocol):
     
     def validate(self):
@@ -11,7 +11,7 @@ class ValidatorProtocol(Protocol):
 
 class GetPriceProtocol(Protocol):
     
-    def get_price(self,ticker:any)->float:
+    def get_price(self,ticker)->float:
         """
         get price should always have one arguments for ticker
         """

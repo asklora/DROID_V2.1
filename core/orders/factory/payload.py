@@ -21,6 +21,7 @@ class SellPayload:
     ticker: Universe
     user_id: User
     margin:int
+    price:float
 
 
 @dataclass

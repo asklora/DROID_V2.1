@@ -8,7 +8,7 @@ from core.orders.models import Order, OrderPosition
 
 class SellValidator:
     
-    position: OrderPosition=None
+    position: OrderPosition
 
     def __init__(self, payload: SellPayload):
         self.payload = payload

@@ -1,7 +1,7 @@
 from core.services.notification import send_notification as firebase_send_notification
 from django.utils import timezone
 import logging
-from core.orders.models import Order
+from core.orders.models import Order, OrderPosition
 from .order_protocol import ValidatorProtocol, OrderProtocol, GetPriceProtocol
 from .payload import ActionPayload, SellPayload, BuyPayload
 from .validator import (
@@ -29,7 +29,7 @@ from django.apps import apps
 
 
 @app.task(bind=True)
-def order_executor(self, payload: str, recall=False):
+def order_executor(self, payload: str):
     if isinstance(payload, str):
         payload = json.loads(payload)
 
@@ -42,7 +42,7 @@ class SellOrderProcessor:
     getter_price = RkdGetterPrice()
 
     def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
-        self.payload = SellPayload(**payload)
+        self.payload:SellPayload = SellPayload(**payload)
         self.validator: ValidatorProtocol = SellValidator(self.payload)
         if getterprice:
             self.getter_price = getterprice
@@ -52,7 +52,7 @@ class SellOrderProcessor:
         with db_transaction.atomic():
             position = self.validator.position
             bot = position.bot
-            trading_day = timezone.now()
+            trading_day = str(timezone.now())
             if bot.is_ucdc():
                 positions, self.response = ucdc_sell_position(
                     self.payload.price, trading_day, position, apps=True
@@ -73,7 +73,7 @@ class SellOrderProcessor:
 
 class BuyOrderProcessor:
     getter_price = RkdGetterPrice()
-    response: Order = None
+    response: Order
 
     def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
         self.raw_payload = payload
@@ -112,8 +112,6 @@ class BaseAction:
             self.message_error(f"{self.validator.order.ticker.mic} is not supported")
             self.send_response()
             raise ValueError(f"{self.validator.order.ticker.mic} is not supported")
-
-        print(f"exchange is: {'open' if exchange.is_open else 'closed'}")
 
         if exchange.is_open:
             return self.fill_order()
@@ -276,7 +274,7 @@ class BuyActionProcessor(BaseAction):
 
 class CancelActionProcessor(BaseAction):
     def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
-        self.raw_payload = payload
+        self.raw_payload:dict = payload
         self.payload = ActionPayload(**payload)
         self.validator: ValidatorProtocol = CancelExecutorValidator(self.payload)
         if getterprice:
