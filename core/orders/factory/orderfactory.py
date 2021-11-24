@@ -52,7 +52,7 @@ class SellOrderProcessor:
         with db_transaction.atomic():
             position = self.validator.position
             bot = position.bot
-            trading_day = str(timezone.now())
+            trading_day = timezone.now()
             if bot.is_ucdc():
                 positions, self.response = ucdc_sell_position(
                     self.payload.price, trading_day, position, apps=True
