@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 
 import pytest
@@ -23,8 +24,8 @@ pytestmark = pytest.mark.django_db(
 
 
 def test_sell_order_with_conversion(user):
-    ticker: str = "XOM"
-    price: float = 60.93
+    ticker: str = "EA.O"
+    price: float = 128.41
     amount: float = 10000
 
     # converter to usd
@@ -34,7 +35,7 @@ def test_sell_order_with_conversion(user):
     print(f"conversion result: {usd_conversion_result}")
 
     wallet = Accountbalance.objects.get(user=user)
-    user_balance = formatdigit(wallet.amount, wallet.currency_code.is_decimal)
+    user_balance = math.ceil(wallet.amount)
 
     order: Order = create_buy_order(
         price=price,
@@ -49,14 +50,11 @@ def test_sell_order_with_conversion(user):
 
     # check if user balance is deducted
     wallet = Accountbalance.objects.get(user=user)
-    user_balance_2 = formatdigit(wallet.amount, False)
+    user_balance_2 = math.ceil(wallet.amount)
     print(f"buy order amount: {order.amount}")
     print(f"user balance after order: {user_balance_2}")
     assert user_balance != user_balance_2
-    assert (
-        formatdigit(user_balance - amount, wallet.currency_code.is_decimal)
-        == user_balance_2
-    )
+    assert math.floor(user_balance - amount) == user_balance_2
 
     performance: PositionPerformance = PositionPerformance.objects.get(
         order_uid=order.order_uid,
@@ -114,6 +112,6 @@ def test_sell_order_with_conversion(user):
     print(hkd_conversion_result)
 
     wallet = Accountbalance.objects.get(user=user)
-    user_balance_3 = formatdigit(wallet.amount, False)
+    user_balance_3 = math.ceil(wallet.amount)
 
-    assert formatdigit(user_balance_2 + hkd_conversion_result, False) == user_balance_3
+    assert math.floor(user_balance_2 + hkd_conversion_result) == user_balance_3
