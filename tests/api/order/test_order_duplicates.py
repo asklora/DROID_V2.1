@@ -78,6 +78,12 @@ def test_duplicated_pending_buy_order(
         "core.orders.serializers.OrderActionSerializer.create",
         wraps=mock_order_action_serializer,
     )
+    mock_buy_validator = mocker.patch(
+        "core.orders.factory.orderfactory.BaseAction.send_notification"
+    )
+    mock_buy_validator = mocker.patch(
+        "core.orders.factory.orderfactory.BaseAction.send_response"
+    )
     confirm_order_api(
         order_1.get("order_uid"),
         client,
@@ -211,6 +217,12 @@ def test_duplicated_pending_sell_order(
     mocker.patch(
         "core.orders.serializers.OrderActionSerializer.create",
         wraps=mock_order_action_serializer,
+    )
+    mock_buy_validator = mocker.patch(
+        "core.orders.factory.orderfactory.BaseAction.send_notification"
+    )
+    mock_buy_validator = mocker.patch(
+        "core.orders.factory.orderfactory.BaseAction.send_response"
     )
     confirm_order_api(
         order["order_uid"],
