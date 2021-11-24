@@ -1,7 +1,7 @@
 from core.services.notification import send_notification as firebase_send_notification
 from django.utils import timezone
 import logging
-from core.orders.models import Order, OrderPosition
+from core.orders.models import Order
 from .order_protocol import ValidatorProtocol, OrderProtocol, GetPriceProtocol
 from .payload import ActionPayload, SellPayload, BuyPayload
 from .validator import (
@@ -337,13 +337,15 @@ class ActionProcessor:
             self.raw_payload["side"] = self.validator.order.side
         if getterprice:
             self.getter_price = getterprice
+            
+    def execute_task(self,payload):
+        return order_executor.apply_async(
+            args=(payload,), task_id=self.payload.order_uid
+        )
 
     def execute(self):
-
         task_payload: str = json.dumps(self.raw_payload)
-        task = order_executor.apply_async(
-            args=(task_payload,), task_id=self.payload.order_uid
-        )
+        task = self.execute_task(task_payload)
         self.response = {
             "action_id": task.id,
             "status": "executed",
