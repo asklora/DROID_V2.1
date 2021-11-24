@@ -1,4 +1,4 @@
-import boto3,yaml,json
+import boto3,json
 import time
 from datetime import datetime
 
@@ -7,8 +7,8 @@ class Cloud:
         if not region:
             raise ValueError('region cant be none/null')
         boto3.setup_default_session(region_name=region)
-        self.ec2_client = boto3.client('ec2')
-        self.rds_client = boto3.client('rds')
+        self.ec2_client = boto3.client('ec2', aws_access_key_id='AKIA2XEOTUNGWEQ43TB6', aws_secret_access_key='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')
+        self.rds_client = boto3.client('rds', aws_access_key_id='AKIA2XEOTUNGWEQ43TB6', aws_secret_access_key='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')
         self.cloud_formation_client = boto3.client('cloudformation')
     
     def validate_stack(self,stack_name):
@@ -77,11 +77,12 @@ class DroidDb(Cloud):
         if snapshot_status == 'available':
             if self.is_testdbexist():
                 self.delete_old_testdb()
-                time.sleep(3)
+                time.sleep(10)
             self.rds_client.restore_db_cluster_from_snapshot(
                         DBClusterIdentifier='droid-v2-test-cluster',
                         SnapshotIdentifier='droid-v2-snapshot',
                         Engine='aurora-postgresql')
+            time.sleep(5)
             while True:
                 db_instance =  self.check_testdb_status()
                 if db_instance == 'available':
@@ -90,6 +91,8 @@ class DroidDb(Cloud):
                     return 'created'
                 elif db_instance == 'creating':
                     print(f'{datetime.now()} == please wait creating test db instance ...')
+                else:
+                    print(f'{datetime.now()} == please wait creating test db instance status {db_instance}')
                 time.sleep(10)
                 
 
@@ -106,7 +109,7 @@ class DroidDb(Cloud):
                     DBClusterIdentifier='droid-v2-test-cluster',
                 )
             status  = db['DBClusters'][0]['Status']
-            if status == 'available':
+            if status == 'available' or status == 'creating':
                 return True 
         except Exception as e:
             print(e)
@@ -121,7 +124,7 @@ class DroidDb(Cloud):
     def get_snapshot(self):
         try:
             snapshot = self.rds_client.describe_db_cluster_snapshots(
-                        DBClusterIdentifier='droid-v2-prod-cluster',
+                        DBClusterIdentifier='droid-v2-production-cluster',
                         DBClusterSnapshotIdentifier='droid-v2-snapshot',
                     )
             if len(snapshot['DBClusterSnapshots'])> 0:
@@ -145,22 +148,46 @@ class DroidDb(Cloud):
             if snapshot == "Not Found":
                 self.rds_client.create_db_cluster_snapshot(
                     DBClusterSnapshotIdentifier='droid-v2-snapshot',
-                    DBClusterIdentifier='droid-v2-prod-cluster',
+                    DBClusterIdentifier='droid-v2-production-cluster',
                 )
                 return True
             elif snapshot == "available":
                 self.delete_snapshot()
                 self.rds_client.create_db_cluster_snapshot(
                     DBClusterSnapshotIdentifier='droid-v2-snapshot',
-                    DBClusterIdentifier='droid-v2-prod-cluster',
+                    DBClusterIdentifier='droid-v2-production-cluster',
                 )
                 return False
             else:
                 print('snapshot status: ',snapshot)
             time.sleep(10)
 
-        
-
+    def create_read_replica(self):
+        rr =  self.rds_client.restore_db_cluster_to_point_in_time(
+                                    DBClusterIdentifier='droid-v2-production-cluster-clone',
+                                    RestoreType='copy-on-write',
+                                    SourceDBClusterIdentifier='droid-v2-production-cluster',
+                                    UseLatestRestorableTime=True
+                                )
+        print(rr)
+        # res = self.rds_client.restore_db_instance_from_db_snapshot(
+        #     DBInstanceIdentifier='droid-v2-test-cluster-replica',
+        #     DBSnapshotIdentifier='droid-v2-snapshot',
+        #     DBInstanceClass='db.t3.medium'
+        # )
+    @property
+    def dev_url(self):
+        """
+        return 
+        -> endpoint
+        -> Reader endpoint
+        -> port
+        """
+        db = self.rds_client.describe_db_clusters(
+                    DBClusterIdentifier='droid-dev-cluster',
+                )
+        return db['DBClusters'][0]['Endpoint'],db['DBClusters'][0]['ReaderEndpoint'], db['DBClusters'][0]['Port']
+    
     @property
     def prod_url(self):
         """
@@ -170,7 +197,7 @@ class DroidDb(Cloud):
         -> port
         """
         db = self.rds_client.describe_db_clusters(
-                    DBClusterIdentifier='droid-v2-prod-cluster',
+                    DBClusterIdentifier='droid-v2-production-cluster',
                 )
         return db['DBClusters'][0]['Endpoint'],db['DBClusters'][0]['ReaderEndpoint'], db['DBClusters'][0]['Port']
 
@@ -188,4 +215,5 @@ class DroidDb(Cloud):
                         DBClusterIdentifier='droid-v2-test-cluster',
                     )
             return db['DBClusters'][0]['Endpoint'],db['DBClusters'][0]['ReaderEndpoint'], db['DBClusters'][0]['Port']
-        # raise ValueError('error connecting database or database not found')
+        else:
+            raise ValueError('error connecting database or database not found, Please create new one')

@@ -1,23 +1,22 @@
-
 import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 import pandas as pd
+pd.options.mode.chained_assignment = None
 from tqdm import tqdm
 from pandas.tseries.offsets import BDay
 from dateutil.relativedelta import relativedelta
 from bot.preprocess import make_multiples
-from general.data_process import uid_maker
 from general.sql_output import upsert_data_to_database
-from general.date_process import dateNow, droid_start_date, str_to_date
-from bot.data_download import get_bot_backtest_data, get_calendar_data, get_master_tac_price
-from general.table_name import get_bot_classic_backtest_table_name, get_latest_price_table_name
-
-from global_vars import classic_business_day, sl_multiplier_1m, tp_multiplier_1m, sl_multiplier_3m, tp_multiplier_3m
+from general.date_process import dateNow, str_to_date
+from bot.data_download import get_bot_backtest_data, get_calendar_data, get_master_tac_price, get_latest_price
+from general.table_name import get_bot_classic_backtest_table_name, get_latest_price_table_name, get_universe_rating_table_name
+from bot.data_process import check_start_end_date, check_time_to_exp
+from global_vars import (classic_business_day, sl_multiplier_1m, tp_multiplier_1m, sl_multiplier_3m, 
+    tp_multiplier_3m, max_vol, min_vol, default_vol)
 
 def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, history=False):
-    if type(start_date) == type(None):
-        start_date = droid_start_date()
-    if type(end_date) == type(None):
-        end_date = dateNow()
+    time_to_exp = check_time_to_exp(time_to_exp)
+    start_date, end_date = check_start_end_date(start_date, end_date)
     # The main function which calculates the volatilities and stop loss and take profit and write them to AWS.
     
     tac_data2 = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
@@ -27,6 +26,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     # dividends_data = get_dividends_data()
     # ******************************* Calculating the vols *************************************
     holidays_df = get_calendar_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
+    holidays_df["non_working_day"] = pd.to_datetime(holidays_df["non_working_day"])
     tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
     main_multiples = make_multiples(tac_data)
 
@@ -36,16 +36,16 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     log_returns_sq = np.square(log_returns)
     returns = log_returns_sq.rolling(512, min_periods=1).mean()
     c2c_vol_0_502 = np.sqrt(returns * 256)
-    c2c_vol_0_502[c2c_vol_0_502.isnull()] = 0.2
-    c2c_vol_0_502[c2c_vol_0_502 < 0.2] = 0.2
-    c2c_vol_0_502[c2c_vol_0_502 > 0.80] = 0.80
+    c2c_vol_0_502[c2c_vol_0_502.isnull()] = default_vol
+    c2c_vol_0_502[c2c_vol_0_502 < min_vol] = min_vol
+    c2c_vol_0_502[c2c_vol_0_502 > max_vol] = max_vol
 
     c2c_vol_0_502["spot_date"] = c2c_vol_0_502.index
     main_pred = c2c_vol_0_502.melt(id_vars="spot_date", var_name="ticker", value_name="classic_vol")
-    main_pred = main_pred.merge(tac_data[["ticker", "trading_day", "tri_adjusted_price"]], how="inner", 
+    main_pred = main_pred.merge(tac_data[["ticker", "trading_day", "tri_adj_close"]], how="inner", 
         left_on=["spot_date", "ticker"], right_on=["trading_day", "ticker"])
     del main_pred["trading_day"]
-    main_pred.rename(columns={"tri_adjusted_price": "spot_price"}, inplace=True)
+    main_pred.rename(columns={"tri_adj_close": "spot_price"}, inplace=True)
 
     # ********************************************************************************************
     # Adding vol periods to main dataframe.
@@ -68,10 +68,10 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
 
         print("Calculating Expiry Date")
         days = int(round((time_exp * 365), 0))
-        main_pred2["expiry_date"] = main_pred2["spot_date"] + relativedelta(days=days)
+        main_pred2["expiry_date"] = main_pred2["spot_date"] + relativedelta(days=(days-1))
         # Code when we use business days
         # days = int(round((time_exp * 256), 0))
-        # main_pred2["expiry_date"] = options_df2["spot_date"] + BDay(days)
+        # main_pred2["expiry_date"] = options_df2["spot_date"] + BDay(days-1)
 
         main_pred_temp = main_pred_temp.append(main_pred2)
         main_pred_temp.reset_index(drop=True, inplace=True)
@@ -85,11 +85,14 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
 
     # making sure that expiry date is not holiday or weekend
     main_pred["expiry_date"] = pd.to_datetime(main_pred["expiry_date"])
-    cond = main_pred["expiry_date"].apply(lambda x: x.weekday()) > 4
-    main_pred.loc[cond, "expiry_date"] = main_pred.loc[cond, "expiry_date"] - BDay(1)
+    while(True):
+        cond = main_pred["expiry_date"].apply(lambda x: x.weekday()) > 4
+        main_pred.loc[cond, "expiry_date"] = main_pred.loc[cond, "expiry_date"] - BDay(1)
+        if(cond.all() == False):
+            break
 
     while(True):
-        cond = main_pred["expiry_date"].isin(holidays_df["non_working_day"])
+        cond = main_pred["expiry_date"].isin(holidays_df["non_working_day"].to_list())
         main_pred.loc[cond, "expiry_date"] = main_pred.loc[cond, "expiry_date"] - BDay(1)
         if(cond.all() == False):
             break
@@ -109,12 +112,11 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     # Adding UID
     main_pred["uid"] = main_pred["ticker"] + "_" + main_pred["spot_date"].astype(str) + "_" + \
         main_pred["time_to_exp"].astype(str)
-    main_pred["uid"] = main_pred["uid"].str.replace("-", "").str.replace(".", "")
+    main_pred["uid"] = main_pred["uid"].str.replace("-", "", regex=True).str.replace(".", "", regex=True)
     main_pred["uid"] = main_pred["uid"].str.strip()
 
     # Filtering the results for faster writing to AWS.
-    main_pred2 = main_pred[main_pred.spot_date >= start_date - BDay(0)]
-    main_pred2 = main_pred
+    main_pred2 = main_pred[main_pred.spot_date >= start_date].copy()
 
     # ********************************************************************************************
     # Updating latest_price_updates classic_vol column.
@@ -130,9 +132,13 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     aa.columns = aa.columns.droplevel(1)
     if len(aa) > 0:
         aa["spot_date"] = spot_date
-        aa["uid"] = uid_maker(uid="uid", ticker="ticker", trading_day="spot_date")
+        latest_price = get_latest_price().drop(columns=["classic_vol"])
+        aa = aa[["ticker", "classic_vol"]]
+        aa = aa.merge(latest_price, on=["ticker"], how="left")
+        print(aa)
         if not history:
-            upsert_data_to_database(aa, get_latest_price_table_name(), "uid", how="update", cpu_count=True, Text=True)
+            upsert_data_to_database(aa[["ticker", "classic_vol"]], get_universe_rating_table_name(), "ticker", how="update", cpu_count=True, Text=True)
+            upsert_data_to_database(aa, get_latest_price_table_name(), "ticker", how="update", cpu_count=True, Text=True)
         # ********************************************************************************************
         table_name = get_bot_classic_backtest_table_name()
         if(mod):
@@ -142,6 +148,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
 
 # *********************** Filling up the Null values **************************
 def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, mod=False):
+    time_to_exp = check_time_to_exp(time_to_exp)
     tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     null_df = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, classic=True, mod=mod, null_filler=True)

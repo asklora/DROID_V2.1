@@ -1,6 +1,14 @@
 import numpy as np
 import pandas as pd
+from general.date_process import dateNow, droid_start_date, str_to_date
 from global_vars import time_to_expiry, bots_list
+
+def check_start_end_date(start_date, end_date):
+    if type(start_date) == type(None):
+        start_date = str_to_date(droid_start_date())
+    if type(end_date) == type(None):
+        end_date = str_to_date(dateNow())
+    return start_date, end_date
 
 def check_bot_list(bot_list):
     if (type(bot_list) == type(None)):

@@ -1,16 +1,44 @@
+from general.date_process import dateNow
 import pandas as pd
+import numpy as np
 from pandas.core.series import Series
+from datetime import datetime, date
+from pandas._libs.tslibs.timestamps import Timestamp
+
+def divide(value1, value2):
+    try:
+        return value1 / value2
+    except ZeroDivisionError:
+        return 0
+    except Exception as e:
+        print(e)
+        return 0
 
 def nonetozero(value):
     if value:
         return value
     return 0
-    
-def uid_maker(data, uid="uid", ticker="ticker", trading_day="trading_day", date=True):
+
+def get_uid(ticker, trading_day=dateNow(), replace=True):
+    print(type(trading_day))
+    if(type(trading_day) == datetime or type(trading_day) == Timestamp or type(trading_day) == date):
+        if(type(trading_day) == datetime or type(trading_day) == Timestamp):
+            trading_day = trading_day.date()
+        trading_day = trading_day.strftime("%Y-%m-%d")
+    uid = f"{trading_day}-{ticker}"
+    if(replace):
+        uid = uid.replace("-", "").replace(".", "").replace(" ", "")
+    return uid
+
+def uid_maker(data, uid="uid", ticker="ticker", trading_day="trading_day", date=True, ticker_int=False, replace=True):
     data[trading_day] = data[trading_day].astype(str)
+    if(ticker_int):
+        data[ticker] = data[ticker].astype(str)
+    
     data[uid]=data[trading_day] + data[ticker]
-    data[uid]=data[uid].str.replace("-", "").str.replace(".", "").str.replace(" ", "")
-    data[uid]=data[uid].str.strip()
+    if(replace):
+        data[uid]=data[uid].str.replace("-", "", regex=True).str.replace(".", "", regex=True).str.replace(" ", "", regex=True)
+        data[uid]=data[uid].str.strip()
     if(date):
         data[trading_day] = pd.to_datetime(data[trading_day])
     return data
@@ -25,6 +53,8 @@ def remove_null(data, field):
 def tuple_data(data):
     if(type(data) == Series):
         data = tuple(data.to_list())
+    elif(type(data) == np.ndarray):
+        data = tuple(data.tolist())
     elif(type(data) == list):
         data = tuple(data)
     elif(type(data) == str):
@@ -34,3 +64,17 @@ def tuple_data(data):
     data = str(data)
     data = data.replace(",)", ")")
     return data
+
+
+def DivByZero(value1, value2):
+    try:
+        return value1 / value2
+    except ZeroDivisionError:
+        return 0
+
+def NoneToZero(value):
+    if value in [np.inf, -np.inf]:
+        return float(0.0)
+    if value:
+        return float(value)
+    return float(0.0)

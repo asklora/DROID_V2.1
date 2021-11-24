@@ -1,0 +1,20 @@
+{
+    "ExtractionRequest": {
+        "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.PriceHistoryExtractionRequest",
+        "ContentFieldNames": [
+            "RIC",
+            "Ticker"
+        ],
+        "IdentifierList": {
+            "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+            "InstrumentIdentifiers": [
+            ],
+            "ValidationOptions": null,
+            "UseUserPreferencesForValidationOptions": false
+        },
+        "Condition":
+        {
+            
+      }
+    }
+}

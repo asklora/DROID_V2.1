@@ -1,11 +1,12 @@
 import pandas as pd
 from talib import RSI, STOCHF
 from general.data_process import uid_maker
-from general.date_process import backdate_by_month, datetimeNow, droid_start_date, backdate_by_day
+from general.date_process import datetimeNow, droid_start_date
 from general.slack import report_to_slack
 from general.table_name import get_master_tac_table_name
 from general.sql_query import get_master_ohlcvtr_data
 from general.sql_output import delete_data_on_database, upsert_data_to_database
+from es_logging.logger import log2es
 
 def ForwardBackwardFillNull(data, columns_field, columns_deletion=False):
     data = data.sort_values(by="trading_day", ascending=False)
@@ -14,7 +15,7 @@ def ForwardBackwardFillNull(data, columns_field, columns_deletion=False):
     if(columns_deletion):
         data_detail = data.drop(columns=columns_field)
     else:
-        data_detail = data[["uid", "ticker", "trading_day", "volume", "currency_code"]]
+        data_detail = data[["uid", "ticker", "trading_day", "volume", "currency_code", "day_status"]]
     universe = data["ticker"].drop_duplicates()
     universe =universe.tolist()
     for column in columns_field:
@@ -59,6 +60,7 @@ def get_stochf(df):
     df["fast_d"]=fastd
     return df
 
+@log2es("db")
 def master_tac_update():
     print("Getting OHLCVTR Data")
     data = get_master_ohlcvtr_data(droid_start_date())
@@ -68,13 +70,14 @@ def master_tac_update():
     print("Delete Holiday Status")
     data = DeleteHolidayStatus(data)
     print(data)
-    data = data.drop(columns=["datapoint_per_day", "datapoint", "day_status"])
+    data = data.drop(columns=["datapoint_per_day", "datapoint"])
     print("Fill Null Data Forward & Backward")
     data = ForwardBackwardFillNull(data, ["open", "high", "low", "close", "total_return_index"])
     print(data)
     print("Calculate TAC")
     result = data.copy()
-    data = data[["uid", "ticker", "trading_day", "volume", "currency_code"]]
+    result = result.drop(columns=["day_status"])
+    data = data[["uid", "ticker", "trading_day", "volume", "currency_code", "day_status"]]
 
     result =  result.rename(columns={"close":"tri_adj_close",
         "low":"tri_adj_low",

@@ -1,0 +1,43 @@
+{
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "required": ["currency_code", "currency_name", "last_price", "utc_offset", "timezone", "region_id", "region_name", "region_time"],
+        "properties": {
+          "currency_code": {
+            "bsonType": "string",
+            "description": "must be a string and is required"
+          },
+          "currency_name": {
+            "bsonType": "string",
+            "description": "must be a string and is required"
+          },
+          "last_price": {
+            "bsonType": "double",
+            "description": "must be a double and is required"
+          },
+          "utc_offset": {
+            "bsonType": "string",
+            "description": "must be an string and is required"
+          },
+          "timezone": {
+            "bsonType": "string",
+            "description": "must be a string and is required"
+          },
+          "region_id": {
+            "bsonType": "string",
+            "description": "must be a string and is required"
+          },
+          "region_name": {
+            "bsonType": "string",
+            "description": "must be a string and is required"
+          },
+          "region_time": {
+            "bsonType": "string",
+            "description": "must be a string and is required"
+          }
+        }
+      }
+    },
+   "validationAction": "warn"
+}

@@ -12,19 +12,20 @@ from general.sql_query import (
      get_data_by_table_name_with_condition, 
      get_latest_price)
 from general.table_name import (
-    get_data_dividend_daily_table_name, 
-    get_data_dividend_table_name, 
-    get_data_interest_daily_table_name, 
+    get_data_dividend_daily_rates_table_name,
+    get_data_dividend_table_name,
+    get_data_interest_daily_rates_table_name, 
     get_data_interest_table_name)
 
 from global_vars import null_per, r_days, q_days
+from es_logging.logger import log2es
 
 def make_multiples(prices_df):
     # This function will make multiples.
-    main_tri = prices_df.pivot_table(index=prices_df.trading_day, columns='ticker', values='total_return_index', aggfunc='first', dropna=False)
+    main_tri = prices_df.pivot_table(index=prices_df.trading_day, columns="ticker", values="total_return_index", aggfunc="first", dropna=False)
     main_tri_shifted = main_tri.shift(periods=1)
-    main_tri[main_tri == 'H'] = 1
-    main_tri_shifted[main_tri_shifted == 'H'] = 1
+    main_tri[main_tri == "H"] = 1
+    main_tri_shifted[main_tri_shifted == "H"] = 1
     main_tri = main_tri.astype(float)
     main_tri_shifted = main_tri_shifted.astype(float)
     tri_df_np = main_tri.values
@@ -35,24 +36,25 @@ def make_multiples(prices_df):
 
 def remove_holidays(prices_df):
     # This function will shift the holidays to the top.
-    prices_df.loc[prices_df.day_status == 'holiday', 'open'] = 'H'
-    prices_df.loc[prices_df.day_status == 'holiday', 'high'] = 'H'
-    prices_df.loc[prices_df.day_status == 'holiday', 'low'] = 'H'
-    prices_df.loc[prices_df.day_status == 'holiday', 'close'] = 'H'
-    prices_df.loc[prices_df.day_status == 'holiday', 'total_return_index'] = 'H'
-    main_open = prices_df.pivot_table(index=prices_df.trading_day, columns='ticker', values='open', aggfunc='first',dropna=False)
-    main_high = prices_df.pivot_table(index=prices_df.trading_day, columns='ticker', values='high', aggfunc='first',dropna=False)
-    main_low = prices_df.pivot_table(index=prices_df.trading_day, columns='ticker', values='low', aggfunc='first',dropna=False)
-    main_close = prices_df.pivot_table(index=prices_df.trading_day, columns='ticker', values='close', aggfunc='first',dropna=False)
-    main_tri = prices_df.pivot_table(index=prices_df.trading_day, columns='ticker', values='total_return_index',aggfunc='first',dropna=False)
+    prices_df.loc[prices_df.day_status == "holiday", "tri_adj_open"] = "H"
+    prices_df.loc[prices_df.day_status == "holiday", "tri_adj_high"] = "H"
+    prices_df.loc[prices_df.day_status == "holiday", "tri_adj_low"] = "H"
+    prices_df.loc[prices_df.day_status == "holiday", "tri_adj_close"] = "H"
+    prices_df.loc[prices_df.day_status == "holiday", "total_return_index"] = "H"
+
+    main_open = prices_df.pivot_table(index=prices_df.trading_day, columns="ticker", values="tri_adj_open", aggfunc="first",dropna=False)
+    main_high = prices_df.pivot_table(index=prices_df.trading_day, columns="ticker", values="tri_adj_high", aggfunc="first",dropna=False)
+    main_low = prices_df.pivot_table(index=prices_df.trading_day, columns="ticker", values="tri_adj_low", aggfunc="first",dropna=False)
+    main_close = prices_df.pivot_table(index=prices_df.trading_day, columns="ticker", values="tri_adj_close", aggfunc="first",dropna=False)
+    main_tri = prices_df.pivot_table(index=prices_df.trading_day, columns="ticker", values="total_return_index",aggfunc="first",dropna=False)
     main_open = move_holidays_to_top(main_open)
     main_high = move_holidays_to_top(main_high)
     main_low = move_holidays_to_top(main_low)
     main_close = move_holidays_to_top(main_close)
     main_tri = move_holidays_to_top(main_tri)
     main_tri_shifted = main_tri.shift(periods=1)
-    main_tri[main_tri == 'H'] = 1
-    main_tri_shifted[main_tri_shifted == 'H'] = 1
+    main_tri[main_tri == "H"] = 1
+    main_tri_shifted[main_tri_shifted == "H"] = 1
     main_tri = main_tri.astype(float)
     main_tri_shifted = main_tri_shifted.astype(float)
     tri_df_np = main_tri.values
@@ -65,19 +67,19 @@ def remove_holidays(prices_df):
 
 def remove_holidays_forward(prices_df):
     # This function will remove holidays for forward calculation of volatility.
-    prices_df.loc[prices_df.day_status == 'holiday', 'open'] = 'H'
-    prices_df.loc[prices_df.day_status == 'holiday', 'high'] = 'H'
-    prices_df.loc[prices_df.day_status == 'holiday', 'low'] = 'H'
-    prices_df.loc[prices_df.day_status == 'holiday', 'close'] = 'H'
-    prices_df.loc[prices_df.day_status == 'holiday', 'total_return_index'] = 'H'
+    prices_df.loc[prices_df.day_status == "holiday", "tri_adj_open"] = "H"
+    prices_df.loc[prices_df.day_status == "holiday", "tri_adj_high"] = "H"
+    prices_df.loc[prices_df.day_status == "holiday", "tri_adj_low"] = "H"
+    prices_df.loc[prices_df.day_status == "holiday", "tri_adj_close"] = "H"
+    prices_df.loc[prices_df.day_status == "holiday", "total_return_index"] = "H"
 
-    main_tri = prices_df.pivot_table(index=prices_df.trading_day, columns='ticker', values='total_return_index',
-                                     aggfunc='first',
+    main_tri = prices_df.pivot_table(index=prices_df.trading_day, columns="ticker", values="total_return_index",
+                                     aggfunc="first",
                                      dropna=False)
     main_tri = move_holidays_to_end(main_tri)
     main_tri_shifted = main_tri.shift(periods=1)
-    main_tri[main_tri == 'H'] = 1
-    main_tri_shifted[main_tri_shifted == 'H'] = 1
+    main_tri[main_tri == "H"] = 1
+    main_tri_shifted[main_tri_shifted == "H"] = 1
     main_tri = main_tri.astype(float)
     main_tri_shifted = main_tri_shifted.astype(float)
     tri_df_np = main_tri.values
@@ -91,7 +93,7 @@ def move_holidays_to_top(df):
     # This function will shift the holidays to the top.
     for col in df:
         temp = df[col].copy()
-        m = temp == 'H'
+        m = temp == "H"
         temp1 = temp[m].append(temp[~m]).reset_index(drop=True)
         temp1.index = temp.index
         df[col] = temp1
@@ -101,7 +103,7 @@ def move_holidays_to_end(df):
     # This function will shift the holidays to the end.
     for col in df:
         temp = df[col].copy()
-        m = temp == 'H'
+        m = temp == "H"
         temp1 = temp[~m].append(temp[m]).reset_index(drop=True)
         temp1.index = temp.index
         df[col] = temp1
@@ -111,7 +113,7 @@ def move_holidays_to_end2(df):
     # This function will shift the holidays to the end.
     for col in df:
         temp = df[col].copy()
-        # m = temp == 'nan'
+        # m = temp == "nan"
         m = temp.isnull().values
         temp1 = temp[~m].append(temp[m]).reset_index(drop=True)
         temp1.index = temp.index
@@ -125,8 +127,8 @@ def series_to_pandas(df, valid_tickers_list):
     return aa
 
 def take_the_most_recent_one(df,col, valid_tickers_list):
-    temp_df = df.pivot_table(index='q_report_date', columns='ticker', values=col,
-                                           aggfunc='first', dropna=False)
+    temp_df = df.pivot_table(index="q_report_date", columns="ticker", values=col,
+                                           aggfunc="first", dropna=False)
     temp_df = temp_df.ffill()
     temp_df = temp_df.iloc[-1, :]
     temp_df = series_to_pandas(temp_df, valid_tickers_list)
@@ -158,75 +160,75 @@ def rounding_fun(df):
     # This is the rounding function as instructed by stephen.
     # https://loratechai.atlassian.net/wiki/spaces/ARYA/pages/48824321/Executive+DROID
     # ***************************************************************************************************
-    df.loc[df['atm_volatility_spot'] < 0, 'atm_volatility_spot'] = 0
-    df.loc[df['atm_volatility_spot'] > 0.55, 'atm_volatility_spot'] = 0.65
+    df.loc[df["atm_volatility_spot"] < 0, "atm_volatility_spot"] = 0
+    df.loc[df["atm_volatility_spot"] > 0.55, "atm_volatility_spot"] = 0.65
 
-    cond = (df['atm_volatility_spot'] > 0) & (df['atm_volatility_spot'] < 0.25)
-    df.loc[cond, 'atm_volatility_spot'] = round(df.loc[cond, 'atm_volatility_spot'] / 0.025)
-    df.loc[cond, 'atm_volatility_spot'] = df.loc[cond, 'atm_volatility_spot'] * 0.025
+    cond = (df["atm_volatility_spot"] > 0) & (df["atm_volatility_spot"] < 0.25)
+    df.loc[cond, "atm_volatility_spot"] = round(df.loc[cond, "atm_volatility_spot"] / 0.025)
+    df.loc[cond, "atm_volatility_spot"] = df.loc[cond, "atm_volatility_spot"] * 0.025
 
-    cond = (df['atm_volatility_spot'] > 0.25) & (df['atm_volatility_spot'] < 0.55)
-    df.loc[cond, 'atm_volatility_spot'] = round(df.loc[cond, 'atm_volatility_spot'] / 0.05)
-    df.loc[cond, 'atm_volatility_spot'] = df.loc[cond, 'atm_volatility_spot'] * 0.05
+    cond = (df["atm_volatility_spot"] > 0.25) & (df["atm_volatility_spot"] < 0.55)
+    df.loc[cond, "atm_volatility_spot"] = round(df.loc[cond, "atm_volatility_spot"] / 0.05)
+    df.loc[cond, "atm_volatility_spot"] = df.loc[cond, "atm_volatility_spot"] * 0.05
     # ***************************************************************************************************
-    df.loc[df['atm_volatility_one_year'] < 0, 'atm_volatility_one_year'] = 0
-    df.loc[df['atm_volatility_one_year'] > 0.5, 'atm_volatility_one_year'] = 0.55
+    df.loc[df["atm_volatility_one_year"] < 0, "atm_volatility_one_year"] = 0
+    df.loc[df["atm_volatility_one_year"] > 0.5, "atm_volatility_one_year"] = 0.55
 
-    cond = (df['atm_volatility_one_year'] > 0) & (df['atm_volatility_one_year'] < 0.25)
-    df.loc[cond, 'atm_volatility_one_year'] = round(df.loc[cond, 'atm_volatility_one_year'] / 0.025)
-    df.loc[cond, 'atm_volatility_one_year'] = df.loc[cond, 'atm_volatility_one_year'] * 0.025
+    cond = (df["atm_volatility_one_year"] > 0) & (df["atm_volatility_one_year"] < 0.25)
+    df.loc[cond, "atm_volatility_one_year"] = round(df.loc[cond, "atm_volatility_one_year"] / 0.025)
+    df.loc[cond, "atm_volatility_one_year"] = df.loc[cond, "atm_volatility_one_year"] * 0.025
 
-    cond = (df['atm_volatility_one_year'] > 0.25) & (df['atm_volatility_one_year'] < 0.5)
-    df.loc[cond, 'atm_volatility_one_year'] = round(df.loc[cond, 'atm_volatility_one_year'] / 0.05)
-    df.loc[cond, 'atm_volatility_one_year'] = df.loc[cond, 'atm_volatility_one_year'] * 0.05
+    cond = (df["atm_volatility_one_year"] > 0.25) & (df["atm_volatility_one_year"] < 0.5)
+    df.loc[cond, "atm_volatility_one_year"] = round(df.loc[cond, "atm_volatility_one_year"] / 0.05)
+    df.loc[cond, "atm_volatility_one_year"] = df.loc[cond, "atm_volatility_one_year"] * 0.05
     # ***************************************************************************************************
-    df.loc[df['atm_volatility_infinity'] < 0, 'atm_volatility_infinity'] = 0
-    df.loc[df['atm_volatility_infinity'] > 0.45, 'atm_volatility_infinity'] = 0.5
+    df.loc[df["atm_volatility_infinity"] < 0, "atm_volatility_infinity"] = 0
+    df.loc[df["atm_volatility_infinity"] > 0.45, "atm_volatility_infinity"] = 0.5
 
-    cond = (df['atm_volatility_infinity'] > 0) & (df['atm_volatility_infinity'] < 0.15)
-    df.loc[cond, 'atm_volatility_infinity'] = round(df.loc[cond, 'atm_volatility_infinity'] / 0.025)
-    df.loc[cond, 'atm_volatility_infinity'] = df.loc[cond, 'atm_volatility_infinity'] * 0.025
+    cond = (df["atm_volatility_infinity"] > 0) & (df["atm_volatility_infinity"] < 0.15)
+    df.loc[cond, "atm_volatility_infinity"] = round(df.loc[cond, "atm_volatility_infinity"] / 0.025)
+    df.loc[cond, "atm_volatility_infinity"] = df.loc[cond, "atm_volatility_infinity"] * 0.025
 
-    cond = (df['atm_volatility_infinity'] > 0.15) & (df['atm_volatility_infinity'] < 0.45)
-    df.loc[cond, 'atm_volatility_infinity'] = round(df.loc[cond, 'atm_volatility_infinity'] / 0.05)
-    df.loc[cond, 'atm_volatility_infinity'] = df.loc[cond, 'atm_volatility_infinity'] * 0.05
+    cond = (df["atm_volatility_infinity"] > 0.15) & (df["atm_volatility_infinity"] < 0.45)
+    df.loc[cond, "atm_volatility_infinity"] = round(df.loc[cond, "atm_volatility_infinity"] / 0.05)
+    df.loc[cond, "atm_volatility_infinity"] = df.loc[cond, "atm_volatility_infinity"] * 0.05
     # ***************************************************************************************************
-    df.loc[df['slope'] < 0, 'slope'] = 0
-    df.loc[df['slope'] > 5, 'slope'] = 5
-    df['slope'] = round(df['slope'], 0)
+    df.loc[df["slope"] < 0, "slope"] = 0
+    df.loc[df["slope"] > 5, "slope"] = 5
+    df["slope"] = round(df["slope"], 0)
     # ***************************************************************************************************
-    df['slope_inf'] = df['slope']
+    df["slope_inf"] = df["slope"]
     # ***************************************************************************************************
-    cond = (df['deriv'] >= 0.05) & (df['deriv'] < 0.09)
-    df.loc[df['deriv'] < 0.05, 'deriv'] = 0.025
-    df.loc[cond, 'deriv'] = 0.075
-    df.loc[df['deriv'] >= 0.09, 'deriv'] = 0.11
+    cond = (df["deriv"] >= 0.05) & (df["deriv"] < 0.09)
+    df.loc[df["deriv"] < 0.05, "deriv"] = 0.025
+    df.loc[cond, "deriv"] = 0.075
+    df.loc[df["deriv"] >= 0.09, "deriv"] = 0.11
     # ***************************************************************************************************
-    df['deriv_inf'] = df['deriv']
-    df.loc[df['deriv_inf'] == 0.025, 'deriv_inf'] = 0
-    df.loc[df['deriv_inf'] > 0.025, 'deriv_inf'] = 0.06
+    df["deriv_inf"] = df["deriv"]
+    df.loc[df["deriv_inf"] == 0.025, "deriv_inf"] = 0
+    df.loc[df["deriv_inf"] > 0.025, "deriv_inf"] = 0.06
     # ***************************************************************************************************
     # Needed for classification
     # NOTE!!!: In case of "changing", the inference in lgbm model should change too.
-    df.loc[df['deriv'] == 0.11, 'deriv'] = 0
-    df.loc[df['deriv'] == 0.075, 'deriv'] = 1
-    df.loc[df['deriv'] == 0.025, 'deriv'] = 2
+    df.loc[df["deriv"] == 0.11, "deriv"] = 0
+    df.loc[df["deriv"] == 0.075, "deriv"] = 1
+    df.loc[df["deriv"] == 0.025, "deriv"] = 2
     return df
 
 def cal_interest_rate(interest_rate_data, days_to_expiry):
     unique_horizons = pd.DataFrame(days_to_expiry)
-    unique_horizons['id'] = 2
-    unique_currencies = pd.DataFrame(interest_rate_data['currency_code'].unique())
-    unique_currencies['id'] = 2
-    rates = pd.merge(unique_horizons, unique_currencies, on='id', how='outer')
-    rates = rates.rename(columns={'0_y': 'currency_code', '0_x': 'days_to_expiry'})
-    interest_rate_data = interest_rate_data.rename(columns={'days_to_maturity': 'days_to_expiry'})
-    rates = pd.merge(rates, interest_rate_data, on=['days_to_expiry', 'currency_code'], how='outer')
+    unique_horizons["id"] = 2
+    unique_currencies = pd.DataFrame(interest_rate_data["currency_code"].unique())
+    unique_currencies["id"] = 2
+    rates = pd.merge(unique_horizons, unique_currencies, on="id", how="outer")
+    rates = rates.rename(columns={"0_y": "currency_code", "0_x": "days_to_expiry"})
+    interest_rate_data = interest_rate_data.rename(columns={"days_to_maturity": "days_to_expiry"})
+    rates = pd.merge(rates, interest_rate_data, on=["days_to_expiry", "currency_code"], how="outer")
     def funs(df):
-        df = df.sort_values(by='days_to_expiry')
+        df = df.sort_values(by="days_to_expiry")
         df = df.reset_index()
-        nan_index = df['rate'].index[df['rate'].isnull()].to_series().reset_index(drop=True)
-        not_nan_index = df['rate'].index[~df['rate'].isnull()].to_series().reset_index(drop=True)
+        nan_index = df["rate"].index[df["rate"].isnull()].to_series().reset_index(drop=True)
+        not_nan_index = df["rate"].index[~df["rate"].isnull()].to_series().reset_index(drop=True)
         for a in nan_index:
             temp = not_nan_index.copy()
             temp[len(temp)] = a
@@ -235,36 +237,37 @@ def cal_interest_rate(interest_rate_data, days_to_expiry):
             ind = temp[temp == a].index
             ind1 = temp.iloc[ind - 1]
             ind2 = temp.iloc[ind + 1]
-            rate_1 = df.loc[ind1, 'rate'].iloc[0]
-            rate_2 = df.loc[ind2, 'rate'].iloc[0]
-            dtm_1 = df.loc[ind1, 'days_to_expiry'].iloc[0]
-            dtm_2 = df.loc[ind2, 'days_to_expiry'].iloc[0]
-            df.loc[a, 'rate'] = rate_1 * (dtm_2 - df.loc[a, 'days_to_expiry'])/(dtm_2 - dtm_1) + rate_2* (df.loc[a, 'days_to_expiry'] - dtm_1)/(dtm_2 - dtm_1)
-        df = df.set_index('index')
+            rate_1 = df.loc[ind1, "rate"].iloc[0]
+            rate_2 = df.loc[ind2, "rate"].iloc[0]
+            dtm_1 = df.loc[ind1, "days_to_expiry"].iloc[0]
+            dtm_2 = df.loc[ind2, "days_to_expiry"].iloc[0]
+            df.loc[a, "rate"] = rate_1 * (dtm_2 - df.loc[a, "days_to_expiry"])/(dtm_2 - dtm_1) + rate_2* (df.loc[a, "days_to_expiry"] - dtm_1)/(dtm_2 - dtm_1)
+        df = df.set_index("index")
         return df
-    rates = rates.groupby('currency_code').apply(lambda x: funs(x))
+    rates = rates.groupby("currency_code").apply(lambda x: funs(x))
     rates = rates.reset_index(drop=True)
-    unique_horizons = unique_horizons.rename(columns={0: 'days_to_expiry'})
+    unique_horizons = unique_horizons.rename(columns={0: "days_to_expiry"})
 
-    unique_horizons = pd.merge(unique_horizons, rates[['days_to_expiry', 'rate']], on='days_to_expiry', how='inner')
-    return unique_horizons['rate'].values
+    unique_horizons = pd.merge(unique_horizons, rates[["days_to_expiry", "rate"]], on="days_to_expiry", how="inner")
+    return unique_horizons["rate"].values
 
 def cal_q(row, dividends_data, dates_temp, prices_temp):
     dates_temp = pd.DataFrame(dates_temp)
     dates_temp2 = dates_temp.copy()
     dates_temp = dates_temp2
-    dates_temp['id'] = 2
-    dividends_data['id'] = 2
-    dates_temp = pd.merge(dates_temp, dividends_data, on='id', how='outer')
-    dates_temp['expiry_date'] = row.expiry_date
-    dates_temp = dates_temp.rename(columns={0: 'spot_date'})
+    dates_temp["id"] = 2
+    dividends_data["id"] = 2
+    dates_temp = pd.merge(dates_temp, dividends_data, on="id", how="outer")
+    dates_temp["expiry_date"] = row.expiry_date
+    dates_temp = dates_temp.rename(columns={0: "spot_date"})
     dates_temp = dates_temp[(dates_temp.spot_date <= dates_temp.ex_dividend_date) & (dates_temp.ex_dividend_date <= dates_temp.expiry_date)]
-    dates_temp = dates_temp.groupby(['spot_date'])['amount'].sum().reset_index()
-    dates_temp2 = dates_temp2.rename(columns={0: 'spot_date'})
-    dates_temp2 = dates_temp2.merge(dates_temp, on='spot_date', how='left').fillna(0)
-    dates_temp2['amount'] = dates_temp2['amount'] / prices_temp
-    return dates_temp2['amount'].values
+    dates_temp = dates_temp.groupby(["spot_date"])["amount"].sum().reset_index()
+    dates_temp2 = dates_temp2.rename(columns={0: "spot_date"})
+    dates_temp2 = dates_temp2.merge(dates_temp, on="spot_date", how="left").fillna(0)
+    dates_temp2["amount"] = dates_temp2["amount"] / prices_temp
+    return dates_temp2["amount"].values
 
+@log2es("db")
 def dividend_daily_update():
     print("{} : === Dividens Daily Update ===".format(datetimeNow()))
     dividend_data = get_data_by_table_name(get_data_dividend_table_name())
@@ -305,9 +308,10 @@ def dividend_daily_update():
     result = uid_maker(result, uid="uid", ticker="ticker", trading_day="t", date=False)
     print(result)
     #insert_data_to_database(result, get_data_dividend_daily_table_name, how="replace")
-    upsert_data_to_database(result, get_data_dividend_daily_table_name(), "uid", how="update", Text=True)
+    upsert_data_to_database(result, get_data_dividend_daily_rates_table_name(), "uid", how="update", Text=True)
     report_to_slack("{} : === Dividens Daily Updated ===".format(datetimeNow()))
-    
+
+@log2es("db")
 def interest_daily_update(currency_code=None):
     def cal_interest_rate(interest_rate_data, days_to_expiry):
         unique_horizons = pd.DataFrame(days_to_expiry)
@@ -362,5 +366,5 @@ def interest_daily_update(currency_code=None):
     result = uid_maker(result, uid="uid", ticker="currency_code", trading_day="t", date=False)
     print(result)
     # insert_data_to_database(result, get_data_interest_daily_table_name(), how="replace")
-    upsert_data_to_database(result, get_data_interest_daily_table_name(), "uid", how="update", Text=True)
+    upsert_data_to_database(result, get_data_interest_daily_rates_table_name(), "uid", how="update", Text=True)
     report_to_slack("{} : === Interest Daily Updated ===".format(datetimeNow()))

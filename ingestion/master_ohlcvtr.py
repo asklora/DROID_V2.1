@@ -7,31 +7,9 @@ from general.date_process import backdate_by_day, dateNow, dlp_start_date, datet
 from general.sql_query import get_master_ohlcvtr_data
 from general.sql_output import delete_data_on_database, upsert_data_to_database
 from general.table_name import get_master_ohlcvtr_table_name
-from ingestion.master_tac import master_tac_update, ForwardBackwardFillNull
-from ingestion.universe import update_currency_code_from_dss
-from ingestion.master_data import (
-    update_data_dss_from_dss,
-    update_data_dsws_from_dsws)
-
-# def datapoint_lte_1000(fulldatapoint):
-#     exclude = list(module.datasource.models.ReportDatapoint.objects.filter(reingested=True).values_list("ticker",flat=True))
-#     if exclude:
-#         low_datapoint = fulldatapoint.loc[fulldatapoint["ticker"].isin(exclude)]
-#     else:
-#         low_datapoint = fulldatapoint
-#     if low_datapoint:
-#         for data in low_datapoint:
-#             try:
-#                 datapoint_table = module.datasource.models.ReportDatapoint.objects.get(ticker=data.ticker)
-#                 datapoint_table.datapoint = data.fulldatapoint
-#                 datapoint_table.updated = datetime.now().date()
-#                 datapoint_table.save()
-#             except module.datasource.models.ReportDatapoint.DoesNotExist:
-#                 datapoint_table = module.datasource.models.ReportDatapoint.objects.create(
-#                     ticker=data.ticker,
-#                     datapoint=data.fulldatapoint,
-#                     updated = datetime.now().date()
-#                     )
+from ingestion.data_from_dsws import update_currency_code_from_dsws, update_data_dsws_from_dsws
+from ingestion.data_from_dss import update_data_dss_from_dss
+from es_logging.logger import log2es
 
 #New Ticker Categories is When Datapoint Less Than 1000 Datapoint
 def FindNewTicker(fulldatapoint):
@@ -40,8 +18,8 @@ def FindNewTicker(fulldatapoint):
     new_ticker = new_ticker["ticker"].to_list()
     print(new_ticker)
     if(len(new_ticker) > 0):
-        #report_to_slack("{} : === New Ticker Found {} Start Historical Ingestion ===".format(datetimeNow(), new_ticker))
-        update_currency_code_from_dss(ticker=new_ticker)
+        report_to_slack("{} : === New Ticker Found {} Start Historical Ingestion ===".format(datetimeNow(), new_ticker))
+        update_currency_code_from_dsws(ticker=new_ticker)
         update_data_dss_from_dss(ticker=new_ticker, history=True)
         update_data_dsws_from_dsws(ticker=new_ticker, history=True)
     print(new_ticker)
@@ -58,7 +36,7 @@ def FillMissingDay(data, start, end):
     daily = pd.date_range(start, end, freq="D")
     indexes = pd.MultiIndex.from_product([result["ticker"].unique(), daily], names=["ticker", "trading_day"])
     result = result.set_index(["ticker", "trading_day"]).reindex(indexes).reset_index().ffill(limit=1)
-    result = uid_maker(result, "uid", "ticker", "trading_day")
+    result = uid_maker(result)
     result = FilterWeekend(result)
     data["trading_day"] = pd.to_datetime(data["trading_day"])
     result = result.merge(data, how="left", on=["uid", "ticker", "trading_day"])
@@ -111,7 +89,8 @@ def FillDayStatus(data):
     data["day_status"] = np.select(conditions, choices, default="missing")
     return data
 
-def master_ohlctr_update():
+@log2es("db")
+def master_ohlctr_update(history=False):
     # do_function("master_ohlcvtr_update")
     print("Get Start Date")
     start_date = dlp_start_date()
@@ -131,8 +110,10 @@ def master_ohlctr_update():
         master_ohlcvtr_data = get_master_ohlcvtr_data(start_date)
         master_ohlcvtr_data = FillMissingDay(master_ohlcvtr_data, start_date, dateNow())
         master_ohlcvtr_data, new_tickers = CountDatapoint(master_ohlcvtr_data)
+    elif(history):
+        upsert_date = dlp_start_date()
     else:
-        upsert_date = backdate_by_day(4)
+        upsert_date = backdate_by_day(15)
     print("Fill Day Status")
     master_ohlcvtr_data = FillDayStatus(master_ohlcvtr_data)
     # print("Fill Null Data Forward & Backward")

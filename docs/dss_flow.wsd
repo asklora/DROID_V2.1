@@ -1,0 +1,52 @@
+@startuml dss
+
+title "DSS data flow"
+
+!theme vibrant
+
+skinparam shadowing false
+skinparam defaultFontName Ubuntu
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+box "Database"
+participant data_dss
+end box
+box "Data source" #LightBlue
+participant Reuters
+end box
+
+group ingestion/data_from_dss
+    == Getting data from Reuters ==
+
+    group datasource/dss
+        rnote over Reuters, token
+        Getting the token
+        end note
+
+        create token
+        Reuters -> token : getAuthToken()
+
+        rnote over Reuters, token
+        Token obtained, request data
+        end note
+
+        token -> Reuters : get_data_from_reuters()
+
+        create data
+        rnote over Reuters, data
+        Data is returned from Reuters
+        end note
+
+        Reuters -> data : resulting data
+    end
+
+    == resulting data is inserted\ninto table data_dss ==
+
+    group general/sql_output
+        data -> data_dss : upsert_data_to_database()
+    end
+
+end
+
+@enduml

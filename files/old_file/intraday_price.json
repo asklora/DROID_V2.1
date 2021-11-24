@@ -1,0 +1,27 @@
+{
+    "ExtractionRequest": {
+        "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.IntradayPricingExtractionRequest",
+        "ContentFieldNames": [
+            "RIC",
+            "Bid Price",
+            "Ask Price",
+            "Open Price",
+            "High Price",
+            "Low Price",
+            "Trade Date",
+            "Last Price",
+            "Last Update Time"
+        ],
+        "IdentifierList": {
+            "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+            "InstrumentIdentifiers": [
+            ],
+            "ValidationOptions":{"AllowHistoricalInstruments":true,"AllowOpenAccessInstruments":true},
+            "UseUserPreferencesForValidationOptions": false
+        },
+        "Condition":
+        {
+            
+      }
+    }
+}

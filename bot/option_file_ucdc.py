@@ -1,7 +1,9 @@
 import gc
 import logging
 import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 import pandas as pd
+pd.options.mode.chained_assignment = None
 from tqdm import tqdm
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
@@ -10,9 +12,8 @@ from general.table_name import get_bot_ucdc_backtest_table_name
 from general.date_process import dateNow, droid_start_date
 from bot.black_scholes import (find_vol, Rev_Conv, deltaRC)
 from bot.preprocess import cal_interest_rate, cal_q
-from bot.data_process import check_time_to_exp
+from bot.data_process import check_start_end_date, check_time_to_exp
 from bot.data_download import (
-    check_start_end_date, 
     get_bot_backtest_data, 
     get_bot_backtest_data_date_list, 
     get_vol_surface_data, 
@@ -21,7 +22,7 @@ from bot.data_download import (
     get_calendar_data, 
     get_currency_data, 
     get_master_tac_price)
-from global_vars import modified_delta_list
+from global_vars import modified_delta_list, max_vol, min_vol
 
 def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, infer=True, history=False, daily=False, new_ticker=False):
     if type(start_date) == type(None):
@@ -42,7 +43,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     tac_data = tac_data2[tac_data2.ticker.isin(vol_surface_data.ticker.unique())]
     options_df = pd.DataFrame()
     options_df["ticker"] = tac_data.ticker
-    options_df["index"] = tac_data.currency_code
+    options_df["currency_code"] = tac_data.currency_code
     options_df["now_date"] = tac_data.trading_day
     options_df["trading_day"] = tac_data.trading_day
     options_df["spot_date"] = tac_data.trading_day
@@ -51,28 +52,27 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     options_df = options_df.merge(vol_surface_data,on=["ticker", "trading_day"])
     options_df.drop(["trading_day"], axis=1, inplace=True)
 
-    if not infer:
-        options_df.drop(["stock_price", "parameter_set_date", "alpha"], axis=1, inplace=True)
+    # if not infer:
+    #     options_df.drop(["stock_price", "parameter_set_date", "alpha"], axis=1, inplace=True)
     options_df = options_df.sort_values(by="spot_date", ascending=False)
 
     # *****************************************************************************************************
     # Adding maturities and expiry date
     options_df_temp = pd.DataFrame(columns=options_df.columns)
-    print("Calculating Month Exp")
+    print("Calculating Time Exp")
     for time_exp in time_to_exp:
         options_df2 = options_df.copy()
         options_df2["time_to_exp"] = time_exp
         days = int(round((time_exp * 365), 0))
 
         print("Calculating Expiry Date")
-        options_df2["expiry_date"] = options_df2["spot_date"] + relativedelta(days=days)
+        options_df2["expiry_date"] = options_df2["spot_date"] + relativedelta(days=(days-1))
         # Code when we use business days
         # days = int(round((time_exp * 256), 0))
-        # options_df2["expiry_date"] = options_df2["spot_date"] + BDay(days)
+        # options_df2["expiry_date"] = options_df2["spot_date"] + BDay(days-1)
         options_df_temp = options_df_temp.append(options_df2)
         options_df_temp.reset_index(drop=True, inplace=True)
         del options_df2
-
     del options_df
     options_df = options_df_temp.copy()
     del options_df_temp
@@ -81,8 +81,12 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     # *****************************************************************************************************
     # making sure that expiry date is not holiday or weekend
     options_df["expiry_date"] = pd.to_datetime(options_df["expiry_date"])
-    cond = options_df["expiry_date"].apply(lambda x: x.weekday()) > 4
-    options_df.loc[cond, "expiry_date"] = options_df.loc[cond, "expiry_date"] - BDay(1)
+
+    while(True):
+        cond = options_df["expiry_date"].apply(lambda x: x.weekday()) > 4
+        options_df.loc[cond, "expiry_date"] = options_df.loc[cond, "expiry_date"] - BDay(1)
+        if(cond.all() == False):
+            break
 
     while(True):
         cond = options_df["expiry_date"].isin(holidays_df["non_working_day"])
@@ -142,11 +146,12 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
         return df
 
     rates = rates.groupby("currency_code").apply(lambda x: funs(x))
-    rates = rates.reset_index(drop=True)
+    rates = rates.drop(columns="currency_code")
+    rates = rates.reset_index()
 
     # *************************************************************************************************
-    currency_data = rates.merge(currency_data, on="currency_code")
-    options_df = options_df.merge(currency_data[["days_to_expiry", "rate", "currency_code"]], on=["days_to_expiry","index"])
+    # currency_data = rates.merge(currency_data, on="currency_code")
+    options_df = options_df.merge(rates[["days_to_expiry", "rate", "currency_code"]], on=["days_to_expiry","currency_code"])
     options_df = options_df.rename(columns={"rate": "r"})
     # *************************************************************************************************
 
@@ -168,9 +173,9 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
                   options_df["atm_volatility_infinity"], 12, options_df["slope"], options_df["slope_inf"],
                   options_df["deriv"], options_df["deriv_inf"], options_df["r"], options_df["q"])
 
-    v0[v0 <= 0.2] = 0.2
-    v0[v0 >= 0.80] = 0.80
-    options_df["vol_t"] = v0 * np.sqrt(options_df["month_to_exp"] / 12)
+    v0[v0 <= min_vol] = min_vol
+    v0[v0 >= max_vol] = max_vol
+    options_df["vol_t"] = v0 * np.sqrt(options_df["time_to_exp"])
 
     options_df["option_type"] = "ATM"
     options_df["strike_1_type"] = "II"
@@ -247,7 +252,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     # Adding UID
     options_df["uid"] = options_df["ticker"] + "_" + options_df["spot_date"].astype(str) + "_" + \
         options_df["option_type"].astype(str) + "_" + options_df["time_to_exp"].astype(str)
-    options_df["uid"] = options_df["uid"].str.replace("-", "").str.replace(".", "")
+    options_df["uid"] = options_df["uid"].str.replace("-", "", regex=True).str.replace(".", "", regex=True)
     options_df["uid"] = options_df["uid"].str.strip()
 
     options_df = options_df[options_df.atm_volatility_one_year > 0.1]
@@ -257,13 +262,13 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
 
     table_name = get_bot_ucdc_backtest_table_name()
     if history:
-        options_df = options_df[options_df.spot_date >= start_date]
+        # options_df = options_df[options_df.spot_date >= start_date]
         # truncate_table(table_name)
-        upsert_data_to_database(options_df, table_name, "uid", how="update", cpu_count=True, Text=True)
-    elif new_ticker:
-        print("NEW TICKER")
-        options_df = options_df[options_df.trading_day == options_df.trading_day.max()]
         upsert_data_to_database(options_df, table_name, "uid", how="ignore", cpu_count=True, Text=True)
+    # elif new_ticker:
+    #     print("NEW TICKER")
+    #     # options_df = options_df[options_df.spot_date == options_df.spot_date.max()]
+    #     upsert_data_to_database(options_df, table_name, "uid", how="ignore", cpu_count=True, Text=True)
     else:
         upsert_data_to_database(options_df, table_name, "uid", how="ignore", cpu_count=True, Text=True)
 
@@ -283,7 +288,7 @@ def shift5_numba(arr, num, fill_value=np.nan):
 
 def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, mod=False, history=False, total_no_of_runs=1, run_number=0):
     time_to_exp = check_time_to_exp(time_to_exp)
-    start_date, end_date = check_start_end_date(start_date=start_date, end_date=end_date)
+    start_date, end_date = check_start_end_date(start_date, end_date)
     # This function is used for filling the nulls in executive options database. Checks whether the options are expired
     # or knocked out or not triggered at all.
     tqdm.pandas()
@@ -307,7 +312,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
 
     # ********************************************************************************************
     # ********************************************************************************************
-    prices_df = tac_data.pivot_table(index=tac_data.trading_day, columns="ticker", values="tri_adjusted_price", aggfunc="first", dropna=False)
+    prices_df = tac_data.pivot_table(index=tac_data.trading_day, columns="ticker", values="tri_adj_close", aggfunc="first", dropna=False)
     prices_df = prices_df.ffill()
     prices_df = prices_df.bfill()
     dates_df = prices_df.index.to_series()
@@ -373,7 +378,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
         last_hedge = np.nan_to_num(last_hedge)
 
         #hedge = (v1 + v2) / 15
-        if row["currency"] in ["USD", "EUR"]:
+        if row["currency_code"] in ["USD", "EUR"]:
             hedge = 0.05
         else:
             hedge = 0.01
@@ -465,7 +470,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
             date_temp = dates_per_run[run_number][k]
             null_df_small = null_df[null_df.spot_date == date_temp]
             print(f"Filling {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
-            null_df_small = null_df_small.progress_apply(lambda x: exec_fill_fun(x, prices_np, dates_np, null_df), axis=1, raw=True)
+            null_df_small = null_df_small.progress_apply(lambda x: exec_fill_fun(x, prices_np, dates_np, null_df), axis=1, raw=False)
             null_df_small.drop(["expiry_date_index", "spot_date_index", "ticker_index"], axis=1, inplace=True)
             null_df_small = null_df_small.infer_objects()
             upsert_data_to_database(null_df_small, table_name, "uid", how="update", cpu_count=True, Text=True)

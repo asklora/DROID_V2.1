@@ -1,0 +1,18 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - echo "skip installing dependencies"
+      # - pip install -r installer/requirements_test.txt
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - echo "check DB Before running tests"
+      - python manage.py createtestdb
+  build:
+    on-failure: ABORT
+    commands:
+        - pytest -s --verbose
+  post_build:
+    commands:
+      - echo test is completed on `date`

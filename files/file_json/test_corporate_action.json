@@ -1,0 +1,38 @@
+{
+    "ExtractionRequest": {
+        "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.CorporateActionsStandardExtractionRequest",
+        "ContentFieldNames": [
+            "RIC",
+            "Capital Change Ex Date",            
+            "Capital Additive Adjustment Factor",
+            "Capital Change Event Type",
+            "Capital Change Event Type Description"
+        ],
+        "IdentifierList": {
+            "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+            "InstrumentIdentifiers": [
+            ],
+            "ValidationOptions":{"AllowHistoricalInstruments":true,"AllowOpenAccessInstruments":true},
+            "UseUserPreferencesForValidationOptions": false
+        },
+        "Condition": {
+            "ReportDateRangeType": "Last",
+            "QueryStartDate": "2021-06-26T00:00:00.000",
+            "QueryEndDate": "2021-09-26T23:59:59.000",
+            "ExcludeDeletedEvents": true,
+            "IncludeCapitalChangeEvents": true,
+            "IncludeDividendEvents": true,
+            "IncludeEarningsEvents": true,
+            "IncludeMergersAndAcquisitionsEvents": true,
+            "IncludeNominalValueEvents": true,
+            "IncludePublicEquityOfferingsEvents": true,
+            "IncludeSharesOutstandingEvents": true,
+            "IncludeVotingRightsEvents": true,
+            "CorporateActionsCapitalChangeType": "CapitalChangeExDate",
+            "CorporateActionsDividendsType": "DividendPayDate",
+            "CorporateActionsEarningsType": "PeriodEndDate",
+            "ShareAmountTypes": [
+            ]
+        }
+    }
+}

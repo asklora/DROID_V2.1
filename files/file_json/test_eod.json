@@ -1,0 +1,19 @@
+{
+    "ExtractionRequest": {
+        "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.EndOfDayPricingExtractionRequest",
+        "ContentFieldNames": [
+            "RIC",
+            "Market MIC"
+        ],
+        "IdentifierList": {
+            "@odata.type": "#DataScope.Select.Api.Extractions.ExtractionRequests.InstrumentIdentifierList",
+            "InstrumentIdentifiers": [],
+            "ValidationOptions": {
+                "AllowHistoricalInstruments": true,
+                "AllowInactiveInstruments": true,
+                "AllowOpenAccessInstruments": false
+            },
+            "UseUserPreferencesForValidationOptions": false
+        }
+    }
+}

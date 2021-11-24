@@ -9,17 +9,20 @@ class AuroraRouters:
         'services',
         'universe',
         'user',
-        
-}
+        'orders',
+        'master',
+        'Clients',
+        'services'
+
+    }
+
 
     def db_for_read(self, model, **hints):
         """
         Attempts to read auth and contenttypes models go to auth_db.
         """
         if model._meta.app_label in self.route_app_labels:
-            
             return 'aurora_read'
-        
         return 'default'
 
     def db_for_write(self, model, **hints):
@@ -47,8 +50,12 @@ class AuroraRouters:
     #     """
     #     if app_label in self.route_app_labels:
     #         return db == 'aurora_write'
-    #     return 'default'
+    #     # if app_label in self.mongo_app_labels:
+    #     #     return db == 'mongo'
+    #     return db == 'default'
+
     def allow_syncdb(self, db, model):
         "Explicitly put all models on all databases."
+
         if model._meta.app_label in self.route_app_labels:
             return True

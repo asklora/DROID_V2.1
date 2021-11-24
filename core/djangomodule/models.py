@@ -1,8 +1,13 @@
 from django.db import models
 from django.utils import timezone
+import pandas as pd
+
 
 class BaseTimeStampModel(models.Model):
-    created = models.DateTimeField(editable=False)
+    """
+    Base model for timestamp support, related models: :model:`Clients.Client` and its related models, :model:`orders.Order` etc.
+    """
+    created = models.DateTimeField(editable=True)
     updated = models.DateTimeField(editable=False)
 
     class Meta:

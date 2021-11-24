@@ -1,0 +1,56 @@
+---
+# This playbook deploys the whole application stack in this site.
+
+# Apply common configuration to bastion hosts
+- name: connect to Instance(s) 
+  hosts: instance
+  remote_user: ubuntu
+  tasks:
+  # task is pulling from repo
+    - name: pull from git
+      git:
+        repo: git@github.com:asklora/DROID_V2.1.git
+        dest: /home/ubuntu/DROID_V2.1
+        update: yes
+        force: yes
+        key_file: /home/ubuntu/red-git-key.pem
+        version: dev
+        
+        
+      
+        
+    - name: set aws
+      ansible.builtin.command:
+        chdir: /home/ubuntu/DROID_V2.1/installer
+        cmd: sudo ./aws-set.sh
+    - name: ecr docker get-authorization-token
+      shell: "aws ecr get-login-password --region ap-east-1"
+      register: ecr_command
+  
+    - set_fact:
+        password: "{{ ecr_command.stdout }}"
+
+    - debug: msg="{{password}}"
+
+    - name: docker_repository - Log into ECR registry and force re-authorization
+      docker_login:
+        registry_url: "736885973837.dkr.ecr.ap-east-1.amazonaws.com"
+        username: "AWS"
+        password: "{{ password }}"
+        reauthorize: yes
+    - name: Stop Container
+      ansible.builtin.command:
+        chdir: /home/ubuntu/DROID_V2.1
+        cmd: docker-compose -p droid -f deployment/compose/dev.yaml down
+    - name: Clean docker system
+      ansible.builtin.command:
+        chdir: /home/ubuntu/DROID_V2.1
+        cmd: docker system prune -a -f
+    - name: Clean docker image
+      ansible.builtin.command:
+        chdir: /home/ubuntu/DROID_V2.1
+        cmd: docker image prune -a -f
+    - name: Run Container
+      ansible.builtin.command:
+        chdir: /home/ubuntu/DROID_V2.1
+        cmd: docker-compose -p droid -f deployment/compose/dev.yaml up --build --force-recreate -d

@@ -1,36 +1,41 @@
 import time
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 import lightgbm as lgb
 from joblib import dump, load
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomForestClassifier
-
 from bot.preprocess import rounding_fun
-from bot.data_download import get_data_vol_surface_ticker, get_executive_data_download
-
-from general.date_process import timeNow, timestampNow
+from bot.data_download import get_executive_data_download
+from general.date_process import dateNow, timeNow, timestampNow
 from general.data_process import uid_maker
-from general.sql_process import do_function
 from general.sql_query import get_active_universe
-from general.sql_output import truncate_table, upsert_data_to_database
+from general.sql_output import upsert_data_to_database
 from general.table_name import get_data_vol_surface_inferred_table_name
 
-from global_vars import random_state, saved_model_path, model_filename, X_columns, Y_columns
+from global_vars import random_state, saved_model_path, model_filename, X_columns, Y_columns, time_to_expiry, bots_list, max_vol, min_vol
 
 def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, train_model=False, daily=False, history=False):
+    '''
+
+    Parameters
+    ----------
+    start_date : Date, bot_data sample start date = 4yr ago
+    end_date : Date, bot_data sample end date = now
+    ticker / currency_code : List, default = None
+    train_model : production will sets as True
+    daily : production will sets as False
+    history : production will sets as False
+
+    '''
     cols_temp_1 = X_columns.copy()
     cols_temp_1.extend(Y_columns[0])
     cols_temp_1.extend(Y_columns[1])
 
     cols_temp_2 = X_columns.copy()
 
+    # get training sample from AWS TABLE bot_date (4yr ago - Now)
     main_df = get_executive_data_download(start_date, end_date, ticker=ticker, currency_code=currency_code)
-    output_tickers = get_data_vol_surface_ticker(ticker=ticker, currency_code=currency_code)
-    # Just taking the rows that we have output for them.
-    main_df = main_df[main_df.ticker.isin(output_tickers)]
-
     temp_y_rf = []
     
     # *****************************************************************************************
@@ -95,10 +100,12 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
                 main_infer_copy = main_infer_copy.loc[main_infer_copy[col] != np.inf]
 
             X_train = main_train_copy[X_col_list]
-            Y_train = main_train_copy[Y_columns]
+            Y_train = main_train_copy[Y_columns_list]
 
             X_infer = main_infer_copy[X_col_list]
 
+            # ERASE any data with Nones or NA--------------------------------------------
+            # If None or NA in any, ERASE IN ALL THREE X_train, Y_train, X_infer
             # We didn"t have vol data for some etfs so I add the following lines so the model can work.
             X_train = X_train.bfill().ffill()
             Y_train = Y_train.bfill().ffill()
@@ -127,6 +134,8 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
                 Y_train = Y_train.astype(int)
                 X_infer = main_infer[X_col_list]
 
+                # ERASE any data with Nones or NA--------------------------------------------
+                # If None or NA in any, ERASE IN ALL THREE X_train, Y_train, X_infer
                 # We didn"t have vol data for some etfs so I add this line so the model can work.
                 X_train = X_train.bfill().ffill()
                 Y_train = Y_train.bfill().ffill()
@@ -180,13 +189,13 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
         final_inferred["ticker"] = ticker_list
 
         # Adding UID
-        final_inferred["uid"] = uid_maker(final_inferred, uid="uid", ticker="ticker", trading_day="trading_day")
+        final_inferred = uid_maker(final_inferred, uid="uid", ticker="ticker", trading_day="trading_day")
         final_inferred = final_inferred.infer_objects()
 
-        final_inferred = final_inferred[final_inferred.atm_volatility_one_year > 0.1]
-        final_inferred = final_inferred[final_inferred.atm_volatility_infinity > 0.1]
-        final_inferred = final_inferred[final_inferred.atm_volatility_one_year < 1.25]
-        final_inferred = final_inferred[final_inferred.atm_volatility_infinity < 1.25]
+        final_inferred = final_inferred[final_inferred.atm_volatility_one_year > min_vol * 0.65]
+        final_inferred = final_inferred[final_inferred.atm_volatility_infinity > min_vol * 0.65]
+        final_inferred = final_inferred[final_inferred.atm_volatility_one_year < max_vol * 1.25]
+        final_inferred = final_inferred[final_inferred.atm_volatility_infinity < max_vol * 1.25]
 
         start_date = start_date.strftime("%Y-%m-%d")
         end_date = end_date.strftime("%Y-%m-%d")
@@ -197,34 +206,43 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
             upsert_data_to_database(final_inferred, table_name, "uid", how="update", cpu_count=True, Text=True)
         else:
             final_inferred.to_csv("vol_history_infered.csv")
-            truncate_table(table_name)
+            # truncate_table(table_name)
             upsert_data_to_database(final_inferred, table_name, "uid", how="update", cpu_count=True, Text=True)
-    do_function("calculate_latest_vol_updates_not_us")
-    do_function("calculate_latest_vol_updates_us")
+    # do_function("calculate_latest_vol_updates_not_us")
+    # do_function("calculate_latest_vol_updates_us")
     finish = timeNow()
     print(finish)
     print("Finished!")
 
-def model_trainer(train_df, infer_df, model_type, just_train=False):
+def model_trainer(train_df, infer_df, model_type, Y_columns=Y_columns[0], just_train=False):
     # This function will train the model either for history or for future inference.
     final_report = pd.DataFrame()
     for col in Y_columns:
+        train_df_copy = train_df.copy()
+        for cols in train_df_copy.columns:
+            train_df_copy = train_df_copy.loc[train_df_copy[cols] != np.inf]
 
-        X_train = train_df[X_columns]
-        Y_train = train_df[Y_columns]
+        infer_df_copy=None
+        if(type(infer_df) != type(None)):
+            infer_df_copy = infer_df.copy()
+            for cols in infer_df_copy.columns:
+                infer_df_copy = infer_df_copy.loc[infer_df_copy[cols] != np.inf]
+        # Remove infinite row
+        X_train = train_df_copy[X_columns]
+        Y_train = train_df_copy[Y_columns]
         if not just_train:
-            X_infer = infer_df[X_columns]
+            X_infer = infer_df_copy[X_columns]
             # Y_infer = infer_df[args.Y_columns]
 
-            final_report["ticker"] = infer_df.loc[:, "ticker"]
-            final_report["spot_date"] = infer_df.loc[:, "spot_date"]
-            final_report["spot_price"] = infer_df.loc[:, "spot_price"]
+            final_report["ticker"] = infer_df_copy.loc[:, "ticker"]
+            final_report["spot_date"] = infer_df_copy.loc[:, "spot_date"]
+            final_report["spot_price"] = infer_df_copy.loc[:, "spot_price"]
 
             for col2 in Y_columns:
                 col22 = col2[:-6]
-                final_report[col22] = infer_df.loc[:, col22]
+                final_report[col22] = infer_df_copy.loc[:, col22]
 
-            final_report[col + "_original"] = infer_df[col]
+            final_report[col + "_original"] = infer_df_copy[col]
 
         X_train = X_train[Y_train[col].notna()]
         Y_train = Y_train[Y_train[col].notna()]
@@ -257,11 +275,11 @@ def model_trainer(train_df, infer_df, model_type, just_train=False):
             if just_train:
                 dump(reg, saved_model_path + f"{col}_lgbm.joblib")
 
-        if model_type == "xgb":
-            reg = xgb.XGBClassifier(n_estimators=200, random_state=random_state)
-            reg.fit(X_train, Y_train[col])
-            if just_train:
-                dump(reg, saved_model_path + f"{col}_xgb.joblib")
+        # if model_type == "xgb":
+        #     reg = xgb.XGBClassifier(n_estimators=200, random_state=random_state)
+        #     reg.fit(X_train, Y_train[col])
+        #     if just_train:
+        #         dump(reg, saved_model_path + f"{col}_xgb.joblib")
 
         if not just_train:
             if len(X_infer) > 0:
@@ -272,55 +290,51 @@ def model_trainer(train_df, infer_df, model_type, just_train=False):
         return final_report
 
 
-def find_rank(row, rank_columns):
+def find_rank(data, time_to_exp):
     # This function finds the rank for each bot.
-    row2 = row[rank_columns].sort_values(ascending=False)
+    result = pd.DataFrame({"ticker":[], "spot_date":[], "bot_type":[], "bot_option_type":[], "time_to_exp_str":[], 
+    "ranking":[], "bot_id":[]}, index=[])
+    for index, row in data.iterrows():
+        ticker = row["ticker"]
+        spot_date = row["spot_date"]
+        for cols in data.columns:
+            column = cols.split("_")
+            if(column[0] == "rank"):
+                ranking = column[1]
+                time_to_exp_str = column[2]
+                bot = row[cols].split("_")
+                bot_type = bot[0].upper()
+                bot_option_type = bot[1]
+                bot_id = bot_type + "_" + bot_option_type + "_" + time_to_exp_str
+                data_temp = pd.DataFrame({"ticker":[ticker], "spot_date":[spot_date], "bot_type":[bot_type], 
+                "bot_option_type":[bot_option_type], "time_to_exp_str":[time_to_exp_str], 
+                "ranking":[ranking], "bot_id":[bot_id]}, index=[0])
+                result = result.append(data_temp)
+    result["time_to_exp"] = 0
+    for time_exp in time_to_exp:
+        time_exp_str = str(time_exp).replace(".", "")
+        result["time_to_exp"] = np.where(result["time_to_exp_str"] == time_exp_str, time_exp, result["time_to_exp"])
+    return result
 
-    for i in range(len(rank_columns)):
-        row[f"rank_{i + 1}"] = row2.index[i].replace("_pnl_class_prob", "")
-        rank_name = row2.index[i].replace("_class_prob", "")
-        rank_name2 = row2.index[i].replace("_class_prob", "_class_original")
-        row[f"pnl_class_prob_rank_{i + 1}"] = row2[i]
-        row[f"pnl_class_original_rank_{i + 1}"] = row[rank_name2]
-        row[f"pnl_avg_rank_{i + 1}"] = row[rank_name] / row.spot_price
-        row[f"pnl_rank_{i + 1}"] = row[rank_name]
-        row[f"acc_rank_{i + 1}"] = row[rank_name + "_class_original"]
-
+def sort_to_rank(row, rank_columns, time_to_exp):
+    # This function finds the rank for each bot.
+    for time_exp in time_to_exp:
+        time_exp_str = str(time_exp).replace(".", "")
+        rank_columns_temp = []
+        for cols in rank_columns:
+            if(cols.split("_")[2] == time_exp_str):
+                rank_columns_temp.append(cols)
+        row2 = row[rank_columns_temp].sort_values(ascending=False)
+        for i in range(len(rank_columns_temp)):
+            row[f"rank_{i + 1}_{time_exp_str}"] = row2.index[i].replace("_pnl_class_prob", "")
     return row
 
-
-def find_rank2(row, rank_columns):
-    # This function finds the rank for each bot.
-
-    row2 = row[rank_columns].sort_values(ascending=False)
-
-    for i in range(len(rank_columns)):
-        row[f"rank_{i + 1}"] = row2.index[i].replace("_pnl_class_prob", "")
-
-    return row
-
-
-def find_rank3(row):
-    # This function finds the rank for each bot.
-    temp = pd.DataFrame()
-    temp.loc[0, "bot"] = row["uno_3m_bot"]
-    temp.loc[1, "bot"] = row["uno_1m_bot"]
-    temp.loc[2, "bot"] = row["ucdc_bot"]
-
-    temp.loc[0, "prob"] = row["uno_3m_bot_prob"]
-    temp.loc[1, "prob"] = row["uno_1m_bot_prob"]
-    temp.loc[2, "prob"] = row["ucdc_bot_prob"]
-
-    temp = temp.sort_values(by="prob", ascending=False, ignore_index=True)
-
-    for i in range(3):
-        row[f"rank_{i+1}"] = temp.loc[i, "bot"]
-
-    return row
-
-def bot_infer(infer_df, model_type, rank_columns):
+def bot_infer(infer_df, model_type, rank_columns, Y_columns, time_to_exp=time_to_expiry, bots_list=bots_list):
     # This function is used for bot ranking daily and live.
     final_report = pd.DataFrame()
+    for cols in infer_df.columns:
+        infer_df = infer_df.loc[infer_df[cols] != np.inf]
+
     for col in Y_columns:
         X_infer = infer_df[X_columns]
 
@@ -337,43 +351,19 @@ def bot_infer(infer_df, model_type, rank_columns):
         if model_type == "lgbm":
             reg = load(saved_model_path + f"{col}_lgbm.joblib")
 
-        if model_type == "xgb":
-            reg = load(saved_model_path + f"{col}_xgb.joblib")
+        # if model_type == "xgb":
+        #     reg = load(saved_model_path + f"{col}_xgb.joblib")
 
         final_report[col + "_prob"] = (reg.predict_proba(X_infer))[:, 1]
         final_report["model_type"] = model_type
-        final_report["when_created"] = timestampNow()
-
-    final_report = final_report.apply(lambda x: find_rank2(x, rank_columns), axis=1)
-
-    latest_df = final_report[final_report.spot_date == final_report.spot_date.max()].copy()
+        final_report["created"] = dateNow()
+    final_report = final_report.apply(lambda x: sort_to_rank(x, rank_columns, time_to_exp), axis=1)
+    final_report = final_report.sort_values(by='spot_date', ascending=False)
+    latest_df = final_report.copy()
+    latest_df = latest_df.drop_duplicates(subset=["ticker"], keep='first', inplace=False)
     latest_df = latest_df.reset_index(drop=True)
-    latest_df_final = pd.DataFrame()
-    latest_df_final["ticker"] = latest_df.ticker
-    latest_df_final["spot_date"] = latest_df.spot_date
-
-    # if latest_df["uno_OTM_3m_pnl_class_prob"] > latest_df["uno_ITM_3m_pnl_class_prob"]:
-    latest_df_final.loc[latest_df["uno_OTM_3m_pnl_class_prob"] > latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot"] = "UNO_OTM_3"
-    latest_df_final.loc[latest_df["uno_OTM_3m_pnl_class_prob"] <= latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot"] = "UNO_ITM_3"
-    latest_df_final.loc[latest_df["uno_OTM_3m_pnl_class_prob"] > latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot_prob"] = latest_df["uno_OTM_3m_pnl_class_prob"]
-    latest_df_final.loc[latest_df["uno_OTM_3m_pnl_class_prob"] <= latest_df["uno_ITM_3m_pnl_class_prob"], "uno_3m_bot_prob"] = latest_df["uno_ITM_3m_pnl_class_prob"]
-    latest_df_final.loc[latest_df["uno_OTM_1m_pnl_class_prob"] > latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot"] = "UNO_OTM_1"
-    latest_df_final.loc[latest_df["uno_OTM_1m_pnl_class_prob"] <= latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot"] = "UNO_ITM_1"
-    latest_df_final.loc[latest_df["uno_OTM_1m_pnl_class_prob"] > latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot_prob"] = latest_df["uno_OTM_1m_pnl_class_prob"]
-    latest_df_final.loc[latest_df["uno_OTM_1m_pnl_class_prob"] <= latest_df["uno_ITM_1m_pnl_class_prob"], "uno_1m_bot_prob"] = latest_df["uno_ITM_1m_pnl_class_prob"]
-    latest_df_final["ucdc_bot"] = "UCDC_ATM_6"
-    latest_df_final["ucdc_bot_prob"] = latest_df["ucdc_ATM_6m_pnl_class_prob"]
-
-    latest_df_final = latest_df_final.apply(lambda x: find_rank3(x), axis=1)
-    for i in range(3):
-        x= latest_df_final[f"rank_{i+1}"]
-        temp = latest_df_final[f"rank_{i+1}"].str.split("_",  expand=True)
-        latest_df_final[f"rank_{i+1}_bot"] = temp.iloc[:, 0]
-        latest_df_final[f"rank_{i+1}_option_type"] = temp.iloc[:, 1]
-        latest_df_final[f"rank_{i+1}_month"] = temp.iloc[:, 2]
-
-    cols = ["ticker", "spot_date", "rank_1_bot", "rank_2_bot", "rank_3_bot", "rank_1_option_type", "rank_2_option_type",
-            "rank_3_option_type", "rank_1_month", "rank_2_month", "rank_3_month"]
-
-    return final_report, latest_df_final[cols]
+    latest_df = find_rank(latest_df, time_to_exp)
+    latest_df = latest_df.reset_index(drop=True)
+    print(latest_df)
+    return final_report, latest_df
 

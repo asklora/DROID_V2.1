@@ -1,33 +1,35 @@
-from general.data_process import uid_maker
-from general.table_name import get_bot_data_table_name
 import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 import pandas as pd
+pd.options.mode.chained_assignment = None
 from pandas.tseries.offsets import BDay
 from bot.data_download import (
     get_currency_data, 
     get_data_vix_price, 
-    get_data_vol_surface_ticker, 
     get_latest_price, 
-    get_master_tac_price)
-from bot.preprocess import remove_holidays, lookback_creator, remove_holidays_forward
+    get_master_tac_price, get_vol_surface_data)
+from general.data_process import uid_maker
+from general.table_name import get_bot_data_table_name
+from bot.preprocess import remove_holidays, lookback_creator
 from bot.vol_calculations import get_close_vol, get_kurt, get_rogers_satchell, get_total_return
-from general.sql_output import truncate_table, upsert_data_to_database
-from general.sql_query import get_active_universe
-from general.date_process import dateNow, droid_start_date
-from global_vars import period, index_to_etf_file
+from general.sql_output import upsert_data_to_database
+from general.sql_query import get_active_universe, get_ticker_etf
+from general.date_process import dateNow, droid_start_date, droid_start_date_buffer
+from global_vars import period
 
 def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code=None, daily=False, new_ticker=False, history=False):
     if type(start_date) == type(None):
-        start_date = droid_start_date()
+        start_date = droid_start_date_buffer()
     if type(end_date) == type(None):
         end_date = dateNow()
     # Get all the prices for the above dates +-4 weeks to make sure all the nans are covered by back filling
-    prices_df = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
+    prices_df = get_master_tac_price(start_date=droid_start_date(), end_date=dateNow(), ticker=ticker, currency_code=currency_code)
 
     #Adding Latest Price to Master TAC
     if (daily):
         intraday_price = get_latest_price(ticker=ticker, currency_code=currency_code)
-        last_date = intraday_price.last_date.max()
+        intraday_price["last_date"] = pd.to_datetime(intraday_price["last_date"])
+        last_date = intraday_price["last_date"].max()
         last_price = intraday_price[["open", "high", "low", "close", "ticker"]]
         if prices_df.trading_day.max() <= last_date:
             prices_df = prices_df.drop(prices_df[prices_df.trading_day == last_date].index)
@@ -36,7 +38,8 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         prices_df = pd.concat([prices_df, last_price], axis=0, join="outer")
 
     #Get Vol Surface Parameter Ticker That Not Infer
-    outputs_df = get_data_vol_surface_ticker(ticker=ticker, currency_code=currency_code)
+    outputs_df = get_vol_surface_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, infer=False)
+    # outputs_infer_df = get_vol_surface_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, infer=True)
 
     #Prepare All Data for Calculation
     dates_df = prices_df.pivot_table(index="trading_day", columns="ticker", values="day_status", aggfunc="first",dropna=False)
@@ -53,6 +56,7 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
                          "c2c_vol_126_252", "c2c_vol_252_504", "kurt_0_504", "rs_vol_0_21", "rs_vol_21_42",
                          "rs_vol_42_63", "rs_vol_63_126", "rs_vol_126_252", "rs_vol_252_504", "total_returns_0_1",
                          "total_returns_0_21", "total_returns_0_63", "total_returns_21_126", "total_returns_21_231"]
+
     main_df = pd.DataFrame(columns=main_columns_list)
     # *********************************************************************************
     for trading_day in trading_day_list:
@@ -68,7 +72,6 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
                                            (prices_df["trading_day"] <= trading_day + BDay(125 * 2))]
 
         main_open, main_high, main_low, main_close, main_tri, main_multiples = remove_holidays(prices_df_temp)
-        main_multiples_f = remove_holidays_forward(prices_df_temp_forward)
 
         main_open = main_open.bfill().ffill()
         main_high = main_high.bfill().ffill()
@@ -76,7 +79,6 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         main_close = main_close.bfill().ffill()
         main_tri = main_tri.bfill().ffill()
         main_multiples = main_multiples.bfill().ffill()
-        main_multiples_f = main_multiples_f.bfill().ffill()
 
         main_open = main_open.replace(to_replace=0, method="ffill")
         main_high = main_high.replace(to_replace=0, method="ffill")
@@ -84,7 +86,6 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         main_close = main_close.replace(to_replace=0, method="ffill")
         main_tri = main_tri.replace(to_replace=0, method="ffill")
         main_multiples = main_multiples.replace(to_replace=0, method="ffill")
-        main_multiples_f = main_multiples_f.replace(to_replace=0, method="ffill")
 
         # **********************************************************************************************
         # In case any stock did not exist for a period of time, and all the values for that period are just H.
@@ -95,7 +96,6 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         main_low = main_low[main_close.columns]
         main_tri = main_tri[main_close.columns]
         main_multiples = main_multiples[main_close.columns]
-        main_multiples_f = main_multiples_f[main_close.columns]
         # **********************************************************************************************
         c2c_vol_0_21 = get_close_vol(lookback_creator(main_multiples, 0, period))
         c2c_vol_21_42 = get_close_vol(lookback_creator(main_multiples, period, 2 * period))
@@ -103,10 +103,6 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         c2c_vol_63_126 = get_close_vol(lookback_creator(main_multiples, 3 * period, 6 * period))
         c2c_vol_126_252 = get_close_vol(lookback_creator(main_multiples, 6 * period, 12 * period))
         c2c_vol_252_504 = get_close_vol(lookback_creator(main_multiples, 12 * period, 24 * period))
-
-        # c2c_vol_forward_0_21 = get_close_vol(forward_creator(main_multiples_f, 0, period))
-        # c2c_vol_forward_0_63 = get_close_vol(forward_creator(main_multiples_f, 0, 3 * period))
-        # c2c_vol_forward_0_126 = get_close_vol(forward_creator(main_multiples_f, 0, 6 * period))
 
         kurt_0_504 = get_kurt(lookback_creator(main_multiples, 0, 24 * period))
         rs_vol_0_21 = get_rogers_satchell(lookback_creator(main_open, 0, period),
@@ -140,17 +136,13 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
         total_returns_21_126 = get_total_return(lookback_creator(main_tri, period, 6 * period + 1))
         total_returns_21_231 = get_total_return(lookback_creator(main_tri, period, 231 + 1))
 
-        technicals_list = [c2c_vol_0_21, c2c_vol_21_42, c2c_vol_42_63, c2c_vol_63_126,
-                           c2c_vol_126_252, c2c_vol_252_504, kurt_0_504, rs_vol_0_21, rs_vol_21_42,
-                           rs_vol_42_63, rs_vol_63_126, rs_vol_126_252, rs_vol_252_504, total_returns_0_1,
-                           total_returns_0_21, total_returns_0_63, total_returns_21_126, total_returns_21_231]
+        technicals_list = [c2c_vol_0_21, c2c_vol_21_42, c2c_vol_42_63, c2c_vol_63_126, c2c_vol_126_252, c2c_vol_252_504, kurt_0_504, 
+            rs_vol_0_21, rs_vol_21_42, rs_vol_42_63, rs_vol_63_126, rs_vol_126_252, rs_vol_252_504, 
+            total_returns_0_1, total_returns_0_21, total_returns_0_63, total_returns_21_126, total_returns_21_231]
 
-        technicals_names_list = ["c2c_vol_0_21", "c2c_vol_21_42", "c2c_vol_42_63", "c2c_vol_63_126",
-                                 "c2c_vol_126_252", "c2c_vol_252_504", "kurt_0_504", "rs_vol_0_21", "rs_vol_21_42",
-                                 "rs_vol_42_63", "rs_vol_63_126", "rs_vol_126_252", "rs_vol_252_504",
-                                 "total_returns_0_1", "total_returns_0_21", "total_returns_0_63",
-                                 "total_returns_21_126",
-                                 "total_returns_21_231"]
+        technicals_names_list = ["c2c_vol_0_21", "c2c_vol_21_42", "c2c_vol_42_63", "c2c_vol_63_126", "c2c_vol_126_252", "c2c_vol_252_504", "kurt_0_504", 
+            "rs_vol_0_21", "rs_vol_21_42", "rs_vol_42_63", "rs_vol_63_126", "rs_vol_126_252", "rs_vol_252_504",
+            "total_returns_0_1", "total_returns_0_21", "total_returns_0_63", "total_returns_21_126", "total_returns_21_231"]
 
         def series_to_pandas(df):
             aa = pd.DataFrame(df[df.index.isin(valid_tickers_list)])
@@ -159,25 +151,29 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
 
         for i in range(len(technicals_list)):
             tech_temp = series_to_pandas(technicals_list[i])
-            temp_df[technicals_names_list[i]] = np.where(tech_temp["ticker"] == temp_df["ticker"], tech_temp[0],
-                                                         temp_df[technicals_names_list[i]])
+            tech_temp = tech_temp.rename(columns={0 : technicals_names_list[i]})
+            temp_df = temp_df.drop(columns=[technicals_names_list[i]])
+            temp_df = temp_df.merge(tech_temp, how="left", on=["ticker"])
+            #temp_df[technicals_names_list[i]] = np.where(tech_temp["ticker"] == temp_df["ticker"], tech_temp[0], temp_df[technicals_names_list[i]])
         main_df = main_df.append(temp_df)
         print(f"{trading_day} is finished.")
     main_df = main_df.merge(prices_df[["vix_value", "ticker", "trading_day"]], on=["ticker", "trading_day"], how="left")
-    main_df = main_df.merge(outputs_df, on=["ticker", "trading_day"], how="left")
-    Y_columns_temp = ["slope", "atm_volatility_spot", "atm_volatility_one_year", "atm_volatility_infinity", "deriv_inf",
-                      "deriv", "slope_inf", "ticker", "trading_day"]
-
-    index_to_etf = pd.read_csv(index_to_etf_file, names=["index", "etf"])
-    droid_universe_df = get_active_universe()
-    droid_universe_df = droid_universe_df.merge(index_to_etf, on="index")
-    etf_list = index_to_etf.etf.unique()
+    Y_columns_temp = ["atm_volatility_spot", "atm_volatility_one_year", "atm_volatility_infinity", "deriv_inf",
+                      "deriv", "slope", "slope_inf", "ticker", "trading_day"]
+    # main_df = main_df.merge(outputs_df, on=["ticker", "trading_day"], how="left")
+    # volatility = [outputs_df[Y_columns_temp], outputs_infer_df[Y_columns_temp]]
+    # volatility = pd.concat(volatility)
+    main_df = main_df.merge(outputs_df[Y_columns_temp], on=["ticker", "trading_day"], how="left")
+    currency_code_to_etf = get_ticker_etf(active=True)
+    universe_df = get_active_universe()
+    universe_df = universe_df.merge(currency_code_to_etf, on="currency_code", how="left")
+    etf_list = currency_code_to_etf.etf_ticker.unique()
 
     main_df2 = main_df.copy()
     main_df = main_df2.copy()
 
     # Adding index vols to the main dataframe
-    main_df = main_df.merge(droid_universe_df[["etf", "ticker"]], on="ticker", how="inner")
+    main_df = main_df.merge(universe_df[["etf_ticker", "ticker"]], on="ticker", how="left")
     etf_df = main_df[main_df.ticker.isin(etf_list)].copy()
 
     # main_df = main_df[~main_df.ticker.isin(etf_list)]
@@ -189,7 +185,7 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     etf_df = etf_df[Y_columns_temp]
     etf_df.rename(columns={"slope": "slope_x", "atm_volatility_spot": "atm_volatility_spot_x",
                            "atm_volatility_one_year": "atm_volatility_one_year_x",
-                           "atm_volatility_infinity": "atm_volatility_infinity_x", "ticker": "etf",
+                           "atm_volatility_infinity": "atm_volatility_infinity_x", "ticker": "etf_ticker",
                            "total_returns_0_63": "total_returns_0_63_x", "total_returns_21_126": "total_returns_21_126_x",
                            "total_returns_0_21": "total_returns_0_21_x",
                            "total_returns_21_231": "total_returns_21_231_x", "c2c_vol_0_21": "c2c_vol_0_21_x",
@@ -200,23 +196,24 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
                            "deriv_inf": "deriv_inf_x",
                            }, inplace=True)
 
-    main_df = main_df.merge(etf_df, on=["etf", "trading_day"], how="left")
-    main_df.drop(["uid", "stock_price", "parameter_set_date", "alpha", "slope_x", "slope_inf_x", "deriv_x","deriv_inf_x", "etf"], axis=1, inplace=True)
+    main_df = main_df.merge(etf_df, on=["etf_ticker", "trading_day"], how="left")
+    main_df.drop(["slope_x", "slope_inf_x", "deriv_x","deriv_inf_x", "etf_ticker"], axis=1, inplace=True)
     
     # temp = get_active_universe()
     # temp = temp[["ticker", "industry_code"]]
     # temp[temp.industry_code == "NA"] = 0
     # main_df = main_df.merge(temp, on=["ticker"], how="left")
-
-    main_df["uid"] = uid_maker(main_df, uid="uid", ticker="ticker", trading_day="trading_day")
+    main_df["trading_day"] = pd.to_datetime(main_df["trading_day"]).dt.date
+    main_df = uid_maker(main_df, uid="uid", ticker="ticker", trading_day="trading_day")
 
     table_name = get_bot_data_table_name()
+    print(main_df)
     if(daily):
         upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=True, Text=True)
     elif(new_ticker):
-        latest_main_df = main_df[main_df.trading_day == main_df.trading_day.max()]
-        upsert_data_to_database(latest_main_df, table_name, "uid", how="update", cpu_count=True, Text=True)
+        # latest_main_df = main_df[main_df.trading_day == main_df.trading_day.max()]
+        upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=True, Text=True)
     else:
         main_df.to_csv("main_df_executive.csv")
-        truncate_table(table_name)
+        # truncate_table(table_name)
         upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=True, Text=True)

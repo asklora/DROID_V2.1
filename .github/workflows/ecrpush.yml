@@ -1,0 +1,51 @@
+name: Ansible auto update  # feel free to pick your own name
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        if: "contains(github.event.head_commit.message, 'ecr')"
+      - name: Configure AWS credentials
+        if: "contains(github.event.head_commit.message, 'ecr')"
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-east-1
+
+      - name: Login to Amazon ECR
+        if: "contains(github.event.head_commit.message, 'ecr')"
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Create droid image
+        run: docker build . -t droid -f deployment/jenkins/bastion/Dockerfile
+        if: "contains(github.event.head_commit.message, 'ecr')"
+      - name: Push to ECR
+        if: "contains(github.event.head_commit.message, 'ecr')"
+        id: ecr
+        uses: jwalton/gh-ecr-push@v1
+        with:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ap-east-1
+          image: droid:latest
+      
+      - uses: actions/checkout@v2
+        if: "contains(github.event.head_commit.message, 'build-base-image')"
+      - name: Create test env image
+        run: docker build . -t app-test-env -f deployment/container/Dockerfile.test
+        if: "contains(github.event.head_commit.message, 'build-base-image')"
+      - name: push image test env
+        if: "contains(github.event.head_commit.message, 'build-base-image')"
+        id: ecr_env
+        uses: jwalton/gh-ecr-push@v1
+        with:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ap-east-1
+          image: app-test-env:latest

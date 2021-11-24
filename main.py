@@ -1,74 +1,54 @@
-import os
-import sys
+from ingestion.data_from_dsws import update_currency_price_from_dsws
+from general.date_process import dateNow
+from general.sql_query import read_query
 from general.sql_process import do_function
-from ingestion.universe import (
-    update_ticker_name_from_dsws, 
-    update_entity_type_from_dsws, 
-    update_lot_size_from_dss,
-    update_currency_code_from_dss,
-    populate_universe_consolidated_by_isin_sedol_from_dsws,
-    update_industry_from_dsws, 
-    update_company_desc_from_dsws,
-    update_worldscope_identifier_from_dsws
-    )
 
-from ingestion.master_tac import master_tac_update
-from ingestion.master_ohlcvtr import master_ohlctr_update
-from ingestion.master_multiple import master_multiple_update
-from ingestion.master_data import (
-    interest_update,
-    dividend_updated,
-    update_data_dss_from_dss,
-    update_data_dsws_from_dsws,
-    update_vix_from_dsws, 
-    update_quandl_orats_from_quandl,
-    update_fundamentals_score_from_dsws,
-    update_fundamentals_quality_value)
-from ingestion.currency import (
-    update_currency_price_from_dss, 
-    update_utc_offset_from_timezone
-    )
-from global_vars import DB_URL_READ, DB_URL_WRITE
-def update_master_data(ticker=None, currency_code=None):
-    update_quandl_orats_from_quandl()
-    update_vix_from_dsws()
-    do_function("universe_populate")
-    update_data_dss_from_dss(ticker=ticker, currency_code=currency_code)
-    update_data_dsws_from_dsws(ticker=ticker, currency_code=currency_code)
-    do_function("master_ohlcvtr_update")
-    master_ohlctr_update()
-    master_tac_update()
-    master_multiple_update()
-    #do_function("universe_update_last_ingestion")
-    dividend_updated(ticker=ticker, currency_code=currency_code)
-    # dividend_daily_update()
-    interest_update()
-    # interest_daily_update(currency_code=currency_code)
-    update_fundamentals_score_from_dsws(ticker=ticker, currency_code=currency_code)
-    update_fundamentals_quality_value(ticker=ticker, currency_code=currency_code)
 
-def update_currency_data():
-    update_utc_offset_from_timezone()
-    update_currency_price_from_dss()
+def dlpa_weekly():
+    print("Run DLPA")
+    # main_portfolio.py --live --portfolio_period 0
+    query = f"select distinct on (index, ticker, spot_date, forward_date) index, ticker, spot_date, forward_date "
+    query += f"from client_portfolios where forward_tri is null and forward_return is null "
+    query += f"and index_forward_price is not null and index_forward_return is not null "
+    query += f"and (forward_date::date + interval '1 days')::date <= NOW()"
+    client_portfolios_missing = read_query(query, table="client_portfolios")
 
-def update_universe_data(ticker=None):
-    populate_universe_consolidated_by_isin_sedol_from_dsws(ticker=ticker)
-    do_function("universe_populate")
-    update_ticker_name_from_dsws(ticker=ticker)
-    update_entity_type_from_dsws(ticker=ticker)
-    update_lot_size_from_dss(ticker=ticker)
-    update_currency_code_from_dss(ticker=ticker)
-    update_industry_from_dsws(ticker=ticker)
-    update_company_desc_from_dsws(ticker=ticker)
-    update_worldscope_identifier_from_dsws(ticker=ticker)
+    query = f"select distinct on (index, spot_date, forward_date) index, spot_date, forward_date "
+    query += f"from client_portfolios where forward_tri is null and forward_return is null "
+    query += f"and index_forward_price is null and index_forward_return is null "
+    query += f"and (forward_date::date + interval '1 days')::date <= NOW()"
+    client_portfolios_holiday = read_query(query, table="client_portfolios")
 
+    # Select Data from dss_ohlcvtr and append.
+    for index, row in client_portfolios_missing.iterrows():
+        ticker = row["ticker"]
+        spot_date = row["spot_date"]
+        forward_date = row["forward_date"]
+        print("{} : === This ticker {} is null on {} to {}===".format(
+            dateNow(), ticker, spot_date, forward_date))
+
+    # Holiday report
+    for index, row in client_portfolios_holiday.iterrows():
+        indices = row["index"]
+        spot_date = row["spot_date"]
+        forward_date = row["forward_date"]
+        print("{} : === This index {} is Holiday from {} to {}===".format(
+            dateNow(), indices, spot_date, forward_date))
+
+        # report_to_slack("{} : === Start filled_holiday_client_portfolios ===".format(str(datetime.now())), args)
+        do_function("filled_holiday_client_portfolios")
+
+        # report_to_slack("{} : === Start migrate_client_portfolios ===".format(str(datetime.now())), args)
+        do_function("migrate_client_portfolios")
+
+        # report_to_slack("{} : === FINISH CLIENT PORTFOLIO ===".format(str(datetime.now())), args)
+        do_function("latest_universe")
+
+    # Post to Linkedin
+    # Post to Facebook
+
+# Main Process
 if __name__ == "__main__":
-    #update_utc_offset_from_timezone()
-    # ticker = ["AAPL.O"]
-    # do_function("master_ohlcvtr_update")
-    master_ohlctr_update()
-    master_tac_update()
-    master_multiple_update()
-    # ticker=["AAPL.O", "MSFT.O"]
-    # currency_code=["USD"]
-    print("Done")
+    print("Start Process")
+    # worldscope_quarter_report_date_from_dsws(history=True)
+    update_currency_price_from_dsws()

@@ -1,0 +1,42 @@
+name: Ansible auto update  # feel free to pick your own name
+
+on: 
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    if: "contains(github.event.head_commit.message, 'dev-run')"
+
+    steps:
+      - name: Create Notification slack server down
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: https://hooks.slack.com/services/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
+          method: POST
+          data: '{"text": ":notes: dev server update strated it may take times please wait. :notes:"}'
+      - uses: actions/checkout@v2
+      - name: Run instance update
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          # template task
+          playbook: playbook.yml
+          directory: ./deployment/ansible
+          # using secrets variable on github to store .pem key for instance
+          key: ${{secrets.BASTIONKEY}}
+          # host address to manage
+          inventory: |
+            [instance]
+            16.162.110.123
+      - name: Create Notification slack
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: https://hooks.slack.com/services/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
+          method: POST
+          data: '{"text": "dev server updated, deployed by ${{ github.actor }} :sunglasses:"}'

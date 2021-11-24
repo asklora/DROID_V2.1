@@ -4,12 +4,14 @@ from sqlalchemy.util.langhelpers import NoneType
 from general.sql_query import get_master_ohlcvtr_data
 from general.date_process import (
     datetimeNow, 
-    dlp_start_date, 
+    dlp_start_date,
+    str_to_date,
     dlp_start_date_buffer)
 from general.sql_output import delete_data_on_database, upsert_data_to_database
 from ingestion.master_tac import ForwardBackwardFillNull
 from general.slack import report_to_slack
 from general.table_name import get_master_multiple_table_name
+from es_logging.logger import log2es
 
 def dataframe_to_pivot( data, universe, index, column, values, indexes=None):
     result = data.pivot_table(index=index, columns=column, values=values, aggfunc="first", dropna=False)
@@ -29,9 +31,10 @@ def pivot_to_dataframe( data, index, column, values, indexes=None, columns=None)
         result = data.melt(id_vars=index, var_name=column, value_name=values)
     return result
 
+@log2es("db")
 def master_multiple_update():
     start_date = dlp_start_date()
-    start_date_buffer = dlp_start_date_buffer()
+    start_date_buffer = str_to_date(dlp_start_date_buffer())
 
     print("Getting OHLCVTR Data")
     data = get_master_ohlcvtr_data(start_date)
@@ -95,5 +98,5 @@ def master_multiple_update():
     # insert_data_to_database(result, "master_multiple", how="replace")
     upsert_data_to_database(result, get_master_multiple_table_name(), "uid", how="update", Text=True)
     delete_data_on_database(get_master_multiple_table_name(), f"trading_day < '{dlp_start_date_buffer()}'", delete_ticker=True)
-    report_to_slack("{} : === Master TAC Update Updated ===".format(datetimeNow()))
+    report_to_slack("{} : === Master Multiple Update Updated ===".format(datetimeNow()))
     del result
