@@ -1,14 +1,12 @@
 import math
-from datetime import datetime
 
 import pytest
-from core.djangomodule.general import formatdigit, jsonprint
+from core.djangomodule.general import jsonprint
 from core.orders.factory.orderfactory import OrderController, SellOrderProcessor
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.convert import ConvertMoney
 from core.user.models import Accountbalance
 from tests.utils.order import (
-    MockGetterPrice,
     confirm_order,
     create_buy_order,
     get_position_performance,
@@ -35,7 +33,7 @@ def test_sell_order_with_conversion(user):
     print(f"conversion result: {usd_conversion_result}")
 
     wallet = Accountbalance.objects.get(user=user)
-    user_balance = math.ceil(wallet.amount)
+    user_balance = math.floor(wallet.amount)
 
     order: Order = create_buy_order(
         price=price,
@@ -50,9 +48,9 @@ def test_sell_order_with_conversion(user):
 
     # check if user balance is deducted
     wallet = Accountbalance.objects.get(user=user)
-    user_balance_2 = math.ceil(wallet.amount)
+    user_balance_2 = math.floor(wallet.amount)
     print(f"buy order amount: {order.amount}")
-    print(f"user balance after order: {user_balance_2}")
+    print(f"user balance after order: {wallet.amount}")
     assert user_balance != user_balance_2
     assert math.floor(user_balance - amount) == user_balance_2
 
@@ -112,6 +110,6 @@ def test_sell_order_with_conversion(user):
     print(hkd_conversion_result)
 
     wallet = Accountbalance.objects.get(user=user)
-    user_balance_3 = math.ceil(wallet.amount)
+    user_balance_3 = math.floor(wallet.amount)
 
-    assert math.floor(user_balance_2 + hkd_conversion_result) == user_balance_3
+    assert math.ceil(user_balance_2 + hkd_conversion_result) == user_balance_3
