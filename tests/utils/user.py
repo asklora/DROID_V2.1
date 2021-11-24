@@ -16,7 +16,7 @@ def set_user_joined(mocker, user: User) -> None:
 
 
 def delete_user(user: User) -> None:
-    user_id = user.id
+    user_id =str(user.id)
 
     PositionPerformance.objects.filter(position_uid__user_id=user).delete()
     Order.objects.filter(user_id=user).delete()

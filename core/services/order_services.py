@@ -107,11 +107,11 @@ def order_executor(self, payload, recall=False, request_id=None):
                     order.amount = 20000
                 else:
                     order.amount = 10000
-        order.price = ticker.iloc[0]['latest_price']
+            order.qty = None
+            order.price = ticker.iloc[0]['latest_price']
         order.status = 'review'
         order.placed = False
         order.placed_at = None
-        order.qty = None
         with transaction.atomic():
             order.save()
 
