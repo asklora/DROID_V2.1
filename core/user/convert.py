@@ -1,72 +1,60 @@
-from abc import abstractmethod,ABC
+import math
+from abc import abstractmethod, ABC
 from core.universe.models import Currency
 class AbstractBaseConvert(ABC):
-    
-    
+
     @abstractmethod
     def set_from_currency(self):
         pass
-    
+
     @abstractmethod
     def set_to_currency(self):
         pass
-    
-    
+
     @abstractmethod
     def set_exchange_rate(self):
         pass
 
-    
     @abstractmethod
     def get_from_currency(self):
         pass
 
-    
     @abstractmethod
     def get_to_currency(self):
         pass
 
-    
     @abstractmethod
     def get_exchange_rate(self):
         pass
 
-    
     @abstractmethod
     def convert(self):
         pass
 
-    
     @abstractmethod
     def to_hkd(self):
         pass
 
-    
     @abstractmethod
     def to_usd(self):
         pass
 
-    
     @abstractmethod
     def to_eur(self):
         pass
 
-    
     @abstractmethod
     def to_cny(self):
         pass
 
-    
     @abstractmethod
     def to_jpy(self):
         pass
 
-    
     @abstractmethod
     def to_krw(self):
         pass
 
-    
     @abstractmethod
     def to_gbp(self):
         pass
@@ -111,11 +99,10 @@ class ConvertMoney(AbstractBaseConvert):
         return self.exchange_rate
 
     def convert(self, amount):
-        rounded = 0
         if(self.to_currency.is_decimal):
-            rounded = 2
-        result = amount * self.exchange_rate
-        return round(result, rounded)
+            return math.floor(amount * self.exchange_rate * 100) / 100
+        else:
+            return math.floor(amount * self.exchange_rate)
     
     def to_hkd(self, amount):
         self.set_to_currency("HKD")

@@ -78,6 +78,7 @@ class Command(BaseCommand):
         parser.add_argument("-quandl", "--quandl", type=bool, help="quandl", default=False)
         parser.add_argument("-vix", "--vix", type=bool, help="vix", default=False)
         parser.add_argument("-interest", "--interest", type=bool, help="interest", default=False)
+        parser.add_argument("-currency_price", "--currency_price", type=bool, help="currency_price", default=False)
         parser.add_argument("-dividend", "--dividend", type=bool, help="dividend", default=False)
         parser.add_argument("-utc_offset", "--utc_offset", type=bool, help="utc_offset", default=False)
         parser.add_argument("-weekly", "--weekly", type=bool, help="weekly", default=False)
@@ -106,7 +107,7 @@ class Command(BaseCommand):
                 else:
                     update_data_dss_from_dss(ticker=ticker)
                     update_data_dsws_from_dsws(ticker=ticker)
-                    update_currency_price_from_dsws()
+                    # update_currency_price_from_dsws()
                     do_function("special_cases_1")
                     do_function("master_ohlcvtr_update")
                     status = "Master OHLCVTR Update"
@@ -133,7 +134,7 @@ class Command(BaseCommand):
                     status = "Daily Ingestion Update"
                     update_data_dss_from_dss(ticker=ticker)
                     update_data_dsws_from_dsws(ticker=ticker)
-                    update_currency_price_from_dsws()
+                    # update_currency_price_from_dsws()
                     do_function("special_cases_1")
                     do_function("master_ohlcvtr_update")
                     status = "Master OHLCVTR Update"
@@ -146,6 +147,10 @@ class Command(BaseCommand):
                     interest_update_from_dsws()
                     dividend_daily_update()
                     interest_daily_update()
+                    
+            if (options["currency_price"]):
+                status = "Currency Price Update"
+                update_currency_price_from_dsws()
 
             if(options["worldscope"]):      # change to weekly but only missing
                 status = "Worldscope Ingestion"

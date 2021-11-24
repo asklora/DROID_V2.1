@@ -16,7 +16,8 @@ from general.firestore_query import (
     change_null_to_zero,
     delete_firestore_universe,
     delete_firestore_user,
-    get_all_portfolio_from_firestore, 
+    get_all_portfolio_from_firestore,
+    get_all_universe_from_firestore, 
     update_to_firestore, 
     change_date_to_str, 
     get_price_data_firebase
@@ -46,28 +47,24 @@ from general.sql_query import (
 from es_logging.logger import log2es
 
 def firebase_user_delete():
-    all_user = get_all_user_core()
     user = get_user_core()
     user = user.loc[user["is_joined"] == True]
     user = user.loc[user["current_status"] == "verified"]
     user = user["id"].to_list()
+
     firebase_portfolio = get_all_portfolio_from_firestore()
     firebase_delete = firebase_portfolio.loc[~firebase_portfolio["user_id"].isin(user)]["user_id"].to_list()
-    deleted_user = all_user.loc[~all_user["id"].isin(user)]["id"].to_list()
-    print(user)
-    print(firebase_delete)
-    for user_id in deleted_user:
-        print(user_id)
-        delete_firestore_user(str(user_id))
     for user_id in firebase_delete:
-        print(user_id)
         delete_firestore_user(str(user_id))
 
 def firebase_universe_delete():
     universe = get_all_universe(active=True)
-    universe = universe.loc[universe["is_active"] == False]["ticker"].to_list()
-    print(universe)
-    for ticker in universe:
+    active_universe = universe.loc[universe["is_active"] == True]["ticker"].to_list()
+
+    firebase_universe = get_all_universe_from_firestore()
+    firebase_delete = firebase_universe.loc[~firebase_universe["ticker"].isin(active_universe)]["ticker"].to_list()
+
+    for ticker in firebase_delete:
         delete_firestore_universe(ticker)
 
 def factor_column_name_changes():
@@ -117,6 +114,7 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
 
     all_universe = all_universe.loc[~all_universe["ticker"].isin(currency["index_ticker"].to_list())]
     all_universe = all_universe.loc[~all_universe["ticker"].isin(currency["etf_ticker"].to_list())]
+    all_universe = all_universe.loc[~all_universe["ticker"].isin([".NDX"])]
     
     currency = currency[["currency_code", "country"]]
     industry = get_industry()
