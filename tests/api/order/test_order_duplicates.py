@@ -34,6 +34,13 @@ def test_duplicated_pending_buy_order(
     ticker, price = choice(tickers).values()
     bot_id: str = "CLASSIC_classic_003846"
 
+    mocker.patch(
+        "core.orders.factory.orderfactory.ActionProcessor.execute_task",
+        wraps=mock_execute_task,
+    )
+    mocker.patch("core.orders.factory.orderfactory.BaseAction.send_notification")
+    mocker.patch("core.orders.factory.orderfactory.BaseAction.send_response")
+
     # utility function to create a new order
     def create_order() -> Union[dict, None]:
         response = client.post(
@@ -74,16 +81,6 @@ def test_duplicated_pending_buy_order(
         close_market(first_order.ticker.mic)
 
     # we confirm the above order
-    mocker.patch(
-        "core.orders.factory.orderfactory.ActionProcessor.execute_task",
-        mock_execute_task
-    )
-    mocker.patch(
-        "core.orders.factory.orderfactory.BaseAction.send_notification"
-    )
-    mocker.patch(
-        "core.orders.factory.orderfactory.BaseAction.send_response"
-    )
     confirm_order_api(
         order_1.get("order_uid"),
         client,
@@ -181,6 +178,13 @@ def test_duplicated_pending_sell_order(
     ticker, price = choice(tickers).values()
     bot_id: str = "UCDC_ATM_007692"
 
+    mocker.patch(
+        "core.orders.factory.orderfactory.ActionProcessor.execute_task",
+        wraps=mock_execute_task,
+    )
+    mocker.patch("core.orders.factory.orderfactory.BaseAction.send_notification")
+    mocker.patch("core.orders.factory.orderfactory.BaseAction.send_response")
+
     response = client.post(
         path="/api/order/create/",
         data={
@@ -214,30 +218,21 @@ def test_duplicated_pending_sell_order(
     if not market_is_initially_open:
         open_market(buy_order.ticker.mic)
 
-    mocker.patch(
-        "core.orders.serializers.OrderActionSerializer.create",
-        wraps=mock_order_action_serializer,
-    )
-    mock_buy_validator = mocker.patch(
-        "core.orders.factory.orderfactory.BaseAction.send_notification"
-    )
-    mock_buy_validator = mocker.patch(
-        "core.orders.factory.orderfactory.BaseAction.send_response"
-    )
+    # we confirm the order
     confirm_order_api(
         order["order_uid"],
         client,
         authentication,
     )
 
-    position, _ = get_position_performance(buy_order)
-    assert position
+    buy_position, _ = get_position_performance(buy_order)
+    assert buy_position
 
     # we create the sell order
     sell_order_data = {
         "side": "sell",
         "ticker": buy_order.ticker,
-        "setup": '{{"position": "{0}"}}'.format(position.position_uid),
+        "setup": '{{"position": "{0}"}}'.format(buy_position.position_uid),
     }
 
     sell_response_1 = client.post(
@@ -272,6 +267,7 @@ def test_duplicated_pending_sell_order(
         mock_buy_validator.validate = mock_sell_validate(
             user=user,
             ticker=ticker,
+            position=buy_position,
             bot_id=bot_id,
         )
 

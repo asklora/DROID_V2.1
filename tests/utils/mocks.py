@@ -5,11 +5,11 @@ from core.orders.models import Order, OrderPosition
 from rest_framework import exceptions
 
 
-def mock_execute_task(payload):
-    print('---task execution mocked---')
+def mock_execute_task(payload, order_uid):
+    print("---task execution mocked---")
     return order_executor.apply(
         args=(payload,),
-        task_id=payload.order_uid,
+        task_id=order_uid,
     )
 
 
@@ -48,7 +48,7 @@ def mock_buy_validate(user, ticker, bot_id):
     is_portfolio_exist()
 
 
-def mock_sell_validate(user, ticker, position, bot_id):
+def mock_sell_validate(user, ticker, bot_id, position):
     def has_order():
         pending_order = Order.objects.filter(
             user_id=user,

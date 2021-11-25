@@ -112,4 +112,4 @@ def test_sell_order_with_conversion(user):
     wallet = Accountbalance.objects.get(user=user)
     user_balance_3 = math.floor(wallet.amount)
 
-    assert math.ceil(user_balance_2 + hkd_conversion_result) == user_balance_3
+    assert math.floor(user_balance_2 + hkd_conversion_result) == user_balance_3
