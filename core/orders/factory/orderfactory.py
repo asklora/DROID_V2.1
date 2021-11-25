@@ -102,6 +102,7 @@ class BaseAction:
         self.update_order()
         self.exchange_executor()
         self.send_response()
+        self.send_notification()
 
     def exchange_executor(self):
         ExchangeModel = apps.get_model("universe", "ExchangeMarket")
@@ -319,6 +320,7 @@ class SellActionProcessor(BaseAction):
         if self.order_in_pending():
             self.exchange_executor()
             self.send_response()
+            self.send_notification()
         else:
             super().execute()
 
