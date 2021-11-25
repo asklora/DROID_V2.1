@@ -5,10 +5,11 @@ from core.orders.models import Order, OrderPosition
 from rest_framework import exceptions
 
 
-def mock_execute_task(self, payload):
+def mock_execute_task(payload):
+    print('---task execution mocked---')
     return order_executor.apply(
         args=(payload,),
-        task_id=self.payload.order_uid,
+        task_id=payload.order_uid,
     )
 
 

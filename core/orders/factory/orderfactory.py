@@ -337,15 +337,16 @@ class ActionProcessor:
             self.raw_payload["side"] = self.validator.order.side
         if getterprice:
             self.getter_price = getterprice
-            
-    def execute_task(self,payload):
+
+    def execute_task(self, payload: dict, task_id: str):
         return order_executor.apply_async(
-            args=(payload,), task_id=self.payload.order_uid
+            args=(payload,),
+            task_id=task_id,
         )
 
     def execute(self):
         task_payload: str = json.dumps(self.raw_payload)
-        task = self.execute_task(task_payload)
+        task = self.execute_task(task_payload, self.payload.order_uid)
         self.response = {
             "action_id": task.id,
             "status": "executed",

@@ -9,8 +9,8 @@ from core.orders.models import Order
 from rest_framework import exceptions
 from tests.utils.market import check_market, close_market, open_market
 from tests.utils.mocks import (
+    mock_execute_task,
     mock_buy_validate,
-    mock_order_action_serializer,
     mock_sell_validate,
 )
 from tests.utils.order import confirm_order, confirm_order_api, get_position_performance
@@ -74,14 +74,14 @@ def test_duplicated_pending_buy_order(
         close_market(first_order.ticker.mic)
 
     # we confirm the above order
-    mock_buy_validator = mocker.patch(
-        "core.orders.factory.orderfactory.ActionProcessor.execute_task"
-        wraps=mock_execute_task,
+    mocker.patch(
+        "core.orders.factory.orderfactory.ActionProcessor.execute_task",
+        mock_execute_task
     )
-    mock_buy_validator = mocker.patch(
+    mocker.patch(
         "core.orders.factory.orderfactory.BaseAction.send_notification"
     )
-    mock_buy_validator = mocker.patch(
+    mocker.patch(
         "core.orders.factory.orderfactory.BaseAction.send_response"
     )
     confirm_order_api(
