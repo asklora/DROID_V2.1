@@ -170,16 +170,16 @@ def check_firebase_schema() -> dict:
 
 
 def check_market() -> dict:
-    def force_open_market(market: dict) -> dict:
+    def force_open_market(market: dict) -> None:
         try:
-            market: ExchangeMarket = ExchangeMarket.objects.get(
+            exchange_market: ExchangeMarket = ExchangeMarket.objects.get(
                 fin_id=market.get("fin_id")
             )
-            market.is_open = True
-            market.save()
+            exchange_market.is_open = True
+            exchange_market.save()
 
             pending_order_checker.apply(args=(market.get("currency")))
-        except:
+        except ExchangeMarket.DoesNotExist:
             print("Market not found")
 
     status: dict = {}
@@ -218,10 +218,10 @@ def check_market() -> dict:
     # if either of the market status from API doesn't match
     # the data in the db, force open it if it's closed
     if us_market_status_api == "open" and us_market_status_db != us_market_status_api:
-        force_open_market(market=us_market)
+        force_open_market(exchange_market=us_market)
 
     if hk_market_status_api == "open" and hk_market_status_db != hk_market_status_api:
-        force_open_market(market=hk_market)
+        force_open_market(exchange_market=hk_market)
 
     return {
         "us_market_api": us_market_status_api,
@@ -260,16 +260,16 @@ def check_testproject() -> dict:
 
 
 def check_asklora() -> dict:
-    # payload = {
-    #     "type": "function",
-    #     "module": "tests.healthcheck.check_asklora",
-    #     "payload": {"date": date.today()},
-    # }
     payload = {
         "type": "function",
-        "module": "core.djangomodule.crudlib.user.get_user",
-        "payload": {"username": "agustian"},
+        "module": "tests.healthcheck.check_asklora",
+        "payload": {},
     }
+    # payload = {
+    #     "type": "function",
+    #     "module": "core.djangomodule.crudlib.user.get_user",
+    #     "payload": {"username": "agustian"},
+    # }
     task = app.send_task(
         "config.celery.listener",
         args=(payload,),
