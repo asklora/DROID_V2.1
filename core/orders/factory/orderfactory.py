@@ -165,8 +165,7 @@ class BaseAction:
             "type": "send_order_message",
             "message_type": "order_filled",
             "title": "order filled",
-            "message": f"{self.validator.order.side} order {self.validator.order.qty} \
-                            stocks {self.validator.order.ticker.ticker} was executed, status filled",
+            "message": f"{self.validator.order.side} order {self.validator.order.qty} stocks {self.validator.order.ticker.ticker} was executed, status filled",
             # 'payload': payload_serializer,
             "status_code": 200,
         }
