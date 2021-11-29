@@ -4,6 +4,7 @@ from core.universe.models import Universe
 from core.user.models import User
 from core.bot.models import BotOptionType
 from django.db import IntegrityError
+import django.utils.timezone
 import uuid
 from core.djangomodule.general import generate_id, formatdigit
 from simple_history.models import HistoricalRecords
@@ -11,7 +12,7 @@ from core.services.notification import send_notification
 from bot.calculate_bot import populate_daily_profit
 from ingestion.firestore_migration import firebase_user_update
 from core.user.convert import ConvertMoney
-
+from django.utils import timezone
 class Order(BaseTimeStampModel):
     """
     Orders created by the users
@@ -143,7 +144,20 @@ class OrderPosition(BaseTimeStampModel):
         db_table = "orders_position"
         indexes = [models.Index(fields=['user_id','ticker'])]
 
-
+    def is_expired(self):
+        """[summary]
+        Check if the order is expired
+        and prevent error NoneType comparison
+        
+        Returns:
+            [type]: [bool]
+        """
+        try:
+            return self.expiry <= timezone.now().date()
+        except TypeError:
+            return False
+    
+    
     def current_return(self):
         performance = self.order_position.filter(
             position_uid=self.position_uid)

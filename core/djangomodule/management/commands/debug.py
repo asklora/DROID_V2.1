@@ -7,6 +7,7 @@ from core.services.notification import send_winner_email
 from core.services.healthcheck import check_firebase_schema, check_api, check_updater_schema, daily_health_check, check_market
 from datasource.rkd import RkdData
 from core.universe.models import Universe
+from core.orders.models import OrderPosition
 from core.bot.models import BotOptionType
 import pandas as pd
 from core.services.order_services import pending_order_checker
@@ -20,6 +21,8 @@ async def main():
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Process")
+        security = OrderPosition.objects.get(pk='05b0eee3669d404db5139f172b3a985b')
+        assert security.is_expired() == False
         # firebase_ranking_update_random()
         # ticker = list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
         #             is_active=True).exclude(Error__contains='{').values_list('ticker',flat=True))
