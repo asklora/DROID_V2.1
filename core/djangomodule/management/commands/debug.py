@@ -4,7 +4,8 @@ from django.core.management.base import BaseCommand
 from core.services.tasks import daily_hedge_user
 from core.services.exchange_services import market_task_checker
 from core.services.notification import send_winner_email
-from core.services.healthcheck import check_firebase_schema, check_api, check_updater_schema, daily_health_check, check_market
+# from core.services.healthcheck import check_firebase_schema, check_api, check_updater_schema, daily_health_check, check_market
+from core.services.healthcheck.run import run_healthcheck
 from datasource.rkd import RkdData
 from core.universe.models import Universe
 import pandas as pd
@@ -18,7 +19,8 @@ class Command(BaseCommand):
         # print(check_api())
         # print(check_updater_schema())
         # print(check_market())
-        daily_health_check.apply()
+        # daily_health_check.apply()
+        run_healthcheck.apply()
         # pending_order_checker()
         # firebase_ranking_update_random()
         # ticker = list(Universe.objects.filter(currency_code__in=["HKD","USD"], 
