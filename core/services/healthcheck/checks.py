@@ -39,7 +39,6 @@ class ApiCheck(Check):
 class FirebaseCheck(Check):
     database: Any
     collection: str
-    id_field: str
     schema: Schema
     failed_checks: List[str] = field(default_factory=list)
 
@@ -47,7 +46,9 @@ class FirebaseCheck(Check):
         collections = self.database.collection(self.collection).stream()
         documents: List[dict] = []
         for document in collections:
-            documents.append(document.to_dict())
+            document_data: dict = document.to_dict()
+            document_data["firebase_id"] = document.id
+            documents.append(document_data)
         return documents
 
     def __post_init__(self):
@@ -58,18 +59,20 @@ class FirebaseCheck(Check):
         for doc in self.get_documents():
             total += 1
             try:
-                self.schema.validate(doc)
+                document_data: dict = doc.copy()
+                del document_data["firebase_id"]
+                self.schema.validate(document_data)
                 success += 1
             except SchemaError as e:
                 failed += 1
                 error: dict = {
-                    "ticker": doc.get(self.id_field),
+                    "id": doc.get("firebase_id"),
                     "error": e,
                 }
                 logging.warning(f"{self.collection} scheme mismatch")
                 print(error)
                 self.error += str(error)
-                self.failed_checks.append(str(doc.get(self.id_field)))
+                self.failed_checks.append(str(doc.get("firebase_id")))
 
         self.data = f"{total} checked, {success} success and {failed} failed"
 
@@ -207,7 +210,7 @@ class TestProjectCheck(Check):
             result += "\n- Latest TestProject test is "
             result += f"*{self.data['status'].lower()}*"
         else:
-            result += "\n- No TestProject test runs yet today"
+            result += "\n- *No* TestProject test runs yet today"
         return result
 
 
@@ -234,7 +237,7 @@ class AskloraCheck(Check):
         result: Any = celery_result.result
         print(result)
 
-        return result
+        return result.get("data", None)
 
     def __post_init__(self):
         payload = {
@@ -258,13 +261,13 @@ class AskloraCheck(Check):
                 date_match: str = (
                     "in sync for both endpoints"
                     if today_date == date
-                    else "out of sync :warning:"
+                    else "*out of sync* :warning:"
                 )
 
                 users_match: str = (
                     "in sync "
                     if droid_users == int(users_nums)
-                    else "out of sync :warning: "
+                    else "*out of sync* :warning: "
                 )
                 users_match += (
                     f"(there are {users_nums} users in asklora database "
@@ -275,10 +278,11 @@ class AskloraCheck(Check):
                 result += f"\n- Users data in the db is {users_match}"
 
                 for key, value in api_status.items():
-                    result += f"\n- asklora {key} API is {value}"
+                    status: str = value if "up" else f"*{value}*"
+                    result += f"\n- asklora {key} API is {status}"
             else:
-                result += "\n- asklora healtcheck is not yet active :warning:"
+                result += "\n- asklora healtcheck is *not active* :warning:"
         else:
-            result = "\n- Celery is not working properly :warning:"
+            result = "\n- Celery is *not working properly* :warning:"
 
         return result

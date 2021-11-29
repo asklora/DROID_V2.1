@@ -64,13 +64,11 @@ def run_healthcheck() -> None:
             FirebaseCheck(
                 database=firebase_database,
                 collection=portfolio_collection,
-                id_field="user_id",
                 schema=FIREBASE_PORTFOLIO_SCHEMA,
             ),
             FirebaseCheck(
                 database=firebase_database,
                 collection=universe_collection,
-                id_field="ticker",
                 schema=FIREBASE_UNIVERSE_SCHEMA,
             ),
             # TestProject check
