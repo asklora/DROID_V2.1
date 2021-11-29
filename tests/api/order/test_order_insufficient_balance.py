@@ -85,7 +85,7 @@ def test_api_multiple_order_insufficient_balance(
             data={
                 "order_uid": order_uid,
                 "status": "placed",
-                "firebase_token": "",
+                "firebase_token": "test",
             },
             **authentication,
         )
@@ -105,10 +105,11 @@ def test_api_multiple_order_insufficient_balance(
         order = create_order()
         assert order
 
+        time.sleep(10)
+
         placed_order = confirm_order(order["order_uid"])
         assert order["order_uid"] == placed_order["order_uid"]
         assert placed_order["status"] == "executed"
-        time.sleep(3)
 
     ticker, price = choice(tickers).values()
     last_order = client.post(

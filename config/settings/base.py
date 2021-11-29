@@ -81,11 +81,11 @@ ADDITIONAL_APPS = [
     'drf_api_logger',
 ]
 CORE_APPS = [
+    "core.djangomodule",
     "core.bot",
     "core.services",
     "core.universe",
     "core.user",
-    "core.djangomodule",
     "core.master",
     "core.topstock",
     "core.Clients",
@@ -137,7 +137,7 @@ TEMPLATES = [
 """
 Django configuration
 """
-# WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = "config.asgi.application"
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 ROOT_URLCONF = "config.urls"

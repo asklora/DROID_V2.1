@@ -1,4 +1,5 @@
 from typing import List
+from schema import SchemaError
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from firebase_admin import firestore
@@ -151,7 +152,6 @@ class Command(BaseCommand):
 
         ranking_fails: List[str] = []
         rankings_num: int = 0
-
         for ranking in rankings:
             rankings_num += 1
             try:

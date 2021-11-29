@@ -1,6 +1,6 @@
 from core.universe.models import Currency, Universe
 from django.db import models
-
+from core.djangomodule.manager import AsyncManager
 # Create your models here.
 class BotType(models.Model):
     bot_type = models.TextField(primary_key=True)

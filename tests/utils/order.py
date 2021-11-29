@@ -3,8 +3,12 @@ from random import choice
 from typing import Tuple
 
 from core.master.models import LatestPrice
+from core.orders.factory.orderfactory import (
+    BuyOrderProcessor,
+    OrderController,
+    SellOrderProcessor,
+)
 from core.orders.models import Order, OrderPosition, PositionPerformance
-from core.orders.services import sell_position_service
 from core.universe.models import Universe
 from core.user.models import User
 from django.test.client import Client
@@ -29,6 +33,23 @@ def get_random_ticker_and_price(currency: str = "HKD") -> Tuple[str, float]:
     latest_price = price.latest_price
 
     return ticker, latest_price
+
+
+def get_position_performance(
+    order: Order,
+) -> Tuple[OrderPosition, PositionPerformance]:
+    try:
+        performance: PositionPerformance = PositionPerformance.objects.get(
+            order_uid_id=order.order_uid
+        )
+
+        position: OrderPosition = OrderPosition.objects.get(
+            pk=performance.position_uid_id,
+        )
+
+        return position, performance
+    except:
+        return None, None
 
 
 def create_buy_order(
@@ -57,23 +78,31 @@ def create_buy_order(
     )
 
 
-def create_sell_order(order: Order) -> Tuple[OrderPosition, Order]:
-    # we simulate the price change here
+def create_sell_order(order: Order) -> Order:
     latest_price: float = order.price + (order.price * 0.25)
 
-    performance: PositionPerformance = PositionPerformance.objects.get(order_uid_id=order.order_uid)
+    position, _ = get_position_performance(order)
 
-    position: OrderPosition = OrderPosition.objects.get(
-        pk=performance.position_uid_id,
+    order_payload: dict = {
+        "setup": {"position": position.position_uid},
+        "side": "sell",
+        "ticker": order.ticker,
+        "user_id": order.user_id,
+        "margin": order.margin,
+    }
+
+    controller: OrderController = OrderController()
+
+    sell_order: Order = controller.process(
+        SellOrderProcessor(
+            order_payload,
+            getterprice=MockGetterPrice(
+                price=latest_price,
+            ),
+        ),
     )
 
-    sell_position, sell_order = sell_position_service(
-        latest_price,
-        datetime.now(),
-        position.position_uid,
-    )
-
-    return sell_position, sell_order
+    return sell_order
 
 
 def confirm_order(
@@ -97,7 +126,7 @@ def confirm_order_api(order_uid: str, client: Client, authentication: dict):
         data={
             "order_uid": order_uid,
             "status": "placed",
-            "firebase_token": "",
+            "firebase_token": "test",
         },
         **authentication,
     )
@@ -109,3 +138,11 @@ def confirm_order_api(order_uid: str, client: Client, authentication: dict):
         return None
 
     return response.json()
+
+
+class MockGetterPrice:
+    def __init__(self, price) -> None:
+        self.price = price
+
+    def get_price(self, tickers) -> float:
+        return self.price

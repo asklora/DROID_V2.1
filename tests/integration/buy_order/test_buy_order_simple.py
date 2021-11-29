@@ -35,9 +35,8 @@ def test_create_simple_order(user, tickers) -> None:
     assert order.placed_at is None
     assert order.filled_at is None
     assert order.canceled_at is None
-    assert order.amount == price * 10000
     assert order.price == price
-    assert order.qty == 10000  # from order.amount divided by order.price
+    assert order.qty == 10000
 
 
 def test_create_new_buy_order_for_user(user) -> None:
@@ -46,8 +45,8 @@ def test_create_new_buy_order_for_user(user) -> None:
     """
 
     order = create_buy_order(
-        ticker="0005.HK",
-        price=1317,
+        ticker="0220.HK",
+        price=7.54,
         user_id=user.id,
         bot_id="STOCK_stock_0",
     )

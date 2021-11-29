@@ -9,7 +9,7 @@ astor==0.8.1
 astunparse==1.6.3
 async-timeout==3.0.1
 attrs==19.3.0
-autopep8==1.5.4
+autopep8==2.8.0
 backcall==0.2.0
 billiard==3.6.3.0
 beautifulsoup4==4.9.3

@@ -1,14 +1,11 @@
 import pandas as pd 
 import requests
 import cfscrape
-import json
-import ast
 import cfscrape
 from core.djangomodule.network.cloud import DroidDb
 from core.universe.models import Universe
 from core.master.models import Currency,LatestPrice
 from bs4 import BeautifulSoup as soup
-from urllib.request import urlopen as uReq
 from datetime import datetime
 from core.services.models import ErrorLog
 
@@ -65,11 +62,11 @@ def get_quote_yahoo(ticker, use_symbol=False):
             ric.last_date = datetime.now().date()
             ric.save()
             ### END SAVE DJANGO ONE BY ONE ###
-            data['ticker'].append(resp['symbol'])
+            data['ticker'].append(ric.ticker)
             data['bid'].append(resp['bid'])
             data['ask'].append(resp['ask'])
+            data['latest_price'].append(resp['regularMarketPrice'])
         df = pd.DataFrame(data)
-        print(df)
         return df
 
 

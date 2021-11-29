@@ -110,7 +110,8 @@ def delete_firestore_universe(ticker:str):
 
 def delete_firestore_user(user_id:str):
     if isinstance(user_id, int):
-        user_id = str(user_id)  # convert to string
+        user_id = str(user_id)
+        
     firebase_app = getattr(settings, "FIREBASE_STAGGING_APP",None)
     if firebase_app:
         logging.warning("UNIVERSE ARE USING STAGGING PRICE")

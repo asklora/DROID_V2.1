@@ -15,7 +15,7 @@ from django.conf import settings
 from typing import Optional,Union,Tuple
 
 
-def classic_sell_position(live_price:float, trading_day:str, 
+def classic_sell_position(live_price:float, trading_day:datetime, 
                             position:OrderPosition, apps:bool=False) -> Tuple[OrderPosition,Optional[Union[Order,None]]]:
 
                             

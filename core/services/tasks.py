@@ -90,6 +90,16 @@ app.conf.beat_schedule = {
         #     "queue":"local"
         # }
     },
+    "TradingHours": {
+        "task": "core.services.exchange_services.init_exchange_check",
+        "schedule": timedelta(seconds=60),
+        "options": {
+            "expires": 5,
+        }
+        # "options":{
+        #     "queue":"local"
+        # }
+    },
     # "USD-HEDGE": {
     #     "task": "core.services.tasks.daily_hedge",
     #     "schedule": crontab(minute=USD_CUR.hedge_schedule.minute, hour=USD_CUR.hedge_schedule.hour, day_of_week="1-5"),
