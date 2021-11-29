@@ -8,6 +8,7 @@ from django.utils import timezone
 # Base check class
 class Check(ABC):
     data: Any = None
+    result: str = ""
     error: str = ""
 
     @abstractmethod

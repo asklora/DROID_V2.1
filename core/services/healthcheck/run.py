@@ -10,7 +10,17 @@ from tests.utils.firebase_schema import (
 )
 
 from .base import HealthCheck, Market
-from .checks import ApiCheck, FirebaseCheck, MarketCheck, TestProjectCheck
+from .checks import (
+    ApiCheck,
+    AskloraCheck,
+    FirebaseCheck,
+    MarketCheck,
+    TestProjectCheck,
+)
+
+
+def send_report(result: str):
+    report_to_slack(result, channel="#healthcheck")
 
 
 @app.task(ignore_result=True)
@@ -27,6 +37,12 @@ def run_healthcheck() -> None:
     # initialize healthcheck
     healthcheck: HealthCheck = HealthCheck(
         checks=[
+            # Celery and Asklora check
+            AskloraCheck(
+                module="core.djangomodule.crudlib.healthcheck.check_asklora",
+                payload=None,
+                queue=settings.ASKLORA_QUEUE,
+            ),
             # api checks
             ApiCheck(
                 name="droid staging",
@@ -67,6 +83,4 @@ def run_healthcheck() -> None:
     )
 
     result: str = healthcheck.execute()
-
-    # print(result)
-    report_to_slack(result, channel="#healthcheck")
+    send_report(result)

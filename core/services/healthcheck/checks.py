@@ -1,11 +1,16 @@
 import logging
+import time
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Any, List
+from typing import Any, List, Union
 
 import requests
+from celery.result import AsyncResult
+from config.celery import app
 from core.services.order_services import pending_order_checker
 from core.universe.models import ExchangeMarket
+from core.user.models import User
+from django.utils.timezone import now
 from schema import Schema, SchemaError
 
 from .base import Check, Market
@@ -203,4 +208,77 @@ class TestProjectCheck(Check):
             result += f"*{self.data['status'].lower()}*"
         else:
             result += "\n- No TestProject test runs yet today"
+        return result
+
+
+@dataclass
+class AskloraCheck(Check):
+    module: str
+    payload: Union[dict, None]
+    queue: str
+
+    def get_celery_result(
+        self,
+        payload: Union[dict, None],
+    ) -> Union[dict, None]:
+        task = app.send_task(
+            "config.celery.listener",
+            args=(payload,),
+            queue=self.queue,
+        )
+        celery_result = AsyncResult(task.id, app=app)
+
+        while celery_result.state == "PENDING":
+            time.sleep(2)
+
+        result: Any = celery_result.result
+        print(result)
+
+        return result
+
+    def __post_init__(self):
+        payload = {
+            "type": "function",
+            "module": self.module,
+            "payload": self.payload,
+        }
+        self.data = self.get_celery_result(payload)
+
+    def get_result(self) -> str:
+        result: str = ""
+        if self.data:
+            result = "\n- Celery is working properly"
+
+            if {"date", "api_status", "users_num"} <= set(self.data):
+                today_date: str = str(now().date())
+                droid_users: int = len(User.objects.all())
+
+                date, api_status, users_nums = self.data.values()
+
+                date_match: str = (
+                    "in sync for both endpoints"
+                    if today_date == date
+                    else "out of sync :warning:"
+                )
+
+                users_match: str = (
+                    "in sync "
+                    if droid_users == int(users_nums)
+                    else "out of sync :warning: "
+                )
+                users_match += (
+                    f"(there are {users_nums} users in asklora database "
+                    f"and {droid_users} users in droid database)"
+                )
+
+                result += f"\n- timezones are {date_match}"
+                result += f"\n- Users data in the db is {users_match}"
+
+                for key, value in api_status.items():
+                    result += f"\n- asklora {key} API is {value}"
+            else:
+                result += "\n- asklora healtcheck is not yet active :warning:"
+        else:
+            result = "\n- Celery is not working properly :warning:"
+
         return result
