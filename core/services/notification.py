@@ -13,6 +13,7 @@ def send_to_asklora(payload: dict) -> None:
 
 
 def send_notification(username: str, title: str, body: str):
+
     payload = {
         "type": "function",
         "module": "core.djangomodule.crudlib.notification.send_notif",
@@ -28,6 +29,7 @@ def send_notification(username: str, title: str, body: str):
 def send_bulk_notification(title: str, body: str):
     # TODO: need to check bulk message
     payload = {
+
         "type": "function",
         "module": "core.djangomodule.crudlib.notification.send_notif",
         "payload": {
@@ -36,6 +38,7 @@ def send_bulk_notification(title: str, body: str):
         },
     }
     send_to_asklora(payload)
+
 
 
 def send_winner_email():

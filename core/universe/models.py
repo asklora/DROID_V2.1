@@ -387,7 +387,7 @@ class UniverseRatingDetailHistory(models.Model):
 
     class Meta:
         db_table = "universe_rating_detail_history"
-        managed = True
+        managed = False
 
 
 class UniverseExcluded(models.Model):

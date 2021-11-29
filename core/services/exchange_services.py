@@ -39,6 +39,7 @@ def market_task_checker():
 
 
 
+
 @app.task(ignore_result=True)
 def init_exchange_check(currency:list=None):
     currency_list = ["HKD", "USD"] if not currency else currency
