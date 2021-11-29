@@ -292,7 +292,9 @@ class OrderGetViews(viewsets.ViewSet):
         trans= [ order_uid.transaction_detail.get("order_uid",None) for 
                 order_uid in TransactionHistory.objects.filter(
                     balance_uid=user.user_balance,transaction_detail__event__in=["return","create"])]
-        instances = Order.objects.prefetch_related('ticker').filter(pk__in=trans).exclude(status__in=['review',None]).order_by('-created')
+        pendings = [order.order_uid for order in Order.objects.filter(user_id=user,status='pending')]
+        filtered_order = trans+pendings
+        instances = Order.objects.prefetch_related('ticker').filter(pk__in=filtered_order).order_by('-created')
         self.serialzer_class = OrderListSerializers
         return response.Response(
             OrderListSerializers(instances, many=True).data, status=status.HTTP_200_OK

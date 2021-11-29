@@ -102,6 +102,7 @@ class BaseAction:
         self.update_order()
         self.exchange_executor()
         self.send_response()
+        self.send_notification()
 
     def exchange_executor(self):
         ExchangeModel = apps.get_model("universe", "ExchangeMarket")
@@ -144,8 +145,7 @@ class BaseAction:
             "type": "send_order_message",
             "message_type": "order_pending",
             "title": "order pending",
-            "message": f"{self.validator.order.side} order {self.validator.order.qty} \
-                            stocks {self.validator.order.ticker.ticker} is received, status pending",
+            "message": f"{self.validator.order.side} order {self.validator.order.qty} stocks {self.validator.order.ticker.ticker} is received, status pending",
             # 'payload': payload_serializer,
             "status_code": 200,
         }
@@ -155,8 +155,7 @@ class BaseAction:
             "type": "send_order_message",
             "message_type": "order_cancel",
             "title": "order cancel",
-            "message": f"{self.validator.order.side} order {self.validator.order.qty} \
-                            stocks {self.validator.order.ticker.ticker} is received, status canceled",
+            "message": f"{self.validator.order.side} order {self.validator.order.qty} stocks {self.validator.order.ticker.ticker} is received, status canceled",
             # 'payload': payload_serializer,
             "status_code": 200,
         }
@@ -166,8 +165,7 @@ class BaseAction:
             "type": "send_order_message",
             "message_type": "order_filled",
             "title": "order filled",
-            "message": f"{self.validator.order.side} order {self.validator.order.qty} \
-                            stocks {self.validator.order.ticker.ticker} was executed, status filled",
+            "message": f"{self.validator.order.side} order {self.validator.order.qty} stocks {self.validator.order.ticker.ticker} was executed, status filled",
             # 'payload': payload_serializer,
             "status_code": 200,
         }
@@ -176,11 +174,14 @@ class BaseAction:
         return self.validator.order.status == "pending"
 
     def send_notification(self):
-        return firebase_send_notification(
-            self.validator.order.user_id.username,
-            self.response.get("title"),
-            self.response.get("message"),
-        )
+        message=self.response.get('message_type',None)
+        is_err = message == 'order_error'
+        if not is_err:
+            return firebase_send_notification(
+                self.validator.order.user_id.username,
+                self.response.get("title"),
+                self.response.get("message"),
+            )
 
     def send_response(self):
         return asyncio.run(
@@ -319,6 +320,7 @@ class SellActionProcessor(BaseAction):
         if self.order_in_pending():
             self.exchange_executor()
             self.send_response()
+            self.send_notification()
         else:
             super().execute()
 
