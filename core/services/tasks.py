@@ -255,8 +255,8 @@ app.conf.beat_schedule = {
             }
     },
     "HealthCheck": {
-        "task": "core.services.healthcheck.daily_health_check",
-        "schedule": crontab(minute=5, hour=4),
+        "task": "core.services.healthcheck.run.run_healthcheck",
+        "schedule": timedelta(minutes=15),
         "options": {
             "expires": 5*60,
         },
