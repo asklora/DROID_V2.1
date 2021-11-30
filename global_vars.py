@@ -31,6 +31,9 @@ DSWS_PASSWORD="LOTUS239"
 DSWS_USERNAME2="ZLOL003"
 DSWS_PASSWORD2="YOUNG862"
 
+DSS_USERNAME3 = "9029924" # Backup
+DSS_PASSWORD3 = "157UHX1g"
+
 DSS_USERNAME2 = "9029345" # Corporate Action
 DSS_PASSWORD2 = "AskLORA2" 
 
@@ -120,7 +123,7 @@ X_columns = ["kurt_0_504", "vix_value",
     "rs_vol_0_21", "rs_vol_21_42", "rs_vol_42_63", "rs_vol_63_126", "rs_vol_126_252", "rs_vol_252_504", 
     "total_returns_0_1", "total_returns_0_21", "total_returns_0_63", "total_returns_21_126", "total_returns_21_231",
     "atm_volatility_spot_x", "atm_volatility_one_year_x", "atm_volatility_infinity_x", 
-    "total_returns_0_21_x", "total_returns_0_63_x", "total_returns_21_126_x", "total_returns_21_231_x", 
+    "total_returns_0_21_x", "total_returns_0_63_x", "total_76returns_21_126_x", "total_returns_21_231_x",
     "c2c_vol_0_21_x", "c2c_vol_21_42_x", "c2c_vol_42_63_x", "c2c_vol_63_126_x", "c2c_vol_126_252_x", "c2c_vol_252_504_x", 
     "usinter3", "usgbill3", "emibor3", "jpmshort", "emgbond", "chgbond",
     "fred_data", "eps1fd12", "eps1tr12", "cap1fd12", "fast_d", "fast_k", "rsi"]

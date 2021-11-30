@@ -329,7 +329,7 @@ def update_data_dsws_from_dsws(ticker=None, currency_code=None, history=False, m
 def update_vix_from_dsws(vix_id=None, history=False):
     print("{} : === Vix Start Ingestion ===".format(datetimeNow()))
     end_date = dateNow()
-    start_date = backdate_by_day(3)
+    start_date = backdate_by_day(0)
     if(history):
         start_date = droid_start_date()
     universe = get_vix(vix_id=vix_id)
@@ -381,7 +381,7 @@ def update_fundamentals_score_from_dsws(*args):
         result = result.drop(columns=["index"])
         if(len(universe)) > 0 :
             upsert_data_to_database(result, get_fundamental_score_table_name(), "ticker", how="update", Text=True)
-            result["trading_day"] = find_nearest_specific_days(days=0)
+            result["trading_day"] = find_nearest_specific_days(days=0)      # label timestamp as Sunday
             result = uid_maker(result, uid="uid", ticker="ticker", trading_day="trading_day", date=True)
             upsert_data_to_database(result, get_data_fundamental_score_history_table_name(), "uid", how="update", Text=True)
             report_to_slack("{} : === Fundamentals Score Updated ===".format(datetimeNow()))
@@ -594,18 +594,20 @@ def score_update_scale(fundamentals, calculate_column, universe_currency_code, f
     factor_rank = get_factor_rank(factor_rank_name)
     factor_rank = factor_rank.merge(factor_formula, left_on=['factor_name'], right_index=True, how='outer')
 
+    for i in set(factor_rank['group'].dropna().unique()):
+        keep_rank = factor_rank.loc[factor_rank["group"].isnull()].copy()
+        keep_rank["group"] = i
+        factor_rank = factor_rank.append(keep_rank, ignore_index=True)
+    factor_rank = factor_rank.dropna(subset=["group"])
+
     # for score not included in backtest (earnings_pred & wts_rating)
     factor_rank.loc[factor_rank['factor_name']=='earnings_pred', ['group', 'long_large','pred_z','factor_weight']] = \
         factor_rank.loc[factor_rank['factor_name']=='fwd_ey', ['group', 'long_large','pred_z','factor_weight']].values
     if factor_rank_name[:6] == 'weekly':
-        factor_rank.loc[factor_rank['factor_name'].isin(["wts_rating"]), ['group', 'long_large','pred_z','factor_weight']] = \
-            ['USD', True, 2, 2]
+        factor_rank.loc[factor_rank['factor_name'].isin(["wts_rating"]), 'long_large'] = True
+        factor_rank.loc[factor_rank['factor_name'].isin(["wts_rating"]), 'pred_z'] = 2
+        factor_rank.loc[factor_rank['factor_name'].isin(["wts_rating"]), 'factor_weight'] = 2
     factor_rank = factor_rank.dropna(subset=['pillar','pred_z'], how='any')
-
-    for i in set(universe_currency_code) - set(factor_rank['group'].unique()):
-        replace_rank = factor_rank.loc[factor_rank['group'] == 'USD'].copy()
-        replace_rank['group'] = i
-        factor_rank = factor_rank.append(replace_rank, ignore_index=True)
 
     # 2.1: use USD -> other currency
     replace_rank = factor_rank.loc[factor_rank['group'] == 'USD'].copy()
@@ -803,130 +805,135 @@ def update_fundamentals_quality_value(ticker=None, currency_code=None):
 
     # --------------------------------- Data Ingestion & Factor Calculation ---------------------------------------
 
-    # Ingest 0: table formula for calculation
-    factor_formula = get_factor_calculation_formula()       # formula for ratio calculation
-    ingestion_source = get_ingestion_name_source()          # ingestion name & source
+    try:
+        # Ingest 0: table formula for calculation
+        factor_formula = get_factor_calculation_formula()       # formula for ratio calculation
+        ingestion_source = get_ingestion_name_source()          # ingestion name & source
 
-    # Ingest 1: DLPA & Universe
-    print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
-    universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
-    universe_rating = universe_rating[["ticker", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
+        # Ingest 1: DLPA & Universe
+        print("{} : === Fundamentals Quality & Value Start Calculate ===".format(datetimeNow()))
+        universe_rating = get_universe_rating(ticker=ticker, currency_code=currency_code)
+        universe_rating = universe_rating[["ticker", "wts_rating", "dlp_1m", "dlp_3m", "wts_rating2", "classic_vol"]]
 
-    # if DLPA results has problem will not using DLPA
-    for col in ['dlp_1m', 'wts_rating']:
-        if any(universe_rating[[col]].value_counts()/len(universe_rating) > .95):
-            universe_rating[[col]] = np.nan
+        # if DLPA results has problem will not using DLPA
+        for col in ['dlp_1m', 'wts_rating']:
+            if any(universe_rating[[col]].value_counts()/len(universe_rating) > .95):
+                universe_rating[[col]] = np.nan
 
-    # Ingest 2: fundamental score (Update: for mkt_cap/E/S/G only)
-    print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
-    fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
-    fundamentals_score = fundamentals_score.filter(['ticker', 'mkt_cap','social','governance','environment'])
-    print(fundamentals_score)
+        # Ingest 2: fundamental score (Update: for mkt_cap/E/S/G only)
+        print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
+        fundamentals_score = get_fundamentals_score(ticker=ticker, currency_code=currency_code)
+        fundamentals_score = fundamentals_score.filter(['ticker', 'mkt_cap','social','governance','environment'])
+        print(fundamentals_score)
 
-    # Ingest 3: worldscope_summary & data_ibes_summary (Update: for mkt_cap/E/S/G only)
-    print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
-    quarter_col = factor_formula.loc[factor_formula['name'].str[-3:]=='_1q', 'field_denom'].to_list()
-    quarter_col = [i for x in quarter_col for i in x.split(' ')  if not any(['-' in i, '+' in i, '*' in i])]
-    year_col = factor_formula.loc[factor_formula['name'].str[-4:]=='_1yr', 'field_denom'].to_list()
-    year_col = [i for x in year_col for i in x.split(' ')  if not any(['-' in i, '+' in i, '*' in i])]
-    ibes_col = ingestion_source.loc[ingestion_source['source']=='ibes','our_name'].to_list()
-    ws_col = ingestion_source.loc[ingestion_source['source']=='ws','our_name'].to_list()
-    ws_latest = get_worldscope_summary_latest(quarter_col=list(set(quarter_col) & set(ws_col)), year_col=list(set(year_col) & set(ws_col)))
-    ws_latest = ws_latest.drop(columns=['mkt_cap'])     # use daily mkt_cap from fundamental_score
-    print(ws_latest)
-    ibes_latest = get_ibes_monthly_latest(quarter_col=list(set(quarter_col) & set(ibes_col)), year_col=list(set(year_col) & set(ibes_col)))
-    print(ibes_latest)
+        # Ingest 3: worldscope_summary & data_ibes_summary (Update: for mkt_cap/E/S/G only)
+        print("=== Calculating Fundamentals Value & Fundamentals Quality ===")
+        quarter_col = factor_formula.loc[factor_formula['name'].str[-3:]=='_1q', 'field_denom'].to_list()
+        quarter_col = [i for x in quarter_col for i in x.split(' ')  if not any(['-' in i, '+' in i, '*' in i])]
+        year_col = factor_formula.loc[factor_formula['name'].str[-4:]=='_1yr', 'field_denom'].to_list()
+        year_col = [i for x in year_col for i in x.split(' ')  if not any(['-' in i, '+' in i, '*' in i])]
+        ibes_col = ingestion_source.loc[ingestion_source['source']=='ibes','our_name'].to_list()
+        ws_col = ingestion_source.loc[ingestion_source['source']=='ws','our_name'].to_list()
+        ws_latest = get_worldscope_summary_latest(quarter_col=list(set(quarter_col) & set(ws_col)), year_col=list(set(year_col) & set(ws_col)))
+        ws_latest = ws_latest.drop(columns=['mkt_cap'])     # use daily mkt_cap from fundamental_score
+        print(ws_latest)
+        ibes_latest = get_ibes_monthly_latest(quarter_col=list(set(quarter_col) & set(ibes_col)), year_col=list(set(year_col) & set(ibes_col)))
+        print(ibes_latest)
 
-    # Ingest 4.1: get last trading price for factor calculation
-    close_price = get_last_close_industry_code(ticker=ticker, currency_code=currency_code)
-    print(close_price)
+        # Ingest 4.1: get last trading price for factor calculation
+        close_price = get_last_close_industry_code(ticker=ticker, currency_code=currency_code)
+        print(close_price)
 
-    # Ingest 4.2: get volatility
-    vol = score_update_vol_rs(list_of_start_end=[[0,1]])     # calculate RS volatility -> list_of_start_end in ascending sequence (start_month, end_month)
-    print(vol)
+        # Ingest 4.2: get volatility
+        vol = score_update_vol_rs(list_of_start_end=[[0,1]])     # calculate RS volatility -> list_of_start_end in ascending sequence (start_month, end_month)
+        print(vol)
 
-    # Ingest 4.3: get skewness
-    skew = score_update_skew(year=1)     # calculate RS volatility -> list_of_start_end in ascending sequence (start_month, end_month)
-    print(skew)
+        # Ingest 4.3: get skewness
+        skew = score_update_skew(year=1)     # calculate RS volatility -> list_of_start_end in ascending sequence (start_month, end_month)
+        print(skew)
 
-    # Ingest 4.4: get different period stock return
-    tri = score_update_stock_return(list_of_start_end_month=[[0,1],[2,6],[7,12]], list_of_start_end_week=[[0,1],[1,2],[2,4]])
-    print(tri)
+        # Ingest 4.4: get different period stock return
+        tri = score_update_stock_return(list_of_start_end_month=[[0,1],[2,6],[7,12]], list_of_start_end_week=[[0,1],[1,2],[2,4]])
+        print(tri)
 
-    #Ingest 4.5:  get last week average volume
-    volume1 = get_specific_volume_avg(backdate_by_month(0), avg_days=7).set_index('ticker')
-    volume2 = get_specific_volume_avg(backdate_by_month(0), avg_days=91).set_index('ticker')
-    volume = (volume1/volume2).reset_index()
-    print(volume)
+        #Ingest 4.5:  get last week average volume
+        volume1 = get_specific_volume_avg(backdate_by_month(0), avg_days=7).set_index('ticker')
+        volume2 = get_specific_volume_avg(backdate_by_month(0), avg_days=91).set_index('ticker')
+        volume = (volume1/volume2).reset_index()
+        print(volume)
 
-    # Ingest 5: get earning_prediction from ai_value
-    pred_mean = get_ai_value_pred_final()
-    print(pred_mean)
+        # Ingest 5: get earning_prediction from ai_value
+        pred_mean = get_ai_value_pred_final()
+        print(pred_mean)
 
-    # merge scores used for calculation
-    fundamentals_score = close_price.merge(fundamentals_score, how="left", on="ticker")
-    fundamentals_score = fundamentals_score.merge(ws_latest, how="left", on="ticker")
-    fundamentals_score = fundamentals_score.merge(ibes_latest, how="left", on="ticker")
-    fundamentals_score = fundamentals_score.merge(vol, how="left", on="ticker")
-    fundamentals_score = fundamentals_score.merge(skew, how="left", on="ticker")
-    fundamentals_score = fundamentals_score.merge(pred_mean, how="left", on="ticker")
-    fundamentals_score = fundamentals_score.merge(tri, how="left", on="ticker")
-    fundamentals_score = fundamentals_score.merge(volume, how="left", on="ticker")
+        # merge scores used for calculation
+        fundamentals_score = close_price.merge(fundamentals_score, how="left", on="ticker")
+        fundamentals_score = fundamentals_score.merge(ws_latest, how="left", on="ticker")
+        fundamentals_score = fundamentals_score.merge(ibes_latest, how="left", on="ticker")
+        fundamentals_score = fundamentals_score.merge(vol, how="left", on="ticker")
+        fundamentals_score = fundamentals_score.merge(skew, how="left", on="ticker")
+        fundamentals_score = fundamentals_score.merge(pred_mean, how="left", on="ticker")
+        fundamentals_score = fundamentals_score.merge(tri, how="left", on="ticker")
+        fundamentals_score = fundamentals_score.merge(volume, how="left", on="ticker")
 
-    # calculate ratios refering to table X
-    fundamentals_score = score_update_factor_ratios(fundamentals_score, factor_formula, ingestion_source)
+        # calculate ratios refering to table X
+        fundamentals_score = score_update_factor_ratios(fundamentals_score, factor_formula, ingestion_source)
 
-    # ------------------------------------ Factor Score Scaling ------------------------------------------
+        # ------------------------------------ Factor Score Scaling ------------------------------------------
 
-    factor_formula = factor_formula.set_index('name')
-    calculate_column = list(factor_formula.loc[factor_formula["scaler"].notnull()].index)
-    calculate_column = sorted(set(calculate_column))
-    calculate_column += ["environment", "social", "governance"]
+        factor_formula = factor_formula.set_index('name')
+        calculate_column = list(factor_formula.loc[factor_formula["scaler"].notnull()].index)
+        calculate_column = sorted(set(calculate_column))
+        calculate_column += ["environment", "social", "governance"]
 
-    fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
-    fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
+        fundamentals = fundamentals_score[["ticker", "currency_code", "industry_code"] + calculate_column]
+        fundamentals = fundamentals.replace([np.inf, -np.inf], np.nan).copy()
 
-    # add DLPA scores
-    fundamentals = fundamentals.merge(universe_rating, on="ticker", how="left")
-    print(fundamentals)
-
-    # Scale original fundamental score
-    universe_currency_code = get_active_universe()['currency_code'].unique()
-    fundamentals_factors_scores_col_diff = ["fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "ai_score", "ai_score2"]
-    fundamentals_1w, fundamentals_details_1w = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='weekly1')
-    fundamentals_1w = fundamentals_1w[fundamentals_factors_scores_col_diff]  # for only scores
-    fundamentals_1m, fundamentals_details_1m = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='monthly1')
-
-    # details history table = average score of 1w + 1m
-    universe_rating_detail_history = (fundamentals_details_1w + fundamentals_details_1m)/2
-    universe_rating_detail_history["trading_day"] = dateNow()
-    universe_rating_detail_history = uid_maker(universe_rating_detail_history.reset_index(), uid="uid", ticker="ticker", trading_day="trading_day")
-
-    fundamentals = fundamentals_1w.merge(fundamentals_1m, left_index=True, right_index=True, suffixes=('_weekly1','_monthly1'))
-    for i in ['ai_score', 'ai_score2']:  # currently we use simple average of weekly score & monthly score
-        fundamentals[i] = (fundamentals[i+'_weekly1'] + fundamentals[i+'_monthly1'])/2
-    fundamentals = fundamentals.reset_index()
-    fundamentals = score_update_final_scale(fundamentals)
-    fundamentals["trading_day"] = dateNow()
-    fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
-    universe_rating_history = fundamentals.copy()
-
-    print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
-    if(len(fundamentals)) > 0 :
+        # add DLPA scores
+        fundamentals = fundamentals.merge(universe_rating, on="ticker", how="left")
         print(fundamentals)
-        # result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "esg",
-        #                        "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
-        result = fundamentals.copy()
-        result["updated"] = dateNow()
-        print(result)
-        print(universe_rating_history)
-        upsert_data_to_database(result, get_universe_rating_table_name(), "ticker", how="update", Text=True)
-        upsert_data_to_database(fundamentals, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
-        upsert_data_to_database(universe_rating_detail_history, get_universe_rating_detail_history_table_name(), "uid", how="update", Text=True)
-        delete_data_on_database(get_universe_rating_table_name(), f"ticker is not null", delete_ticker=True)
-        delete_data_on_database(get_universe_rating_history_table_name(), f"ticker is not null", delete_ticker=True)
-        delete_data_on_database(get_universe_rating_detail_history_table_name(), f"ticker is not null", delete_ticker=True)
-        report_to_slack("{} : === Universe Fundamentals Quality & Value Updated ===".format(datetimeNow()))
+
+        # Scale original fundamental score
+        universe_currency_code = get_active_universe()['currency_code'].unique()
+        fundamentals_factors_scores_col_diff = ["fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "ai_score", "ai_score2"]
+        fundamentals_1w, fundamentals_details_1w = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='weekly1')
+        fundamentals_1w = fundamentals_1w[fundamentals_factors_scores_col_diff]  # for only scores
+        fundamentals_1m, fundamentals_details_1m = score_update_scale(fundamentals, calculate_column, universe_currency_code, factor_formula, factor_rank_name='monthly1')
+
+        # details history table = average score of 1w + 1m
+        universe_rating_detail_history = (fundamentals_details_1w + fundamentals_details_1m)/2
+        universe_rating_detail_history["trading_day"] = dateNow()
+        universe_rating_detail_history = uid_maker(universe_rating_detail_history.reset_index(), uid="uid", ticker="ticker", trading_day="trading_day")
+
+        fundamentals = fundamentals_1w.merge(fundamentals_1m, left_index=True, right_index=True, suffixes=('_weekly1','_monthly1'))
+        for i in ['ai_score', 'ai_score2']:  # currently we use simple average of weekly score & monthly score
+            fundamentals[i] = (fundamentals[i+'_weekly1'] + fundamentals[i+'_monthly1'])/2
+        fundamentals = fundamentals.reset_index()
+        fundamentals = score_update_final_scale(fundamentals)
+        fundamentals["trading_day"] = dateNow()
+        fundamentals = uid_maker(fundamentals, uid="uid", ticker="ticker", trading_day="trading_day")
+        universe_rating_history = fundamentals.copy()
+
+        print("=== Calculate Fundamentals Value & Fundamentals Quality DONE ===")
+        if(len(fundamentals)) > 0 :
+            print(fundamentals)
+            # result = fundamentals[["ticker", "fundamentals_value", "fundamentals_quality", "fundamentals_momentum", "fundamentals_extra", "esg",
+            #                        "ai_score", "ai_score2"]].merge(universe_rating, how="left", on="ticker")
+            result = fundamentals.copy()
+            result["updated"] = dateNow()
+            print(result)
+            print(universe_rating_history)
+            upsert_data_to_database(result, get_universe_rating_table_name(), "ticker", how="update", Text=True)
+            upsert_data_to_database(fundamentals, get_universe_rating_history_table_name(), "uid", how="update", Text=True)
+            upsert_data_to_database(universe_rating_detail_history, get_universe_rating_detail_history_table_name(), "uid", how="update", Text=True)
+            delete_data_on_database(get_universe_rating_table_name(), f"ticker is not null", delete_ticker=True)
+            delete_data_on_database(get_universe_rating_history_table_name(), f"ticker is not null", delete_ticker=True)
+            delete_data_on_database(get_universe_rating_detail_history_table_name(), f"ticker is not null", delete_ticker=True)
+            report_to_slack("{} : === Universe Fundamentals Quality & Value Updated ===".format(datetimeNow()))
+    except Exception as e:
+        error_msg = "{} : === ERROR in Fundamentals Quality & Value Updated: {} ===".format(datetimeNow(), e)
+        print(error_msg)
+        report_to_slack(error_msg)
 
 @log2es("ingestion")
 def dividend_updated_from_dsws(ticker=None, currency_code=None):
@@ -937,7 +944,7 @@ def dividend_updated_from_dsws(ticker=None, currency_code=None):
     filter_field = ["UDDE"]
     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
     universe = universe[["ticker"]]
-    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field, use_ticker=True, dividend=True, split_number=1)
+    result, error_ticker = get_data_history_from_dsws(start_date, end_date, universe, identifier, filter_field)
     print(result)
     if(len(result)) > 0 :
         result = result.rename(columns={"UDDE": "amount", "index":"ex_dividend_date"})
@@ -952,7 +959,6 @@ def dividend_updated_from_dsws(ticker=None, currency_code=None):
 @update_ingestion_update_time(get_data_interest_table_name())
 @log2es("ingestion")
 def interest_update_from_dsws():
-    return
     print("{} : === Interest Update ===".format(datetimeNow()))
     universe = get_data_by_table_name(get_data_interest_table_name())
     print(universe)
