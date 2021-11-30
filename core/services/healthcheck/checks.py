@@ -38,6 +38,7 @@ class ApiCheck(Check):
 @dataclass
 class FirebaseCheck(Check):
     database: Any
+    model: Any
     collection: str
     schema: Schema
     failed_checks: List[str] = field(default_factory=list)
@@ -50,6 +51,30 @@ class FirebaseCheck(Check):
             document_data["firebase_id"] = document.id
             documents.append(document_data)
         return documents
+
+    def log_error(self, error: SchemaError, item: dict) -> None:
+        item_id: Union[str, None] = item.get("firebase_id", None)
+        error_data: dict = {
+            "id": item_id,
+            "error": error,
+        }
+        logging.warning(
+            f"document {item_id} in {self.collection} has scheme mismatch",
+        )
+        print(str(error))
+        self.error += str(error_data)
+
+    def check_database(self, item: dict):
+        """
+        Check if the item is not in the database
+        and delete it from firebase
+        """
+        item_id: Union[str, None] = item.get("firebase_id", None)
+        if not self.model.objects.filter(pk=item_id).exists():
+            logging.warning(f"{item_id} does not exist in the database")
+            self.database.collection(self.collection).document(
+                item_id,
+            ).delete()
 
     def __post_init__(self):
         total: int = 0
@@ -65,14 +90,9 @@ class FirebaseCheck(Check):
                 success += 1
             except SchemaError as e:
                 failed += 1
-                error: dict = {
-                    "id": doc.get("firebase_id"),
-                    "error": e,
-                }
-                logging.warning(f"{self.collection} scheme mismatch")
-                print(error)
-                self.error += str(error)
                 self.failed_checks.append(str(doc.get("firebase_id")))
+                self.log_error(error=e, item=doc)
+                self.check_database(item=doc)
 
         self.data = f"{total} checked, {success} success and {failed} failed"
 
