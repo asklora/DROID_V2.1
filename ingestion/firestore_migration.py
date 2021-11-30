@@ -186,6 +186,8 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
         curr_details["factor_name"] = curr_details["factor_name"].map(name_map)
 
         # rules for positive / negative factors
+        curr_details['score'] = pd.to_numeric(curr_details['score'])
+        curr_details = curr_details.dropna(how='any')
         curr_des = curr_details.groupby(['factor_name'])['score'].agg(['mean','std'])
         curr_pos = (curr_des['mean'] + 0.4*curr_des['std']).to_dict()       # positive = factors > mean + 0.4std
         curr_neg = (curr_des['mean'] - 0.4*curr_des['std']).to_dict()       # negative = factors < mean - 0.4std
