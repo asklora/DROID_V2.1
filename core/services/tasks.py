@@ -1,4 +1,5 @@
 # PYTHON TOOLS
+from core.djangomodule.general import is_end_of_month
 from core.services.notification import send_winner_email
 from ingestion.data_from_dsws import update_ibes_currency_from_dsws
 import time as tm
@@ -818,18 +819,19 @@ def daily_hedge(currency=None, **options):
 
 @app.task()
 def season_update_task():
-    try:
-     update_monthly_deposit()
-    except Exception as e:
-        err = ErrorLog.objects.create_log(
-            error_description=f"===  ERROR IN UPDATE SEASON ===", error_message=str(e))
-        err.send_report_error()
-    try:
-     send_winner_email()
-    except Exception as e:
-        err = ErrorLog.objects.create_log(
-            error_description=f"===  ERROR IN UPDATE SENDING WINNER EMAIL ===", error_message=str(e))
-        err.send_report_error()
+    if is_end_of_month():
+        try:
+            update_monthly_deposit()
+        except Exception as e:
+            err = ErrorLog.objects.create_log(
+                error_description=f"===  ERROR IN UPDATE SEASON ===", error_message=str(e))
+            err.send_report_error()
+        try:
+            send_winner_email()
+        except Exception as e:
+            err = ErrorLog.objects.create_log(
+                error_description=f"===  ERROR IN UPDATE SENDING WINNER EMAIL ===", error_message=str(e))
+            err.send_report_error()
 
 
 
