@@ -154,6 +154,7 @@ def order(authentication, client, user, tickers) -> Union[dict, None]:
         "price": price,
         "bot_id": "STOCK_stock_0",
         "amount": 10000,
+        'margin': 2,
         "user": user.id,
         "side": "buy",
     }
