@@ -122,7 +122,7 @@ class Command(BaseCommand):
                     interest_daily_update()
             if (options["ws"]):
                 ticker = get_universe_by_region(region_id=["ws"])["ticker"].to_list()
-                if(options["firebase_update"]):
+                if(options["ai_rating"]):
                     status = "Fundamentals Ingestion"
                     update_daily_fundamentals_score_from_dsws(ticker=ticker)
                     status = "Update AI Score"
