@@ -4,7 +4,8 @@ from django.apps import apps
 import pandas as pd
 
 
-def send_to_asklora(payload: dict) -> None:
+def send_to_asklora(payload: dict,mock=False) -> None:
+    if mock: return
     app.send_task(
         "config.celery.listener",
         args=(payload,),
@@ -77,4 +78,4 @@ def send_winner_email():
         },
     }
 
-    # send_to_asklora(payload=payload)
+    send_to_asklora(payload=payload)
