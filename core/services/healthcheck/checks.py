@@ -112,10 +112,8 @@ class FirebaseCheck(Check):
 
 @dataclass
 class MarketCheck(Check):
-    """
-    Since it involves calling an API, I decided it's better to run the check
-    for all markets at once, to minimize API calls.
-    """
+    # Since it involves calling an API, I decided it's better to run the check
+    # for all markets at once, to minimize API calls.
 
     tradinghours_token: str
     markets: List[Market] = field(default_factory=list)

@@ -39,9 +39,14 @@ def test_sending_winner_email(mocker) -> None:
         winners: List[SeasonHistory] = list(
             SeasonHistory.objects.filter(season_id=last_season, rank__gt=0)
         )
+        print(f"\nThere are {len(winners)} winners")
 
         # check if the number of the winners matches the payload data
         assert len(winners) == len(payload["payload"]["winner"])
+
+        # check if the winners matched
+        for index, winner in enumerate(winners):
+            assert winner.user_id.email == payload["payload"]["winner"][index]
 
     # we mock the payload sending to asklora
     payload_sent = mocker.patch(
@@ -54,4 +59,3 @@ def test_sending_winner_email(mocker) -> None:
 
     # check if the payload is correct
     payload_sent.assert_called()
-
