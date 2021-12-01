@@ -26,6 +26,9 @@ logger = logger.ESLogger()
 logger.log("Ingestion", "update_data_dsws_from_dsws", time.time(), "1337.HK", "HKD", time.time(), "0", str(errorObj))
 ```
 
+**Notes:**
+ The id field of the log is the id of the task, not the log.
+
 **Requirements**
 ```
 Flask==2.0.2
