@@ -57,6 +57,7 @@ def send_winner_email():
         )
     )
     data = pd.DataFrame(winners)
+    data = data.head( len(data) if len(data) < 50 else 50 )
     data = data.rename(
         columns={
             "user_id__email": "email",
@@ -76,4 +77,4 @@ def send_winner_email():
         },
     }
 
-    send_to_asklora(payload=payload)
+    # send_to_asklora(payload=payload)
