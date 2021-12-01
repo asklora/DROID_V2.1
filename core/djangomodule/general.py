@@ -29,7 +29,7 @@ def is_end_of_month():
     date = timezone.now().date()
     end_month = date.replace(day = calendar.monthrange(date.year, date.month)[1])
     tommorow_date = end_month+ timedelta(days=1)
-    month_changed = int(tommorow_date.strftime("%d")) == 1
+    return int(tommorow_date.strftime("%d")) == 1
 
 
 class NeedRegister(APIException):
