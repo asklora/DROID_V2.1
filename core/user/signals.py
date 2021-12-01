@@ -2,7 +2,6 @@ from .models import TransactionHistory, Accountbalance,User,UserDepositHistory
 from django.db.models.signals import post_save, pre_save,post_delete
 from django.dispatch import receiver
 from core.djangomodule.general import formatdigit
-from bot.calculate_bot import update_monthly_deposit
 
 
 @receiver(post_save, sender=TransactionHistory)

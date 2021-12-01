@@ -12,6 +12,7 @@ from drf_spectacular.utils import (
     OpenApiParameter,
 )
 from core.Clients.models import UserClient
+from core.user.models import TransactionHistory
 from .models import OrderPosition, PositionPerformance, Order
 from .serializers import (
     PositionSerializer,
@@ -287,7 +288,13 @@ class OrderGetViews(viewsets.ViewSet):
         # more customizations
     )
     def list(self, request):
-        instances = Order.objects.prefetch_related('ticker').filter(user_id=request.user).exclude(status__in=['review',None]).order_by('-created')
+        user =request.user
+        trans= [ order_uid.transaction_detail.get("order_uid",None) for 
+                order_uid in TransactionHistory.objects.filter(
+                    balance_uid=user.user_balance,transaction_detail__event__in=["return","create"])]
+        pendings = [order.order_uid for order in Order.objects.filter(user_id=user,status='pending')]
+        filtered_order = trans+pendings
+        instances = Order.objects.prefetch_related('ticker').filter(pk__in=filtered_order).order_by('-created')
         self.serialzer_class = OrderListSerializers
         return response.Response(
             OrderListSerializers(instances, many=True).data, status=status.HTTP_200_OK

@@ -132,11 +132,12 @@ def authentication(client, user) -> Union[dict, None]:
     response_body = response.json()
     return {"HTTP_AUTHORIZATION": "Bearer " + response_body["access"]}
 
+
 @pytest.fixture
 def tickers() -> List[dict]:
     tickers: List = []
 
-    for i in range(10):
+    for i in range(5):
         # get random ticker
         ticker, price = get_random_ticker_and_price()
         tickers.append({"ticker": ticker, "price": price})
@@ -153,6 +154,7 @@ def order(authentication, client, user, tickers) -> Union[dict, None]:
         "price": price,
         "bot_id": "STOCK_stock_0",
         "amount": 10000,
+        'margin': 2,
         "user": user.id,
         "side": "buy",
     }

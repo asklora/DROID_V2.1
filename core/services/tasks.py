@@ -1,4 +1,5 @@
 # PYTHON TOOLS
+from core.services.notification import send_winner_email
 from ingestion.data_from_dsws import update_ibes_currency_from_dsws
 import time as tm
 import pandas as pd
@@ -29,7 +30,7 @@ from channels_presence.models import Presence
 from django.core.mail import EmailMessage
 from django.conf import settings
 from datasource.rkd import RkdData
-from bot.calculate_bot import populate_daily_profit
+from bot.calculate_bot import populate_daily_profit, update_monthly_deposit
 # RAW SQL QUERY MODULE
 from general.sql_process import do_function
 # SLACK REPORT
@@ -82,6 +83,16 @@ app.conf.beat_schedule = {
     },
     "prune-presence": {
         "task": "core.services.tasks.channel_prune",
+        "schedule": timedelta(seconds=60),
+        "options": {
+            "expires": 5,
+        }
+        # "options":{
+        #     "queue":"local"
+        # }
+    },
+    "TradingHours": {
+        "task": "core.services.exchange_services.init_exchange_check",
         "schedule": timedelta(seconds=60),
         "options": {
             "expires": 5,
@@ -244,8 +255,8 @@ app.conf.beat_schedule = {
             }
     },
     "HealthCheck": {
-        "task": "core.services.healthcheck.daily_health_check",
-        "schedule": crontab(minute=5, hour=4),
+        "task": "core.services.healthcheck.run.run_healthcheck",
+        "schedule": timedelta(minutes=15),
         "options": {
             "expires": 5*60,
         },
@@ -805,7 +816,20 @@ def daily_hedge(currency=None, **options):
 
 
 
-
+@app.task()
+def season_update_task():
+    try:
+     update_monthly_deposit()
+    except Exception as e:
+        err = ErrorLog.objects.create_log(
+            error_description=f"===  ERROR IN UPDATE SEASON ===", error_message=str(e))
+        err.send_report_error()
+    try:
+     send_winner_email()
+    except Exception as e:
+        err = ErrorLog.objects.create_log(
+            error_description=f"===  ERROR IN UPDATE SENDING WINNER EMAIL ===", error_message=str(e))
+        err.send_report_error()
 
 
 

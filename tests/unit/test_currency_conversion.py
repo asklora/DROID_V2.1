@@ -1,3 +1,4 @@
+import math
 import random
 
 import pytest
@@ -26,10 +27,13 @@ def test_currency_conversion():
             if from_currency.last_price == to_currency.last_price
             else to_currency.last_price / from_currency.last_price
         )
-        rounding: int = 2 if decimal else 0
 
-        result: float = amount * rate
-        return round(result, rounding)
+        if decimal:
+            result: float = math.floor(amount * rate * 100) / 100
+        else:
+            result: float = math.floor(amount * rate)
+
+        return result
 
     # we get all currency data
     currencies = Currency.objects.filter(is_active=True)

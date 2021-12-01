@@ -8,7 +8,6 @@ from django.db import transaction
 from firebase_admin import messaging
 from datetime import datetime
 from rest_framework import serializers
-from channels.layers import get_channel_layer
 from ingestion.firestore_migration import firebase_user_update
 from datasource import rkd as trkd
 import time
@@ -168,7 +167,6 @@ def order_executor(self, payload, recall=False, request_id=None):
     
     order.populate_to_firebase()
     payload_serializer = OrderDetailsServicesSerializers(order).data
-    channel_layer = get_channel_layer()
     if payload.get('firebase_token',None):
         msg = messaging.Message(
             notification=messaging.Notification(
