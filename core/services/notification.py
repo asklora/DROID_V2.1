@@ -78,4 +78,4 @@ def send_winner_email():
         },
     }
 
-    send_to_asklora(payload=payload)
+    send_to_asklora(payload=payload,mock=True)
