@@ -200,11 +200,17 @@ west_market:
 north_asia_market:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --na True
 
-firebase_update_na:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --na True --firebase_update True
+ai_rating_na:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --na True --ai_rating True
 
-firebase_update_ws:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --ws True --firebase_update True
+ai_rating_ws:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --ws True --ai_rating True
+
+firebase_universe_na:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --na True --firebase_universe True
+
+firebase_universe_ws:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --ws True --firebase_universe True
 
 weekly:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --weekly True

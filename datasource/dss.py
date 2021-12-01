@@ -13,8 +13,10 @@ from general.sql_output import update_ingestion_count
 from global_vars import (
     DSS_PASSWORD,
     DSS_PASSWORD2,
+    DSS_PASSWORD3,
     DSS_USERNAME,
     DSS_USERNAME2,
+    DSS_USERNAME3,
     REPORT_CORPORATE_ACTION,
     REPORT_HISTORY,
     REPORT_INDEXMEMBER,
@@ -41,6 +43,11 @@ def getAuthToken(report=REPORT_HISTORY):
     else:
         _data = {"Credentials": {"Password": DSS_PASSWORD, "Username": DSS_USERNAME}}
     resp = requests.post(URL_AuthToken, json=_data, headers=_header)
+
+    if resp.status_code != 200:
+        _data = {"Credentials": {"Password": DSS_PASSWORD3, "Username": DSS_USERNAME3}}
+        resp = requests.post(URL_AuthToken, json=_data, headers=_header)
+
     if resp.status_code != 200:
         print(
             datetimeNow()
@@ -52,7 +59,6 @@ def getAuthToken(report=REPORT_HISTORY):
     else:
         _jResp = resp.json()
         return _jResp["value"]
-
 
 def get_data_from_reuters(
     start_date, end_date, authToken, jsonFileName, stocks, report

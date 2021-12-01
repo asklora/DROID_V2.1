@@ -13,6 +13,7 @@ def send_to_asklora(payload: dict) -> None:
 
 
 def send_notification(username: str, title: str, body: str):
+
     payload = {
         "type": "function",
         "module": "core.djangomodule.crudlib.notification.send_notif",
@@ -28,6 +29,7 @@ def send_notification(username: str, title: str, body: str):
 def send_bulk_notification(title: str, body: str):
     # TODO: need to check bulk message
     payload = {
+
         "type": "function",
         "module": "core.djangomodule.crudlib.notification.send_notif",
         "payload": {
@@ -36,6 +38,7 @@ def send_bulk_notification(title: str, body: str):
         },
     }
     send_to_asklora(payload)
+
 
 
 def send_winner_email():
@@ -54,6 +57,7 @@ def send_winner_email():
         )
     )
     data = pd.DataFrame(winners)
+    data = data.head( len(data) if len(data) < 50 else 50 )
     data = data.rename(
         columns={
             "user_id__email": "email",
@@ -73,4 +77,4 @@ def send_winner_email():
         },
     }
 
-    send_to_asklora(payload=payload)
+    # send_to_asklora(payload=payload)

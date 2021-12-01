@@ -3,7 +3,10 @@ from random import choice
 from typing import Tuple, Union
 
 from core.master.models import LatestPrice
-from core.orders.factory.orderfactory import OrderController, SellOrderProcessor
+from core.orders.factory.orderfactory import (
+    OrderController,
+    SellOrderProcessor,
+)
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.universe.models import Universe
 from core.user.models import User
@@ -13,10 +16,14 @@ from django.utils import timezone
 
 def get_random_ticker_and_price(currency: str = "HKD") -> Tuple[str, float]:
     # We get the tickers
-    tickers = Universe.objects.filter(
-        currency_code=currency,
-        is_active=True,
-    ).values_list("ticker", flat=True)
+    tickers = (
+        Universe.objects.filter(
+            currency_code=currency,
+            is_active=True,
+        )
+        .exclude(ticker__in=["1638.HK", "9959.HK"])
+        .values_list("ticker", flat=True)
+    )
 
     # We turn them into list of tickers
     tickers_list = [str(elem) for elem in list(tickers)]

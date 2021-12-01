@@ -109,8 +109,6 @@ def delete_firestore_universe(ticker:str):
     time.sleep(0.5)
 
 def delete_firestore_user(user_id:str):
-    
-    
     if isinstance(user_id, int):
         user_id = str(user_id)
         

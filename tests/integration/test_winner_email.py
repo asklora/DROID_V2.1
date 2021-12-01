@@ -54,3 +54,4 @@ def test_sending_winner_email(mocker) -> None:
 
     # check if the payload is correct
     payload_sent.assert_called()
+

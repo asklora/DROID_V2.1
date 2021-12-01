@@ -8,7 +8,7 @@ logger.log(*args, *kwargs)
 Args:
     task (str): The task that's being done. (e.g. Ingestion)
     subtask (str): The subtask that's being done. (e.g. update_data_dsws_from_dsws)
-    start_time (float): Time of when the subtask started in iso format.
+    start_time (float): Time of when the subtask started in epoch (i.e. time.time()).
     ticker (str): Ticker.
     currency (str): Currency type.
 Kwargs:
