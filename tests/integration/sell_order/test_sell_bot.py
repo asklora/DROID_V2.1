@@ -18,7 +18,7 @@ def test_create_new_sell_order_for_user_with_classic_bot(
     user,
     tickers,
 ) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     # We create an order
     buy_order = create_buy_order(
@@ -56,7 +56,7 @@ def test_create_new_sell_order_for_user_with_uno_bot(
     user,
     tickers,
 ) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     # We create an order
     buy_order = create_buy_order(
@@ -91,7 +91,7 @@ def test_create_new_sell_order_for_user_with_ucdc_bot(
     user,
     tickers,
 ) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     # We create an order
     buy_order = create_buy_order(

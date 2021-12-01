@@ -2,7 +2,10 @@ import math
 
 import pytest
 from core.djangomodule.general import jsonprint
-from core.orders.factory.orderfactory import OrderController, SellOrderProcessor
+from core.orders.factory.orderfactory import (
+    OrderController,
+    SellOrderProcessor,
+)
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.convert import ConvertMoney
 from core.user.models import Accountbalance
@@ -49,6 +52,7 @@ def test_sell_order_with_conversion(user):
     # check if user balance is deducted
     wallet = Accountbalance.objects.get(user=user)
     user_balance_2 = math.floor(wallet.amount)
+    user_balance_4 = wallet.amount
     print(f"buy order amount: {order.amount}")
     print(f"user balance after order: {wallet.amount}")
     assert user_balance != user_balance_2
@@ -111,5 +115,6 @@ def test_sell_order_with_conversion(user):
 
     wallet = Accountbalance.objects.get(user=user)
     user_balance_3 = math.floor(wallet.amount)
-
-    assert math.floor(user_balance_2 + hkd_conversion_result) == user_balance_3
+    user_balance_5 = math.floor(user_balance_4 + hkd_conversion_result)
+    print(user_balance_5)
+    assert user_balance_5 == user_balance_3

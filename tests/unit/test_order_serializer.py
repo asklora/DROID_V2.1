@@ -35,6 +35,8 @@ def test_serialized_buy_order(user) -> None:
     if serializer.is_valid(raise_exception=True):
         buy_order = serializer.save()
 
+    print(buy_order)
+
     assert buy_order.order_uid is not None
 
 

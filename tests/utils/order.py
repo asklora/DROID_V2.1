@@ -1,13 +1,9 @@
 from datetime import datetime
 from random import choice
-from typing import Tuple
+from typing import Tuple, Union
 
 from core.master.models import LatestPrice
-from core.orders.factory.orderfactory import (
-    BuyOrderProcessor,
-    OrderController,
-    SellOrderProcessor,
-)
+from core.orders.factory.orderfactory import OrderController, SellOrderProcessor
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.universe.models import Universe
 from core.user.models import User
@@ -37,7 +33,7 @@ def get_random_ticker_and_price(currency: str = "HKD") -> Tuple[str, float]:
 
 def get_position_performance(
     order: Order,
-) -> Tuple[OrderPosition, PositionPerformance]:
+) -> Union[Tuple[OrderPosition, PositionPerformance], Tuple[None, None]]:
     try:
         performance: PositionPerformance = PositionPerformance.objects.get(
             order_uid_id=order.order_uid
@@ -120,7 +116,11 @@ def confirm_order(
         order.save()
 
 
-def confirm_order_api(order_uid: str, client: Client, authentication: dict):
+def confirm_order_api(
+    order_uid: str,
+    client: Client,
+    authentication: dict,
+):
     response = client.post(
         path="/api/order/action/",
         data={

@@ -19,7 +19,7 @@ def test_api_create_order_with_classic_bot(
     user,
     tickers,
 ) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     data = {
         "ticker": ticker,
@@ -69,7 +69,7 @@ def test_api_create_order_with_uno_bot(
     user,
     tickers,
 ) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     data = {
         "ticker": ticker,
@@ -116,7 +116,7 @@ def test_api_create_order_with_uno_bot(
 
 
 def test_api_create_order_with_ucdc_bot(authentication, client, user, tickers) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     data = {
         "ticker": ticker,
