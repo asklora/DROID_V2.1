@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from core.services.tasks import populate_client_top_stock_weekly, order_client_topstock, daily_hedge, send_csv_hanwha, hedge
+from core.services.tasks import daily_hedge
 
 class Command(BaseCommand):
     def add_arguments(self, parser):

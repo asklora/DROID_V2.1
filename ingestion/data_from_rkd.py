@@ -17,72 +17,52 @@ from general.sql_query import get_active_currency, get_active_currency_ric_not_n
 from general.date_process import dateNow, datetimeNow, str_to_date
 from datasource import rkd as RKD
 
-# def update_currency_code_from_rkd(ticker=None, currency_code=None):
-#     print("{} : === Currency Code Start Ingestion ===".format(datetimeNow()))
-#     identifier="ticker"
-#     universe = get_active_universe(ticker=ticker, currency_code=currency_code)
-#     universe = universe.drop(columns=["currency_code"])
-#     ticker = universe["ticker"].to_list()
-#     field = ["CF_CURRENCY"]
+# def update_currency_price_from_rkd(currency_code=None):
+#     print("{} : === Currency Price Ingestion ===".format(datetimeNow()))
+#     currencylist = get_active_currency_ric_not_null(currency_code=currency_code)
+#     currencylist = currencylist.drop(columns=["last_date", "last_price"])
+#     currency = currencylist["ric"].to_list()
+#     field = ["CF_DATE", "CF_ASK", "CF_BID"]
 #     rkd = RKD.RkdData()
-#     result = rkd.get_data_from_rkd(ticker, field)
+#     result = rkd.get_data_from_rkd(currency, field)
 #     print(result)
-#     if (len(result) > 0 ):
-#         result = result.rename(columns={"CF_CURRENCY": "currency_code"})
-#         result = remove_null(result, "currency_code")
-#         result = universe.merge(result, how="left", on=["ticker"])
-#         result["currency_code"] = result["currency_code"].str.upper()
+#     if(len(result) > 0):
+#         result = result.rename(columns={
+#             "ticker" : "ric",
+#             "CF_DATE": "last_date",
+#             "CF_ASK": "ask_price",
+#             "CF_BID": "bid_price",
+#         })
+#         result["last_date"] = pd.to_datetime(result["last_date"])
+#         result["ask_price"] = result["ask_price"].astype(float)
+#         result["bid_price"] = result["bid_price"].astype(float)
+#         result = result.merge(currencylist, how="left", on="ric")
+#         result["last_price"] = (result["ask_price"] + result["ask_price"]) / 2
+#         result = result.drop(columns=["ask_price", "bid_price"])
 #         print(result)
-#         upsert_data_to_database(result, get_universe_table_name(), identifier, how="update", Text=True)
-#         report_to_slack("{} : === Currency Code Updated ===".format(datetimeNow()))
-#         update_universe_where_currency_code_null()
-
-def update_currency_price_from_rkd(currency_code=None):
-    print("{} : === Currency Price Ingestion ===".format(datetimeNow()))
-    currencylist = get_active_currency_ric_not_null(currency_code=currency_code)
-    currencylist = currencylist.drop(columns=["last_date", "last_price"])
-    currency = currencylist["ric"].to_list()
-    field = ["CF_DATE", "CF_ASK", "CF_BID"]
-    rkd = RKD.RkdData()
-    result = rkd.get_data_from_rkd(currency, field)
-    print(result)
-    if(len(result) > 0):
-        result = result.rename(columns={
-            "ticker" : "ric",
-            "CF_DATE": "last_date",
-            "CF_ASK": "ask_price",
-            "CF_BID": "bid_price",
-        })
-        result["last_date"] = pd.to_datetime(result["last_date"])
-        result["ask_price"] = result["ask_price"].astype(float)
-        result["bid_price"] = result["bid_price"].astype(float)
-        result = result.merge(currencylist, how="left", on="ric")
-        result["last_price"] = (result["ask_price"] + result["ask_price"]) / 2
-        result = result.drop(columns=["ask_price", "bid_price"])
-        print(result)
-        upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
-        report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
+#         upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
+#         report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
     
-def update_index_price_from_rkd(currency_code=None):
-    print("{} : === Currency Price Ingestion ===".format(datetimeNow()))
-    currencylist = get_active_currency(currency_code=currency_code)
-    currencylist = currencylist.drop(columns=["index_price"])
-    currency = currencylist["ric"].to_list()
-    field = ["CF_LAST"]
-    rkd = RKD.RkdData()
-    result = rkd.get_data_from_rkd(currency, field)
-    print(result)
-    if(len(result) > 0):
-        result = result.rename(columns={
-            "ticker": "ric",
-            "CF_LAST": "index_price"
-        })
-        result["index_price"] = result["index_price"].astype(float)
-        result = result.dropna(subset=["index_price"])
-        result = result.merge(currencylist, how="left", on="ric")
-        print(result)
-        upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
-        report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
+# def update_index_price_from_rkd(currency_code=None):
+#     print("{} : === Currency Price Ingestion ===".format(datetimeNow()))
+#     currencylist = get_active_currency(currency_code=currency_code)
+#     currencylist = currencylist.drop(columns=["index_price"])
+#     currency = currencylist["ric"].to_list()
+#     field = ["CF_LAST"]
+#     rkd = RKD.RkdData()
+#     result = rkd.get_data_from_rkd(currency, field)
+#     print(result)
+#     if(len(result) > 0):
+#         result = result.rename(columns={
+#             "ticker": "ric",
+#             "CF_LAST": "index_price"
+#         })
+#         result["index_price"] = result["index_price"].astype(float)
+#         result = result.dropna(subset=["index_price"])
+#         result = result.merge(currencylist, how="left", on="ric")
+#         print(result)
+#         upsert_data_to_database(result, get_currency_table_name(), "currency_code", how="update", Text=True)
+        # report_to_slack("{} : === Currency Price Updated ===".format(datetimeNow()))
 
 def populate_intraday_latest_price_from_rkd(ticker=None, currency_code=None,use_index=False):
     latest_price = get_latest_price_data(ticker=ticker, currency_code=currency_code)
@@ -141,7 +121,7 @@ def populate_intraday_latest_price_from_rkd(ticker=None, currency_code=None,use_
             result = result.drop_duplicates(subset="ticker", keep="last")
             print(result)
             upsert_data_to_database(result, get_latest_price_table_name(), "ticker", how="update", Text=True)
-            clean_latest_price()
+            # clean_latest_price()
             if(type(currency_code) != type(None)):
                 report_to_slack("{} : === {} Intraday Price Updated ===".format(dateNow(), currency_code))
             elif(type(ticker) != type(None)):

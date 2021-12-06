@@ -8,6 +8,7 @@ def callback(message):
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        print("Process")
         # bulk_update_rtdb.apply_async(args=('args',),queue='broadcaster')
         # rkd = RkdStream()
         # rkd.chanels = 'market'
