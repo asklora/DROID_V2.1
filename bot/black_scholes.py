@@ -310,23 +310,3 @@ def get_interest_rate(index_code, spot_date, expiry_date):
     # return rate
     return rate
 
-# if __name__ == "__main__":
-#     options_df = pd.DataFrame()
-#     options_df['spot']= [1,1]
-#     options_df['t']= [0.0821917808219178,0.0821917808219178]
-#     options_df['alpha']= [12, 12]
-#     options_df['atm_volatility_spot'] = [0.5213088709677419,0.357950403225807]
-#     options_df['atm_volatility_one_year']= [0.440825,0.3640875]
-#     options_df['atm_volatility_infinity'] = [0.43395,0.3599]
-#     options_df['slope'] = [1,2]
-#     options_df['slope_inf']= [0,2]
-#     options_df['deriv']= [0.0105, 0.091]
-#     options_df['deriv_inf'] = [0, 0.0692]
-#     options_df['r'] = [0.0015,0.0015]
-#     options_df['q'] = [0,0]
-#     print(options_df['t'])
-#     print(options_df)
-#     x = find_vol(1, options_df['t'], options_df['atm_volatility_spot'], options_df['atm_volatility_one_year'],
-#                 options_df['atm_volatility_infinity'], 12, options_df['slope'], options_df['slope_inf'],
-#                 options_df['deriv'], options_df['deriv_inf'],options_df['r'], options_df['q'])
-#     print(x)

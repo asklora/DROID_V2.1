@@ -1,6 +1,5 @@
 from core.user.convert import ConvertMoney
 from general.date_process import to_date
-from pandas.core.base import DataError
 from bot.calculate_bot import check_dividend_paid
 from datetime import datetime
 from core.master.models import LatestPrice, MasterOhlcvtr, HedgeLatestPriceHistory
