@@ -24,6 +24,7 @@ from .serializers import (
     OrderActionSerializer,
     OrderPortfolioCheckSerializer,
 )
+from django.utils.translation import gettext as _
 
 
 class BotPerformanceViews(views.APIView):
@@ -54,7 +55,7 @@ class BotPerformanceViews(views.APIView):
         )
         if not perf.exists():
             return response.Response(
-                {"message": f"{position_uid} doesnt exist"},
+                {"message": _("position %(position)s does not exist") % {'position': position_uid}},
                 status=status.HTTP_404_NOT_FOUND,
             )
         return response.Response(
@@ -176,7 +177,7 @@ class PositionDetailViews(views.APIView):
                 )
 
         return response.Response(
-            {"detail": f"{position_uid} does not exist"}, status=status.HTTP_404_NOT_FOUND
+            {"detail": _("position %(position)s does not exist") % {'position': position_uid}}, status=status.HTTP_404_NOT_FOUND
         )
 
 
@@ -258,7 +259,7 @@ class OrderUpdateViews(views.APIView):
             )
         except OrderUpdateSerializer.Meta.model.DoesNotExist:
             return response.Response(
-                {"detail": "order not found"}, status=status.HTTP_404_NOT_FOUND
+                {"detail": _("order not found")}, status=status.HTTP_404_NOT_FOUND
             )
         # ignore if fels account
         if not instance.user_id.id == 135:
@@ -315,7 +316,7 @@ class OrderGetViews(viewsets.ViewSet):
             )
         except Order.DoesNotExist:
             return response.Response(
-                {"detail": "order not forund"}, status=status.HTTP_404_NOT_FOUND
+                {"detail": _("order not found")}, status=status.HTTP_404_NOT_FOUND
             )
 
 
@@ -334,7 +335,7 @@ class OrderActionViews(views.APIView):
             )
         except OrderActionSerializer.Meta.model.DoesNotExist:
             return response.Response(
-                {"detail": "order not found"}, status=status.HTTP_404_NOT_FOUND
+                {"detail": _("order not found")}, status=status.HTTP_404_NOT_FOUND
             )
         except KeyError as e:
             err = str(e)
