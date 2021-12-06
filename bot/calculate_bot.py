@@ -669,6 +669,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
             daily_profit_pct = 0
             daily_invested_amount = 0
             total_profit = formatdigit(user_core.loc[index, "pending_amount"] + user_core.loc[index, "balance"] - user_core.loc[index, "deposit"])
+
             total_profit_pct = (total_profit / user_core.loc[index, "deposit"]) * 100
         user_core.loc[index, "daily_profit"] = profit
         user_core.loc[index, "daily_profit_pct"] = daily_profit_pct

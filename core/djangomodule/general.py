@@ -14,7 +14,9 @@ import logging,coloredlogs
 import pandas as pd
 import pprint
 from rest_framework.throttling import UserRateThrottle
-
+from django.utils import timezone
+import calendar
+from datetime import timedelta
 
 coloredlogs.install()
 logging.basicConfig(format="%(asctime)s - %(message)s",
@@ -22,6 +24,11 @@ logging.basicConfig(format="%(asctime)s - %(message)s",
 logging.getLogger().setLevel(logging.INFO)
 
 
+
+def is_end_of_month(date:timezone=timezone.now().date()) -> bool:
+    end_month = date.replace(day = calendar.monthrange(date.year, date.month)[1])
+    tommorow_date = end_month+ timedelta(days=1)
+    return int(tommorow_date.strftime("%d")) == 1
 
 
 class NeedRegister(APIException):

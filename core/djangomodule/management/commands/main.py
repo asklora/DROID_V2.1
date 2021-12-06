@@ -86,7 +86,8 @@ class Command(BaseCommand):
         parser.add_argument("-split", "--split", type=int, help="split", default=1)
         parser.add_argument("-currency_code", "--currency_code", nargs="+", help="currency_code", default=None)
         parser.add_argument("-month", "--month", type=bool, help="month", default=False)
-        parser.add_argument("-firebase_update", "--firebase_update", type=bool, help="firebase_update", default=False)
+        parser.add_argument("-ai_rating", "--ai_rating", type=bool, help="ai_rating", default=False)
+        parser.add_argument("-firebase_universe", "--firebase_universe", type=bool, help="firebase_universe", default=False)
 
 
     def handle(self, *args, **options):
@@ -96,18 +97,17 @@ class Command(BaseCommand):
             status = ""
             if (options["na"]):
                 ticker = get_universe_by_region(region_id=["na"])["ticker"].to_list()
-                if(options["firebase_update"]):
+                if(options["ai_rating"]):
                     status = "Fundamentals Ingestion"
                     update_daily_fundamentals_score_from_dsws(ticker=ticker)
                     status = "Update AI Score"
                     update_fundamentals_quality_value()
+                elif(options["firebase_universe"]):
                     status = "Update Firebase Universe"
-                    # populate_intraday_latest_price_from_rkd(currency_code=["HKD"])
                     firebase_universe_update(currency_code=["HKD"])
                 else:
                     update_data_dss_from_dss(ticker=ticker)
                     update_data_dsws_from_dsws(ticker=ticker)
-                    # update_currency_price_from_dsws()
                     do_function("special_cases_1")
                     do_function("master_ohlcvtr_update")
                     status = "Master OHLCVTR Update"
@@ -122,19 +122,18 @@ class Command(BaseCommand):
                     interest_daily_update()
             if (options["ws"]):
                 ticker = get_universe_by_region(region_id=["ws"])["ticker"].to_list()
-                if(options["firebase_update"]):
+                if(options["ai_rating"]):
                     status = "Fundamentals Ingestion"
                     update_daily_fundamentals_score_from_dsws(ticker=ticker)
                     status = "Update AI Score"
                     update_fundamentals_quality_value()
+                elif(options["firebase_universe"]):
                     status = "Update Firebase Universe"
-                    # populate_intraday_latest_price_from_rkd(currency_code=["USD"])
                     firebase_universe_update(currency_code=["USD"])
                 else:
                     status = "Daily Ingestion Update"
                     update_data_dss_from_dss(ticker=ticker)
                     update_data_dsws_from_dsws(ticker=ticker)
-                    # update_currency_price_from_dsws()
                     do_function("special_cases_1")
                     do_function("master_ohlcvtr_update")
                     status = "Master OHLCVTR Update"

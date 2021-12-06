@@ -98,7 +98,6 @@ def new_ticker_ingestion(ticker):
         print("{} : === {} New Ticker Ingestion ERROR === : {}".format(dateNow(), status, e))
 
 def populate_ticker_monthly(client=None):
-    update_ingestion_update_time('universe', finish=False)
     if(client is None):
         client = "dZzmhmoA" #Client is ASKLORA
     universe_consolidated = get_consolidated_universe_data()
@@ -156,7 +155,6 @@ def populate_ticker_monthly(client=None):
     print(new_universe_client)
     insert_data_to_database(new_universe_client, get_universe_client_table_name(), how="append")
     new_ticker_ingestion(ticker["ticker"].to_list())
-    update_ingestion_update_time('universe', finish=True)
 
 class Command(BaseCommand):
     def add_arguments(self, parser):

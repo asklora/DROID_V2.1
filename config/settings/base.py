@@ -213,7 +213,7 @@ CELERY_IMPORTS = [
     "datasource.rkd",
     "core.services.order_services",
     "core.services.exchange_services",
-    "core.services.healthcheck",
+    "core.services.healthcheck.run",
 ]
 RUN_LOCAL=False
 
