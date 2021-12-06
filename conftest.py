@@ -5,17 +5,14 @@ from typing import List, Union
 import pytest
 from django.conf import settings
 from django.test.client import Client
+from django.utils.translation import activate
 from dotenv import load_dotenv
 from environs import Env
 from firebase_admin import firestore
 
 from core.djangomodule.network.cloud import DroidDb
-from core.user.models import (
-    Accountbalance,
-    TransactionHistory,
-    User,
-    UserDepositHistory,
-)
+from core.user.models import (Accountbalance, TransactionHistory, User,
+                              UserDepositHistory)
 from general.data_process import get_uid
 from general.date_process import dateNow
 from tests.utils.order import get_random_ticker_and_price
@@ -172,3 +169,8 @@ def order(authentication, client, user, tickers) -> Union[dict, None]:
         return None
 
     return response.json()
+
+
+@pytest.fixture(scope="function")
+def use_chinese():
+    activate("zh-hant")
