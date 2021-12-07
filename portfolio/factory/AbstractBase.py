@@ -7,14 +7,14 @@ from abc import ABC, abstractmethod
 
 
 
-class AbstractCaltulator(ABC):
+class AbstractCalculator(ABC):
     
     @abstractmethod
     def calculate(self):
         pass
 
 
-class Bot(ABC):
+class AbstractBotProcessor(ABC):
     
     
     @abstractmethod
@@ -37,7 +37,7 @@ class Bot(ABC):
 class AbstactBotFactory(ABC):
     
     @abstractmethod
-    def bot_select(self,name) -> Bot:
+    def bot_use(self,name):
         pass
 
 

@@ -1,8 +1,27 @@
 from .AbstractBase import *
 from core.bot.models import BotOptionType
+from .estimator import BlackScholes
+
+class BaseProcessor(AbstractBotProcessor):
+
+    def __init__(self,estimator:AbstractCalculator=BlackScholes):
+        self.estimator=estimator()
+        
+        
+        
+        
+class ClassicBot(BaseProcessor):
+    pass
 
 
-class BlackScholes(AbstractCaltulator):
+
+class UcdcBot(BaseProcessor):
+    pass
+
+
+
+
+class UnoBot(BaseProcessor):
     pass
 
 
@@ -10,59 +29,27 @@ class BlackScholes(AbstractCaltulator):
 
 
 
-class ClassicBot(Bot):
-    
-    
-    
-    def __name__(self):
-        return 'Classic'
 
-
-
-class UcdcBot(Bot):
-    
-    
-    
-    def __name__(self):
-        return 'Ucdc'
-
-
-
-
-class UnoBot(Bot):
-    
-    
-    def __name__(self):
-        return 'Uno'
-
-
-
-
-
-
-
-class BotBackendBase(Bot):
-    bot : BotOptionType
-    
-    def __init__(self,bot_id):
-        try:
-            self.bot = BotOptionType.objects.get(pk=bot_id)
-        except BotOptionType.DoesNotExist:
-            raise Exception('Bot does not exist')
-
-
-class BotDirector(AbstactBotFactory):
+class BotBackendDirector(AbstactBotFactory):
     bot_process = {
-        ClassicBot.__name__:ClassicBot,
-        UcdcBot.__name__:UcdcBot,
-        UnoBot.__name__:UnoBot,
+        "classic":ClassicBot,
+        "ucdc":UcdcBot,
+        "uno":UnoBot,
         
     }
+    model : BotOptionType
     
-    
-    def bot_select(self, name):
+    def __init__(self,bot_id:str):
         try:
-            return self.bot_process[name]
+            self.model = BotOptionType.objects.get(pk=bot_id)
+        except BotOptionType.DoesNotExist:
+            raise Exception('Bot does not exist')
+        self.bot_use(self.model.bot_type.bot_type.lower())
+    
+    
+    def bot_use(self, name):
+        try:
+            self.bot_processor = self.bot_process[name]
         except KeyError:
             raise Exception('Bot does not exist')
         
