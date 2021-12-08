@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 
 
 
-
 class AbstractCalculator(ABC):
     
     @abstractmethod
@@ -34,10 +33,14 @@ class AbstractBotProcessor(ABC):
     
 
 
-class AbstactBotFactory(ABC):
+class AbstactBotDirector(ABC):
     
     @abstractmethod
-    def bot_use(self,name):
+    def bot_use(self,name,props):
+        pass
+    
+    @abstractmethod
+    def set_estimator(self,name,props):
         pass
 
 

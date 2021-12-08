@@ -13,7 +13,7 @@ from .AbstractBase import AbstractCalculator
 
 
 class BlackScholes(AbstractCalculator):
-    properties:dict
+    properties:dict={}
     
     def calculate(self):
         pass

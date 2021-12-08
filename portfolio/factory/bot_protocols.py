@@ -5,15 +5,15 @@ from typing import Protocol
 
 
 
-class HedgeProtocol(Protocol):
+class ValidatorProtocol(Protocol):
     
-    
-    
-    def get_or_create_bot(self):
+    def validate(self):
         ...
+
+class EstimatorProtocol(Protocol):
     
-    
-    def select_hedger_class(self):
+    def calculate(self):
         ...
+
     
     

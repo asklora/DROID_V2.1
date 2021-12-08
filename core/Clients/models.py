@@ -16,7 +16,6 @@ class Client(BaseTimeStampModel):
     commissions_buy = models.FloatField(null=True, blank=True)
     commissions_sell = models.FloatField(null=True, blank=True)
     commissions_type = models.TextField(null=True, blank=True)
-
     class Meta:
         managed = True
         db_table = "client"
