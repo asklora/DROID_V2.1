@@ -175,8 +175,7 @@ class BaseAction:
 
     def send_notification(self):
         message=self.response.get('message_type',None)
-        is_err = message == 'order_error'
-        if not is_err:
+        if not message == 'order_error':
             return firebase_send_notification(
                 self.validator.order.user_id.username,
                 self.response.get("title"),
@@ -340,7 +339,7 @@ class ActionProcessor:
         if getterprice:
             self.getter_price = getterprice
             
-    def execute_task(self,payload):
+    def execute_task(self,payload:str):
         return order_executor.apply_async(
             args=(payload,), task_id=self.payload.order_uid
         )
@@ -364,6 +363,16 @@ class ActionOrderController:
     protocol: OrderProtocol
 
     def select_process_class(self, payload: dict):
+        """
+        dict required:
+            - side : buy , sell or cancel 
+        """
+        
+        if not payload.get("side", None): raise KeyError("side is required")
+        
+        if payload.get("side",None) not in  ['buy', 'sell','cancel']:
+            raise KeyError("side is invalid")
+        
         protocol = self.PROCESSOR[payload.pop("side")]
         self.protocol = protocol(payload)
 

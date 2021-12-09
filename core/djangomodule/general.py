@@ -25,8 +25,7 @@ logging.getLogger().setLevel(logging.INFO)
 
 
 
-def is_end_of_month():
-    date = timezone.now().date()
+def is_end_of_month(date:timezone=timezone.now().date()) -> bool:
     end_month = date.replace(day = calendar.monthrange(date.year, date.month)[1])
     tommorow_date = end_month+ timedelta(days=1)
     return int(tommorow_date.strftime("%d")) == 1
