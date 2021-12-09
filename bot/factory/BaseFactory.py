@@ -1,8 +1,8 @@
 from .AbstractBase import *
 from core.bot.models import BotOptionType
 from .estimator import BlackScholes
-from portfolio.factory.validator import BotCreateProps
-from portfolio.factory.bot_protocols import ValidatorProtocol,EstimatorProtocol
+from .validator import BotCreateProps
+from .bot_protocols import ValidatorProtocol,EstimatorProtocol
 import math
 from core.master.models import LatestPrice
 from .botproperties import ClassicProperties

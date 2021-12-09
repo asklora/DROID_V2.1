@@ -1,9 +1,9 @@
 
 from django.core.management.base import BaseCommand
-from portfolio.factory.BaseFactory import BotFactory
-from portfolio.factory.validator import BotCreateProps
+from bot.factory.BaseFactory import BotFactory
+from bot.factory.validator import BotCreateProps
 from datetime import datetime
-from portfolio.factory.estimator import BlackScholes
+from bot.factory.estimator import BlackScholes
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
