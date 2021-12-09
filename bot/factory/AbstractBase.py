@@ -1,16 +1,14 @@
 from abc import ABC, abstractmethod
 
 
-
-
-
-
-
 class AbstractCalculator(ABC):
     
     @abstractmethod
     def calculate(self):
         pass
+
+
+
 
 
 class AbstractBotProcessor(ABC):
@@ -28,10 +26,42 @@ class AbstractBotProcessor(ABC):
     def stop(self):
         pass
     
-
     
     
 
+class AbstracBotCreator(ABC):
+    
+    @abstractmethod
+    def create(self):
+        pass
+
+
+
+
+
+
+class AbstractBotHedger(ABC):
+    
+    @abstractmethod
+    def hedge(self):
+        pass
+
+
+
+
+
+
+class AbstractBotStopper(ABC):
+    
+    @abstractmethod
+    def stop(self):
+        pass
+    
+    
+    
+    
+    
+    
 
 class AbstactBotDirector(ABC):
     
