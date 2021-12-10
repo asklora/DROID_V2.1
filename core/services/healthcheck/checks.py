@@ -7,8 +7,10 @@ from typing import Any, List, Union
 import requests
 from celery.result import AsyncResult
 from config.celery import app
+from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.services.order_services import pending_order_checker
 from core.universe.models import ExchangeMarket
+from core.user.models import Accountbalance, TransactionHistory
 from django.utils.timezone import now
 from schema import Schema, SchemaError
 
@@ -154,14 +156,25 @@ class TestUsersCheck(Check):
         users: List[Any] = self.get_database_objects()
 
         for user in users:
+            PositionPerformance.objects.filter(
+                position_uid__user_id=user
+            ).delete()
+            Order.objects.filter(user_id=user).delete()
+            OrderPosition.objects.filter(user_id=user).delete()
+            TransactionHistory.objects.filter(balance_uid__user=user).delete()
+            Accountbalance.objects.filter(user=user).delete()
             user.delete()
 
     def __post_init__(self):
         self.list_firebase_test_users()
         self.list_database_test_users()
 
-        print(f"firebase: {', '.join(self.firebase_test_users)}")
-        print(f"database: {', '.join(self.database_test_users)}")
+        print(
+            f"firebase test users' IDs: {', '.join(self.firebase_test_users)}"
+        )
+        print(
+            f"database test users' IDs: {', '.join(self.database_test_users)}"
+        )
 
         if self.firebase_test_users:
             self.delete_firebase_test_users()
@@ -177,12 +190,26 @@ class TestUsersCheck(Check):
             or len(self.database_test_users) > 0
         )
 
+        firebase_test_users_num: int = len(self.firebase_test_users)
+        database_test_users_num: int = len(self.database_test_users)
+
+        firebase_num: str = (
+            f"*{firebase_test_users_num}*"
+            if firebase_test_users_num > 0
+            else str(firebase_test_users_num)
+        )
+        database_num: str = (
+            f"*{database_test_users_num}*"
+            if database_test_users_num > 0
+            else str(database_test_users_num)
+        )
+
         result: str = (
             "\n- "
             + f"There {'were ' if deleted else 'is '}"
-            + f"{len(self.firebase_test_users)}"
+            + firebase_num
             + " test users in Firebase, and "
-            + f"{len(self.database_test_users)}"
+            + database_num
             + " test users in the database"
             + f"{' (now deleted)' if deleted else ''}"
         )
