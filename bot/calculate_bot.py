@@ -2,7 +2,7 @@ from general.slack import report_to_slack
 from bot.data_download import get_currency_data
 from core.djangomodule.general import formatdigit
 from general.sql_output import upsert_data_to_database
-from general.date_process import dateNow, date_to_string, datetimeNow, str_to_date
+from general.date_process import backdate_by_day, dateNow, date_to_string, datetimeNow, str_to_date
 import math
 import numpy as np
 from datetime import datetime
@@ -703,7 +703,7 @@ def populate_daily_profit(currency_code=None, user_id=None):
 
 def update_season():
     month_list = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-    period = str_to_date(dateNow())
+    period = str_to_date(backdate_by_day(1))
     months = period.month
     years = period.year
     season_id = f"{month_list[months - 1]}{years}"
@@ -717,7 +717,7 @@ def update_season():
 
 def update_season_monthly(currency_code=None, user_id=None) -> None:
     new_season = get_latest_season()
-    if(date_to_string(new_season.loc[0, "end_date"]) == dateNow()):
+    if(date_to_string(new_season.loc[0, "end_date"]) == backdate_by_day(1)):
         user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, current_status")[["user_id", "is_joined", "current_status"]]
         user_core = user_core.loc[user_core["is_joined"] == True]
         user_core = user_core.loc[user_core["current_status"] == "verified"]
@@ -752,7 +752,7 @@ def update_monthly_deposit(currency_code=None, user_id=None) -> None:
     update_season()
     update_season_monthly(currency_code=currency_code, user_id=user_id)
     new_season = get_latest_season()
-    if(date_to_string(new_season.loc[0, "end_date"]) == dateNow()):
+    if(date_to_string(new_season.loc[0, "end_date"]) == backdate_by_day(1)):
         user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, current_status")[["user_id", "is_joined", "current_status"]]
         user_core = user_core.loc[user_core["is_joined"] == True]
         user_core = user_core.loc[user_core["current_status"] == "verified"]
