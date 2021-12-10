@@ -172,12 +172,12 @@ class PositionDetailViews(views.APIView):
                 )
             else:
                 return response.Response(
-                    {"detail": f"this position not belong to current user"},
+                    {"detail": _("this position not belong to current user")},
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
         return response.Response(
-            {"detail": _("position %(position)s does not exist") % {'position': position_uid}}, status=status.HTTP_404_NOT_FOUND
+            {"detail": _("position %(position)s does not exist") % {"position": position_uid}}, status=status.HTTP_404_NOT_FOUND
         )
 
 
@@ -265,7 +265,7 @@ class OrderUpdateViews(views.APIView):
         if not instance.user_id.id == 135:
             if instance.user_id.username != request.user.username:
                 return response.Response(
-                    {"detail": "credentials not allowed to change this order"},
+                    {"detail": _("credentials not allowed to change this order")},
                     status=status.HTTP_403_FORBIDDEN,
                 )
         serializer = OrderUpdateSerializer(
@@ -340,13 +340,13 @@ class OrderActionViews(views.APIView):
         except KeyError as e:
             err = str(e)
             return response.Response(
-                {"detail": f"error key {err}"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": _("error key %(err)s") % {err: err}}, status=status.HTTP_400_BAD_REQUEST
             )
         # ignore if fels account
         if not instance.user_id.id == 135:
             if instance.user_id.username != request.user.username:
                 return response.Response(
-                    {"detail": "credentials not allowed to change this order"},
+                    {"detail": _("credentials not allowed to change this order")},
                     status=status.HTTP_403_FORBIDDEN,
                 )
         serializer = OrderActionSerializer(data=request.data)

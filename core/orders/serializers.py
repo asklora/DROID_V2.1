@@ -12,6 +12,7 @@ from core.user.convert import ConvertMoney
 from django.apps import apps
 from django.db import transaction as db_transaction
 from .services import OrderPositionValidation
+from django.utils.translation import gettext as _
 
 
 
@@ -290,14 +291,14 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 validated_data["user_id"] = request.user
                 user = request.user
             else:
-                error = {"detail": "missing user"}
+                error = {"detail": _("missing user")}
                 raise serializers.ValidationError(error)
         else:
             usermodel = apps.get_model("user", "User")
             try:
                 user = usermodel.objects.get(id=validated_data.pop("user"))
             except usermodel.DoesNotExist:
-                error = {"detail": "user not found with the given payload user"}
+                error = {"detail": _("user not found with the given payload user")}
                 raise exceptions.NotFound(error)
             validated_data["user_id"] = user
         
@@ -349,7 +350,7 @@ class OrderPortfolioCheckSerializer(serializers.Serializer):
         if data:
             return data
         else:
-            raise exceptions.NotFound({"detail":"no position / order exist"})
+            raise exceptions.NotFound({"detail": _("no position / order exist")})
 
 
 
@@ -392,7 +393,7 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
             try:
                 instance.save()
             except Exception as e:
-                error = {"detail": "something went wrong"}
+                error = {"detail": _("something went wrong")}
                 raise serializers.ValidationError(error)
         return instance
 
