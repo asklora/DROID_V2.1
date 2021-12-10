@@ -761,6 +761,18 @@ def update_monthly_deposit(currency_code=None, user_id=None) -> None:
         if user_core.empty:
             return
 
+        bot_order_pending = get_orders_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
+        user_core = user_core.merge(bot_order_pending, how="left", on=["user_id"])
+        user_core["bot_pending_amount"] = np.where(user_core["bot_pending_amount"].isnull(), float(0), user_core["bot_pending_amount"])
+        stock_order_pending = get_orders_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=True)
+        user_core = user_core.merge(stock_order_pending, how="left", on=["user_id"])
+        user_core["stock_pending_amount"] = np.where(user_core["stock_pending_amount"].isnull(), float(0), user_core["stock_pending_amount"])
+        
+        user_core["pending_amount"] = user_core["stock_pending_amount"] + user_core["bot_pending_amount"]
+        user_core["bot_pending_amount"]  = user_core["bot_pending_amount"].astype(float)
+        user_core["stock_pending_amount"]  = user_core["stock_pending_amount"].astype(float)
+        user_core["pending_amount"]  = user_core["pending_amount"].astype(float)
+
         user_balance = get_user_account_balance(user_id=user_id, field="user_id, amount as balance, currency_code")
         user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_invested_amount")
         currency = get_currency_data(currency_code=currency_code)
@@ -770,7 +782,8 @@ def update_monthly_deposit(currency_code=None, user_id=None) -> None:
         user_core = user_core.merge(currency, how="left", on=["currency_code"])
         user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
         user_core["daily_invested_amount"] = np.where(user_core["daily_invested_amount"].isnull(), 0, user_core["daily_invested_amount"])
-        user_core["deposit"] = (user_core["balance"] + user_core["daily_invested_amount"])
+        user_core["pending_amount"] = np.where(user_core["pending_amount"].isnull(), 0, user_core["pending_amount"])
+        user_core["deposit"] = (user_core["balance"] + user_core["daily_invested_amount"]+ user_core["pending_amount"])
         user_core["deposit"] = np.where(user_core["is_decimal"] == True, user_core["deposit"].astype(float).round(2), user_core["deposit"])
         user_core["trading_day"] = str_to_date(dateNow())
         user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True, ticker_int=True, replace=True)
