@@ -1,8 +1,16 @@
-from abc import ABC, abstractmethod
 import math
+from abc import ABC, abstractmethod
+
+import numpy as np
+import pandas as pd
+import scipy.stats as si
 from bot.factory.bot_protocols import ValidatorProtocol
 from core.master.models import LatestPrice
-from ..botproperties import ClassicProperties, BaseProperties
+from scipy.optimize import newton
+
+from general.data_process import NoneToZero
+
+from ..botproperties import BaseProperties, ClassicProperties
 
 
 class Creator(ABC):
@@ -170,5 +178,54 @@ class ClassicCreator(BaseCreator):
     def get_result_as_dict(self):
         return self.properties.__dict__
 
+
 class UnoCreator(BaseCreator):
-    pass
+    def last_hedge_delta(self):
+        delta = self.estimator.get_delta()
+        return np.nan_to_num(delta, nan=0)
+
+    def _bot_hedge_share(self):
+        delta = self.estimator.get_delta()
+        math.floor(delta * self.validated_data.total_bot_share_num)
+
+    def get_bot_cash_balance(self):
+        return round(
+            self.validated_data.investment_amount
+            - (self._bot_hedge_share() * self.validated_data.price),
+            self._digits(self.validated_data.price),
+        )
+
+    def max_loss_pct(self):
+        option_price = uno.Up_Out_Call(
+            price, strike, barrier, rebate, t/365, r, q, v1, v2)
+        option_price = np.nan_to_num(option_price, nan=0)
+        return -1 * option_price / price
+
+    def max_loss_price(self):
+        return round(price - option_price, int(digits))
+
+    def max_loss_amount(self):
+        return round(option_price * total_bot_share_num, int(digits)) * -1
+
+    def target_profit_pct(self):
+        return (barrier-strike) / price
+
+    def target_profit_price(self):
+        round(barrier, int(digits))
+
+    def target_profit_amount(self):
+        round(rebate * total_bot_share_num, int(digits))
+
+    def process(self):
+        self._construct()
+        self.properties = ClassicProperties(
+            **self._default_properties.__dict__,
+            vol=self.get_vol(),
+            classic_vol=self.get_classic_vol()
+        )
+
+    def get_result(self):
+        pass
+
+    def get_result_as_dict(self):
+        pass

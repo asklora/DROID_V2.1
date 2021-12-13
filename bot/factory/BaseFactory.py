@@ -48,7 +48,10 @@ class UcdcBot(BaseProcessor):
 
 class UnoBot(BaseProcessor):
     def create(self):
-        print(self.validated_data.expiry)
+        # print(self.validated_data.expiry)
+        creator = UnoCreator(self.validated_data, self.estimator)
+        creator.process()
+        return creator
 
     def hedge(self):
         pass
