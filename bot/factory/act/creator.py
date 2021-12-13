@@ -11,13 +11,56 @@ class Creator(ABC):
         pass
 
     @abstractmethod
-    def construct(self):
+    def _construct(self):
+        pass
+
+    @abstractmethod
+    def last_hedge_delta(self):
+        pass
+
+    @abstractmethod
+    def get_bot_cash_balance(self):
+        pass
+
+    @abstractmethod
+    def max_loss_pct(self):
+        pass
+
+    @abstractmethod
+    def max_loss_price(self):
+        pass
+
+    @abstractmethod
+    def max_loss_amount(self):
+        pass
+
+    @abstractmethod
+    def target_profit_pct(self):
+        pass
+
+    @abstractmethod
+    def target_profit_price(self):
+        pass
+
+    @abstractmethod
+    def target_profit_amount(self):
+        pass
+
+    @abstractmethod
+    def get_result(self):
+        pass
+
+    @abstractmethod
+    def get_result_as_dict(self):
         pass
 
 
 class BaseCreator(Creator):
     validated_data: ValidatorProtocol
     _default_properties: BaseProperties
+
+    def __init__(self, validated_data, properties_class):
+        self.validated_data = validated_data
 
     def _digits(self, price):
         digit = max(min(4 - len(str(int(price))), 2), -1)
@@ -27,9 +70,7 @@ class BaseCreator(Creator):
         inv_amt = self.validated_data.investment_amount
         margin = self.validated_data.margin
         price = self.validated_data.price
-        return math.floor(
-            (inv_amt * margin) / price
-        )
+        return math.floor((inv_amt * margin) / price)
 
     def _construct(self):
         self._default_properties = BaseProperties(
@@ -54,9 +95,6 @@ class BaseCreator(Creator):
 
 
 class ClassicCreator(BaseCreator):
-    def __init__(self, validated_data, properties_class):
-        self.validated_data = validated_data
-
     def get_classic_vol(self):
         try:
             return LatestPrice.objects.get(
@@ -131,3 +169,6 @@ class ClassicCreator(BaseCreator):
 
     def get_result_as_dict(self):
         return self.properties.__dict__
+
+class UnoCreator(BaseCreator):
+    pass
