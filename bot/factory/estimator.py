@@ -1,6 +1,5 @@
 import gc
 from multiprocessing import cpu_count
-from typing_extensions import Self
 
 import numpy as np
 import scipy.special as sc
@@ -12,13 +11,16 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 
 from .AbstractBase import AbstractCalculator
-
+from .botproperties import EstimatorUnoResult
 sc.seterr(all="ignore")
 
 
-class BlackScholes(AbstractCalculator, BotUtilities):
-    properties: dict = {}
 
+
+
+class BlackScholes(AbstractCalculator, BotUtilities):
+    
+    
     def calculate(self):
         pass
 
@@ -251,48 +253,48 @@ class BlackScholes(AbstractCalculator, BotUtilities):
         return final_vol
 
     # FIXME: modify calls to database
-    def get_vol_by_date(self, ticker, trading_day):
-        trading_day = self.check_date(trading_day)
-        vol_table = get_data_vol_surface_table_name()
-        vol_inferred_table = get_data_vol_surface_inferred_table_name()
-        latest_vol_table = get_latest_vol_table_name()
-        query = f"select * "
-        query += f"from {vol_table} vol "
-        query += f"where vol.ticker = '{ticker}' and "
-        query += f"vol.trading_day <= '{trading_day}' "
-        query += f"order by trading_day DESC limit 1;"
-        data = read_query(query, vol_table, cpu_counts=True, prints=False)
-        if len(data) != 1:
-            query = f"select * "
-            query += f"from {vol_inferred_table} vol "
-            query += f"where vol.ticker = '{ticker}' and "
-            query += f"vol.trading_day <= '{trading_day}' "
-            query += f"order by trading_day DESC limit 1;"
-            data = read_query(
-                query, vol_inferred_table, cpu_counts=True, prints=False
-            )
-            if len(data) != 1:
-                query = f"select * "
-                query += f"from {latest_vol_table} vol "
-                query += f"where vol.ticker = '{ticker}' limit 1;"
-                data = read_query(
-                    query, latest_vol_table, cpu_counts=True, prints=False
-                )
-                if len(data) != 1:
-                    data = {"ticker": ticker, "trading_day": trading_day}
-                    return False, data
-        data = {
-            "ticker": ticker,
-            "trading_day": trading_day,
-            "atm_volatility_spot": data.loc[0, "atm_volatility_spot"],
-            "atm_volatility_one_year": data.loc[0, "atm_volatility_one_year"],
-            "atm_volatility_infinity": data.loc[0, "atm_volatility_infinity"],
-            "slope": data.loc[0, "slope"],
-            "slope_inf": data.loc[0, "slope_inf"],
-            "deriv": data.loc[0, "deriv"],
-            "deriv_inf": data.loc[0, "deriv_inf"],
-        }
-        return True, data
+    # def get_vol_by_date(self, ticker, trading_day):
+    #     trading_day = self.check_date(trading_day)
+    #     vol_table = get_data_vol_surface_table_name()
+    #     vol_inferred_table = get_data_vol_surface_inferred_table_name()
+    #     latest_vol_table = get_latest_vol_table_name()
+    #     query = f"select * "
+    #     query += f"from {vol_table} vol "
+    #     query += f"where vol.ticker = '{ticker}' and "
+    #     query += f"vol.trading_day <= '{trading_day}' "
+    #     query += f"order by trading_day DESC limit 1;"
+    #     data = read_query(query, vol_table, cpu_counts=True, prints=False)
+    #     if len(data) != 1:
+    #         query = f"select * "
+    #         query += f"from {vol_inferred_table} vol "
+    #         query += f"where vol.ticker = '{ticker}' and "
+    #         query += f"vol.trading_day <= '{trading_day}' "
+    #         query += f"order by trading_day DESC limit 1;"
+    #         data = read_query(
+    #             query, vol_inferred_table, cpu_counts=True, prints=False
+    #         )
+    #         if len(data) != 1:
+    #             query = f"select * "
+    #             query += f"from {latest_vol_table} vol "
+    #             query += f"where vol.ticker = '{ticker}' limit 1;"
+    #             data = read_query(
+    #                 query, latest_vol_table, cpu_counts=True, prints=False
+    #             )
+    #             if len(data) != 1:
+    #                 data = {"ticker": ticker, "trading_day": trading_day}
+    #                 return False, data
+    #     data = {
+    #         "ticker": ticker,
+    #         "trading_day": trading_day,
+    #         "atm_volatility_spot": data.loc[0, "atm_volatility_spot"],
+    #         "atm_volatility_one_year": data.loc[0, "atm_volatility_one_year"],
+    #         "atm_volatility_infinity": data.loc[0, "atm_volatility_infinity"],
+    #         "slope": data.loc[0, "slope"],
+    #         "slope_inf": data.loc[0, "slope_inf"],
+    #         "deriv": data.loc[0, "deriv"],
+    #         "deriv_inf": data.loc[0, "deriv_inf"],
+    #     }
+    #     return True, data
 
     def get_v1_v2(self, ticker, price, trading_day, t, r, q, strike, barrier):
         trading_day = self.check_date(trading_day)
@@ -335,8 +337,8 @@ class BlackScholes(AbstractCalculator, BotUtilities):
             )
             v2 = np.nan_to_num(v2, nan=0)
         else:
-            v1 = default_vol
-            v2 = default_vol
+            v1 = 0
+            v2 = 0
         return float(NoneToZero(v1)), float(NoneToZero(v2))
 
     def convert_ORATS_vol(self, iv30, iv60, iv90, M3ATM, M4ATM):
@@ -529,3 +531,10 @@ class BlackScholes(AbstractCalculator, BotUtilities):
 
         # return rate
         return rate
+
+
+class UnoEstimator(BlackScholes):
+    
+    def calculate(self,validated_data):
+        result=EstimatorUnoResult()
+        

@@ -10,7 +10,7 @@ from scipy.optimize import newton
 
 from general.data_process import NoneToZero
 
-from ..botproperties import BaseProperties, ClassicProperties
+from ..botproperties import BaseProperties, ClassicProperties, UnoProperties
 
 
 class Creator(ABC):
@@ -67,8 +67,9 @@ class BaseCreator(Creator):
     validated_data: ValidatorProtocol
     _default_properties: BaseProperties
 
-    def __init__(self, validated_data, properties_class):
+    def __init__(self, validated_data, estimator):
         self.validated_data = validated_data
+        self.estimator = estimator
 
     def _digits(self, price):
         digit = max(min(4 - len(str(int(price))), 2), -1)
@@ -180,6 +181,17 @@ class ClassicCreator(BaseCreator):
 
 
 class UnoCreator(BaseCreator):
+    
+    
+    def _uno_itm(self):
+        return
+
+    def _uno_otm(self):
+        return
+
+    def _get_strike_barrier(self, price, vol, bot_option_type, bot_group):
+        pass
+
     def last_hedge_delta(self):
         delta = self.estimator.get_delta()
         return np.nan_to_num(delta, nan=0)
@@ -196,8 +208,9 @@ class UnoCreator(BaseCreator):
         )
 
     def max_loss_pct(self):
-        option_price = uno.Up_Out_Call(
-            price, strike, barrier, rebate, t/365, r, q, v1, v2)
+        option_price = self.estimator.Up_Out_Call(
+            price, strike, barrier, rebate, t / 365, r, q, v1, v2
+        )
         option_price = np.nan_to_num(option_price, nan=0)
         return -1 * option_price / price
 
@@ -208,7 +221,7 @@ class UnoCreator(BaseCreator):
         return round(option_price * total_bot_share_num, int(digits)) * -1
 
     def target_profit_pct(self):
-        return (barrier-strike) / price
+        return (barrier - strike) / price
 
     def target_profit_price(self):
         round(barrier, int(digits))
@@ -218,7 +231,7 @@ class UnoCreator(BaseCreator):
 
     def process(self):
         self._construct()
-        self.properties = ClassicProperties(
+        self.properties = UnoProperties(
             **self._default_properties.__dict__,
             vol=self.get_vol(),
             classic_vol=self.get_classic_vol()

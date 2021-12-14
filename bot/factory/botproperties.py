@@ -29,9 +29,32 @@ class ClassicProperties(BaseProperties):
     classic_vol: float
 
 
+@dataclass
 class UnoProperties(BaseProperties):
-    pass
+    barrier: float
+    option_price: float
+    q: float
+    r: float
+    strike: float
+    t: float
+    v1: float
+    v2: float
+    vol: float
 
 
 class UcdcProperties(BaseProperties):
     pass
+
+
+@dataclass
+class EstimatorUnoResult:
+    barrier: float
+    delta: float
+    option_price: float
+    q: float
+    r: float
+    strike: float
+    t: float
+    v1: float
+    v2: float
+    vol: float

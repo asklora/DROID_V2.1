@@ -2,64 +2,45 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
+from core.master.models import DataDividendDailyRates, DataInterestDailyRates
 from general.data_process import NoneToZero
 
 
 class BotUtilities:
-    @staticmethod
-    def check_date(dates):
-        if type(dates) == str and len(dates) > 10:
-            dates = pd.to_datetime(dates)
-        elif type(dates) == str and len(dates) == 10:
-            dates = datetime.strptime(dates, "%Y-%m-%d")
-        return dates
+    
+    @property
+    def _get_q(self, ticker: str, t: int) -> int:
+        try:
+            q = DataDividendDailyRates.objects.get(ticker=ticker, t=t).q
+            if q:
+                return q
+            return 0
+        except DataDividendDailyRates.DoesNotExist:
+            return 0
 
-    # FIXME: modify calls to database
-    @classmethod
-    def get_holiday(cls, non_working_day, currency_code):
-        table_name = get_currency_calendar_table_name()
-        query = f"select distinct ON (non_working_day) non_working_day, currency_code from {table_name} "
-        query += f" where non_working_day='{non_working_day}' and currency_code in {tuple_data(currency_code)}"
-        data = read_query(query, table_name, cpu_counts=True, prints=False)
-        return data
+    @property
+    def _get_r(self, currency_code: str, t: int) -> int:
+        try:
+            r = DataInterestDailyRates.objects.get(
+                currency_code=currency_code, t=t
+            ).r
+            if r:
+                return r
+            return 0
+        except DataInterestDailyRates.DoesNotexist:
+            return 0
 
-    @classmethod
-    def get_expiry_date(
-        cls,
-        time_to_exp,
-        spot_date,
-        currency_code,
-        apps=False,
-    ):
-        """
-        - Parameters:
-            - time_to_exp -> float
-            - spot_date -> date
-            - currency_code -> str
-        - Returns:
-            - datetime -> date
-        """
-        spot_date = cls.check_date(spot_date)
-        days = int(round((time_to_exp * 365), 0))
-        expiry = spot_date + relativedelta(days=(days))
-        if not apps:
-            while expiry.weekday() != 5:
-                expiry = expiry - relativedelta(days=1)
-        # days = int(round((time_to_exp * 256), 0))
-        # expiry = spot_date + BDay(days-1)
+    def get_trq(
+        self,
+        expiry: datetime,
+        spot_date: datetime,
+        ticker: str,
+        currency_code: str,
+    ) -> tuple(int, float, float):
+        t = max(1, (expiry - spot_date).days)
+        return t, self._get_r(currency_code, t), self._get_q(ticker, t)
 
-        while True:
-            holiday = False
-            data = get_holiday(expiry.strftime("%Y-%m-%d"), currency_code)
-            if len(data) > 0:
-                holiday = True
-            if (holiday == False) and expiry.weekday() < 5:
-                break
-            else:
-                expiry = expiry - relativedelta(days=1)
-        return expiry
 
-    @staticmethod
     def get_strike_barrier(price, vol, bot_option_type, bot_group):
         price = NoneToZero(price)
         vol = NoneToZero(vol)
@@ -80,16 +61,6 @@ class BotUtilities:
             strike_2 = price * (1 - vol * 1.5)
             return float(NoneToZero(strike)), float(NoneToZero(strike_2))
         return False
-
-    def get_trq(self, ticker, expiry, spot_date, currency_code):
-        expiry = self.check_date(expiry)
-        spot_date = self.check_date(spot_date)
-        t = (expiry - spot_date).days
-        if t == 0:
-            t = 1
-        r = get_r(currency_code, t)
-        q = get_q(ticker, t)
-        return int(NoneToZero(t)), float(NoneToZero(r)), float(NoneToZero(q))
 
     def get_vol(self, ticker, trading_day, t, r, q, time_to_exp):
         t = NoneToZero(t)
