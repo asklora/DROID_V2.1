@@ -7,9 +7,6 @@ class AbstractCalculator(ABC):
         pass
 
 
-
-
-
 class AbstractBotProcessor(ABC):
     @abstractmethod
     def create(self):
@@ -28,19 +25,12 @@ class AbstractBotProcessor(ABC):
         pass
 
 
-
-
 class AbstractBotStopper(ABC):
-    
+
     @abstractmethod
     def stop(self):
         pass
-    
-    
-    
-    
-    
-    
+
 
 class AbstactBotDirector(ABC):
     @abstractmethod

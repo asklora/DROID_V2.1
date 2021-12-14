@@ -1,3 +1,4 @@
+import datetime
 import pandas as pd
 from django.conf import settings
 from core.djangomodule.general import get_cached_data,set_cache_data
@@ -21,12 +22,15 @@ from general.table_name import (
     get_data_ibes_monthly_table_name,
     get_data_macro_monthly_table_name,
     get_ai_value_pred_table_name,
+    get_data_vol_surface_inferred_table_name,
+    get_data_vol_surface_table_name,
     get_data_worldscope_summary_table_name,
     get_industry_group_table_name,
     get_industry_table_name,
     get_latest_bot_update_table_name,
     get_latest_price_table_name,
     get_latest_bot_ranking_table_name,
+    get_latest_vol_table_name,
     get_master_tac_table_name,
     get_orders_position_performance_table_name,
     get_orders_position_table_name,
@@ -974,3 +978,66 @@ def get_latest_season():
     query = f"select * from {table_name} where end_date = (select max(end_date) as end_date from {table_name})"
     data = read_query(query, table_name, cpu_counts=True)
     return data
+
+
+
+def get_vol_surface_inferred(ticker:str,trading_day:datetime):
+    vol_inferred_table = get_data_vol_surface_inferred_table_name()
+    query = f"select * "
+    query += f"from {vol_inferred_table} vol "
+    query += f"where vol.ticker = '{ticker}' and "
+    query += f"vol.trading_day <= '{trading_day}' "
+    query += f"order by trading_day DESC limit 1;"
+    data = read_query(
+        query, vol_inferred_table, cpu_counts=True, prints=False
+        
+    )
+    if len(data) != 1:
+        return get_vol_latest(ticker,trading_day)
+    data = {
+            "ticker": ticker,
+            "trading_day": trading_day,
+            "atm_volatility_spot": data.loc[0, "atm_volatility_spot"],
+            "atm_volatility_one_year": data.loc[0, "atm_volatility_one_year"],
+            "atm_volatility_infinity": data.loc[0, "atm_volatility_infinity"],
+            "slope": data.loc[0, "slope"],
+            "slope_inf": data.loc[0, "slope_inf"],
+            "deriv": data.loc[0, "deriv"],
+            "deriv_inf": data.loc[0, "deriv_inf"],
+        }
+    return True,data
+    
+def get_vol_latest(ticker:str,trading_day:datetime):
+    latest_vol_table = get_latest_vol_table_name()
+    query = f"select * "
+    query += f"from {latest_vol_table} vol "
+    query += f"where vol.ticker = '{ticker}' limit 1;"
+    data = read_query(
+        query, latest_vol_table, cpu_counts=True, prints=False
+    )
+    if len(data) != 1:
+        data = {"ticker": ticker, "trading_day": trading_day}
+        return False,data
+    
+def get_bot_vol_surface_data(ticker:str,trading_day:str):
+    vol_table = get_data_vol_surface_table_name()
+    query = f"select * "
+    query += f"from {vol_table} vol "
+    query += f"where vol.ticker = '{ticker}' and "
+    query += f"vol.trading_day <= '{trading_day}' "
+    query += f"order by trading_day DESC limit 1;"
+    data = read_query(query, vol_table, cpu_counts=True, prints=False)
+    if len(data) != 1:
+        return get_vol_surface_inferred(ticker,trading_day)
+    data = {
+            "ticker": ticker,
+            "trading_day": trading_day,
+            "atm_volatility_spot": data.loc[0, "atm_volatility_spot"],
+            "atm_volatility_one_year": data.loc[0, "atm_volatility_one_year"],
+            "atm_volatility_infinity": data.loc[0, "atm_volatility_infinity"],
+            "slope": data.loc[0, "slope"],
+            "slope_inf": data.loc[0, "slope_inf"],
+            "deriv": data.loc[0, "deriv"],
+            "deriv_inf": data.loc[0, "deriv_inf"],
+        }
+    return True, data

@@ -22,6 +22,12 @@ class BaseProperties:
     price: float
     margin: int
 
+@dataclass
+class BaseResultProperties:
+    q: float
+    r: float
+    t: float
+    
 
 @dataclass
 class ClassicProperties(BaseProperties):
@@ -47,14 +53,11 @@ class UcdcProperties(BaseProperties):
 
 
 @dataclass
-class EstimatorUnoResult:
+class EstimatorUnoResult(BaseResultProperties):
     barrier: float
     delta: float
     option_price: float
-    q: float
-    r: float
     strike: float
-    t: float
     v1: float
     v2: float
     vol: float

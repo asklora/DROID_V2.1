@@ -1,5 +1,8 @@
+import datetime
 import gc
 from multiprocessing import cpu_count
+from general.sql_query import get_bot_vol_surface_data
+from global_vars import large_hedge, small_hedge, buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem, max_vol, min_vol, default_vol
 
 import numpy as np
 import scipy.special as sc
@@ -15,12 +18,8 @@ from .botproperties import EstimatorUnoResult
 sc.seterr(all="ignore")
 
 
-
-
-
 class BlackScholes(AbstractCalculator, BotUtilities):
-    
-    
+
     def calculate(self):
         pass
 
@@ -43,8 +42,7 @@ class BlackScholes(AbstractCalculator, BotUtilities):
 
         return call
 
-    @staticmethod
-    def BS_put(S, K, T, r, q, sigma):
+    def BS_put(self, S, K, T, r, q, sigma):
         # S: spot price
         # K: strike price
         # T: time to maturity
@@ -252,62 +250,31 @@ class BlackScholes(AbstractCalculator, BotUtilities):
 
         return final_vol
 
-    # FIXME: modify calls to database
-    # def get_vol_by_date(self, ticker, trading_day):
-    #     trading_day = self.check_date(trading_day)
-    #     vol_table = get_data_vol_surface_table_name()
-    #     vol_inferred_table = get_data_vol_surface_inferred_table_name()
-    #     latest_vol_table = get_latest_vol_table_name()
-    #     query = f"select * "
-    #     query += f"from {vol_table} vol "
-    #     query += f"where vol.ticker = '{ticker}' and "
-    #     query += f"vol.trading_day <= '{trading_day}' "
-    #     query += f"order by trading_day DESC limit 1;"
-    #     data = read_query(query, vol_table, cpu_counts=True, prints=False)
-    #     if len(data) != 1:
-    #         query = f"select * "
-    #         query += f"from {vol_inferred_table} vol "
-    #         query += f"where vol.ticker = '{ticker}' and "
-    #         query += f"vol.trading_day <= '{trading_day}' "
-    #         query += f"order by trading_day DESC limit 1;"
-    #         data = read_query(
-    #             query, vol_inferred_table, cpu_counts=True, prints=False
-    #         )
-    #         if len(data) != 1:
-    #             query = f"select * "
-    #             query += f"from {latest_vol_table} vol "
-    #             query += f"where vol.ticker = '{ticker}' limit 1;"
-    #             data = read_query(
-    #                 query, latest_vol_table, cpu_counts=True, prints=False
-    #             )
-    #             if len(data) != 1:
-    #                 data = {"ticker": ticker, "trading_day": trading_day}
-    #                 return False, data
-    #     data = {
-    #         "ticker": ticker,
-    #         "trading_day": trading_day,
-    #         "atm_volatility_spot": data.loc[0, "atm_volatility_spot"],
-    #         "atm_volatility_one_year": data.loc[0, "atm_volatility_one_year"],
-    #         "atm_volatility_infinity": data.loc[0, "atm_volatility_infinity"],
-    #         "slope": data.loc[0, "slope"],
-    #         "slope_inf": data.loc[0, "slope_inf"],
-    #         "deriv": data.loc[0, "deriv"],
-    #         "deriv_inf": data.loc[0, "deriv_inf"],
-    #     }
-    #     return True, data
-
-    def get_v1_v2(self, ticker, price, trading_day, t, r, q, strike, barrier):
-        trading_day = self.check_date(trading_day)
+    def get_vol(self, ticker: str, trading_day: datetime, t: int, r: float, q: float, time_to_exp: float):
         status, obj = self.get_vol_by_date(ticker, trading_day)
-        price = NoneToZero(price)
-        t = NoneToZero(t)
-        r = NoneToZero(r)
-        q = NoneToZero(q)
-        strike = NoneToZero(strike)
-        barrier = NoneToZero(barrier)
+        if status:
+            v0 = self.find_vol(1, t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
+                               obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
+            v0 = np.nan_to_num(v0, nan=0)
+            v0 = max(min(v0, max_vol), min_vol)
+
+            # Code when we use business days
+            # month = int(round((time_exp * 256), 0)) / 22
+            month = int(round((time_to_exp * 365), 0)) / 30
+            vol = v0 * (month/12)**0.5
+
+        else:
+            vol = default_vol
+        return float(NoneToZero(vol))
+
+    def get_vol_by_date(self, ticker, trading_day):
+        return get_bot_vol_surface_data(ticker, str(trading_day))
+
+    def get_v1_v2(self, ticker: str, price: float, trading_day: datetime, t: int, r: float = 0, q: float = 0, strike: float = 0, barrier: float = 0):
+        status, obj = self.get_vol_by_date(ticker, trading_day)
         if status:
             v1 = self.find_vol(
-                NoneToZero(strike / price),
+                (strike / price),
                 t / 365,
                 obj["atm_volatility_spot"],
                 obj["atm_volatility_one_year"],
@@ -533,8 +500,52 @@ class BlackScholes(AbstractCalculator, BotUtilities):
         return rate
 
 
-class UnoEstimator(BlackScholes):
-    
-    def calculate(self,validated_data):
-        result=EstimatorUnoResult()
-        
+class UnoCreateEstimator(BlackScholes):
+    @property
+    def _uno_strike_itm(self):
+        return self.validated_data.price * (1 + self.est.vol * 0.5)
+
+    @property
+    def _uno_strike_otm(self):
+        return self.validated_data.price * (1 + self.est.vol * 0.5)
+
+    @property
+    def _uno_barier_itm(self):
+        return self.validated_data.price * (1 + self.est.vol * 2)
+
+    @property
+    def _uno_barier_otm(self):
+        return self.validated_data.price * (1 + self.est.vol * 1.5)
+
+    @property
+    def _rebate(self):
+        return self._get_strike - self._get_barrier
+
+    @property
+    def _get_strike(self):
+        return getattr(self, f'_uno_strike_{self.validated_data.bot.bot_option_type.lower()}')()
+
+    @property
+    def _get_barrier(self):
+        return getattr(self, f'_uno_barier_{self.validated_data.bot.bot_option_type.lower()}')()
+
+    def calculate(self, validated_data):
+        self.validated_data = validated_data
+        t, r, q = self.get_trq(validated_data.expiry, validated_data.spot_date,
+                               validated_data.ticker, validated_data.currency)
+        vol = self.get_vol(validated_data.ticker, validated_data.spot_date,
+                           t, r, q, validated_data.time_to_exp)
+
+        v1, v2 = self.get_v1_v2(validated_data.ticker, validated_data.price, validated_data.spot_date,
+                                t, r, q, self._get_strike, self._get_barrier)
+        delta = self.deltaUnOC(validated_data.price, self._get_strike, self._get_barrier,
+                               self._rebate, t/365, r, q, v1, v2)
+        delta = np.nan_to_num(delta, nan=0)
+        option_price = self.Up_Out_Call(
+            validated_data.price, self._get_strike, self._get_barrier, self._rebate, t/365, r, q, v1, v2)
+        option_price = np.nan_to_num(option_price, nan=0)
+
+        result = EstimatorUnoResult(
+            t=t, r=r, q=q, vol=vol, v1=v1, v2=v2, barrier=self._get_barrier, delta=delta, option_price=option_price
+        )
+        return result

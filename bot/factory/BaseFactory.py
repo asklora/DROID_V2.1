@@ -1,9 +1,9 @@
 from .AbstractBase import AbstactBotDirector, AbstractBotProcessor
 from core.bot.models import BotOptionType
-from .estimator import BlackScholes, UnoEstimator
+from .estimator import BlackScholes, UnoCreateEstimator
 from .bot_protocols import ValidatorProtocol, EstimatorProtocol
 from .botproperties import ClassicProperties
-from .act.creator import ClassicCreator
+from .act.creator import ClassicCreator,UnoCreator
 
 
 class BaseProcessor(AbstractBotProcessor):
@@ -48,7 +48,7 @@ class UcdcBot(BaseProcessor):
 
 class UnoBot(BaseProcessor):
     def create(self):
-        super().set_estimator(BlackScholes)
+        super().set_estimator(UnoCreateEstimator)
         creator = UnoCreator(self.validated_data, self.estimator)
         creator.process()
         return creator

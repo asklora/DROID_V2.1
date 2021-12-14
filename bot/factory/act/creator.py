@@ -2,15 +2,9 @@ import math
 from abc import ABC, abstractmethod
 
 import numpy as np
-import pandas as pd
-import scipy.stats as si
 from bot.factory.bot_protocols import ValidatorProtocol
 from core.master.models import LatestPrice
-from scipy.optimize import newton
-
-from general.data_process import NoneToZero
-
-from ..botproperties import BaseProperties, ClassicProperties, UnoProperties
+from ..botproperties import BaseProperties, ClassicProperties, UnoProperties, EstimatorUnoResult
 
 
 class Creator(ABC):
@@ -181,24 +175,13 @@ class ClassicCreator(BaseCreator):
 
 
 class UnoCreator(BaseCreator):
-    
-    
-    def _uno_itm(self):
-        return
-
-    def _uno_otm(self):
-        return
-
-    def _get_strike_barrier(self, price, vol, bot_option_type, bot_group):
-        pass
+    est: EstimatorUnoResult
 
     def last_hedge_delta(self):
-        delta = self.estimator.get_delta()
-        return np.nan_to_num(delta, nan=0)
+        return self.est.delta
 
     def _bot_hedge_share(self):
-        delta = self.estimator.get_delta()
-        math.floor(delta * self.validated_data.total_bot_share_num)
+        return math.floor(self.est.delta * self.get_total_bot_share_num())
 
     def get_bot_cash_balance(self):
         return round(
@@ -208,28 +191,26 @@ class UnoCreator(BaseCreator):
         )
 
     def max_loss_pct(self):
-        option_price = self.estimator.Up_Out_Call(
-            price, strike, barrier, rebate, t / 365, r, q, v1, v2
-        )
-        option_price = np.nan_to_num(option_price, nan=0)
-        return -1 * option_price / price
+        return -1 * self.est.option_price / self.validated_data.price
 
     def max_loss_price(self):
-        return round(price - option_price, int(digits))
+        return round(self.validated_data.price - self.est.option_price, self._digits(self.validated_data.price))
 
     def max_loss_amount(self):
-        return round(option_price * total_bot_share_num, int(digits)) * -1
+        return round(self.est.option_price * self.get_total_bot_share_num(), self._digits(self.validated_data.price)) * -1
 
     def target_profit_pct(self):
-        return (barrier - strike) / price
+        return (self.est.barier - self.est.barier) / self.validated_data.price
 
     def target_profit_price(self):
-        round(barrier, int(digits))
+        return round(self.est.barier, self._digits(self.validated_data.price))
 
     def target_profit_amount(self):
-        round(rebate * total_bot_share_num, int(digits))
+        return round(self.est.rebate * self.get_total_bot_share_num(),
+              self._digits(self.validated_data.price))
 
     def process(self):
+        self.est = self.estimator.calculate(self.validated_data)
         self._construct()
         self.properties = UnoProperties(
             **self._default_properties.__dict__,
