@@ -1,6 +1,6 @@
 from .AbstractBase import AbstactBotDirector, AbstractBotProcessor
 from core.bot.models import BotOptionType
-from .estimator import BlackScholes
+from .estimator import BlackScholes, UnoEstimator
 from .bot_protocols import ValidatorProtocol, EstimatorProtocol
 from .botproperties import ClassicProperties
 from .act.creator import ClassicCreator
@@ -48,7 +48,10 @@ class UcdcBot(BaseProcessor):
 
 class UnoBot(BaseProcessor):
     def create(self):
-        print(self.validated_data.expiry)
+        super().set_estimator(BlackScholes)
+        creator = UnoCreator(self.validated_data, self.estimator)
+        creator.process()
+        return creator
 
     def hedge(self):
         pass
