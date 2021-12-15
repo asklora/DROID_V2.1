@@ -4,7 +4,7 @@ from core.djangomodule.general import get_cached_data,set_cache_data
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general import table_name
-from general.sql_process import db_read, alibaba_db_url, DB_URL_ALIBABA_PROD
+from general.sql_process import db_read
 from general.date_process import (
     backdate_by_day,
     backdate_by_year,
@@ -126,24 +126,6 @@ def check_ticker_currency_code_query(ticker=None, currency_code=None, active=Tru
     return query
 
 
-def get_region():
-    table_name = get_region_table_name()
-    query = f"select * from {table_name}"
-    data = read_query(query, table=table_name)
-    return data
-
-
-def get_latest_price():
-    query = f"select mo.* from master_ohlcvtr mo, "
-    query += f"(select master_ohlcvtr.ticker, max(master_ohlcvtr.trading_day) max_date "
-    # and master_ohlcvtr.trading_day <= '2020-09-14'
-    query += f"from master_ohlcvtr where master_ohlcvtr.close is not null "
-    query += f"group by master_ohlcvtr.ticker) filter "
-    query += f"where mo.ticker=filter.ticker and mo.trading_day=filter.max_date; "
-    data = read_query(query, table="latest_price")
-    return data
-
-
 def get_data_by_table_name(table):
     query = f"select * from {table}"
     data = read_query(query, table=table)
@@ -175,6 +157,7 @@ def get_active_currency_ric_not_null(currency_code=None, active=True):
 def get_active_universe_consolidated_by_field(
     isin=False, cusip=False, sedol=False, manual=False, ticker=None
 ):
+    ''' obsolete (only used in special_case.py) '''
     query = (
         f"select * from {get_universe_consolidated_table_name()} where is_active=True "
     )

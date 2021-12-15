@@ -55,6 +55,7 @@ from general.table_name import (
 )
 
 def ticker_changes(old_ticker, new_ticker):
+    ''' obsolete '''
     old_ticker_uid = old_ticker.replace(".", "").replace("-", "").replace("_", "")
     new_ticker_uid = new_ticker.replace(".", "").replace("-", "").replace("_", "")
     consolidated_universe = get_active_universe_consolidated_by_field(ticker=old_ticker)
