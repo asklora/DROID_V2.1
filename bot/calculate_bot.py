@@ -1,7 +1,7 @@
 from general.slack import report_to_slack
 from bot.data_download import get_currency_data
 from core.djangomodule.general import formatdigit
-from general.sql_output import upsert_data_to_database
+from general.sql_output import clean_daily_profit_history, upsert_data_to_database
 from general.date_process import backdate_by_day, dateNow, date_to_string, datetimeNow, str_to_date
 import math
 import numpy as np
@@ -602,7 +602,7 @@ def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
     return bot_cash_dividend
 
 def populate_daily_profit(currency_code=None, user_id=None):
-    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, is_test, is_superuser")[["user_id", "is_joined", "is_test", "is_superuser"]]
+    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, is_test, is_superuser", conditions=["is_active=True"])[["user_id", "is_joined", "is_test", "is_superuser"]]
     if user_core.empty:
         return
     user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, currency_code, amount as balance")
@@ -702,7 +702,8 @@ def populate_daily_profit(currency_code=None, user_id=None):
     not_joined["rank"] = None
     not_joined["total_profit_pct"] = not_joined["total_profit_pct"].round(4)
     upsert_data_to_database(not_joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
-
+    clean_daily_profit_history()
+    
 def update_season():
     month_list = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     period = str_to_date(backdate_by_day(1))
