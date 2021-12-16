@@ -304,6 +304,7 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
     universe = change_date_to_str(universe)
+    universe = universe.reset_index(inplace=False, drop=True)
     if(update_firebase):
         update_to_firestore(data=universe, index="ticker", table=settings.FIREBASE_COLLECTION['universe'], dict=False)
         report_to_slack("{} : === FIREBASE UNIVERSE UPDATED ===".format(datetimeNow()))
@@ -425,6 +426,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         result["total_user_invested_amount"]  = result["total_user_invested_amount"].astype(float).round(2)
         result["total_profit_amount"]  = result["total_profit_amount"].astype(float).round(2)
         result["daily_live_profit"]  = result["daily_live_profit"].astype(float).round(2)
+        result = result.reset_index(inplace=False, drop=True)
         if(update_firebase):
             await sync_to_async(update_to_firestore)(data=result, index="user_id", table=settings.FIREBASE_COLLECTION['portfolio'], dict=False)
         return result
@@ -523,6 +525,7 @@ def firebase_ranking_update(update_firebase=True):
     user_core = user_core.drop(columns=["current_status", "is_joined"])
     rank = rank.merge(user_core, how="left", on=["user_id"])
     rank["ranking"] = (rank["ranking"].astype(int).astype(str) * 4)
+    rank = rank.reset_index(inplace=False, drop=True)
     if(update_firebase):
         update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
     else:
@@ -548,6 +551,7 @@ def firebase_ranking_update_random(update_firebase=True):
     rank = rank.sort_values(by=["rank"], ascending=True)
     rank = rank.head(6)
     rank["ranking"] = (rank["ranking"].astype(int).astype(str) * 4)
+    rank = rank.reset_index(inplace=False, drop=True)
     if(update_firebase):
         update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
     else:
