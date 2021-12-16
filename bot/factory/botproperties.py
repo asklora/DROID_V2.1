@@ -10,6 +10,7 @@ class BaseProperties:
     current_bot_cash_balance: float
     expiry: datetime.date
     spot_date: datetime.date
+    created: datetime
     total_bot_share_num: float
     max_loss_pct: float
     max_loss_price: float
@@ -38,6 +39,7 @@ class ClassicProperties(BaseProperties):
 @dataclass
 class UnoProperties(BaseProperties):
     barrier: float
+    delta: float
     option_price: float
     q: float
     r: float
@@ -57,6 +59,7 @@ class EstimatorUnoResult(BaseResultProperties):
     barrier: float
     delta: float
     option_price: float
+    rebate: float
     strike: float
     v1: float
     v2: float

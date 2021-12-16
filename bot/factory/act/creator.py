@@ -4,7 +4,12 @@ from abc import ABC, abstractmethod
 import numpy as np
 from bot.factory.bot_protocols import ValidatorProtocol
 from core.master.models import LatestPrice
-from ..botproperties import BaseProperties, ClassicProperties, UnoProperties, EstimatorUnoResult
+from ..botproperties import (
+    BaseProperties,
+    ClassicProperties,
+    UnoProperties,
+    EstimatorUnoResult,
+)
 
 
 class Creator(ABC):
@@ -53,13 +58,14 @@ class Creator(ABC):
         pass
 
     @abstractmethod
-    def get_result_as_dict(self):
+    def get_result_as_dict(self) -> BaseProperties:
         pass
 
 
 class BaseCreator(Creator):
     validated_data: ValidatorProtocol
     _default_properties: BaseProperties
+    properties: BaseProperties
 
     def __init__(self, validated_data, estimator):
         self.validated_data = validated_data
@@ -82,6 +88,7 @@ class BaseCreator(Creator):
             share_num=self.get_total_bot_share_num(),
             current_bot_cash_balance=self.get_bot_cash_balance(),
             expiry=self.validated_data.expiry,
+            created=self.validated_data.created,
             spot_date=self.validated_data.spot_date,
             total_bot_share_num=self.get_total_bot_share_num(),
             max_loss_pct=self.max_loss_amount(),
@@ -95,6 +102,12 @@ class BaseCreator(Creator):
             price=self.validated_data.price,
             margin=self.validated_data.margin,
         )
+
+    def _properties_check(self):
+        if self.properties:
+            return
+        else:
+            raise ValueError("No result found, need process to be trigered")
 
 
 class ClassicCreator(BaseCreator):
@@ -194,32 +207,45 @@ class UnoCreator(BaseCreator):
         return -1 * self.est.option_price / self.validated_data.price
 
     def max_loss_price(self):
-        return round(self.validated_data.price - self.est.option_price, self._digits(self.validated_data.price))
+        return round(
+            self.validated_data.price - self.est.option_price,
+            self._digits(self.validated_data.price),
+        )
 
     def max_loss_amount(self):
-        return round(self.est.option_price * self.get_total_bot_share_num(), self._digits(self.validated_data.price)) * -1
+        return (
+            round(
+                self.est.option_price * self.get_total_bot_share_num(),
+                self._digits(self.validated_data.price),
+            )
+            * -1
+        )
 
     def target_profit_pct(self):
-        return (self.est.barier - self.est.barier) / self.validated_data.price
+        return (self.est.barrier - self.est.barrier) / self.validated_data.price
 
     def target_profit_price(self):
-        return round(self.est.barier, self._digits(self.validated_data.price))
+        return round(self.est.barrier, self._digits(self.validated_data.price))
 
     def target_profit_amount(self):
-        return round(self.est.rebate * self.get_total_bot_share_num(),
-              self._digits(self.validated_data.price))
+        return round(
+            self.est.rebate * self.get_total_bot_share_num(),
+            self._digits(self.validated_data.price),
+        )
 
     def process(self):
         self.est = self.estimator.calculate(self.validated_data)
         self._construct()
+        result_dict = self.est.__dict__
+        result_dict.pop("rebate")
         self.properties = UnoProperties(
-            **self._default_properties.__dict__,
-            vol=self.get_vol(),
-            classic_vol=self.get_classic_vol()
+            **self._default_properties.__dict__, **result_dict
         )
 
     def get_result(self):
-        pass
+        self._properties_check()
+        return self.properties
 
     def get_result_as_dict(self):
-        pass
+        self._properties_check()
+        return self.properties.__dict__

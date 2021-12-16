@@ -2,7 +2,17 @@ import datetime
 import gc
 from multiprocessing import cpu_count
 from general.sql_query import get_bot_vol_surface_data
-from global_vars import large_hedge, small_hedge, buy_UCDC_prem, sell_UCDC_prem, buy_UNO_prem, sell_UNO_prem, max_vol, min_vol, default_vol
+from global_vars import (
+    large_hedge,
+    small_hedge,
+    buy_UCDC_prem,
+    sell_UCDC_prem,
+    buy_UNO_prem,
+    sell_UNO_prem,
+    max_vol,
+    min_vol,
+    default_vol,
+)
 
 import numpy as np
 import scipy.special as sc
@@ -14,12 +24,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 
 from .AbstractBase import AbstractCalculator
+from .validator import BotCreateProps
 from .botproperties import EstimatorUnoResult
+
 sc.seterr(all="ignore")
 
 
 class BlackScholes(AbstractCalculator, BotUtilities):
-
     def calculate(self):
         pass
 
@@ -104,37 +115,34 @@ class BlackScholes(AbstractCalculator, BotUtilities):
         skew_inf,
         curv_1m,
         curv_inf,
-        flag,
     ):
         # t = days to maturity / 365
 
         # term structure
-        cond1 = t > 0.05
-        cond2 = t <= 0.05
-
-        st_vol = np.zeros_like(atmv_0)
-        lt_vol = np.zeros_like(atmv_0)
-        atm_vol = np.zeros_like(atmv_0)
-
-        st_vol[cond1] = (
-            (atmv_0[cond1] - atmv_inf[cond1])
-            * (1 - np.exp(-term_alpha * t[cond1]))
-            / (term_alpha * t[cond1])
-        )
-        lt_vol[cond1] = np.exp(-term_alpha * t[cond1]) * (
-            atmv_1Y[cond1] - atmv_inf[cond1]
-        )
-        atm_vol[cond1] = atmv_inf[cond1] + st_vol[cond1] - lt_vol[cond1]
-
-        atm_vol[cond2] = atmv_0[cond2] * (1 - t[cond2] / 0.08) + (
-            atmv_1Y[cond2] * t[cond2] / 0.08
-        )
+        if t > 0.05:
+            st_vol = (
+                (atmv_0 - atmv_inf)
+                * (1 - np.exp(-term_alpha * t))
+                / (term_alpha * t)
+            )
+            # print(st_vol)
+            lt_vol = np.exp(-term_alpha * t) * (atmv_1Y - atmv_inf)
+            atm_vol = atmv_inf + st_vol - lt_vol
+        else:  # for really small t use a hack
+            atmv_0 * (1 - t / 0.08) + (atmv_1Y * t / 0.08)
+            atm_vol = atmv_0 * (1 - t / 0.08) + atmv_1Y * (
+                t / 0.08
+            )  # 0.05 / 0.08 so use some atmv_1Y
 
         # find the skew + curvature
         t_ratio = np.sqrt(1 / (t * 12))
-        t_ratio[t_ratio >= 1.5] = 1.5
+        if t_ratio > 1.5:
+            t_ratio = (
+                1.5  # limit short term skew to 1.5 X skew_1m - 0.5 X skew_inf
+            )
         skew = skew_1m * t_ratio + skew_inf * (1 - t_ratio)
-        t_ratio[t_ratio >= 1] = 1
+        if t_ratio > 1:
+            t_ratio = 1  # limit to curv => curv_1m
         curv = curv_1m * t_ratio + curv_inf * (1 - t_ratio)
 
         vol = atm_vol * (
@@ -142,10 +150,8 @@ class BlackScholes(AbstractCalculator, BotUtilities):
             + (skew * (delta * 100 - 50) / 1000)
             + (curv * ((delta * 100 - 50) ** 2) / 2000)
         )
-
-        if vol.any() < 0 and flag.any() == 1:
-            print("Warning, negative vol!!!")
-            vol[vol <= 0.01] = 0.01
+        if vol < 0:
+            vol = 0.01  # don't return NEGATIVE vols
 
         return vol
 
@@ -164,10 +170,8 @@ class BlackScholes(AbstractCalculator, BotUtilities):
         r,
         q,
     ):
-        # convert droid_vol_surface_parameters to a black-scholes vol
         # input MONEYNESS - not BS forwards OR price strikes
-
-        moneyness = moneyness * 100
+        moneyness = moneyness * 100  # USE 100 BASE!!!
 
         def strike_delta(delta):
 
@@ -182,54 +186,37 @@ class BlackScholes(AbstractCalculator, BotUtilities):
                 skew_inf,
                 curv_1m,
                 curv_inf,
-                0,
             )
+            # print(vol)
             K = self.delta_to_strikes(
                 100, delta, expiry_days_as_fraction, r, q, vol
             )
-
+            # print(K)
             return K - moneyness
 
+        # find a vol for the strike
         try:
-            x0 = np.full((len(atmv_0)), 0.5)
-            final_delta1 = newton(strike_delta, x0, maxiter=1000)
-        except:
-            final_delta1 = np.full((len(atmv_0)), np.nan)
-
-        try:
-            x0 = np.full((len(atmv_0)), 0.9)
-            final_delta2 = newton(strike_delta, x0=x0, maxiter=1000)
-        except:
-            final_delta2 = np.full((len(atmv_0)), np.nan)
-
-        try:
-            x0 = np.full((len(atmv_0)), 0.1)
-            final_delta3 = newton(strike_delta, x0=x0, maxiter=1000)
-        except:
-            final_delta3 = np.full((len(atmv_0)), np.nan)
-        final_delta = np.where(
-            np.isnan(final_delta1),
-            np.where(
-                np.isnan(final_delta2),
-                np.where(
-                    np.isnan(final_delta3),
-                    np.where(
+            final_delta = newton(strike_delta, 0.5, maxiter=1000)
+            # print(final_delta)
+        except RuntimeError as E:
+            # try starting a seed at 0.9 or 0.1 delta
+            try:
+                final_delta = newton(strike_delta, x0=0.9, maxiter=1000)
+            except RuntimeError as E:
+                try:
+                    final_delta = newton(strike_delta, x0=0.1, maxiter=1000)
+                except RuntimeError as E:
+                    # if still not converging, just take the zero or one delta vol
+                    if (
                         moneyness * ((expiry_days_as_fraction * (r - q)) + 1)
-                        > 100,
-                        0.01,
-                        0.99,
-                    ),
-                    final_delta3,
-                ),
-                final_delta2,
-            ),
-            final_delta1,
-        )
+                        > 100
+                    ):
+                        # if BS forward is greater than 100 - means higher strike
+                        final_delta = 0.01
+                    else:
+                        final_delta = 0.99
 
-        final_delta[final_delta <= 0.01] = 0.01
-        final_delta[final_delta >= 0.99] = 0.99
-
-        final_delta = np.squeeze(final_delta)
+        final_delta = min(max(final_delta, 0.01), 0.99)
 
         final_vol = self.delta_vol(
             final_delta,
@@ -242,26 +229,46 @@ class BlackScholes(AbstractCalculator, BotUtilities):
             skew_inf,
             curv_1m,
             curv_inf,
-            1,
         )
 
-        final_vol[final_vol < 0.1] = 0.1
-        # final_vol = np.squeeze(final_vol)
+        final_vol = max(final_vol, 0.1)
 
         return final_vol
 
-    def get_vol(self, ticker: str, trading_day: datetime, t: int, r: float, q: float, time_to_exp: float):
+    def get_vol(
+        self,
+        ticker: str,
+        trading_day: datetime,
+        t: int,
+        r: float,
+        q: float,
+        time_to_exp: float,
+    ):
         status, obj = self.get_vol_by_date(ticker, trading_day)
+        # print(status, obj)
+
         if status:
-            v0 = self.find_vol(1, t/365, obj["atm_volatility_spot"], obj["atm_volatility_one_year"],
-                               obj["atm_volatility_infinity"], 12, obj["slope"], obj["slope_inf"], obj["deriv"], obj["deriv_inf"], r, q)
+            v0 = self.find_vol(
+                1,
+                t / 365,
+                obj["atm_volatility_spot"],
+                obj["atm_volatility_one_year"],
+                obj["atm_volatility_infinity"],
+                12,
+                obj["slope"],
+                obj["slope_inf"],
+                obj["deriv"],
+                obj["deriv_inf"],
+                r,
+                q,
+            )
             v0 = np.nan_to_num(v0, nan=0)
             v0 = max(min(v0, max_vol), min_vol)
 
             # Code when we use business days
             # month = int(round((time_exp * 256), 0)) / 22
             month = int(round((time_to_exp * 365), 0)) / 30
-            vol = v0 * (month/12)**0.5
+            vol = v0 * (month / 12) ** 0.5
 
         else:
             vol = default_vol
@@ -270,7 +277,17 @@ class BlackScholes(AbstractCalculator, BotUtilities):
     def get_vol_by_date(self, ticker, trading_day):
         return get_bot_vol_surface_data(ticker, str(trading_day))
 
-    def get_v1_v2(self, ticker: str, price: float, trading_day: datetime, t: int, r: float = 0, q: float = 0, strike: float = 0, barrier: float = 0):
+    def get_v1_v2(
+        self,
+        ticker: str,
+        price: float,
+        trading_day: datetime,
+        t: int,
+        r: float = 0,
+        q: float = 0,
+        strike: float = 0,
+        barrier: float = 0,
+    ):
         status, obj = self.get_vol_by_date(ticker, trading_day)
         if status:
             v1 = self.find_vol(
@@ -503,19 +520,19 @@ class BlackScholes(AbstractCalculator, BotUtilities):
 class UnoCreateEstimator(BlackScholes):
     @property
     def _uno_strike_itm(self):
-        return self.validated_data.price * (1 + self.est.vol * 0.5)
+        return self.validated_data.price * (1 + self.vol * 0.5)
 
     @property
     def _uno_strike_otm(self):
-        return self.validated_data.price * (1 + self.est.vol * 0.5)
+        return self.validated_data.price * (1 + self.vol * 0.5)
 
     @property
     def _uno_barier_itm(self):
-        return self.validated_data.price * (1 + self.est.vol * 2)
+        return self.validated_data.price * (1 + self.vol * 2)
 
     @property
     def _uno_barier_otm(self):
-        return self.validated_data.price * (1 + self.est.vol * 1.5)
+        return self.validated_data.price * (1 + self.vol * 1.5)
 
     @property
     def _rebate(self):
@@ -523,29 +540,81 @@ class UnoCreateEstimator(BlackScholes):
 
     @property
     def _get_strike(self):
-        return getattr(self, f'_uno_strike_{self.validated_data.bot.bot_option_type.lower()}')()
+        return getattr(
+            self,
+            f"_uno_strike_{self.validated_data.bot.bot_option_type.lower()}",
+        )
 
     @property
     def _get_barrier(self):
-        return getattr(self, f'_uno_barier_{self.validated_data.bot.bot_option_type.lower()}')()
+        return getattr(
+            self,
+            f"_uno_barier_{self.validated_data.bot.bot_option_type.lower()}",
+        )
 
-    def calculate(self, validated_data):
+    def calculate(self, validated_data: BotCreateProps):
         self.validated_data = validated_data
-        t, r, q = self.get_trq(validated_data.expiry, validated_data.spot_date,
-                               validated_data.ticker, validated_data.currency)
-        vol = self.get_vol(validated_data.ticker, validated_data.spot_date,
-                           t, r, q, validated_data.time_to_exp)
+        t, r, q = self.get_trq(
+            validated_data.expiry,
+            validated_data.spot_date,
+            validated_data.ticker,
+            validated_data.currency,
+        )
+        self.vol = self.get_vol(
+            validated_data.ticker,
+            validated_data.spot_date,
+            t,
+            r,
+            q,
+            validated_data.time_to_exp,
+        )
 
-        v1, v2 = self.get_v1_v2(validated_data.ticker, validated_data.price, validated_data.spot_date,
-                                t, r, q, self._get_strike, self._get_barrier)
-        delta = self.deltaUnOC(validated_data.price, self._get_strike, self._get_barrier,
-                               self._rebate, t/365, r, q, v1, v2)
+        v1, v2 = self.get_v1_v2(
+            validated_data.ticker,
+            validated_data.price,
+            validated_data.spot_date,
+            t,
+            r,
+            q,
+            self._get_strike,
+            self._get_barrier,
+        )
+        delta = self.deltaUnOC(
+            validated_data.price,
+            self._get_strike,
+            self._get_barrier,
+            self._rebate,
+            t / 365,
+            r,
+            q,
+            v1,
+            v2,
+        )
         delta = np.nan_to_num(delta, nan=0)
         option_price = self.Up_Out_Call(
-            validated_data.price, self._get_strike, self._get_barrier, self._rebate, t/365, r, q, v1, v2)
+            validated_data.price,
+            self._get_strike,
+            self._get_barrier,
+            self._rebate,
+            t / 365,
+            r,
+            q,
+            v1,
+            v2,
+        )
         option_price = np.nan_to_num(option_price, nan=0)
 
         result = EstimatorUnoResult(
-            t=t, r=r, q=q, vol=vol, v1=v1, v2=v2, barrier=self._get_barrier, delta=delta, option_price=option_price
+            t=t,
+            r=r,
+            q=q,
+            vol=self.vol,
+            v1=v1,
+            v2=v2,
+            barrier=self._get_barrier,
+            rebate=self._rebate,
+            strike=self._get_strike,
+            delta=delta,
+            option_price=option_price,
         )
         return result

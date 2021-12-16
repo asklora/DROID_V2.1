@@ -8,7 +8,8 @@ from core.orders.models import OrderPosition
 @dataclass
 class BotCreateProps:
     ticker: str
-    spot_date: datetime
+    spot_date: datetime.date
+    created:datetime
     expiry: datetime.date
     investment_amount: float
     price: float
@@ -27,7 +28,8 @@ class BotCreateProps:
         margin: int = 1,
     ):
         self.ticker = ticker
-        self.spot_date = spot_date
+        self.spot_date = spot_date.date()
+        self.created = spot_date
         self.investment_amount = investment_amount
         self.price = price
         self.bot_id = bot_id
@@ -60,7 +62,7 @@ class BotCreateProps:
         while True:
             holiday = False
             data = CurrencyCalendars.objects.filter(
-                non_working_day=expiry.date(), currency_code=currency
+                non_working_day=expiry, currency_code=currency
             ).distinct("non_working_day")
             if data:
                 holiday = True
@@ -68,7 +70,7 @@ class BotCreateProps:
                 break
             else:
                 expiry = expiry - timedelta(days=1)
-        self.expiry = expiry.date()
+        self.expiry = expiry
 
     def validate(self):
         self.get_bot()
