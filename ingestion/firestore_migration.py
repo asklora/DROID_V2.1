@@ -518,13 +518,16 @@ def firebase_user_update(user_id=None, currency_code=None, update_firebase=True)
 
 def firebase_ranking_update(update_firebase=True):
     rank = get_user_profit_history(field="user_id, rank::integer as ranking, rank::integer, total_profit_pct")
-    rank = rank.sort_values(by=["rank"], ascending=True).head(6)
-    print(rank)
-    user_core = get_user_core(user_id=rank["user_id"].to_list(), field="id as user_id, username, current_status, is_joined, first_name, last_name, email")
+    rank = rank.sort_values(by=["rank"], ascending=True)
+    rank = rank.loc[rank["rank"] <= 6]
+    user_core = get_user_core(user_id=rank["user_id"].to_list(), field="id as user_id, username, current_status, is_joined, first_name, last_name, email, is_test, is_superuser")
     user_core = user_core.loc[user_core["current_status"] == "verified"]
     user_core = user_core.loc[user_core["is_joined"] == True]
-    user_core = user_core.drop(columns=["current_status", "is_joined"])
+    user_core = user_core.loc[user_core["is_test"] == True]
+    user_core = user_core.loc[user_core["is_superuser"] == True]
+    user_core = user_core.drop(columns=["current_status", "is_joined", "is_test", "is_superuser"])
     rank = rank.merge(user_core, how="left", on=["user_id"])
+    rank = rank.dropna(subset=["email"])
     rank["ranking"] = (rank["ranking"].astype(int).astype(str) * 4)
     rank = rank.reset_index(inplace=False, drop=True)
     if(update_firebase):

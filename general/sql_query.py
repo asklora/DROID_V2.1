@@ -830,9 +830,9 @@ def get_all_user_core():
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
-def get_user_core(currency_code=None, user_id=None, field="*", ):
+def get_user_core(currency_code=None, user_id=None, field="*", conditions=["is_active=True", "is_superuser=False", "is_test=False"]):
     table_name = get_user_core_table_name()
-    query = f"select {field} from {table_name} where is_active=True and is_superuser=False and is_test=False " #is_active=True and is_joined=True and current_status='verified' and is_test=False
+    query = f"select {field} from {table_name} where {' AND '.join(conditions)} "
     if type(user_id) != type(None):
         if len(user_id) != 0:
             query += f"and id in {tuple_data(user_id)}  "
