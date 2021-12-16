@@ -23,12 +23,13 @@ class BaseProperties:
     price: float
     margin: int
 
+
 @dataclass
 class BaseResultProperties:
     q: float
     r: float
     t: float
-    
+
 
 @dataclass
 class ClassicProperties(BaseProperties):
@@ -50,8 +51,18 @@ class UnoProperties(BaseProperties):
     vol: float
 
 
+@dataclass
 class UcdcProperties(BaseProperties):
-    pass
+    strike_2: float
+    delta: float
+    option_price: float
+    q: float
+    r: float
+    strike: float
+    t: float
+    v1: float
+    v2: float
+    vol: float
 
 
 @dataclass
@@ -61,6 +72,18 @@ class EstimatorUnoResult(BaseResultProperties):
     option_price: float
     rebate: float
     strike: float
+    v1: float
+    v2: float
+    vol: float
+
+
+@dataclass
+class EstimatorUcdcResult(BaseResultProperties):
+    delta: float
+    option_price: float
+    rebate: float
+    strike: float
+    strike_2: float
     v1: float
     v2: float
     vol: float

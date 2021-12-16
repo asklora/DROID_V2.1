@@ -54,11 +54,11 @@ class Creator(ABC):
         pass
 
     @abstractmethod
-    def get_result(self):
+    def get_result(self) -> BaseProperties:
         pass
 
     @abstractmethod
-    def get_result_as_dict(self) -> BaseProperties:
+    def get_result_as_dict(self) -> dict:
         pass
 
 
@@ -108,6 +108,14 @@ class BaseCreator(Creator):
             return
         else:
             raise ValueError("No result found, need process to be trigered")
+
+    def get_result(self):
+        self._properties_check()
+        return self.properties
+
+    def get_result_as_dict(self):
+        self._properties_check()
+        return self.properties.__dict__
 
 
 class ClassicCreator(BaseCreator):
@@ -180,12 +188,6 @@ class ClassicCreator(BaseCreator):
             classic_vol=self.get_classic_vol()
         )
 
-    def get_result(self):
-        return self.properties
-
-    def get_result_as_dict(self):
-        return self.properties.__dict__
-
 
 class UnoCreator(BaseCreator):
     est: EstimatorUnoResult
@@ -241,11 +243,3 @@ class UnoCreator(BaseCreator):
         self.properties = UnoProperties(
             **self._default_properties.__dict__, **result_dict
         )
-
-    def get_result(self):
-        self._properties_check()
-        return self.properties
-
-    def get_result_as_dict(self):
-        self._properties_check()
-        return self.properties.__dict__
