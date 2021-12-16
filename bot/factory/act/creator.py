@@ -1,13 +1,13 @@
 import math
 from abc import ABC, abstractmethod
-
-import numpy as np
 from bot.factory.bot_protocols import ValidatorProtocol
 from core.master.models import LatestPrice
 from ..botproperties import (
     BaseProperties,
     ClassicProperties,
+    EstimatorUcdcResult,
     UnoProperties,
+    UcdcProperties,
     EstimatorUnoResult,
 )
 
@@ -81,17 +81,20 @@ class BaseCreator(Creator):
         price = self.validated_data.price
         return math.floor((inv_amt * margin) / price)
 
+    def get_hedge_share(self):
+        return self.get_total_bot_share_num()
+
     def _construct(self):
         self._default_properties = BaseProperties(
             ticker=self.validated_data.ticker,
             last_hedge_delta=self.last_hedge_delta(),
-            share_num=self.get_total_bot_share_num(),
+            share_num=self.get_hedge_share(),
             current_bot_cash_balance=self.get_bot_cash_balance(),
             expiry=self.validated_data.expiry,
             created=self.validated_data.created,
             spot_date=self.validated_data.spot_date,
             total_bot_share_num=self.get_total_bot_share_num(),
-            max_loss_pct=self.max_loss_amount(),
+            max_loss_pct=self.max_loss_pct(),
             max_loss_price=self.max_loss_price(),
             max_loss_amount=self.max_loss_amount(),
             target_profit_pct=self.target_profit_pct(),
@@ -113,9 +116,23 @@ class BaseCreator(Creator):
         self._properties_check()
         return self.properties
 
+    def _result_date_to_sting(self, data: dict) -> dict:
+        if not data.get("created"):
+            raise ValueError("error key created not found")
+        data["created"] = str(data["created"])
+        if not data.get("spot_date"):
+            raise ValueError("error key spot_date not found")
+        data["spot_date"] = str(data["spot_date"])
+
+        if not data.get("expiry"):
+            raise ValueError("error key expiry not found")
+        data["expiry"] = str(data["expiry"])
+
+        return data
+
     def get_result_as_dict(self):
         self._properties_check()
-        return self.properties.__dict__
+        return self._result_date_to_sting(self.properties.__dict__)
 
 
 class ClassicCreator(BaseCreator):
@@ -198,6 +215,9 @@ class UnoCreator(BaseCreator):
     def _bot_hedge_share(self):
         return math.floor(self.est.delta * self.get_total_bot_share_num())
 
+    def get_hedge_share(self):
+        return self._bot_hedge_share()
+
     def get_bot_cash_balance(self):
         return round(
             self.validated_data.investment_amount
@@ -241,5 +261,48 @@ class UnoCreator(BaseCreator):
         result_dict = self.est.__dict__
         result_dict.pop("rebate")
         self.properties = UnoProperties(
+            **self._default_properties.__dict__, **result_dict
+        )
+
+
+class UcdcCreator(UnoCreator):
+    est: EstimatorUcdcResult
+
+    def target_profit_pct(self):
+        return -1 * self.est.option_price / self.validated_data.price
+
+    def target_profit_price(self):
+        return round(
+            ((-1 * self.est.option_price) + self.validated_data.price),
+            self._digits(self.validated_data.price),
+        )
+
+    def target_profit_amount(self):
+        return (
+            round(
+                self.est.option_price * self.get_total_bot_share_num(),
+                self._digits(self.validated_data.price),
+            )
+            * -1
+        )
+
+    def max_loss_pct(self):
+        return (self.est.strike_2 - self.est.strike) / self.validated_data.price
+
+    def max_loss_price(self):
+        return round(self.est.strike_2, self._digits(self.validated_data.price))
+
+    def max_loss_amount(self):
+        return round(
+            (self.est.strike_2 - self.est.strike)
+            * self.get_total_bot_share_num(),
+            self._digits(self.validated_data.price),
+        )
+
+    def process(self):
+        self.est = self.estimator.calculate(self.validated_data)
+        self._construct()
+        result_dict = self.est.__dict__
+        self.properties = UcdcProperties(
             **self._default_properties.__dict__, **result_dict
         )

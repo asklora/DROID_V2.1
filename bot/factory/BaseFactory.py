@@ -1,9 +1,9 @@
 from .AbstractBase import AbstactBotDirector, AbstractBotProcessor
 from core.bot.models import BotOptionType
-from .estimator import BlackScholes, UnoCreateEstimator
+from .estimator import BlackScholes, UnoCreateEstimator, UcdcCreateEstimator
 from .bot_protocols import ValidatorProtocol, EstimatorProtocol
 from .botproperties import ClassicProperties
-from .act.creator import ClassicCreator, Creator, UnoCreator
+from .act.creator import ClassicCreator, Creator, UnoCreator, UcdcCreator
 
 
 class BaseProcessor(AbstractBotProcessor):
@@ -37,7 +37,10 @@ class ClassicBot(BaseProcessor):
 
 class UcdcBot(BaseProcessor):
     def create(self):
-        print(self.validated_data.expiry)
+        super().set_estimator(UcdcCreateEstimator)
+        creator = UcdcCreator(self.validated_data, self.estimator)
+        creator.process()
+        return creator
 
     def hedge(self):
         pass
@@ -74,6 +77,9 @@ class BaseBackendDirector(AbstactBotDirector):
             self.bot_processor = self.bot_process[name](props)
         except KeyError:
             raise Exception("Bot does not exist")
+        
+    def create(self):
+        return self.bot_processor.create()
 
 
 class BotCreateDirector(BaseBackendDirector):
@@ -102,7 +108,7 @@ class BotFactory:
 
     def get_creator(self, props: ValidatorProtocol) -> BaseProcessor:
         director = BotCreateDirector(props)
-        return director.bot_processor
+        return director
 
     def get_hedger(self, props) -> BaseProcessor:
         director = BotHedgeDirector(props)

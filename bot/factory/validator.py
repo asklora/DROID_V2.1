@@ -30,7 +30,7 @@ class BotCreateProps:
         self.ticker = ticker
         self.spot_date = spot_date.date()
         self.created = spot_date
-        self.investment_amount = investment_amount
+        self.investment_amount = investment_amount * margin
         self.price = price
         self.bot_id = bot_id
         self.currency = self.get_ticker_currency()

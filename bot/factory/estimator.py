@@ -25,7 +25,7 @@ from sqlalchemy.sql import text
 
 from .AbstractBase import AbstractCalculator
 from .validator import BotCreateProps
-from .botproperties import EstimatorUnoResult
+from .botproperties import EstimatorUnoResult, EstimatorUcdcResult
 
 sc.seterr(all="ignore")
 
@@ -618,3 +618,76 @@ class UnoCreateEstimator(BlackScholes):
             option_price=option_price,
         )
         return result
+
+
+class UcdcCreateEstimator(BlackScholes):
+    @property
+    def _get_strike(self):
+        return self.validated_data.price
+
+    @property
+    def _get_strike_2(self):
+        return self.validated_data.price * (1 - self.vol * 1.5)
+
+    def calculate(self, validated_data):
+        self.validated_data = validated_data
+        t, r, q = self.get_trq(
+            validated_data.expiry,
+            validated_data.spot_date,
+            validated_data.ticker,
+            validated_data.currency,
+        )
+        self.vol = self.get_vol(
+            validated_data.ticker,
+            validated_data.spot_date,
+            t,
+            r,
+            q,
+            validated_data.time_to_exp,
+        )
+
+        v1, v2 = self.get_v1_v2(
+            validated_data.ticker,
+            validated_data.price,
+            validated_data.spot_date,
+            t,
+            r,
+            q,
+            self._get_strike,
+            self._get_strike_2,
+        )
+        delta = self.deltaRC(
+            validated_data.price,
+            self._get_strike,
+            self._get_strike_2,
+            t / 365,
+            r,
+            q,
+            v1,
+            v2,
+        )
+        delta = np.nan_to_num(delta, nan=0)
+        option_price = self.Rev_Conv(
+            validated_data.price,
+            self._get_strike,
+            self._get_strike_2,
+            t / 365,
+            r,
+            q,
+            v1,
+            v2,
+        )
+        option_price = np.nan_to_num(option_price, nan=0)
+
+        return EstimatorUcdcResult(
+            t=t,
+            r=r,
+            q=q,
+            vol=self.vol,
+            v1=v1,
+            v2=v2,
+            strike_2=self._get_strike_2,
+            strike=self._get_strike,
+            delta=delta,
+            option_price=option_price,
+        )

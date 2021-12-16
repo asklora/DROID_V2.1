@@ -81,7 +81,6 @@ class EstimatorUnoResult(BaseResultProperties):
 class EstimatorUcdcResult(BaseResultProperties):
     delta: float
     option_price: float
-    rebate: float
     strike: float
     strike_2: float
     v1: float
