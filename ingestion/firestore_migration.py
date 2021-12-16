@@ -433,7 +433,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
 
 def firebase_user_update(user_id=None, currency_code=None, update_firebase=True):
     firebase_ranking_update()
-    firebase_user_delete()
+    # firebase_user_delete()
     if not user_id and not currency_code:
         return
     convert = ConvertMoney("USD", "HKD")
@@ -519,6 +519,7 @@ def firebase_user_update(user_id=None, currency_code=None, update_firebase=True)
 def firebase_ranking_update(update_firebase=True):
     rank = get_user_profit_history(field="user_id, rank::integer as ranking, rank::integer, total_profit_pct")
     rank = rank.sort_values(by=["rank"], ascending=True).head(6)
+    print(rank)
     user_core = get_user_core(user_id=rank["user_id"].to_list(), field="id as user_id, username, current_status, is_joined, first_name, last_name, email")
     user_core = user_core.loc[user_core["current_status"] == "verified"]
     user_core = user_core.loc[user_core["is_joined"] == True]
