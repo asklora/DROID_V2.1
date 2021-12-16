@@ -1,4 +1,6 @@
-from core.services.notification import send_notification as firebase_send_notification
+from core.services.notification import (
+    send_notification as firebase_send_notification,
+)
 from django.utils import timezone
 import logging
 from core.orders.models import Order
@@ -42,13 +44,15 @@ class SellOrderProcessor:
     getter_price = RkdGetterPrice()
 
     def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
-        self.payload:SellPayload = SellPayload(**payload)
+        self.payload: SellPayload = SellPayload(**payload)
         self.validator: ValidatorProtocol = SellValidator(self.payload)
         if getterprice:
             self.getter_price = getterprice
 
     def execute(self):
-        self.payload.price = self.getter_price.get_price([self.payload.ticker.ticker])
+        self.payload.price = self.getter_price.get_price(
+            [self.payload.ticker.ticker]
+        )
         with db_transaction.atomic():
             position = self.validator.position
             bot = position.bot
@@ -107,12 +111,18 @@ class BaseAction:
     def exchange_executor(self):
         ExchangeModel = apps.get_model("universe", "ExchangeMarket")
         try:
-            exchange = ExchangeModel.objects.get(mic=self.validator.order.ticker.mic)
+            exchange = ExchangeModel.objects.get(
+                mic=self.validator.order.ticker.mic
+            )
         except ExchangeModel.DoesNotExist as e:
             logging.error(e)
-            self.message_error(f"{self.validator.order.ticker.mic} is not supported")
+            self.message_error(
+                f"{self.validator.order.ticker.mic} is not supported"
+            )
             self.send_response()
-            raise ValueError(f"{self.validator.order.ticker.mic} is not supported")
+            raise ValueError(
+                f"{self.validator.order.ticker.mic} is not supported"
+            )
 
         if exchange.is_open:
             return self.fill_order()
@@ -130,7 +140,9 @@ class BaseAction:
             except Exception as e:
                 logging.error(str(e))
                 self.message_error(str(e))
-                raise ValueError(f"{self.validator.order.ticker.ticker} is not executed")
+                raise ValueError(
+                    f"{self.validator.order.ticker.ticker} is not executed"
+                )
 
     def message_error(self, error: str):
         self.response = {
@@ -174,8 +186,8 @@ class BaseAction:
         return self.validator.order.status == "pending"
 
     def send_notification(self):
-        message=self.response.get('message_type',None)
-        if not message == 'order_error':
+        message = self.response.get("message_type", None)
+        if not message == "order_error":
             return firebase_send_notification(
                 self.validator.order.user_id.username,
                 self.response.get("title"),
@@ -184,7 +196,9 @@ class BaseAction:
 
     def send_response(self):
         return asyncio.run(
-            self.channel_layer.group_send(str(self.validator.order.pk), self.response)
+            self.channel_layer.group_send(
+                str(self.validator.order.pk), self.response
+            )
         )
 
     def update_order(self):
@@ -231,9 +245,7 @@ class BuyActionProcessor(BaseAction):
                     in_wallet_transactions.delete()
                 except Exception as e:
                     logging.error(str(e))
-                    err_msg = (
-                        f"{self.validator.order.pk} refund pending buy order failed"
-                    )
+                    err_msg = f"{self.validator.order.pk} refund pending buy order failed"
                     self.message_error(err_msg)
                     self.send_response()
                     raise ValueError(err_msg)
@@ -242,11 +254,15 @@ class BuyActionProcessor(BaseAction):
 
     def reset_buy_order(self):
         if self.validator.order.is_bot_order:
-            self.validator.order.amount = self.validator.order.userconverter.convert(
-                self.validator.order.setup["position"]["investment_amount"]
+            self.validator.order.amount = (
+                self.validator.order.userconverter.convert(
+                    self.validator.order.setup["position"]["investment_amount"]
+                )
             )
         else:
-            if (self.validator.order.amount / self.validator.order.margin) > 11000:
+            if (
+                self.validator.order.amount / self.validator.order.margin
+            ) > 11000:
                 self.validator.order.amount = 20000
             else:
                 self.validator.order.amount = 10000
@@ -266,7 +282,9 @@ class BuyActionProcessor(BaseAction):
                     f"{self.validator.order.pk} recalculate order failed"
                 )
                 self.send_response()
-                raise ValueError(f"{self.validator.order.pk} recalculate order failed")
+                raise ValueError(
+                    f"{self.validator.order.pk} recalculate order failed"
+                )
 
     def recalculate_buy_order(self):
         return self.refund_pending()
@@ -274,9 +292,11 @@ class BuyActionProcessor(BaseAction):
 
 class CancelActionProcessor(BaseAction):
     def __init__(self, payload: dict, getterprice: GetPriceProtocol = None):
-        self.raw_payload:dict = payload
+        self.raw_payload: dict = payload
         self.payload = ActionPayload(**payload)
-        self.validator: ValidatorProtocol = CancelExecutorValidator(self.payload)
+        self.validator: ValidatorProtocol = CancelExecutorValidator(
+            self.payload
+        )
         if getterprice:
             self.getter_price = getterprice
 
@@ -338,8 +358,8 @@ class ActionProcessor:
             self.raw_payload["side"] = self.validator.order.side
         if getterprice:
             self.getter_price = getterprice
-            
-    def execute_task(self,payload:str):
+
+    def execute_task(self, payload: str):
         return order_executor.apply_async(
             args=(payload,), task_id=self.payload.order_uid
         )
@@ -365,14 +385,15 @@ class ActionOrderController:
     def select_process_class(self, payload: dict):
         """
         dict required:
-            - side : buy , sell or cancel 
+            - side : buy , sell or cancel
         """
-        
-        if not payload.get("side", None): raise KeyError("side is required")
-        
-        if payload.get("side",None) not in  ['buy', 'sell','cancel']:
+
+        if not payload.get("side", None):
+            raise KeyError("side is required")
+
+        if payload.get("side", None) not in ["buy", "sell", "cancel"]:
             raise KeyError("side is invalid")
-        
+
         protocol = self.PROCESSOR[payload.pop("side")]
         self.protocol = protocol(payload)
 

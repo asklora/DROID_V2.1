@@ -9,6 +9,7 @@ import random
 class Command(BaseCommand):
     def handle(self, *args, **options):
         botIds = ['UNO_OTM_003846','UNO_ITM_003846','UCDC_ATM_008333','CLASSIC_classic_015384']
+        propscreate=[]
         for bot_id in botIds:
             props = BotCreateProps(
                 ticker="1211.HK",
@@ -19,15 +20,16 @@ class Command(BaseCommand):
                 margin=random.randint(1,2)
                 
             )
-            factory = BotFactory()
-            
-            creator = factory.get_creator(props)
-            print(creator.props.bot.bot_type)
-            # creator.set_estimator(BlackScholes)
-            res = creator.create()
-            jsonprint(res.get_result_as_dict())
-            print('')
-            print('')
+            propscreate.append(props)
+        factory = BotFactory()
+        
+        creator = factory.get_batch_creator(propscreate)
+        # print(creator.props.bot.bot_type)
+        # creator.set_estimator(BlackScholes)
+        res = creator.create()
+        jsonprint(res.get_result_as_dict())
+        print('')
+        print('')
             
         # rkd = RkdData()
         # print(rkd.bulk_get_quote(['WYNN.O'],df=True))

@@ -9,7 +9,7 @@ from core.orders.models import OrderPosition
 class BotCreateProps:
     ticker: str
     spot_date: datetime.date
-    created:datetime
+    created: datetime
     expiry: datetime.date
     investment_amount: float
     price: float

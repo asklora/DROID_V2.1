@@ -1,9 +1,13 @@
+import asyncio
+from typing import List
+from bot.factory.validator import BotCreateProps
 from .AbstractBase import AbstactBotDirector, AbstractBotProcessor
 from core.bot.models import BotOptionType
 from .estimator import BlackScholes, UnoCreateEstimator, UcdcCreateEstimator
 from .bot_protocols import ValidatorProtocol, EstimatorProtocol
 from .botproperties import ClassicProperties
 from .act.creator import ClassicCreator, Creator, UnoCreator, UcdcCreator
+from asgiref.sync import sync_to_async
 
 
 class BaseProcessor(AbstractBotProcessor):
@@ -77,7 +81,7 @@ class BaseBackendDirector(AbstactBotDirector):
             self.bot_processor = self.bot_process[name](props)
         except KeyError:
             raise Exception("Bot does not exist")
-        
+
     def create(self):
         return self.bot_processor.create()
 
@@ -87,6 +91,39 @@ class BotCreateDirector(BaseBackendDirector):
         props.validate()
         self.props = props
         self.bot_use(self.props.bot.bot_type.bot_type.lower(), props)
+
+
+class BatchCreateExecutor:
+    result_dict_data = []
+    result_dict_class = []
+
+    def __init__(self, directors: List[BotCreateDirector]):
+        self.directors = directors
+
+    async def _initialize_class(self, director):
+        return await sync_to_async(director.create)()
+
+    async def main(self):
+        tasks = []
+        for director in self.directors:
+            tasks.append(
+                asyncio.ensure_future(self._initialize_class(director))
+            )
+        return await asyncio.gather(*tasks)
+
+    def create(self):
+        results = asyncio.run(self.main())
+
+        for result in results:
+            self.result_dict_data.append(result.get_result_as_dict())
+            self.result_dict_class.append(result.get_result())
+        return self
+
+    def get_result_as_dict(self):
+        return self.result_dict_data
+
+    def get_result(self):
+        return self.result_dict_class
 
 
 class BotHedgeDirector(BaseBackendDirector):
@@ -106,7 +143,26 @@ class BotFactory:
         - get_stopper -> BotStopDirector
     """
 
+    async def _initialize_class(self, props):
+        self._check_props_class(props)
+        return await sync_to_async(BotCreateDirector)(props)
+
+    async def main(self, props):
+        tasks = []
+        for p in props:
+            tasks.append(asyncio.ensure_future(self._initialize_class(p)))
+        return await asyncio.gather(*tasks)
+
+    def _check_props_class(self, props):
+        if not isinstance(props, BotCreateProps):
+            raise TypeError(" creator Props must be BotCreateProps")
+
+    def get_batch_creator(self, props):
+        directors = asyncio.run(self.main(props))
+        return BatchCreateExecutor(directors)
+
     def get_creator(self, props: ValidatorProtocol) -> BaseProcessor:
+        self._check_props_class(props)
         director = BotCreateDirector(props)
         return director
 
