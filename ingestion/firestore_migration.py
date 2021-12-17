@@ -433,7 +433,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
 
 def firebase_user_update(user_id=None, currency_code=None, update_firebase=True):
     firebase_ranking_update()
-    # firebase_user_delete()
+    firebase_user_delete()
     if not user_id and not currency_code:
         return
     convert = ConvertMoney("USD", "HKD")
