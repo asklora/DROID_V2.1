@@ -1018,6 +1018,19 @@ def get_vol_latest(ticker:str,trading_day:datetime):
     if len(data) != 1:
         data = {"ticker": ticker, "trading_day": trading_day}
         return False,data
+    data = {
+            "ticker": ticker,
+            "trading_day": trading_day,
+            "atm_volatility_spot": data.loc[0, "atm_volatility_spot"],
+            "atm_volatility_one_year": data.loc[0, "atm_volatility_one_year"],
+            "atm_volatility_infinity": data.loc[0, "atm_volatility_infinity"],
+            "slope": data.loc[0, "slope"],
+            "slope_inf": data.loc[0, "slope_inf"],
+            "deriv": data.loc[0, "deriv"],
+            "deriv_inf": data.loc[0, "deriv_inf"],
+        }
+    return True, data
+    
     
 def get_bot_vol_surface_data(ticker:str,trading_day:str):
     vol_table = get_data_vol_surface_table_name()

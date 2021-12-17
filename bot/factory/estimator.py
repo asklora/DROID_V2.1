@@ -346,7 +346,6 @@ class BlackScholes(AbstractCalculator, BotUtilities):
         return spot_vol, one_year_v, inf_vol
 
     def Up_Out_Call(self, S, K, Bar, Reb, T, r, q, v1, v2):
-        #   Up and Out KO call
         #   S- Spot, K -Strike, Bar - Barrier
         #   v1 is strike vol, #v2 is BARRIER vol - price with Reb = Bar - K
         v3 = (v1 + v2) / 2
@@ -536,7 +535,7 @@ class UnoCreateEstimator(BlackScholes):
 
     @property
     def _rebate(self):
-        return self._get_strike - self._get_barrier
+        return abs(self._get_strike - self._get_barrier)
 
     @property
     def _get_strike(self):
