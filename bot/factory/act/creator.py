@@ -71,10 +71,6 @@ class BaseCreator(Creator):
         self.validated_data = validated_data
         self.estimator = estimator
 
-    def _digits(self, price):
-        digit = max(min(4 - len(str(int(price))), 2), -1)
-        return int(digit)
-
     def get_total_bot_share_num(self):
         inv_amt = self.validated_data.investment_amount
         margin = self.validated_data.margin

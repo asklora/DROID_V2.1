@@ -45,7 +45,7 @@ def test_create_bot() -> None:
     # check if the result matches the original
     # props we set above
     assert result.get("ticker") == props.ticker
-    assert result.get("bot_id") == props.get_bot()
+    assert result.get("bot_id") == props.bot
 
     # we then check the values
     assert result.get("classic_vol") is not None
@@ -112,7 +112,7 @@ def test_create_batch_bot() -> None:
 
     list_props: List[BotCreateProps] = []
 
-    for item in tickers_list:
+    for item in random.sample(tickers_list, random.randint(30, 60)):
         props = BotCreateProps(
             ticker=item.ticker,
             spot_date=datetime.now(),

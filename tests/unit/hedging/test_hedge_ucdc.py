@@ -26,7 +26,7 @@ def test_create_bot() -> None:
         spot_date=datetime.now(),
         investment_amount=100000,
         price=290.1,
-        bot_id="UNO_ITM_015384",
+        bot_id="UCDC_ATM_016666",
     )
 
     # we start the factory
@@ -64,7 +64,7 @@ def test_create_bot() -> None:
 
 def test_create_bot_all_tickers() -> None:
     bots = BotOptionType.objects.filter(
-        bot_type="UNO"
+        bot_type="UCDC"
     ).values_list("bot_id", flat=True)
 
     tickers = (
@@ -107,7 +107,7 @@ def test_create_bot_all_tickers() -> None:
 
 def test_create_batch_bot() -> None:
     bots = BotOptionType.objects.filter(
-        bot_type="UNO"
+        bot_type="UCDC"
     ).values_list("bot_id", flat=True)
 
     tickers = (
