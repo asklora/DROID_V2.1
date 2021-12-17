@@ -47,7 +47,7 @@ from general.sql_query import (
 from es_logging.logger import log2es
 
 def firebase_user_delete():
-    user = get_user_core()
+    user = get_user_core(conditions=["is_active=True", "is_superuser=False"])
     user = user.loc[user["is_joined"] == True]
     user = user.loc[user["current_status"] == "verified"]
     user = user["id"].to_list()
