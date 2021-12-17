@@ -141,10 +141,9 @@ class ClassicCreator(BaseCreator):
             raise ValueError("Ticker not found in latest price")
 
     def get_bot_cash_balance(self):
-        return round(
+        return self.estimator._round(
             self.validated_data.investment_amount
-            - (self.get_total_bot_share_num() * self.validated_data.price),
-            2,
+            - (self.get_total_bot_share_num() * self.validated_data.price)
         )
 
     def _month(self) -> int:
@@ -165,32 +164,28 @@ class ClassicCreator(BaseCreator):
         return self.get_vol() * self.get_classic_vol() * 1.25
 
     def max_loss_price(self) -> float:
-        return round(
-            self.validated_data.price * (1 + self.max_loss_pct()),
-            self._digits(self.validated_data.price),
+        return self.estimator._round(
+            self.validated_data.price * (1 + self.max_loss_pct())
         )
 
     def max_loss_amount(self):
-        return round(
+        return self.estimator._round(
             (self.max_loss_price() - self.validated_data.price)
-            * self.get_total_bot_share_num(),
-            self._digits(self.validated_data.price),
+            * self.get_total_bot_share_num()
         )
 
     def target_profit_pct(self):
         return self.get_vol() * self.get_classic_vol()
 
     def target_profit_price(self):
-        return round(
-            self.validated_data.price * (1 + self.target_profit_pct()),
-            self._digits(self.validated_data.price),
+        return self.estimator._round(
+            self.validated_data.price * (1 + self.target_profit_pct())
         )
 
     def target_profit_amount(self):
-        return round(
+        return self.estimator._round(
             (self.target_profit_price() - self.validated_data.price)
-            * self.get_total_bot_share_num(),
-            self._digits(self.validated_data.price),
+            * self.get_total_bot_share_num()
         )
 
     def process(self):
@@ -215,26 +210,23 @@ class UnoCreator(BaseCreator):
         return self._bot_hedge_share()
 
     def get_bot_cash_balance(self):
-        return round(
+        return self.estimator._round(
             self.validated_data.investment_amount
-            - (self._bot_hedge_share() * self.validated_data.price),
-            self._digits(self.validated_data.price),
+            - (self._bot_hedge_share() * self.validated_data.price)
         )
 
     def max_loss_pct(self):
         return -1 * self.est.option_price / self.validated_data.price
 
     def max_loss_price(self):
-        return round(
-            self.validated_data.price - self.est.option_price,
-            self._digits(self.validated_data.price),
+        return self.estimator._round(
+            self.validated_data.price - self.est.option_price
         )
 
     def max_loss_amount(self):
         return (
-            round(
-                self.est.option_price * self.get_total_bot_share_num(),
-                self._digits(self.validated_data.price),
+            self.estimator._round(
+                self.est.option_price * self.get_total_bot_share_num()
             )
             * -1
         )
@@ -243,12 +235,11 @@ class UnoCreator(BaseCreator):
         return (self.est.barrier - self.est.barrier) / self.validated_data.price
 
     def target_profit_price(self):
-        return round(self.est.barrier, self._digits(self.validated_data.price))
+        return self.estimator._round(self.est.barrier)
 
     def target_profit_amount(self):
-        return round(
-            self.est.rebate * self.get_total_bot_share_num(),
-            self._digits(self.validated_data.price),
+        return self.estimator._round(
+            self.est.rebate * self.get_total_bot_share_num()
         )
 
     def process(self):
@@ -268,16 +259,14 @@ class UcdcCreator(UnoCreator):
         return -1 * self.est.option_price / self.validated_data.price
 
     def target_profit_price(self):
-        return round(
-            ((-1 * self.est.option_price) + self.validated_data.price),
-            self._digits(self.validated_data.price),
+        return self.estimator._round(
+            ((-1 * self.est.option_price) + self.validated_data.price)
         )
 
     def target_profit_amount(self):
         return (
-            round(
-                self.est.option_price * self.get_total_bot_share_num(),
-                self._digits(self.validated_data.price),
+            self.estimator._round(
+                self.est.option_price * self.get_total_bot_share_num()
             )
             * -1
         )
@@ -286,13 +275,12 @@ class UcdcCreator(UnoCreator):
         return (self.est.strike_2 - self.est.strike) / self.validated_data.price
 
     def max_loss_price(self):
-        return round(self.est.strike_2, self._digits(self.validated_data.price))
+        return self.estimator._round(self.est.strike_2)
 
     def max_loss_amount(self):
-        return round(
+        return self.estimator._round(
             (self.est.strike_2 - self.est.strike)
-            * self.get_total_bot_share_num(),
-            self._digits(self.validated_data.price),
+            * self.get_total_bot_share_num()
         )
 
     def process(self):

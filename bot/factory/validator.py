@@ -6,8 +6,6 @@ from core.orders.models import OrderPosition, PositionPerformance
 from .BotException import UnactiveTicker
 
 
-
-
 @dataclass
 class BaseDatavalidation:
     bot: BotOptionType

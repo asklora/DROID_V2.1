@@ -3,8 +3,6 @@ from typing import Tuple
 
 from core.djangomodule.general import logging
 from core.master.models import DataDividendDailyRates, DataInterestDailyRates
-from core.universe.models import Currency
-from core.user.convert import ConvertMoney
 from general.data_process import NoneToZero
 
 
@@ -48,29 +46,10 @@ class BotUtilities:
         t = max(1, (expiry - spot_date).days)
         return t, self._get_r(currency_code, t), self._get_q(ticker, t)
 
-    def get_strike_barrier(self, price, vol, bot_option_type, bot_group):
-        price = NoneToZero(price)
-        vol = NoneToZero(vol)
-        if bot_group == "UNO":
-            if bot_option_type == "OTM":
-                strike = price * (1 + vol * 0.5)
-                barrier = price * (1 + vol * 2)
-            elif bot_option_type == "ITM":
-                strike = price * (1 - vol * 0.5)
-                barrier = price * (1 + vol * 1.5)
-
-            return float(NoneToZero(strike)), float(NoneToZero(barrier))
-
-        elif bot_group == "UCDC":
-            strike = price
-            strike_2 = price * (1 - vol * 1.5)
-            return float(NoneToZero(strike)), float(NoneToZero(strike_2))
-        return False
-
     def get_current_investment_amount(
         self, live_price: float, share_num: float
     ) -> float:
-        return live_price * share_num
+        return self._round(live_price * share_num)
 
     def get_current_pnl_amount(
         self,
@@ -116,18 +95,18 @@ class BotUtilities:
 
     def get_current_value(
         self,
-        live_price: float,
-        last_live_price: float,
+        current_price: float,
+        entry_price: float,
         last_pnl_amt: float,
         share_num: float,
     ) -> float:
         current_investment: float = self.get_current_investment_amount(
-            live_price=live_price,
+            live_price=current_price,
             share_num=share_num,
         )
         current_pnl_amount: float = self.get_current_pnl_amount(
-            live_price=live_price,
-            last_live_price=last_live_price,
+            live_price=current_price,
+            last_live_price=entry_price,
             last_pnl_amt=last_pnl_amt,
             share_num=share_num,
         )
