@@ -47,7 +47,7 @@ from general.sql_query import (
 from es_logging.logger import log2es
 
 def firebase_user_delete():
-    user = get_user_core()
+    user = get_user_core(conditions=["is_active=True", "is_superuser=False"])
     user = user.loc[user["is_joined"] == True]
     user = user.loc[user["current_status"] == "verified"]
     user = user["id"].to_list()
@@ -304,6 +304,7 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
     universe = universe.merge(ranking, how="left", on=["ticker"])
     universe = universe.reset_index(inplace=False, drop=True)
     universe = change_date_to_str(universe)
+    universe = universe.reset_index(inplace=False, drop=True)
     if(update_firebase):
         update_to_firestore(data=universe, index="ticker", table=settings.FIREBASE_COLLECTION['universe'], dict=False)
         report_to_slack("{} : === FIREBASE UNIVERSE UPDATED ===".format(datetimeNow()))
@@ -425,6 +426,7 @@ async def do_task(position_data:pd.DataFrame, bot_option_type:pd.DataFrame, user
         result["total_user_invested_amount"]  = result["total_user_invested_amount"].astype(float).round(2)
         result["total_profit_amount"]  = result["total_profit_amount"].astype(float).round(2)
         result["daily_live_profit"]  = result["daily_live_profit"].astype(float).round(2)
+        result = result.reset_index(inplace=False, drop=True)
         if(update_firebase):
             await sync_to_async(update_to_firestore)(data=result, index="user_id", table=settings.FIREBASE_COLLECTION['portfolio'], dict=False)
         return result
@@ -442,15 +444,14 @@ def firebase_user_update(user_id=None, currency_code=None, update_firebase=True)
     bot_option_type = bot_option_type.merge(bot_type, how="left", on=["bot_type"])
     currency = get_currency_data(currency_code=currency_code)
     currency = currency[["currency_code", "is_decimal"]]
-
-    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, current_status, first_name, last_name, email, phone, birth_date, gender")
+    field = "id as user_id, username, is_joined, current_status, first_name, last_name, email, phone, birth_date, gender"
+    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field=field, conditions=["is_active=True", "is_superuser=False"])
     user_core = user_core.loc[user_core["current_status"] == "verified"]
     user_core = user_core.loc[user_core["is_joined"] == True]
     user_core = user_core.drop(columns=["current_status"])
     if user_core.empty:
         return
     user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_profit, daily_profit_pct, daily_invested_amount, rank::integer, total_profit, total_profit_pct")
-    # user_daily_profit["rank"]  = user_daily_profit["rank"].astype(int)
     user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, amount as balance, currency_code")
     
     user_core = user_core.merge(user_balance, how="left", on=["user_id"])
@@ -516,13 +517,18 @@ def firebase_user_update(user_id=None, currency_code=None, update_firebase=True)
 
 def firebase_ranking_update(update_firebase=True):
     rank = get_user_profit_history(field="user_id, rank::integer as ranking, rank::integer, total_profit_pct")
-    rank = rank.sort_values(by=["rank"], ascending=True).head(6)
-    user_core = get_user_core(user_id=rank["user_id"].to_list(), field="id as user_id, username, current_status, is_joined, first_name, last_name, email")
+    rank = rank.sort_values(by=["rank"], ascending=True)
+    rank = rank.loc[rank["rank"] <= 6]
+    user_core = get_user_core(user_id=rank["user_id"].to_list(), field="id as user_id, username, current_status, is_joined, first_name, last_name, email, is_test, is_superuser")
     user_core = user_core.loc[user_core["current_status"] == "verified"]
     user_core = user_core.loc[user_core["is_joined"] == True]
-    user_core = user_core.drop(columns=["current_status", "is_joined"])
+    user_core = user_core.loc[user_core["is_test"] == False]
+    user_core = user_core.loc[user_core["is_superuser"] == False]
+    user_core = user_core.drop(columns=["current_status", "is_joined", "is_test", "is_superuser"])
     rank = rank.merge(user_core, how="left", on=["user_id"])
+    rank = rank.dropna(subset=["email"])
     rank["ranking"] = (rank["ranking"].astype(int).astype(str) * 4)
+    rank = rank.reset_index(inplace=False, drop=True)
     if(update_firebase):
         update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
     else:
@@ -548,6 +554,7 @@ def firebase_ranking_update_random(update_firebase=True):
     rank = rank.sort_values(by=["rank"], ascending=True)
     rank = rank.head(6)
     rank["ranking"] = (rank["ranking"].astype(int).astype(str) * 4)
+    rank = rank.reset_index(inplace=False, drop=True)
     if(update_firebase):
         update_to_firestore(data=rank, index="ranking", table=settings.FIREBASE_COLLECTION['ranking'], dict=False)
     else:

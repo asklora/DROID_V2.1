@@ -48,9 +48,8 @@ def pending_order_checker(self,currency=None):
                 fb_token=None
                 if 'firebase_token' in order.order_summary:
                     fb_token = order.order_summary['firebase_token']
-                payload = {'order_uid': str(order.order_uid),'status':'placed'}
-                if fb_token:
-                    payload['firebase_token'] = fb_token
+                payload = {'order_uid': str(order.order_uid),'status':'placed','side':order.side}
+                payload['firebase_token'] = fb_token
                 
                 payload = json.dumps(payload)
                 # order_executor.apply_async(args=(payload,),kwargs={"recall":True},task_id=str(order.order_uid))
@@ -81,8 +80,6 @@ def cancel_pending_order(self,from_date:datetime=datetime.now(),run_async=False)
 def update_rtdb_user_porfolio():
     
     try:
-        # hkd_exchange =ExchangeMarket.objects.get(mic='XHKG')
-        # if hkd_exchange.is_open:
         users = [user['id'] for user in User.objects.filter(is_superuser=False,current_status="verified").values('id')]
         populate_daily_profit()
         firebase_user_update(user_id=users)

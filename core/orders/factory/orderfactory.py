@@ -252,7 +252,7 @@ class BuyActionProcessor(BaseAction):
             else:
                 self.validator.order.amount = 10000
         self.validator.order.price = self.getter_price.get_price(
-            [self.validator.order.ticker]
+            [self.validator.order.ticker.ticker]
         )
         self.validator.order.status = "review"
         self.validator.order.placed = False
