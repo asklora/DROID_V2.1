@@ -523,8 +523,8 @@ def firebase_ranking_update(update_firebase=True):
     user_core = get_user_core(user_id=rank["user_id"].to_list(), field="id as user_id, username, current_status, is_joined, first_name, last_name, email, is_test, is_superuser")
     user_core = user_core.loc[user_core["current_status"] == "verified"]
     user_core = user_core.loc[user_core["is_joined"] == True]
-    user_core = user_core.loc[user_core["is_test"] == True]
-    user_core = user_core.loc[user_core["is_superuser"] == True]
+    user_core = user_core.loc[user_core["is_test"] == False]
+    user_core = user_core.loc[user_core["is_superuser"] == False]
     user_core = user_core.drop(columns=["current_status", "is_joined", "is_test", "is_superuser"])
     rank = rank.merge(user_core, how="left", on=["user_id"])
     rank = rank.dropna(subset=["email"])
