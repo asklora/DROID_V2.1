@@ -24,6 +24,7 @@ from .serializers import (
     OrderActionSerializer,
     OrderPortfolioCheckSerializer,
 )
+from django.utils.translation import gettext as _
 
 
 class BotPerformanceViews(views.APIView):
@@ -54,7 +55,7 @@ class BotPerformanceViews(views.APIView):
         )
         if not perf.exists():
             return response.Response(
-                {"message": f"{position_uid} doesnt exist"},
+                {"message": _("position %(position)s does not exist") % {'position': position_uid}},
                 status=status.HTTP_404_NOT_FOUND,
             )
         return response.Response(
@@ -171,12 +172,12 @@ class PositionDetailViews(views.APIView):
                 )
             else:
                 return response.Response(
-                    {"detail": f"this position not belong to current user"},
+                    {"detail": _("this position not belong to current user")},
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
         return response.Response(
-            {"detail": f"{position_uid} does not exist"}, status=status.HTTP_404_NOT_FOUND
+            {"detail": _("position %(position)s does not exist") % {"position": position_uid}}, status=status.HTTP_404_NOT_FOUND
         )
 
 
@@ -258,13 +259,13 @@ class OrderUpdateViews(views.APIView):
             )
         except OrderUpdateSerializer.Meta.model.DoesNotExist:
             return response.Response(
-                {"detail": "order not found"}, status=status.HTTP_404_NOT_FOUND
+                {"detail": _("order not found")}, status=status.HTTP_404_NOT_FOUND
             )
         # ignore if fels account
         if not instance.user_id.id == 135:
             if instance.user_id.username != request.user.username:
                 return response.Response(
-                    {"detail": "credentials not allowed to change this order"},
+                    {"detail": _("credentials not allowed to change this order")},
                     status=status.HTTP_403_FORBIDDEN,
                 )
         serializer = OrderUpdateSerializer(
@@ -315,7 +316,7 @@ class OrderGetViews(viewsets.ViewSet):
             )
         except Order.DoesNotExist:
             return response.Response(
-                {"detail": "order not forund"}, status=status.HTTP_404_NOT_FOUND
+                {"detail": _("order not found")}, status=status.HTTP_404_NOT_FOUND
             )
 
 
@@ -334,18 +335,18 @@ class OrderActionViews(views.APIView):
             )
         except OrderActionSerializer.Meta.model.DoesNotExist:
             return response.Response(
-                {"detail": "order not found"}, status=status.HTTP_404_NOT_FOUND
+                {"detail": _("order not found")}, status=status.HTTP_404_NOT_FOUND
             )
         except KeyError as e:
             err = str(e)
             return response.Response(
-                {"detail": f"error key {err}"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": _("error key %(err)s") % {err: err}}, status=status.HTTP_400_BAD_REQUEST
             )
         # ignore if fels account
         if not instance.user_id.id == 135:
             if instance.user_id.username != request.user.username:
                 return response.Response(
-                    {"detail": "credentials not allowed to change this order"},
+                    {"detail": _("credentials not allowed to change this order")},
                     status=status.HTTP_403_FORBIDDEN,
                 )
         serializer = OrderActionSerializer(data=request.data)

@@ -26,6 +26,7 @@ from datasource.getterprice import RkdGetterPrice
 from channels.layers import get_channel_layer
 from config.celery import app
 from django.apps import apps
+from django.utils.translation import gettext as _
 
 
 @app.task(bind=True)
@@ -110,9 +111,9 @@ class BaseAction:
             exchange = ExchangeModel.objects.get(mic=self.validator.order.ticker.mic)
         except ExchangeModel.DoesNotExist as e:
             logging.error(e)
-            self.message_error(f"{self.validator.order.ticker.mic} is not supported")
+            self.message_error(_("%(mic)s is not supported") % {"mic": self.validator.order.ticker.mic})
             self.send_response()
-            raise ValueError(f"{self.validator.order.ticker.mic} is not supported")
+            raise ValueError(_("%(mic)s is not supported") % {"mic": self.validator.order.ticker.mic})
 
         if exchange.is_open:
             return self.fill_order()
@@ -130,7 +131,7 @@ class BaseAction:
             except Exception as e:
                 logging.error(str(e))
                 self.message_error(str(e))
-                raise ValueError(f"{self.validator.order.ticker.ticker} is not executed")
+                raise ValueError(_("%(ticker)s is not executed") % {"ticker": self.validator.order.ticker})
 
     def message_error(self, error: str):
         self.response = {
@@ -144,8 +145,8 @@ class BaseAction:
         self.response = {
             "type": "send_order_message",
             "message_type": "order_pending",
-            "title": "order pending",
-            "message": f"{self.validator.order.side} order {self.validator.order.qty} stocks {self.validator.order.ticker.ticker} is received, status pending",
+            "title": _("order pending"),
+            "message": _("%(side)s order %(qty)d stocks %(ticker)s is received, status pending") % {"side": self.validator.order.side, "qty": self.validator.order.qty, "ticker": self.validator.order.ticker.ticker},
             # 'payload': payload_serializer,
             "status_code": 200,
         }
@@ -154,8 +155,8 @@ class BaseAction:
         self.response = {
             "type": "send_order_message",
             "message_type": "order_cancel",
-            "title": "order cancel",
-            "message": f"{self.validator.order.side} order {self.validator.order.qty} stocks {self.validator.order.ticker.ticker} is received, status canceled",
+            "title": _("order cancel"),
+            "message": _("%(side)s order %(qty)d stocks %(ticker)s is received, status canceled") % {"side": self.validator.order.side, "qty": self.validator.order.qty, "ticker": self.validator.order.ticker.ticker},
             # 'payload': payload_serializer,
             "status_code": 200,
         }
@@ -164,8 +165,8 @@ class BaseAction:
         self.response = {
             "type": "send_order_message",
             "message_type": "order_filled",
-            "title": "order filled",
-            "message": f"{self.validator.order.side} order {self.validator.order.qty} stocks {self.validator.order.ticker.ticker} was executed, status filled",
+            "title": _("order filled"),
+            "message": _("%(side)s order %(qty)d stocks %(ticker)s was executed, status filled") % {"side": self.validator.order.side, "qty": self.validator.order.qty, "ticker": self.validator.order.ticker.ticker},
             # 'payload': payload_serializer,
             "status_code": 200,
         }
@@ -197,9 +198,9 @@ class BaseAction:
                 self.validator.order.save()
             except Exception as e:
                 logging.error(str(e))
-                self.message_error(f"{self.validator.order.pk} update failed")
+                self.message_error(_("%(id)s update failed") % {"id": self.validator.order.pk})
                 self.send_response()
-                raise ValueError(f"{self.validator.order.pk} update failed")
+                raise ValueError(_("%(id)s update failed") % {"id": self.validator.order.pk})
 
 
 class BuyActionProcessor(BaseAction):
@@ -232,7 +233,7 @@ class BuyActionProcessor(BaseAction):
                 except Exception as e:
                     logging.error(str(e))
                     err_msg = (
-                        f"{self.validator.order.pk} refund pending buy order failed"
+                        _("%(id)s refund pending buy order failed") % {"id": self.validator.order.pk}
                     )
                     self.message_error(err_msg)
                     self.send_response()
@@ -263,10 +264,10 @@ class BuyActionProcessor(BaseAction):
             except Exception as e:
                 logging.error(str(e))
                 self.message_error(
-                    f"{self.validator.order.pk} recalculate order failed"
+                    _("%(id)s recalculate order failed") % {"id": self.validator.order.pk}
                 )
                 self.send_response()
-                raise ValueError(f"{self.validator.order.pk} recalculate order failed")
+                raise ValueError(_("%(id)s recalculate order failed") % {"id": self.validator.order.pk})
 
     def recalculate_buy_order(self):
         return self.refund_pending()
@@ -294,9 +295,9 @@ class CancelActionProcessor(BaseAction):
                 self.validator.order.save()
             except Exception as e:
                 logging.error(str(e))
-                self.message_error(f"{self.validator.order.pk} update failed")
+                self.message_error(_("%(id)s update failed") % {"id": self.validator.order.pk})
                 self.send_response()
-                raise ValueError(f"{self.validator.order.pk} update failed")
+                raise ValueError(_("%(id)s update failed") % {"id": self.validator.order.pk})
 
 
 class SellActionProcessor(BaseAction):
@@ -369,10 +370,10 @@ class ActionOrderController:
             - side : buy , sell or cancel 
         """
         
-        if not payload.get("side", None): raise KeyError("side is required")
+        if not payload.get("side", None): raise KeyError(_("side is required"))
         
         if payload.get("side",None) not in  ['buy', 'sell','cancel']:
-            raise KeyError("side is invalid")
+            raise KeyError(_("side is invalid"))
         
         protocol = self.PROCESSOR[payload.pop("side")]
         self.protocol = protocol(payload)

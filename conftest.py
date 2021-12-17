@@ -7,13 +7,12 @@ from typing import List, NamedTuple, Union
 import pytest
 from django.conf import settings
 from django.test.client import Client
-from django.utils import timezone
+from django.utils.translation import activate
 from dotenv import load_dotenv
 from environs import Env
 from firebase_admin import firestore
 
 from core.djangomodule.network.cloud import DroidDb
-from core.master.models import LatestPrice
 from core.user.models import (
     Accountbalance,
     TransactionHistory,
@@ -184,3 +183,8 @@ def order(authentication, client, user, tickers) -> Union[dict, None]:
         return None
 
     return response.json()
+
+
+@pytest.fixture(scope="function")
+def use_chinese():
+    activate("zh-hant")
