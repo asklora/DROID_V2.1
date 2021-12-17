@@ -20,7 +20,7 @@ def test_api_create_order_with_insufficient_balance(
     user,
     tickers,
 ) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     response = client.post(
         path="/api/order/create/",
@@ -53,7 +53,7 @@ def test_api_multiple_order_insufficient_balance(
     tickers,
 ) -> None:
     def create_order() -> Union[dict, None]:
-        ticker, price = choice(tickers).values()
+        ticker, price = choice(tickers)
 
         response = client.post(
             path="/api/order/create/",
@@ -111,7 +111,7 @@ def test_api_multiple_order_insufficient_balance(
         assert order["order_uid"] == placed_order["order_uid"]
         assert placed_order["status"] == "executed"
 
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
     last_order = client.post(
         path="/api/order/create/",
         data={

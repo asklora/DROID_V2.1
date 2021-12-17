@@ -22,7 +22,7 @@ def test_hedge_values_for_ucdc_bot(
     user,
     tickers,
 ) -> None:
-    ticker, _ = choice(tickers).values()
+    ticker, _ = choice(tickers)
 
     # step 1: create a new order
     master = MasterOhlcvtr.objects.get(

@@ -2,7 +2,6 @@ from datetime import datetime
 from random import choice
 from typing import Tuple, Union
 
-
 from core.master.models import LatestPrice
 from core.orders.factory.orderfactory import (
     OrderController,
@@ -124,7 +123,11 @@ def confirm_order(
         order.save()
 
 
-def confirm_order_api(order_uid: str, client: Client, authentication: dict):
+def confirm_order_api(
+    order_uid: str,
+    client: Client,
+    authentication: dict,
+):
     response = client.post(
         path="/api/order/action/",
         data={

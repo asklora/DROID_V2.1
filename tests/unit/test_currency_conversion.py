@@ -36,7 +36,7 @@ def test_currency_conversion():
         return result
 
     # we get all currency data
-    currencies = Currency.objects.filter(is_active=True)
+    currencies = list(Currency.objects.filter(is_active=True))
 
     # we do the assertion three times
     for _ in range(3):

@@ -1,6 +1,8 @@
+from datetime import timedelta
+import random
 import socket
 from random import choice
-from typing import List, Union
+from typing import List, NamedTuple, Union
 
 import pytest
 from django.conf import settings
@@ -11,11 +13,14 @@ from environs import Env
 from firebase_admin import firestore
 
 from core.djangomodule.network.cloud import DroidDb
-from core.user.models import (Accountbalance, TransactionHistory, User,
-                              UserDepositHistory)
+from core.user.models import (
+    Accountbalance,
+    TransactionHistory,
+    User,
+    UserDepositHistory,
+)
 from general.data_process import get_uid
 from general.date_process import dateNow
-from tests.utils.order import get_random_ticker_and_price
 from tests.utils.user import delete_user
 
 load_dotenv()
@@ -131,27 +136,36 @@ def authentication(client, user) -> Union[dict, None]:
 
 
 @pytest.fixture
-def tickers() -> List[dict]:
-    tickers: List = []
+def tickers() -> List[NamedTuple]:
+    yesterday = timezone.now().date() - timedelta(days=1)
+    tickers = (
+        LatestPrice.objects.filter(
+            intraday_date=yesterday,
+            ticker__currency_code="HKD",
+        )
+        .exclude(latest_price=None)
+        .values_list(
+            "ticker",
+            "latest_price",
+            named=True,
+        )
+    )
 
-    for i in range(5):
-        # get random ticker
-        ticker, price = get_random_ticker_and_price()
-        tickers.append({"ticker": ticker, "price": price})
+    tickers_list = list(tickers)
 
-    return tickers
+    return random.sample(tickers_list, 5)
 
 
 @pytest.fixture
 def order(authentication, client, user, tickers) -> Union[dict, None]:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     data = {
         "ticker": ticker,
         "price": price,
         "bot_id": "STOCK_stock_0",
         "amount": 10000,
-        'margin': 2,
+        "margin": 2,
         "user": user.id,
         "side": "buy",
     }

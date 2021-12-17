@@ -21,7 +21,7 @@ def test_create_simple_order(user, tickers) -> None:
     status, dates, etc.
     """
 
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     order = create_buy_order(
         user_id=user.id,
@@ -63,7 +63,7 @@ def test_update_new_buy_order_for_user(user, tickers) -> None:
     """
 
     side = "buy"
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
     qty = 10000
     bot_id = "STOCK_stock_0"
 

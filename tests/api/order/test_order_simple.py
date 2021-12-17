@@ -19,7 +19,7 @@ def test_api_create_buy_order(
     user,
     tickers,
 ) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     data = {
         "ticker": ticker,
@@ -59,7 +59,7 @@ def test_api_create_sell_order(
     user,
     tickers,
 ) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     data = {
         "ticker": ticker,

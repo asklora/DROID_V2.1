@@ -21,7 +21,7 @@ def test_create_new_sell_order_for_user(user, tickers) -> None:
     A new SELL order should be created from a buy order
     """
 
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     # We create an order
     buy_order = create_buy_order(

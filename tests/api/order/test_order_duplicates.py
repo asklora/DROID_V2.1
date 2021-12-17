@@ -7,13 +7,17 @@ from core.orders.models import Order
 
 # from core.orders.factory.orderfactory import
 from rest_framework import exceptions
-from tests.utils.market import check_market, close_market, open_market
+from tests.utils.market import MarketManager
 from tests.utils.mocks import (
+    mock_execute_task,
     mock_buy_validate,
-    mock_order_action_serializer,
     mock_sell_validate,
 )
-from tests.utils.order import confirm_order, confirm_order_api, get_position_performance
+from tests.utils.order import (
+    confirm_order,
+    confirm_order_api,
+    get_position_performance,
+)
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -31,8 +35,19 @@ def test_duplicated_pending_buy_order(
     user,
     tickers,
 ) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
     bot_id: str = "CLASSIC_classic_003846"
+
+    mocker.patch(
+        "core.orders.factory.orderfactory.ActionProcessor.execute_task",
+        wraps=mock_execute_task,
+    )
+    mocker.patch(
+        "core.orders.factory.orderfactory.BaseAction.send_notification",
+    )
+    mocker.patch(
+        "core.orders.factory.orderfactory.BaseAction.send_response",
+    )
 
     # utility function to create a new order
     def create_order() -> Union[dict, None]:
@@ -69,28 +84,17 @@ def test_duplicated_pending_buy_order(
     assert first_order.order_uid.hex == order_1.get("order_uid")
 
     # we close the market to make it pending
-    market_is_initially_open: bool = check_market(first_order.ticker.mic)
+    market_manager: MarketManager = MarketManager(mic=first_order.ticker.mic)
+    market_is_initially_open: bool = market_manager.is_open
     if market_is_initially_open:
-        close_market(first_order.ticker.mic)
+        market_manager.close()
 
     # we confirm the above order
-    mocker.patch(
-        "core.orders.serializers.OrderActionSerializer.create",
-        wraps=mock_order_action_serializer,
-    )
-    mock_buy_validator = mocker.patch(
-        "core.orders.factory.orderfactory.BaseAction.send_notification"
-    )
-    mock_buy_validator = mocker.patch(
-        "core.orders.factory.orderfactory.BaseAction.send_response"
-    )
     confirm_order_api(
-        order_1.get("order_uid"),
+        order_1.get("order_uid", first_order.order_uid.hex),
         client,
         authentication,
     )
-
-    time.sleep(30)
 
     # we see if its really pending
     first_order = Order.objects.get(pk=order_1.get("order_uid"))
@@ -111,7 +115,7 @@ def test_duplicated_pending_buy_order(
         assert not order_2
 
         if market_is_initially_open:
-            open_market(first_order.ticker.mic)
+            market_manager.open()
 
 
 def test_duplicated_filled_buy_order(
@@ -121,7 +125,7 @@ def test_duplicated_filled_buy_order(
     tickers,
     user,
 ) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
     bot_id: str = "STOCK_stock_0"
 
     def create_order() -> Union[dict, None]:
@@ -178,8 +182,19 @@ def test_duplicated_pending_sell_order(
     tickers,
     user,
 ) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
     bot_id: str = "UCDC_ATM_007692"
+
+    mocker.patch(
+        "core.orders.factory.orderfactory.ActionProcessor.execute_task",
+        wraps=mock_execute_task,
+    )
+    mocker.patch(
+        "core.orders.factory.orderfactory.BaseAction.send_notification",
+    )
+    mocker.patch(
+        "core.orders.factory.orderfactory.BaseAction.send_response",
+    )
 
     response = client.post(
         path="/api/order/create/",
@@ -210,34 +225,26 @@ def test_duplicated_pending_sell_order(
     assert buy_order.order_uid.hex == order["order_uid"]
 
     # if the market is closed, the order won't be filled
-    market_is_initially_open = check_market(buy_order.ticker.mic)
+    market_manager: MarketManager = MarketManager(mic=buy_order.ticker.mic)
+    market_is_initially_open: bool = market_manager.is_open
     if not market_is_initially_open:
-        open_market(buy_order.ticker.mic)
+        market_manager.open()
 
-    mocker.patch(
-        "core.orders.serializers.OrderActionSerializer.create",
-        wraps=mock_order_action_serializer,
-    )
-    mock_buy_validator = mocker.patch(
-        "core.orders.factory.orderfactory.BaseAction.send_notification"
-    )
-    mock_buy_validator = mocker.patch(
-        "core.orders.factory.orderfactory.BaseAction.send_response"
-    )
+    # we confirm the order
     confirm_order_api(
         order["order_uid"],
         client,
         authentication,
     )
 
-    position, _ = get_position_performance(buy_order)
-    assert position
+    buy_position, _ = get_position_performance(buy_order)
+    assert buy_position
 
     # we create the sell order
     sell_order_data = {
         "side": "sell",
         "ticker": buy_order.ticker,
-        "setup": '{{"position": "{0}"}}'.format(position.position_uid),
+        "setup": '{{"position": "{0}"}}'.format(buy_position.position_uid),
     }
 
     sell_response_1 = client.post(
@@ -257,7 +264,7 @@ def test_duplicated_pending_sell_order(
     assert sell_order_1["order_uid"] is not None
 
     # We set the market to be closed, if it's opened
-    close_market(buy_order.ticker.mic)
+    market_manager.close()
 
     confirm_order_api(sell_order_1["order_uid"], client, authentication)
 
@@ -272,6 +279,7 @@ def test_duplicated_pending_sell_order(
         mock_buy_validator.validate = mock_sell_validate(
             user=user,
             ticker=ticker,
+            position=buy_position,
             bot_id=bot_id,
         )
 
@@ -285,14 +293,14 @@ def test_duplicated_pending_sell_order(
         print(sell_response_2.json())
 
         if market_is_initially_open:
-            open_market(buy_order.ticker.mic)
+            market_manager.open()
 
         sell_order_2 = sell_response_2.json()
 
         assert sell_response_2.status_code != 201
-        assert (
-            sell_order_2["detail"]
-            == f"sell order already exists for this position, order id : {sell_order_1['order_uid']}, current status pending"
+        assert sell_order_2["detail"] == (
+            "sell order already exists for this position, order id : "
+            f"{sell_order_1['order_uid']}, current status pending"
         )
 
 
@@ -302,7 +310,7 @@ def test_duplicated_filled_sell_order(
     user,
     tickers,
 ) -> None:
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     response = client.post(
         path="/api/order/create/",
