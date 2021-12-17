@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from bot.factory.act import creator
+from bot.factory.act.creator import Creator
 
 
 class AbstractCalculator(ABC):
@@ -11,7 +11,7 @@ class AbstractCalculator(ABC):
 
 class AbstractBotProcessor(ABC):
     @abstractmethod
-    def create(self) -> creator:
+    def create(self) -> Creator:
         pass
 
     @abstractmethod
