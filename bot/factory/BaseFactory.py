@@ -8,7 +8,7 @@ from .bot_protocols import ValidatorProtocol, EstimatorProtocol
 from .botproperties import ClassicProperties
 from .act.creator import ClassicCreator, Creator, UnoCreator, UcdcCreator
 from asgiref.sync import sync_to_async
-
+from .BotException import UnactiveTicker
 
 class BaseProcessor(AbstractBotProcessor):
     def __init__(
@@ -127,7 +127,18 @@ class BatchCreateExecutor:
 
 
 class BotHedgeDirector(BaseBackendDirector):
-    pass
+    
+    def __init__(self, props: ValidatorProtocol):
+        try:
+            props.validate()
+        except UnactiveTicker:
+            pass 
+        self.props = props
+        self.bot_use(self.props.bot.bot_type.bot_type.lower(), props)
+        
+    
+    def create(self):
+        return self.bot_processor.hedge()
 
 
 class BotStopDirector(BaseBackendDirector):

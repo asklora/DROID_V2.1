@@ -1,0 +1,4 @@
+
+
+class UnactiveTicker(Exception):
+    pass

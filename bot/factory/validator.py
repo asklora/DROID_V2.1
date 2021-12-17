@@ -2,11 +2,34 @@ from dataclasses import dataclass
 from core.universe.models import CurrencyCalendars, Universe
 from datetime import datetime, timedelta
 from core.bot.models import BotOptionType
-from core.orders.models import OrderPosition
+from core.orders.models import OrderPosition, PositionPerformance
+from .BotException import UnactiveTicker
+
+
 
 
 @dataclass
-class BotCreateProps:
+class BaseDatavalidation:
+    bot: BotOptionType
+
+    def validate_ticker_is_active(self, ticker_code: str):
+        try:
+            ticker = Universe.objects.get(ticker=ticker_code)
+        except Universe.DoesNotExist:
+            raise ValueError(f"Ticker {self.ticker} not found in Universe")
+
+        if not ticker.is_active:
+            raise UnactiveTicker("Ticker is not active")
+
+    def get_bot(self, bot_id):
+        try:
+            self.bot = BotOptionType.objects.get(pk=bot_id)
+        except BotOptionType.DoesNotExist:
+            raise Exception("Bot does not exist")
+
+
+@dataclass
+class BotCreateProps(BaseDatavalidation):
     ticker: str
     spot_date: datetime.date
     created: datetime
@@ -35,12 +58,6 @@ class BotCreateProps:
         self.bot_id = bot_id
         self.currency = self.get_ticker_currency()
         self.margin = margin
-
-    def get_bot(self):
-        try:
-            self.bot = BotOptionType.objects.get(pk=self.bot_id)
-        except BotOptionType.DoesNotExist:
-            raise Exception("Bot does not exist")
 
     def get_ticker_currency(self) -> str:
         try:
@@ -73,19 +90,24 @@ class BotCreateProps:
         self.expiry = expiry
 
     def validate(self):
-        self.get_bot()
+        self.validate_ticker_is_active(self.ticker)
+        self.get_bot(self.bot_id)
         self.set_time_to_exp(self.bot.time_to_exp)
         self.set_expiry_date()
 
 
 @dataclass
-class BotHedgerProps:
+class BotHedgerProps(BaseDatavalidation):
     sec_id: str
     bot: BotOptionType
     position: OrderPosition
+    last_performance: PositionPerformance
 
     def __init__(self, sec_id: str):
         self.sec_id = sec_id
+        self.get_active_position()
+        self.get_last_performance()
+        self.get_bot(self.position.bot_id)
 
     def get_active_position(self):
         try:
@@ -95,15 +117,21 @@ class BotHedgerProps:
         except OrderPosition.DoesNotExist:
             raise Exception("Position does not exist")
 
-    def get_bot(self, bot_id):
+    def get_last_performance(self):
         try:
-            self.bot = BotOptionType.objects.get(pk=bot_id)
-        except BotOptionType.DoesNotExist:
-            raise Exception("Bot does not exist")
+            self.last_performance = PositionPerformance.objects.filter(
+                position_uid=self.position
+            ).latest("created")
+        except PositionPerformance.DoesNotExist:
+            raise Exception("performance does not exist")
+
+    def validate_position_is_active(self):
+        if not self.position.is_active:
+            raise Exception("Position is not active")
 
     def validate(self):
-        self.get_active_position()
-        self.get_bot(self.position.bot_id)
+        self.validate_position_is_active()
+        self.validate_ticker_is_active(self.position.ticker.ticker)
 
 
 @dataclass
