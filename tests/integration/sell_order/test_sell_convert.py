@@ -2,7 +2,10 @@ import math
 
 import pytest
 from core.djangomodule.general import jsonprint
-from core.orders.factory.orderfactory import OrderController, SellOrderProcessor
+from core.orders.factory.orderfactory import (
+    OrderController,
+    SellOrderProcessor,
+)
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.convert import ConvertMoney
 from core.user.models import Accountbalance
@@ -115,4 +118,3 @@ def test_sell_order_with_conversion(user):
     user_balance_5 = math.floor(user_balance_4 + hkd_conversion_result)
     print(user_balance_5)
     assert user_balance_5 == user_balance_3
-

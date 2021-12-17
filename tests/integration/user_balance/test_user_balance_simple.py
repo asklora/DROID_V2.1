@@ -25,7 +25,7 @@ def test_check_if_user_balance_is_cut_accordingly(
     """
 
     side = "buy"
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
     qty = 20000
     bot_id = "STOCK_stock_0"
 
@@ -73,7 +73,7 @@ def test_check_if_user_balance_is_cut_accordingly_with_margin(
     """
 
     side = "buy"
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
     amount = 20000 * price
     margin = 2
     bot_id = "UNO_OTM_007692"

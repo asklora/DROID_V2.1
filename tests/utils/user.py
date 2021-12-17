@@ -12,11 +12,11 @@ def set_user_joined(mocker, user: User) -> None:
 
     # we manually have to put it here because in the server,
     # this part of code is called when the user joined
-    firebase_user_update([user.id])
+    firebase_user_update([user.pk])
 
 
 def delete_user(user: User) -> None:
-    user_id =str(user.id)
+    user_id = user.pk
 
     PositionPerformance.objects.filter(position_uid__user_id=user).delete()
     Order.objects.filter(user_id=user).delete()

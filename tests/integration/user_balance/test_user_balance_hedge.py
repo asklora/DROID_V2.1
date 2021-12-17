@@ -1,10 +1,10 @@
 from datetime import datetime
-from typing import List
 
 import pytest
 from core.master.models import MasterOhlcvtr
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.models import Accountbalance, TransactionHistory
+from django.db.models.query import QuerySet
 from portfolio import ucdc_position_check
 from tests.utils.order import confirm_order, create_buy_order
 
@@ -69,8 +69,8 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     balance = Accountbalance.objects.get(user=user)
 
     # get user transaction history
-    transactions: List[TransactionHistory] = TransactionHistory.objects.filter(
-        balance_uid=balance
+    transactions: QuerySet = TransactionHistory.objects.filter(
+        balance_uid=balance,
     )
 
     # we check if the hedge created performances data
@@ -78,7 +78,8 @@ def test_bot_and_user_balance_movements_for_ucdc_bot(user) -> None:
     assert len(performances) > 1
 
     # we check if the user get the investment monye back from bot
-    # first transaction is the initial deposit, and the last one is the bot return
+    # first transaction is the initial deposit,
+    # and the last one is the bot return
     assert len(transactions) >= 3
     assert transactions.last().transaction_detail["description"] == "bot return"
 

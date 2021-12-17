@@ -21,7 +21,7 @@ def test_create_new_buy_order_for_classic_bot(
     """
 
     bot_id = "CLASSIC_classic_007692"
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     order = create_buy_order(
         bot_id=bot_id,
@@ -47,7 +47,7 @@ def test_create_new_buy_order_for_uno_bot(
     """
 
     bot_id = "UNO_OTM_007692"
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     order = create_buy_order(
         bot_id=bot_id,
@@ -71,7 +71,7 @@ def test_create_new_buy_order_for_ucdc_bot(
     """
 
     bot_id = "UCDC_ATM_007692"
-    ticker, price = choice(tickers).values()
+    ticker, price = choice(tickers)
 
     order = create_buy_order(
         bot_id=bot_id,

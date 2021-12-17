@@ -1,3 +1,4 @@
+from random import choice
 from typing import List
 
 import pytest
@@ -15,18 +16,21 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_should_confirm_bot_expiry_for_classic(user) -> None:
-    bot_types: List[BotOptionType] = BotOptionType.objects.filter(
-        bot_type="CLASSIC"
-    ).order_by("time_to_exp")
+def test_should_confirm_bot_expiry_for_classic(user, tickers) -> None:
+    ticker, price = choice(tickers)
+    bot_types: List[BotOptionType] = list(
+        BotOptionType.objects.filter(
+            bot_type="CLASSIC",
+        ).order_by("time_to_exp")
+    )
 
     print("\nbot types: " + str(len(bot_types)))
 
     for bot_type in bot_types:
         order = create_buy_order(
             bot_id=bot_type.bot_id,
-            price=15.36,
-            ticker="9901.HK",
+            price=price,
+            ticker=ticker,
             user_id=user.id,
             margin=2,
         )
@@ -47,18 +51,21 @@ def test_should_confirm_bot_expiry_for_classic(user) -> None:
         assert order.setup["position"]["expiry"] == expiry_date
 
 
-def test_should_confirm_bot_expiry_for_uno(user) -> None:
-    bot_types: List[BotOptionType] = BotOptionType.objects.filter(
-        bot_type="UNO"
-    ).order_by("time_to_exp")
+def test_should_confirm_bot_expiry_for_uno(user, tickers) -> None:
+    ticker, price = choice(tickers)
+    bot_types: List[BotOptionType] = list(
+        BotOptionType.objects.filter(
+            bot_type="UNO",
+        ).order_by("time_to_exp")
+    )
 
     print("\nbot types: " + str(len(bot_types)))
 
     for bot_type in bot_types:
         order = create_buy_order(
             bot_id=bot_type.bot_id,
-            price=15.36,
-            ticker="9901.HK",
+            price=price,
+            ticker=ticker,
             user_id=user.id,
             margin=2,
         )
@@ -79,18 +86,21 @@ def test_should_confirm_bot_expiry_for_uno(user) -> None:
         assert order.setup["position"]["expiry"] == expiry_date
 
 
-def test_should_confirm_bot_expiry_for_ucdc(user) -> None:
-    bot_types: List[BotOptionType] = BotOptionType.objects.filter(
-        bot_type="UCDC"
-    ).order_by("time_to_exp")
+def test_should_confirm_bot_expiry_for_ucdc(user, tickers) -> None:
+    ticker, price = choice(tickers)
+    bot_types: List[BotOptionType] = list(
+        BotOptionType.objects.filter(
+            bot_type="UCDC",
+        ).order_by("time_to_exp")
+    )
 
     print("\nbot types: " + str(len(bot_types)))
 
     for bot_type in bot_types:
         order = create_buy_order(
             bot_id=bot_type.bot_id,
-            price=15.36,
-            ticker="9901.HK",
+            price=price,
+            ticker=ticker,
             user_id=user.id,
             margin=2,
         )

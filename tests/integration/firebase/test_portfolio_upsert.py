@@ -1,4 +1,5 @@
 import time
+from random import choice
 
 from bot.calculate_bot import populate_daily_profit
 from django.conf import settings
@@ -19,7 +20,7 @@ def test_order_should_be_updated_to_firebase(
         set_user_joined(mocker, user)
 
     # get random ticker
-    ticker, price = tickers[2].values()
+    ticker, price = choice(tickers)
 
     # we create a new order here
     order = create_buy_order(
@@ -37,7 +38,7 @@ def test_order_should_be_updated_to_firebase(
     firebase_user_update([user.id])
 
     # it takes a while to propagate to firebase so give it a second
-    time.sleep(90)
+    time.sleep(60)
 
     doc_ref = firestore_client.collection(
         settings.FIREBASE_COLLECTION["portfolio"],
