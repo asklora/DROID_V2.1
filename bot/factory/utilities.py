@@ -1,10 +1,7 @@
 from datetime import datetime
-
-import numpy as np
-import pandas as pd
 from core.master.models import DataDividendDailyRates, DataInterestDailyRates
 from general.data_process import NoneToZero
-
+from core.djangomodule.general import logging
 
 class BotUtilities:
     def _get_q(self, ticker: str, t: int) -> int:
@@ -14,6 +11,7 @@ class BotUtilities:
                 return q
             return 0
         except DataDividendDailyRates.DoesNotExist:
+            logging.warning(f"No q for {ticker} at t={t}")
             return 0
 
     def _get_r(self, currency_code: str, t: int) -> int:
@@ -25,6 +23,7 @@ class BotUtilities:
                 return r
             return 0
         except DataInterestDailyRates.DoesNotexist:
+            logging.warning(f"No r for {currency_code} at t={t}")
             return 0
 
     def get_trq(
