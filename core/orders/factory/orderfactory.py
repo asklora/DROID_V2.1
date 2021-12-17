@@ -130,7 +130,7 @@ class BaseAction:
             except Exception as e:
                 logging.error(str(e))
                 self.message_error(str(e))
-                raise ValueError(f"{self.validator.order.ticker} is not executed")
+                raise ValueError(f"{self.validator.order.ticker.ticker} is not executed")
 
     def message_error(self, error: str):
         self.response = {
@@ -175,8 +175,7 @@ class BaseAction:
 
     def send_notification(self):
         message=self.response.get('message_type',None)
-        is_err = message == 'order_error'
-        if not is_err:
+        if not message == 'order_error':
             return firebase_send_notification(
                 self.validator.order.user_id.username,
                 self.response.get("title"),
@@ -252,7 +251,7 @@ class BuyActionProcessor(BaseAction):
             else:
                 self.validator.order.amount = 10000
         self.validator.order.price = self.getter_price.get_price(
-            [self.validator.order.ticker]
+            [self.validator.order.ticker.ticker]
         )
         self.validator.order.status = "review"
         self.validator.order.placed = False
@@ -365,6 +364,16 @@ class ActionOrderController:
     protocol: OrderProtocol
 
     def select_process_class(self, payload: dict):
+        """
+        dict required:
+            - side : buy , sell or cancel 
+        """
+        
+        if not payload.get("side", None): raise KeyError("side is required")
+        
+        if payload.get("side",None) not in  ['buy', 'sell','cancel']:
+            raise KeyError("side is invalid")
+        
         protocol = self.PROCESSOR[payload.pop("side")]
         self.protocol = protocol(payload)
 
