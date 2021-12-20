@@ -4,6 +4,7 @@ from rest_framework import exceptions
 from core.orders.models import OrderPosition
 from .payload import ActionPayload, SellPayload, BuyPayload
 from core.orders.models import Order, OrderPosition, Feature
+from django.utils.translation import gettext as _
 
 
 class SellValidator:
@@ -19,7 +20,7 @@ class SellValidator:
             if feature.active:
                 if not self.position.sellable:
                     raise exceptions.NotAcceptable(
-                        {"detail": "Selling is available the next trading day"}
+                        {"detail": _("Selling is available the next trading day")}
                     )
         except Feature.DoesNotExist:
             return
@@ -34,7 +35,7 @@ class SellValidator:
         if self.payload.setup.get("position", None):
             return
         raise exceptions.NotAcceptable(
-            {"detail": "must provided the position uid for sell side"}
+            {"detail": _("must provided the position uid for sell side")}
         )
 
     def is_position_exists(self) -> OrderPosition:
@@ -43,7 +44,7 @@ class SellValidator:
                 "user_id", "ticker"
             ).get(position_uid=self.payload.setup["position"])
         except OrderPosition.DoesNotExist:
-            raise exceptions.NotFound({"detail": "position not found error"})
+            raise exceptions.NotFound({"detail": _("position not found error")})
 
         return position
 
@@ -94,7 +95,7 @@ class BuyValidator:
         try:
             await BotOptionType.objects.async_get(bot_id=self.payload.bot_id)
         except BotOptionType.DoesNotExist:
-            raise exceptions.NotFound({"detail": "bot not found"})
+            raise exceptions.NotFound({"detail": _("bot not found")})
 
     async def is_ticker_active(self):
         if not self.payload.ticker.is_active:
@@ -136,11 +137,11 @@ class BuyValidator:
 
     async def is_insufficient_funds(self):
         if self.payload.amount > self.user_amount or await self.is_below_one():
-            raise exceptions.NotAcceptable({"detail": "insufficient funds"})
+            raise exceptions.NotAcceptable({"detail": _("insufficient funds")})
 
     async def is_zero_amount(self):
         if self.payload.amount <= 0:
-            raise exceptions.NotAcceptable({"detail": "amount should not 0"})
+            raise exceptions.NotAcceptable({"detail": _("amount should not 0")})
 
     async def validation_tasks(self):
         tasks = [
@@ -166,7 +167,7 @@ class ActionValidator:
         try:
             self.order = Order.objects.get(pk=self.payload.order_uid)
         except Order.DoesNotExist:
-            raise exceptions.NotFound({"detail": "order not found"})
+            raise exceptions.NotFound({"detail": _("order not found")})
 
     def is_actioned(self):
         if self.order.status == self.payload.status:
@@ -178,13 +179,13 @@ class ActionValidator:
         if not self.payload.status == "cancel":
             if self.order.insufficient_balance():
                 raise exceptions.MethodNotAllowed(
-                    {"detail": "insufficient funds"}
+                    {"detail": _("insufficient funds")}
                 )
 
     def is_incorrect_status(self):
         if not self.payload.status in ["placed", "cancel"]:
             raise exceptions.MethodNotAllowed(
-                {"detail": "status should placed or cancel"}
+                {"detail": _("status should placed or cancel")}
             )
 
     def validate(self):
@@ -201,7 +202,7 @@ class ExecutorValidator(ActionValidator):
     def is_insufficient_funds(self):
         if not self.payload.status == "cancel":
             if self.order.insufficient_balance():
-                Exception("insufficient funds")
+                Exception(_("insufficient funds"))
 
 
 class CancelExecutorValidator(ExecutorValidator):

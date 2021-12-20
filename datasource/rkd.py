@@ -82,7 +82,7 @@ class Rkd:
                         "companyId"
                     ],
                     "Error": response,
-                    "AREVPS": None,
+                    "AREV": None,
                     "MKTCAP": None,
                     "PEEXCLXOR": None,
                     "ProjPE": None,
@@ -288,7 +288,7 @@ class RkdData(Rkd):
                         0
                     ]["IssueID"][2]["Value"]
                     fields = [
-                        "AREVPS",
+                        "AREV",
                         "MKTCAP",
                         "PEEXCLXOR",
                         "ProjPE",
@@ -331,7 +331,7 @@ class RkdData(Rkd):
                 "IssueID"
             ][2]["Value"]
             fields = [
-                "AREVPS",
+                "AREV",
                 "MKTCAP",
                 "PEEXCLXOR",
                 "ProjPE",
@@ -353,7 +353,7 @@ class RkdData(Rkd):
             list_formated_json.append(formated_json)
         df_data = pd.DataFrame(list_formated_json).rename(
             columns={
-                "AREVPS": "revenue_per_share",
+                "AREV": "revenue_per_share",
                 "MKTCAP": "market_cap",
                 "PEEXCLXOR": "pe_ratio",
                 "ProjPE": "pe_forecast",
