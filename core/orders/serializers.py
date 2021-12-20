@@ -127,6 +127,7 @@ class PositionSerializer(serializers.ModelSerializer):
     current_values=serializers.SerializerMethodField()
     current_returns=serializers.SerializerMethodField()
     current_inv_ret = serializers.SerializerMethodField()
+    
 
     class Meta:
         model = OrderPosition
