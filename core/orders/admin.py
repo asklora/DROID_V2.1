@@ -17,5 +17,4 @@ class PerformanceAdmin(admin.ModelAdmin):
 
 
 admin.site.register(PositionPerformance, PerformanceAdmin)
-admin.site.register(PositionPerformance, PerformanceAdmin)
 admin.site.register(Feature)
