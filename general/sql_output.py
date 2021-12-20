@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
 from general.date_process import dateNow, timestampNow, str_to_date
 from general.sql_query import get_order_performance_by_ticker
-from general.table_name import get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_consolidated_table_name, get_universe_table_name
+from general.table_name import get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_consolidated_table_name, get_universe_table_name, get_user_core_table_name, get_user_profit_history_table_name
 from general.data_process import tuple_data
 
 def execute_query(query, table=None):
@@ -346,3 +346,11 @@ def update_ingestion_update_time(table):
             __update_ingestion_update_time(table, finish=True)
         return inner
     return decorator
+
+def clean_daily_profit_history():
+    table_name = get_user_profit_history_table_name()
+    query = f"delete from {table_name} where "
+    query += f"user_id in (select id from {get_user_core_table_name()} where is_active=False) and "
+    query += f"trading_day = (select max(filters.trading_day) max_date from {table_name} filters) "
+    data = execute_query(query, table=table_name)
+    return data

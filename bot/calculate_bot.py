@@ -1,8 +1,8 @@
 from general.slack import report_to_slack
 from bot.data_download import get_currency_data
 from core.djangomodule.general import formatdigit
-from general.sql_output import upsert_data_to_database
-from general.date_process import dateNow, date_to_string, datetimeNow, str_to_date
+from general.sql_output import clean_daily_profit_history, upsert_data_to_database
+from general.date_process import backdate_by_day, dateNow, date_to_string, datetimeNow, str_to_date
 import math
 import numpy as np
 from datetime import datetime
@@ -602,7 +602,7 @@ def check_dividend_paid(ticker, trading_day, share_num, bot_cash_dividend):
     return bot_cash_dividend
 
 def populate_daily_profit(currency_code=None, user_id=None):
-    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined")[["user_id", "is_joined"]]
+    user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, is_test, is_superuser", conditions=["is_active=True"])[["user_id", "is_joined", "is_test", "is_superuser"]]
     if user_core.empty:
         return
     user_balance = get_user_account_balance(currency_code=currency_code, user_id=user_id, field="user_id, currency_code, amount as balance")
@@ -685,6 +685,8 @@ def populate_daily_profit(currency_code=None, user_id=None):
     user_core = user_core.replace([np.inf, -np.inf], 0).copy()
     
     joined = user_core.loc[user_core["is_joined"] == True]
+    joined = joined.loc[joined["is_test"] == False]
+    joined = joined.loc[joined["is_superuser"] == False]
     joined = joined.loc[joined["total_position"] > 0]
     joined = joined.sort_values(by=["total_profit_pct"], ascending=[False])
     joined = joined.reset_index(inplace=False, drop=True)
@@ -692,18 +694,19 @@ def populate_daily_profit(currency_code=None, user_id=None):
     joined = joined.rename(columns={"index" : "rank"})
     joined["total_profit_pct"] = joined["total_profit_pct"].round(4)
     joined["rank"] = joined["rank"] + 1
-    joined = joined.drop(columns=["is_joined", "total_position"])
+    joined = joined.drop(columns=["is_joined", "total_position", "is_test", "is_superuser"])
     upsert_data_to_database(joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
 
     not_joined = user_core.loc[~user_core["user_id"].isin(joined["user_id"].to_list())]
-    not_joined = not_joined.drop(columns=["is_joined", "total_position"])
+    not_joined = not_joined.drop(columns=["is_joined", "total_position", "is_test", "is_superuser"])
     not_joined["rank"] = None
     not_joined["total_profit_pct"] = not_joined["total_profit_pct"].round(4)
     upsert_data_to_database(not_joined, get_user_profit_history_table_name(), "uid", how="update", cpu_count=False, Text=True)
-
+    clean_daily_profit_history()
+    
 def update_season():
     month_list = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-    period = str_to_date(dateNow())
+    period = str_to_date(backdate_by_day(1))
     months = period.month
     years = period.year
     season_id = f"{month_list[months - 1]}{years}"
@@ -717,7 +720,7 @@ def update_season():
 
 def update_season_monthly(currency_code=None, user_id=None) -> None:
     new_season = get_latest_season()
-    if(date_to_string(new_season.loc[0, "end_date"]) == dateNow()):
+    if(date_to_string(new_season.loc[0, "end_date"]) == backdate_by_day(1)):
         user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, current_status")[["user_id", "is_joined", "current_status"]]
         user_core = user_core.loc[user_core["is_joined"] == True]
         user_core = user_core.loc[user_core["current_status"] == "verified"]
@@ -752,7 +755,7 @@ def update_monthly_deposit(currency_code=None, user_id=None) -> None:
     update_season()
     update_season_monthly(currency_code=currency_code, user_id=user_id)
     new_season = get_latest_season()
-    if(date_to_string(new_season.loc[0, "end_date"]) == dateNow()):
+    if(date_to_string(new_season.loc[0, "end_date"]) == backdate_by_day(1)):
         user_core = get_user_core(currency_code=currency_code, user_id=user_id, field="id as user_id, username, is_joined, current_status")[["user_id", "is_joined", "current_status"]]
         user_core = user_core.loc[user_core["is_joined"] == True]
         user_core = user_core.loc[user_core["current_status"] == "verified"]
@@ -760,6 +763,18 @@ def update_monthly_deposit(currency_code=None, user_id=None) -> None:
 
         if user_core.empty:
             return
+
+        bot_order_pending = get_orders_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=False)
+        user_core = user_core.merge(bot_order_pending, how="left", on=["user_id"])
+        user_core["bot_pending_amount"] = np.where(user_core["bot_pending_amount"].isnull(), float(0), user_core["bot_pending_amount"])
+        stock_order_pending = get_orders_group_by_user_id(user_id=user_core["user_id"].to_list(), stock=True)
+        user_core = user_core.merge(stock_order_pending, how="left", on=["user_id"])
+        user_core["stock_pending_amount"] = np.where(user_core["stock_pending_amount"].isnull(), float(0), user_core["stock_pending_amount"])
+        
+        user_core["pending_amount"] = user_core["stock_pending_amount"] + user_core["bot_pending_amount"]
+        user_core["bot_pending_amount"]  = user_core["bot_pending_amount"].astype(float)
+        user_core["stock_pending_amount"]  = user_core["stock_pending_amount"].astype(float)
+        user_core["pending_amount"]  = user_core["pending_amount"].astype(float)
 
         user_balance = get_user_account_balance(user_id=user_id, field="user_id, amount as balance, currency_code")
         user_daily_profit = get_user_profit_history(user_id=user_id, field="user_id, daily_invested_amount")
@@ -770,7 +785,8 @@ def update_monthly_deposit(currency_code=None, user_id=None) -> None:
         user_core = user_core.merge(currency, how="left", on=["currency_code"])
         user_core["balance"] = np.where(user_core["balance"].isnull(), 0, user_core["balance"])
         user_core["daily_invested_amount"] = np.where(user_core["daily_invested_amount"].isnull(), 0, user_core["daily_invested_amount"])
-        user_core["deposit"] = (user_core["balance"] + user_core["daily_invested_amount"])
+        user_core["pending_amount"] = np.where(user_core["pending_amount"].isnull(), 0, user_core["pending_amount"])
+        user_core["deposit"] = (user_core["balance"] + user_core["daily_invested_amount"]+ user_core["pending_amount"])
         user_core["deposit"] = np.where(user_core["is_decimal"] == True, user_core["deposit"].astype(float).round(2), user_core["deposit"])
         user_core["trading_day"] = str_to_date(dateNow())
         user_core = uid_maker(user_core, uid="uid", ticker="user_id", trading_day="trading_day", date=True, ticker_int=True, replace=True)
