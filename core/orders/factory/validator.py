@@ -73,7 +73,6 @@ class SellValidator:
             asyncio.ensure_future(self.is_user_position()),
             asyncio.ensure_future(self.has_order()),
             asyncio.ensure_future(self.is_closed()),
-            asyncio.ensure_future(self.is_sellable()),
         ]
         await asyncio.gather(*task)
 
