@@ -255,6 +255,9 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
         ranking = ranking.append(rank)
     ranking = ranking.reset_index(inplace=False, drop=True)
     universe = universe.merge(ranking, how="left", on=["ticker"])
+    ranking_null = universe.loc[universe["ranking"].isnull()]
+    for index, row in ranking_null.iterrows():
+        universe.loc[index, ["ranking"]] = [[]]
     universe = universe.reset_index(inplace=False, drop=True)
     universe = change_date_to_str(universe)
     universe = universe.reset_index(inplace=False, drop=True)
