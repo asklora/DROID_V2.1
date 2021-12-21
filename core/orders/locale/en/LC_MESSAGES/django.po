@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-08 04:38+0000\n"
+"POT-Creation-Date: 2021-12-21 10:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,7 +35,9 @@ msgstr "Order is pending"
 #: factory/orderfactory.py:149
 #, python-format
 msgid "%(side)s order %(qty)d stocks %(ticker)s is received, status pending"
-msgstr "A %(side)s order of %(qty)d stocks for ticker %(ticker)s is received, order status is pending"
+msgstr ""
+"A %(side)s order of %(qty)d stocks for ticker %(ticker)s is received, order "
+"status is pending"
 
 #: factory/orderfactory.py:158
 msgid "order cancel"
@@ -44,7 +46,9 @@ msgstr "Order is canceled"
 #: factory/orderfactory.py:159
 #, python-format
 msgid "%(side)s order %(qty)d stocks %(ticker)s is received, status canceled"
-msgstr "A %(side)s order of %(qty)d stocks for ticker %(ticker)s is received, order status is canceled"
+msgstr ""
+"A %(side)s order of %(qty)d stocks for ticker %(ticker)s is received, order "
+"status is canceled"
 
 #: factory/orderfactory.py:168
 msgid "order filled"
@@ -53,7 +57,9 @@ msgstr "Order is filled"
 #: factory/orderfactory.py:169
 #, python-format
 msgid "%(side)s order %(qty)d stocks %(ticker)s was executed, status filled"
-msgstr "A %(side)s order of %(qty)d stocks for ticker %(ticker)s is received, order status is filled"
+msgstr ""
+"A %(side)s order of %(qty)d stocks for ticker %(ticker)s is received, order "
+"status is filled"
 
 #: factory/orderfactory.py:201 factory/orderfactory.py:203
 #: factory/orderfactory.py:298 factory/orderfactory.py:300
@@ -71,27 +77,103 @@ msgstr "Refund pending buy order for %(id)s is failed"
 msgid "%(id)s recalculate order failed"
 msgstr "Order recalculation for %(id)s is failed"
 
-#: factory/orderfactory.py:372
+#: factory/orderfactory.py:373
 msgid "side is required"
 msgstr "side is required"
 
-#: factory/orderfactory.py:375
+#: factory/orderfactory.py:376
 msgid "side is invalid"
 msgstr "side is invalid"
 
-#: serializers.py:294
+#: factory/validator.py:23
+msgid "Selling is available the next trading day"
+msgstr "You can only sell the order in the next trading day"
+
+#: factory/validator.py:31
+#, python-format
+msgid "%(position_uid)s credentials error"
+msgstr "Credentials for %(position_uid)s is invalid"
+
+#: factory/validator.py:38
+msgid "must provided the position uid for sell side"
+msgstr "Position uid must be provided for sell orders"
+
+#: factory/validator.py:47
+msgid "position not found error"
+msgstr "Error: position cannot be found"
+
+#: factory/validator.py:53
+msgid "position has been closed"
+msgstr "Position has been closed"
+
+#: factory/validator.py:68
+#, python-format
+msgid ""
+"sell order already exists for this position, order id : %(order_id)s, "
+"current status pending"
+msgstr ""
+"Sell order already exists for this position: a pending order with id "
+"%(order_id)s"
+
+#: factory/validator.py:97
+msgid "bot not found"
+msgstr "Bot id cannot be found"
+
+#: factory/validator.py:102
+#, python-format
+msgid "%(ticker)s is not active"
+msgstr "%(ticker)s is not active"
+
+#: factory/validator.py:116
+#, python-format
+msgid "you already has order for %(ticker)s in current options"
+msgstr "You already have orders for %(ticker)s in the current option"
+
+#: factory/validator.py:130
+#, python-format
+msgid "cannot have multiple position for %(ticker)s in current options"
+msgstr ""
+"You cannot have multiple positions for %(ticker)s in the current option"
+
+#: factory/validator.py:139 factory/validator.py:181 factory/validator.py:204
+msgid "insufficient funds"
+msgstr "Insufficient funds"
+
+#: factory/validator.py:143
+msgid "amount should not 0"
+msgstr "Amount should not be zero"
+
+#: factory/validator.py:169 views.py:262 views.py:319 views.py:338
+msgid "order not found"
+msgstr "Order cannot be found"
+
+#: factory/validator.py:174 factory/validator.py:199
+#, python-format
+msgid "order is already %(status)s"
+msgstr "Order is already %(status)s"
+
+#: factory/validator.py:187
+msgid "status should placed or cancel"
+msgstr "Order status should be 'placed' or 'cancel'"
+
+#: factory/validator.py:211
+#, python-format
+msgid "cannot cancel, for order with status %(status)s"
+msgstr "Cannot cancel an order with status %(status)s"
+
+#: serializers.py:343
 msgid "missing user"
 msgstr "user is missing"
 
-#: serializers.py:301
+#: serializers.py:351
 msgid "user not found with the given payload user"
 msgstr "User id in payload cannot be found"
 
-#: serializers.py:353
+#: serializers.py:399
 msgid "no position / order exist"
 msgstr "Order or position does not exist"
 
-#: serializers.py:396
+#: serializers.py:451
 msgid "something went wrong"
 msgstr "Something went wrong"
 
@@ -103,10 +185,6 @@ msgstr "Position %(position)s does not exist"
 #: views.py:175
 msgid "this position not belong to current user"
 msgstr "This position does not belong to the current user"
-
-#: views.py:262 views.py:319 views.py:338
-msgid "order not found"
-msgstr "Order cannot be found"
 
 #: views.py:268 views.py:349
 msgid "credentials not allowed to change this order"

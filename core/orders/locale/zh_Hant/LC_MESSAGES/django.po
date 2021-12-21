@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-08 04:38+0000\n"
+"POT-Creation-Date: 2021-12-21 10:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -71,27 +71,100 @@ msgstr "%(id)s 交易退款失敗"
 msgid "%(id)s recalculate order failed"
 msgstr "重新計算 %(id)s 的交易失敗"
 
-#: factory/orderfactory.py:372
+#: factory/orderfactory.py:373
 msgid "side is required"
 msgstr "請選擇指令"
 
-#: factory/orderfactory.py:375
+#: factory/orderfactory.py:376
 msgid "side is invalid"
 msgstr "指令無效"
 
-#: serializers.py:294
+#: factory/validator.py:23
+msgid "Selling is available the next trading day"
+msgstr "可於下個交易日賣出"
+
+#: factory/validator.py:31
+#, python-format
+msgid "%(position_uid)s credentials error"
+msgstr "%(position_uid)s 憑據無效"
+
+#: factory/validator.py:38
+msgid "must provided the position uid for sell side"
+msgstr "請提供倉位編號以便賣出"
+
+#: factory/validator.py:47
+msgid "position not found error"
+msgstr "找不到此倉位"
+
+#: factory/validator.py:53
+msgid "position has been closed"
+msgstr "倉位已關閉"
+
+#: factory/validator.py:68
+#, python-format
+msgid ""
+"sell order already exists for this position, order id : %(order_id)s, "
+"current status pending"
+msgstr "已存在提交賣出此倉位的記錄，訂單編號為： %(order_id)s，交易待處理"
+
+#: factory/validator.py:97
+msgid "bot not found"
+msgstr "找不到此策略"
+
+#: factory/validator.py:102
+#, python-format
+msgid "%(ticker)s is not active"
+msgstr "%(ticker)s 交易無效"
+
+#: factory/validator.py:116
+#, python-format
+msgid "you already has order for %(ticker)s in current options"
+msgstr "你現在已有 %(ticker)s 此選項之相關交易"
+
+#: factory/validator.py:130
+#, python-format
+msgid "cannot have multiple position for %(ticker)s in current options"
+msgstr "請避免重複持倉 %(ticker)s"
+
+#: factory/validator.py:139 factory/validator.py:181 factory/validator.py:204
+msgid "insufficient funds"
+msgstr "金額不足"
+
+#: factory/validator.py:143
+msgid "amount should not 0"
+msgstr "金額不能為零"
+
+#: factory/validator.py:169 views.py:262 views.py:319 views.py:338
+msgid "order not found"
+msgstr "找不到此交易"
+
+#: factory/validator.py:174 factory/validator.py:199
+#, python-format
+msgid "order is already %(status)s"
+msgstr "訂單已 %(status)s"
+
+#: factory/validator.py:187
+msgid "status should placed or cancel"
+msgstr "狀態該爲已執行或取消"
+
+#: factory/validator.py:211
+#, python-format
+msgid "cannot cancel, for order with status %(status)s"
+msgstr "%(status)s 之交易不能取消"
+
+#: serializers.py:343
 msgid "missing user"
 msgstr "找不到此用戶"
 
-#: serializers.py:301
+#: serializers.py:351
 msgid "user not found with the given payload user"
 msgstr "找不到此用戶"
 
-#: serializers.py:353
+#: serializers.py:399
 msgid "no position / order exist"
 msgstr "交易或倉位不存在"
 
-#: serializers.py:396
+#: serializers.py:451
 msgid "something went wrong"
 msgstr "網頁錯誤"
 
@@ -103,10 +176,6 @@ msgstr "%(position)s 倉位不存在"
 #: views.py:175
 msgid "this position not belong to current user"
 msgstr "此倉位不屬於此用戶"
-
-#: views.py:262 views.py:319 views.py:338
-msgid "order not found"
-msgstr "找不到此交易"
 
 #: views.py:268 views.py:349
 msgid "credentials not allowed to change this order"
