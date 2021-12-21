@@ -206,7 +206,7 @@ class TestUsersCheck(Check):
 
         result: str = (
             "\n- "
-            + f"There {'were ' if deleted else 'is '}"
+            + f"There {'were ' if deleted else 'are '}"
             + firebase_num
             + " test users in Firebase, and "
             + database_num
