@@ -15,6 +15,22 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 
 
+
+
+
+
+
+class Feature(BaseTimeStampModel):
+    name = models.CharField(max_length=255, unique=True)
+    active = models.BooleanField(default=False)
+
+    class Meta:
+        managed = True
+        db_table = "Features"
+
+    def __str__(self):
+        return f"{self.name}"
+
 class Order(BaseTimeStampModel):
     """
     Orders created by the users
@@ -209,7 +225,10 @@ class OrderPosition(BaseTimeStampModel):
 
     @property
     def sellable(self):
-        return timezone.now() > self.created + timedelta(hours=9)
+        feature = Feature.objects.get(name='prevent_instant_sell')
+        if feature.active:
+            return timezone.now() > self.created + timedelta(hours=9)
+        return True
 
     @property
     def bot(self):
@@ -348,13 +367,3 @@ class OrderFee(BaseTimeStampModel):
         return f"{self.order_uid.order_uid}-{self.created}-{self.fee_type}"
 
 
-class Feature(BaseTimeStampModel):
-    name = models.CharField(max_length=255, unique=True)
-    active = models.BooleanField(default=False)
-
-    class Meta:
-        managed = True
-        db_table = "Features"
-
-    def __str__(self):
-        return f"{self.name}"
