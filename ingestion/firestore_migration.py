@@ -181,10 +181,19 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
     for tick in universe_rating["ticker"].unique():
         rating_data = universe_rating.loc[universe_rating["ticker"] == tick]
         rating_data["final_score"] = rating_data["ai_score"]
-        ai_score = rating_data["ai_score"].to_list()[0]
+        final_score = rating_data["final_score"].to_list()[0]
         ai_score2 = rating_data["ai_score2"].to_list()[0]
-        rating_data = rating_data[["final_score", "ai_score", "ai_score2", "positive_factor", "negative_factor"]].to_dict("records")
-        rating = pd.DataFrame({"ticker":[tick], "rating":[rating_data[0]], "ai_score":[ai_score], "ai_score2":[ai_score2]}, index=[0])
+        ai_score = rating_data["ai_score"].to_list()[0]
+        positive_factor = str(rating_data["positive_factor"].to_list()[0]).replace("[\"", "").replace("\"]", "").replace("\", \"", ",").replace("null", "").replace("Null", "").replace("NA", "")
+        negative_factor = str(rating_data["negative_factor"].to_list()[0]).replace("[\"", "").replace("\"]", "").replace("\", \"", ",").replace("null", "").replace("Null", "").replace("NA", "")
+        rating_data = {
+            "final_score": final_score,
+            "ai_score": ai_score,
+            "ai_score2": ai_score2, 
+            "positive_factor": positive_factor.split(","),
+            "negative_factor": negative_factor.split(",")
+            }
+        rating = pd.DataFrame({"ticker":[tick], "rating":[rating_data], "ai_score":[ai_score], "ai_score2":[ai_score2]}, index=[0])
         rating_df = rating_df.append(rating)
     rating_df = rating_df.reset_index(inplace=False, drop=True)
     universe = universe.merge(rating_df, how="left", on=["ticker"])
@@ -246,6 +255,9 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
         ranking = ranking.append(rank)
     ranking = ranking.reset_index(inplace=False, drop=True)
     universe = universe.merge(ranking, how="left", on=["ticker"])
+    ranking_null = universe.loc[universe["ranking"].isnull()]
+    for index, row in ranking_null.iterrows():
+        universe.loc[index, ["ranking"]] = [[]]
     universe = universe.reset_index(inplace=False, drop=True)
     universe = change_date_to_str(universe)
     universe = universe.reset_index(inplace=False, drop=True)
