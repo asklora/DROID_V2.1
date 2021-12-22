@@ -1,0 +1,118 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-12-08 04:38+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: factory/orderfactory.py:114 factory/orderfactory.py:116
+#, python-format
+msgid "%(mic)s is not supported"
+msgstr "暫不支援 %(mic)s 市場"
+
+#: factory/orderfactory.py:134
+#, python-format
+msgid "%(ticker)s is not executed"
+msgstr "%(ticker)s 交易仍未執行"
+
+#: factory/orderfactory.py:148
+msgid "order pending"
+msgstr "交易待處理"
+
+#: factory/orderfactory.py:149
+#, python-format
+msgid "%(side)s order %(qty)d stocks %(ticker)s is received, status pending"
+msgstr "已收到 %(side)s %(qty)d 股 %(ticker)s 的訂單，交易待處理"
+
+#: factory/orderfactory.py:158
+msgid "order cancel"
+msgstr "交易已取消"
+
+#: factory/orderfactory.py:159
+#, python-format
+msgid "%(side)s order %(qty)d stocks %(ticker)s is received, status canceled"
+msgstr "已收到 %(side)s %(qty)d 股 %(ticker)s 的訂單，交易取消"
+
+#: factory/orderfactory.py:168
+msgid "order filled"
+msgstr "交易已執行"
+
+#: factory/orderfactory.py:169
+#, python-format
+msgid "%(side)s order %(qty)d stocks %(ticker)s was executed, status filled"
+msgstr "已收到 %(side)s %(qty)d 股 %(ticker)s 的訂單，交易成功"
+
+#: factory/orderfactory.py:201 factory/orderfactory.py:203
+#: factory/orderfactory.py:298 factory/orderfactory.py:300
+#, python-format
+msgid "%(id)s update failed"
+msgstr "%(id)s 更新失敗"
+
+#: factory/orderfactory.py:236
+#, python-format
+msgid "%(id)s refund pending buy order failed"
+msgstr "%(id)s 交易退款失敗"
+
+#: factory/orderfactory.py:267 factory/orderfactory.py:270
+#, python-format
+msgid "%(id)s recalculate order failed"
+msgstr "重新計算 %(id)s 的交易失敗"
+
+#: factory/orderfactory.py:372
+msgid "side is required"
+msgstr "請選擇指令"
+
+#: factory/orderfactory.py:375
+msgid "side is invalid"
+msgstr "指令無效"
+
+#: serializers.py:294
+msgid "missing user"
+msgstr "找不到此用戶"
+
+#: serializers.py:301
+msgid "user not found with the given payload user"
+msgstr "找不到此用戶"
+
+#: serializers.py:353
+msgid "no position / order exist"
+msgstr "交易或倉位不存在"
+
+#: serializers.py:396
+msgid "something went wrong"
+msgstr "網頁錯誤"
+
+#: views.py:58 views.py:180
+#, python-format
+msgid "position %(position)s does not exist"
+msgstr "%(position)s 倉位不存在"
+
+#: views.py:175
+msgid "this position not belong to current user"
+msgstr "此倉位不屬於此用戶"
+
+#: views.py:262 views.py:319 views.py:338
+msgid "order not found"
+msgstr "找不到此交易"
+
+#: views.py:268 views.py:349
+msgid "credentials not allowed to change this order"
+msgstr "憑據無效，無法更改此交易"
+
+#: views.py:343
+#, python-format
+msgid "error key %(err)s"
+msgstr "執行 %(err)s 時發生錯誤"

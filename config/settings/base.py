@@ -21,6 +21,7 @@ This file will be imported by `local.py`, `development.py`, and `production.py` 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv()
 env = Env()
 db = DroidDb()
@@ -101,6 +102,7 @@ Django middleware settings
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -187,7 +189,13 @@ AUTHENTICATION_BACKENDS = ["config.Auth.AuthBackend"]
 """
 Django Internatinalization settings (https://docs.djangoproject.com/en/3.2/topics/i18n/)
 """
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "en"
+# LANGUAGE_CODE = "zh-hant"
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('zh-hant', '繁體中文')
+]
 
 TIME_ZONE = "UTC"
 
@@ -312,13 +320,13 @@ Settings for firebase backend
 """
 # FIREBASE CREDENTIALS
 FIREBASE_DEV_CREDS = firebase_admin.credentials.Certificate(
-    "files/file_json/dev-asklora-firebase.json"
+    os.path.join(PROJECT_DIR, "files/file_json/dev-asklora-firebase.json")
 )
 FIREBASE_STAGGING_CREDS = firebase_admin.credentials.Certificate(
-    "files/file_json/stagging-asklora-firebase.json"
+    os.path.join(PROJECT_DIR, "files/file_json/stagging-asklora-firebase.json")
 )
 FIREBASE_PROD_CREDS = firebase_admin.credentials.Certificate(
-    "files/file_json/asklora-firebase.json"
+    os.path.join(PROJECT_DIR, "files/file_json/asklora-firebase.json")
 )
 
 # additional logger
