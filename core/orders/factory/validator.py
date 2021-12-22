@@ -28,7 +28,7 @@ class SellValidator:
     async def is_user_position(self):
         if self.payload.user_id != self.position.user_id:
             raise exceptions.NotAcceptable(
-                f"{self.position.position_uid} credentials error"
+                _("%(position_uid)s credentials error") % {"position_uid": self.position.position_uid}
             )
 
     def is_position_uid_valid(self):
@@ -50,7 +50,7 @@ class SellValidator:
 
     async def is_closed(self):
         if not self.position.is_live:
-            raise exceptions.NotAcceptable(f"position, has been closed")
+            raise exceptions.NotAcceptable(_("position has been closed"))
         return
 
     async def has_order(self):
@@ -65,7 +65,7 @@ class SellValidator:
             last_order = await pending_order.async_first()
             orderId = last_order.order_uid.hex
             raise exceptions.NotAcceptable(
-                f"sell order already exists for this position, order id : {orderId}, current status pending"
+                _("sell order already exists for this position, order id : %(order_id)s, current status pending") % {"order_id": orderId}
             )
 
     async def validation_tasks(self):
@@ -99,7 +99,7 @@ class BuyValidator:
     async def is_ticker_active(self):
         if not self.payload.ticker.is_active:
             raise exceptions.NotAcceptable(
-                {"detail": f"{self.payload.ticker.ticker} is not active"}
+                {"detail": _("%(ticker)s is not active") % {"ticker": self.payload.ticker.ticker}}
             )
 
     async def is_order_exist(self):
@@ -113,7 +113,7 @@ class BuyValidator:
         if await orders.async_exists():
             raise exceptions.NotAcceptable(
                 {
-                    "detail": f"you already has order for {self.payload.ticker.ticker} in current options"
+                    "detail": _("you already has order for %(ticker)s in current options") % {"ticker": self.payload.ticker.ticker}
                 }
             )
 
@@ -127,7 +127,7 @@ class BuyValidator:
         if await portfolios.async_exists():
             raise exceptions.NotAcceptable(
                 {
-                    "detail": f"cannot have multiple position for {self.payload.ticker.ticker} in current options"
+                    "detail": _("cannot have multiple position for %(ticker)s in current options") % {"ticker": self.payload.ticker.ticker}
                 }
             )
 
@@ -171,7 +171,7 @@ class ActionValidator:
     def is_actioned(self):
         if self.order.status == self.payload.status:
             raise exceptions.NotAcceptable(
-                {"detail": f"order is already {self.order.status}"}
+                {"detail": _("order is already %(status)s") % {"status": self.order.status}}
             )
 
     def is_insufficient_funds(self):
@@ -182,7 +182,7 @@ class ActionValidator:
                 )
 
     def is_incorrect_status(self):
-        if not self.payload.status in ["placed", "cancel"]:
+        if self.payload.status not in ["placed", "cancel"]:
             raise exceptions.MethodNotAllowed(
                 {"detail": _("status should placed or cancel")}
             )
@@ -196,7 +196,7 @@ class ActionValidator:
 class ExecutorValidator(ActionValidator):
     def is_actioned(self):
         if self.order.status == self.payload.status:
-            raise Exception(f"order is already {self.order.status}")
+            raise Exception(_("order is already %(status)s") % {"status": self.order.status})
 
     def is_insufficient_funds(self):
         if not self.payload.status == "cancel":
@@ -208,7 +208,7 @@ class CancelExecutorValidator(ExecutorValidator):
     def is_on_pending(self):
         if self.order.status != "pending":
             raise Exception(
-                f"cannot cancel, for order with status {self.order.status}"
+                _("cannot cancel, for order with status %(status)s") % {"status": self.order.status}
             )
 
     def validate(self):
