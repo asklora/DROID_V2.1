@@ -448,6 +448,10 @@ def firebase_user_update(user_id=None, currency_code=None, update_firebase=True)
         position_data["expiry"]=position_data["expiry"].astype(str)
         if(len(position_data) > 0):
             universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "ticker_fullname", "schi_name", "tchi_name", "currency_code"]]
+            universe["ticker_name"] = np.where(universe["ticker_name"].isnull(), "NA", universe["ticker_name"])
+            universe["ticker_fullname"] = np.where(universe["ticker_fullname"].isnull(), universe["ticker_name"], universe["ticker_fullname"])
+            universe["tchi_name"] = np.where(universe["tchi_name"].isnull(), universe["ticker_name"], universe["tchi_name"])
+            universe["schi_name"] = np.where(universe["schi_name"].isnull(), universe["ticker_name"], universe["schi_name"])
             latest_price = get_price_data_firebase(position_data["ticker"].unique().tolist())
             latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})
             position_data = position_data.merge(latest_price, how="left", on=["ticker"])
