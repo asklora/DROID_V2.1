@@ -128,6 +128,13 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
     result = all_universe.merge(industry, on="industry_code", how="left")
     result = result.merge(currency, on="currency_code", how="left")
     result = result.merge(industry_group, on="industry_group_code", how="left")
+
+    result["ticker_name"] = np.where(result["ticker_name"].isnull(), "NA", result["ticker_name"])
+    result["ticker_fullname"] = np.where(result["ticker_fullname"].isnull(), result["ticker_name"], result["ticker_fullname"])
+    result["tchi_name"] = np.where(result["tchi_name"].isnull(), result["ticker_name"], result["tchi_name"])
+    result["schi_name"] = np.where(result["schi_name"].isnull(), result["ticker_name"], result["schi_name"])
+    result["company_description"] = np.where(result["company_description"].isnull(), "NA", result["company_description"])
+
     universe = result[["ticker"]]
 
     # 1. static info dict of {Companies Name, Industry, Currency, Description, Lot Size}
