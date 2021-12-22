@@ -279,7 +279,7 @@ def option_maker_classic_check_new_ticker(ticker=None, currency_code=None, time_
         if null_filler:
             fill_bot_backtest_classic(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=new_ticker, currency_code=currency_code, mod=mod)
         report = "OPTION MAKER CLASSIC CHECK NEW TICKER COMPLETED"
-        report_check(report, ticker=ticker, currency_code=currency_code)
+        report_check(report)
 
 
 def option_maker_daily_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False):
@@ -297,7 +297,7 @@ def option_maker_daily_classic(ticker=None, currency_code=None, time_to_exp=None
     if null_filler:
         fill_bot_backtest_classic(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, mod=mod)
     report = "OPTION MAKER CLASSIC DAILY COMPLETED"
-    report_check(report, ticker=ticker, currency_code=currency_code)
+    report_check(report)
 
 
 def option_maker_history_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False):
@@ -315,7 +315,7 @@ def option_maker_history_classic(ticker=None, currency_code=None, time_to_exp=No
     if null_filler:
         fill_bot_backtest_classic(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, mod=mod)
     report = "OPTION MAKER CLASSIC HISTORY COMPLETED"
-    report_check(report, ticker=ticker, currency_code=currency_code)
+    report_check(report)
 
 
 # ************************************************************************************************************************************************************************************
@@ -447,7 +447,7 @@ def bot_statistic_classic(ticker=None, currency_code=None, time_to_exp=None):
     time_to_exp = check_time_to_exp(time_to_exp)
     populate_classic_statistic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
     report = "BOT STATISTIC CLASSIC COMPLETED"
-    report_check(report, ticker=ticker, currency_code=currency_code)
+    report_check(report)
 
 
 def bot_statistic_ucdc(ticker=None, currency_code=None, time_to_exp=None):
