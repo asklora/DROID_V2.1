@@ -142,6 +142,7 @@ def authentication(client, user) -> Union[dict, None]:
 
 @pytest.fixture
 def tickers() -> List[NamedTuple]:
+    three_days_ago = timezone.now().date() - timedelta(days=3)
     yesterday = timezone.now().date() - timedelta(days=1)
     tickers = (
         LatestPrice.objects.prefetch_related(
@@ -151,7 +152,8 @@ def tickers() -> List[NamedTuple]:
             )
         )
         .filter(
-            intraday_date=yesterday,
+            intraday_date__gt=three_days_ago,
+            intraday_date__lte=yesterday,
             ticker__currency_code="HKD",
         )
         .exclude(latest_price=None)
