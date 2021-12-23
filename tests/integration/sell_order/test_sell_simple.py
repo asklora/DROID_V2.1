@@ -5,7 +5,12 @@ import pytest
 from core.orders.factory.orderfactory import OrderController, SellOrderProcessor
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.models import Accountbalance, User
-from tests.utils.order import MockGetterPrice, confirm_order, create_buy_order
+from tests.utils.order import (
+    FeatureManager,
+    MockGetterPrice,
+    confirm_order,
+    create_buy_order,
+)
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -16,7 +21,11 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_create_new_sell_order_for_user(user, tickers) -> None:
+def test_create_new_sell_order_for_user(
+    same_day_sell_feature,
+    tickers,
+    user,
+) -> None:
     """
     A new SELL order should be created from a buy order
     """
@@ -55,6 +64,10 @@ def test_create_new_sell_order_for_user(user, tickers) -> None:
     # We confirm if the position is set
     assert position is not None
 
+    # Before selling, we disable the same-day selling feature
+    feature_manager: FeatureManager = FeatureManager(same_day_sell_feature)
+    feature_manager.deactivate()
+
     # We create the sell order
     latest_price: float = buy_order.price + (buy_order.price * 0.25)
 
@@ -89,4 +102,7 @@ def test_create_new_sell_order_for_user(user, tickers) -> None:
     # We confirm that the selling is successfully finished
     # by checking the user balance
     user_balance = Accountbalance.objects.get(user=user).amount
+
+    feature_manager.activate()
+
     assert user_balance != previous_user_balance

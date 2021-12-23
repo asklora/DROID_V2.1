@@ -1,4 +1,3 @@
-import time
 from random import choice
 from typing import Union
 
@@ -14,6 +13,7 @@ from tests.utils.mocks import (
     mock_sell_validate,
 )
 from tests.utils.order import (
+    FeatureManager,
     confirm_order,
     confirm_order_api,
     get_position_performance,
@@ -179,6 +179,7 @@ def test_duplicated_pending_sell_order(
     authentication,
     client,
     mocker,
+    same_day_sell_feature,
     tickers,
     user,
 ) -> None:
@@ -210,6 +211,8 @@ def test_duplicated_pending_sell_order(
         **authentication,
     )
 
+    print(response.json())
+
     if (
         response.status_code != 201
         or response.headers["Content-Type"] != "application/json"
@@ -240,6 +243,10 @@ def test_duplicated_pending_sell_order(
     buy_position, _ = get_position_performance(buy_order)
     assert buy_position
 
+    # Before selling, we disable the same-day selling feature
+    feature_manager: FeatureManager = FeatureManager(same_day_sell_feature)
+    feature_manager.deactivate()
+
     # we create the sell order
     sell_order_data = {
         "side": "sell",
@@ -252,6 +259,8 @@ def test_duplicated_pending_sell_order(
         data=sell_order_data,
         **authentication,
     )
+
+    print(sell_response_1.json())
 
     if (
         sell_response_1.status_code != 201
@@ -273,10 +282,10 @@ def test_duplicated_pending_sell_order(
     assert sell_order.status == "pending"
 
     with pytest.raises(exceptions.NotAcceptable):
-        mock_buy_validator = mocker.patch(
-            "core.orders.factory.orderfactory.BuyValidator"
+        mock_sell_validator = mocker.patch(
+            "core.orders.factory.orderfactory.SellValidator"
         )
-        mock_buy_validator.validate = mock_sell_validate(
+        mock_sell_validator.validate = mock_sell_validate(
             user=user,
             ticker=ticker,
             position=buy_position,
@@ -295,6 +304,8 @@ def test_duplicated_pending_sell_order(
         if market_is_initially_open:
             market_manager.open()
 
+        feature_manager.activate()
+
         sell_order_2 = sell_response_2.json()
 
         assert sell_response_2.status_code != 201
@@ -307,8 +318,9 @@ def test_duplicated_pending_sell_order(
 def test_duplicated_filled_sell_order(
     authentication,
     client,
-    user,
+    same_day_sell_feature,
     tickers,
+    user,
 ) -> None:
     ticker, price = choice(tickers)
 
@@ -325,6 +337,7 @@ def test_duplicated_filled_sell_order(
         },
         **authentication,
     )
+    print(response.json())
 
     if (
         response.status_code != 201
@@ -344,6 +357,10 @@ def test_duplicated_filled_sell_order(
 
     position, _ = get_position_performance(buy_order)
     assert position
+
+    # Before selling, we disable the same-day selling feature
+    feature_manager: FeatureManager = FeatureManager(same_day_sell_feature)
+    feature_manager.deactivate()
 
     # we create the sell order
     sell_order_data = {
@@ -378,10 +395,11 @@ def test_duplicated_filled_sell_order(
         data=sell_order_data,
         **authentication,
     )
-
     print(sell_response_2.json())
 
     sell_order_2 = sell_response_2.json()
 
+    feature_manager.activate()
+
     assert sell_response_2.status_code != 201
-    assert sell_order_2["detail"] == "position, has been closed"
+    assert sell_order_2["detail"] == "Position has been closed"

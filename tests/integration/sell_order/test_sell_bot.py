@@ -3,7 +3,12 @@ from random import choice
 import pytest
 from core.orders.models import Order
 from core.user.models import Accountbalance, User
-from tests.utils.order import confirm_order, create_buy_order, create_sell_order
+from tests.utils.order import (
+    FeatureManager,
+    confirm_order,
+    create_buy_order,
+    create_sell_order,
+)
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -15,8 +20,9 @@ pytestmark = pytest.mark.django_db(
 
 
 def test_create_new_sell_order_for_user_with_classic_bot(
-    user,
+    same_day_sell_feature,
     tickers,
+    user,
 ) -> None:
     ticker, price = choice(tickers)
 
@@ -32,6 +38,10 @@ def test_create_new_sell_order_for_user_with_classic_bot(
 
     # we confirm the order
     confirm_order(buy_order)
+
+    # Before selling, we disable the same-day selling feature
+    feature_manager: FeatureManager = FeatureManager(same_day_sell_feature)
+    feature_manager.deactivate()
 
     # create sell order here
     sell_order = create_sell_order(buy_order)
@@ -49,12 +59,16 @@ def test_create_new_sell_order_for_user_with_classic_bot(
     # We confirm that the selling is successfully finished
     # by checking the user balance
     user_balance = Accountbalance.objects.get(user=user).amount
+
+    feature_manager.activate()
+
     assert user_balance != previous_user_balance
 
 
 def test_create_new_sell_order_for_user_with_uno_bot(
-    user,
+    same_day_sell_feature,
     tickers,
+    user,
 ) -> None:
     ticker, price = choice(tickers)
 
@@ -69,6 +83,10 @@ def test_create_new_sell_order_for_user_with_uno_bot(
     # we confirm the order
     confirm_order(buy_order)
 
+    # Before selling, we disable the same-day selling feature
+    feature_manager: FeatureManager = FeatureManager(same_day_sell_feature)
+    feature_manager.deactivate()
+
     # create sell order here
     sell_order = create_sell_order(buy_order)
 
@@ -84,12 +102,16 @@ def test_create_new_sell_order_for_user_with_uno_bot(
     # We confirm that the selling is successfully finished
     # by checking the user balance
     user_balance = Accountbalance.objects.get(user=user).amount
+
+    feature_manager.activate()
+
     assert user_balance != previous_user_balance
 
 
 def test_create_new_sell_order_for_user_with_ucdc_bot(
-    user,
+    same_day_sell_feature,
     tickers,
+    user,
 ) -> None:
     ticker, price = choice(tickers)
 
@@ -104,6 +126,10 @@ def test_create_new_sell_order_for_user_with_ucdc_bot(
     # we confirm the order
     confirm_order(buy_order)
 
+    # Before selling, we disable the same-day selling feature
+    feature_manager: FeatureManager = FeatureManager(same_day_sell_feature)
+    feature_manager.deactivate()
+
     # create sell order here
     sell_order = create_sell_order(buy_order)
 
@@ -119,4 +145,7 @@ def test_create_new_sell_order_for_user_with_ucdc_bot(
     # We confirm that the selling is successfully finished
     # by checking the user balance
     user_balance = Accountbalance.objects.get(user=user).amount
+
+    feature_manager.activate()
+
     assert user_balance != previous_user_balance

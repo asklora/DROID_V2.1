@@ -43,7 +43,7 @@ def test_api_create_order_with_insufficient_balance(
         assert False
 
     response_body = response.json()
-    assert response_body["detail"] == "insufficient funds"
+    assert response_body["detail"] == "Insufficient funds"
 
 
 def test_api_multiple_order_insufficient_balance(
@@ -133,4 +133,4 @@ def test_api_multiple_order_insufficient_balance(
         return None
 
     last_order_body = last_order.json()
-    assert last_order_body["detail"] == "insufficient funds"
+    assert last_order_body["detail"] == "Insufficient funds"

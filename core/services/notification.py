@@ -31,7 +31,7 @@ def send_bulk_notification(title: str, body: str):
     payload = {
 
         "type": "function",
-        "module": "core.djangomodule.crudlib.notification.send_notif",
+        "module": "core.djangomodule.crudlib.notification.send_notif_bulk",
         "payload": {
             "title": f"{title}",
             "body": f"{body}",
