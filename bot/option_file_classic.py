@@ -227,7 +227,6 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                 row["drawdown_return"] = min(prices_temp) / prices_temp[0] - 1
         except Exception as e:
             print("{} : === FILL OPTION CLASSIC ERROR === : {}".format(dateNow(), e))
-            report_to_slack("{} : === FILL OPTION CLASSIC ERROR === : {}".format(dateNow(), e))
         return row
 
     tqdm.pandas()
