@@ -6,6 +6,7 @@ from typing import List, NamedTuple, Union
 
 import pytest
 from django.conf import settings
+from django.db.models.query import Prefetch
 from django.test.client import Client
 from django.utils import timezone
 from django.utils.translation import activate
@@ -142,16 +143,16 @@ def authentication(client, user) -> Union[dict, None]:
 @pytest.fixture
 def tickers() -> List[NamedTuple]:
     yesterday = timezone.now().date() - timedelta(days=1)
-    hkd_active_tickers = [
-        ticker.ticker
-        for ticker in Universe.objects.filter(
-            currency_code="HKD", is_active=True
-        )
-    ]
     tickers = (
-        LatestPrice.objects.filter(
+        LatestPrice.objects.prefetch_related(
+            Prefetch(
+                "ticker",
+                queryset=Universe.objects.filter(is_active=True),
+            )
+        )
+        .filter(
             intraday_date=yesterday,
-            ticker__in=hkd_active_tickers,
+            ticker__currency_code="HKD",
         )
         .exclude(latest_price=None)
         .values_list(
