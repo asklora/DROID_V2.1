@@ -1,6 +1,8 @@
 from typing import Any
 
 from config.celery import app
+from core.universe.models import Universe
+from core.user.models import User
 from django.conf import settings
 from firebase_admin import firestore
 from general.slack import report_to_slack
@@ -15,6 +17,7 @@ from .checks import (
     AskloraCheck,
     FirebaseCheck,
     MarketCheck,
+    TestUsersCheck,
     TestProjectCheck,
 )
 
@@ -29,7 +32,7 @@ def run_healthcheck() -> None:
     tradinghours_token: str = (
         "1M1a35Qhk8gUbCsOSl6XRY2z3Qjj0of7y5ZEfE5MasUYm5b9YsoooA7RSxW7"
     )
-    firebase_database: Any = firestore.client()
+    firebase_app: Any = firestore.client()
     portfolio_collection: str = settings.FIREBASE_COLLECTION["portfolio"]
     universe_collection: str = settings.FIREBASE_COLLECTION["universe"]
     testproject_token: str = "okSRWQSYYFAr7LZvVkczgvyEpm5h1TkYWvSAEm-GAz41"
@@ -45,12 +48,12 @@ def run_healthcheck() -> None:
             ),
             # api checks
             ApiCheck(
-                name="droid staging",
-                url="https://dev-services.asklora.ai",
-            ),
-            ApiCheck(
                 name="droid production",
                 url="https://services.asklora.ai",
+            ),
+            ApiCheck(
+                name="droid staging",
+                url="https://dev-services.asklora.ai",
             ),
             # market check
             MarketCheck(
@@ -62,14 +65,21 @@ def run_healthcheck() -> None:
             ),
             # Firebase check
             FirebaseCheck(
-                database=firebase_database,
+                firebase_app=firebase_app,
+                model=User,
                 collection=portfolio_collection,
                 schema=FIREBASE_PORTFOLIO_SCHEMA,
             ),
             FirebaseCheck(
-                database=firebase_database,
+                firebase_app=firebase_app,
+                model=Universe,
                 collection=universe_collection,
                 schema=FIREBASE_UNIVERSE_SCHEMA,
+            ),
+            TestUsersCheck(
+                firebase_app=firebase_app,
+                model=User,
+                collection=portfolio_collection,
             ),
             # TestProject check
             TestProjectCheck(

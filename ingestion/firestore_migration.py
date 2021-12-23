@@ -28,8 +28,8 @@ from general.sql_query import (
     get_all_universe,
     get_all_user_core,
     get_bot_type, 
-    get_industry, 
-    get_industry_group, 
+    # get_industry,
+    # get_industry_group,
     get_latest_price_data,
     get_latest_ranking,
     get_orders_group_by_user_id,
@@ -45,6 +45,12 @@ from general.sql_query import (
     get_factor_calculation_formula,
     get_factor_current_used)
 from es_logging.logger import log2es
+from general.api_quant_request import (
+    get_industry,
+    get_industry_group,
+    get_ai_score_factor,
+    get_ai_score
+)
 
 def firebase_user_delete():
     user = get_user_core(conditions=["is_active=True", "is_superuser=False"])
@@ -117,11 +123,18 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
     all_universe = all_universe.loc[~all_universe["ticker"].isin([".NDX"])]
     
     currency = currency[["currency_code", "country"]]
-    industry = get_industry()
-    industry_group = get_industry_group()
+    industry = get_industry()               # from API
+    industry_group = get_industry_group()   # from API
     result = all_universe.merge(industry, on="industry_code", how="left")
     result = result.merge(currency, on="currency_code", how="left")
     result = result.merge(industry_group, on="industry_group_code", how="left")
+
+    result["ticker_name"] = np.where(result["ticker_name"].isnull(), "NA", result["ticker_name"])
+    result["ticker_fullname"] = np.where(result["ticker_fullname"].isnull(), result["ticker_name"], result["ticker_fullname"])
+    result["tchi_name"] = np.where(result["tchi_name"].isnull(), result["ticker_name"], result["tchi_name"])
+    result["schi_name"] = np.where(result["schi_name"].isnull(), result["ticker_name"], result["schi_name"])
+    result["company_description"] = np.where(result["company_description"].isnull(), "NA", result["company_description"])
+
     universe = result[["ticker"]]
 
     # 1. static info dict of {Companies Name, Industry, Currency, Description, Lot Size}
@@ -161,59 +174,9 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
 
     # 3. positive / negative factor -> factor = factor used in ai_score calculation
     rating = result[["ticker"]]
-    universe_rating = get_universe_rating_history(ticker=ticker, currency_code=currency_code)
-    universe_rating_detail = get_universe_rating_detail_history(ticker=ticker, currency_code=currency_code)
-    universe_rating_detail = universe_rating_detail.merge(universe_rating[["ticker", "dlp_1m", "wts_rating"]], how="left", on=["ticker"])
-
-    universe_rating_positive_negative = pd.DataFrame({"ticker":[], "positive_factor":[], "negative_factor":[]}, index=[])
-    name_map = factor_column_name_changes()
-
-    # factor currently used in ai_score calculation
-    factor_use = get_factor_current_used().transpose().to_dict(orient='list')
-    for cur, v in factor_use.items():   # work on different currency separately -> can use different factors
-        lst = [x for x in ','.join(v).split(',') if len(x) > 0]
-        lst = list(set(lst))
-        lst += [x + '_minmax_currency_code' for x in lst]
-
-        # select dataframe for given industry
-        curr_ticker = result.loc[result['currency_code']==cur,'ticker'].to_list()
-        curr_details = universe_rating_detail.loc[universe_rating_detail['ticker'].isin(curr_ticker)]
-
-        # unstack dataframe
-        cols = list(set(lst) & set(universe_rating_detail.columns.to_list()))
-        curr_details = curr_details.set_index(["ticker"])[cols].unstack().reset_index()
-        curr_details.columns = ["factor_name", "ticker", "score"]
-        curr_details["factor_name"] = curr_details["factor_name"].map(name_map)
-
-        # rules for positive / negative factors
-        curr_details['score'] = pd.to_numeric(curr_details['score'])
-        curr_details = curr_details.dropna(how='any')
-        curr_des = curr_details.groupby(['factor_name'])['score'].agg(['mean','std'])
-        curr_pos = (curr_des['mean'] + 0.4*curr_des['std']).to_dict()       # positive = factors > mean + 0.4std
-        curr_neg = (curr_des['mean'] - 0.4*curr_des['std']).to_dict()       # negative = factors < mean - 0.4std
-
-        for tick in curr_details['ticker'].unique():
-            positive_factor = []
-            negative_factor = []
-            temp = curr_details.loc[curr_details["ticker"] == tick]
-
-            positive = temp.loc[temp["score"] > temp["factor_name"].map(curr_pos)]
-            positive = positive.sort_values(by=["score"], ascending=False).head(5)
-            # if len(positive) == 0:
-            #     positive = temp.nlargest(1,'score')     # if no factor > mean + 0.4*std -> use highest score one as pos
-
-            negative = temp.loc[temp["score"] < temp["factor_name"].map(curr_neg)]
-            negative = negative.sort_values(by=["score"]).head(5)
-            # if len(negative) == 0:
-            #     positive = temp.nsmallest(1,'score')
-
-            for index, row in positive.iterrows():
-                positive_factor.append(row["factor_name"])      # positive/negative only first 5 factor
-            for index, row in negative.iterrows():
-                negative_factor.append(row["factor_name"])
-            positive_negative_result = pd.DataFrame({"ticker":[tick], "positive_factor":[positive_factor], "negative_factor":[negative_factor]}, index=[0])
-            universe_rating_positive_negative = universe_rating_positive_negative.append(positive_negative_result)
-
+    universe_rating = pd.DataFrame({'ai_score': get_ai_score(tickers=universe["ticker"].unique(), field='ai_score'),
+                             'ai_score2': get_ai_score(tickers=universe["ticker"].unique(), field='ai_score2')}).reset_index().rename(columns={"index": "ticker"})     # from API
+    universe_rating_positive_negative = pd.DataFrame(get_ai_score_factor(tickers=universe["ticker"].unique())).reset_index().rename(columns={"index": "ticker"})       # from API
     universe_rating = rating.merge(universe_rating, how="left", on=["ticker"])
     universe_rating = universe_rating.merge(universe_rating_positive_negative, how="left", on=["ticker"])
     universe_rating = change_date_to_str(universe_rating)
@@ -225,11 +188,19 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
     for tick in universe_rating["ticker"].unique():
         rating_data = universe_rating.loc[universe_rating["ticker"] == tick]
         rating_data["final_score"] = rating_data["ai_score"]
-        ai_score = rating_data["ai_score"].to_list()[0]
+        final_score = rating_data["final_score"].to_list()[0]
         ai_score2 = rating_data["ai_score2"].to_list()[0]
-        rating_data = rating_data[["final_score", "ai_score", "ai_score2", "fundamentals_quality", "fundamentals_value", "fundamentals_extra",
-        "dlp_1m", "dlp_3m", "wts_rating", "wts_rating2", "esg", "positive_factor", "negative_factor"]].to_dict("records")
-        rating = pd.DataFrame({"ticker":[tick], "rating":[rating_data[0]], "ai_score":[ai_score], "ai_score2":[ai_score2]}, index=[0])
+        ai_score = rating_data["ai_score"].to_list()[0]
+        positive_factor = str(rating_data["positive_factor"].to_list()[0]).replace("[\"", "").replace("\"]", "").replace("\", \"", ",").replace("null", "").replace("Null", "").replace("NA", "")
+        negative_factor = str(rating_data["negative_factor"].to_list()[0]).replace("[\"", "").replace("\"]", "").replace("\", \"", ",").replace("null", "").replace("Null", "").replace("NA", "")
+        rating_data = {
+            "final_score": final_score,
+            "ai_score": ai_score,
+            "ai_score2": ai_score2, 
+            "positive_factor": positive_factor.split(","),
+            "negative_factor": negative_factor.split(",")
+            }
+        rating = pd.DataFrame({"ticker":[tick], "rating":[rating_data], "ai_score":[ai_score], "ai_score2":[ai_score2]}, index=[0])
         rating_df = rating_df.append(rating)
     rating_df = rating_df.reset_index(inplace=False, drop=True)
     universe = universe.merge(rating_df, how="left", on=["ticker"])
@@ -238,17 +209,6 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
     universe = universe.drop(columns=["index", "ai_score", "ai_score2"])
     universe = universe.reset_index(inplace=False, drop=True)
     # print(universe)
-
-    # 3/4 testing: What tickers has no postive/negative tickers?
-    for cur in factor_use.keys():
-        curr_ticker = result.loc[result['currency_code'] == cur, 'ticker'].to_list()
-        df_cur = universe_rating.loc[universe_rating['ticker'].isin(list(curr_ticker))]
-        for i in ['positive_factor', 'negative_factor']:
-            df = df_cur.loc[df_cur[i].astype(str) == '[]']
-            if cur in ['USD', 'HKD']:
-                if(update_firebase):
-                    report_to_slack_factor("*{} : === [{}] without {}: {}/{} ===*".format(dateNow(), cur, i, len(df), len(df_cur)))
-                    report_to_slack_factor('```'+', '.join(["{0:<10}: {1:<5}".format(x,y) for x, y in df[['ticker', 'ai_score']].values])+'```')
 
     # 5. bot ranking & statistics
     ranking = result[["ticker"]]
@@ -302,6 +262,9 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
         ranking = ranking.append(rank)
     ranking = ranking.reset_index(inplace=False, drop=True)
     universe = universe.merge(ranking, how="left", on=["ticker"])
+    ranking_null = universe.loc[universe["ranking"].isnull()]
+    for index, row in ranking_null.iterrows():
+        universe.loc[index, ["ranking"]] = [[]]
     universe = universe.reset_index(inplace=False, drop=True)
     universe = change_date_to_str(universe)
     universe = universe.reset_index(inplace=False, drop=True)
@@ -484,6 +447,10 @@ def firebase_user_update(user_id=None, currency_code=None, update_firebase=True)
         position_data["expiry"]=position_data["expiry"].astype(str)
         if(len(position_data) > 0):
             universe = get_active_universe(ticker = position_data["ticker"].unique())[["ticker", "ticker_name", "ticker_fullname", "schi_name", "tchi_name", "currency_code"]]
+            universe["ticker_name"] = np.where(universe["ticker_name"].isnull(), "NA", universe["ticker_name"])
+            universe["ticker_fullname"] = np.where(universe["ticker_fullname"].isnull(), universe["ticker_name"], universe["ticker_fullname"])
+            universe["tchi_name"] = np.where(universe["tchi_name"].isnull(), universe["ticker_name"], universe["tchi_name"])
+            universe["schi_name"] = np.where(universe["schi_name"].isnull(), universe["ticker_name"], universe["schi_name"])
             latest_price = get_price_data_firebase(position_data["ticker"].unique().tolist())
             latest_price = latest_price.rename(columns={"last_date" : "trading_day", "latest_price" : "price"})
             position_data = position_data.merge(latest_price, how="left", on=["ticker"])
