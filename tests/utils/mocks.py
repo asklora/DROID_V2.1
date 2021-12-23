@@ -1,7 +1,7 @@
-from core.orders.factory.orderfactory import (
-    order_executor,
-)
-from core.orders.models import Order, OrderPosition
+from core.orders.factory.orderfactory import order_executor
+from core.orders.models import Feature, Order, OrderPosition
+from core.universe.models import Universe
+from core.user.models import User
 from rest_framework import exceptions
 
 
@@ -27,7 +27,9 @@ def mock_buy_validate(user, ticker, bot_id):
 
         if orders.exists():
             raise exceptions.NotAcceptable(
-                {"detail": f"you already has order for {ticker} in current options"}
+                {
+                    "detail": f"you already has order for {ticker} in current options"
+                }
             )
 
     def is_portfolio_exist():
@@ -48,7 +50,15 @@ def mock_buy_validate(user, ticker, bot_id):
     is_portfolio_exist()
 
 
-def mock_sell_validate(user, ticker, bot_id, position):
+def mock_sell_validate(
+    user: User,
+    ticker: Universe,
+    bot_id: str,
+    position: OrderPosition,
+    skip_same_day_sell=False,
+):
+    print("----sell validation is mocked----")
+
     def has_order():
         pending_order = Order.objects.filter(
             user_id=user,
@@ -63,17 +73,24 @@ def mock_sell_validate(user, ticker, bot_id, position):
                 f"sell order already exists for this position, order id : {order_id}, current status pending"
             )
 
+    def is_user_position():
+        if user.pk != position.user_id.pk:
+            raise exceptions.NotAcceptable(
+                f"{position.position_uid} credentials error"
+            )
+
     def is_position_exists(position) -> OrderPosition:
         print(f">>>{position}<<<")
         try:
             position = OrderPosition.objects.select_related(
                 "user_id",
                 "ticker",
-            ).get(pk=position)
+            ).get(position_uid=position.position_uid)
         except OrderPosition.DoesNotExist:
             raise exceptions.NotFound({"detail": "position not found error"})
 
         return position
 
     has_order()
+    is_user_position()
     is_position_exists(position)

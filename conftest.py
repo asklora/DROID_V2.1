@@ -1,18 +1,22 @@
-from datetime import timedelta
 import random
 import socket
+from datetime import timedelta
 from random import choice
 from typing import List, NamedTuple, Union
 
 import pytest
 from django.conf import settings
 from django.test.client import Client
+from django.utils import timezone
 from django.utils.translation import activate
 from dotenv import load_dotenv
 from environs import Env
 from firebase_admin import firestore
 
 from core.djangomodule.network.cloud import DroidDb
+from core.master.models import LatestPrice
+from core.orders.models import Feature
+from core.universe.models import Universe
 from core.user.models import (
     Accountbalance,
     TransactionHistory,
@@ -79,7 +83,7 @@ def user(django_db_setup, django_db_blocker):
             password="everything_is_but_a_test",
             is_active=True,
             current_status="verified",
-            # is_test=True
+            is_test=True,
         )
         user_balance = Accountbalance.objects.create(
             user=user,
@@ -138,10 +142,16 @@ def authentication(client, user) -> Union[dict, None]:
 @pytest.fixture
 def tickers() -> List[NamedTuple]:
     yesterday = timezone.now().date() - timedelta(days=1)
+    hkd_active_tickers = [
+        ticker.ticker
+        for ticker in Universe.objects.filter(
+            currency_code="HKD", is_active=True
+        )
+    ]
     tickers = (
         LatestPrice.objects.filter(
             intraday_date=yesterday,
-            ticker__currency_code="HKD",
+            ticker__in=hkd_active_tickers,
         )
         .exclude(latest_price=None)
         .values_list(
@@ -152,8 +162,9 @@ def tickers() -> List[NamedTuple]:
     )
 
     tickers_list = list(tickers)
+    length = 5 if len(tickers_list) > 5 else len(tickers_list)
 
-    return random.sample(tickers_list, 5)
+    return random.sample(tickers_list, length)
 
 
 @pytest.fixture
@@ -188,3 +199,14 @@ def order(authentication, client, user, tickers) -> Union[dict, None]:
 @pytest.fixture(scope="function")
 def use_chinese():
     activate("zh-hant")
+
+
+@pytest.fixture(scope="function")
+def same_day_sell_feature():
+    feature = Feature.objects.get(name="prevent_instant_sell")
+
+    yield feature
+
+    if not feature.active:
+        feature.active = True
+        feature.save()

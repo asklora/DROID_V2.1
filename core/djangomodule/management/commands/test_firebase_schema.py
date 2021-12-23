@@ -8,7 +8,6 @@ from tests.utils.firebase_schema import (
     FIREBASE_PORTFOLIO_SCHEMA,
     FIREBASE_RANKING_SCHEMA,
     FIREBASE_UNIVERSE_SCHEMA,
-    FIREBASE_UNIVERSE_SCHEMA_DEVELOPMENT,
 )
 from tests.utils.print import print_divider
 
@@ -214,7 +213,7 @@ class Command(BaseCommand):
         for ticker in tickers:
             tickers_num += 1
             try:
-                FIREBASE_UNIVERSE_SCHEMA_DEVELOPMENT.validate(ticker.to_dict())
+                FIREBASE_UNIVERSE_SCHEMA.validate(ticker.to_dict())
             except:
                 tickers_fails.append(ticker.to_dict()["ticker"])
 
@@ -244,7 +243,7 @@ class Command(BaseCommand):
             for ticker in tickers:
                 staging_tickers_num += 1
                 try:
-                    FIREBASE_UNIVERSE_SCHEMA_DEVELOPMENT.validate(ticker.to_dict())
+                    FIREBASE_UNIVERSE_SCHEMA.validate(ticker.to_dict())
                 except:
                     staging_tickers_fails.append(ticker.to_dict()["ticker"])
 
