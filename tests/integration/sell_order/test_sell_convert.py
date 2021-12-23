@@ -2,14 +2,12 @@ import math
 
 import pytest
 from core.djangomodule.general import jsonprint
-from core.orders.factory.orderfactory import (
-    OrderController,
-    SellOrderProcessor,
-)
+from core.orders.factory.orderfactory import OrderController, SellOrderProcessor
 from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.user.convert import ConvertMoney
 from core.user.models import Accountbalance
 from tests.utils.order import (
+    FeatureManager,
     confirm_order,
     create_buy_order,
     get_position_performance,
@@ -24,7 +22,7 @@ pytestmark = pytest.mark.django_db(
 )
 
 
-def test_sell_order_with_conversion(user):
+def test_sell_order_with_conversion(same_day_sell_feature, user):
     ticker: str = "EA.O"
     price: float = 128.41
     amount: float = 10000
@@ -69,6 +67,10 @@ def test_sell_order_with_conversion(user):
     print(f"position bot balance: {position.bot_cash_balance}")
     print(f"position amount: {position.investment_amount}")
 
+    # Before selling, we disable the same-day selling feature
+    feature_manager: FeatureManager = FeatureManager(same_day_sell_feature)
+    feature_manager.deactivate()
+
     # We create the sell order
     buy_position, _ = get_position_performance(order)
 
@@ -103,7 +105,9 @@ def test_sell_order_with_conversion(user):
     assert round(
         abs(
             confirmed_sell_order.setup["performance"]["last_live_price"]
-            * confirmed_sell_order.setup["performance"]["order_summary"]["hedge_shares"]
+            * confirmed_sell_order.setup["performance"]["order_summary"][
+                "hedge_shares"
+            ]
         )
     ) == round(confirmed_sell_order.amount)
 
@@ -117,4 +121,7 @@ def test_sell_order_with_conversion(user):
     user_balance_3 = math.floor(wallet.amount)
     user_balance_5 = math.floor(user_balance_4 + hkd_conversion_result)
     print(user_balance_5)
+
+    feature_manager.activate()
+
     assert user_balance_5 == user_balance_3

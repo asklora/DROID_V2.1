@@ -63,16 +63,17 @@ def test_order_should_be_updated_to_firebase(
     assert len(active_portfolios) == 1
 
     # whether the order data is correct
+    last_portfolio: dict = active_portfolios[len(active_portfolios) - 1]
     assert (
-        active_portfolios[len(active_portfolios) - 1]["order_uid"].replace(
+        last_portfolio["order_uid"].replace(
             "-",
             "",
         )
         == order.order_uid
     )
-    assert active_portfolios[len(active_portfolios) - 1]["share_num"] == order.qty
+    assert last_portfolio["share_num"] == order.qty
 
     # time.sleep(600)
 
-    # whether the user's rank changes
-    assert doc_dict["rank"] is not None
+    # test user should have no ranking
+    assert doc_dict["rank"] is None

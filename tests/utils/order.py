@@ -1,41 +1,20 @@
+from dataclasses import dataclass
 from datetime import datetime
-from random import choice
 from typing import Tuple, Union
 
-from core.master.models import LatestPrice
 from core.orders.factory.orderfactory import (
     OrderController,
     SellOrderProcessor,
 )
-from core.orders.models import Order, OrderPosition, PositionPerformance
-from core.universe.models import Universe
+from core.orders.models import (
+    Feature,
+    Order,
+    OrderPosition,
+    PositionPerformance,
+)
 from core.user.models import User
 from django.test.client import Client
 from django.utils import timezone
-
-
-def get_random_ticker_and_price(currency: str = "HKD") -> Tuple[str, float]:
-    # We get the tickers
-    tickers = (
-        Universe.objects.filter(
-            currency_code=currency,
-            is_active=True,
-        )
-        .exclude(ticker__in=["1638.HK", "9959.HK"])
-        .values_list("ticker", flat=True)
-    )
-
-    # We turn them into list of tickers
-    tickers_list = [str(elem) for elem in list(tickers)]
-
-    # we return a random ticker
-    ticker = choice(tickers_list)
-
-    # we get latest price here
-    price = LatestPrice.objects.get(ticker=ticker)
-    latest_price = price.latest_price
-
-    return ticker, latest_price
 
 
 def get_position_performance(
@@ -51,7 +30,7 @@ def get_position_performance(
         )
 
         return position, performance
-    except:
+    except PositionPerformance.DoesNotExist:
         return None, None
 
 
@@ -153,3 +132,29 @@ class MockGetterPrice:
 
     def get_price(self, tickers) -> float:
         return self.price
+
+
+@dataclass
+class FeatureManager:
+    feature: Feature
+
+    def __post_init__(self):
+        print(
+            f"{self.feature.name} feature is active"
+            if self.feature.active
+            else f"{self.feature.name} feature is NOT active"
+        )
+
+    @property
+    def is_active(self) -> bool:
+        return self.feature.active
+
+    def activate(self):
+        print(f"Activating {self.feature.name} feature")
+        self.feature.active = True
+        self.feature.save()
+
+    def deactivate(self):
+        print(f"Deactivating {self.feature.name} feature")
+        self.feature.active = False
+        self.feature.save()

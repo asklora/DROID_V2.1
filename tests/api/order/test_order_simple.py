@@ -2,7 +2,11 @@ from random import choice
 
 import pytest
 from core.orders.models import Order
-from tests.utils.order import confirm_order, get_position_performance
+from tests.utils.order import (
+    FeatureManager,
+    confirm_order,
+    get_position_performance,
+)
 
 pytestmark = pytest.mark.django_db(
     databases=[
@@ -56,8 +60,9 @@ def test_api_create_buy_order(
 def test_api_create_sell_order(
     authentication,
     client,
-    user,
+    same_day_sell_feature,
     tickers,
+    user,
 ) -> None:
     ticker, price = choice(tickers)
 
@@ -98,6 +103,10 @@ def test_api_create_sell_order(
     position, _ = get_position_performance(buy_order)
     assert position
 
+    # Before selling, we disable the same-day selling feature
+    feature_manager: FeatureManager = FeatureManager(same_day_sell_feature)
+    feature_manager.deactivate()
+
     # we create the sell order
     sell_response = client.post(
         path="/api/order/create/",
@@ -117,5 +126,8 @@ def test_api_create_sell_order(
         assert False
 
     sell_order = sell_response.json()
+
+    feature_manager.activate()
+
     assert sell_order is not None
     assert sell_order["order_uid"] is not None
