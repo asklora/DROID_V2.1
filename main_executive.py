@@ -112,6 +112,8 @@ def daily_uno_ucdc(ticker=None, currency_code=None, time_to_exp=time_to_expiry, 
 
 # follow currency schedule
 def daily_classic(ticker=None, currency_code=None, time_to_exp=time_to_expiry, mod=False, option_maker=True, null_filler=True):
+    if(type(ticker) == type(None) and type(currency_code) == type(None)):
+        ticker = get_active_universe()["ticker"].tolist()
     option_maker_classic_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
     option_maker_daily_classic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler)
     bot_ranking_check_new_ticker()
@@ -277,7 +279,7 @@ def option_maker_classic_check_new_ticker(ticker=None, currency_code=None, time_
         if null_filler:
             fill_bot_backtest_classic(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=new_ticker, currency_code=currency_code, mod=mod)
         report = "OPTION MAKER CLASSIC CHECK NEW TICKER COMPLETED"
-        report_check(report, ticker=ticker, currency_code=currency_code)
+        report_check(report)
 
 
 def option_maker_daily_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False):
@@ -295,7 +297,7 @@ def option_maker_daily_classic(ticker=None, currency_code=None, time_to_exp=None
     if null_filler:
         fill_bot_backtest_classic(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, mod=mod)
     report = "OPTION MAKER CLASSIC DAILY COMPLETED"
-    report_check(report, ticker=ticker, currency_code=currency_code)
+    report_check(report)
 
 
 def option_maker_history_classic(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False):
@@ -313,7 +315,7 @@ def option_maker_history_classic(ticker=None, currency_code=None, time_to_exp=No
     if null_filler:
         fill_bot_backtest_classic(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, mod=mod)
     report = "OPTION MAKER CLASSIC HISTORY COMPLETED"
-    report_check(report, ticker=ticker, currency_code=currency_code)
+    report_check(report)
 
 
 # ************************************************************************************************************************************************************************************
@@ -445,7 +447,7 @@ def bot_statistic_classic(ticker=None, currency_code=None, time_to_exp=None):
     time_to_exp = check_time_to_exp(time_to_exp)
     populate_classic_statistic(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp)
     report = "BOT STATISTIC CLASSIC COMPLETED"
-    report_check(report, ticker=ticker, currency_code=currency_code)
+    report_check(report)
 
 
 def bot_statistic_ucdc(ticker=None, currency_code=None, time_to_exp=None):

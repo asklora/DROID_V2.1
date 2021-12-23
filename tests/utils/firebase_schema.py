@@ -157,17 +157,9 @@ FIREBASE_UNIVERSE_SCHEMA = Schema(
         "rating": {
             "ai_score": Or(float, int),
             "ai_score2": Or(float, int),
-            "dlp_1m": Or(float, int),
-            "dlp_3m": Or(float, int),
-            "esg": Or(float, int),
             "final_score": Or(float, int),
-            "fundamentals_extra": Or(float, int),
-            "fundamentals_quality": Or(float, int),
-            "fundamentals_value": Or(float, int),
             "negative_factor": Or([str], []),
             "positive_factor": Or([str], []),
-            "wts_rating": Or(float, int),
-            "wts_rating2": Or(float, int),
         },
         "ticker": str,
     }

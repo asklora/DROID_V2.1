@@ -7,9 +7,10 @@ from typing import Any, List, Union
 import requests
 from celery.result import AsyncResult
 from config.celery import app
+from core.orders.models import Order, OrderPosition, PositionPerformance
 from core.services.order_services import pending_order_checker
 from core.universe.models import ExchangeMarket
-from core.user.models import User
+from core.user.models import Accountbalance, TransactionHistory
 from django.utils.timezone import now
 from schema import Schema, SchemaError
 
@@ -37,19 +38,44 @@ class ApiCheck(Check):
 
 @dataclass
 class FirebaseCheck(Check):
-    database: Any
+    firebase_app: Any
+    model: Any
     collection: str
     schema: Schema
     failed_checks: List[str] = field(default_factory=list)
 
     def get_documents(self) -> List[dict]:
-        collections = self.database.collection(self.collection).stream()
+        collections = self.firebase_app.collection(self.collection).stream()
         documents: List[dict] = []
         for document in collections:
             document_data: dict = document.to_dict()
             document_data["firebase_id"] = document.id
             documents.append(document_data)
         return documents
+
+    def log_error(self, error: SchemaError, item: dict) -> None:
+        item_id: Union[str, None] = item.get("firebase_id", None)
+        error_data: dict = {
+            "id": item_id,
+            "error": error,
+        }
+        logging.warning(
+            f"document {item_id} in {self.collection} has scheme mismatch",
+        )
+        print(str(error))
+        self.error += str(error_data)
+
+    def check_database(self, item: dict):
+        """
+        Check if the item is not in the database
+        and delete it from firebase
+        """
+        item_id: Union[str, None] = item.get("firebase_id", None)
+        if not self.model.objects.filter(pk=item_id).exists():
+            logging.warning(f"{item_id} does not exist in the database")
+            self.firebase_app.collection(self.collection).document(
+                item_id,
+            ).delete()
 
     def __post_init__(self):
         total: int = 0
@@ -65,14 +91,9 @@ class FirebaseCheck(Check):
                 success += 1
             except SchemaError as e:
                 failed += 1
-                error: dict = {
-                    "id": doc.get("firebase_id"),
-                    "error": e,
-                }
-                logging.warning(f"{self.collection} scheme mismatch")
-                print(error)
-                self.error += str(error)
                 self.failed_checks.append(str(doc.get("firebase_id")))
+                self.log_error(error=e, item=doc)
+                self.check_database(item=doc)
 
         self.data = f"{total} checked, {success} success and {failed} failed"
 
@@ -91,11 +112,115 @@ class FirebaseCheck(Check):
 
 
 @dataclass
+class TestUsersCheck(Check):
+    firebase_app: Any
+    model: Any
+    collection: str
+    firebase_test_users: List[str] = field(default_factory=list)
+    database_test_users: List[str] = field(default_factory=list)
+
+    def get_firebase_ref(self) -> Any:
+        return (
+            self.firebase_app.collection(self.collection)
+            .where("profile.first_name", "==", "Test")
+            .stream()
+        )
+
+    def get_database_objects(self) -> Any:
+        return self.model.objects.filter(
+            first_name="Test",
+            email__iendswith="@tests.com",
+        )
+
+    def list_firebase_test_users(self) -> None:
+        collections = self.get_firebase_ref()
+        users: List[str] = []
+        for document in collections:
+            users.append(document.id)
+        self.firebase_test_users = users
+
+    def list_database_test_users(self) -> None:
+        users = [str(user.pk) for user in self.get_database_objects()]
+        self.database_test_users = users
+
+    def delete_firebase_test_users(self) -> None:
+        batch = self.firebase_app.batch()
+        collections = self.get_firebase_ref()
+
+        for document in collections:
+            batch.delete(document.reference)
+
+        batch.commit()
+
+    def delete_database_test_users(self) -> None:
+        users: List[Any] = self.get_database_objects()
+
+        for user in users:
+            PositionPerformance.objects.filter(
+                position_uid__user_id=user
+            ).delete()
+            Order.objects.filter(user_id=user).delete()
+            OrderPosition.objects.filter(user_id=user).delete()
+            TransactionHistory.objects.filter(balance_uid__user=user).delete()
+            Accountbalance.objects.filter(user=user).delete()
+            user.delete()
+
+    def __post_init__(self):
+        self.list_firebase_test_users()
+        self.list_database_test_users()
+
+        print(
+            f"firebase test users' IDs: {', '.join(self.firebase_test_users)}"
+        )
+        print(
+            f"database test users' IDs: {', '.join(self.database_test_users)}"
+        )
+
+        if self.firebase_test_users:
+            self.delete_firebase_test_users()
+
+        if self.database_test_users:
+            self.delete_database_test_users()
+
+    def get_result(self) -> str:
+        deleted: bool = (
+            # there were test users in firebase
+            len(self.firebase_test_users) > 0
+            # or in database
+            or len(self.database_test_users) > 0
+        )
+
+        firebase_test_users_num: int = len(self.firebase_test_users)
+        database_test_users_num: int = len(self.database_test_users)
+
+        firebase_num: str = (
+            f"*{firebase_test_users_num}*"
+            if firebase_test_users_num > 0
+            else str(firebase_test_users_num)
+        )
+        database_num: str = (
+            f"*{database_test_users_num}*"
+            if database_test_users_num > 0
+            else str(database_test_users_num)
+        )
+
+        result: str = (
+            "\n- "
+            + f"There {'were ' if deleted else 'are '}"
+            + firebase_num
+            + " test users in Firebase, and "
+            + database_num
+            + " test users in the database"
+            + f"{' (now deleted)' if deleted else ''}"
+        )
+
+        return result
+
+
+@dataclass
 class MarketCheck(Check):
-    """
-    Since it involves calling an API, I decided it's better to run the check
-    for all markets at once, to minimize API calls.
-    """
+    # Since it involves calling an API, I decided it's better to run the check
+    # for all markets at once, to minimize API calls.
 
     tradinghours_token: str
     markets: List[Market] = field(default_factory=list)
@@ -254,9 +379,9 @@ class AskloraCheck(Check):
 
             if {"date", "api_status", "users_num"} <= set(self.data):
                 today_date: str = str(now().date())
-                droid_users: int = len(User.objects.all())
+                # droid_users: int = len(User.objects.all())
 
-                date, api_status, users_nums = self.data.values()
+                date, api_status, _ = self.data.values()
 
                 date_match: str = (
                     "in sync for both endpoints"
@@ -264,18 +389,18 @@ class AskloraCheck(Check):
                     else "*out of sync* :warning:"
                 )
 
-                users_match: str = (
-                    "in sync "
-                    if droid_users == int(users_nums)
-                    else "*out of sync* :warning: "
-                )
-                users_match += (
-                    f"(there are {users_nums} users in asklora database "
-                    f"and {droid_users} users in droid database)"
-                )
+                # users_match: str = (
+                #     "in sync "
+                #     if droid_users == int(users_nums)
+                #     else "*out of sync* :warning: "
+                # )
+                # users_match += (
+                #     f"(there are {users_nums} users in asklora database "
+                #     f"and {droid_users} users in droid database)"
+                # )
 
                 result += f"\n- timezones are {date_match}"
-                result += f"\n- Users data in the db is {users_match}"
+                # result += f"\n- Users data in the db is {users_match}"
 
                 for key, value in api_status.items():
                     status: str = value if "up" else f"*{value}*"

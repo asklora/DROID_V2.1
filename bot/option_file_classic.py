@@ -1,3 +1,4 @@
+from general.slack import report_to_slack
 import numpy as np
 np.seterr(divide='ignore', invalid='ignore')
 import pandas as pd
@@ -157,73 +158,75 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
     prices_df = prices_df.ffill()
     prices_df = prices_df.bfill()
     def SLTP_fn(row):
-        # Calculate the desired quantities row by row.
-        prices_temp = prices_df.loc[(prices_df.index >= row.spot_date) & (prices_df.index <= row.expiry_date), row.ticker]
-        if len(prices_temp) == 0:
-            return row
-        # Finding the index that take profit is triggered.
-        tp_indices = np.argmax((prices_temp >= row.take_profit).values)
-        if tp_indices == 0:
-            tp_indices = -1
-        # Finding the index that stop loss is triggered.
-        sl_indices = np.argmax((prices_temp <= row.stop_loss).values)
-        if sl_indices == 0:
-            sl_indices = -1
-        days = int(round((row.time_to_exp * 365), 0))
-        temp_date = row.spot_date + relativedelta(days=days)
-        if temp_date.weekday() > 4:
-            temp_date = temp_date - BDay(1)
+        try:
+            # Calculate the desired quantities row by row.
+            prices_temp = prices_df.loc[(prices_df.index >= row.spot_date) & (prices_df.index <= row.expiry_date), row.ticker]
+            if len(prices_temp) == 0:
+                return row
+            # Finding the index that take profit is triggered.
+            tp_indices = np.argmax((prices_temp >= row.take_profit).values)
+            if tp_indices == 0:
+                tp_indices = -1
+            # Finding the index that stop loss is triggered.
+            sl_indices = np.argmax((prices_temp <= row.stop_loss).values)
+            if sl_indices == 0:
+                sl_indices = -1
+            days = int(round((row.time_to_exp * 365), 0))
+            temp_date = row.spot_date + relativedelta(days=days)
+            if temp_date.weekday() > 4:
+                temp_date = temp_date - BDay(1)
 
-        if (sl_indices == -1) & (tp_indices == -1):
-            # If none of the events are triggered.
-            if (prices_temp.index[-1] < temp_date) & (temp_date > str_to_date(dateNow()) - BDay(1)):
+            if (sl_indices == -1) & (tp_indices == -1):
+                # If none of the events are triggered.
+                if (prices_temp.index[-1] < temp_date) & (temp_date > str_to_date(dateNow()) - BDay(1)):
+                    # If the expiry date hasn"t arrived yet.
+                    row.event = None
+                    row["bot_return"] = None
+                    row.event_date = None
+                    row.event_price = None
+                else:
+                    # If none of the events are triggered and expiry date has arrived.
+                    row.event = "NT"
+                    row["bot_return"] = prices_temp[-1] / prices_temp[0] - 1
+                    row.event_date = prices_temp.index[-1]
+                    row.event_price = prices_temp[-1]
+                    row.expiry_price = prices_temp[-1]
+                    row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
+                    row.pnl = prices_temp[-1] - prices_temp[0]
+                    row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
+            else:
+                # If one of the events is triggered.
+                if sl_indices > tp_indices:
+                    # If stop loss is triggered.
+                    row.event = "SL"
+                    row["bot_return"] = prices_temp[sl_indices] / prices_temp[0] - 1
+                    row.event_date = prices_temp.index[sl_indices]
+                    row.event_price = prices_temp[sl_indices]
+                    row.expiry_price = prices_temp[-1]
+                    row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
+                    row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
+                    row.pnl = prices_temp[sl_indices] - prices_temp[0]
+
+                else:
+                    # If take profit is triggered.
+                    row.event = "TP"
+                    row["bot_return"] = prices_temp[tp_indices] / prices_temp[0] - 1
+                    row.event_date = prices_temp.index[tp_indices]
+                    row.event_price = prices_temp[tp_indices]
+                    row.expiry_price = prices_temp[-1]
+                    row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
+                    row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
+                    row.pnl = prices_temp[tp_indices] - prices_temp[0]
+
+
+            if prices_temp.index[-1] < temp_date:
                 # If the expiry date hasn"t arrived yet.
-                row.event = None
-                row["bot_return"] = None
-                row.event_date = None
-                row.event_price = None
+                row["drawdown_return"] = None
             else:
-                # If none of the events are triggered and expiry date has arrived.
-                row.event = "NT"
-                row["bot_return"] = prices_temp[-1] / prices_temp[0] - 1
-                row.event_date = prices_temp.index[-1]
-                row.event_price = prices_temp[-1]
-                row.expiry_price = prices_temp[-1]
-                row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
-                row.pnl = prices_temp[-1] - prices_temp[0]
-                row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
-        else:
-            # If one of the events is triggered.
-            if sl_indices > tp_indices:
-                # If stop loss is triggered.
-                row.event = "SL"
-                row["bot_return"] = prices_temp[sl_indices] / prices_temp[0] - 1
-                row.event_date = prices_temp.index[sl_indices]
-                row.event_price = prices_temp[sl_indices]
-                row.expiry_price = prices_temp[-1]
-                row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
-                row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
-                row.pnl = prices_temp[sl_indices] - prices_temp[0]
-
-            else:
-                # If take profit is triggered.
-                row.event = "TP"
-                row["bot_return"] = prices_temp[tp_indices] / prices_temp[0] - 1
-                row.event_date = prices_temp.index[tp_indices]
-                row.event_price = prices_temp[tp_indices]
-                row.expiry_price = prices_temp[-1]
-                row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
-                row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
-                row.pnl = prices_temp[tp_indices] - prices_temp[0]
-
-
-        if prices_temp.index[-1] < temp_date:
-            # If the expiry date hasn"t arrived yet.
-            row["drawdown_return"] = None
-        else:
-            # If the expiry date is arrived.
-            row["drawdown_return"] = min(prices_temp) / prices_temp[0] - 1
-
+                # If the expiry date is arrived.
+                row["drawdown_return"] = min(prices_temp) / prices_temp[0] - 1
+        except Exception as e:
+            print("{} : === FILL OPTION CLASSIC ERROR === : {}".format(dateNow(), e))
         return row
 
     tqdm.pandas()
