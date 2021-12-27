@@ -42,16 +42,19 @@ def run_healthcheck() -> None:
         checks=[
             # Celery and Asklora check
             AskloraCheck(
+                check_key="asklora_check",
                 module="core.djangomodule.crudlib.healthcheck.check_asklora",
                 payload=None,
                 queue=settings.ASKLORA_QUEUE,
             ),
             # api checks
             ApiCheck(
+                check_key="api_check_production",
                 name="droid production",
                 url="https://services.asklora.ai",
             ),
             ApiCheck(
+                check_key="api_check_staging",
                 name="droid staging",
                 url="https://dev-services.asklora.ai",
             ),
@@ -90,5 +93,8 @@ def run_healthcheck() -> None:
         ]
     )
 
-    result: str = healthcheck.execute()
-    send_report(result)
+    _, failure = healthcheck.execute()
+    result = healthcheck.get_result()
+
+    if failure:
+        send_report(result)

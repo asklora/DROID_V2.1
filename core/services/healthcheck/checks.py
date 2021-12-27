@@ -19,25 +19,31 @@ from .base import Check, Market
 
 @dataclass
 class ApiCheck(Check):
+    check_key: str
     name: str
     url: str
 
-    def __post_init__(self):
+    def execute(self) -> bool:
         try:
             response = requests.head(self.url)
-            if response.status_code == 200:
-                self.data = "up"
-            else:
-                self.data = "*down* :warning:"
+            self.result["status"] = response.status_code == 200
         except Exception as e:
             self.error = str(e)
+            self.result["status"] = False
+
+        return self.result.get("status", False)
 
     def get_result(self) -> str:
-        return f"\n- {self.name} API is {self.data}"
+        status: str = "up" if self.result.get("status") else "*down* :warning:"
+        return f"\n- {self.name} API is {status}"
+
+    def get_result_as_dict(self) -> dict:
+        return {"status": self.result.get("status")}
 
 
 @dataclass
 class FirebaseCheck(Check):
+    check_key: str
     firebase_app: Any
     model: Any
     collection: str
@@ -77,7 +83,7 @@ class FirebaseCheck(Check):
                 item_id,
             ).delete()
 
-    def __post_init__(self):
+    def execute(self) -> bool:
         total: int = 0
         success: int = 0
         failed: int = 0
@@ -95,7 +101,11 @@ class FirebaseCheck(Check):
                 self.log_error(error=e, item=doc)
                 self.check_database(item=doc)
 
-        self.data = f"{total} checked, {success} success and {failed} failed"
+        self.resultstr = (
+            f"{total} checked, {success} success and {failed} failed"
+        )
+
+        return True if failed == 0 else False
 
     def get_result(self) -> str:
         status: str = ""
@@ -110,9 +120,13 @@ class FirebaseCheck(Check):
 
         return result
 
+    def get_result_as_dict(self) -> dict:
+        return {""}
+
 
 @dataclass
 class TestUsersCheck(Check):
+    check_key: str
     firebase_app: Any
     model: Any
     collection: str
@@ -219,6 +233,7 @@ class TestUsersCheck(Check):
 
 @dataclass
 class MarketCheck(Check):
+    check_key: str
     # Since it involves calling an API, I decided it's better to run the check
     # for all markets at once, to minimize API calls.
 
@@ -303,6 +318,7 @@ class MarketCheck(Check):
 
 @dataclass
 class TestProjectCheck(Check):
+    check_key: str
     api_key: str
     project_id: str
     job_id: str
@@ -341,6 +357,7 @@ class TestProjectCheck(Check):
 
 @dataclass
 class AskloraCheck(Check):
+    check_key: str
     module: str
     payload: Union[dict, None]
     queue: str
