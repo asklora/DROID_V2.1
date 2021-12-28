@@ -1,12 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Protocol, Union
 
 from django.utils import timezone
 
 
 # Base check class
-class Check(ABC):
+class Check(Protocol):
     check_key: str
     data: Any
     error: str
@@ -15,15 +15,15 @@ class Check(ABC):
 
     @abstractmethod
     def execute(self) -> bool:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
-    def get_result(self) -> str:
-        pass
+    def get_result(self) -> dict:
+        raise NotImplementedError
 
     @abstractmethod
-    def get_result_as_dict(self) -> dict:
-        pass
+    def __str__(self) -> str:
+        raise NotImplementedError
 
 
 @dataclass
@@ -34,38 +34,40 @@ class Market:
 
 
 # Main healthcheck class
+# It is also a Check class, meaning every Check class can be run
+# individually or in unison using this one
 @dataclass
-class HealthCheck:
+class HealthCheck(Check):
     checks: List[Check] = field(default_factory=list)
 
     def _get_timestamp(self) -> str:
         return timezone.now().strftime("%A, %d %B %Y")
 
-    def execute(self) -> Tuple[List, List]:
+    def execute(self) -> bool:
         failure: List = []
-        success: List = []
 
         for check in self.checks:
-            if check.execute():
-                success.append(check.check_key)
-            else:
+            if not check.execute():
                 failure.append(check.check_key)
 
-        return success, failure
+        return True if not failure else False
 
-    def get_result_as_dict(self) -> dict:
-        result: dict[str, Union[dict, str]] = {
+    def get_result(self) -> dict:
+        self.result: dict[str, Union[dict, str]] = {
             "date": timezone.now().isoformat(),
         }
         for check in self.checks:
-            result[check.check_key] = check.get_result_as_dict()
-
-        return result
-
-    def get_result(self) -> str:
-        self.result: str = "Healthcheck for "
-        self.result += timezone.now().strftime("%A, %d %B %Y")
-        for check in self.checks:
-            self.result += check.get_result()
+            self.result[check.check_key] = check.get_result()
 
         return self.result
+
+    def __str__(self) -> str:
+        if not self.result:
+            self.get_result()
+
+        result: str = "Healthcheck for "
+        result += timezone.now().strftime("%A, %d %B %Y")
+        for check in self.checks:
+            result += str(check)
+
+        return result

@@ -18,6 +18,110 @@ from .base import Check, Market
 
 
 @dataclass
+class AskloraCheck(Check):
+    check_key: str
+    module: str
+    payload: Union[dict, None]
+    queue: str
+
+    def get_celery_result(
+        self,
+        payload: Union[dict, None],
+    ) -> Union[dict, None]:
+        task = app.send_task(
+            "config.celery.listener",
+            args=(payload,),
+            queue=self.queue,
+        )
+        celery_result = AsyncResult(task.id, app=app)
+
+        while celery_result.state == "PENDING":
+            time.sleep(2)
+
+        result: Any = celery_result.result
+        print(result)
+
+        return result.get("data", None)
+
+    def execute(self) -> bool:
+        payload = {
+            "type": "function",
+            "module": self.module,
+            "payload": self.payload,
+        }
+        self.data = self.get_celery_result(payload)
+
+        return (
+            True
+            if self.data is not None
+            and all(
+                [
+                    value == "up"
+                    for value in self.data.get("api_status", {}).values()
+                ]
+            )
+            else False
+        )
+
+    def get_result(self) -> dict:
+        if {"date", "api_status", "users_num"} <= set(self.data):
+            date, api_status, _ = self.data.values()
+            todays_date: str = str(now().date())
+
+            status: dict = {
+                "datetime_matched": True if date == todays_date else False
+            }
+
+            for key, value in api_status.items():
+                status[f"api_check_{key}"] = value
+
+            return {"status": status}
+
+        else:
+            return {"status": "error"}
+
+    def __str__(self) -> str:
+        result: str = ""
+        if self.data:
+            result = "\n- Celery is working properly"
+
+            if {"date", "api_status", "users_num"} <= set(self.data):
+                date, api_status, _ = self.data.values()
+
+                today_date: str = str(now().date())
+                # droid_users: int = len(User.objects.all())
+
+                date_match: str = (
+                    "in sync for both endpoints"
+                    if today_date == date
+                    else "*out of sync* :warning:"
+                )
+
+                # users_match: str = (
+                #     "in sync "
+                #     if droid_users == int(users_nums)
+                #     else "*out of sync* :warning: "
+                # )
+                # users_match += (
+                #     f"(there are {users_nums} users in asklora database "
+                #     f"and {droid_users} users in droid database)"
+                # )
+
+                result += f"\n- timezones are {date_match}"
+                # result += f"\n- Users data in the db is {users_match}"
+
+                for key, value in api_status.items():
+                    status: str = value if "up" else f"*{value}* :warning:"
+                    result += f"\n- asklora {key} API is {status}"
+            else:
+                result += "\n- asklora healtcheck is *not active* :warning:"
+        else:
+            result = "\n- Celery is *not working properly* :warning:"
+
+        return result
+
+
+@dataclass
 class ApiCheck(Check):
     check_key: str
     name: str
@@ -33,12 +137,12 @@ class ApiCheck(Check):
 
         return self.result.get("status", False)
 
-    def get_result(self) -> str:
+    def get_result(self) -> dict:
+        return {"status": self.result.get("status")}
+
+    def __str__(self) -> str:
         status: str = "up" if self.result.get("status") else "*down* :warning:"
         return f"\n- {self.name} API is {status}"
-
-    def get_result_as_dict(self) -> dict:
-        return {"status": self.result.get("status")}
 
 
 @dataclass
@@ -270,7 +374,9 @@ class MarketCheck(Check):
             )
         return status
 
-    def sync_market(self, market: Market, api, db):
+    def sync_market(self, market: Market, api, db) -> bool:
+        status: bool = False
+
         if api == "open" and db == "closed":
             try:
                 exchange_market: ExchangeMarket = ExchangeMarket.objects.get(
@@ -280,40 +386,68 @@ class MarketCheck(Check):
                 exchange_market.save()
 
                 pending_order_checker.apply(args=(market.currency))
-
-                self.result += " (we have fixed the issue for now)"
+                status = True
             except ExchangeMarket.DoesNotExist:
                 print("Market not found")
 
-    def __post_init__(self):
+        return status
+
+    def execute(self) -> bool:
         api_result: dict = self.check_market()
         db_result: dict = self.check_database()
 
-        result: str = ""
-
         for market in self.markets:
+            market_name: str = market.name.lower().replace(" ", "_")
             status_api = api_result.get(market.fin_id)
             status_db = db_result.get(market.fin_id)
 
-            result += f"\n- {market.name} is "
+            self.result[market_name] = {
+                "status": "ok" if status_api == status_db else "error",
+                "api": status_api,
+                "db": status_db,
+                "fixed": False,
+            }
 
-            if status_api == status_db:
-                result += f"in sync ({status_api})"
-            else:
-                result += "*out of sync* :warning:, "
-                result += f"TradingHours: {status_api}, "
-                result += f"database: {status_db}"
-
-                self.sync_market(
+            if status_api != status_db:
+                fixed: bool = self.sync_market(
                     market=market,
                     api=status_api,
                     db=status_db,
                 )
+                self.result[market_name]["fixed"] = fixed
 
-        self.result = result
+        print(self.result)
+        return (
+            True
+            if all(
+                [value.get("status") == "ok" for value in self.result.values()]
+            )
+            else False
+        )
 
-    def get_result(self) -> str:
+    def get_result(self) -> dict:
         return self.result
+
+    def __str__(self) -> str:
+        result: str = ""
+
+        for market in self.markets:
+            market_name: str = market.name.lower().replace(" ", "_")
+            data: dict = self.result.get(market_name, {})
+
+            result += f"\n- {market.name} is "
+
+            if data.get("status") == "ok":
+                result += f"in sync ({data.get('api')})"
+            else:
+                result += "*out of sync* :warning:, "
+                result += f"TradingHours: {data.get('api')}, "
+                result += f"database: {data.get('db')}"
+
+                if data.get("fixed"):
+                    result += " (we have fixed the issue for now)"
+
+        return result
 
 
 @dataclass
@@ -323,7 +457,7 @@ class TestProjectCheck(Check):
     project_id: str
     job_id: str
 
-    def __post_init__(self):
+    def execute(self) -> bool:
         self.data = {}
         url: str = (
             "https://api.testproject.io/v2/projects/"
@@ -345,86 +479,21 @@ class TestProjectCheck(Check):
                 self.data["date"] = latest_test_date
                 self.data["status"] = response_body["testResults"][0]["result"]
 
-    def get_result(self) -> str:
+        return True if self.data.get("status") == "success" else False
+
+    def get_result(self) -> dict:
+        return {
+            "status": {
+                "date": self.data.get("date"),
+                "result": self.data.get("status"),
+            }
+        }
+
+    def __str__(self) -> str:
         result: str = ""
         if self.data:
             result += "\n- Latest TestProject test is "
             result += f"*{self.data['status'].lower()}*"
         else:
             result += "\n- *No* TestProject test runs yet today"
-        return result
-
-
-@dataclass
-class AskloraCheck(Check):
-    check_key: str
-    module: str
-    payload: Union[dict, None]
-    queue: str
-
-    def get_celery_result(
-        self,
-        payload: Union[dict, None],
-    ) -> Union[dict, None]:
-        task = app.send_task(
-            "config.celery.listener",
-            args=(payload,),
-            queue=self.queue,
-        )
-        celery_result = AsyncResult(task.id, app=app)
-
-        while celery_result.state == "PENDING":
-            time.sleep(2)
-
-        result: Any = celery_result.result
-        print(result)
-
-        return result.get("data", None)
-
-    def __post_init__(self):
-        payload = {
-            "type": "function",
-            "module": self.module,
-            "payload": self.payload,
-        }
-        self.data = self.get_celery_result(payload)
-
-    def get_result(self) -> str:
-        result: str = ""
-        if self.data:
-            result = "\n- Celery is working properly"
-
-            if {"date", "api_status", "users_num"} <= set(self.data):
-                today_date: str = str(now().date())
-                # droid_users: int = len(User.objects.all())
-
-                date, api_status, _ = self.data.values()
-
-                date_match: str = (
-                    "in sync for both endpoints"
-                    if today_date == date
-                    else "*out of sync* :warning:"
-                )
-
-                # users_match: str = (
-                #     "in sync "
-                #     if droid_users == int(users_nums)
-                #     else "*out of sync* :warning: "
-                # )
-                # users_match += (
-                #     f"(there are {users_nums} users in asklora database "
-                #     f"and {droid_users} users in droid database)"
-                # )
-
-                result += f"\n- timezones are {date_match}"
-                # result += f"\n- Users data in the db is {users_match}"
-
-                for key, value in api_status.items():
-                    status: str = value if "up" else f"*{value}*"
-                    result += f"\n- asklora {key} API is {status}"
-            else:
-                result += "\n- asklora healtcheck is *not active* :warning:"
-        else:
-            result = "\n- Celery is *not working properly* :warning:"
-
         return result

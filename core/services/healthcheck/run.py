@@ -22,8 +22,8 @@ from .checks import (
 )
 
 
-def send_report(result: str):
-    report_to_slack(result, channel="#healthcheck")
+def send_report(result: Any):
+    report_to_slack(str(result), channel="#healthcheck")
 
 
 @app.task(ignore_result=True)
@@ -60,6 +60,7 @@ def run_healthcheck() -> None:
             ),
             # market check
             MarketCheck(
+                check_key="market_check",
                 tradinghours_token=tradinghours_token,
                 markets=[
                     Market("US market", "USD", "US.NASDAQ"),
@@ -86,6 +87,7 @@ def run_healthcheck() -> None:
             ),
             # TestProject check
             TestProjectCheck(
+                check_key="testproject_check",
                 api_key=testproject_token,
                 project_id="GGUk2NYP4k2YZVYIVSVlUg",
                 job_id="YaTSnhGMxESupCgfkNO08g",
@@ -93,8 +95,7 @@ def run_healthcheck() -> None:
         ]
     )
 
-    _, failure = healthcheck.execute()
-    result = healthcheck.get_result()
+    success: bool = healthcheck.execute()
 
-    if failure:
-        send_report(result)
+    if not success:
+        send_report(healthcheck)
