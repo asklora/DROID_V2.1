@@ -1,16 +1,25 @@
-from typing import List
+from typing import Any, List
 
-from core.services.healthcheck.base import HealthCheck, Market
+from core.services.healthcheck.base import Check, Endpoint, HealthCheck, Market
 from core.services.healthcheck.checks import (
     ApiCheck,
     AskloraCheck,
+    FirebaseCheck,
     MarketCheck,
     TestProjectCheck,
+    TestUsersCheck,
 )
 from core.services.serializers import BroadcastSenderSerializer
+from core.universe.models import Universe
+from core.user.models import User
 from django.conf import settings
+from firebase_admin import firestore
 from rest_framework import response, status
 from rest_framework.views import APIView
+from tests.utils.firebase_schema import (
+    FIREBASE_PORTFOLIO_SCHEMA,
+    FIREBASE_UNIVERSE_SCHEMA,
+)
 
 
 class BroadcastSender(APIView):
@@ -47,6 +56,77 @@ class BroadcastSender(APIView):
 class Healthcheck(APIView):
     authentication_classes = []
 
+    def get_checks(self, keys: List[str]) -> List[Check]:
+        # Variables
+        firebase_app: Any = firestore.client()
+        portfolio_collection: str = settings.FIREBASE_COLLECTION["portfolio"]
+        universe_collection: str = settings.FIREBASE_COLLECTION["universe"]
+        testproject_token: str = "okSRWQSYYFAr7LZvVkczgvyEpm5h1TkYWvSAEm-GAz41"
+        tradinghours_token: str = (
+            "1M1a35Qhk8gUbCsOSl6XRY2z3Qjj0of7y5ZEfE5MasUYm5b9YsoooA7RSxW7"
+        )
+
+        # Dictionary containing all checks
+        all_checks: dict[str, Check] = {
+            "asklora": AskloraCheck(
+                check_key="asklora_check",
+                module="core.djangomodule.crudlib.healthcheck.check_asklora",
+                payload=None,
+                queue=settings.ASKLORA_QUEUE,
+            ),
+            "api": ApiCheck(
+                check_key="api_check",
+                endpoints=[
+                    Endpoint(
+                        name="droid production",
+                        url="https://services.asklora.ai",
+                    ),
+                    Endpoint(
+                        name="droid staging",
+                        url="https://dev-services.asklora.ai",
+                    ),
+                ],
+            ),
+            "portfolio": FirebaseCheck(
+                check_key="firebase_portfolio_check",
+                firebase_app=firebase_app,
+                model=User,
+                collection=portfolio_collection,
+                schema=FIREBASE_PORTFOLIO_SCHEMA,
+            ),
+            "universe": FirebaseCheck(
+                check_key="firebase_universe_check",
+                firebase_app=firebase_app,
+                model=Universe,
+                collection=universe_collection,
+                schema=FIREBASE_UNIVERSE_SCHEMA,
+            ),
+            "market": MarketCheck(
+                check_key="market_check",
+                tradinghours_token=tradinghours_token,
+                markets=[
+                    Market("US market", "USD", "US.NASDAQ"),
+                    Market("HK market", "HKD", "HK.HKEX"),
+                ],
+            ),
+            "testproject": TestProjectCheck(
+                check_key="testproject_test",
+                api_key=testproject_token,
+                project_id="GGUk2NYP4k2YZVYIVSVlUg",
+                job_id="YaTSnhGMxESupCgfkNO08g",
+            ),
+            "testusers": TestUsersCheck(
+                check_key="test_users_check",
+                firebase_app=firebase_app,
+                model=User,
+                collection=portfolio_collection,
+            ),
+        }
+
+        checks: List[Check] = [all_checks[key] for key in keys]
+
+        return checks
+
     def run_check(self, items: List) -> dict:
         if items:
             healthcheck: HealthCheck = HealthCheck(checks=items)
@@ -62,79 +142,11 @@ class Healthcheck(APIView):
             return {"message": "no tests are run"}
 
     def get(self, request):
-        key = request.META.get("HTTP_CHECK_KEY")
-        tradinghours_token: str = (
-            "1M1a35Qhk8gUbCsOSl6XRY2z3Qjj0of7y5ZEfE5MasUYm5b9YsoooA7RSxW7"
-        )
-        # firebase_app: Any = firestore.client()
-        # portfolio_collection: str = settings.FIREBASE_COLLECTION["portfolio"]
-        # universe_collection: str = settings.FIREBASE_COLLECTION["universe"]
-        testproject_token: str = "okSRWQSYYFAr7LZvVkczgvyEpm5h1TkYWvSAEm-GAz41"
-
-        asklora_check = (
-            AskloraCheck(
-                check_key="asklora_check",
-                module="core.djangomodule.crudlib.healthcheck.check_asklora",
-                payload=None,
-                queue=settings.ASKLORA_QUEUE,
-            ),
-        )
-        api_check = (
-            ApiCheck(
-                check_key="api_check_production",
-                name="droid production",
-                url="https://services.asklora.ai",
-            ),
-            ApiCheck(
-                check_key="api_check_staging",
-                name="droid staging",
-                url="https://dev-services.asklora.ai",
-            ),
-        )
-        # firebase_check = request.META.get("HTTP_FIREBASE_CHECK")
-        # test_users_check = request.META.get("HTTP_TEST_USERS_CHECK")
-        market_check = (
-            MarketCheck(
-                check_key="market_check",
-                tradinghours_token=tradinghours_token,
-                markets=[
-                    Market("US market", "USD", "US.NASDAQ"),
-                    Market("HK market", "HKD", "HK.HKEX"),
-                ],
-            ),
-        )
-        testproject_check = (
-            TestProjectCheck(
-                check_key="testproject_test",
-                api_key=testproject_token,
-                project_id="GGUk2NYP4k2YZVYIVSVlUg",
-                job_id="YaTSnhGMxESupCgfkNO08g",
-            ),
-        )
+        key: str = request.META.get("HTTP_CHECK_KEY")
+        check_list: List[str] = request.META.get("HTTP_CHECK_LIST").split(",")
 
         if key == "runhealthcheck":
-            run_asklora_check = (
-                asklora_check if request.META.get("HTTP_ASKLORA_CHECK") else ()
-            )
-            run_api_check = (
-                api_check if request.META.get("HTTP_API_CHECK") else ()
-            )
-            run_market_check = (
-                market_check if request.META.get("HTTP_MARKET_CHECK") else ()
-            )
-            run_testproject_check = (
-                testproject_check
-                if request.META.get("HTTP_TESTPROJECT_CHECK")
-                else ()
-            )
-
-            checks: List = [
-                *run_asklora_check,
-                *run_api_check,
-                *run_market_check,
-                *run_testproject_check,
-            ]
-
+            checks: List[Check] = self.get_checks(check_list)
             result: dict = self.run_check(checks)
 
             return response.Response(

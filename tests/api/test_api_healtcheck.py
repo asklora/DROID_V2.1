@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 pytestmark = pytest.mark.django_db(
@@ -12,10 +14,7 @@ pytestmark = pytest.mark.django_db(
 def test_healthcheck_api(client) -> None:
     headers: dict = {
         "HTTP_CHECK_KEY": "runhealthcheck",
-        "HTTP_ASKLORA_CHECK": True,
-        "HTTP_API_CHECK": True,
-        "HTTP_MARKET_CHECK": True,
-        # "HTTP_TESTPROJECT_CHECK": True,
+        "HTTP_CHECK_LIST": "asklora,api,market,testusers",
     }
 
     response = client.get(
@@ -27,5 +26,5 @@ def test_healthcheck_api(client) -> None:
     assert response.headers["Content-Type"] == "application/json"
 
     response_body: dict = response.json()
-    print(response_body)
+    print(json.dumps(response_body, indent=2))
     assert response_body.get("message") == "ok"

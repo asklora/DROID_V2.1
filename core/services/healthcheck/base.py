@@ -1,17 +1,16 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, List, Protocol, Union
+from typing import Any, List, Union
 
 from django.utils import timezone
 
 
 # Base check class
-class Check(Protocol):
+@dataclass
+class Check(ABC):
     check_key: str
-    data: Any
-    error: str
-    result: dict = {}
-    result_str: str
+    data: Any = field(init=False)
+    result: dict = field(default_factory=dict, init=False)
 
     @abstractmethod
     def execute(self) -> bool:
@@ -33,11 +32,18 @@ class Market:
     fin_id: str
 
 
+@dataclass
+class Endpoint:
+    name: str
+    url: str
+
+
 # Main healthcheck class
 # It is also a Check class, meaning every Check class can be run
 # individually or in unison using this one
 @dataclass
 class HealthCheck(Check):
+    check_key: str = "healthcheck"
     checks: List[Check] = field(default_factory=list)
 
     def _get_timestamp(self) -> str:
