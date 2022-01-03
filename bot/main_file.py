@@ -28,14 +28,15 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     #Adding Latest Price to Master TAC
     if (daily):
         intraday_price = get_latest_price(ticker=ticker, currency_code=currency_code)
-        intraday_price["last_date"] = pd.to_datetime(intraday_price["last_date"])
-        last_date = intraday_price["last_date"].max()
-        last_price = intraday_price[["open", "high", "low", "close", "ticker"]]
-        if prices_df.trading_day.max() <= last_date:
-            prices_df = prices_df.drop(prices_df[prices_df.trading_day == last_date].index)
-            last_price = last_price.assign(day_status="trading_day")
-            last_price = last_price.assign(trading_day=last_date)
-        prices_df = pd.concat([prices_df, last_price], axis=0, join="outer")
+        if (len(intraday_price) > 0):
+            intraday_price["last_date"] = pd.to_datetime(intraday_price["last_date"])
+            last_date = intraday_price["last_date"].max()
+            last_price = intraday_price[["open", "high", "low", "close", "ticker"]]
+            if prices_df.trading_day.max() <= last_date:
+                prices_df = prices_df.drop(prices_df[prices_df.trading_day == last_date].index)
+                last_price = last_price.assign(day_status="trading_day")
+                last_price = last_price.assign(trading_day=last_date)
+            prices_df = pd.concat([prices_df, last_price], axis=0, join="outer")
 
     #Get Vol Surface Parameter Ticker That Not Infer
     outputs_df = get_vol_surface_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, infer=False)
