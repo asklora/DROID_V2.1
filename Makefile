@@ -221,6 +221,9 @@ monthly:
 populate_ticker:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py populate_ticker --settings=config.settings.production
 
+restart_pc:
+	@/sbin/shutdown -r now
+
 sgd_prep:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --do_infer True --currency_code SGD --infer True
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --currency_code SGD
