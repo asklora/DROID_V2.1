@@ -127,6 +127,7 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
     industry_group = get_industry_group()   # from API
     result = all_universe.merge(industry, on="industry_code", how="left")
     result = result.merge(currency, on="currency_code", how="left")
+    result['industry_group_code'] = result['industry_code'].str[:6]
     result = result.merge(industry_group, on="industry_group_code", how="left")
 
     result["ticker_name"] = np.where(result["ticker_name"].isnull(), "NA", result["ticker_name"])
@@ -153,7 +154,8 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
     # print(universe)
 
     # 2. detail_df of financial info dict of {price, pe, pb, ...} <- from Universe
-    price = result[["ticker", "ebitda", "free_cash_flow", "market_cap", "pb", "pe_forecast", "pe_ratio", "revenue_per_share", "wk52_high", "wk52_low"]]
+    price = result[["ticker", "ebitda", "free_cash_flow", "market_cap", "pb", "pe_forecast", "pe_ratio",
+                    "revenue_per_share", "wk52_high", "wk52_low"]]
     latest_price = get_latest_price_data(ticker=ticker, currency_code=currency_code)
     latest_price = price.merge(latest_price, how="left", on=["ticker"])
     latest_price = change_date_to_str(latest_price)
@@ -174,9 +176,8 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
 
     # 3. positive / negative factor -> factor = factor used in ai_score calculation
     rating = result[["ticker"]]
-    universe_rating = pd.DataFrame({'ai_score': get_ai_score(tickers=universe["ticker"].unique(), field='ai_score'),
-                             'ai_score2': get_ai_score(tickers=universe["ticker"].unique(), field='ai_score2')}).reset_index().rename(columns={"index": "ticker"})     # from API
-    universe_rating_positive_negative = pd.DataFrame(get_ai_score_factor(tickers=universe["ticker"].unique())).reset_index().rename(columns={"index": "ticker"})       # from API
+    universe_rating = get_ai_score(tickers=universe["ticker"].unique(), fields=['ai_score', 'ai_score2'])     # from API
+    universe_rating_positive_negative = get_ai_score_factor(tickers=universe["ticker"].unique())       # from API
     universe_rating = rating.merge(universe_rating, how="left", on=["ticker"])
     universe_rating = universe_rating.merge(universe_rating_positive_negative, how="left", on=["ticker"])
     universe_rating = change_date_to_str(universe_rating)
@@ -191,14 +192,14 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
         final_score = rating_data["final_score"].to_list()[0]
         ai_score2 = rating_data["ai_score2"].to_list()[0]
         ai_score = rating_data["ai_score"].to_list()[0]
-        positive_factor = str(rating_data["positive_factor"].to_list()[0]).replace("[\"", "").replace("\"]", "").replace("\", \"", ",").replace("null", "").replace("Null", "").replace("NA", "")
-        negative_factor = str(rating_data["negative_factor"].to_list()[0]).replace("[\"", "").replace("\"]", "").replace("\", \"", ",").replace("null", "").replace("Null", "").replace("NA", "")
+        positive_factor = rating_data["positive_factors"].to_list()[0]
+        negative_factor = rating_data["negative_factors"].to_list()[0]
         rating_data = {
             "final_score": final_score,
             "ai_score": ai_score,
             "ai_score2": ai_score2, 
-            "positive_factor": positive_factor.split(","),
-            "negative_factor": negative_factor.split(",")
+            "positive_factor": positive_factor,
+            "negative_factor": negative_factor,
             }
         rating = pd.DataFrame({"ticker":[tick], "rating":[rating_data], "ai_score":[ai_score], "ai_score2":[ai_score2]}, index=[0])
         rating_df = rating_df.append(rating)
