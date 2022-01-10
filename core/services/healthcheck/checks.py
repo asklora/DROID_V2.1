@@ -14,26 +14,164 @@ from core.user.models import Accountbalance, TransactionHistory
 from django.utils.timezone import now
 from schema import Schema, SchemaError
 
-from .base import Check, Market
+from .base import Check, Endpoint, Market
+
+
+@dataclass
+class AskloraCheck(Check):
+    module: str
+    payload: Union[dict, None]
+    queue: str
+
+    def get_celery_result(
+        self,
+        payload: Union[dict, None],
+    ) -> Union[dict, None]:
+        task = app.send_task(
+            "config.celery.listener",
+            args=(payload,),
+            queue=self.queue,
+        )
+        celery_result = AsyncResult(task.id, app=app)
+        retry_count = 0
+
+        while celery_result.state == "PENDING":
+            time.sleep(2)
+            retry_count += 1
+            if retry_count > 9:
+                break
+
+        result: Any = celery_result.result
+        print(result)
+
+        if result is None:
+            return None
+
+        return result.get("data", None)
+
+    def execute(self) -> bool:
+        payload = {
+            "type": "function",
+            "module": self.module,
+            "payload": self.payload,
+        }
+        self.data = self.get_celery_result(payload)
+
+        return (
+            True
+            if self.data is not None
+            and all(
+                [
+                    value == "up"
+                    for value in self.data.get("api_status", {}).values()
+                ]
+            )
+            else False
+        )
+
+    def get_result(self) -> dict:
+        if self.data and {"date", "api_status", "users_num"} <= set(self.data):
+            date, api_status, _ = self.data.values()
+            todays_date: str = str(now().date())
+
+            datetime_matched: bool = date == todays_date
+            api_is_up: bool = all(
+                [value == "up" for value in api_status.values()]
+            )
+
+            result: dict = {
+                "datetime_matched": True if datetime_matched else False
+            }
+
+            for key, value in api_status.items():
+                result[f"api_check_{key}"] = value
+
+            status: str = "ok" if datetime_matched and api_is_up else "error"
+
+            return {"status": status, "result": result}
+
+        else:
+            return {"status": "error"}
+
+    def __str__(self) -> str:
+        result: str = ""
+        if self.data:
+            result = "\n- Celery is working properly"
+
+            if {"date", "api_status", "users_num"} <= set(self.data):
+                date, api_status, _ = self.data.values()
+
+                today_date: str = str(now().date())
+                # droid_users: int = len(User.objects.all())
+
+                date_match: str = (
+                    "in sync for both endpoints"
+                    if today_date == date
+                    else "*out of sync* :warning:"
+                )
+
+                # users_match: str = (
+                #     "in sync "
+                #     if droid_users == int(users_nums)
+                #     else "*out of sync* :warning: "
+                # )
+                # users_match += (
+                #     f"(there are {users_nums} users in asklora database "
+                #     f"and {droid_users} users in droid database)"
+                # )
+
+                result += f"\n- datetime are {date_match}"
+                # result += f"\n- Users data in the db is {users_match}"
+
+                for key, value in api_status.items():
+                    status: str = value if "up" else f"*{value}* :warning:"
+                    result += f"\n- asklora {key} API is {status}"
+            else:
+                result += "\n- asklora healtcheck is *not active* :warning:"
+        else:
+            result = "\n- Celery is *not working properly* :warning:"
+
+        return result
 
 
 @dataclass
 class ApiCheck(Check):
-    name: str
-    url: str
+    endpoints: List[Endpoint]
 
-    def __post_init__(self):
-        try:
-            response = requests.head(self.url)
-            if response.status_code == 200:
-                self.data = "up"
-            else:
-                self.data = "*down* :warning:"
-        except Exception as e:
-            self.error = str(e)
+    def get_api_name(self, name: str) -> str:
+        return name.replace(" ", "_")
 
-    def get_result(self) -> str:
-        return f"\n- {self.name} API is {self.data}"
+    def execute(self) -> bool:
+        for api in self.endpoints:
+            name: str = self.get_api_name(api.name)
+            try:
+                response = requests.head(api.url)
+                self.result[name] = (
+                    "up" if response.status_code == 200 else "down"
+                )
+            except Exception as e:
+                self.error = str(e)
+                self.result[name] = "down"
+
+        return self.is_ok()
+
+    def is_ok(self) -> bool:
+        return all([value == "up" for value in self.result.values()])
+
+    def get_result(self) -> dict:
+        return {
+            "status": "ok" if self.is_ok() else "error",
+            "result": self.result,
+        }
+
+    def __str__(self) -> str:
+        result: str = ""
+        for api in self.endpoints:
+            name: str = self.get_api_name(api.name)
+            is_up: bool = self.result.get(name) == "up"
+            status: str = "up" if is_up else "*down* :warning:"
+            result += f"\n- {api.name} API is {status}"
+        return result
 
 
 @dataclass
@@ -42,7 +180,6 @@ class FirebaseCheck(Check):
     model: Any
     collection: str
     schema: Schema
-    failed_checks: List[str] = field(default_factory=list)
 
     def get_documents(self) -> List[dict]:
         collections = self.firebase_app.collection(self.collection).stream()
@@ -55,15 +192,10 @@ class FirebaseCheck(Check):
 
     def log_error(self, error: SchemaError, item: dict) -> None:
         item_id: Union[str, None] = item.get("firebase_id", None)
-        error_data: dict = {
-            "id": item_id,
-            "error": error,
-        }
         logging.warning(
             f"document {item_id} in {self.collection} has scheme mismatch",
         )
         print(str(error))
-        self.error += str(error_data)
 
     def check_database(self, item: dict):
         """
@@ -77,10 +209,11 @@ class FirebaseCheck(Check):
                 item_id,
             ).delete()
 
-    def __post_init__(self):
+    def execute(self) -> bool:
         total: int = 0
         success: int = 0
         failed: int = 0
+        failed_ids: List[str] = []
 
         for doc in self.get_documents():
             total += 1
@@ -91,22 +224,39 @@ class FirebaseCheck(Check):
                 success += 1
             except SchemaError as e:
                 failed += 1
-                self.failed_checks.append(str(doc.get("firebase_id")))
+                failed_ids.append(str(doc.get("firebase_id")))
                 self.log_error(error=e, item=doc)
                 self.check_database(item=doc)
 
-        self.data = f"{total} checked, {success} success and {failed} failed"
+        self.result = {
+            "status": "ok" if failed == 0 else "error",
+            "total": total,
+            "success": success,
+            "failed": failed,
+            "failed_ids": failed_ids,
+        }
 
-    def get_result(self) -> str:
-        status: str = ""
-        if self.failed_checks:
-            errors: str = ", ".join(self.failed_checks)
-            status += f"*has schema mismatch* :warning:: {errors}"
-        else:
-            status += "is correct"
+        return True if failed == 0 else False
 
+    def get_result(self) -> dict:
+        return self.result
+
+    def __str__(self) -> str:
         result: str = f"\n- `{self.collection}` data in Firebase "
-        result += f"{status} ({self.data})"
+        status: str = ""
+        info: str = (
+            f"{self.result.get('total', 0)} checked, "
+            f"{self.result.get('success', 0)} success and "
+            f"{self.result.get('failed', 0)} failed"
+        )
+
+        if self.result.get("failed", 0) > 0:
+            errors: str = ", ".join(self.result.get("failed_id", []))
+            status = f"*has schema mismatch* :warning: {errors}"
+        else:
+            status = "is correct"
+
+        result += f"{status} ({info})"
 
         return result
 
@@ -116,8 +266,6 @@ class TestUsersCheck(Check):
     firebase_app: Any
     model: Any
     collection: str
-    firebase_test_users: List[str] = field(default_factory=list)
-    database_test_users: List[str] = field(default_factory=list)
 
     def get_firebase_ref(self) -> Any:
         return (
@@ -137,61 +285,94 @@ class TestUsersCheck(Check):
         users: List[str] = []
         for document in collections:
             users.append(document.id)
-        self.firebase_test_users = users
+        self.result["firebase"] = {"users": users}
 
     def list_database_test_users(self) -> None:
         users = [str(user.pk) for user in self.get_database_objects()]
-        self.database_test_users = users
+        self.result["database"] = {"users": users}
 
-    def delete_firebase_test_users(self) -> None:
+    def delete_firebase_test_users(self) -> bool:
         batch = self.firebase_app.batch()
         collections = self.get_firebase_ref()
 
-        for document in collections:
-            batch.delete(document.reference)
+        try:
+            for document in collections:
+                batch.delete(document.reference)
 
-        batch.commit()
+            batch.commit()
+            return True
+        except Exception as e:
+            print(e)
+            return False
 
-    def delete_database_test_users(self) -> None:
+    def delete_database_test_users(self) -> bool:
         users: List[Any] = self.get_database_objects()
 
-        for user in users:
-            PositionPerformance.objects.filter(
-                position_uid__user_id=user
-            ).delete()
-            Order.objects.filter(user_id=user).delete()
-            OrderPosition.objects.filter(user_id=user).delete()
-            TransactionHistory.objects.filter(balance_uid__user=user).delete()
-            Accountbalance.objects.filter(user=user).delete()
-            user.delete()
+        try:
+            for user in users:
+                PositionPerformance.objects.filter(
+                    position_uid__user_id=user
+                ).delete()
+                Order.objects.filter(user_id=user).delete()
+                OrderPosition.objects.filter(user_id=user).delete()
+                TransactionHistory.objects.filter(
+                    balance_uid__user=user
+                ).delete()
+                Accountbalance.objects.filter(user=user).delete()
+                user.delete()
 
-    def __post_init__(self):
+            return True
+        except Exception as e:
+            print(e)
+            return False
+
+    def is_ok(self) -> bool:
+        firebase_test_users = self.result.get("firebase", {}).get("users", [])
+        database_test_users = self.result.get("database", {}).get("users", [])
+        return len(firebase_test_users) == 0 and len(database_test_users) == 0
+
+    def execute(self) -> bool:
         self.list_firebase_test_users()
         self.list_database_test_users()
 
-        print(
-            f"firebase test users' IDs: {', '.join(self.firebase_test_users)}"
-        )
-        print(
-            f"database test users' IDs: {', '.join(self.database_test_users)}"
-        )
+        firebase_test_users = self.result.get("firebase", {}).get("users", [])
+        database_test_users = self.result.get("database", {}).get("users", [])
 
-        if self.firebase_test_users:
-            self.delete_firebase_test_users()
+        print(f"firebase test users' IDs: {', '.join(firebase_test_users)}")
+        print(f"database test users' IDs: {', '.join(database_test_users)}")
 
-        if self.database_test_users:
-            self.delete_database_test_users()
+        if firebase_test_users:
+            deleted: bool = self.delete_firebase_test_users()
+            self.result["firebase"]["deleted"] = deleted
 
-    def get_result(self) -> str:
+        if database_test_users:
+            deleted: bool = self.delete_database_test_users()
+            self.result["database"]["deleted"] = deleted
+
+        return self.is_ok()
+
+    def get_result(self) -> dict:
+        return {
+            "status": "ok" if self.is_ok() else "error",
+            "result": self.result,
+        }
+
+    def __str__(self) -> str:
+        firebase_data = self.result.get("firebase", {})
+        database_data = self.result.get("database", {})
+
+        firebase_test_users = firebase_data.get("users", [])
+        database_test_users = database_data.get("users", [])
+
+        firebase_test_users_num: int = len(firebase_test_users)
+        database_test_users_num: int = len(database_test_users)
+
         deleted: bool = (
             # there were test users in firebase
-            len(self.firebase_test_users) > 0
+            firebase_data.get("deleted", False)
             # or in database
-            or len(self.database_test_users) > 0
+            or database_data.get("deleted", False)
         )
-
-        firebase_test_users_num: int = len(self.firebase_test_users)
-        database_test_users_num: int = len(self.database_test_users)
 
         firebase_num: str = (
             f"*{firebase_test_users_num}*"
@@ -219,9 +400,6 @@ class TestUsersCheck(Check):
 
 @dataclass
 class MarketCheck(Check):
-    # Since it involves calling an API, I decided it's better to run the check
-    # for all markets at once, to minimize API calls.
-
     tradinghours_token: str
     markets: List[Market] = field(default_factory=list)
 
@@ -255,7 +433,9 @@ class MarketCheck(Check):
             )
         return status
 
-    def sync_market(self, market: Market, api, db):
+    def sync_market(self, market: Market, api, db) -> bool:
+        status: bool = False
+
         if api == "open" and db == "closed":
             try:
                 exchange_market: ExchangeMarket = ExchangeMarket.objects.get(
@@ -265,49 +445,77 @@ class MarketCheck(Check):
                 exchange_market.save()
 
                 pending_order_checker.apply(args=(market.currency))
-
-                self.result += " (we have fixed the issue for now)"
+                status = True
             except ExchangeMarket.DoesNotExist:
                 print("Market not found")
 
-    def __post_init__(self):
+        return status
+
+    def is_ok(self) -> bool:
+        return all(
+            [value.get("status") == "ok" for value in self.result.values()]
+        )
+
+    def execute(self) -> bool:
         api_result: dict = self.check_market()
         db_result: dict = self.check_database()
 
-        result: str = ""
-
         for market in self.markets:
+            market_name: str = market.name.lower().replace(" ", "_")
             status_api = api_result.get(market.fin_id)
             status_db = db_result.get(market.fin_id)
 
-            result += f"\n- {market.name} is "
+            self.result[market_name] = {
+                "status": "ok" if status_api == status_db else "error",
+                "api": status_api,
+                "db": status_db,
+                "fixed": False,
+            }
 
-            if status_api == status_db:
-                result += f"in sync ({status_api})"
-            else:
-                result += "*out of sync* :warning:, "
-                result += f"TradingHours: {status_api}, "
-                result += f"database: {status_db}"
-
-                self.sync_market(
+            if status_api != status_db:
+                fixed: bool = self.sync_market(
                     market=market,
                     api=status_api,
                     db=status_db,
                 )
+                self.result[market_name]["fixed"] = fixed
 
-        self.result = result
+        return True if self.is_ok() else False
 
-    def get_result(self) -> str:
-        return self.result
+    def get_result(self) -> dict:
+        status: str = "ok" if self.is_ok() else "error"
+        return {"status": status, "result": self.result}
+
+    def __str__(self) -> str:
+        result: str = ""
+
+        for market in self.markets:
+            market_name: str = market.name.lower().replace(" ", "_")
+            data: dict = self.result.get(market_name, {})
+
+            result += f"\n- {market.name} is "
+
+            if data.get("status") == "ok":
+                result += f"in sync ({data.get('api')})"
+            else:
+                result += "*out of sync* :warning:, "
+                result += f"TradingHours: {data.get('api')}, "
+                result += f"database: {data.get('db')}"
+
+                if data.get("fixed"):
+                    result += " (we have fixed the issue for now)"
+
+        return result
 
 
 @dataclass
 class TestProjectCheck(Check):
+    check_key: str
     api_key: str
     project_id: str
     job_id: str
 
-    def __post_init__(self):
+    def execute(self) -> bool:
         self.data = {}
         url: str = (
             "https://api.testproject.io/v2/projects/"
@@ -329,85 +537,21 @@ class TestProjectCheck(Check):
                 self.data["date"] = latest_test_date
                 self.data["status"] = response_body["testResults"][0]["result"]
 
-    def get_result(self) -> str:
+        return True if self.data.get("status") == "success" else False
+
+    def get_result(self) -> dict:
+        return {
+            "status": {
+                "date": self.data.get("date"),
+                "result": self.data.get("status"),
+            }
+        }
+
+    def __str__(self) -> str:
         result: str = ""
         if self.data:
             result += "\n- Latest TestProject test is "
             result += f"*{self.data['status'].lower()}*"
         else:
             result += "\n- *No* TestProject test runs yet today"
-        return result
-
-
-@dataclass
-class AskloraCheck(Check):
-    module: str
-    payload: Union[dict, None]
-    queue: str
-
-    def get_celery_result(
-        self,
-        payload: Union[dict, None],
-    ) -> Union[dict, None]:
-        task = app.send_task(
-            "config.celery.listener",
-            args=(payload,),
-            queue=self.queue,
-        )
-        celery_result = AsyncResult(task.id, app=app)
-
-        while celery_result.state == "PENDING":
-            time.sleep(2)
-
-        result: Any = celery_result.result
-        print(result)
-
-        return result.get("data", None)
-
-    def __post_init__(self):
-        payload = {
-            "type": "function",
-            "module": self.module,
-            "payload": self.payload,
-        }
-        self.data = self.get_celery_result(payload)
-
-    def get_result(self) -> str:
-        result: str = ""
-        if self.data:
-            result = "\n- Celery is working properly"
-
-            if {"date", "api_status", "users_num"} <= set(self.data):
-                today_date: str = str(now().date())
-                # droid_users: int = len(User.objects.all())
-
-                date, api_status, _ = self.data.values()
-
-                date_match: str = (
-                    "in sync for both endpoints"
-                    if today_date == date
-                    else "*out of sync* :warning:"
-                )
-
-                # users_match: str = (
-                #     "in sync "
-                #     if droid_users == int(users_nums)
-                #     else "*out of sync* :warning: "
-                # )
-                # users_match += (
-                #     f"(there are {users_nums} users in asklora database "
-                #     f"and {droid_users} users in droid database)"
-                # )
-
-                result += f"\n- timezones are {date_match}"
-                # result += f"\n- Users data in the db is {users_match}"
-
-                for key, value in api_status.items():
-                    status: str = value if "up" else f"*{value}*"
-                    result += f"\n- asklora {key} API is {status}"
-            else:
-                result += "\n- asklora healtcheck is *not active* :warning:"
-        else:
-            result = "\n- Celery is *not working properly* :warning:"
-
         return result
