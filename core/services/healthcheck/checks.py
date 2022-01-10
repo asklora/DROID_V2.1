@@ -33,12 +33,19 @@ class AskloraCheck(Check):
             queue=self.queue,
         )
         celery_result = AsyncResult(task.id, app=app)
+        retry_count = 0
 
         while celery_result.state == "PENDING":
             time.sleep(2)
+            retry_count += 1
+            if retry_count > 14:
+                break
 
         result: Any = celery_result.result
         print(result)
+
+        if result is None:
+            return None
 
         return result.get("data", None)
 
@@ -63,7 +70,7 @@ class AskloraCheck(Check):
         )
 
     def get_result(self) -> dict:
-        if {"date", "api_status", "users_num"} <= set(self.data):
+        if self.data and {"date", "api_status", "users_num"} <= set(self.data):
             date, api_status, _ = self.data.values()
             todays_date: str = str(now().date())
 
