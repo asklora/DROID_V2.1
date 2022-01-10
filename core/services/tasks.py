@@ -255,13 +255,13 @@ app.conf.beat_schedule = {
             "expires": 5*60,
             }
     },
-    "HealthCheck": {
-        "task": "core.services.healthcheck.run.run_healthcheck",
-        "schedule": timedelta(minutes=15),
-        "options": {
-            "expires": 5*60,
-        },
-    },
+    # "HealthCheck": {
+    #     "task": "core.services.healthcheck.run.run_healthcheck",
+    #     "schedule": timedelta(minutes=15),
+    #     "options": {
+    #         "expires": 5*60,
+    #     },
+    # },
 }
 # END TASK SCHEDULE
 
