@@ -38,7 +38,7 @@ class AskloraCheck(Check):
         while celery_result.state == "PENDING":
             time.sleep(2)
             retry_count += 1
-            if retry_count > 14:
+            if retry_count > 9:
                 break
 
         result: Any = celery_result.result
