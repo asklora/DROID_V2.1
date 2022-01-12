@@ -7,7 +7,7 @@ import time
 api_url = "http://quant.loratechai.com:8000"
 # api_url = "http://8.210.210.97:8000"
 
-@retry(ConnectionResetError, delay=1)
+@retry(delay=1)
 def get_ai_score_field(tickers, field):
     print(f"API request: {field} from /ai_score")
     query = {'tickers': tickers, 'field': field}
@@ -27,7 +27,7 @@ def get_ai_score(tickers, fields):
     data = pd.concat(df_list, axis=1).reset_index()
     return data
 
-@retry(ConnectionResetError, delay=1)
+@retry(delay=1)
 def get_ai_score_factor(tickers):
     ''' get positive / negative factors from API '''
     print(f"API request: /ai_score_factor")
@@ -38,7 +38,7 @@ def get_ai_score_factor(tickers):
     data = pd.DataFrame(content["hits"])
     return data
 
-@retry(ConnectionResetError, delay=1)
+@retry(delay=1)
 def get_industry():
     ''' get industry code/name from API '''
     print(f"API request: industry_name from /industries")
@@ -48,7 +48,7 @@ def get_industry():
     data = pd.DataFrame(content["industries"])
     return data
 
-@retry(ConnectionResetError, delay=1)
+@retry(delay=1)
 def get_industry_group():
     ''' get industry group code/name from API '''
     print(f"API request: industry_group_name from /industries")
