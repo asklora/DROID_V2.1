@@ -55,7 +55,10 @@ print('using prod db')
 read_endpoint, write_endpoint, port = db.prod_url
 MQPASS="NjI0NkZFQzVBQkQwNUE2RERCRjY1QzJGMzA2OUFFMjE1MjAyMkRFMjoxNjMxNjA0MjEwOTY5"
 MQUSER="MjphbXFwLXNnLTZ3cjJjbG1hbzAwMzpMVEFJNXRTaGR4VUhxV3ZCVm9MNVR5amE="
-CELERY_BROKER_URL = f'amqp://{MQUSER}:{MQPASS}@amqp-sg-6wr2clmao003.mq-amqp.cn-hongkong-3568556-b.aliyuncs.com:5672/master'
+# CELERY_BROKER_URL = f'amqp://{MQUSER}:{MQPASS}@amqp-sg-6wr2clmao003.mq-amqp.cn-hongkong-3568556-b.aliyuncs.com:5672/master'
+CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@47.242.245.63:5672'
+
+
 # CELERY_SINGLETON_BACKEND_URL = 'redis://redis:6379/1'
 BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 86400}
 WORKER_PREFETCH_MULTIPLIER=1

@@ -49,8 +49,8 @@ logging.warning(f'celery role using -> {role}')
 #   . portfolio.daily_hedge_user.user_position_check
 
 app = Celery('core.services')
-if debug in ['config.settings.production','config.settings.prodtest']:
-    app.conf.broker_login_method = 'PLAIN'
+# if debug in ['config.settings.production','config.settings.prodtest']:
+#     app.conf.broker_login_method = 'PLAIN'
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load task modules from all registered Django app configs.
