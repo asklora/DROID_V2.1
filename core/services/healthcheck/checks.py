@@ -247,13 +247,15 @@ class FirebaseCheck(Check):
         result: str = f"\n- `{self.collection}` data in Firebase "
         status: str = ""
         info: str = (
-            f"{self.result.get('total', 0)} checked, "
-            f"{self.result.get('success', 0)} success and "
-            f"{self.result.get('failed', 0)} failed"
+            f"{self.result.get('result', {}).get('total', 0)} checked, "
+            f"{self.result.get('result', {}).get('success', 0)} success and "
+            f"{self.result.get('result', {}).get('failed', 0)} failed"
         )
 
         if self.result.get("failed", 0) > 0:
-            errors: str = ", ".join(self.result.get("failed_id", []))
+            errors: str = ", ".join(
+                self.result.get("result", {}).get("failed_id", [])
+            )
             status = f"*has schema mismatch* :warning: {errors}"
         else:
             status = "is correct"
