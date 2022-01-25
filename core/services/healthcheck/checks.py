@@ -230,10 +230,12 @@ class FirebaseCheck(Check):
 
         self.result = {
             "status": "ok" if failed == 0 else "error",
-            "total": total,
-            "success": success,
-            "failed": failed,
-            "failed_ids": failed_ids,
+            "result": {
+                "total": total,
+                "success": success,
+                "failed": failed,
+                "failed_ids": failed_ids,
+            },
         }
 
         return True if failed == 0 else False
