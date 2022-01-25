@@ -145,7 +145,7 @@ class ApiCheck(Check):
         for api in self.endpoints:
             name: str = self.get_api_name(api.name)
             try:
-                response = requests.head(api.url)
+                response = requests.get(api.url, timeout=15)
                 self.result[name] = (
                     "up" if response.status_code == 200 else "down"
                 )

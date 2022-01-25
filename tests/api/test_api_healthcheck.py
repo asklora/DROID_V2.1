@@ -14,7 +14,7 @@ pytestmark = pytest.mark.django_db(
 def test_healthcheck_api(client) -> None:
     headers: dict = {
         "HTTP_CHECK_KEY": "runhealthcheck",
-        "HTTP_CHECK_LIST": "api,asklora",
+        "HTTP_CHECK_LIST": "asklora,market",
     }
 
     response = client.get(
