@@ -180,6 +180,8 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
     universe_rating_positive_negative = get_ai_score_factor(tickers=universe["ticker"].unique())       # from API
     universe_rating = rating.merge(universe_rating, how="left", on=["ticker"])
     universe_rating = universe_rating.merge(universe_rating_positive_negative, how="left", on=["ticker"])
+    universe_rating["negative_factor"] = np.where(universe_rating["negative_factor"].isnull(), [], universe_rating["negative_factor"])
+    universe_rating["positive_factor"] = np.where(universe_rating["positive_factor"].isnull(), [], universe_rating["positive_factor"])
     universe_rating = change_date_to_str(universe_rating)
     universe_rating = change_null_to_zero(universe_rating)
     # print(universe_rating)
@@ -194,6 +196,10 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
         ai_score = rating_data["ai_score"].to_list()[0]
         positive_factor = rating_data["positive_factors"].to_list()[0]
         negative_factor = rating_data["negative_factors"].to_list()[0]
+        if(positive_factor == 0):
+            positive_factor = []
+        if (negative_factor == 0):
+            negative_factor = []
         rating_data = {
             "final_score": final_score,
             "ai_score": ai_score,
