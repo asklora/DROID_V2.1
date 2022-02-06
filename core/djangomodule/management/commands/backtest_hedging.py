@@ -1,20 +1,22 @@
-from django.core.management.base import BaseCommand
+import sys
 import gc
 import logging
 import numpy as np
-np.seterr(divide='ignore', invalid='ignore')
+np.seterr(divide="ignore", invalid="ignore")
 import pandas as pd
 pd.options.mode.chained_assignment = None
 from tqdm import tqdm
-from general.sql_output import upsert_data_to_database
-from general.date_process import dateNow, droid_start_date
-from general.table_name import get_bot_uno_backtest_table_name
+from datetime import date
+from general.data_process import tuple_data
+from general.sql_query import read_query
+from django.core.management.base import BaseCommand
+from general.date_process import dateNow
+from general.table_name import get_bot_classic_backtest_table_name, get_bot_ucdc_backtest_table_name, get_bot_uno_backtest_table_name
 from bot.data_process import check_start_end_date, check_time_to_exp
 from bot.preprocess import cal_interest_rate, cal_q
 from bot.black_scholes import (find_vol, deltaUnOC)
 from bot.data_download import (
-    get_bot_backtest_data, 
-    get_bot_backtest_data_date_list, 
+    check_ticker_currency_code_query,
     get_master_tac_price, 
     get_interest_rate_data,
     get_dividends_data)
@@ -24,7 +26,20 @@ class Command(BaseCommand):
         parser.add_argument("-run_number", "--run_number", help="run_number", type=int, default=0)
 
     def handle(self, *args, **options):
-        pass
+        ticker = "TSLA.O"
+        start_date = "2021-12-15"
+        end_date = dateNow()
+        time_to_exp = 0.07692
+        option_type = "ITM"
+        generate_hedging(start_date=start_date, end_date=end_date, time_to_exp=[time_to_exp], ticker=[ticker], option_type=[option_type])
+
+        # ticker = "TSLA.O"
+        # option_type = "OTM"
+        # start_date = "2022-01-03"
+        # end_date = dateNow()
+        # time_to_exp = 0.07692
+        # generate_hedging(start_date=start_date, end_date=end_date, time_to_exp=[time_to_exp], ticker=[ticker], option_type=[option_type])
+        # pass
 
 # *********************** Filling up the Null values **************************
 def shift5_numba(arr, num, fill_value=np.nan):
@@ -40,13 +55,63 @@ def shift5_numba(arr, num, fill_value=np.nan):
         result[:] = arr
     return result
 
-def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, mod=False, history=False, total_no_of_runs=1, run_number=0):
+def get_bot_backtest_data_date_list(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, option_type=None, uno=False, ucdc=False, classic=False, null_filler=False):
+    start_date, end_date = check_start_end_date(start_date, end_date)
+    if(uno):
+        table_name = get_bot_uno_backtest_table_name()
+    elif(ucdc):
+        table_name = get_bot_ucdc_backtest_table_name()
+    else:
+        table_name = get_bot_classic_backtest_table_name()
+    
+    query = f"select distinct spot_date from {table_name} where spot_date >= '{start_date}' and spot_date <= '{end_date}' "
+    query += f" "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += f"and " + check
+    if(type(time_to_exp) != type(None)):
+        query += f"and time_to_exp in {tuple_data(time_to_exp)} "
+    if(option_type):
+        query += f"and option_type in {tuple_data(option_type)} "
+    if(null_filler):
+        query += f"and event is null "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data.spot_date.unique()
+
+def get_bot_backtest_data(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, option_type=None, uno=False, ucdc=False, classic=False, null_filler=False, not_null=False):
+    start_date, end_date = check_start_end_date(start_date, end_date)
+    if(uno):
+        table_name = get_bot_uno_backtest_table_name()
+    elif(ucdc):
+        table_name = get_bot_ucdc_backtest_table_name()
+    elif(classic):
+        table_name = get_bot_classic_backtest_table_name()
+    else:
+        table_name = get_bot_uno_backtest_table_name()
+    
+    query = f"select * from {table_name} where spot_date >= '{start_date}' and spot_date <= '{end_date}' "
+    query += f" "
+    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    if(check != ""):
+        query += f"and " + check
+    if(type(time_to_exp) != type(None)):
+        query += f"and time_to_exp in {tuple_data(time_to_exp)} "
+    if(null_filler):
+        query += f"and event is null "
+    if(option_type):
+        query += f"and option_type in {tuple_data(option_type)} "
+    if(not_null):
+        query += f"and event is not null "
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
+
+def generate_hedging(start_date=None, end_date=None, time_to_exp=None, ticker=None, option_type=None, total_no_of_runs=1, run_number=0):
     time_to_exp = check_time_to_exp(time_to_exp)
     start_date, end_date = check_start_end_date(start_date, end_date)
     # This function is used for filling the nulls in executive options database. Checks whether the options are expired
     # or knocked out or not triggered at all.
     tqdm.pandas()
-    dates_df_unique = get_bot_backtest_data_date_list(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, uno=True, mod=mod, null_filler=True)
+    dates_df_unique = get_bot_backtest_data_date_list(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, option_type=option_type, uno=True, null_filler=False)
     # Dividing the dates to sections for running manually
     dates_df_unique = np.sort(dates_df_unique)
     divison_length = round(len(dates_df_unique) / total_no_of_runs)
@@ -55,10 +120,10 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
     date_min = min(dates_per_run[run_number])
     date_max = max(dates_per_run[run_number])
     # Downloading the options that are not triggered from the executive database.
-    null_df = get_bot_backtest_data(start_date=date_min, end_date=date_max, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, uno=True, mod=mod, null_filler=True)
+    null_df = get_bot_backtest_data(start_date=date_min, end_date=date_max, time_to_exp=time_to_exp, ticker=ticker, option_type=option_type, uno=True, null_filler=False)
     start_date = null_df.spot_date.min()
     #tac_data = tac_data_download_null_filler(start_date, args)
-    tac_data = get_master_tac_price(start_date=date_min, end_date=date_max, ticker=ticker, currency_code=currency_code)
+    tac_data = get_master_tac_price(start_date=date_min, end_date=date_max, ticker=ticker)
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     interest_rate_data = get_interest_rate_data()
     dividends_data = get_dividends_data()
@@ -90,9 +155,12 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
     del prices_df, tac_data
     gc.collect()
     table_name = get_bot_uno_backtest_table_name()
-    if mod:
-        table_name += "_mod"
+
     def exec_fill_fun(row, prices_np, dates_np, null_df):
+        result = row.to_frame().reset_index(inplace=False)
+        column_name = result.columns.values.tolist()
+        result = pd.DataFrame(columns=result[column_name[0]].to_list(), data=[result[column_name[1]].to_list()])
+        result_columns = result.columns.values.tolist()
         # Calculate the desired quantities row by row.
         # Everything is converted to numpy array for faster runtime.
         if row.expiry_date_index == -2:
@@ -150,82 +218,187 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
         stock_balance2 = np.copy(stock_balance)
         stock_balance2 = shift5_numba(stock_balance2, 1)
         stock_balance2 = np.nan_to_num(stock_balance2)
-
         if barrier_indices != 0:
             # barrier(knockout) is triggered.
-            row.event = "KO"
-            row["stock_balance"] = stock_balance[barrier_indices]
-            row["stock_price"] = prices_temp[barrier_indices]
-            row["now_price"] = prices_temp[barrier_indices]
-            row["event_date"] = dates_temp[barrier_indices]
-            row["event_price"] = prices_temp[barrier_indices]
-            row["expiry_price"] = prices_temp[-1]
-            row["now_date"] = dates_temp[barrier_indices]
-            row["expiry_payoff"] = row["barrier"] - row["strike"]
-            row["expiry_return"] = (prices_temp[-1] / prices_temp[0]) - 1
-            row["drawdown_return"] = np.amin(prices_temp) / prices_temp[0] - 1
-            row["duration"] = (row["event_date"] - row["spot_date"]).days / 365
-            row["r"] = r[barrier_indices]
-            row["q"] = q[barrier_indices]
-            row["v1"] = v1[barrier_indices]
-            row["v2"] = v2[barrier_indices]
-            row["t"] = t[barrier_indices]
+            indices = barrier_indices + 1
+            stock_balance_dataframe = pd.DataFrame(columns=["stock_balance"], data=stock_balance).reset_index(inplace=False)[:indices]
+            stock_price_dataframe = pd.DataFrame(columns=["stock_price"], data=prices_temp).reset_index(inplace=False)[:indices]
+            now_price_dataframe = pd.DataFrame(columns=["now_price"], data=prices_temp).reset_index(inplace=False)[:indices]
+            now_date_dataframe = pd.DataFrame(columns=["now_date"], data=dates_temp).reset_index(inplace=False)[:indices]
+            r_dataframe = pd.DataFrame(columns=["r"], data=r).reset_index(inplace=False)[:indices]
+            q_dataframe = pd.DataFrame(columns=["q"], data=q).reset_index(inplace=False)[:indices]
+            v1_dataframe = pd.DataFrame(columns=["v1"], data=v1).reset_index(inplace=False)[:indices]
+            v2_dataframe = pd.DataFrame(columns=["v2"], data=v2).reset_index(inplace=False)[:indices]
+            t_dataframe = pd.DataFrame(columns=["t"], data=t).reset_index(inplace=False)[:indices]
+
+            data = stock_balance_dataframe.merge(stock_price_dataframe, how="left", on=["index"])
+            data = data.merge(now_price_dataframe, how="left", on=["index"])
+            data = data.merge(now_date_dataframe, how="left", on=["index"])
+            data = data.merge(r_dataframe, how="left", on=["index"])
+            data = data.merge(q_dataframe, how="left", on=["index"])
+            data = data.merge(v1_dataframe, how="left", on=["index"])
+            data = data.merge(v2_dataframe, how="left", on=["index"])
+            data = data.merge(t_dataframe, how="left", on=["index"])
+
+            event = "KO"
+            expiry_index = len(data) - 1
+            event_price = prices_temp[barrier_indices]
+            expiry_price = prices_temp[-1]
+            event_date = dates_temp[barrier_indices]           
+            expiry_payoff = row["barrier"] - row["strike"]
+            expiry_return = (prices_temp[-1] / prices_temp[0]) - 1
+            drawdown_return  = np.amin(prices_temp) / prices_temp[0] - 1
+            duration = (row["event_date"] - row["spot_date"]).days / 365
             stock_balance[barrier_indices] = 0
             pnl = (stock_balance2 - stock_balance) * prices_temp
             churn = (stock_balance2 - stock_balance)
             pnl = pnl[:barrier_indices+1]
             churn = churn[:barrier_indices+1]
-            row["pnl"] = np.nansum(pnl)
+            pnl = np.nansum(pnl)
             delta_churn = np.abs(churn)
-            row["delta_churn"] = np.nansum(delta_churn)
-            row["bot_return"] = row["pnl"] / prices_temp[0]
-            row["num_hedges"] = np.sum(stock_balance2[:barrier_indices+1] != stock_balance[:barrier_indices+1])
+            delta_churn = np.nansum(delta_churn)
+            bot_return = pnl / prices_temp[0]
 
+            num_hedges = stock_balance2 - stock_balance
+            num_hedges_dataframe = pd.DataFrame(columns=["num_hedges"], data=num_hedges).reset_index(inplace=False)[:indices]
+            data = data.merge(num_hedges_dataframe, how="left", on=["index"])
+            data = data.drop(columns=["index"])
+
+            result = result.drop(columns=data.columns.values.tolist())
+            result = result.drop(columns=["event_price", "expiry_price", "event_date", "expiry_payoff", "expiry_return", "drawdown_return",
+            "duration", "pnl", "delta_churn", "bot_return", "event"])
+            column_name = result.columns.values.tolist()
+            result = pd.concat([data, result], axis=1)
+            for name in column_name:
+                result[name] = result[name].bfill().ffill()
+            result["days_to_expiry"] = result["t"]
+            result.loc[expiry_index, "event_price"] = event_price
+            result.loc[expiry_index, "expiry_price"] = expiry_price
+            result.loc[expiry_index, "event_date"] = event_date
+            result.loc[expiry_index, "expiry_payoff"] = expiry_payoff
+            result.loc[expiry_index, "expiry_return"] = expiry_return
+            result.loc[expiry_index, "drawdown_return"] = drawdown_return
+            result.loc[expiry_index, "duration"] = duration
+            result.loc[expiry_index, "pnl"] = pnl
+            result.loc[expiry_index, "delta_churn"] = delta_churn
+            result.loc[expiry_index, "bot_return"] = bot_return
+            result.loc[expiry_index, "event"] = event
+            uid = result.loc[0, "uid"]
+            result["uid"] = (result["uid"] + result["now_date"].astype(str)).str.replace("-", "", regex=True)
+            result[result_columns].to_csv(f"Hedging_{uid}.csv")
         elif dates_temp[-1] == row["expiry_date"]:
             # Expiry is triggered.
-            row.event = "expire"
-            row["stock_balance"] = stock_balance[-1]
-            row["stock_price"] = prices_temp[-1]
-            row["now_price"] = prices_temp[-1]
-            row["event_price"] = prices_temp[-1]
-            row["expiry_price"] = prices_temp[-1]
-            row["event_date"] = dates_temp[-1]
-            row["now_date"] = dates_temp[-1]
-            row["expiry_payoff"] = max(row["now_price"] - row["strike"], 0)
-            row["expiry_return"] = (prices_temp[-1] / prices_temp[0]) - 1
-            row["drawdown_return"] = np.amin(prices_temp) / prices_temp[0] - 1
-            row["duration"] = (row["event_date"] - row["spot_date"]).days / 365
-            row["r"] = r[-1]
-            row["q"] = q[-1]
-            row["v1"] = v1[-1]
-            row["v2"] = v2[-1]
-            row["t"] = t[-1]
+            stock_balance_dataframe = pd.DataFrame(columns=["stock_balance"], data=stock_balance).reset_index(inplace=False)
+            stock_price_dataframe = pd.DataFrame(columns=["stock_price"], data=prices_temp).reset_index(inplace=False)
+            now_price_dataframe = pd.DataFrame(columns=["now_price"], data=prices_temp).reset_index(inplace=False)
+            now_date_dataframe = pd.DataFrame(columns=["now_date"], data=dates_temp).reset_index(inplace=False)
+            r_dataframe = pd.DataFrame(columns=["r"], data=r).reset_index(inplace=False)
+            q_dataframe = pd.DataFrame(columns=["q"], data=q).reset_index(inplace=False)
+            v1_dataframe = pd.DataFrame(columns=["v1"], data=v1).reset_index(inplace=False)
+            v2_dataframe = pd.DataFrame(columns=["v2"], data=v2).reset_index(inplace=False)
+            t_dataframe = pd.DataFrame(columns=["t"], data=t).reset_index(inplace=False)
+
+            data = stock_balance_dataframe.merge(stock_price_dataframe, how="left", on=["index"])
+            data = data.merge(now_price_dataframe, how="left", on=["index"])
+            data = data.merge(now_date_dataframe, how="left", on=["index"])
+            data = data.merge(r_dataframe, how="left", on=["index"])
+            data = data.merge(q_dataframe, how="left", on=["index"])
+            data = data.merge(v1_dataframe, how="left", on=["index"])
+            data = data.merge(v2_dataframe, how="left", on=["index"])
+            data = data.merge(t_dataframe, how="left", on=["index"])
+
+            event = "expire"
+            expiry_index = len(data) - 1
+            event_price = prices_temp[-1]
+            expiry_price = prices_temp[-1]
+            event_date = dates_temp[-1]            
+            expiry_payoff = max(row["now_price"] - row["strike"], 0)
+            expiry_return = (prices_temp[-1] / prices_temp[0]) - 1
+            drawdown_return  = np.amin(prices_temp) / prices_temp[0] - 1
+            duration = (row["event_date"] - row["spot_date"]).days / 365
             stock_balance[-1] = 0
             pnl = (stock_balance2 - stock_balance) * prices_temp
             churn = (stock_balance2 - stock_balance)
-            row["pnl"] = np.nansum(pnl)
+            pnl = np.nansum(pnl)
             delta_churn = np.abs(churn)
-            row["delta_churn"] = np.nansum(delta_churn)
-            row["bot_return"] = row["pnl"] / prices_temp[0]
-            row["num_hedges"] = np.sum(stock_balance2 != stock_balance)
+            delta_churn = np.nansum(delta_churn)
+            bot_return = pnl / prices_temp[0]
 
+            num_hedges = stock_balance2 - stock_balance
+            num_hedges_dataframe = pd.DataFrame(columns=["num_hedges"], data=num_hedges).reset_index(inplace=False)
+            data = data.merge(num_hedges_dataframe, how="left", on=["index"])
+            data = data.drop(columns=["index"])
+
+            result = result.drop(columns=data.columns.values.tolist())
+            result = result.drop(columns=["event_price", "expiry_price", "event_date", "expiry_payoff", "expiry_return", "drawdown_return",
+            "duration", "pnl", "delta_churn", "bot_return", "event"])
+            column_name = result.columns.values.tolist()
+            result = pd.concat([data, result], axis=1)
+            for name in column_name:
+                result[name] = result[name].bfill().ffill()
+            result["days_to_expiry"] = result["t"]
+            result.loc[expiry_index, "event_price"] = event_price
+            result.loc[expiry_index, "expiry_price"] = expiry_price
+            result.loc[expiry_index, "event_date"] = event_date
+            result.loc[expiry_index, "expiry_payoff"] = expiry_payoff
+            result.loc[expiry_index, "expiry_return"] = expiry_return
+            result.loc[expiry_index, "drawdown_return"] = drawdown_return
+            result.loc[expiry_index, "duration"] = duration
+            result.loc[expiry_index, "pnl"] = pnl
+            result.loc[expiry_index, "delta_churn"] = delta_churn
+            result.loc[expiry_index, "bot_return"] = bot_return
+            result.loc[expiry_index, "event"] = event
+            uid = result.loc[0, "uid"]
+            result["uid"] = (result["uid"] + result["now_date"].astype(str)).str.replace("-", "", regex=True)
+            result[result_columns].to_csv(f"Hedging_{uid}.csv")
         else:
-            # No event is triggered.
-            row.event = None
-            row["stock_balance"] = 0
-            row["stock_price"] = prices_temp[-1]
-            row["now_price"] = prices_temp[-1]
-            row["event_date"] = None
-            row["now_date"] = dates_temp[-1]
-            row["expiry_payoff"] = None
-            row["v1"] = v1[-1]
-            row["v2"] = v2[-1]
-            row["r"] = r[-1]
-            row["q"] = q[-1]
-            row["pnl"] = None
-            row["delta_churn"] = None
-            row["t"] = t[-1]
-            row["num_hedges"] = None
+            stock_balance_dataframe = pd.DataFrame(columns=["stock_balance"], data=stock_balance).reset_index(inplace=False)
+            stock_price_dataframe = pd.DataFrame(columns=["stock_price"], data=prices_temp).reset_index(inplace=False)
+            now_price_dataframe = pd.DataFrame(columns=["now_price"], data=prices_temp).reset_index(inplace=False)
+            now_date_dataframe = pd.DataFrame(columns=["now_date"], data=dates_temp).reset_index(inplace=False)
+            r_dataframe = pd.DataFrame(columns=["r"], data=r).reset_index(inplace=False)
+            q_dataframe = pd.DataFrame(columns=["q"], data=q).reset_index(inplace=False)
+            v1_dataframe = pd.DataFrame(columns=["v1"], data=v1).reset_index(inplace=False)
+            v2_dataframe = pd.DataFrame(columns=["v2"], data=v2).reset_index(inplace=False)
+            t_dataframe = pd.DataFrame(columns=["t"], data=t).reset_index(inplace=False)
+
+            data = stock_balance_dataframe.merge(stock_price_dataframe, how="left", on=["index"])
+            data = data.merge(now_price_dataframe, how="left", on=["index"])
+            data = data.merge(now_date_dataframe, how="left", on=["index"])
+            data = data.merge(r_dataframe, how="left", on=["index"])
+            data = data.merge(q_dataframe, how="left", on=["index"])
+            data = data.merge(v1_dataframe, how="left", on=["index"])
+            data = data.merge(v2_dataframe, how="left", on=["index"])
+            data = data.merge(t_dataframe, how="left", on=["index"])
+
+            num_hedges = stock_balance2 - stock_balance
+            num_hedges_dataframe = pd.DataFrame(columns=["num_hedges"], data=num_hedges).reset_index(inplace=False)
+            data = data.merge(num_hedges_dataframe, how="left", on=["index"])
+            data = data.drop(columns=["index"])
+
+            result = result.drop(columns=data.columns.values.tolist())
+            result = result.drop(columns=["event_price", "expiry_price", "event_date", "expiry_payoff", "expiry_return", "drawdown_return",
+            "duration", "pnl", "delta_churn", "bot_return", "event"])
+            column_name = result.columns.values.tolist()
+            result = pd.concat([data, result], axis=1)
+            for name in column_name:
+                result[name] = result[name].bfill().ffill()
+            result["days_to_expiry"] = result["t"]
+            result["event_price"] = None
+            result["expiry_price"] = None
+            result["event_date"] = None
+            result["expiry_payoff"] = None
+            result["expiry_return"] = None
+            result["drawdown_return"] = None
+            result["duration"] = None
+            result["pnl"] = None
+            result["delta_churn"] = None
+            result["bot_return"] = None
+            result["event"] = None
+            uid = result.loc[0, "uid"]
+            result["uid"] = (result["uid"] + result["now_date"].astype(str)).str.replace("-", "", regex=True)
+            result[result_columns].to_csv(f"Hedging_{uid}.csv")
+        # sys.exit(1)
         return row
 
     logging.basicConfig(filename="logfilename.log", level=logging.INFO)
@@ -234,9 +407,12 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
         prev = np.arange(len(arr))
         prev[arr == 2] = 2
         prev = np.maximum.accumulate(prev)
-        return arr[prev]
+        if(len(arr) > 2):
+            return arr[prev]
+        return arr
+
     def foo(k):
-        try:
+        # try:
             # run the null filler for each section of dates
             date_temp = dates_per_run[run_number][k]
             null_df_small = null_df[null_df.spot_date == date_temp]
@@ -245,30 +421,16 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
             null_df_small.drop(["expiry_date_index", "spot_date_index", "ticker_index"], axis=1, inplace=True)
             null_df_small = null_df_small.infer_objects()
             table_name = get_bot_uno_backtest_table_name()
-            if mod:
-                table_name += "_mod"
-            upsert_data_to_database(null_df_small, table_name, "uid", how="update", cpu_count=True, Text=True)
+            # upsert_data_to_database(null_df_small, table_name, "uid", how="update", cpu_count=True, Text=True)
             print(f"Finished {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
 
-        except Exception as e:
-            print(e)
-            logging.error(e)
-            logging.error(f"Error for {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
-            print(f"Error for {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
+        # except Exception as e:
+        #     print(e)
+        #     logging.error(e)
+        #     logging.error(f"Error for {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
+        #     print(f"Error for {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
 
-
-    if len(null_df) > len(dates_per_run[run_number]):
-        for i in range(int(len(dates_per_run[run_number]))):
-            foo(i)
-    else:
-        if (history):
-            null_df["num_hedges"] = None
-        null_df = null_df.progress_apply(exec_fill_fun, axis=1, raw=True)
-        null_df.drop(["expiry_date_index", "spot_date_index", "ticker_index"], axis=1, inplace=True)
-        null_df = null_df.infer_objects()
-        if len(null_df) > 0 :
-            null_df = null_df.drop_duplicates(subset=["uid"], keep="first", inplace=False)
-            upsert_data_to_database(null_df, table_name, "uid", how="update", cpu_count=True, Text=True)
-    # ********************************************************************************************
+    for i in range(int(len(dates_per_run[run_number]))):
+        foo(i)
     print(f"Filling up the nulls is finished.")
 

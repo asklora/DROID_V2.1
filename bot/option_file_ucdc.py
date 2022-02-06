@@ -462,7 +462,9 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
         prev = np.arange(len(arr))
         prev[arr == 2] = 2
         prev = np.maximum.accumulate(prev)
-        return arr[prev]
+        if(len(arr) > 2):
+            return arr[prev]
+        return arr
 
     def foo(k):
         try:

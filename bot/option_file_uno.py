@@ -479,7 +479,10 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
         prev = np.arange(len(arr))
         prev[arr == 2] = 2
         prev = np.maximum.accumulate(prev)
-        return arr[prev]
+        if(len(arr) > 2):
+            return arr[prev]
+        return arr
+
     def foo(k):
         try:
             # run the null filler for each section of dates
