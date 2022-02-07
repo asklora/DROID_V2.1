@@ -398,7 +398,7 @@ def generate_hedging(start_date=None, end_date=None, time_to_exp=None, ticker=No
             uid = result.loc[0, "uid"]
             result["uid"] = (result["uid"] + result["now_date"].astype(str)).str.replace("-", "", regex=True)
             result[result_columns].to_csv(f"Hedging_{uid}.csv")
-        # sys.exit(1)
+        sys.exit(1)
         return row
 
     logging.basicConfig(filename="logfilename.log", level=logging.INFO)
