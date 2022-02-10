@@ -58,3 +58,15 @@ def get_industry_group():
     data = pd.DataFrame(content["industries"]).rename(columns={"industry_code": 'industry_group_code',
                                                                "industry_name": "industry_group_name"})
     return data
+
+@retry(delay=1)
+def get_single_ticker_close_price(ticker, start_date, end_date):
+    ''' get industry group code/name from API '''
+    print(f"API request: close_price from /ohlcv_price")
+    query = {'tickers': [ticker], "start_date": start_date, "end_date": end_date, "fields": ["close"]}
+    response = requests.get(f"{api_url}/ohlcv_price/", params=query)
+    content = json.loads(response.content)
+    data = pd.DataFrame(content["hits"])
+    data["close"] = [x["close"] for x in data["details"].to_list()]
+    return data.set_index(['trading_day'])['close'].to_dict()
+
