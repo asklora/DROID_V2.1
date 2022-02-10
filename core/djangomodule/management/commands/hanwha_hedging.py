@@ -125,11 +125,11 @@ class Command(BaseCommand):
                 order.save()
             performance = PositionPerformance.objects.get(order_uid=order.order_uid)
             position = OrderPosition.objects.get(pk=performance.position_uid_id)
-            if("CLASSIC" not in bot_id):
+            if("CLASSIC" in bot_id):
                 classic_position_check(position.position_uid, tac=True)
-            if("UNO" not in bot_id):
+            if("UNO" in bot_id):
                 uno_position_check(position.position_uid, tac=True)
-            if("UCDC" not in bot_id):
+            if("UCDC" in bot_id):
                 ucdc_position_check(position.position_uid, tac=True)
             pass
 
