@@ -309,7 +309,7 @@ def uno_position_check(position_uid, to_date=None, tac=False, hedge=False, lates
                     break
         elif(tac):
             tac_data = MasterOhlcvtr.objects.filter(
-                ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=exp_date, day_status="trading_day").order_by("trading_day")
+                ticker=position.ticker, trading_day__gt=trading_day, trading_day__lte=exp_date, day_status="trading_day").exclude(close__isnull=True).order_by("trading_day")
             for tac_price in tac_data:
                 trading_day = tac_price.trading_day
                 status, order_id = create_performance(tac_price, position, tac=True)
@@ -334,7 +334,7 @@ def uno_position_check(position_uid, to_date=None, tac=False, hedge=False, lates
                 trading_day = trading_day.date()
             if trading_day >= position.expiry:
                 try:
-                    tac_data = MasterOhlcvtr.objects.filter(ticker=position.ticker, trading_day__gte=position.expiry, day_status="trading_day").latest("trading_day")
+                    tac_data = MasterOhlcvtr.objects.filter(ticker=position.ticker, trading_day__gte=position.expiry, day_status="trading_day").exclude(close__isnull=True).latest("trading_day")
                     if(not status and tac_data):
                         position.expiry = tac_data.trading_day
                         position.save()

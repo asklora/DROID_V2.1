@@ -258,7 +258,7 @@ def classic_position_check(position_uid, to_date=None, tac=False, hedge=False, l
                 trading_day = trading_day.date()
             if trading_day >= position.expiry:
                 try:
-                    tac_data = MasterOhlcvtr.objects.filter(ticker=position.ticker, trading_day__gte=position.expiry, day_status="trading_day").latest("trading_day")
+                    tac_data = MasterOhlcvtr.objects.filter(ticker=position.ticker, trading_day__gte=position.expiry, day_status="trading_day").exclude(close__isnull=True).latest("trading_day")
                     if(not status and tac_data):
                         position.expiry = tac_data.trading_day
                         position.save()
