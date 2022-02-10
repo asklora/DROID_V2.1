@@ -1,4 +1,6 @@
 from math import floor
+from portfolio.daily_hedge_classic import classic_position_check
+from portfolio.daily_hedge_ucdc import ucdc_position_check
 from portfolio.daily_hedge_uno import uno_position_check
 from core.orders.models import Order, PositionPerformance, OrderPosition
 from general.date_process import dateNow
@@ -123,6 +125,11 @@ class Command(BaseCommand):
                 order.save()
             performance = PositionPerformance.objects.get(order_uid=order.order_uid)
             position = OrderPosition.objects.get(pk=performance.position_uid_id)
-            uno_position_check(position.position_uid, to_date=None, tac=True, hedge=False, latest=False)
+            if("CLASSIC" not in bot_id):
+                classic_position_check(position.position_uid, tac=True)
+            if("UNO" not in bot_id):
+                uno_position_check(position.position_uid, tac=True)
+            if("UCDC" not in bot_id):
+                ucdc_position_check(position.position_uid, tac=True)
             pass
 
