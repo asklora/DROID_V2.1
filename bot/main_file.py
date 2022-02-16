@@ -149,7 +149,6 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
             aa = pd.DataFrame(df[df.index.isin(valid_tickers_list)])
             aa.reset_index(inplace=True)
             return aa
-
         for i in range(len(technicals_list)):
             tech_temp = series_to_pandas(technicals_list[i])
             tech_temp = tech_temp.rename(columns={0 : technicals_names_list[i]})

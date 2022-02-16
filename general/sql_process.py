@@ -8,16 +8,17 @@ env = Env()
 load_dotenv()
 db = DroidDb()
 
-debug=env.bool("DROID_DEBUG")
-if debug:
-    read_endpoint, write_endpoint, port = db.test_url
-    alibaba_db_url = DB_URL_ALIBABA_DEV
-else:
-    read_endpoint, write_endpoint, port = db.prod_url
-    alibaba_db_url = DB_URL_ALIBABA_PROD
+# debug=env.bool("DROID_DEBUG")
+# if debug:
+#     read_endpoint, write_endpoint, port = db.test_url
+#     alibaba_db_url = DB_URL_ALIBABA_DEV
+# else:
+#     read_endpoint, write_endpoint, port = db.prod_url
+#     alibaba_db_url = DB_URL_ALIBABA_PROD
 
-db_read = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+read_endpoint+":"+str(port)+"/"+os.getenv("DBUSER")
-db_write = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+write_endpoint+":"+str(port)+"/"+os.getenv("DBUSER")
+# db_read = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+read_endpoint+":"+str(port)+"/"+os.getenv("DBUSER")
+# db_write = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+write_endpoint+":"+str(port)+"/"+os.getenv("DBUSER")
+db_url = "postgres://backtest_tmp:TU1HB5c5rTvuRr2u@pgm-3nse9b275d7vr3u18o.pg.rds.aliyuncs.com:1921/backtest_tmp"
 
 def get_debug_url():
     debug_read_endpoint, debug_write_endpoint, debug_port = db.test_url
@@ -25,7 +26,7 @@ def get_debug_url():
     return db_debug_write
     
 def do_function(func):
-    engine = create_engine(db_write)
+    engine = create_engine(db_url)
     print("create connections to db")
     connection = engine.raw_connection()
     cursor = connection.cursor()

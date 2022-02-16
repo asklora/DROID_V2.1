@@ -17,7 +17,6 @@ def get_close_vol(multiplier, days_in_year=256):
 
 def get_total_return(tris):
     total_return = (tris.iloc[-1, :] / tris.iloc[0, :]) - 1
-
     return total_return
 
 
