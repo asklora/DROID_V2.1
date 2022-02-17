@@ -227,6 +227,12 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     options_df["drawdown_return"] = None
     options_df["duration"] = None
     options_df["bot_return"] = None
+    options_df["bot_id"] = "UCDC_" + options_df["option_type"].astype(str) + "_" + options_df["time_to_exp"].astype(str)
+    options_df["bot_id"] = options_df["bot_id"].str.replace(".", "", regex=True)
+    options_df["total_bot_share_num"] = 1
+    options_df["hedge_share"] = None
+    options_df["delta"] = deltaRC(options_df["now_price"], options_df["strike_1"], options_df["strike_2"], options_df["t"],
+        options_df["r"], options_df["q"], options_df["v1"], options_df["v2"])
 
     if (mod):
         options_df_temp = pd.DataFrame(columns=options_df.columns)
@@ -437,6 +443,8 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
                 delta_churn = np.abs(churn)
                 row["delta_churn"] = np.nansum(delta_churn)
             row["bot_return"] = row["pnl"] / prices_temp[0]
+            row["hedge_share"] = last_hedge[-1] - stock_balance[-1]
+            row["delta"] = stock_balance[-1]
         else:
             # No event is triggered.
             row.event = None
@@ -454,6 +462,8 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
             row["delta_churn"] = None
             row["t"] = t[-1]
             row["num_hedges"] = None
+            row["hedge_share"] = last_hedge[-1] - stock_balance[-1]
+            row["delta"] = stock_balance[-1]
         return row
 
     logging.basicConfig(filename="logfilename.log", level=logging.INFO)

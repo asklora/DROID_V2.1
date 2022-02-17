@@ -207,9 +207,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     options_df["target_max_loss"] = Up_Out_Call(options_df["now_price"], options_df["strike"], options_df["barrier"],
         (options_df["barrier"] - options_df["strike"]), options_df["t"],
         options_df["r"], options_df["q"], options_df["v1"], options_df["v2"])
-
     options_df["target_profit"] = options_df["barrier"] - options_df["strike"]
-
     options_df["stock_balance"] = None
     options_df["stock_price"] = None
     options_df["event_date"] = None
@@ -223,6 +221,13 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     options_df["drawdown_return"] = None
     options_df["duration"] = None
     options_df["bot_return"] = None
+    options_df["bot_id"] = "UNO_" + options_df["option_type"].astype(str) + "_" + options_df["time_to_exp"].astype(str)
+    options_df["bot_id"] = options_df["bot_id"].str.replace(".", "", regex=True)
+    options_df["total_bot_share_num"] = 2
+    options_df["hedge_share"] = None
+    options_df["delta"] = deltaUnOC(options_df["now_price"], options_df["strike"], options_df["barrier"],
+        (options_df["barrier"] - options_df["strike"]), options_df["t"],
+        options_df["r"], options_df["q"], options_df["v1"], options_df["v2"])
 
     if (mod):
         options_df_temp = pd.DataFrame(columns=options_df.columns)
@@ -260,13 +265,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
 
     table_name = get_bot_uno_backtest_table_name()
     if history:
-        # options_df = options_df[options_df.spot_date >= start_date]
-        # truncate_table(table_name)
         upsert_data_to_database(options_df, table_name, "uid", how="ignore", cpu_count=True, Text=True)
-    # elif new_ticker:
-    #     print("NEW TICKER")
-    #     # options_df = options_df[options_df.spot_date == options_df.spot_date.max()]
-    #     upsert_data_to_database(options_df, table_name, "uid", how="ignore", cpu_count=True, Text=True)
     else:
         upsert_data_to_database(options_df, table_name, "uid", how="ignore", cpu_count=True, Text=True)
 
@@ -425,6 +424,8 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
             row["delta_churn"] = np.nansum(delta_churn)
             row["bot_return"] = row["pnl"] / prices_temp[0]
             row["num_hedges"] = np.sum(stock_balance2[:barrier_indices+1] != stock_balance[:barrier_indices+1])
+            row["hedge_share"] = last_hedge[barrier_indices] - stock_balance[barrier_indices]
+            row["delta"] = stock_balance[barrier_indices]
 
         elif dates_temp[-1] == row["expiry_date"]:
             # Expiry is triggered.
@@ -453,6 +454,8 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
             row["delta_churn"] = np.nansum(delta_churn)
             row["bot_return"] = row["pnl"] / prices_temp[0]
             row["num_hedges"] = np.sum(stock_balance2 != stock_balance)
+            row["hedge_share"] = last_hedge[-1] - stock_balance[-1]
+            row["delta"] = stock_balance[-1]
 
         else:
             # No event is triggered.
@@ -471,6 +474,8 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
             row["delta_churn"] = None
             row["t"] = t[-1]
             row["num_hedges"] = None
+            row["hedge_share"] = last_hedge[-1] - stock_balance[-1]
+            row["delta"] = stock_balance[-1]
         return row
 
     logging.basicConfig(filename="logfilename.log", level=logging.INFO)

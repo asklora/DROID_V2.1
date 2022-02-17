@@ -5,7 +5,7 @@ import sqlalchemy as db
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count as cpucount
 from sqlalchemy.types import DATE, BIGINT, TEXT, INTEGER, BOOLEAN, Integer
-from general.sql_process import db_read, db_write, get_debug_url, alibaba_db_url, DB_URL_ALIBABA_PROD
+# from general.sql_process import db_read, db_write, get_debug_url, alibaba_db_url, DB_URL_ALIBABA_PROD
 from pangres import upsert
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
@@ -13,10 +13,11 @@ from general.date_process import dateNow, timestampNow, str_to_date
 from general.sql_query import get_order_performance_by_ticker
 from general.table_name import get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_consolidated_table_name, get_universe_table_name, get_user_core_table_name, get_user_profit_history_table_name
 from general.data_process import tuple_data
+db_url = "postgres://backtest_tmp:TU1HB5c5rTvuRr2u@pgm-3nse9b275d7vr3u18o.pg.rds.aliyuncs.com:1921/backtest_tmp"
 
 def execute_query(query, table=None):
     print(f"Execute Query to Table {table}")
-    engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    engine = create_engine(db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
         result = conn.execute(query)
     engine.dispose()
@@ -39,7 +40,7 @@ def replace_table_datebase_ali(data, table_name):
 
 def insert_data_to_database(data, table, how="append"):
     print(f"=== Insert Data to Database on Table {table} ===")
-    engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    engine = create_engine(db_url, max_overflow=-1, isolation_level="AUTOCOMMIT")
     try:
         with engine.connect() as conn:
             data.to_sql(
@@ -54,7 +55,7 @@ def insert_data_to_database(data, table, how="append"):
     except Exception as ex:
         print(f"error: ", ex)
 
-def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=False, Text=False, Date=False, Int=False, Bigint=False, Bool=False, debug=False):
+def upsert_data_to_database(data, table, primary_key, how="update", Text=False, Date=False, Int=False, Bigint=False, Bool=False, debug=False, cpu_count=True):
     try:
         print(f"=== Upsert Data to Database on Table {table} ===")
         data = data.drop_duplicates(subset=[primary_key], keep="first", inplace=False)
@@ -73,10 +74,7 @@ def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=Fa
         else:
             data_type={primary_key:TEXT}
         
-        if(cpu_count):
-            engine = create_engine(db_write, pool_size=cpucount(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-        else:
-            engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
+        engine = create_engine(db_url, pool_size=cpucount(), max_overflow=-1, isolation_level="AUTOCOMMIT")
         upsert(engine=engine,
             df=data,
             table_name=table,
@@ -85,20 +83,6 @@ def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=Fa
             dtype=data_type)
         print(f"DATA UPSERT TO {table}")
         engine.dispose()
-        if(debug):
-            try:
-                engine = create_engine(get_debug_url(), pool_size=cpucount(), max_overflow=-1, isolation_level="AUTOCOMMIT")
-                upsert(engine=engine,
-                    df=data,
-                    table_name=table,
-                    if_row_exists=how,
-                    chunksize=20000,
-                    dtype=data_type)
-                print(f"DATA UPSERT TO {table}")
-                engine.dispose()
-            except Exception as e:
-                report_to_slack(f"===  ERROR IN UPSERT TEST DB ===")
-                report_to_slack(str(e))
     except Exception as e:
         report_to_slack(f"===  ERROR IN UPSERT DB === Error : {e}")
 

@@ -109,6 +109,10 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     main_pred["bot_return"] = None
     main_pred["duration"] = None
     main_pred["pnl"] = None
+    main_pred["bot_id"] = "CLASSIC_classic_" + main_pred["time_to_exp"].astype(str).str.replace(".", "", regex=True)
+    main_pred["delta"] = 100
+    main_pred["total_bot_share_num"] = 1
+    main_pred["hedge_share"] = None
 
     # Adding UID
     main_pred["uid"] = main_pred["ticker"] + "_" + main_pred["spot_date"].astype(str) + "_" + \
@@ -194,6 +198,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                     row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
                     row.pnl = prices_temp[-1] - prices_temp[0]
                     row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
+                    row.hedge_share = -1
             else:
                 # If one of the events is triggered.
                 if sl_indices > tp_indices:
@@ -206,6 +211,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                     row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
                     row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
                     row.pnl = prices_temp[sl_indices] - prices_temp[0]
+                    row.hedge_share = -1
 
                 else:
                     # If take profit is triggered.
@@ -217,6 +223,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                     row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
                     row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
                     row.pnl = prices_temp[tp_indices] - prices_temp[0]
+                    row.hedge_share = -1
 
 
             if prices_temp.index[-1] < temp_date:

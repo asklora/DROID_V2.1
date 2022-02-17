@@ -1,10 +1,10 @@
 import pandas as pd
 from django.conf import settings
-from core.djangomodule.general import get_cached_data,set_cache_data
+# from core.djangomodule.general import get_cached_data,set_cache_data
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general import table_name
-from general.sql_process import db_read, alibaba_db_url, DB_URL_ALIBABA_PROD
+# from general.sql_process import db_read, alibaba_db_url, DB_URL_ALIBABA_PROD
 from general.date_process import (
     backdate_by_day,
     backdate_by_year,
@@ -59,12 +59,12 @@ from general.table_name import (
 )
 
 
-from core.djangomodule.general import logging
+# from core.djangomodule.general import logging
 
 
 
 
-def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=settings.SQLPRINT):
+def read_query(query, table=get_universe_table_name(), prints=True, cpu_counts=True):
     """Base function for database query
 
     Args:
@@ -78,28 +78,17 @@ def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba
     Returns:
         DataFrame: Resulting data from the query
     """
-  
-    if(prints):
-        logging.info(f"Get Data From Database on {table} table")
-    if alibaba:
-        dbcon = alibaba_db_url
-    else:
-        dbcon = db_read
-
-    if cpu_counts:
-        engine = create_engine(
-            dbcon, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT"
-        )
-    else:
-        engine = create_engine(dbcon, max_overflow=-1, isolation_level="AUTOCOMMIT")
-
+    # if(prints):
+        # logging.info(f"Get Data From Database on {table} table")
+    db_url = "postgres://backtest_tmp:TU1HB5c5rTvuRr2u@pgm-3nse9b275d7vr3u18o.pg.rds.aliyuncs.com:1921/backtest_tmp"
+    engine = create_engine(db_url, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
         data = pd.read_sql(query, con=conn)
     engine.dispose()
     data = pd.DataFrame(data)
-
-    if prints:
-        logging.info("Total Data = " + str(len(data)))
+    print(data)
+    print("Total Data = " + str(len(data)))
+        # logging.info("Total Data = " + str(len(data)))
     return data
 
 
@@ -714,12 +703,8 @@ def get_bot_type(condition=None):
     query = f"select * from {table_name} "
     if type(condition) != type(None):
         query += f" where {condition}"
-    cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
-    if  not isinstance(cached_data,pd.DataFrame) :
-        data = read_query(query, table_name, cpu_counts=True)
-        set_cache_data(table_name,data.to_dict("records"))
-        return data
-    return cached_data
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
 
 
 def get_latest_bot_update_data(ticker=None, currency_code=None):
@@ -764,12 +749,8 @@ def get_bot_option_type(condition=None):
     query = f"select * from {table_name} "
     if type(condition) != type(None):
         query += f" where {condition}"
-    cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
-    if  not isinstance(cached_data,pd.DataFrame) :
-        data = read_query(query, table_name, cpu_counts=True)
-        set_cache_data(table_name,data.to_dict("records"))
-        return data
-    return cached_data
+    data = read_query(query, table_name, cpu_counts=True)
+    return data
 
 
 def get_latest_ranking(ticker=None, currency_code=None, active=True):
