@@ -258,7 +258,14 @@ jpy_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code JPY --ucdc True --infer True
 
 hanwha_hedging:
-	@python3 manage.py hanwha_hedging --settings=config.settings.production --ticker TSLA.O --bot_id UNO_OTM_015384 --spot_date 2021-12-03
-	@python3 manage.py hanwha_hedging --settings=config.settings.production --ticker TSLA.O --bot_id UNO_ITM_015384 --spot_date 2021-12-03
-	@python3 manage.py hanwha_hedging --settings=config.settings.production --ticker NFLX.O --bot_id UCDC_ATM_015384 --spot_date 2021-12-03
+	@#python3 manage.py hanwha_hedging --settings=config.settings.production --ticker TSLA.O --bot_id UNO_OTM_007692 --spot_date 2021-09-30
+	@#python3 manage.py hanwha_hedging --settings=config.settings.production --ticker TSLA.O --bot_id UNO_ITM_007692 --spot_date 2021-09-30
+	@#python3 manage.py hanwha_hedging --settings=config.settings.production --ticker TSLA.O --bot_id UNO_OTM_007692 --spot_date 2021-12-20
+	@#python3 manage.py hanwha_hedging --settings=config.settings.production --ticker TSLA.O --bot_id UNO_ITM_007692 --spot_date 2021-12-20
+	@python3 manage.py hanwha_hedging --settings=config.settings.production --ticker FB.O --bot_id UNO_OTM_007692 --spot_date 2022-01-06
+
+	@python3 manage.py hanwha_hedging --settings=config.settings.production --ticker AAPL.O --bot_id UCDC_ATM_007692 --spot_date 2021-10-29
+	@python3 manage.py hanwha_hedging --settings=config.settings.production --ticker DIS --bot_id UCDC_ATM_007692 --spot_date 2021-11-17
+	@python3 manage.py hanwha_hedging --settings=config.settings.production --ticker AAPL.O --bot_id UCDC_ATM_007692 --spot_date 2021-09-20
+
 	@python3 manage.py hanwha_hedging --settings=config.settings.production --save_csv True

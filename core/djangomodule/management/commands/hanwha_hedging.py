@@ -41,7 +41,7 @@ class Command(BaseCommand):
             for i in position:
                 # get all hedging details
                 performance = PositionPerformance.objects.filter(position_uid_id=i.position_uid)
-                performance = pd.DataFrame(performance.values('created', 'current_pnl_ret', 'order_summary')
+                performance = pd.DataFrame(performance.values('created', 'current_pnl_ret', 'order_summary', 'barrier')
                                            ).rename(columns={"created": "trading_day"})
                 performance['hedge_shares'] = [x['hedge_shares'] if x else None for x in performance['order_summary'].to_list()]
                 performance = performance.drop(columns=['order_summary'])
@@ -53,6 +53,7 @@ class Command(BaseCommand):
 
                 # merge & save sheet
                 performance = performance.merge(price, on=["trading_day"], how="outer").sort_values(by=['trading_day'])
+                performance['expiry'] = i.expiry
                 sheet_name = f"{str(i.ticker).split('.')[0]}_{i.bot_id}_{i.spot_date.strftime('%Y%m%d')}"
                 performance.to_excel(xls, sheet_name=sheet_name, index=False)
             xls.save()
