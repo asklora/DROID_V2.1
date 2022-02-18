@@ -27,7 +27,7 @@ def test_hedge_values_for_ucdc_bot(
     # step 1: create a new order
     master = MasterOhlcvtr.objects.get(
         ticker=ticker,
-        trading_day="2021-05-03",
+        trading_day="2021-10-05",
     )
     price = master.close
     log_time = datetime.combine(master.trading_day, datetime.min.time())
