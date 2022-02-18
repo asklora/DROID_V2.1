@@ -16,7 +16,7 @@ from django.core.management.base import BaseCommand
 
 from core.services.healthcheck.run import run_healthcheck
 
-# from datasource.rkd import RkdData
+from datasource.rkd import RkdData
 # from core.universe.models import Universe
 # import pandas as pd
 # from core.services.order_services import pending_order_checker
@@ -25,7 +25,7 @@ from core.services.healthcheck.run import run_healthcheck
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Process")
-        run_healthcheck.apply()
+        # run_healthcheck.apply()
         # pending_order_checker(currency=["HKD"])
         # firebase_ranking_update_random()
         # ticker = list(
@@ -36,8 +36,8 @@ class Command(BaseCommand):
         #     .exclude(Error__contains="{")
         #     .values_list("ticker", flat=True)
         # )
-        # rkd = RkdData()
-        # print(rkd.bulk_get_quote(['1797.HK',],df=True))
+        rkd = RkdData()
+        rkd.bulk_get_quote(['XLNX.O','AAPL.O'],df=True,save=True)
         # update_season_monthly()
         # update_monthly_deposit()
         # populate_daily_profit(user_id=[1846])

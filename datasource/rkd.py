@@ -21,6 +21,8 @@ import gc
 from core.djangomodule.general import logging, jsonprint
 from django.conf import settings
 
+from general.slack import report_to_slack
+
 
 db = firestore.client()
 
@@ -48,6 +50,7 @@ def bulk_update_rtdb(data):
 
 class Rkd:
     token = None
+    error_message = []
 
     def __init__(self, *args, **kwargs):
         self.credentials = ThirdpartyCredentials.objects.get(services="RKD")
@@ -215,9 +218,10 @@ class Rkd:
                             val = f.get("Value", 0)
                             formated_json_data[index].update({field: val})
                     else:
-                        logging.warning(
-                            f"error status message {item['Status']['StatusMsg']} for {ticker}, there is no response data"
-                        )
+                        warning_message = f"*error status message {item['Status']['StatusMsg']} for {ticker}, there is no response data from RKD*"
+                        logging.warning(warning_message)
+                        self.error_message.append(warning_message)
+
             return formated_json_data
         logging.error(response)
         raise Exception(response)
@@ -503,6 +507,21 @@ class RkdData(Rkd):
             else:
                 raise Exception(response)
 
+    def remove_na(self, df):
+        if len(df) > 1:
+            df = df.dropna(
+                subset=[
+                    "intraday_ask",
+                    "close",
+                    "open",
+                    "intraday_bid",
+                    "high",
+                    "low",
+                    "latest_price",
+                ],
+            )
+        return df
+
     def bulk_get_quote(
         self, ticker: list, df=False, save=False, **options
     ) -> Optional[Union[pd.DataFrame, dict]]:
@@ -542,6 +561,7 @@ class RkdData(Rkd):
         )
         data: pd.DataFrame = pd.concat(response, ignore_index=True)
         if save:
+            self.remove_na(data)
             print("saving....")
             self.save("master", "LatestPrice", data.to_dict("records"))
         if df:
@@ -607,6 +627,8 @@ class RkdData(Rkd):
         collected_data = pd.concat(collected_data, ignore_index=True)
         if save:
             print("saving....")
+            self.remove_na(collected_data)
+
             self.save(
                 "master", "LatestPrice", collected_data.to_dict("records")
             )
@@ -640,10 +662,14 @@ class RkdData(Rkd):
         self.get_snapshot(ticker, save=save)
         self.bulk_get_quote(ticker, save=save)
 
-    @app.task(bind=True, ignore_result=True)
+    def send_error_report(self):
+        for error in self.error_message:
+            report_to_slack(error, "#error-log")
+
     def save(self, app, model, data):
         from django.apps import apps
 
+        self.send_error_report()
         Model = apps.get_model(app, model)
         pk = Model._meta.pk.name
         if isinstance(data, list):
@@ -965,7 +991,6 @@ class RkdStream(RkdData):
             data = [message["Fields"]]
             df = pd.DataFrame(data).rename(columns=change)
             # ticker = df.loc[df["ticker"] == message["Fields"]["ticker"]]
-            print(df)
             self.update_rtdb.apply_async(
                 args=(df.to_dict("records"),), queue="broadcaster"
             )
