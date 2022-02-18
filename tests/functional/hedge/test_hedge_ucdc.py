@@ -20,7 +20,7 @@ def test_should_create_hedge_order_for_ucdc_bot(user) -> None:
     ticker = "2282.HK"
     master = MasterOhlcvtr.objects.get(
         ticker=ticker,
-        trading_day="2021-10-01",
+        trading_day="2021-10-05",
     )
     price = master.close
     log_time = datetime.combine(master.trading_day, datetime.min.time())
@@ -67,7 +67,7 @@ def test_should_create_hedge_order_for_ucdc_bot_with_margin(user) -> None:
     ticker = "2282.HK"
     master = MasterOhlcvtr.objects.get(
         ticker=ticker,
-        trading_day="2021-10-01",
+        trading_day="2021-10-05",
     )
     price = master.close
     log_time = datetime.combine(master.trading_day, datetime.min.time())
