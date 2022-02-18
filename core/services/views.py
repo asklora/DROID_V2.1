@@ -9,6 +9,7 @@ from core.services.healthcheck.checks import (
     TestProjectCheck,
     TestUsersCheck,
 )
+from core.services.healthcheck.run import send_report
 from core.services.serializers import BroadcastSenderSerializer
 from core.universe.models import Universe
 from core.user.models import User
@@ -78,10 +79,6 @@ class Healthcheck(APIView):
                 check_key="api_check",
                 endpoints=[
                     Endpoint(
-                        name="droid production",
-                        url="https://services.asklora.ai",
-                    ),
-                    Endpoint(
                         name="droid staging",
                         url="https://dev-services.asklora.ai",
                     ),
@@ -132,7 +129,9 @@ class Healthcheck(APIView):
             healthcheck: HealthCheck = HealthCheck(checks=items)
             success: bool = healthcheck.execute()
 
-            print(healthcheck)
+            if not success:
+                print(healthcheck)
+                send_report(healthcheck)
 
             return {
                 "message": "ok" if success else "error",

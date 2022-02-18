@@ -145,7 +145,7 @@ class ApiCheck(Check):
         for api in self.endpoints:
             name: str = self.get_api_name(api.name)
             try:
-                response = requests.head(api.url)
+                response = requests.get(api.url, timeout=15)
                 self.result[name] = (
                     "up" if response.status_code == 200 else "down"
                 )
@@ -230,10 +230,12 @@ class FirebaseCheck(Check):
 
         self.result = {
             "status": "ok" if failed == 0 else "error",
-            "total": total,
-            "success": success,
-            "failed": failed,
-            "failed_ids": failed_ids,
+            "result": {
+                "total": total,
+                "success": success,
+                "failed": failed,
+                "failed_ids": failed_ids,
+            },
         }
 
         return True if failed == 0 else False
@@ -245,13 +247,15 @@ class FirebaseCheck(Check):
         result: str = f"\n- `{self.collection}` data in Firebase "
         status: str = ""
         info: str = (
-            f"{self.result.get('total', 0)} checked, "
-            f"{self.result.get('success', 0)} success and "
-            f"{self.result.get('failed', 0)} failed"
+            f"{self.result.get('result', {}).get('total', 0)} checked, "
+            f"{self.result.get('result', {}).get('success', 0)} success and "
+            f"{self.result.get('result', {}).get('failed', 0)} failed"
         )
 
         if self.result.get("failed", 0) > 0:
-            errors: str = ", ".join(self.result.get("failed_id", []))
+            errors: str = ", ".join(
+                self.result.get("result", {}).get("failed_id", [])
+            )
             status = f"*has schema mismatch* :warning: {errors}"
         else:
             status = "is correct"

@@ -194,6 +194,10 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
         ai_score = rating_data["ai_score"].to_list()[0]
         positive_factor = rating_data["positive_factors"].to_list()[0]
         negative_factor = rating_data["negative_factors"].to_list()[0]
+        if(positive_factor == 0):
+            positive_factor = []
+        if (negative_factor == 0):
+            negative_factor = []
         rating_data = {
             "final_score": final_score,
             "ai_score": ai_score,

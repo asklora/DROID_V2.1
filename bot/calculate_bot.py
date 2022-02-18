@@ -705,17 +705,18 @@ def populate_daily_profit(currency_code=None, user_id=None):
     clean_daily_profit_history()
     
 def update_season():
-    month_list = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    month_list = ["January-February", "March-April", "May-June", "July-August", "September-October", "November-December"]
     period = str_to_date(backdate_by_day(1))
     months = period.month
     years = period.year
-    season_id = f"{month_list[months - 1]}{years}"
-    start_date = str_to_date(f"{years}-{months}-01")
-    season = pd.DataFrame({"season_id":[season_id], "start_date":[start_date], "end_date":[period]}, index=[0])
-    season["end_date"] = pd.to_datetime(season["end_date"])
-    season["end_date"] = season["end_date"].dt.to_period("M").dt.to_timestamp("M")
-    season["end_date"] = pd.to_datetime(season["end_date"])
-    upsert_data_to_database(season, get_season_table_name(), "season_id", how="update", cpu_count=False, Text=True)
+    if(months % 2 == 0):
+        season_id = f"{month_list[int((months / 2) - 1)]}{years}"
+        start_date = str_to_date(f"{years}-{months - 1}-01")
+        season = pd.DataFrame({"season_id":[season_id], "start_date":[start_date], "end_date":[period]}, index=[0])
+        season["end_date"] = pd.to_datetime(season["end_date"])
+        season["end_date"] = season["end_date"].dt.to_period("M").dt.to_timestamp("M")
+        season["end_date"] = pd.to_datetime(season["end_date"])
+        upsert_data_to_database(season, get_season_table_name(), "season_id", how="update", cpu_count=False, Text=True)
     
 
 def update_season_monthly(currency_code=None, user_id=None) -> None:
