@@ -234,7 +234,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
         options_df["r"], options_df["q"], options_df["v1"], options_df["v2"])
     options_df["current_delta"] = None
     options_df["avg_delta"] = None
-    # options_df["avg_share"] = None
+    options_df["avg_share"] = None
 
     if (mod):
         options_df_temp = pd.DataFrame(columns=options_df.columns)
@@ -391,14 +391,14 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
         else:
             hedge = 0.01
 
-        condition = np.abs(last_hedge - stock_balance) <= hedge
-        stock_balance[condition] = 2
-        stock_balance = fill_zeros_with_last(stock_balance)
-        stock_balance_bck = np.copy(stock_balance)
+        # condition = np.abs(last_hedge - stock_balance) <= hedge
+        # stock_balance[condition] = 2
+        # stock_balance = fill_zeros_with_last(stock_balance)
+        # stock_balance_bck = np.copy(stock_balance)
         stock_balance2 = np.copy(stock_balance)
         stock_balance2 = shift5_numba(stock_balance2, 1)
         stock_balance2 = np.nan_to_num(stock_balance2)
-        strike_2_indices = np.argmax((prices_temp >= row.strike_2))
+        # strike_2_indices = np.argmax((prices_temp >= row.strike_2))
 
         if row["modified"] == 1:
             modify_str = row.modify_arg[0]
@@ -423,9 +423,9 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
             row["v1"] = v1[-1]
             row["v2"] = v2[-1]
             row["t"] = t[-1]
-            row["current_delta"] = stock_balance[-1]
+            row["current_delta"] = stock_balance2[-1]
             row["avg_delta"] = np.nansum(stock_balance) / stock_balance.size
-            # row["avg_share"] = row["avg_delta"] * row["total_bot_share_num"]
+            row["avg_share"] = row["avg_delta"] * row["total_bot_share_num"]
             row["num_hedges"] = np.sum(stock_balance2 != stock_balance)
             if row["modified"] == 1:
                 if modify_str == "v":
@@ -466,9 +466,9 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
             row["delta_churn"] = None
             row["t"] = t[-1]
             row["num_hedges"] = None
-            row["current_delta"] = stock_balance[-1]
+            row["current_delta"] = stock_balance2[-1]
             row["avg_delta"] = np.nansum(stock_balance) / stock_balance.size
-            # row["avg_share"] = row["avg_delta"] * row["total_bot_share_num"]
+            row["avg_share"] = row["avg_delta"] * row["total_bot_share_num"]
         return row
 
     logging.basicConfig(filename="logfilename.log", level=logging.INFO)
