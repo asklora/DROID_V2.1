@@ -164,7 +164,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     options_df = options_df.rename(columns={"amount": "q"})
 
     # *************************************************************************************************
-    options_df["t"] = options_df["days_to_expiry"]
+    options_df["t"] = options_df["days_to_expiry"] / 365
     # *************************************************************************************************
     # Adding OPTION configurations
 
@@ -347,6 +347,7 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
             return row
         dates_temp = dates_np[int(row.spot_date_index):int(row.expiry_date_index+1), 0]
         t = np.full((len(prices_temp)), ((row["expiry_date"] - dates_temp).astype("timedelta64[D]")) / np.timedelta64(1, "D"))
+        t = t / 365
         strike = np.full((len(prices_temp)), row["strike"])
         barrier = np.full((len(prices_temp)), row["barrier"])
 

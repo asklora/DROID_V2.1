@@ -76,7 +76,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     del options_df
     options_df = options_df_temp.copy()
     del options_df_temp
-    print(options_df)
+    # print(options_df)
 
     # *****************************************************************************************************
     # making sure that expiry date is not holiday or weekend
@@ -165,7 +165,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     options_df = options_df.rename(columns={"amount": "q"})
 
     # *************************************************************************************************
-    options_df["t"] = options_df["days_to_expiry"]
+    options_df["t"] = options_df["days_to_expiry"] / 365
     # *************************************************************************************************
     # Adding OPTION configurations
 
@@ -357,6 +357,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
             return row
         dates_temp = dates_np[int(row.spot_date_index):int(row.expiry_date_index+1), 0]
         t = np.full((len(prices_temp)), ((row["expiry_date"] - dates_temp).astype("timedelta64[D]")) / np.timedelta64(1, "D"))
+        t = t / 365
         strike_1 = np.full((len(prices_temp)), row["strike_1"])
         strike_2 = np.full((len(prices_temp)), row["strike_2"])
         cond = (null_df.ticker == row.ticker) & (null_df.spot_date >= row.spot_date) &\

@@ -312,21 +312,37 @@ def get_interest_rate(index_code, spot_date, expiry_date):
 
 # if __name__ == "__main__":
 #     options_df = pd.DataFrame()
-#     options_df['spot']= [1,1]
-#     options_df['t']= [0.0821917808219178,0.0821917808219178]
-#     options_df['alpha']= [12, 12]
-#     options_df['atm_volatility_spot'] = [0.5213088709677419,0.357950403225807]
-#     options_df['atm_volatility_one_year']= [0.440825,0.3640875]
-#     options_df['atm_volatility_infinity'] = [0.43395,0.3599]
-#     options_df['slope'] = [1,2]
-#     options_df['slope_inf']= [0,2]
-#     options_df['deriv']= [0.0105, 0.091]
-#     options_df['deriv_inf'] = [0, 0.0692]
-#     options_df['r'] = [0.0015,0.0015]
-#     options_df['q'] = [0,0]
-#     print(options_df['t'])
+#     options_df['t']= [88]
+#     options_df['alpha']= [12]
+#     options_df['atm_volatility_spot'] = [0.470138614919355]
+#     options_df['atm_volatility_one_year']= [0.3932171875]
+#     options_df['atm_volatility_infinity'] = [0.39100275]
+#     options_df['slope'] = [2]
+#     options_df['slope_inf']= [2]
+#     options_df['deriv']= [0.11]
+#     options_df['deriv_inf'] = [0.06]
+#     options_df['r'] = [0.06]
+#     options_df['q'] = [0]
+#     options_df['strike_1'] = [3.75]
+#     options_df['strike_2'] = [2.686214526841495]
+#     options_df['now_price'] = [3.75]
 #     print(options_df)
 #     x = find_vol(1, options_df['t'], options_df['atm_volatility_spot'], options_df['atm_volatility_one_year'],
 #                 options_df['atm_volatility_infinity'], 12, options_df['slope'], options_df['slope_inf'],
 #                 options_df['deriv'], options_df['deriv_inf'],options_df['r'], options_df['q'])
+#     v0 = find_vol(1, options_df["t"], options_df["atm_volatility_spot"], options_df["atm_volatility_one_year"],
+#                   options_df["atm_volatility_infinity"], 12, options_df["slope"], options_df["slope_inf"],
+#                   options_df["deriv"], options_df["deriv_inf"], options_df["r"], options_df["q"])
+#     print(v0)
+#     v1 = find_vol(options_df["strike_1"] / options_df["now_price"], options_df["t"],
+#                                 options_df["atm_volatility_spot"], options_df["atm_volatility_one_year"],
+#                                 options_df["atm_volatility_infinity"], 12, options_df["slope"], options_df["slope_inf"],
+#                                 options_df["deriv"], options_df["deriv_inf"], options_df["r"], options_df["q"])
+#     print(v1)
+#     v2 = find_vol(options_df["strike_2"] / options_df["now_price"], options_df["t"],
+#                                 options_df["atm_volatility_spot"], options_df["atm_volatility_one_year"],
+#                                 options_df["atm_volatility_infinity"], 12, options_df["slope"], options_df["slope_inf"],
+#                                 options_df["deriv"], options_df["deriv_inf"], options_df["r"], options_df["q"])
+#     print(v2)
+#     delta = deltaRC(options_df["now_price"], options_df["strike_1"], options_df["strike_2"], options_df["t"], options_df["r"], options_df["q"], v1, v2)
 #     print(x)
