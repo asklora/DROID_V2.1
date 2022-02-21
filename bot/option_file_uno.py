@@ -22,7 +22,7 @@ from bot.data_download import (
     get_vol_surface_data, 
     get_interest_rate_data,
     get_dividends_data)
-from global_vars import modified_delta_list, max_vol, min_vol
+from global_vars import modified_delta_list, max_vol, min_vol, large_hedge, small_hedge
 
 def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, infer=True, history=False, daily=False, new_ticker=False):
     if type(start_date) == type(None):
@@ -223,12 +223,13 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     options_df["bot_return"] = None
     options_df["bot_id"] = "UNO_" + options_df["option_type"].astype(str) + "_" + options_df["time_to_exp"].astype(str)
     options_df["bot_id"] = options_df["bot_id"].str.replace(".", "", regex=True)
-    options_df["total_bot_share_num"] = 2
+    options_df["total_bot_share_num"] = 1
     options_df["initial_delta"] = deltaUnOC(options_df["now_price"], options_df["strike"], options_df["barrier"],
         (options_df["barrier"] - options_df["strike"]), options_df["t"],
         options_df["r"], options_df["q"], options_df["v1"], options_df["v2"])
     options_df["current_delta"] = None
     options_df["avg_delta"] = None
+    options_df["avg_share"] = None
 
     if (mod):
         options_df_temp = pd.DataFrame(columns=options_df.columns)
@@ -380,18 +381,18 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
         last_hedge = np.copy(stock_balance)
         last_hedge = shift5_numba(last_hedge, 1)
         last_hedge = np.nan_to_num(last_hedge)
-        hedge = 0.05
 
         # Condition
         condition1A = prices_temp > strike
-        condition2A = np.abs(last_hedge - stock_balance) <= 0.05
+        condition2A = np.abs(last_hedge - stock_balance) <= large_hedge
         conditionA = condition1A & condition2A
         condition1B = prices_temp <= strike
-        condition2B = np.abs(last_hedge - stock_balance) <= 0.01
+        condition2B = np.abs(last_hedge - stock_balance) <= small_hedge
         conditionB = condition1B & condition2B
         condition = conditionA | conditionB
         stock_balance[condition] = 2
-        stock_balance = fill_zeros_with_last(stock_balance)
+        while(any(stock_balance == 2)):
+            stock_balance = fill_zeros_with_last(stock_balance)
         barrier_indices = np.argmax((prices_temp >= row.barrier))
         stock_balance2 = np.copy(stock_balance)
         stock_balance2 = shift5_numba(stock_balance2, 1)
@@ -426,8 +427,9 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
             row["delta_churn"] = np.nansum(delta_churn)
             row["bot_return"] = row["pnl"] / prices_temp[0]
             row["num_hedges"] = np.sum(stock_balance2[:barrier_indices+1] != stock_balance[:barrier_indices+1])
-            row["hedge_share"] = last_hedge[barrier_indices] - stock_balance[barrier_indices]
-            row["delta"] = stock_balance[barrier_indices]
+            row["current_delta"] = stock_balance2[barrier_indices]
+            row["avg_delta"] = np.nansum(stock_balance[:barrier_indices+1]) / stock_balance[:barrier_indices+1].size
+            row["avg_share"] = row["avg_delta"] * row["total_bot_share_num"]
 
         elif dates_temp[-1] == row["expiry_date"]:
             # Expiry is triggered.
@@ -456,8 +458,9 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
             row["delta_churn"] = np.nansum(delta_churn)
             row["bot_return"] = row["pnl"] / prices_temp[0]
             row["num_hedges"] = np.sum(stock_balance2 != stock_balance)
-            row["hedge_share"] = last_hedge[-1] - stock_balance[-1]
-            row["delta"] = stock_balance[-1]
+            row["current_delta"] = stock_balance2[-1]
+            row["avg_delta"] = np.nansum(stock_balance) / stock_balance.size
+            row["avg_share"] = row["avg_delta"] * row["total_bot_share_num"]
 
         else:
             # No event is triggered.
@@ -476,8 +479,9 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
             row["delta_churn"] = None
             row["t"] = t[-1]
             row["num_hedges"] = None
-            row["hedge_share"] = last_hedge[-1] - stock_balance[-1]
-            row["delta"] = stock_balance[-1]
+            row["current_delta"] = stock_balance2[-1]
+            row["avg_delta"] = np.nansum(stock_balance) / stock_balance.size
+            row["avg_share"] = row["avg_delta"] * row["total_bot_share_num"]
         return row
 
     logging.basicConfig(filename="logfilename.log", level=logging.INFO)
@@ -487,6 +491,7 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
         prev[arr == 2] = 2
         prev = np.maximum.accumulate(prev)
         return arr[prev]
+        
     def foo(k):
         try:
             # run the null filler for each section of dates

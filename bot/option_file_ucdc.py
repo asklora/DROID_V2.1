@@ -22,7 +22,7 @@ from bot.data_download import (
     get_calendar_data, 
     get_currency_data, 
     get_master_tac_price)
-from global_vars import modified_delta_list, max_vol, min_vol
+from global_vars import modified_delta_list, max_vol, min_vol, large_hedge, small_hedge
 
 def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, time_to_exp=None, mod=False, infer=True, history=False, daily=False, new_ticker=False):
     if type(start_date) == type(None):
@@ -229,7 +229,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     options_df["bot_return"] = None
     options_df["bot_id"] = "UCDC_" + options_df["option_type"].astype(str) + "_" + options_df["time_to_exp"].astype(str)
     options_df["bot_id"] = options_df["bot_id"].str.replace(".", "", regex=True)
-    options_df["total_bot_share_num"] = 2
+    options_df["total_bot_share_num"] = 1
     options_df["initial_delta"] = deltaRC(options_df["now_price"], options_df["strike_1"], options_df["strike_2"], options_df["t"],
         options_df["r"], options_df["q"], options_df["v1"], options_df["v2"])
     options_df["current_delta"] = None
@@ -388,18 +388,16 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
 
         #hedge = (v1 + v2) / 15
         if row["currency_code"] in ["USD", "EUR"]:
-            hedge = 0.05
+            hedge = large_hedge
         else:
-            hedge = 0.01
-
-        # condition = np.abs(last_hedge - stock_balance) <= hedge
-        # stock_balance[condition] = 2
-        # stock_balance = fill_zeros_with_last(stock_balance)
-        # stock_balance_bck = np.copy(stock_balance)
+            hedge = small_hedge
+        condition = np.abs(last_hedge - stock_balance) <= hedge
+        stock_balance[condition] = 2
+        while(any(stock_balance == 2)):
+            stock_balance = fill_zeros_with_last(stock_balance)
         stock_balance2 = np.copy(stock_balance)
         stock_balance2 = shift5_numba(stock_balance2, 1)
         stock_balance2 = np.nan_to_num(stock_balance2)
-        # strike_2_indices = np.argmax((prices_temp >= row.strike_2))
 
         if row["modified"] == 1:
             modify_str = row.modify_arg[0]

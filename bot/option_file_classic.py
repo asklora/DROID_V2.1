@@ -199,7 +199,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                     row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
                     row.pnl = prices_temp[-1] - prices_temp[0]
                     row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
-                    row.current_delta = 0
+                    row.current_delta = 100
             else:
                 # If one of the events is triggered.
                 if sl_indices > tp_indices:
@@ -212,7 +212,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                     row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
                     row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
                     row.pnl = prices_temp[sl_indices] - prices_temp[0]
-                    row.current_delta = 0
+                    row.current_delta = 100
 
                 else:
                     # If take profit is triggered.
@@ -224,7 +224,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                     row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
                     row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
                     row.pnl = prices_temp[tp_indices] - prices_temp[0]
-                    row.current_delta = 0
+                    row.current_delta = 100
 
 
             if prices_temp.index[-1] < temp_date:
