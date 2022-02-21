@@ -392,7 +392,7 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
         condition = conditionA | conditionB
         stock_balance[condition] = 2
         while(any(stock_balance == 2)):
-            stock_balance = fill_zeros_with_last(stock_balance)
+            stock_balance = forward_fill(stock_balance)
         barrier_indices = np.argmax((prices_temp >= row.barrier))
         stock_balance2 = np.copy(stock_balance)
         stock_balance2 = shift5_numba(stock_balance2, 1)
@@ -486,12 +486,16 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
 
     logging.basicConfig(filename="logfilename.log", level=logging.INFO)
 
-    def fill_zeros_with_last(arr):
+    def forward_fill(arr):
+        if((arr.size>=2) and (arr[1] == 2)):
+            arr[1] = arr[0]
+        if((arr.size>=3) and (arr[2] == 2)):
+            arr[2] = arr[1]
         prev = np.arange(len(arr))
         prev[arr == 2] = 2
         prev = np.maximum.accumulate(prev)
         return arr[prev]
-        
+
     def foo(k):
         try:
             # run the null filler for each section of dates
