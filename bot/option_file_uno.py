@@ -224,10 +224,11 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
     options_df["bot_id"] = "UNO_" + options_df["option_type"].astype(str) + "_" + options_df["time_to_exp"].astype(str)
     options_df["bot_id"] = options_df["bot_id"].str.replace(".", "", regex=True)
     options_df["total_bot_share_num"] = 2
-    options_df["hedge_share"] = None
-    options_df["delta"] = deltaUnOC(options_df["now_price"], options_df["strike"], options_df["barrier"],
+    options_df["initial_delta"] = deltaUnOC(options_df["now_price"], options_df["strike"], options_df["barrier"],
         (options_df["barrier"] - options_df["strike"]), options_df["t"],
         options_df["r"], options_df["q"], options_df["v1"], options_df["v2"])
+    options_df["current_delta"] = None
+    options_df["avg_delta"] = None
 
     if (mod):
         options_df_temp = pd.DataFrame(columns=options_df.columns)
