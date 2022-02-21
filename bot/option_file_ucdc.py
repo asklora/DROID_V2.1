@@ -234,7 +234,6 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
         options_df["r"], options_df["q"], options_df["v1"], options_df["v2"])
     options_df["current_delta"] = None
     options_df["avg_delta"] = None
-    options_df["avg_share"] = None
 
     if (mod):
         options_df_temp = pd.DataFrame(columns=options_df.columns)
@@ -424,7 +423,6 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
             row["t"] = t[-1]
             row["current_delta"] = stock_balance2[-1]
             row["avg_delta"] = np.nansum(stock_balance) / stock_balance.size
-            row["avg_share"] = row["avg_delta"] * row["total_bot_share_num"]
             row["num_hedges"] = np.sum(stock_balance2 != stock_balance)
             if row["modified"] == 1:
                 if modify_str == "v":
@@ -467,7 +465,6 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
             row["num_hedges"] = None
             row["current_delta"] = stock_balance2[-1]
             row["avg_delta"] = np.nansum(stock_balance) / stock_balance.size
-            row["avg_share"] = row["avg_delta"] * row["total_bot_share_num"]
         return row
 
     logging.basicConfig(filename="logfilename.log", level=logging.INFO)
