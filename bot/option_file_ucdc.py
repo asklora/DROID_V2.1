@@ -166,6 +166,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
 
     # *************************************************************************************************
     options_df["t"] = options_df["days_to_expiry"]
+    options_df["t"] = options_df["t"] / 365
     # *************************************************************************************************
     # Adding OPTION configurations
 
@@ -349,6 +350,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
             return row
         dates_temp = dates_np[int(row.spot_date_index):int(row.expiry_date_index+1), 0]
         t = np.full((len(prices_temp)), ((row["expiry_date"] - dates_temp).astype("timedelta64[D]")) / np.timedelta64(1, "D"))
+        t = t / 365
         strike_1 = np.full((len(prices_temp)), row["strike_1"])
         strike_2 = np.full((len(prices_temp)), row["strike_2"])
         cond = (null_df.ticker == row.ticker) & (null_df.spot_date >= row.spot_date) &\
@@ -459,6 +461,10 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
     logging.basicConfig(filename="logfilename.log", level=logging.INFO)
     
     def fill_zeros_with_last(arr):
+        if((arr.size>=2) and (arr[1] == 2)):
+            arr[1] = arr[0]
+        if((arr.size>=3) and (arr[2] == 2)):
+            arr[2] = arr[1]
         prev = np.arange(len(arr))
         prev[arr == 2] = 2
         prev = np.maximum.accumulate(prev)
