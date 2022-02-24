@@ -4,7 +4,7 @@ from core.djangomodule.general import get_cached_data,set_cache_data
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general import table_name
-from general.sql_process import db_read, alibaba_db_url, DB_URL_ALIBABA_PROD
+from general.sql_process import db_read, alibaba_db_url, DB_URL_ALIBABA_PROD, local_db_url
 from general.date_process import (
     backdate_by_day,
     backdate_by_year,
@@ -64,7 +64,7 @@ from core.djangomodule.general import logging
 
 
 
-def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=settings.SQLPRINT):
+def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=settings.SQLPRINT, local=False):
     """Base function for database query
 
     Args:
@@ -78,11 +78,13 @@ def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba
     Returns:
         DataFrame: Resulting data from the query
     """
-  
+    
     if(prints):
         logging.info(f"Get Data From Database on {table} table")
     if alibaba:
         dbcon = alibaba_db_url
+    elif local:
+        dbcon = local_db_url
     else:
         dbcon = db_read
 
@@ -133,26 +135,26 @@ def get_region():
     return data
 
 
-def get_latest_price():
+def get_latest_price(local=False):
     query = f"select mo.* from master_ohlcvtr mo, "
     query += f"(select master_ohlcvtr.ticker, max(master_ohlcvtr.trading_day) max_date "
     # and master_ohlcvtr.trading_day <= '2020-09-14'
     query += f"from master_ohlcvtr where master_ohlcvtr.close is not null "
     query += f"group by master_ohlcvtr.ticker) filter "
     query += f"where mo.ticker=filter.ticker and mo.trading_day=filter.max_date; "
-    data = read_query(query, table="latest_price")
+    data = read_query(query, table="latest_price", local=local)
     return data
 
 
-def get_data_by_table_name(table):
+def get_data_by_table_name(table, local=False):
     query = f"select * from {table}"
-    data = read_query(query, table=table)
+    data = read_query(query, table=table, local=local)
     return data
 
 
-def get_data_by_table_name_with_condition(table, condition):
+def get_data_by_table_name_with_condition(table, condition, local=False):
     query = f"select * from {table} where {condition}"
-    data = read_query(query, table=table)
+    data = read_query(query, table=table, local=local)
     return data
 
 
@@ -405,15 +407,15 @@ def findnewticker(args):
     return data
 
 
-def get_master_ohlcvtr_data(trading_day):
+def get_master_ohlcvtr_data(trading_day, local=False):
     query = f"select * from {get_master_ohlcvtr_table_name()} where trading_day>='{trading_day}' and ticker in (select ticker from {get_universe_table_name()} where is_active=True)"
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(query, table=get_master_ohlcvtr_table_name(), local=local)
     return data
 
 
-def get_master_ohlcvtr_start_date():
+def get_master_ohlcvtr_start_date(local=False):
     query = f"SELECT min(trading_day) as start_date FROM {get_master_ohlcvtr_table_name()} WHERE day_status is null"
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(query, table=get_master_ohlcvtr_table_name(), local=local)
     data = data.loc[0, "start_date"]
     data = str(data)
     data = str_to_date(data)
@@ -459,7 +461,7 @@ def get_max_last_ingestion_from_universe(ticker=None, currency_code=None):
     return str(data.loc[0, "max_date"])
 
 
-def get_last_close_industry_code(ticker=None, currency_code=None):
+def get_last_close_industry_code(ticker=None, currency_code=None, local=False):
     query = f"select mo.ticker, mo.close, mo.currency_code, substring(univ.industry_code from 0 for 7) as industry_code from "
     query += f"{get_master_ohlcvtr_table_name()} mo inner join {get_universe_table_name()} univ on univ.ticker=mo.ticker where univ.is_active=True "
     if type(ticker) != type(None):
@@ -469,7 +471,7 @@ def get_last_close_industry_code(ticker=None, currency_code=None):
     query += f"and exists( select 1 from (select ticker, max(trading_day) max_date "
     query += f"from {get_master_ohlcvtr_table_name()} where close is not null group by ticker) filter where filter.ticker=mo.ticker "
     query += f"and filter.max_date=mo.trading_day)"
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(query, table=get_master_ohlcvtr_table_name(), local=local)
     return data
 
 
@@ -493,24 +495,24 @@ def get_ai_value_pred_final():
     return data.reset_index()
 
 
-def get_specific_tri(trading_day, tri_name="tri"):
+def get_specific_tri(trading_day, tri_name="tri", local=False):
     query = f"select price.ticker, price.total_return_index as {tri_name} from {get_master_ohlcvtr_table_name()} price "
     query += f"inner join (select ohlcvtr.ticker, max(ohlcvtr.trading_day) as max_date from {get_master_ohlcvtr_table_name()} ohlcvtr "
     query += f"where ohlcvtr.total_return_index is not null and ohlcvtr.trading_day <= '{trading_day}' group by ohlcvtr.ticker) result "
     query += f"on price.ticker=result.ticker and price.trading_day=result.max_date "
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(query, table=get_master_ohlcvtr_table_name(), local=local)
     return data
 
-def get_specific_tri_avg(trading_day, avg_days=7, tri_name="tri"):
+def get_specific_tri_avg(trading_day, avg_days=7, tri_name="tri", local=False):
     query = f"SELECT a.ticker, avg(a.tri) as {tri_name} FROM (SELECT ticker, total_return_index as tri FROM master_ohlcvtr "
     query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{date_minus_day(start_date=trading_day, days=avg_days)}') a GROUP BY ticker"
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(query, table=get_master_ohlcvtr_table_name(), local=local)
     return data
 
-def get_specific_volume_avg(trading_day, avg_days=7, volume_name="volume"):
+def get_specific_volume_avg(trading_day, avg_days=7, volume_name="volume", local=False):
     query = f"SELECT a.ticker, avg(a.volume) as {volume_name} FROM (SELECT ticker, volume FROM master_ohlcvtr "
     query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{date_minus_day(start_date=trading_day, days=avg_days)}') a GROUP BY ticker"
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(query, table=get_master_ohlcvtr_table_name(), local=local)
     return data
 
 def get_factor_calculation_formula():
@@ -540,7 +542,7 @@ def get_factor_rank(score_type):
     data = read_query(query, table=get_factor_rank_table_name(), alibaba=True)
     return data
 
-def get_yesterday_close_price(ticker=None, currency_code=None, active=True):
+def get_yesterday_close_price(ticker=None, currency_code=None, active=True, local=False):
     query = f"select tac.ticker, tac.trading_day, tac.tri_adj_close as yesterday_close from {get_master_tac_table_name()} tac "
     query += f"inner join (select mo.ticker, max(mo.trading_day) as max_date from {get_master_tac_table_name()} mo where mo.tri_adj_close is not null group by mo.ticker) result "
     query += f"on tac.ticker=result.ticker and tac.trading_day=result.max_date "
@@ -549,7 +551,7 @@ def get_yesterday_close_price(ticker=None, currency_code=None, active=True):
     )
     if check != "":
         query += f"where tac." + check
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(query, table=get_master_ohlcvtr_table_name(), local=local)
     return data
 
 
@@ -622,7 +624,7 @@ def get_industry_group():
 
 
 def get_master_tac_data(
-    start_date=None, end_date=None, ticker=None, currency_code=None, active=True
+    start_date=None, end_date=None, ticker=None, currency_code=None, active=True, local=False
 ):
     start_date, end_date = check_start_end_date(start_date, end_date)
     table_name = get_master_tac_table_name()
@@ -633,7 +635,7 @@ def get_master_tac_data(
     )
     if check != "":
         query += "and " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name, cpu_counts=True, local=local)
     return data
 
 def get_consolidated_universe_data():

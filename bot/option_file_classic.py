@@ -20,7 +20,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     start_date, end_date = check_start_end_date(start_date, end_date)
     # The main function which calculates the volatilities and stop loss and take profit and write them to AWS.
     
-    tac_data2 = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
+    # tac_data2 = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, local=True)
     # vol_surface_data = get_vol_surface_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, infer=infer)
     # currency_data = get_currency_data(currency_code=currency_code)
     # interest_rate_data = get_interest_rate_data()
@@ -28,7 +28,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     # ******************************* Calculating the vols *************************************
     holidays_df = get_calendar_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
     holidays_df["non_working_day"] = pd.to_datetime(holidays_df["non_working_day"])
-    tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
+    tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, local=True)
     main_multiples = make_multiples(tac_data)
 
     # ********************************************************************************************
@@ -150,7 +150,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
 # *********************** Filling up the Null values **************************
 def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, mod=False):
     time_to_exp = check_time_to_exp(time_to_exp)
-    tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
+    tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, local=True)
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     null_df = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, classic=True, mod=mod, null_filler=True)
     # ********************************************************************************************

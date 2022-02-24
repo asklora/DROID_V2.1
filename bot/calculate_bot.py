@@ -70,11 +70,11 @@ def get_r(currency_code, t):
     return NoneToZero(r)
 
 
-def get_spot_date(spot_date, ticker):
+def get_spot_date(spot_date, ticker, local=False):
     spot_date = check_date(spot_date)
     table_name = get_master_tac_table_name()
     query = f"select max(trading_day) as max_date from {table_name} where ticker = {ticker} and spot_date>='{spot_date}' and day_status='trading_day'"
-    data = read_query(query, table_name, cpu_counts=True, prints=False)
+    data = read_query(query, table_name, cpu_counts=True, prints=False, local=local)
     return data.loc[0, "max_date"]
 
 

@@ -23,7 +23,7 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     if type(end_date) == type(None):
         end_date = dateNow()
     # Get all the prices for the above dates +-4 weeks to make sure all the nans are covered by back filling
-    prices_df = get_master_tac_price(start_date=droid_start_date(), end_date=dateNow(), ticker=ticker, currency_code=currency_code)
+    prices_df = get_master_tac_price(start_date=droid_start_date(), end_date=dateNow(), ticker=ticker, currency_code=currency_code, local=True)
 
     #Adding Latest Price to Master TAC
     if (daily):

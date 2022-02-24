@@ -55,7 +55,7 @@ def get_bot_data_latest_date(bot_data=False, vol_infer=False, ranking=False):
         return str_to_date(droid_start_date())
     return min(data["max_date"])
 
-def get_master_tac_price(start_date=None, end_date=None, ticker=None, currency_code=None):
+def get_master_tac_price(start_date=None, end_date=None, ticker=None, currency_code=None, local=False):
     start_date, end_date = check_start_end_date(start_date, end_date)
     table_name = get_master_tac_table_name()
     query = f"select * from {table_name} where trading_day >= '{start_date}' "
@@ -63,7 +63,7 @@ def get_master_tac_price(start_date=None, end_date=None, ticker=None, currency_c
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
     if(check != ""):
         query += "and " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name, cpu_counts=True, local=local)
     return data
 
 def get_latest_price(ticker=None, currency_code=None):
@@ -328,15 +328,15 @@ def get_ibes_data(start_date, end_date, ticker_list):
             result[col] = result[col].bfill().ffill()
     return result
 
-def get_stochatic_data(start_date, end_date, ticker_list):
+def get_stochatic_data(start_date, end_date, ticker_list, local=False):
     query = f"select ticker, trading_day, fast_d, fast_k, rsi "
     query += f"from {get_master_tac_table_name()} where trading_day >= '{start_date}' and trading_day <= '{end_date}' "
     query += f" and ticker in {tuple_data(ticker_list)} "
-    data = read_query(query, get_master_tac_table_name(), cpu_counts=False)
+    data = read_query(query, get_master_tac_table_name(), cpu_counts=False, local=local)
     data["trading_day"] = pd.to_datetime(data["trading_day"])
     return data
 
-def get_executive_data_download(start_date, end_date, ticker=None, currency_code=None):
+def get_executive_data_download(start_date, end_date, ticker=None, currency_code=None, local=False):
     query = f"select * from {get_bot_data_table_name()} where trading_day >= '{start_date}' "
     query += f"and trading_day <= '{end_date}' "
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
@@ -346,7 +346,7 @@ def get_executive_data_download(start_date, end_date, ticker=None, currency_code
     tickers_list = data["ticker"].unique().tolist()
     macro_data = get_macro_data(start_date, end_date)
     ibes_data = get_ibes_data(start_date, end_date, tickers_list)
-    stochatic_data = get_stochatic_data(start_date, end_date, tickers_list)
+    stochatic_data = get_stochatic_data(start_date, end_date, tickers_list, local=local)
     data["trading_day"] = pd.to_datetime(data["trading_day"])
     data = data.merge(macro_data, how="left", on=["trading_day"])
     data = data.merge(ibes_data, how="left", on=["ticker", "trading_day"])
@@ -505,7 +505,7 @@ def get_bot_option_type(condition=None):
 def get_bot_backtest(start_date=None, end_date=None, ticker=None, currency_code=None, bot_id=None):
     table_name = get_bot_backtest_table_name()
     start_date, end_date = check_start_end_date(start_date, end_date)
-    table_name = get_master_tac_table_name()
+    # table_name = get_master_tac_table_name()
     query = f"select * from {table_name} where trading_day >= '{start_date}' "
     query += f"and trading_day <= '{end_date}' "
     check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
