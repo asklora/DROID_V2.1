@@ -1,3 +1,6 @@
+import os
+from dotenv import load_dotenv
+from environs import Env
 import pandas as pd
 import requests
 import json
@@ -7,11 +10,15 @@ import time
 api_url = "http://quant.loratechai.com:8000"
 # api_url = "http://8.210.201.22:8000"
 
+env = Env()
+load_dotenv()
+headers={"x-secret-key": os.getenv("API_AUTH")}
+
 @retry(delay=1)
 def get_ai_score(tickers, fields):
     print(f"API request: {fields} from /ai_score")
     query = {'tickers': tickers, 'fields': fields, "weeks_to_expire": [4]}
-    response = requests.get(f"{api_url}/ai_score/", params=query)
+    response = requests.get(f"{api_url}/ai_score/", params=query, headers=headers)
     content = json.loads(response.content)
     print('---> Finished')
     df = pd.DataFrame(content["hits"])
@@ -24,7 +31,7 @@ def get_ai_score_factor(tickers):
     ''' get positive / negative factors from API '''
     print(f"API request: /ai_score_factor")
     query = {'tickers': tickers, "weeks_to_expire": 4}      # ai_score using 4w
-    response = requests.get(f"{api_url}/ai_score_factor/", params=query)
+    response = requests.get(f"{api_url}/ai_score_factor/", params=query, headers=headers)
     content = json.loads(response.content)
     print('---> Finished')
     data = pd.DataFrame(content["hits"])
@@ -37,7 +44,7 @@ def get_ai_score_factor(tickers):
 def get_industry():
     ''' get industry code/name from API '''
     print(f"API request: industry_name from /industries")
-    response = requests.get(f"{api_url}/industries/?industry_code_length=8")
+    response = requests.get(f"{api_url}/industries/?industry_code_length=8", headers=headers)
     content = json.loads(response.content)
     print('---> Finished')
     data = pd.DataFrame(content["industries"])
@@ -47,7 +54,7 @@ def get_industry():
 def get_industry_group():
     ''' get industry group code/name from API '''
     print(f"API request: industry_group_name from /industries")
-    response = requests.get(f"{api_url}/industries/?industry_code_length=6")
+    response = requests.get(f"{api_url}/industries/?industry_code_length=6", headers=headers)
     content = json.loads(response.content)
     print('---> Finished')
     data = pd.DataFrame(content["industries"]).rename(columns={"industry_code": 'industry_group_code',
@@ -57,7 +64,7 @@ def get_industry_group():
 if __name__ == '__main__':
 
     tickers = ["AAPL.O", "TSLA.O", ".SPX"]
-    get_ai_score(tickers, fields=["ai_score", "ai_score2"])
-    get_ai_score_factor(tickers)
-    get_industry()
-    get_industry_group()
+    print(get_ai_score(tickers, fields=["ai_score", "ai_score2"]))
+    print(get_ai_score_factor(tickers))
+    print(get_industry())
+    print(get_industry_group())
