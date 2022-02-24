@@ -161,14 +161,14 @@ def get_data_vol_surface_inferred_ticker(ticker=None, currency_code=None):
 def get_count_master_ohlcvtr(start_date):
     query = f"select ticker, coalesce(count(mo.trading_day), 0) as count_price "
     query += f"from {get_master_ohlcvtr_table_name()} mo where mo.trading_day>='{start_date}'  and mo.close is not null group by mo.ticker"
-    data = read_query(query, table=get_universe_table_name())
+    data = read_query(query, table=get_universe_table_name(), local=True)
     return data
 
 def get_maxmin_master_ohlcvtr(start_date):
     query = f"select ticker, min(mo.trading_day)::date as ohlctr_min_date, max(mo.trading_day)::date as ohlctr_max_date, "
     query += f"(min(mo.trading_day)::date + interval '13 months') as ohlctr_interval_date "
     query += f"from {get_master_ohlcvtr_table_name()} mo where mo.trading_day>='{start_date}'  and mo.close is not null group by mo.ticker"
-    data = read_query(query, table=get_universe_table_name())
+    data = read_query(query, table=get_universe_table_name(), local=True)
     return data
 
 def get_new_tickers_from_bot_data(start_date, start_date2, date_identifier, ticker=None, currency_code=None):
