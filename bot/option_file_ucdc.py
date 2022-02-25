@@ -82,7 +82,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
 
     # *****************************************************************************************************
     # making sure that expiry date is not holiday or weekend
-    options_df["expiry_date"] = pd.to_datetime(options_df["expiry_date"])
+    options_df["expiry_date"] = pd.to_datetime(options_df["expiry_date"]).dt.date
 
     while(True):
         cond = options_df["expiry_date"].apply(lambda x: x.weekday()) > 4
@@ -292,8 +292,8 @@ def FillMissingDay(data, start, end):
     result["uid"]=result["trading_day"] + result["ticker"]
     result["uid"]=result["uid"].str.replace("-", "", regex=True).str.replace(".", "", regex=True).str.replace(" ", "", regex=True)
     result["uid"]=result["uid"].str.strip()
-    result["trading_day"] = pd.to_datetime(result["trading_day"])
-    data["trading_day"] = pd.to_datetime(data["trading_day"])
+    result["trading_day"] = pd.to_datetime(result["trading_day"]).dt.date
+    data["trading_day"] = pd.to_datetime(data["trading_day"]).dt.date
     result = result.merge(data, how="left", on=["uid", "ticker", "trading_day"])
     del data, daily,indexes
     gc.collect()
@@ -370,9 +370,9 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
     dates_df["spot_date_index"] = dates_df.index
     dates_df["expiry_date_index"] = dates_df.index
     dates_df = dates_df.rename(columns={"trading_day": "spot_date"})
-    dates_df["spot_date"] = pd.to_datetime(dates_df["spot_date"])
-    null_df["spot_date"] = pd.to_datetime(null_df["spot_date"])
-    null_df["expiry_date"] = pd.to_datetime(null_df["expiry_date"])
+    dates_df["spot_date"] = pd.to_datetime(dates_df["spot_date"]).dt.date
+    null_df["spot_date"] = pd.to_datetime(null_df["spot_date"]).dt.date
+    null_df["expiry_date"] = pd.to_datetime(null_df["expiry_date"]).dt.date
     null_df = null_df.merge(dates_df[["spot_date", "spot_date_index"]], on=["spot_date"], how="left")
     dates_df = dates_df.rename(columns={"spot_date": "expiry_date"})
     null_df = null_df.merge(dates_df[["expiry_date", "expiry_date_index"]], on=["expiry_date"], how="left")
@@ -528,7 +528,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
         try:
             # run the null filler for each section of dates
             date_temp = dates_per_run[run_number][k]
-            null_df_small = null_df[null_df["spot_date"].dt.date == date_temp]
+            null_df_small = null_df[null_df.spot_date == date_temp]
             print(f"Filling {dates_per_run[run_number][k]}, {k} date from {len(dates_per_run[run_number])} dates.")
             null_df_small = null_df_small.progress_apply(lambda x: exec_fill_fun(x, prices_np, dates_np, null_df), axis=1, raw=False)
             null_df_small.drop(["expiry_date_index", "spot_date_index", "ticker_index"], axis=1, inplace=True)

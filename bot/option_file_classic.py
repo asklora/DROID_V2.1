@@ -163,8 +163,8 @@ def FillMissingDay(data, start, end):
     result["uid"]=result["trading_day"] + result["ticker"]
     result["uid"]=result["uid"].str.replace("-", "", regex=True).str.replace(".", "", regex=True).str.replace(" ", "", regex=True)
     result["uid"]=result["uid"].str.strip()
-    result["trading_day"] = pd.to_datetime(result["trading_day"])
-    data["trading_day"] = pd.to_datetime(data["trading_day"])
+    result["trading_day"] = pd.to_datetime(result["trading_day"]).dt.date
+    data["trading_day"] = pd.to_datetime(data["trading_day"]).dt.date
     result = result.merge(data, how="left", on=["uid", "ticker", "trading_day"])
     del data, daily,indexes
     gc.collect()
@@ -194,9 +194,9 @@ def ForwardBackwardFillNull(data, columns_field):
 def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, mod=False):
     time_to_exp = check_time_to_exp(time_to_exp)
     tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
-    tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     tac_data = FillMissingDay(tac_data, start_date, backdate_by_day(1))
     tac_data = ForwardBackwardFillNull(tac_data, ["total_return_index", "tri_adj_open", "tri_adj_high", "tri_adj_low", "tri_adj_close", "rsi", "fast_k", "fast_d"])
+    tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     null_df = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, classic=True, mod=mod, null_filler=True)
     # ********************************************************************************************
     prices_df = tac_data.pivot_table(index=tac_data.trading_day, columns="ticker", values="tri_adj_close", aggfunc="first", dropna=False)
