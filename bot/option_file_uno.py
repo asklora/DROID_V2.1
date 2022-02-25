@@ -358,6 +358,9 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
     dates_df["spot_date_index"] = dates_df.index
     dates_df["expiry_date_index"] = dates_df.index
     dates_df = dates_df.rename(columns={"trading_day": "spot_date"})
+    dates_df["spot_date"] = pd.to_datetime(dates_df["spot_date"])
+    null_df["spot_date"] = pd.to_datetime(null_df["spot_date"])
+    null_df["expiry_date"] = pd.to_datetime(null_df["expiry_date"])
     null_df = null_df.merge(dates_df[["spot_date", "spot_date_index"]], on=["spot_date"], how="left")
     dates_df = dates_df.rename(columns={"spot_date": "expiry_date"})
     null_df = null_df.merge(dates_df[["expiry_date", "expiry_date_index"]], on=["expiry_date"], how="left")
