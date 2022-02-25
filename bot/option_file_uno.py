@@ -8,7 +8,7 @@ from tqdm import tqdm
 from pandas.tseries.offsets import BDay
 from dateutil.relativedelta import relativedelta
 from general.sql_output import upsert_data_to_database
-from general.date_process import dateNow, droid_start_date
+from general.date_process import backdate_by_day, dateNow, droid_start_date
 from general.table_name import get_bot_uno_backtest_table_name
 from bot.data_process import check_start_end_date, check_time_to_exp
 from bot.preprocess import cal_interest_rate, cal_q
@@ -341,7 +341,7 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
     start_date = null_df.spot_date.min()
     #tac_data = tac_data_download_null_filler(start_date, args)
     tac_data = get_master_tac_price(start_date=date_min, end_date=date_max, ticker=ticker, currency_code=currency_code)
-    tac_data = FillMissingDay(tac_data, start_date, end_date)
+    tac_data = FillMissingDay(tac_data, start_date, backdate_by_day(1))
     tac_data = ForwardBackwardFillNull(tac_data, ["open", "high", "low", "close", "total_return_index"])
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     interest_rate_data = get_interest_rate_data()

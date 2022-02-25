@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 from pandas.tseries.offsets import BDay
 from general.sql_output import upsert_data_to_database
 from general.table_name import get_bot_ucdc_backtest_table_name
-from general.date_process import dateNow, droid_start_date
+from general.date_process import backdate_by_day, dateNow, droid_start_date
 from bot.black_scholes import (find_vol, Rev_Conv, deltaRC)
 from bot.preprocess import cal_interest_rate, cal_q
 from bot.data_process import check_start_end_date, check_time_to_exp
@@ -319,7 +319,7 @@ def ForwardBackwardFillNull(data, columns_field):
         result = result.merge(price, on=["uid"], how="left")
     result = result.merge(data_detail, on=["uid"], how="left")
     return result
-    
+
 # *********************** Filling up the Null values **************************
 def shift5_numba(arr, num, fill_value=np.nan):
     # This function is used for shifting the numpy array
@@ -354,7 +354,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
     start_date = null_df.spot_date.min()
 
     tac_data = get_master_tac_price(start_date=date_min, end_date=date_max, ticker=ticker, currency_code=currency_code)
-    tac_data = FillMissingDay(tac_data, start_date, end_date)
+    tac_data = FillMissingDay(tac_data, start_date, backdate_by_day(1))
     tac_data = ForwardBackwardFillNull(tac_data, ["open", "high", "low", "close", "total_return_index"])
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     interest_rate_data = get_interest_rate_data()

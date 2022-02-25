@@ -8,7 +8,7 @@ from pandas.tseries.offsets import BDay
 from dateutil.relativedelta import relativedelta
 from bot.preprocess import make_multiples
 from general.sql_output import upsert_data_to_database
-from general.date_process import dateNow, str_to_date
+from general.date_process import backdate_by_day, dateNow, str_to_date
 from bot.data_download import get_bot_backtest_data, get_calendar_data, get_master_tac_price, get_latest_price
 from general.table_name import get_bot_classic_backtest_table_name, get_latest_price_table_name, get_universe_rating_table_name
 from bot.data_process import check_start_end_date, check_time_to_exp
@@ -195,7 +195,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
     time_to_exp = check_time_to_exp(time_to_exp)
     tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
-    tac_data = FillMissingDay(tac_data, start_date, end_date)
+    tac_data = FillMissingDay(tac_data, start_date, backdate_by_day(1))
     tac_data = ForwardBackwardFillNull(tac_data, ["open", "high", "low", "close", "total_return_index"])
     null_df = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, classic=True, mod=mod, null_filler=True)
     # ********************************************************************************************
