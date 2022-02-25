@@ -160,7 +160,7 @@ def FillMissingDay(data, start, end):
     result = result.set_index(["ticker", "trading_day"]).reindex(indexes).reset_index().ffill(limit=1)
     result = result[result["trading_day"].apply(lambda x: x.weekday() not in [5, 6])]
     result["trading_day"] = result["trading_day"].astype(str)
-    result["uid"]=result["trading_day"] + data["ticker"]
+    result["uid"]=result["trading_day"] + result["ticker"]
     result["uid"]=result["uid"].str.replace("-", "", regex=True).str.replace(".", "", regex=True).str.replace(" ", "", regex=True)
     result["uid"]=result["uid"].str.strip()
     result["trading_day"] = pd.to_datetime(result["trading_day"])
@@ -183,13 +183,7 @@ def ForwardBackwardFillNull(data, columns_field):
         price = pd.DataFrame(price.values, index=price.index, columns=price.columns)
         price["trading_day"] = price.index
         price = price.melt(id_vars="trading_day", var_name="ticker", value_name=column)
-        price["trading_day"] = price["trading_day"].astype(str)
-        price["uid"]=price["trading_day"] + data["ticker"]
-        price["uid"]=price["uid"].str.replace("-", "", regex=True).str.replace(".", "", regex=True).str.replace(" ", "", regex=True)
-        price["uid"]=price["uid"].str.strip()
-        price["trading_day"] = pd.to_datetime(price["trading_day"])
-        price = price.drop(columns=["trading_day", "ticker"])
-        result = result.merge(price, on=["uid"], how="left")
+        result = result.merge(price, on=["trading_day", "ticker"], how="left")
         del price
         time.sleep(3)
     del data, universe
