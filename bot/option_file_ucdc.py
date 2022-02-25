@@ -302,8 +302,7 @@ def FillMissingDay(data, start, end):
 def ForwardBackwardFillNull(data, columns_field):
     data = data.sort_values(by="trading_day", ascending=False)
     data = data.infer_objects()
-    result = data[["uid"]]
-    data_detail = data[["uid", "ticker", "trading_day", "volume", "currency_code", "day_status"]]
+    result = data[["uid", "ticker", "trading_day", "volume", "currency_code", "day_status"]]
     universe = data["ticker"].drop_duplicates()
     universe =universe.tolist()
     for column in columns_field:
@@ -322,8 +321,7 @@ def ForwardBackwardFillNull(data, columns_field):
         result = result.merge(price, on=["uid"], how="left")
         del price
         time.sleep(3)
-    result = result.merge(data_detail, on=["uid"], how="left")
-    del data, data_detail, universe
+    del data, universe
     gc.collect()
     return result
 
