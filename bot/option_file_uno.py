@@ -1,4 +1,5 @@
 import gc
+import time
 import logging
 import numpy as np
 np.seterr(divide='ignore', invalid='ignore')
@@ -296,7 +297,7 @@ def ForwardBackwardFillNull(data, columns_field):
     for column in columns_field:
         price = data.pivot_table(index="trading_day", columns="ticker", values=column, aggfunc="first", dropna=False)
         price = price.reindex(columns=universe)
-        price = price.ffill().bfill()
+        price = price.ffill()
         price = pd.DataFrame(price.values, index=price.index, columns=price.columns)
         price["trading_day"] = price.index
         price = price.melt(id_vars="trading_day", var_name="ticker", value_name=column)
@@ -308,6 +309,7 @@ def ForwardBackwardFillNull(data, columns_field):
         price = price.drop(columns=["trading_day", "ticker"])
         result = result.merge(price, on=["uid"], how="left")
         del price
+        time.sleep(3)
     result = result.merge(data_detail, on=["uid"], how="left")
     del data, data_detail, universe
     gc.collect()
