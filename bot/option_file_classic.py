@@ -1,3 +1,4 @@
+import gc
 from general.slack import report_to_slack
 import numpy as np
 np.seterr(divide='ignore', invalid='ignore')
@@ -164,6 +165,8 @@ def FillMissingDay(data, start, end):
     result["trading_day"] = pd.to_datetime(result["trading_day"])
     data["trading_day"] = pd.to_datetime(data["trading_day"])
     result = result.merge(data, how="left", on=["uid", "ticker", "trading_day"])
+    del data, daily,indexes
+    gc.collect()
     return result
 
 def ForwardBackwardFillNull(data, columns_field):
@@ -188,6 +191,8 @@ def ForwardBackwardFillNull(data, columns_field):
         price = price.drop(columns=["trading_day", "ticker"])
         result = result.merge(price, on=["uid"], how="left")
     result = result.merge(data_detail, on=["uid"], how="left")
+    del data, data_detail, universe, price
+    gc.collect()
     return result
 
 # *********************** Filling up the Null values **************************
