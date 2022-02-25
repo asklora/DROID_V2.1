@@ -196,7 +196,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
     tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     tac_data = FillMissingDay(tac_data, start_date, backdate_by_day(1))
-    tac_data = ForwardBackwardFillNull(tac_data, ["open", "high", "low", "close", "total_return_index"])
+    tac_data = ForwardBackwardFillNull(tac_data, ["total_return_index", "tri_adj_open", "tri_adj_high", "tri_adj_low", "tri_adj_close", "rsi", "fast_k", "fast_d"])
     null_df = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, classic=True, mod=mod, null_filler=True)
     # ********************************************************************************************
     prices_df = tac_data.pivot_table(index=tac_data.trading_day, columns="ticker", values="tri_adj_close", aggfunc="first", dropna=False)
