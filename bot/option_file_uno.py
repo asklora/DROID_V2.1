@@ -307,8 +307,9 @@ def ForwardBackwardFillNull(data, columns_field):
         price["trading_day"] = pd.to_datetime(price["trading_day"])
         price = price.drop(columns=["trading_day", "ticker"])
         result = result.merge(price, on=["uid"], how="left")
+        del price
     result = result.merge(data_detail, on=["uid"], how="left")
-    del data, data_detail, universe, price
+    del data, data_detail, universe
     gc.collect()
     return result
     
