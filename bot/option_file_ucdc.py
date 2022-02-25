@@ -35,6 +35,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
 
     holidays_df = get_calendar_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
     tac_data2 = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
+    tac_data2 = tac_data2.loc[tac_data2["day_status"] == "trading_day"]
     vol_surface_data = get_vol_surface_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, infer=infer)
     currency_data = get_currency_data(currency_code=currency_code)
     interest_rate_data = get_interest_rate_data()
@@ -279,6 +280,46 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     else:
         upsert_data_to_database(options_df, table_name, "uid", how="ignore", cpu_count=True, Text=True)
 
+def FillMissingDay(data, start, end):
+    result = data[["ticker", "trading_day"]]
+    result = result.sort_values(by=["trading_day"], ascending=True)
+    daily = pd.date_range(start, end, freq="D")
+    indexes = pd.MultiIndex.from_product([result["ticker"].unique(), daily], names=["ticker", "trading_day"])
+    result = result.set_index(["ticker", "trading_day"]).reindex(indexes).reset_index().ffill(limit=1)
+    result = result[result["trading_day"].apply(lambda x: x.weekday() not in [5, 6])]
+    result["trading_day"] = result["trading_day"].astype(str)
+    result["uid"]=result["trading_day"] + data["ticker"]
+    result["uid"]=result["uid"].str.replace("-", "", regex=True).str.replace(".", "", regex=True).str.replace(" ", "", regex=True)
+    result["uid"]=result["uid"].str.strip()
+    result["trading_day"] = pd.to_datetime(result["trading_day"])
+    data["trading_day"] = pd.to_datetime(data["trading_day"])
+    result = result.merge(data, how="left", on=["uid", "ticker", "trading_day"])
+    return result
+
+def ForwardBackwardFillNull(data, columns_field):
+    data = data.sort_values(by="trading_day", ascending=False)
+    data = data.infer_objects()
+    result = data[["uid"]]
+    data_detail = data[["uid", "ticker", "trading_day", "volume", "currency_code", "day_status"]]
+    universe = data["ticker"].drop_duplicates()
+    universe =universe.tolist()
+    for column in columns_field:
+        price = data.pivot_table(index="trading_day", columns="ticker", values=column, aggfunc="first", dropna=False)
+        price = price.reindex(columns=universe)
+        price = price.ffill().bfill()
+        price = pd.DataFrame(price.values, index=price.index, columns=price.columns)
+        price["trading_day"] = price.index
+        price = price.melt(id_vars="trading_day", var_name="ticker", value_name=column)
+        price["trading_day"] = price["trading_day"].astype(str)
+        price["uid"]=price["trading_day"] + data["ticker"]
+        price["uid"]=price["uid"].str.replace("-", "", regex=True).str.replace(".", "", regex=True).str.replace(" ", "", regex=True)
+        price["uid"]=price["uid"].str.strip()
+        price["trading_day"] = pd.to_datetime(price["trading_day"])
+        price = price.drop(columns=["trading_day", "ticker"])
+        result = result.merge(price, on=["uid"], how="left")
+    result = result.merge(data_detail, on=["uid"], how="left")
+    return result
+    
 # *********************** Filling up the Null values **************************
 def shift5_numba(arr, num, fill_value=np.nan):
     # This function is used for shifting the numpy array
@@ -313,6 +354,8 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
     start_date = null_df.spot_date.min()
 
     tac_data = get_master_tac_price(start_date=date_min, end_date=date_max, ticker=ticker, currency_code=currency_code)
+    tac_data = FillMissingDay(tac_data, start_date, end_date)
+    tac_data = ForwardBackwardFillNull(tac_data, ["open", "high", "low", "close", "total_return_index"])
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     interest_rate_data = get_interest_rate_data()
     dividends_data = get_dividends_data()
