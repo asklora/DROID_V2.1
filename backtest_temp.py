@@ -1,4 +1,6 @@
 # from main_executive import data_prep_history
+from bot.data_download import get_bot_option_type
+from general.sql_output import truncate_table, upsert_data_to_database
 from bot.option_file_classic import fill_bot_backtest_classic, populate_bot_classic_backtest
 from bot.bot_labeler import populate_bot_labeler
 from bot.statistic_classic import populate_classic_statistic
@@ -9,7 +11,7 @@ from bot.option_file_uno import fill_bot_backtest_uno, populate_bot_uno_backtest
 from bot.data_process import check_time_to_exp
 from global_vars import folder_check, time_to_expiry, bots_list
 from general.date_process import backdate_by_month, dateNow, droid_start_date, droid_start_date_buffer, str_to_date
-from general.sql_query import get_active_universe, get_ticker_etf
+from general.sql_query import get_active_universe, get_ticker_etf, read_query
 from bot.main_file import populate_bot_data
 from bot.final_model import populate_vol_infer
 
@@ -124,6 +126,28 @@ def bot_ranking_history(ticker=None, currency_code=None, mod=False, time_to_exp=
     print(f"The end date is set as: {end_date}")
     populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, currency_code=currency_code, mod=mod, history=True)
 
+def get_best_backtest_bot(bot_id, time_exp, time_exp_str, bot_type, option_type):
+    if(bot_type == "CLASSIC"):
+        query = f"select backtest.uid, backtest.spot_date, '{bot_type}' as bot_type, '{option_type}' as bot_option_type, backtest.time_to_exp, backtest.drawdown_return, "
+        query += f" 0 as delta_churn, backtest.avg_delta::double precision, 0 as v1, backtest.bot_return, backtest.expiry_return, backtest.ticker, "
+        query += f"backtest.bot_id from bot_{bot_type.lower()}_backtest backtest where time_to_exp = {time_exp} and exists ( "
+        query += f"select 1 from bot_ranking rank where rank_1_{time_exp_str}='{bot_type.lower()}_{option_type}_{time_exp_str}' and rank.ticker = backtest.ticker and rank.spot_date=backtest.spot_date)"
+    else:
+        query = f"select backtest.uid, backtest.spot_date, '{bot_type}' as bot_type, '{option_type}' as bot_option_type, backtest.time_to_exp, backtest.drawdown_return, "
+        query += f"backtest.delta_churn, backtest.avg_delta::double precision, backtest.v1, backtest.bot_return, backtest.expiry_return, backtest.ticker, "
+        query += f"backtest.bot_id from bot_{bot_type.lower()}_backtest backtest where time_to_exp = {time_exp} and option_type='{option_type}' and exists ( "
+        query += f"select 1 from bot_ranking rank where rank_1_{time_exp_str}='{bot_type.lower()}_{option_type}_{time_exp_str}' and rank.ticker = backtest.ticker and rank.spot_date=backtest.spot_date)"
+    print(query)
+    data = read_query(query)
+    return data
+
+def update_best_bot():
+    truncate_table("bot_backtest")
+    bot = get_bot_option_type()
+    for index, row in bot.iterrows():
+        result = get_best_backtest_bot(row["bot_id"], row["time_to_exp"], row["time_to_exp_str"], row["bot_type"], row["bot_option_type"])
+        upsert_data_to_database(result, "bot_backtest", "uid", how="update", Text=True)
+
 if __name__ == "__main__":
     # data_prep_history(currency_code=["USD", "HKD", "CNY"])
     # train_model(currency_code=["USD", "HKD", "CNY"])
@@ -174,4 +198,5 @@ if __name__ == "__main__":
     # bot_statistic_ucdc(currency_code=["USD", "HKD", "CNY"])
     # train_lebeler_model(currency_code=["USD", "HKD", "CNY"])
     # bot_ranking_history(currency_code=["USD", "HKD", "CNY"])
+    # update_best_bot()
     pass

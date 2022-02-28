@@ -499,6 +499,7 @@ def get_bot_option_type(condition=None):
     query = f"select * from {table_name} "
     if(type(condition) != type(None)):
         query+= f" where {condition}"
+    query += "order by bot_id"
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
