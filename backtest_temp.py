@@ -128,7 +128,7 @@ if __name__ == "__main__":
     # data_prep_history(currency_code=["USD", "HKD", "CNY"])
     # train_model(currency_code=["USD", "HKD", "CNY"])
     # infer_history(currency_code=["USD", "HKD", "CNY"])
-    # option_maker_history_classic(currency_code=["USD", "HKD", "CNY"], option_maker=True, null_filler=True)
+    # option_maker_history_classic(currency_code=["USD", "HKD", "CNY"], option_maker=False, null_filler=True)
     # option_maker_history_uno(currency_code=["CNY"], option_maker=True, null_filler=False, infer=True)
     # option_maker_history_uno(currency_code=["USD"], option_maker=True, null_filler=False, infer=False)
     # option_maker_history_uno(currency_code=["HKD"], option_maker=True, null_filler=False, infer=True)
