@@ -15,7 +15,7 @@ from bot.final_model import populate_vol_infer
 
 def data_prep_history(currency_code=None):
     print("{} : === DATA PREPERATION HISTORY STARTED ===".format(dateNow()))
-    start_date = str_to_date(backdate_by_month(6))
+    start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
     print("Data preparation history started!")
     print(f"The start date is set as: {start_date}")
@@ -34,7 +34,7 @@ def train_model(ticker=None, currency_code=None):
     print("{} : === VOLATILITY TRAIN MODEL STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
-    start_date = str_to_date(backdate_by_month(6))
+    start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -43,7 +43,7 @@ def train_model(ticker=None, currency_code=None):
 def infer_history(currency_code=None):
     folder_check()
     print("{} : === VOLATILITY INFER HISTORY STARTED ===".format(dateNow()))
-    start_date = str_to_date(backdate_by_month(6))
+    start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -53,7 +53,7 @@ def infer_history(currency_code=None):
 def option_maker_history_uno(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
     time_to_exp = check_time_to_exp(time_to_exp)
     print("{} : === OPTION MAKER UNO HISTORY STARTED ===".format(dateNow()))
-    start_date = str_to_date(backdate_by_month(6))
+    start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
     if option_maker:
         populate_bot_uno_backtest(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, infer=infer, history=True)
@@ -64,7 +64,7 @@ def option_maker_history_uno(ticker=None, currency_code=None, time_to_exp=None, 
 def option_maker_history_ucdc(ticker=None, currency_code=None, time_to_exp=None, mod=False, option_maker=False, null_filler=False, infer=True, total_no_of_runs=1, run_number=0):
     time_to_exp = check_time_to_exp(time_to_exp)
     print("{} : === OPTION MAKER UCDC HISTORY STARTED ===".format(dateNow()))
-    start_date = str_to_date(backdate_by_month(6))
+    start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
     if option_maker:
         populate_bot_ucdc_backtest(ticker = ticker, currency_code=currency_code, start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, mod=mod, infer=infer, history=True)
@@ -77,7 +77,7 @@ def option_maker_history_classic(ticker=None, currency_code=None, time_to_exp=No
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
     print("{} : === OPTION MAKER CLASSIC HISTORY STARTED ===".format(dateNow()))
-    start_date = str_to_date(backdate_by_month(6))
+    start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -109,7 +109,7 @@ def train_lebeler_model(ticker=None, currency_code=None, time_to_exp=time_to_exp
     print("{} : === BOT RANKING TRAIN MODEL STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
-    start_date = str_to_date(backdate_by_month(6))
+    start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
     populate_bot_labeler(start_date=start_date, end_date=end_date, ticker=ticker, time_to_exp=time_to_exp, bot_labeler_train = True, bots_list=bots_list)
 
@@ -118,7 +118,7 @@ def bot_ranking_history(ticker=None, currency_code=None, mod=False, time_to_exp=
     print("{} : === BOT RANKING HISTORY STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
-    start_date = str_to_date(backdate_by_month(6))
+    start_date = str_to_date(backdate_by_month(7))
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
