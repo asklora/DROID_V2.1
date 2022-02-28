@@ -304,7 +304,7 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
     null_df = get_bot_backtest_data(start_date=date_min, end_date=date_max, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, uno=True, mod=mod, null_filler=True)
     start_date = null_df.spot_date.min()
     #tac_data = tac_data_download_null_filler(start_date, args)
-    tac_data = get_master_tac_price(start_date=date_min, end_date=date_max, ticker=ticker, currency_code=currency_code, local=True)
+    tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, local=True)
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     interest_rate_data = get_interest_rate_data()
     dividends_data = get_dividends_data()
