@@ -339,7 +339,7 @@ def fill_bot_backtest_uno(start_date=None, end_date=None, time_to_exp=None, tick
     null_df = get_bot_backtest_data(start_date=date_min, end_date=date_max, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, uno=True, mod=mod, null_filler=True)
     start_date = null_df.spot_date.min()
     #tac_data = tac_data_download_null_filler(start_date, args)
-    tac_data = get_master_tac_price(start_date=date_min, end_date=date_max, ticker=ticker, currency_code=currency_code)
+    tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
     tac_data = FillMissingDay(tac_data, start_date, backdate_by_day(1))
     tac_data = ForwardBackwardFillNull(tac_data, ["total_return_index", "tri_adj_open", "tri_adj_high", "tri_adj_low", "tri_adj_close", "rsi", "fast_k", "fast_d"])
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
