@@ -194,6 +194,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                     row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
                     row.pnl = prices_temp[-1] - prices_temp[0]
                     row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
+                    row.drawdown_return = np.amin(prices_temp) / prices_temp[0] - 1
             else:
                 # If one of the events is triggered.
                 if sl_indices > tp_indices:
@@ -206,6 +207,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                     row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
                     row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
                     row.pnl = prices_temp[sl_indices] - prices_temp[0]
+                    row.drawdown_return = np.amin(prices_temp) / prices_temp[0] - 1
 
                 else:
                     # If take profit is triggered.
@@ -217,14 +219,8 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                     row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
                     row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
                     row.pnl = prices_temp[tp_indices] - prices_temp[0]
-
-
-            if prices_temp.index[-1] < temp_date:
-                # If the expiry date hasn"t arrived yet.
-                row["drawdown_return"] = None
-            else:
-                # If the expiry date is arrived.
-                row["drawdown_return"] = min(prices_temp) / prices_temp[0] - 1
+                    row.drawdown_return = np.amin(prices_temp) / prices_temp[0] - 1
+                    # row["drawdown_return"] = min(prices_temp) / prices_temp[0] - 1
         except Exception as e:
             print("{} : === FILL OPTION CLASSIC ERROR === : {}".format(dateNow(), e))
         return row
