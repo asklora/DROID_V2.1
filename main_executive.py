@@ -167,7 +167,7 @@ def data_prep_daily(ticker=None, currency_code=None):
     universe_df = get_active_universe(ticker=currency_code_to_etf["etf_ticker"].to_list())
     universe_df = universe_df.loc[~universe_df["ticker"].isin(ticker)]
     ticker.extend(universe_df["ticker"].to_list())
-    populate_bot_data(start_date=start_date, end_date=end_date, ticker=ticker, daily=True)
+    populate_bot_data(start_date=start_date, end_date=end_date, ticker=ticker)
     report = "DATA PREPERATION DAILY COMPLETED"
     report_check(report, currency_code=currency_code)
 
