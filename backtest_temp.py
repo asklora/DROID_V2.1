@@ -137,13 +137,13 @@ def get_best_backtest_bot(bot_id, time_exp, time_exp_str, bot_type, option_type)
         query += f"backtest.delta_churn, backtest.avg_delta::double precision, backtest.v1, backtest.bot_return, backtest.expiry_return, backtest.ticker, "
         query += f"backtest.bot_id from bot_{bot_type.lower()}_backtest backtest where time_to_exp = {time_exp} and option_type='{option_type}' and exists ( "
         query += f"select 1 from bot_ranking rank where rank_1_{time_exp_str}='{bot_type.lower()}_{option_type}_{time_exp_str}' and rank.ticker = backtest.ticker and rank.spot_date=backtest.spot_date)"
-    print(query)
     data = read_query(query)
     return data
 
 def update_best_bot():
     truncate_table("bot_backtest")
     bot = get_bot_option_type()
+    bot = bot.loc[bot["bot_type"].isin(["CLASSIC", "UNO", "UCDC"])]
     for index, row in bot.iterrows():
         result = get_best_backtest_bot(row["bot_id"], row["time_to_exp"], row["time_to_exp_str"], row["bot_type"], row["bot_option_type"])
         upsert_data_to_database(result, "bot_backtest", "uid", how="update", Text=True)
