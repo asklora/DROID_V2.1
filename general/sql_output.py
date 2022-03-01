@@ -5,7 +5,7 @@ import sqlalchemy as db
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count as cpucount
 from sqlalchemy.types import DATE, BIGINT, TEXT, INTEGER, BOOLEAN, Integer
-from general.sql_process import db_read, db_write, get_debug_url, alibaba_db_url, DB_URL_ALIBABA_PROD, local_db_url
+from general.sql_process import db_read as DB_READ, db_write as DB_WRITE, get_debug_url, alibaba_db_url, DB_URL_ALIBABA_PROD, local_db_url
 from pangres import upsert
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
@@ -17,6 +17,8 @@ from general.data_process import tuple_data
 def execute_query(query, table=None, local=False):
     if(local):
         db_read = local_db_url
+    else:
+        db_read = DB_READ
     print(f"Execute Query to Table {table}")
     engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
@@ -42,6 +44,8 @@ def replace_table_datebase_ali(data, table_name):
 def insert_data_to_database(data, table, how="append", local=False):
     if(local):
         db_write = local_db_url
+    else:
+        db_write = DB_WRITE
     print(f"=== Insert Data to Database on Table {table} ===")
     engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
     try:
@@ -61,6 +65,8 @@ def insert_data_to_database(data, table, how="append", local=False):
 def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=False, Text=False, Date=False, Int=False, Bigint=False, Bool=False, debug=False, local=False):
     if(local):
         db_write = local_db_url
+    else:
+        db_write = DB_WRITE
     try:
         print(f"=== Upsert Data to Database on Table {table} ===")
         data = data.drop_duplicates(subset=[primary_key], keep="first", inplace=False)
@@ -166,7 +172,7 @@ def update_fundamentals_score_in_droid_universe_daily(data, table):
     print(f"=== Update Data to Database on Table {table} ===")
     data = data[["ticker","mkt_cap"]]
     resultdict = data.to_dict("records")
-    engine = db.create_engine(db_write)
+    engine = db.create_engine(DB_WRITE)
     sm = sessionmaker(bind=engine)
     session = sm()
     metadata = db.MetaData(bind=engine)
