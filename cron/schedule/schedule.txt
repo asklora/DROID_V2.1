@@ -1,66 +1,11 @@
 BOT SCHEDULE IN HK TIME
-00 08 * * 1-5 /home/loratech/PycharmProjects/DROID_V2.1/cron/currency_price.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/currency_price.log 2>&1
-
-00 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/north_asia_market.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/north_asia_market.log 2>&1
-00 10 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/west_market.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/west_market.log 2>&1
-
-00 03 * * 1-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/ai_rating_na.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/ai_rating_na.log 2>&1
-00 11 * * 1-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/ai_rating_ws.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/ai_rating_ws.log 2>&1
-
-00 07 * * 1-7 /home/loratech/PycharmProjects/DROID_V2.1/cron/firebase_universe_na.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/firebase_universe_na.log 2>&1
-00 19 * * 1-7 /home/loratech/PycharmProjects/DROID_V2.1/cron/firebase_universe_ws.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/firebase_universe_ws.log 2>&1
-
-00 19 * * 6 /home/loratech/PycharmProjects/DROID_V2.1/cron/training.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/training.log 2>&1
-
-30 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/classic.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/classic_na.log 2>&1
-
-31 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/krw_prep.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/krw_prep.log 2>&1
-31 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/krw_uno.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/krw_uno.log 2>&1
-32 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/krw_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/krw_ucdc.log 2>&1
-
-32 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/hkd_prep.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/hkd_prep.log 2>&1
-33 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/hkd_uno.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/hkd_uno.log 2>&1
-34 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/hkd_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/hkd_ucdc.log 2>&1
-
-33 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/cny_prep.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/cny_prep.log 2>&1
-35 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/cny_uno.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/cny_uno.log 2>&1
-36 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/cny_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/cny_ucdc.log 2>&1
-
-30 10 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/classic.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/classic_ws.log 2>&1
-
-31 10 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/usd_prep.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/usd_prep.log 2>&1
-31 11 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/usd_uno.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/usd_uno.log 2>&1
-32 11 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/usd_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/usd_ucdc.log 2>&1
-
-32 10 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/eur_prep.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/eur_prep.log 2>&1
-33 11 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/eur_uno.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/eur_uno.log 2>&1
-34 11 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/eur_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/eur_ucdc.log 2>&1
-
-33 10 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/gbp_prep.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/gbp_prep.log 2>&1
-35 11 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/gbp_uno.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/gbp_uno.log 2>&1
-36 11 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/gbp_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/gbp_ucdc.log 2>&1
-
-
-40 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/fundamentals.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/fundamentals.log 2>&1
-56 10 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/worldscope.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/worldscope.log 2>&1
-
-00 04 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/monthly.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/monthly.log 2>&1
-
-00 05 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/vix.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/vix.log 2>&1
-
-15 05 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/interest.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/interest.log 2>&1
-
-45 21 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/quandl.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/quandl.log 2>&1
-
-00 04 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/utc_offset.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/utc_offset.log 2>&1
-
-00 04 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/dividend.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/dividend.log 2>&1
-
-00 04 * * 0 /home/loratech/PycharmProjects/DROID_V2.1/cron/weekly.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/weekly.log 2>&1
-
-30 05 1 * * /home/loratech/PycharmProjects/DROID_V2.1/cron/populate_ticker.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/populate_ticker.log 2>&1
-
-
-
-
-
+00 00 * * 0 /home/loratech/DROID_V2.1/cron/training.sh 2>&1 >/home/loratech/DROID_V2.1/cron/LogFile/training.log 2>&1
+00 11 * * 2-6 /home/loratech/DROID_V2.1/cron/data_migrations.sh 2>&1 >/home/loratech/DROID_V2.1/cron/LogFile/data_migrations.log 2>&1
+20 11 * * 2-6 /home/loratech/DROID_V2.1/cron/data_prep.sh 2>&1 >/home/loratech/DROID_V2.1/cron/LogFile/data_prep.log 2>&1
+25 11 * * 2-6 /home/loratech/DROID_V2.1/cron/classic.sh 2>&1 >/home/loratech/DROID_V2.1/cron/LogFile/classic.log 2>&1
+00 12 * * 2-6 /home/loratech/DROID_V2.1/cron/usd_uno.sh 2>&1 >/home/loratech/DROID_V2.1/cron/LogFile/usd_uno.log 2>&1
+00 12 * * 2-6 /home/loratech/DROID_V2.1/cron/usd_ucdc.sh 2>&1 >/home/loratech/DROID_V2.1/cron/LogFile/usd_ucdc.log 2>&1
+00 12 * * 2-6 /home/loratech/DROID_V2.1/cron/cny_uno.sh 2>&1 >/home/loratech/DROID_V2.1/cron/LogFile/cny_uno.log 2>&1
+00 12 * * 2-6 /home/loratech/DROID_V2.1/cron/cny_ucdc.sh 2>&1 >/home/loratech/DROID_V2.1/cron/LogFile/cny_ucdc.log 2>&1
+00 12 * * 2-6 /home/loratech/DROID_V2.1/cron/hkd_uno.sh 2>&1 >/home/loratech/DROID_V2.1/cron/LogFile/hkd_uno.log 2>&1
+00 12 * * 2-6 /home/loratech/DROID_V2.1/cron/hkd_ucdc.sh 2>&1 >/home/loratech/DROID_V2.1/cron/LogFile/hkd_ucdc.log 2>&1
