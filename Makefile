@@ -19,19 +19,19 @@ classic:
 	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest_temp.py --classic True
 
 usd_uno:
-	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest_temp.py --option_maker True --null_filler True --currency_code USD --uno True
+	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest_temp.py --currency_code USD --uno True
 
 usd_ucdc:
-	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest.py --option_maker True --null_filler True --currency_code USD --ucdc True
+	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest.py --currency_code USD --ucdc True
 
 cny_uno:
-	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest.py --option_maker True --null_filler True --currency_code CNY --uno True --infer True
+	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest.py --currency_code CNY --uno True --infer True
 
 cny_ucdc:
-	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest.py --option_maker True --null_filler True --currency_code CNY --ucdc True --infer True
+	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest.py --currency_code CNY --ucdc True --infer True
 
 hkd_uno:
-	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest.py --option_maker True --null_filler True --currency_code HKD --uno True --infer True
+	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest.py --currency_code HKD --uno True --infer True
 
 hkd_ucdc:
-	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest.py --option_maker True --null_filler True --currency_code HKD --ucdc True --infer True
+	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest.py --currency_code HKD --ucdc True --infer True
