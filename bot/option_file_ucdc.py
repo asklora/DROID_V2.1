@@ -96,7 +96,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
         if(cond.all() == False):
             break
 
-    options_df["expiry_date"] = (options_df["expiry_date"]).apply(lambda x: x.date())
+    # options_df["expiry_date"] = (options_df["expiry_date"]).apply(lambda x: x.date())
 
     options_df["days_to_expiry"] = (options_df["expiry_date"] - options_df["spot_date"]).apply(lambda x:x.days)
     # *************************************************************************************************
