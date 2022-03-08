@@ -81,7 +81,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
 
     # *****************************************************************************************************
     # making sure that expiry date is not holiday or weekend
-    options_df["expiry_date"] = pd.to_datetime(options_df["expiry_date"]).dt.date
+    options_df["expiry_date"] = pd.to_datetime(options_df["expiry_date"])
     while(True):
         cond = options_df["expiry_date"].apply(lambda x: x.weekday()) > 4
         options_df.loc[cond, "expiry_date"] = options_df.loc[cond, "expiry_date"] - BDay(1)
@@ -94,7 +94,7 @@ def populate_bot_uno_backtest(start_date=None, end_date=None, ticker=None, curre
         if(cond.all() == False):
             break
 
-    # options_df["expiry_date"] = (options_df["expiry_date"]).apply(lambda x: x.date())
+    options_df["expiry_date"] = (options_df["expiry_date"]).apply(lambda x: x.date())
 
     options_df["days_to_expiry"] = (options_df["expiry_date"] - options_df["spot_date"]).apply(lambda x:x.days)
     # *************************************************************************************************

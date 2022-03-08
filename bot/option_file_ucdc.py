@@ -82,7 +82,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
 
     # *****************************************************************************************************
     # making sure that expiry date is not holiday or weekend
-    options_df["expiry_date"] = pd.to_datetime(options_df["expiry_date"]).dt.date
+    options_df["expiry_date"] = pd.to_datetime(options_df["expiry_date"])
 
     while(True):
         cond = options_df["expiry_date"].apply(lambda x: x.weekday()) > 4
@@ -96,7 +96,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
         if(cond.all() == False):
             break
 
-    # options_df["expiry_date"] = (options_df["expiry_date"]).apply(lambda x: x.date())
+    options_df["expiry_date"] = (options_df["expiry_date"]).apply(lambda x: x.date())
 
     options_df["days_to_expiry"] = (options_df["expiry_date"] - options_df["spot_date"]).apply(lambda x:x.days)
     # *************************************************************************************************
