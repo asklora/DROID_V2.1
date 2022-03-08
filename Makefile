@@ -10,7 +10,7 @@ stop_python:
 	@sudo pkill python
 
 data_migrations:
-	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/migrations_code
+	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/migrations_code.py
 	
 data_prep:
 	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest_temp.py --data_prep True
