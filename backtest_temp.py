@@ -1,4 +1,5 @@
 # from main_executive import data_prep_history
+from datetime import datetime
 from bot.data_download import get_bot_option_type
 from general.sql_output import truncate_table, upsert_data_to_database
 from bot.option_file_classic import fill_bot_backtest_classic, populate_bot_classic_backtest
@@ -157,6 +158,7 @@ parser.add_argument("-uno", "--uno", type=bool, help="uno", default=False)
 parser.add_argument("-ucdc", "--ucdc", type=bool, help="ucdc", default=False)
 parser.add_argument("-classic", "--classic", type=bool, help="classic", default=False)
 parser.add_argument("-currency_code", "--currency_code", nargs="+", help="currency_code", default=None)
+parser.add_argument("-split", "--split", type=int, help="currency_code", default=0)
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -167,16 +169,29 @@ if __name__ == "__main__":
         train_model(currency_code=["USD", "HKD", "CNY"])
         train_lebeler_model(currency_code=["USD", "HKD", "CNY"])
     if(args.uno):
-        option_maker_history_uno(currency_code=args.currency_code, option_maker=True, null_filler=True, infer=args.infer)
+        if("USD" in  args.currency_code):
+            ticker = get_active_universe(currency_code=args.currency_code)["ticker"].to_list()
+            ticker_list = [ticker[0:300], ticker[300:]]
+            option_maker_history_uno(ticker=ticker_list[args.split], option_maker=True, null_filler=True)
+        else:
+            option_maker_history_uno(currency_code=args.currency_code, option_maker=True, null_filler=True, infer=args.infer)
         if("USD" in  args.currency_code):
             bot_statistic_uno(currency_code=["USD", "HKD", "CNY"])
             bot_ranking_history(currency_code=["USD", "HKD", "CNY"])
             update_best_bot()
+        print(datetime.now())
     if(args.ucdc):
-        option_maker_history_ucdc(currency_code=args.currency_code, option_maker=True, null_filler=True, infer=args.infer)
+        if("USD" in  args.currency_code):
+            ticker = get_active_universe(currency_code=args.currency_code)["ticker"].to_list()
+            ticker_list = [ticker[0:300], ticker[300:]]
+            option_maker_history_ucdc(ticker=ticker_list[args.split], option_maker=True, null_filler=True)
+        else:
+            option_maker_history_ucdc(currency_code=args.currency_code, option_maker=True, null_filler=True, infer=args.infer)
         if("USD" in  args.currency_code):
             bot_statistic_ucdc(currency_code=["USD", "HKD", "CNY"])
+        print(datetime.now())
     if(args.classic):
         option_maker_history_classic(currency_code=["USD", "HKD", "CNY"], option_maker=True, null_filler=True)
         bot_statistic_classic(currency_code=["USD", "HKD", "CNY"])
+        print(datetime.now())
     pass

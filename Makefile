@@ -18,11 +18,17 @@ data_prep:
 classic:
 	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest_temp.py --classic True
 
-usd_uno:
-	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest_temp.py --currency_code USD --uno True
+usd0_uno:
+	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest_temp.py --currency_code USD --uno True --split 0
 
-usd_ucdc:
-	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest_temp.py --currency_code USD --ucdc True
+usd1_uno:
+	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest_temp.py --currency_code USD --uno True --split 1
+
+usd0_ucdc:
+	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest_temp.py --currency_code USD --ucdc True --split 0
+
+usd1_ucdc:
+	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest_temp.py --currency_code USD --ucdc True --split 1
 
 cny_uno:
 	@sudo /home/loratech/DROID_V2.1/env/bin/python3 /home/loratech/DROID_V2.1/backtest_temp.py --currency_code CNY --uno True --infer True
