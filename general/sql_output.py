@@ -194,6 +194,12 @@ def fill_null_company_desc_with_ticker_name():
     data = execute_query(query, table=get_universe_table_name())
     return data
 
+def activate_position_ticker():
+    query = f"update {get_universe_table_name()} set is_active = True "
+    query += f"where ticker in (select op.ticker from {get_orders_position_table_name()} op where op.is_live=True)"
+    data = execute_query(query, table=get_universe_table_name())
+    return data
+
 def fill_null_quandl_symbol():
     query = f"update {get_universe_table_name()} set quandl_symbol=split_part(ticker, '.', 1) "
     query += f"WHERE is_active=True and quandl_symbol is null and currency_code = 'USD'"
