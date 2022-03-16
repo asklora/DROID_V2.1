@@ -77,8 +77,98 @@ gbp_uno:
 gbp_ucdc:
 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code GBP --ucdc True --infer True
 
-worldscope:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --split 16
+ranking_statistic_na:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --backtest True --ranking True --statistic True --currency_code HKD CNY KRW
+
+ranking_statistic_ws:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --backtest True --ranking True --statistic True --currency_code GBP EUR USD
+
+fundamentals_monthly_factor:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_rating True
+
+quandl:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --quandl True
+
+vix:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --vix True
+
+interest:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --interest True
+
+dividend:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --dividend True
+
+utc_offset:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --utc_offset True
+
+currency_price:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --currency_price True
+
+west_market:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --ws True
+
+north_asia_market:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --na True
+
+ai_rating_na:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --na True --ai_rating True
+
+ai_rating_ws:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --ws True --ai_rating True
+
+firebase_universe_na:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --na True --firebase_universe True
+
+firebase_universe_ws:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --ws True --firebase_universe True
+
+weekly:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --weekly True
+
+monthly:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --monthly True
+	
+populate_ticker:
+	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py populate_ticker --settings=config.settings.production
+
+restart_pc:
+	@/sbin/shutdown -r now
+
+# sgd_prep:
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --do_infer True --currency_code SGD --infer True
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --currency_code SGD
+
+# sgd_uno:
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code SGD --uno True --infer True
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --backtest True --ranking True --statistic True --currency_code SGD
+
+# sgd_ucdc:
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code SGD --ucdc True --infer True
+
+# twd_prep:
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --do_infer True --currency_code TWD --infer True
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --currency_code TWD
+
+# twd_uno:
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code TWD --uno True --infer True
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --backtest True --ranking True --statistic True --currency_code TWD
+
+# twd_ucdc:
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code TWD --ucdc True --infer True
+
+# jpy_prep:
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --do_infer True --currency_code JPY --infer True
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --currency_code JPY
+
+# jpy_uno:
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code JPY --uno True --infer True
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --backtest True --ranking True --statistic True --currency_code JPY
+
+# jpy_ucdc:
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code JPY --ucdc True --infer True
+
+# worldscope:
+# 	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --split 16
 
 #worldscope_2:
 #	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --worldscope True --currency_code KRW --split 1
@@ -172,87 +262,3 @@ fundamentals:
 #
 #fundamentals_16:
 #	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_score True --currency_code USD --split 5
-
-fundamentals_monthly_factor:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --fundamentals_rating True
-
-quandl:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --quandl True
-
-vix:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --vix True
-
-interest:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --interest True
-
-dividend:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --dividend True
-
-utc_offset:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --utc_offset True
-
-currency_price:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --currency_price True
-
-west_market:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --ws True
-
-north_asia_market:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --na True
-
-ai_rating_na:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --na True --ai_rating True
-
-ai_rating_ws:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --ws True --ai_rating True
-
-firebase_universe_na:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --na True --firebase_universe True
-
-firebase_universe_ws:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --ws True --firebase_universe True
-
-weekly:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --weekly True
-
-monthly:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py main --settings=config.settings.production --monthly True
-	
-populate_ticker:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py populate_ticker --settings=config.settings.production
-
-restart_pc:
-	@/sbin/shutdown -r now
-
-sgd_prep:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --do_infer True --currency_code SGD --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --currency_code SGD
-
-sgd_uno:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code SGD --uno True --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --backtest True --ranking True --statistic True --currency_code SGD
-
-sgd_ucdc:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code SGD --ucdc True --infer True
-
-twd_prep:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --do_infer True --currency_code TWD --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --currency_code TWD
-
-twd_uno:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code TWD --uno True --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --backtest True --ranking True --statistic True --currency_code TWD
-
-twd_ucdc:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code TWD --ucdc True --infer True
-
-jpy_prep:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --do_infer True --currency_code JPY --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --prep True --currency_code JPY
-
-jpy_uno:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code JPY --uno True --infer True
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --backtest True --ranking True --statistic True --currency_code JPY
-
-jpy_ucdc:
-	@sudo /home/loratech/droid2env/bin/python3 /home/loratech/PycharmProjects/DROID_V2.1/manage.py backtest --settings=config.settings.production --option_maker True --null_filler True --currency_code JPY --ucdc True --infer True

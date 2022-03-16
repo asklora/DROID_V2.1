@@ -12,6 +12,7 @@ BOT SCHEDULE IN HK TIME
 
 00 19 * * 6 /home/loratech/PycharmProjects/DROID_V2.1/cron/training.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/training.log 2>&1
 
+00 01 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/ranking_statistic_na.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/ranking_statistic_na.log 2>&1
 30 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/classic.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/classic_na.log 2>&1
 
 31 02 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/krw_prep.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/krw_prep.log 2>&1
@@ -26,6 +27,7 @@ BOT SCHEDULE IN HK TIME
 35 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/cny_uno.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/cny_uno.log 2>&1
 36 03 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/cny_ucdc.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/cny_ucdc.log 2>&1
 
+00 09 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/ranking_statistic_ws.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/ranking_statistic_ws.log 2>&1
 30 10 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/classic.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/classic_ws.log 2>&1
 
 31 10 * * 2-6 /home/loratech/PycharmProjects/DROID_V2.1/cron/usd_prep.sh 2>&1 >/home/loratech/PycharmProjects/DROID_V2.1/cron/LogFile/usd_prep.log 2>&1
