@@ -5,6 +5,8 @@ from bot.final_model import populate_vol_infer
 from bot.main_file import populate_bot_data
 from general.sql_process import do_function
 from general.sql_query import get_active_universe, get_ticker_etf
+from general.sql_output import delete_old_backtest_on_database, upsert_data_to_database
+from general.table_name import get_bot_backtest_table_name
 from bot.data_download import (
     get_backtest_latest_date, 
     get_bot_data_latest_date,
@@ -12,8 +14,9 @@ from bot.data_download import (
     get_new_ticker_from_bot_vol_surface_infer, 
     get_new_ticker_from_classic_bot_backtest,
     get_new_ticker_from_uno_ucdc_bot_backtest, 
-     get_new_tickers_from_bot_data, 
-     get_volatility_latest_date)
+    get_new_tickers_from_bot_data, 
+    get_volatility_latest_date,
+    get_bot_backtest_data)
 from general.slack import report_to_slack
 from general.date_process import backdate_by_month, dateNow, date_minus_bday, droid_start_date_buffer, str_to_date, droid_start_date
 from bot.option_file_classic import fill_bot_backtest_classic, populate_bot_classic_backtest
@@ -40,6 +43,31 @@ def report_check(report, ticker=None, currency_code=None, time_to_exp=None):
 def training(ticker=None, currency_code=None):
     train_model(ticker=ticker, currency_code=currency_code)
     train_lebeler_model(ticker=ticker, currency_code=currency_code)
+
+def bot_backtest_updates(ticker=None, currency_code=None, time_to_exp=time_to_expiry):
+    time_to_exp = check_time_to_exp(time_to_exp)
+    start_date = backdate_by_month(7)
+    end_date = dateNow()
+    delete_old_backtest_on_database()
+    for bot in bots_list:
+        print(f"{bot} backtest" )
+        backtest = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, 
+        uno=(bot=="uno"), ucdc=(bot=="ucdc"), classic=(bot=="classic"))
+        backtest["bot_type"] = bot.upper()
+        if(bot == "classic"):
+            backtest["option_type"] = bot
+            backtest["potential_max_loss"] = (backtest["stop_loss"] / backtest["spot_price"]) - 1
+            backtest["targeted_profit"] = (backtest["take_profit"] / backtest["spot_price"]) - 1
+        else:
+            backtest["potential_max_loss"] = (backtest["target_max_loss"] / backtest["spot_price"]) - 1
+            backtest["targeted_profit"] = (backtest["target_profit"] / backtest["spot_price"]) - 1
+        backtest = backtest[["uid", "ticker", "bot_id", "spot_date", "bot_type", "option_type", 
+            "time_to_exp", "spot_price", "potential_max_loss", "targeted_profit", "bot_return", "event"]]
+        print(backtest)
+        null_event_backtest = backtest.loc[backtest["event"].isnull()]
+        event_backtest = backtest.loc[~backtest["event"].isnull()]
+        upsert_data_to_database(null_event_backtest, get_bot_backtest_table_name(), "uid", how="ignore", Text=True)
+        upsert_data_to_database(event_backtest, get_bot_backtest_table_name(), "uid", how="update", Text=True)
 
 # follow currency schedule
 def daily_shcedule_uno_ucdc(ticker=None, currency_code=None, time_to_exp=time_to_expiry, option_maker=True, null_filler=True, mod=False, total_no_of_runs=1, run_number=0, uno=False, ucdc=False, prep=False, statistic=False, do_infer=True, infer=True, latest_data=False, ranking=False, backtest=False):
@@ -68,7 +96,7 @@ def daily_shcedule_uno_ucdc(ticker=None, currency_code=None, time_to_exp=time_to
         option_maker_daily_ucdc(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
     if(backtest):
         #Update Bot Backtest
-        do_function("bot_backtest_updates")
+        bot_backtest_updates(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_expiry)
     if(ranking):
         #Populate Bot Ranking
         bot_ranking_check_new_ticker(ticker=ticker, currency_code=currency_code, mod=mod, time_to_exp=time_to_exp)
@@ -99,7 +127,7 @@ def daily_uno_ucdc(ticker=None, currency_code=None, time_to_exp=time_to_expiry, 
     option_maker_ucdc_check_new_ticker(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
     option_maker_daily_ucdc(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_exp, mod=mod, option_maker=option_maker, null_filler=null_filler, infer=infer, total_no_of_runs=total_no_of_runs, run_number=run_number)
     #Update Bot Backtest
-    do_function("bot_backtest_updates")
+    bot_backtest_updates(ticker=ticker, currency_code=currency_code, time_to_exp=time_to_expiry)
     #Populate Bot Ranking
     bot_ranking_check_new_ticker(ticker=ticker, currency_code=currency_code, mod=mod, time_to_exp=time_to_exp)
     bot_ranking_daily(ticker=ticker, currency_code=currency_code, mod=mod, time_to_exp=time_to_exp)

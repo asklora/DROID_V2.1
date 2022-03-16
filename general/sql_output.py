@@ -9,9 +9,9 @@ from general.sql_process import db_read as DB_READ, db_write as DB_WRITE, get_de
 from pangres import upsert
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
-from general.date_process import dateNow, timestampNow, str_to_date
+from general.date_process import backdate_by_month, dateNow, timestampNow, str_to_date
 from general.sql_query import get_order_performance_by_ticker
-from general.table_name import get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_consolidated_table_name, get_universe_table_name, get_user_core_table_name, get_user_profit_history_table_name
+from general.table_name import get_bot_backtest_table_name, get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_consolidated_table_name, get_universe_table_name, get_user_core_table_name, get_user_profit_history_table_name
 from general.data_process import tuple_data
 
 def execute_query(query, table=None, local=False):
@@ -224,6 +224,12 @@ def delete_old_dividends_on_database():
     old_date = dateNow()
     query = f"delete from {get_data_dividend_table_name()} where ex_dividend_date <= '{old_date}'"
     data = execute_query(query, table=get_data_dividend_table_name())
+    return data
+
+def delete_old_backtest_on_database():
+    old_date = backdate_by_month(12)
+    query = f"delete from {get_bot_backtest_table_name()} where spot_date <= '{old_date}'"
+    data = execute_query(query, table=get_bot_backtest_table_name())
     return data
 
 def clean_latest_price():
