@@ -172,7 +172,7 @@ if __name__ == "__main__":
         if("USD" in  args.currency_code):
             ticker = get_active_universe(currency_code=args.currency_code)["ticker"].to_list()
             ticker_list = [ticker[0:300], ticker[300:]]
-            option_maker_history_uno(ticker=ticker_list[args.split], option_maker=True, null_filler=True)
+            option_maker_history_uno(ticker=ticker_list[args.split], option_maker=True, null_filler=True, infer=args.infer)
         else:
             option_maker_history_uno(currency_code=args.currency_code, option_maker=True, null_filler=True, infer=args.infer)
         if("USD" in  args.currency_code):
@@ -184,7 +184,7 @@ if __name__ == "__main__":
         if("USD" in  args.currency_code):
             ticker = get_active_universe(currency_code=args.currency_code)["ticker"].to_list()
             ticker_list = [ticker[0:300], ticker[300:]]
-            option_maker_history_ucdc(ticker=ticker_list[args.split], option_maker=True, null_filler=True)
+            option_maker_history_ucdc(ticker=ticker_list[args.split], option_maker=True, null_filler=True, infer=args.infer)
         else:
             option_maker_history_ucdc(currency_code=args.currency_code, option_maker=True, null_filler=True, infer=args.infer)
         if("USD" in  args.currency_code):
