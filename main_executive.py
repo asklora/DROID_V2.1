@@ -48,7 +48,7 @@ def bot_backtest_updates(ticker=None, currency_code=None, time_to_exp=time_to_ex
     time_to_exp = check_time_to_exp(time_to_exp)
     start_date = backdate_by_month(7)
     end_date = dateNow()
-    delete_old_backtest_on_database()
+    # delete_old_backtest_on_database()
     for bot in bots_list:
         print(f"{bot} backtest" )
         backtest = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, 
