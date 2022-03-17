@@ -16,6 +16,7 @@ from bot.data_download import (
     get_new_ticker_from_uno_ucdc_bot_backtest, 
     get_new_tickers_from_bot_data, 
     get_volatility_latest_date,
+    get_bot_option_type,
     get_bot_backtest_data)
 from general.slack import report_to_slack
 from general.date_process import backdate_by_month, dateNow, date_minus_bday, droid_start_date_buffer, str_to_date, droid_start_date
@@ -48,11 +49,14 @@ def bot_backtest_updates(ticker=None, currency_code=None, time_to_exp=time_to_ex
     time_to_exp = check_time_to_exp(time_to_exp)
     start_date = backdate_by_month(7)
     end_date = dateNow()
+    bot_id = get_bot_option_type()[["bot_id", "time_to_exp", "bot_option_type", "bot_type"]]
+    bot_id = bot_id.rename(columns = {"bot_option_type" : "option_type"})
     # delete_old_backtest_on_database()
     for bot in bots_list:
         print(f"{bot} backtest" )
         backtest = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, 
         uno=(bot=="uno"), ucdc=(bot=="ucdc"), classic=(bot=="classic"))
+        backtest = backtest.merge(bot_id, on=["time_to_exp", "bot_option_type", "bot_type"], how="left")
         backtest["bot_type"] = bot.upper()
         if(bot == "classic"):
             backtest["option_type"] = bot
