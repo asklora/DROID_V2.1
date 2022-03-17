@@ -57,8 +57,10 @@ def bot_backtest_updates(ticker=None, currency_code=None, time_to_exp=time_to_ex
         backtest = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, 
         uno=(bot=="uno"), ucdc=(bot=="ucdc"), classic=(bot=="classic"))
         backtest["bot_type"] = bot.upper()
-        backtest = backtest.merge(bot_id, on=["time_to_exp", "option_type", "bot_type"], how="left")
         backtest["option_type"] = bot
+        
+        backtest = backtest.merge(bot_id, on=["time_to_exp", "option_type", "bot_type"], how="left")
+        
         if(bot == "classic"):
             backtest["potential_max_loss"] = (backtest["stop_loss"] / backtest["spot_price"]) - 1
             backtest["targeted_profit"] = (backtest["take_profit"] / backtest["spot_price"]) - 1
