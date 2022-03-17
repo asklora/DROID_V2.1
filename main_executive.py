@@ -56,7 +56,7 @@ def bot_backtest_updates(ticker=None, currency_code=None, time_to_exp=time_to_ex
         print(f"{bot} backtest" )
         backtest = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, 
         uno=(bot=="uno"), ucdc=(bot=="ucdc"), classic=(bot=="classic"))
-        backtest = backtest.merge(bot_id, on=["time_to_exp", "bot_option_type", "bot_type"], how="left")
+        backtest = backtest.merge(bot_id, on=["time_to_exp", "option_type", "bot_type"], how="left")
         backtest["bot_type"] = bot.upper()
         if(bot == "classic"):
             backtest["option_type"] = bot
