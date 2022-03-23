@@ -144,13 +144,15 @@ def authentication(client, user) -> Union[dict, None]:
 def tickers() -> List[NamedTuple]:
     three_days_ago = timezone.now().date() - timedelta(days=3)
     tickers = (
-        LatestPrice.objects
-        .filter(
+        LatestPrice.objects.filter(
             intraday_date__gte=three_days_ago,
             ticker__currency_code="HKD",
             ticker__is_active=True,
         )
-        .exclude(latest_price=None)
+        .exclude(
+            latest_price=None,
+            ticker__startswith=".",
+        )
         .values_list(
             "ticker",
             "latest_price",
