@@ -3,7 +3,7 @@ from general.sql_query import get_universe_by_region
 from django.core.management.base import BaseCommand
 from general.date_process import dateNow, str_to_date
 from general.sql_process import do_function
-from general.sql_output import fill_null_quandl_symbol
+from general.sql_output import activate_position_ticker, fill_null_quandl_symbol
 from ingestion.master_multiple import master_multiple_update
 from ingestion.master_tac import master_tac_update
 from ingestion.master_ohlcvtr import master_ohlctr_update
@@ -96,6 +96,7 @@ class Command(BaseCommand):
         try:
             status = ""
             if (options["na"]):
+                activate_position_ticker()
                 ticker = get_universe_by_region(region_id=["na"])["ticker"].to_list()
                 if(options["ai_rating"]):
                     status = "Fundamentals Ingestion"
@@ -121,6 +122,7 @@ class Command(BaseCommand):
                     dividend_daily_update()
                     interest_daily_update()
             if (options["ws"]):
+                activate_position_ticker()
                 ticker = get_universe_by_region(region_id=["ws"])["ticker"].to_list()
                 if(options["ai_rating"]):
                     status = "Fundamentals Ingestion"
