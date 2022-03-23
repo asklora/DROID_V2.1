@@ -34,7 +34,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
     # https://loratechai.atlassian.net/wiki/spaces/ARYA/pages/82379155/Executive+UnO+KO+Barrier+Options+all+python+function+in+black+scholes.py
 
     holidays_df = get_calendar_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
-    tac_data2 = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
+    tac_data2 = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, local=True)
     vol_surface_data = get_vol_surface_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, infer=infer)
     currency_data = get_currency_data(currency_code=currency_code)
     interest_rate_data = get_interest_rate_data()
@@ -166,6 +166,7 @@ def populate_bot_ucdc_backtest(start_date=None, end_date=None, ticker=None, curr
 
     # *************************************************************************************************
     options_df["t"] = options_df["days_to_expiry"]
+    options_df["t"] = options_df["t"] / 365
     # *************************************************************************************************
     # Adding OPTION configurations
 
@@ -305,7 +306,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
     null_df = get_bot_backtest_data(start_date=date_min, end_date=date_max, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, ucdc=True, mod=mod, null_filler=True)
     start_date = null_df.spot_date.min()
 
-    tac_data = get_master_tac_price(start_date=date_min, end_date=date_max, ticker=ticker, currency_code=currency_code)
+    tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, local=True)
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     interest_rate_data = get_interest_rate_data()
     dividends_data = get_dividends_data()
@@ -349,6 +350,7 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
             return row
         dates_temp = dates_np[int(row.spot_date_index):int(row.expiry_date_index+1), 0]
         t = np.full((len(prices_temp)), ((row["expiry_date"] - dates_temp).astype("timedelta64[D]")) / np.timedelta64(1, "D"))
+        t = t / 365
         strike_1 = np.full((len(prices_temp)), row["strike_1"])
         strike_2 = np.full((len(prices_temp)), row["strike_2"])
         cond = (null_df.ticker == row.ticker) & (null_df.spot_date >= row.spot_date) &\
@@ -459,6 +461,10 @@ def fill_bot_backtest_ucdc(start_date=None, end_date=None, time_to_exp=None, tic
     logging.basicConfig(filename="logfilename.log", level=logging.INFO)
     
     def fill_zeros_with_last(arr):
+        if((arr.size>=2) and (arr[1] == 2)):
+            arr[1] = arr[0]
+        if((arr.size>=3) and (arr[2] == 2)):
+            arr[2] = arr[1]
         prev = np.arange(len(arr))
         prev[arr == 2] = 2
         prev = np.maximum.accumulate(prev)

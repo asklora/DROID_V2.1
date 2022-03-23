@@ -96,7 +96,7 @@ def master_ohlctr_update(history=False):
     start_date = dlp_start_date()
     print(f"Calculation Start From {start_date}")
     print("Getting OHLCVTR Data")
-    master_ohlcvtr_data = get_master_ohlcvtr_data(start_date)
+    master_ohlcvtr_data = get_master_ohlcvtr_data(start_date, local=True)
     print("OHLCTR Done")
     print("Filling All Missing Days")
     master_ohlcvtr_data = FillMissingDay(master_ohlcvtr_data, start_date, dateNow())
@@ -107,7 +107,7 @@ def master_ohlctr_update(history=False):
         print("Restart Master OHLCVTR Update")
         do_function("master_ohlcvtr_update")
         start_date = dlp_start_date()
-        master_ohlcvtr_data = get_master_ohlcvtr_data(start_date)
+        master_ohlcvtr_data = get_master_ohlcvtr_data(start_date, local=True)
         master_ohlcvtr_data = FillMissingDay(master_ohlcvtr_data, start_date, dateNow())
         master_ohlcvtr_data, new_tickers = CountDatapoint(master_ohlcvtr_data)
     elif(history):
@@ -122,8 +122,8 @@ def master_ohlctr_update(history=False):
     print(master_ohlcvtr_data)
     if(len(master_ohlcvtr_data) > 0):
         master_ohlcvtr_data = master_ohlcvtr_data.loc[master_ohlcvtr_data["trading_day"] >= upsert_date] 
-        upsert_data_to_database(master_ohlcvtr_data, get_master_ohlcvtr_table_name(), "uid", how="update", Text=True)
-        delete_data_on_database(get_master_ohlcvtr_table_name(), f"trading_day < '{dlp_start_date()}'", delete_ticker=True)
+        upsert_data_to_database(master_ohlcvtr_data, get_master_ohlcvtr_table_name(), "uid", how="update", Text=True, local=True)
+        delete_data_on_database(get_master_ohlcvtr_table_name(), f"trading_day < '{dlp_start_date()}'", delete_ticker=True, local=True)
         report_to_slack("{} : === Master OHLCVTR Update Updated ===".format(datetimeNow()))
         del master_ohlcvtr_data
         #master_tac_update()

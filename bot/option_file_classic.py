@@ -20,7 +20,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     start_date, end_date = check_start_end_date(start_date, end_date)
     # The main function which calculates the volatilities and stop loss and take profit and write them to AWS.
     
-    tac_data2 = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
+    # tac_data2 = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, local=True)
     # vol_surface_data = get_vol_surface_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, infer=infer)
     # currency_data = get_currency_data(currency_code=currency_code)
     # interest_rate_data = get_interest_rate_data()
@@ -28,7 +28,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
     # ******************************* Calculating the vols *************************************
     holidays_df = get_calendar_data(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
     holidays_df["non_working_day"] = pd.to_datetime(holidays_df["non_working_day"])
-    tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
+    tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, local=True)
     main_multiples = make_multiples(tac_data)
 
     # ********************************************************************************************
@@ -150,7 +150,7 @@ def populate_bot_classic_backtest(start_date=None, end_date=None, ticker=None, c
 # *********************** Filling up the Null values **************************
 def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, ticker=None, currency_code=None, mod=False):
     time_to_exp = check_time_to_exp(time_to_exp)
-    tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code)
+    tac_data = get_master_tac_price(start_date=start_date, end_date=end_date, ticker=ticker, currency_code=currency_code, local=True)
     tac_data = tac_data.sort_values(by=["currency_code", "ticker", "trading_day"], ascending=True)
     null_df = get_bot_backtest_data(start_date=start_date, end_date=end_date, time_to_exp=time_to_exp, ticker=ticker, currency_code=currency_code, classic=True, mod=mod, null_filler=True)
     # ********************************************************************************************
@@ -194,6 +194,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                     row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
                     row.pnl = prices_temp[-1] - prices_temp[0]
                     row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
+                    row.drawdown_return = np.amin(prices_temp) / prices_temp[0] - 1
             else:
                 # If one of the events is triggered.
                 if sl_indices > tp_indices:
@@ -206,6 +207,7 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                     row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
                     row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
                     row.pnl = prices_temp[sl_indices] - prices_temp[0]
+                    row.drawdown_return = np.amin(prices_temp) / prices_temp[0] - 1
 
                 else:
                     # If take profit is triggered.
@@ -217,14 +219,8 @@ def fill_bot_backtest_classic(start_date=None, end_date=None, time_to_exp=None, 
                     row.expiry_return = prices_temp[-1] / prices_temp[0] - 1
                     row.duration = (pd.to_datetime(row.event_date) - pd.to_datetime(row.spot_date)).days
                     row.pnl = prices_temp[tp_indices] - prices_temp[0]
-
-
-            if prices_temp.index[-1] < temp_date:
-                # If the expiry date hasn"t arrived yet.
-                row["drawdown_return"] = None
-            else:
-                # If the expiry date is arrived.
-                row["drawdown_return"] = min(prices_temp) / prices_temp[0] - 1
+                    row.drawdown_return = np.amin(prices_temp) / prices_temp[0] - 1
+                    # row["drawdown_return"] = min(prices_temp) / prices_temp[0] - 1
         except Exception as e:
             print("{} : === FILL OPTION CLASSIC ERROR === : {}".format(dateNow(), e))
         return row

@@ -1,10 +1,10 @@
 import pandas as pd
 from django.conf import settings
-from core.djangomodule.general import get_cached_data,set_cache_data
+from core.djangomodule.general import get_cached_data, set_cache_data
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general import table_name
-from general.sql_process import db_read, alibaba_db_url, DB_URL_ALIBABA_PROD
+from general.sql_process import db_read, alibaba_db_url, DB_URL_ALIBABA_PROD, local_db_url
 from general.date_process import (
     backdate_by_day,
     backdate_by_year,
@@ -62,9 +62,7 @@ from general.table_name import (
 from core.djangomodule.general import logging
 
 
-
-
-def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=settings.SQLPRINT):
+def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=settings.SQLPRINT, local=False):
     """Base function for database query
 
     Args:
@@ -78,11 +76,13 @@ def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba
     Returns:
         DataFrame: Resulting data from the query
     """
-  
+
     if(prints):
         logging.info(f"Get Data From Database on {table} table")
     if alibaba:
         dbcon = alibaba_db_url
+    elif local:
+        dbcon = local_db_url
     else:
         dbcon = db_read
 
@@ -91,7 +91,8 @@ def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba
             dbcon, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT"
         )
     else:
-        engine = create_engine(dbcon, max_overflow=-1, isolation_level="AUTOCOMMIT")
+        engine = create_engine(dbcon, max_overflow=-1,
+                               isolation_level="AUTOCOMMIT")
 
     with engine.connect() as conn:
         data = pd.read_sql(query, con=conn)
@@ -133,26 +134,26 @@ def get_region():
     return data
 
 
-def get_latest_price():
+def get_latest_price(local=False):
     query = f"select mo.* from master_ohlcvtr mo, "
     query += f"(select master_ohlcvtr.ticker, max(master_ohlcvtr.trading_day) max_date "
     # and master_ohlcvtr.trading_day <= '2020-09-14'
     query += f"from master_ohlcvtr where master_ohlcvtr.close is not null "
     query += f"group by master_ohlcvtr.ticker) filter "
     query += f"where mo.ticker=filter.ticker and mo.trading_day=filter.max_date; "
-    data = read_query(query, table="latest_price")
+    data = read_query(query, table="latest_price", local=local)
     return data
 
 
-def get_data_by_table_name(table):
+def get_data_by_table_name(table, local=False):
     query = f"select * from {table}"
-    data = read_query(query, table=table)
+    data = read_query(query, table=table, local=local)
     return data
 
 
-def get_data_by_table_name_with_condition(table, condition):
+def get_data_by_table_name_with_condition(table, condition, local=False):
     query = f"select * from {table} where {condition}"
-    data = read_query(query, table=table)
+    data = read_query(query, table=table, local=local)
     return data
 
 
@@ -206,6 +207,7 @@ def get_all_universe(ticker=None, currency_code=None, active=True):
     data = read_query(query, table=get_universe_table_name())
     return data
 
+
 def get_ticker_etf(ticker=None, currency_code=None, active=True):
     table_name = get_currency_table_name()
     query = f"select currency_code, etf_ticker from {table_name} where is_active={active} "
@@ -216,24 +218,29 @@ def get_ticker_etf(ticker=None, currency_code=None, active=True):
     data = read_query(query, table=table_name)
     return data
 
+
 def get_active_universe(ticker=None, currency_code=None, active=True):
     query = f"select * from {get_universe_table_name()} where is_active=True "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code, active=active)
+    check = check_ticker_currency_code_query(
+        ticker=ticker, currency_code=currency_code, active=active)
     if check != "":
         query += f"and " + check
     query += f"order by ticker"
     data = read_query(query, table=get_universe_table_name())
     return data
 
+
 def get_active_universe_by_created(created=dateNow()):
     query = f"select * from {get_universe_table_name()} where is_active=True and created='{created}' order by ticker"
     data = read_query(query, table=get_universe_table_name())
     return data
 
+
 def get_active_position_ticker():
     query = f"select distinct ticker from {get_orders_position_table_name()} where is_live=True"
     data = read_query(query, table=get_orders_position_table_name())
     return data
+
 
 def get_universe_rating(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_table_name()
@@ -263,6 +270,7 @@ def get_active_universe_by_entity_type(ticker=None, currency_code=None, null_ent
     data = read_query(query, table=get_universe_table_name())
     return data
 
+
 def get_worldscope_period_end_list(start_date="2000-01-01", end_date=dateNow()):
     table_name = get_data_worldscope_summary_table_name()
     query = f"select distinct period_end from {table_name} where period_end>='{start_date}' and period_end<='{end_date}' order by period_end ASC"
@@ -277,13 +285,15 @@ def get_worldscope_summary_latest(quarter_col, year_col):
     query = f"select * from {table_name} where period_end>='{start_date}' order by ticker, period_end ASC"
     data = read_query(query, table=table_name)
     num_col = data.select_dtypes(float).columns.to_list()
-    data[num_col] = data.groupby('ticker')[num_col].ffill()       # ffill for missing fields
+    # ffill for missing fields
+    data[num_col] = data.groupby('ticker')[num_col].ffill()
     for col in quarter_col:
-        data[col+'_1q'] = data.groupby('ticker')[col].shift(1)      # add quarter columns for growth ratio calc
+        # add quarter columns for growth ratio calc
+        data[col+'_1q'] = data.groupby('ticker')[col].shift(1)
     for col in year_col:
         data[col+'_1y'] = data.groupby('ticker')[col].shift(4)
     data = data.groupby('ticker').last().reset_index()
-    return data.drop(columns=['uid','worldscope_identifier','year','fiscal_quarter_end','frequency_number','period_end','report_date'])
+    return data.drop(columns=['uid', 'worldscope_identifier', 'year', 'fiscal_quarter_end', 'frequency_number', 'period_end', 'report_date'])
 
 
 def get_ibes_monthly_latest(quarter_col, year_col):
@@ -293,13 +303,15 @@ def get_ibes_monthly_latest(quarter_col, year_col):
     query = f"select * from {table_name} where period_end>='{start_date}' order by ticker, period_end ASC"
     data = read_query(query, table=table_name)
     num_col = data.select_dtypes(float).columns.to_list()
-    data[num_col] = data.groupby('ticker')[num_col].ffill()  # ffill for missing fields
+    # ffill for missing fields
+    data[num_col] = data.groupby('ticker')[num_col].ffill()
     for col in quarter_col:
-        data[col + '_1q'] = data.groupby('ticker')[col].shift(1)  # add quarter columns for growth ratio calc
+        # add quarter columns for growth ratio calc
+        data[col + '_1q'] = data.groupby('ticker')[col].shift(1)
     for col in year_col:
         data[col + '_1y'] = data.groupby('ticker')[col].shift(4)
     data = data.groupby('ticker').last().reset_index()
-    return data.drop(columns=['uid','trading_day','period_end'])
+    return data.drop(columns=['uid', 'trading_day', 'period_end'])
 
 
 def get_missing_field_ticker_list(table_name, field=None, tickers=None, period_end=None):
@@ -327,18 +339,20 @@ def get_missing_field_ticker_list(table_name, field=None, tickers=None, period_e
         # if period_end not exists
         query_miss = f"SELECT * FROM {table_name} LIMIT 1"
         data_miss = read_query(query_miss, table=table_name)
-        data_miss = pd.DataFrame(index=range(len(tickers)), columns=data_miss.columns.to_list())
+        data_miss = pd.DataFrame(index=range(
+            len(tickers)), columns=data_miss.columns.to_list())
         data_miss['ticker'] = tickers
         data_miss['period_end'] = period_end
         return data_miss
     else:
         # if period_end exists
-        if len(tickers)==1:
+        if len(tickers) == 1:
             query = f"SELECT * FROM {table_name} WHERE {field} IS NULL AND period_end='{period_end}' AND ticker='{tickers[0]}'"
         else:
             query = f"SELECT * FROM {table_name} WHERE {field} IS NULL AND period_end='{period_end}' AND ticker IN {tuple(tickers)}"
         data = read_query(query, table=table_name)
         return data
+
 
 def get_active_universe_by_country_code(country_code, method=True):
     if method:
@@ -374,6 +388,7 @@ def get_active_universe_by_quandl_symbol(
         data = read_query(query, table=get_universe_table_name())
     return data
 
+
 def get_universe_client(client_uid=None):
     query = f"select * from {get_universe_client_table_name()} "
     if type(client_uid) != type(None):
@@ -381,10 +396,11 @@ def get_universe_client(client_uid=None):
     data = read_query(query, table=get_universe_table_name())
     return data
 
+
 def get_universe_by_region(region_id=None):
     query = f"select * from {get_universe_table_name()} where is_active=True "
     if type(region_id) != type(None):
-        query += f"and currency_code in (select currency_code from {get_currency_table_name()} where region_id in {tuple_data(region_id)}) "
+        query += f"and currency_code in (select currency_code from {get_currency_table_name()} where region_id in {tuple_data(region_id)}) and is_active=true"
     data = read_query(query, table=get_universe_table_name())
     return data
 
@@ -405,15 +421,17 @@ def findnewticker(args):
     return data
 
 
-def get_master_ohlcvtr_data(trading_day):
+def get_master_ohlcvtr_data(trading_day, local=False):
     query = f"select * from {get_master_ohlcvtr_table_name()} where trading_day>='{trading_day}' and ticker in (select ticker from {get_universe_table_name()} where is_active=True)"
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(
+        query, table=get_master_ohlcvtr_table_name(), local=local)
     return data
 
 
-def get_master_ohlcvtr_start_date():
+def get_master_ohlcvtr_start_date(local=False):
     query = f"SELECT min(trading_day) as start_date FROM {get_master_ohlcvtr_table_name()} WHERE day_status is null"
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(
+        query, table=get_master_ohlcvtr_table_name(), local=local)
     data = data.loc[0, "start_date"]
     data = str(data)
     data = str_to_date(data)
@@ -429,12 +447,14 @@ def get_vix(vix_id=None):
     data = read_query(query, table=get_vix_table_name())
     return data
 
+
 def get_vix_since(vix_id=None, date=None):
     query = f"select * from {get_data_vix_table_name()} WHERE trading_day > '{date}'"
     if type(vix_id) != type(None):
         query += f" where vix_id in {tuple_data(vix_id)}"
     data = read_query(query, table=get_data_vix_table_name())
     return data
+
 
 def get_fundamentals_score(ticker=None, currency_code=None):
     query = f"select * from {get_fundamental_score_table_name()} "
@@ -459,7 +479,7 @@ def get_max_last_ingestion_from_universe(ticker=None, currency_code=None):
     return str(data.loc[0, "max_date"])
 
 
-def get_last_close_industry_code(ticker=None, currency_code=None):
+def get_last_close_industry_code(ticker=None, currency_code=None, local=False):
     query = f"select mo.ticker, mo.close, mo.currency_code, substring(univ.industry_code from 0 for 7) as industry_code from "
     query += f"{get_master_ohlcvtr_table_name()} mo inner join {get_universe_table_name()} univ on univ.ticker=mo.ticker where univ.is_active=True "
     if type(ticker) != type(None):
@@ -469,7 +489,8 @@ def get_last_close_industry_code(ticker=None, currency_code=None):
     query += f"and exists( select 1 from (select ticker, max(trading_day) max_date "
     query += f"from {get_master_ohlcvtr_table_name()} where close is not null group by ticker) filter where filter.ticker=mo.ticker "
     query += f"and filter.max_date=mo.trading_day)"
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(
+        query, table=get_master_ohlcvtr_table_name(), local=local)
     return data
 
 
@@ -479,68 +500,88 @@ def get_pred_mean():
     query += (
         f"where filter.ticker=avlpf.ticker and filter.max_date=avlpf.testing_period;"
     )
-    data = read_query(query, table=get_master_ohlcvtr_table_name(), alibaba=True)
+    data = read_query(
+        query, table=get_master_ohlcvtr_table_name(), alibaba=True)
     data = data.sort_values(by=["ticker", "update_time"], ascending=False)
     data = data.drop_duplicates(subset=["ticker"], keep="first")
     data = data.drop(columns=["update_time"])
     return data
 
+
 def get_ai_value_pred_final():
     query = f"SELECT * FROM {get_ai_value_pred_table_name()}"
-    data = read_query(query, table=get_ai_value_pred_table_name(), alibaba=True)
-    data = pd.pivot_table(data, index=["ticker"], columns=["y_type"], values="final_pred")
+    data = read_query(
+        query, table=get_ai_value_pred_table_name(), alibaba=True)
+    data = pd.pivot_table(data, index=["ticker"], columns=[
+                          "y_type"], values="final_pred")
     data.columns = ["ai_value_"+x for x in data.columns]
     return data.reset_index()
 
 
-def get_specific_tri(trading_day, tri_name="tri"):
+def get_specific_tri(trading_day, tri_name="tri", local=False):
     query = f"select price.ticker, price.total_return_index as {tri_name} from {get_master_ohlcvtr_table_name()} price "
     query += f"inner join (select ohlcvtr.ticker, max(ohlcvtr.trading_day) as max_date from {get_master_ohlcvtr_table_name()} ohlcvtr "
     query += f"where ohlcvtr.total_return_index is not null and ohlcvtr.trading_day <= '{trading_day}' group by ohlcvtr.ticker) result "
     query += f"on price.ticker=result.ticker and price.trading_day=result.max_date "
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(
+        query, table=get_master_ohlcvtr_table_name(), local=local)
     return data
 
-def get_specific_tri_avg(trading_day, avg_days=7, tri_name="tri"):
+
+def get_specific_tri_avg(trading_day, avg_days=7, tri_name="tri", local=False):
     query = f"SELECT a.ticker, avg(a.tri) as {tri_name} FROM (SELECT ticker, total_return_index as tri FROM master_ohlcvtr "
     query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{date_minus_day(start_date=trading_day, days=avg_days)}') a GROUP BY ticker"
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(
+        query, table=get_master_ohlcvtr_table_name(), local=local)
     return data
 
-def get_specific_volume_avg(trading_day, avg_days=7, volume_name="volume"):
+
+def get_specific_volume_avg(trading_day, avg_days=7, volume_name="volume", local=False):
     query = f"SELECT a.ticker, avg(a.volume) as {volume_name} FROM (SELECT ticker, volume FROM master_ohlcvtr "
     query += f"WHERE trading_day < '{trading_day}' AND trading_day >= '{date_minus_day(start_date=trading_day, days=avg_days)}') a GROUP BY ticker"
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(
+        query, table=get_master_ohlcvtr_table_name(), local=local)
     return data
+
 
 def get_factor_calculation_formula():
     query = f"SELECT * FROM {get_factor_calculation_table_name()} WHERE is_active"
-    data = read_query(query, table=get_factor_calculation_table_name(), alibaba=True)
+    data = read_query(
+        query, table=get_factor_calculation_table_name(), alibaba=True)
     return data
+
 
 def get_factor_current_used():
     query = f"SELECT * FROM {get_factor_current_use_table_name()}"
-    data1 = read_query(query+"_weekly1", table=get_factor_current_use_table_name(), alibaba=True).set_index('index')
-    data2 = read_query(query+"_monthly1", table=get_factor_current_use_table_name(), alibaba=True).set_index('index')
+    data1 = read_query(
+        query+"_weekly1", table=get_factor_current_use_table_name(), alibaba=True).set_index('index')
+    data2 = read_query(
+        query+"_monthly1", table=get_factor_current_use_table_name(), alibaba=True).set_index('index')
     data = data1+','+data2
     return data
 
+
 def get_ingestion_name_source():
     query = f"SELECT * FROM {get_ingestion_name_source_table_name()} WHERE is_active"
-    data = read_query(query, table=get_ingestion_name_source_table_name(), alibaba=True)
+    data = read_query(
+        query, table=get_ingestion_name_source_table_name(), alibaba=True)
     return data
+
 
 def get_ingestion_name_macro_source():
     query = f"SELECT * FROM {get_ingestion_name_source_table_name()}_macro"
-    data = read_query(query, table=get_ingestion_name_source_table_name()+"_macro", alibaba=True)
+    data = read_query(
+        query, table=get_ingestion_name_source_table_name()+"_macro", alibaba=True)
     return data
+
 
 def get_factor_rank(score_type):
     query = f"SELECT * FROM {get_factor_rank_table_name()}_{score_type}"
     data = read_query(query, table=get_factor_rank_table_name(), alibaba=True)
     return data
 
-def get_yesterday_close_price(ticker=None, currency_code=None, active=True):
+
+def get_yesterday_close_price(ticker=None, currency_code=None, active=True, local=False):
     query = f"select tac.ticker, tac.trading_day, tac.tri_adj_close as yesterday_close from {get_master_tac_table_name()} tac "
     query += f"inner join (select mo.ticker, max(mo.trading_day) as max_date from {get_master_tac_table_name()} mo where mo.tri_adj_close is not null group by mo.ticker) result "
     query += f"on tac.ticker=result.ticker and tac.trading_day=result.max_date "
@@ -549,7 +590,8 @@ def get_yesterday_close_price(ticker=None, currency_code=None, active=True):
     )
     if check != "":
         query += f"where tac." + check
-    data = read_query(query, table=get_master_ohlcvtr_table_name())
+    data = read_query(
+        query, table=get_master_ohlcvtr_table_name(), local=local)
     return data
 
 
@@ -622,7 +664,7 @@ def get_industry_group():
 
 
 def get_master_tac_data(
-    start_date=None, end_date=None, ticker=None, currency_code=None, active=True
+    start_date=None, end_date=None, ticker=None, currency_code=None, active=True, local=False
 ):
     start_date, end_date = check_start_end_date(start_date, end_date)
     table_name = get_master_tac_table_name()
@@ -633,14 +675,16 @@ def get_master_tac_data(
     )
     if check != "":
         query += "and " + check
-    data = read_query(query, table_name, cpu_counts=True)
+    data = read_query(query, table_name, cpu_counts=True, local=local)
     return data
+
 
 def get_consolidated_universe_data():
     table_name = get_universe_consolidated_table_name()
     query = f"select * from {table_name} "
     data = read_query(query, table_name, cpu_counts=True)
     return data
+
 
 def get_consolidated_data(column, condition, group_field=None):
     table_name = get_universe_consolidated_table_name()
@@ -652,38 +696,44 @@ def get_consolidated_data(column, condition, group_field=None):
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+
 def get_ai_score_testing_history(backyear=1):
     """ get ai_score / ai_score2 history from universe rating """
-    query =  f"SELECT trading_day, h.ticker, currency_code, ai_score_unscaled, ai_score2_unscaled "
+    query = f"SELECT trading_day, h.ticker, currency_code, ai_score_unscaled, ai_score2_unscaled "
     query += f"FROM {get_universe_rating_history_table_name()} h "
     query += f"INNER JOIN {get_universe_table_name()} u ON u.ticker=h.ticker "
     query += f"WHERE trading_day > '{backdate_by_year(backyear)}' "
     query += f"AND ai_score_unscaled IS NOT NULL "
-    data = read_query(query, table=get_ai_score_history_testing_table_name(), alibaba=False)
+    data = read_query(
+        query, table=get_ai_score_history_testing_table_name(), alibaba=False)
     return data
+
 
 def get_currency_fx_rate_dict():
     """ get ai_score / ai_score2 history from universe rating """
     table_name = get_currency_table_name()
-    query =  f"select currency_code, last_price, last_date from {table_name} cph "
-    query +=  f"where exists (select 1 from (select filters.currency_code, max(filters.last_date) max_date "
-    query +=  f"from {table_name} as filters group by filters.currency_code) result "
-    query +=  f"where result.currency_code=cph.currency_code and result.max_date=cph.last_date); "
+    query = f"select currency_code, last_price, last_date from {table_name} cph "
+    query += f"where exists (select 1 from (select filters.currency_code, max(filters.last_date) max_date "
+    query += f"from {table_name} as filters group by filters.currency_code) result "
+    query += f"where result.currency_code=cph.currency_code and result.max_date=cph.last_date); "
     # query =  f"SELECT currency_code, last_price FROM {get_currency_table_name()} "
     data = read_query(query, table=get_ai_score_history_testing_table_name())
     return data.set_index("currency_code")["last_price"].to_dict()
 
+
 def get_currency_code_ibes_ws():
     """ get ai_score / ai_score2 history from universe rating """
-    query =  f"SELECT ticker, currency_code_ibes, currency_code_ws FROM {get_universe_table_name()}"
+    query = f"SELECT ticker, currency_code_ibes, currency_code_ws FROM {get_universe_table_name()}"
     data = read_query(query, table=get_universe_table_name(), alibaba=False)
     return data
 
+
 def get_iso_currency_code_map():
     """ get ai_score / ai_score2 history from universe rating """
-    query =  f"SELECT currency_code, nation_code FROM iso_currency_code"
+    query = f"SELECT currency_code, nation_code FROM iso_currency_code"
     data = read_query(query, table="iso_currency_code", alibaba=True)
     return data.set_index("nation_code")["currency_code"].to_dict()
+
 
 def get_universe_rating_history(ticker=None, currency_code=None, active=True):
     table_name = get_universe_rating_history_table_name()
@@ -714,10 +764,10 @@ def get_bot_type(condition=None):
     query = f"select * from {table_name} "
     if type(condition) != type(None):
         query += f" where {condition}"
-    cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
-    if  not isinstance(cached_data,pd.DataFrame) :
+    cached_data = get_cached_data(f"{table_name}_{condition}", df=True)
+    if not isinstance(cached_data, pd.DataFrame):
         data = read_query(query, table_name, cpu_counts=True)
-        set_cache_data(table_name,data.to_dict("records"))
+        set_cache_data(table_name, data.to_dict("records"))
         return data
     return cached_data
 
@@ -725,7 +775,8 @@ def get_bot_type(condition=None):
 def get_latest_bot_update_data(ticker=None, currency_code=None):
     table_name = get_latest_bot_update_table_name()
     query = f"select * from {table_name} "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(
+        ticker=ticker, currency_code=currency_code)
     if check != "":
         query += "where " + check
     data = read_query(query, table_name, cpu_counts=True)
@@ -735,7 +786,8 @@ def get_latest_bot_update_data(ticker=None, currency_code=None):
 def get_bot_statistic_data(ticker=None, currency_code=None):
     table_name = get_bot_statistic_table_name()
     query = f"select * from {table_name} "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(
+        ticker=ticker, currency_code=currency_code)
     if check != "":
         query += "where " + check
     data = read_query(query, table_name, cpu_counts=True)
@@ -750,7 +802,8 @@ def get_bot_backtest(
     table_name = get_master_tac_table_name()
     query = f"select * from {table_name} where trading_day >= '{start_date}' "
     query += f"and trading_day <= '{end_date}' "
-    check = check_ticker_currency_code_query(ticker=ticker, currency_code=currency_code)
+    check = check_ticker_currency_code_query(
+        ticker=ticker, currency_code=currency_code)
     if check != "":
         query += f"and " + check
     if type(bot_id) != type(None):
@@ -764,10 +817,10 @@ def get_bot_option_type(condition=None):
     query = f"select * from {table_name} "
     if type(condition) != type(None):
         query += f" where {condition}"
-    cached_data = get_cached_data(f"{table_name}_{condition}",df=True)
-    if  not isinstance(cached_data,pd.DataFrame) :
+    cached_data = get_cached_data(f"{table_name}_{condition}", df=True)
+    if not isinstance(cached_data, pd.DataFrame):
         data = read_query(query, table_name, cpu_counts=True)
-        set_cache_data(table_name,data.to_dict("records"))
+        set_cache_data(table_name, data.to_dict("records"))
         return data
     return cached_data
 
@@ -824,11 +877,13 @@ def get_data_from_table_name(table_name, ticker=None, currency_code=None, active
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+
 def get_all_user_core():
     table_name = get_user_core_table_name()
     query = f"select * from {table_name} "
     data = read_query(query, table_name, cpu_counts=True)
     return data
+
 
 def get_user_core(currency_code=None, user_id=None, field="*", conditions=["is_active=True", "is_superuser=False", "is_test=False"]):
     table_name = get_user_core_table_name()
@@ -842,6 +897,7 @@ def get_user_core(currency_code=None, user_id=None, field="*", conditions=["is_a
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+
 def get_user_profit_history(user_id=None, field="*"):
     table_name = get_user_profit_history_table_name()
     query = f"select {field} from {table_name} uph "
@@ -851,6 +907,7 @@ def get_user_profit_history(user_id=None, field="*"):
     query += "order by user_id "
     data = read_query(query, table_name, cpu_counts=True)
     return data
+
 
 def get_user_account_balance(currency_code=None, user_id=None, field="*"):
     table_name = get_user_account_balance_table_name()
@@ -862,6 +919,7 @@ def get_user_account_balance(currency_code=None, user_id=None, field="*"):
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+
 def get_user_deposit(user_id=None):
     table_name = get_user_deposit_history_table_name()
     query = f"select user_id, deposit from {table_name} udh "
@@ -871,6 +929,7 @@ def get_user_deposit(user_id=None):
         query += f"and user_id in {tuple_data(user_id)} "
     data = read_query(query, table_name, cpu_counts=True)
     return data
+
 
 def get_orders_position(user_id=None, ticker=None, currency_code=None, position_uid=None, field="*", active=True):
     table_name = get_orders_position_table_name()
@@ -885,6 +944,7 @@ def get_orders_position(user_id=None, ticker=None, currency_code=None, position_
         query += f"and ticker in (select ticker from universe where currency_code in {tuple_data(currency_code)}) "
     data = read_query(query, table_name, cpu_counts=True)
     return data
+
 
 def get_orders_group_by_user_id(user_id=None, ticker=None, currency_code=None, stock=False):
     filter = ""
@@ -910,6 +970,7 @@ def get_orders_group_by_user_id(user_id=None, ticker=None, currency_code=None, s
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+
 def get_count_orders_position(user_id=None, ticker=None, currency_code=None):
     filter = ""
     if type(user_id) != type(None):
@@ -923,6 +984,7 @@ def get_count_orders_position(user_id=None, ticker=None, currency_code=None):
     query = f"select user_id, count(position_uid) as total_position from  {table_name} {filter} group by user_id; "
     data = read_query(query, table_name, cpu_counts=True)
     return data
+
 
 def get_orders_position_performance(user_id=None, ticker=None, currency_code=None, position_uid=None, field="*", active=True, latest=False):
     table_name = get_orders_position_performance_table_name()
@@ -946,13 +1008,15 @@ def get_orders_position_performance(user_id=None, ticker=None, currency_code=Non
     data = read_query(query, table_name, cpu_counts=True)
     return data
 
+
 def rename_table_columns():
     ''' obsolete '''
     from global_vars import DB_URL_ALIBABA_DEV
-    engine = create_engine(DB_URL_ALIBABA_DEV, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    engine = create_engine(
+        DB_URL_ALIBABA_DEV, max_overflow=-1, isolation_level="AUTOCOMMIT")
 
     df = get_ingestion_name_source()
-    filter_field = df.loc[df['ibes_monthly'], ['dsws_name','our_name']].values
+    filter_field = df.loc[df['ibes_monthly'], ['dsws_name', 'our_name']].values
     table_name = 'factor_formula_ratios'
 
     with engine.connect() as conn:
@@ -966,6 +1030,7 @@ def rename_table_columns():
             df[col] = x
         df.to_sql(table_name, conn, if_exists='replace', index=False)
     engine.dispose()
+
 
 def get_latest_season():
     table_name = get_season_table_name()

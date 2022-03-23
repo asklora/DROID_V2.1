@@ -5,16 +5,20 @@ import sqlalchemy as db
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count as cpucount
 from sqlalchemy.types import DATE, BIGINT, TEXT, INTEGER, BOOLEAN, Integer
-from general.sql_process import db_read, db_write, get_debug_url, alibaba_db_url, DB_URL_ALIBABA_PROD
+from general.sql_process import db_read as DB_READ, db_write as DB_WRITE, get_debug_url, alibaba_db_url, DB_URL_ALIBABA_PROD, local_db_url
 from pangres import upsert
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import bindparam
-from general.date_process import dateNow, timestampNow, str_to_date
+from general.date_process import backdate_by_month, dateNow, timestampNow, str_to_date
 from general.sql_query import get_order_performance_by_ticker
-from general.table_name import get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_consolidated_table_name, get_universe_table_name, get_user_core_table_name, get_user_profit_history_table_name
+from general.table_name import get_bot_backtest_table_name, get_data_dividend_table_name, get_data_split_table_name, get_latest_price_table_name, get_orders_position_performance_table_name, get_orders_position_table_name, get_universe_consolidated_table_name, get_universe_table_name, get_user_core_table_name, get_user_profit_history_table_name
 from general.data_process import tuple_data
 
-def execute_query(query, table=None):
+def execute_query(query, table=None, local=False):
+    if(local):
+        db_read = local_db_url
+    else:
+        db_read = DB_READ
     print(f"Execute Query to Table {table}")
     engine = create_engine(db_read, max_overflow=-1, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
@@ -22,9 +26,9 @@ def execute_query(query, table=None):
     engine.dispose()
     return True
 
-def truncate_table(table_name):
+def truncate_table(table_name, local=False):
     query = f"truncate table {table_name}"
-    data = execute_query(query, table=table_name)
+    data = execute_query(query, table=table_name, local=local)
     return True
 
 def replace_table_datebase_ali(data, table_name):
@@ -37,7 +41,11 @@ def replace_table_datebase_ali(data, table_name):
     return True
 
 
-def insert_data_to_database(data, table, how="append"):
+def insert_data_to_database(data, table, how="append", local=False):
+    if(local):
+        db_write = local_db_url
+    else:
+        db_write = DB_WRITE
     print(f"=== Insert Data to Database on Table {table} ===")
     engine = create_engine(db_write, max_overflow=-1, isolation_level="AUTOCOMMIT")
     try:
@@ -54,7 +62,11 @@ def insert_data_to_database(data, table, how="append"):
     except Exception as ex:
         print(f"error: ", ex)
 
-def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=False, Text=False, Date=False, Int=False, Bigint=False, Bool=False, debug=False):
+def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=False, Text=False, Date=False, Int=False, Bigint=False, Bool=False, debug=False, local=False):
+    if(local):
+        db_write = local_db_url
+    else:
+        db_write = DB_WRITE
     try:
         print(f"=== Upsert Data to Database on Table {table} ===")
         data = data.drop_duplicates(subset=[primary_key], keep="first", inplace=False)
@@ -101,7 +113,6 @@ def upsert_data_to_database(data, table, primary_key, how="update", cpu_count=Fa
                 report_to_slack(str(e))
     except Exception as e:
         report_to_slack(f"===  ERROR IN UPSERT DB === Error : {e}")
-
 
 def upsert_data_to_database_ali(data, table, primary_key, how="replace", cpu_count=False, Text=False, Date=False, Int=False,
                                 Bigint=False, Bool=False):
@@ -161,7 +172,7 @@ def update_fundamentals_score_in_droid_universe_daily(data, table):
     print(f"=== Update Data to Database on Table {table} ===")
     data = data[["ticker","mkt_cap"]]
     resultdict = data.to_dict("records")
-    engine = db.create_engine(db_write)
+    engine = db.create_engine(DB_WRITE)
     sm = sessionmaker(bind=engine)
     session = sm()
     metadata = db.MetaData(bind=engine)
@@ -183,6 +194,12 @@ def fill_null_company_desc_with_ticker_name():
     data = execute_query(query, table=get_universe_table_name())
     return data
 
+def activate_position_ticker():
+    query = f"update {get_universe_table_name()} set is_active = True "
+    query += f"where ticker in (select op.ticker from {get_orders_position_table_name()} op where op.is_live=True)"
+    data = execute_query(query, table=get_universe_table_name())
+    return data
+
 def fill_null_quandl_symbol():
     query = f"update {get_universe_table_name()} set quandl_symbol=split_part(ticker, '.', 1) "
     query += f"WHERE is_active=True and quandl_symbol is null and currency_code = 'USD'"
@@ -195,18 +212,24 @@ def update_consolidated_activation_by_ticker(ticker=None, is_active=True):
     data = execute_query(query, table=get_universe_consolidated_table_name())
     return data
     
-def delete_data_on_database(table, condition, delete_ticker=False):
+def delete_data_on_database(table, condition, delete_ticker=False, local=False):
     old_date = dateNow()
     query = f"delete from {table} where {condition} "
     if(delete_ticker):
         query += f" and ticker not in (select ticker from {get_universe_table_name()} where is_active=True)"
-    data = execute_query(query, table=table)
+    data = execute_query(query, table=table, local=local)
     return data
 
 def delete_old_dividends_on_database():
     old_date = dateNow()
     query = f"delete from {get_data_dividend_table_name()} where ex_dividend_date <= '{old_date}'"
     data = execute_query(query, table=get_data_dividend_table_name())
+    return data
+
+def delete_old_backtest_on_database():
+    old_date = backdate_by_month(12)
+    query = f"delete from {get_bot_backtest_table_name()} where spot_date <= '{old_date}'"
+    data = execute_query(query, table=get_bot_backtest_table_name())
     return data
 
 def clean_latest_price():

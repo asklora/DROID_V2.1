@@ -35,7 +35,7 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
     cols_temp_2 = X_columns.copy()
 
     # get training sample from AWS TABLE bot_date (4yr ago - Now)
-    main_df = get_executive_data_download(start_date, end_date, ticker=ticker, currency_code=currency_code)
+    main_df = get_executive_data_download(start_date, end_date, ticker=ticker, currency_code=currency_code, local=True)
     temp_y_rf = []
     
     # *****************************************************************************************

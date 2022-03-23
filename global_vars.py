@@ -21,7 +21,7 @@ DB_URL_READ = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+
 DB_URL_WRITE = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+os.getenv("DBHOSTWRITE")+":"+os.getenv("DBPORT")+"/"+os.getenv("DBUSER")
 DB_URL_ALIBABA_DEV = "postgres://asklora:AskLORAv2@pgm-3nse9b275d7vr3u18o.pg.rds.aliyuncs.com:1921/postgres"
 DB_URL_ALIBABA_PROD = "postgres://asklora:AskLORAv2@pgm-3nscoa6v8c876g5xlo.pg.rds.aliyuncs.com:1924/postgres"
-
+DB_URL_LOCAL = "postgres://postgres:AskLORAv2@localhost:5432/postgres"
 DBPASSWORDHKPOLYU="DLvalue123"
 DBHOSTHKPOLYU="hkpolyu.cgqhw7rofrpo.ap-northeast-2.rds.amazonaws.com"
 
@@ -105,10 +105,10 @@ bot_slippage = 0.0025 # comms + fees + slippage each way for bots
 bots_list = ["uno", "ucdc", "classic"]
 labeler_model_type = "rf"
 
-model_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/DROID_V2.1/models/"
-saved_model_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/DROID_V2.1/saved_models/"
-plot_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/DROID_V2.1/plots/"
-model_path_clustering = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/DROID_V2.1/clustering/"
+model_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe032758/PycharmProjects/DROID_V2.1/models/"
+saved_model_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe032758/PycharmProjects/DROID_V2.1/saved_models/"
+plot_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe032758/PycharmProjects/DROID_V2.1/plots/"
+model_path_clustering = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe032758/PycharmProjects/DROID_V2.1/clustering/"
 
 # else:
 #     model_path = "C:/dlpa_master/model/"

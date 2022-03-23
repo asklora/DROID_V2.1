@@ -63,7 +63,7 @@ def get_stochf(df):
 @log2es("db")
 def master_tac_update():
     print("Getting OHLCVTR Data")
-    data = get_master_ohlcvtr_data(droid_start_date())
+    data = get_master_ohlcvtr_data(droid_start_date(), local=True)
     print(data)
     print("OHLCTR Done")
     #data = data.rename(columns={"ticker_id" : "ticker", "currency_code_id" : "currency_code"})
@@ -110,7 +110,7 @@ def master_tac_update():
     print("Calculate TAC Done")
     print(result)
     #insert_data_to_database(result, "master_tac", how="replace")
-    upsert_data_to_database(result, get_master_tac_table_name(), "uid", how="update", Text=True)
-    delete_data_on_database(get_master_tac_table_name(), f"trading_day < '{droid_start_date()}'", delete_ticker=True)
+    upsert_data_to_database(result, get_master_tac_table_name(), "uid", how="update", Text=True, local=True)
+    delete_data_on_database(get_master_tac_table_name(), f"trading_day < '{droid_start_date()}'", delete_ticker=True, local=True)
     report_to_slack("{} : === Master TAC Update Updated ===".format(datetimeNow()))
     del result
