@@ -110,10 +110,10 @@ labeler_model_type = "rf"
 # plot_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/DROID_V2.1/plots/"
 # model_path_clustering = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/DROID_V2.1/clustering/"
 
-model_path = "/home/loratech/DROID_V2.1/models/"
-saved_model_path = "/home/loratech/DROID_V2.1/saved_models/"
-plot_path = "/home/loratech/DROID_V2.1/plots/"
-model_path_clustering = "/home/loratech/DROID_V2.1/clustering/"
+model_path = "/home/loratech/PycharmProjects/DROID_V2.1/models/"
+saved_model_path = "/home/loratech/PycharmProjects/DROID_V2.1/saved_models/"
+plot_path = "/home/loratech/PycharmProjects/DROID_V2.1/plots/"
+model_path_clustering = "/home/loratech/PycharmProjects/DROID_V2.1/clustering/"
 
 
 # else:
