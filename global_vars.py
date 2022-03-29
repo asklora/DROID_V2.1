@@ -105,15 +105,15 @@ bot_slippage = 0.0025 # comms + fees + slippage each way for bots
 bots_list = ["uno", "ucdc", "classic"]
 labeler_model_type = "rf"
 
-# model_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/DROID_V2.1/models/"
-# saved_model_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/DROID_V2.1/saved_models/"
-# plot_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/DROID_V2.1/plots/"
-# model_path_clustering = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/DROID_V2.1/clustering/"
+# model_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/Backtest-Temporary/models/"
+# saved_model_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/Backtest-Temporary/saved_models/"
+# plot_path = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/Backtest-Temporary/plots/"
+# model_path_clustering = "/media/loratech/c6a1535c-380b-4d1f-a9bf-56d8fe0327581/PycharmProjects/Backtest-Temporary/clustering/"
 
-model_path = "/home/loratech/PycharmProjects/DROID_V2.1/models/"
-saved_model_path = "/home/loratech/PycharmProjects/DROID_V2.1/saved_models/"
-plot_path = "/home/loratech/PycharmProjects/DROID_V2.1/plots/"
-model_path_clustering = "/home/loratech/PycharmProjects/DROID_V2.1/clustering/"
+model_path = "/home/loratech/PycharmProjects/Backtest-Temporary/models/"
+saved_model_path = "/home/loratech/PycharmProjects/Backtest-Temporary/saved_models/"
+plot_path = "/home/loratech/PycharmProjects/Backtest-Temporary/plots/"
+model_path_clustering = "/home/loratech/PycharmProjects/Backtest-Temporary/clustering/"
 
 
 # else:
