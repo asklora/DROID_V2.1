@@ -1,0 +1,637 @@
+2022-03-27 : === VOLATILITY TRAIN MODEL STARTED ===
+The start date is set as: 2021-08-27
+The end date is set as: 2022-03-27
+                     uid trading_day  ...  c2c_vol_252_504_x     ticker
+0       20210906000876SZ  2021-09-06  ...                NaN  000876.SZ
+1       20210906000895SZ  2021-09-06  ...                NaN  000895.SZ
+2       20210906000938SZ  2021-09-06  ...                NaN  000938.SZ
+3       20210906000963SZ  2021-09-06  ...                NaN  000963.SZ
+4       20210906000977SZ  2021-09-06  ...                NaN  000977.SZ
+...                  ...         ...  ...                ...        ...
+164488    202203259988HK  2022-03-25  ...                NaN    9988.HK
+164489    202203259992HK  2022-03-25  ...                NaN    9992.HK
+164490    202203259996HK  2022-03-25  ...                NaN    9996.HK
+164491    202203259997HK  2022-03-25  ...                NaN    9997.HK
+164492    202203259999HK  2022-03-25  ...                NaN    9999.HK
+
+[164493 rows x 42 columns]
+Total Data = 164493
+  trading_day  usinter3  usgbill3  ...  emgbond  chgbond  fred_data
+0  2021-08-31       NaN      0.04  ...      NaN    2.857        NaN
+1  2021-09-15    0.1227       NaN  ...   0.1967      NaN       3.30
+2  2021-09-30       NaN      0.04  ...      NaN    2.874        NaN
+3  2021-10-15    0.1272       NaN  ...   0.3523      NaN       3.34
+4  2021-10-29       NaN      0.05  ...      NaN    2.976        NaN
+5  2021-11-15    0.1581       NaN  ...   0.3124      NaN        NaN
+6  2021-11-30       NaN      0.05  ...      NaN    2.867        NaN
+7  2021-12-31       NaN      0.05  ...      NaN      NaN        NaN
+
+[8 rows x 8 columns]
+Total Data = 8
+          ticker trading_day  eps1fd12  eps1tr12   cap1fd12
+0        2518.HK  2021-09-11     6.687     6.440    309.633
+1      300014.SZ  2021-09-11     2.207     1.430   3217.523
+2      300122.SZ  2021-09-11     4.397     3.388    611.730
+3        6030.HK  2021-09-11     1.590     1.380        NaN
+4        6862.HK  2021-09-11     0.827     0.420   5334.555
+...          ...         ...       ...       ...        ...
+12646  600655.SS  2021-10-30     1.236     1.054   2684.667
+12647  600763.SS  2021-10-30     2.910     2.165    319.733
+12648  600893.SS  2021-10-30     0.743     0.574   2081.083
+12649  600926.SS  2021-10-30     1.670     1.388  28183.340
+12650  600958.SS  2021-10-30     0.783     0.630        NaN
+
+[12651 rows x 5 columns]
+Total Data = 12651
+           ticker trading_day     fast_d     fast_k        rsi
+0             HIG  2021-09-06  89.213274  86.274510  61.806605
+1             FIS  2021-09-06  17.617513  19.277108  30.454243
+2             ITW  2021-09-06  23.399549  15.633075  43.851343
+3             BAX  2021-09-06  99.611567  99.634035  76.680647
+4             IRM  2021-09-06  88.251833  87.473904  80.708468
+...           ...         ...        ...        ...        ...
+172750  000783.SZ  2022-03-25  48.046784  40.000000  32.338064
+172751        BXP  2022-03-25  87.002391  98.600311  60.745871
+172752          L  2022-03-25  92.624245  96.460177  65.760029
+172753    6110.HK  2022-03-25  44.901065  39.726027  41.331345
+172754     FANG.O  2022-03-25  92.568906  92.618065  62.657101
+
+[172755 rows x 5 columns]
+Total Data = 172755
+         ticker     created  ... currency_code_ibes currency_code_ws
+0       .CSI300  2021-05-10  ...               None             None
+1          .HSI  2021-05-18  ...               None             None
+2          .SPX  2021-05-10  ...               None             None
+3     000001.SZ  2021-04-08  ...                CNY              CNY
+4     000002.SZ  2021-04-08  ...                CNY              CNY
+...         ...         ...  ...                ...              ...
+1157     ZBRA.O  2021-01-26  ...                USD              USD
+1158     ZION.O  2021-08-26  ...                USD              USD
+1159       ZM.O  2021-01-26  ...                USD              USD
+1160       ZS.O  2021-01-26  ...                USD              USD
+1161        ZTS  2021-01-26  ...                USD              USD
+
+[1162 rows x 34 columns]
+Total Data = 1162
+[Parallel(n_jobs=-1)]: Using backend ThreadingBackend with 16 concurrent workers.
+building tree 1 of 200
+building tree 2 of 200
+building tree 3 of 200
+building tree 4 of 200
+building tree 5 of 200
+building tree 6 of 200
+building tree 7 of 200
+building tree 8 of 200
+building tree 9 of 200
+building tree 10 of 200
+building tree 11 of 200
+building tree 12 of 200
+building tree 13 of 200
+building tree 14 of 200
+building tree 15 of 200
+building tree 16 of 200
+building tree 17 of 200
+[Parallel(n_jobs=-1)]: Done   1 tasks      | elapsed:    7.0s
+building tree 18 of 200
+[Parallel(n_jobs=-1)]: Done   2 tasks      | elapsed:    7.3s
+[Parallel(n_jobs=-1)]: Done   3 tasks      | elapsed:    7.4s
+building tree 19 of 200
+[Parallel(n_jobs=-1)]: Done   4 tasks      | elapsed:    7.4s
+building tree 20 of 200
+building tree 21 of 200
+[Parallel(n_jobs=-1)]: Done   5 tasks      | elapsed:    7.4s
+building tree 22 of 200
+[Parallel(n_jobs=-1)]: Done   6 tasks      | elapsed:    7.7s
+[Parallel(n_jobs=-1)]: Done   7 tasks      | elapsed:    7.7s
+building tree 23 of 200
+building tree 24 of 200
+[Parallel(n_jobs=-1)]: Done   8 tasks      | elapsed:    7.7s
+building tree 25 of 200
+building tree 26 of 200
+[Parallel(n_jobs=-1)]: Done   9 tasks      | elapsed:    7.8s
+[Parallel(n_jobs=-1)]: Done  10 tasks      | elapsed:    7.8s
+building tree 27 of 200
+[Parallel(n_jobs=-1)]: Done  11 tasks      | elapsed:    7.9s
+[Parallel(n_jobs=-1)]: Done  12 tasks      | elapsed:    8.0s
+building tree 28 of 200
+building tree 29 of 200
+[Parallel(n_jobs=-1)]: Done  13 tasks      | elapsed:    8.0s
+building tree 30 of 200
+[Parallel(n_jobs=-1)]: Done  14 tasks      | elapsed:    8.1s
+building tree 31 of 200
+[Parallel(n_jobs=-1)]: Done  15 tasks      | elapsed:    8.1s
+building tree 32 of 200
+[Parallel(n_jobs=-1)]: Done  16 tasks      | elapsed:    8.2s
+building tree 33 of 200
+[Parallel(n_jobs=-1)]: Done  17 tasks      | elapsed:   13.6s
+building tree 34 of 200
+[Parallel(n_jobs=-1)]: Done  18 tasks      | elapsed:   14.0s
+building tree 35 of 200
+[Parallel(n_jobs=-1)]: Done  19 tasks      | elapsed:   14.1s
+building tree 36 of 200
+[Parallel(n_jobs=-1)]: Done  20 tasks      | elapsed:   14.4s
+building tree 37 of 200
+[Parallel(n_jobs=-1)]: Done  21 tasks      | elapsed:   14.5s
+building tree 38 of 200
+[Parallel(n_jobs=-1)]: Done  22 tasks      | elapsed:   14.7s
+building tree 39 of 200
+[Parallel(n_jobs=-1)]: Done  23 tasks      | elapsed:   14.7s
+building tree 40 of 200
+[Parallel(n_jobs=-1)]: Done  24 tasks      | elapsed:   14.7s
+[Parallel(n_jobs=-1)]: Done  25 tasks      | elapsed:   15.3s
+building tree 41 of 200
+[Parallel(n_jobs=-1)]: Done  26 tasks      | elapsed:   15.4s
+building tree 42 of 200
+building tree 43 of 200
+[Parallel(n_jobs=-1)]: Done  27 tasks      | elapsed:   15.5s
+building tree 44 of 200
+[Parallel(n_jobs=-1)]: Done  28 tasks      | elapsed:   15.6s
+building tree 45 of 200
+[Parallel(n_jobs=-1)]: Done  29 tasks      | elapsed:   15.6s
+building tree 46 of 200
+[Parallel(n_jobs=-1)]: Done  30 tasks      | elapsed:   15.7s
+[Parallel(n_jobs=-1)]: Done  31 tasks      | elapsed:   15.9s
+building tree 47 of 200
+building tree 48 of 200
+[Parallel(n_jobs=-1)]: Done  32 tasks      | elapsed:   16.1s
+building tree 49 of 200
+[Parallel(n_jobs=-1)]: Done  33 tasks      | elapsed:   20.9s
+building tree 50 of 200
+[Parallel(n_jobs=-1)]: Done  34 tasks      | elapsed:   21.2s
+building tree 51 of 200
+[Parallel(n_jobs=-1)]: Done  35 tasks      | elapsed:   21.4s
+[Parallel(n_jobs=-1)]: Done  36 tasks      | elapsed:   21.5s
+building tree 52 of 200
+building tree 53 of 200
+[Parallel(n_jobs=-1)]: Done  37 tasks      | elapsed:   21.6s
+building tree 54 of 200
+[Parallel(n_jobs=-1)]: Done  38 tasks      | elapsed:   22.0s
+[Parallel(n_jobs=-1)]: Done  39 tasks      | elapsed:   22.1s
+building tree 55 of 200
+building tree 56 of 200
+[Parallel(n_jobs=-1)]: Done  40 tasks      | elapsed:   22.2s
+building tree 57 of 200
+[Parallel(n_jobs=-1)]: Done  41 tasks      | elapsed:   22.5s
+[Parallel(n_jobs=-1)]: Done  42 tasks      | elapsed:   22.7s
+building tree 58 of 200
+building tree 59 of 200
+[Parallel(n_jobs=-1)]: Done  43 tasks      | elapsed:   22.7s
+building tree 60 of 200
+[Parallel(n_jobs=-1)]: Done  44 tasks      | elapsed:   22.8s
+building tree 61 of 200
+building tree 62 of 200
+[Parallel(n_jobs=-1)]: Done  45 tasks      | elapsed:   22.9s
+[Parallel(n_jobs=-1)]: Done  46 tasks      | elapsed:   22.9s
+[Parallel(n_jobs=-1)]: Done  47 tasks      | elapsed:   23.2s
+building tree 63 of 200
+building tree 64 of 200
+[Parallel(n_jobs=-1)]: Done  48 tasks      | elapsed:   23.3s
+[Parallel(n_jobs=-1)]: Done  49 tasks      | elapsed:   28.0s
+building tree 65 of 200
+building tree 66 of 200
+[Parallel(n_jobs=-1)]: Done  50 tasks      | elapsed:   28.3s
+building tree 67 of 200
+[Parallel(n_jobs=-1)]: Done  51 tasks      | elapsed:   28.5s
+building tree 68 of 200
+[Parallel(n_jobs=-1)]: Done  52 tasks      | elapsed:   28.6s
+building tree 69 of 200
+[Parallel(n_jobs=-1)]: Done  53 tasks      | elapsed:   28.7s
+building tree 70 of 200
+[Parallel(n_jobs=-1)]: Done  54 tasks      | elapsed:   28.9s
+building tree 71 of 200
+[Parallel(n_jobs=-1)]: Done  55 tasks      | elapsed:   29.2s
+building tree 72 of 200
+[Parallel(n_jobs=-1)]: Done  56 tasks      | elapsed:   29.7s
+building tree 73 of 200
+[Parallel(n_jobs=-1)]: Done  57 tasks      | elapsed:   29.8s
+[Parallel(n_jobs=-1)]: Done  58 tasks      | elapsed:   29.8s
+building tree 74 of 200
+building tree 75 of 200
+[Parallel(n_jobs=-1)]: Done  59 tasks      | elapsed:   30.0s
+building tree 76 of 200
+[Parallel(n_jobs=-1)]: Done  60 tasks      | elapsed:   30.1s
+building tree 77 of 200
+[Parallel(n_jobs=-1)]: Done  61 tasks      | elapsed:   30.1s
+[Parallel(n_jobs=-1)]: Done  62 tasks      | elapsed:   30.3s
+building tree 78 of 200
+building tree 79 of 200
+[Parallel(n_jobs=-1)]: Done  63 tasks      | elapsed:   30.6s
+building tree 80 of 200
+[Parallel(n_jobs=-1)]: Done  64 tasks      | elapsed:   31.0s
+building tree 81 of 200
+[Parallel(n_jobs=-1)]: Done  65 tasks      | elapsed:   34.6s
+[Parallel(n_jobs=-1)]: Done  66 tasks      | elapsed:   35.1s
+building tree 82 of 200
+building tree 83 of 200
+[Parallel(n_jobs=-1)]: Done  67 tasks      | elapsed:   36.1s
+[Parallel(n_jobs=-1)]: Done  68 tasks      | elapsed:   36.2s
+building tree 84 of 200
+building tree 85 of 200
+[Parallel(n_jobs=-1)]: Done  69 tasks      | elapsed:   36.3s
+[Parallel(n_jobs=-1)]: Done  70 tasks      | elapsed:   36.5s
+building tree 86 of 200
+building tree 87 of 200
+[Parallel(n_jobs=-1)]: Done  71 tasks      | elapsed:   36.6s
+building tree 88 of 200
+[Parallel(n_jobs=-1)]: Done  72 tasks      | elapsed:   36.6s
+building tree 89 of 200
+[Parallel(n_jobs=-1)]: Done  73 tasks      | elapsed:   36.8s
+[Parallel(n_jobs=-1)]: Done  74 tasks      | elapsed:   36.9s
+building tree 90 of 200
+building tree 91 of 200
+[Parallel(n_jobs=-1)]: Done  75 tasks      | elapsed:   37.1s
+[Parallel(n_jobs=-1)]: Done  76 tasks      | elapsed:   37.3s
+building tree 92 of 200
+building tree 93 of 200
+building tree 94 of 200
+[Parallel(n_jobs=-1)]: Done  77 tasks      | elapsed:   37.5s
+[Parallel(n_jobs=-1)]: Done  78 tasks      | elapsed:   37.5s
+building tree 95 of 200
+[Parallel(n_jobs=-1)]: Done  79 tasks      | elapsed:   37.7s
+building tree 96 of 200
+[Parallel(n_jobs=-1)]: Done  80 tasks      | elapsed:   38.5s
+building tree 97 of 200
+[Parallel(n_jobs=-1)]: Done  81 tasks      | elapsed:   41.9s
+building tree 98 of 200
+[Parallel(n_jobs=-1)]: Done  82 tasks      | elapsed:   42.3s
+building tree 99 of 200
+[Parallel(n_jobs=-1)]: Done  83 tasks      | elapsed:   43.2s
+building tree 100 of 200
+[Parallel(n_jobs=-1)]: Done  84 tasks      | elapsed:   43.4s
+[Parallel(n_jobs=-1)]: Done  85 tasks      | elapsed:   43.4s
+building tree 101 of 200
+[Parallel(n_jobs=-1)]: Done  86 tasks      | elapsed:   43.7s
+building tree 102 of 200
+building tree 103 of 200
+[Parallel(n_jobs=-1)]: Done  87 tasks      | elapsed:   43.8s
+building tree 104 of 200
+[Parallel(n_jobs=-1)]: Done  88 tasks      | elapsed:   44.2s
+building tree 105 of 200
+[Parallel(n_jobs=-1)]: Done  89 tasks      | elapsed:   44.3s
+building tree 106 of 200
+[Parallel(n_jobs=-1)]: Done  90 tasks      | elapsed:   44.4s
+building tree 107 of 200
+[Parallel(n_jobs=-1)]: Done  91 tasks      | elapsed:   44.4s
+building tree 108 of 200
+[Parallel(n_jobs=-1)]: Done  92 tasks      | elapsed:   44.4s
+building tree 109 of 200
+[Parallel(n_jobs=-1)]: Done  93 tasks      | elapsed:   44.4s
+[Parallel(n_jobs=-1)]: Done  94 tasks      | elapsed:   45.2s
+building tree 110 of 200
+building tree 111 of 200
+[Parallel(n_jobs=-1)]: Done  95 tasks      | elapsed:   45.3s
+building tree 112 of 200
+[Parallel(n_jobs=-1)]: Done  96 tasks      | elapsed:   46.3s
+building tree 113 of 200
+[Parallel(n_jobs=-1)]: Done  97 tasks      | elapsed:   49.1s
+[Parallel(n_jobs=-1)]: Done  98 tasks      | elapsed:   49.7s
+building tree 114 of 200
+building tree 115 of 200
+[Parallel(n_jobs=-1)]: Done  99 tasks      | elapsed:   50.4s
+building tree 116 of 200
+[Parallel(n_jobs=-1)]: Done 100 tasks      | elapsed:   50.6s
+building tree 117 of 200
+[Parallel(n_jobs=-1)]: Done 101 tasks      | elapsed:   51.0s
+[Parallel(n_jobs=-1)]: Done 102 tasks      | elapsed:   51.0s
+building tree 118 of 200
+building tree 119 of 200
+[Parallel(n_jobs=-1)]: Done 103 tasks      | elapsed:   51.3s
+building tree 120 of 200
+[Parallel(n_jobs=-1)]: Done 104 tasks      | elapsed:   51.5s
+[Parallel(n_jobs=-1)]: Done 105 tasks      | elapsed:   51.6s
+building tree 121 of 200
+building tree 122 of 200
+[Parallel(n_jobs=-1)]: Done 106 tasks      | elapsed:   51.7s
+[Parallel(n_jobs=-1)]: Done 107 tasks      | elapsed:   51.7s
+building tree 123 of 200
+building tree 124 of 200
+[Parallel(n_jobs=-1)]: Done 108 tasks      | elapsed:   51.7s
+building tree 125 of 200
+[Parallel(n_jobs=-1)]: Done 109 tasks      | elapsed:   52.1s
+building tree 126 of 200
+[Parallel(n_jobs=-1)]: Done 110 tasks      | elapsed:   52.4s
+building tree 127 of 200
+[Parallel(n_jobs=-1)]: Done 111 tasks      | elapsed:   53.0s
+[Parallel(n_jobs=-1)]: Done 112 tasks      | elapsed:   53.1s
+building tree 128 of 200
+building tree 129 of 200
+[Parallel(n_jobs=-1)]: Done 113 tasks      | elapsed:   56.1s
+building tree 130 of 200
+[Parallel(n_jobs=-1)]: Done 114 tasks      | elapsed:   56.4s
+[Parallel(n_jobs=-1)]: Done 115 tasks      | elapsed:   57.7s
+building tree 131 of 200
+building tree 132 of 200
+[Parallel(n_jobs=-1)]: Done 116 tasks      | elapsed:   58.0s
+building tree 133 of 200
+[Parallel(n_jobs=-1)]: Done 117 tasks      | elapsed:   58.0s
+[Parallel(n_jobs=-1)]: Done 118 tasks      | elapsed:   58.3s
+building tree 134 of 200
+building tree 135 of 200
+[Parallel(n_jobs=-1)]: Done 119 tasks      | elapsed:   58.4s
+building tree 136 of 200
+[Parallel(n_jobs=-1)]: Done 120 tasks      | elapsed:   58.4s
+building tree 137 of 200
+[Parallel(n_jobs=-1)]: Done 121 tasks      | elapsed:   58.5s
+building tree 138 of 200
+[Parallel(n_jobs=-1)]: Done 122 tasks      | elapsed:   58.9s
+building tree 139 of 200
+[Parallel(n_jobs=-1)]: Done 123 tasks      | elapsed:   59.1s
+building tree 140 of 200
+[Parallel(n_jobs=-1)]: Done 124 tasks      | elapsed:   59.1s
+building tree 141 of 200
+[Parallel(n_jobs=-1)]: Done 125 tasks      | elapsed:   59.2s
+[Parallel(n_jobs=-1)]: Done 126 tasks      | elapsed:   59.7s
+building tree 142 of 200
+building tree 143 of 200
+[Parallel(n_jobs=-1)]: Done 127 tasks      | elapsed:   59.9s
+[Parallel(n_jobs=-1)]: Done 128 tasks      | elapsed:  1.0min
+building tree 144 of 200
+building tree 145 of 200
+[Parallel(n_jobs=-1)]: Done 129 tasks      | elapsed:  1.1min
+building tree 146 of 200
+[Parallel(n_jobs=-1)]: Done 130 tasks      | elapsed:  1.1min
+building tree 147 of 200
+[Parallel(n_jobs=-1)]: Done 131 tasks      | elapsed:  1.1min
+building tree 148 of 200
+[Parallel(n_jobs=-1)]: Done 132 tasks      | elapsed:  1.1min
+building tree 149 of 200
+[Parallel(n_jobs=-1)]: Done 133 tasks      | elapsed:  1.1min
+building tree 150 of 200
+[Parallel(n_jobs=-1)]: Done 134 tasks      | elapsed:  1.1min
+building tree 151 of 200
+[Parallel(n_jobs=-1)]: Done 135 tasks      | elapsed:  1.1min
+building tree 152 of 200
+[Parallel(n_jobs=-1)]: Done 136 tasks      | elapsed:  1.1min
+building tree 153 of 200
+[LightGBM] [Info] Total Bins 8325
+[LightGBM] [Info] Number of data: 76391, number of used features: 45
+[LightGBM] [Info] Start training from score -2.625858
+[LightGBM] [Info] Start training from score -2.049612
+[LightGBM] [Info] Start training from score -1.384503
+[LightGBM] [Info] Start training from score -1.248830
+[LightGBM] [Info] Start training from score -1.710110
+[LightGBM] [Info] Start training from score -2.516977
+[LightGBM] [Info] Total Bins 8325
+[LightGBM] [Info] Number of data: 76391, number of used features: 45
+[LightGBM] [Info] Start training from score -0.507310
+[LightGBM] [Info] Start training from score -1.504005
+[LightGBM] [Info] Start training from score -1.739268
+[Parallel(n_jobs=-1)]: Done 137 tasks      | elapsed:  1.1min
+[Parallel(n_jobs=-1)]: Done 138 tasks      | elapsed:  1.1min
+building tree 154 of 200
+building tree 155 of 200
+[Parallel(n_jobs=-1)]: Done 139 tasks      | elapsed:  1.1min
+building tree 156 of 200
+[Parallel(n_jobs=-1)]: Done 140 tasks      | elapsed:  1.1min
+building tree 157 of 200
+[Parallel(n_jobs=-1)]: Done 141 tasks      | elapsed:  1.1min
+building tree 158 of 200
+[Parallel(n_jobs=-1)]: Done 142 tasks      | elapsed:  1.1min
+building tree 159 of 200
+[Parallel(n_jobs=-1)]: Done 143 tasks      | elapsed:  1.1min
+[Parallel(n_jobs=-1)]: Done 144 tasks      | elapsed:  1.1min
+building tree 160 of 200
+[Parallel(n_jobs=-1)]: Done 145 tasks      | elapsed:  1.2min
+building tree 161 of 200
+[Parallel(n_jobs=-1)]: Done 146 tasks      | elapsed:  1.2min
+building tree 162 of 200
+building tree 163 of 200
+[Parallel(n_jobs=-1)]: Done 147 tasks      | elapsed:  1.2min
+[Parallel(n_jobs=-1)]: Done 148 tasks      | elapsed:  1.2min
+building tree 164 of 200
+building tree 165 of 200
+[Parallel(n_jobs=-1)]: Done 149 tasks      | elapsed:  1.2min
+[Parallel(n_jobs=-1)]: Done 150 tasks      | elapsed:  1.2min
+building tree 166 of 200
+building tree 167 of 200
+[Parallel(n_jobs=-1)]: Done 151 tasks      | elapsed:  1.2min
+building tree 168 of 200
+[Parallel(n_jobs=-1)]: Done 152 tasks      | elapsed:  1.2min
+building tree 169 of 200
+[Parallel(n_jobs=-1)]: Done 153 tasks      | elapsed:  1.2min
+building tree 170 of 200
+[Parallel(n_jobs=-1)]: Done 154 tasks      | elapsed:  1.2min
+building tree 171 of 200
+[Parallel(n_jobs=-1)]: Done 155 tasks      | elapsed:  1.2min
+building tree 172 of 200
+[Parallel(n_jobs=-1)]: Done 156 tasks      | elapsed:  1.2min
+building tree 173 of 200
+[Parallel(n_jobs=-1)]: Done 157 tasks      | elapsed:  1.2min
+building tree 174 of 200
+[Parallel(n_jobs=-1)]: Done 158 tasks      | elapsed:  1.2min
+building tree 175 of 200
+[Parallel(n_jobs=-1)]: Done 159 tasks      | elapsed:  1.2min
+building tree 176 of 200
+[Parallel(n_jobs=-1)]: Done 160 tasks      | elapsed:  1.3min
+building tree 177 of 200
+[Parallel(n_jobs=-1)]: Done 161 tasks      | elapsed:  1.3min
+building tree 178 of 200
+[Parallel(n_jobs=-1)]: Done 162 tasks      | elapsed:  1.3min
+[Parallel(n_jobs=-1)]: Done 163 tasks      | elapsed:  1.3min
+building tree 179 of 200
+[Parallel(n_jobs=-1)]: Done 164 tasks      | elapsed:  1.3min
+building tree 180 of 200
+building tree 181 of 200
+[Parallel(n_jobs=-1)]: Done 165 tasks      | elapsed:  1.3min
+building tree 182 of 200
+[Parallel(n_jobs=-1)]: Done 166 tasks      | elapsed:  1.3min
+[Parallel(n_jobs=-1)]: Done 167 tasks      | elapsed:  1.3min
+building tree 183 of 200
+building tree 184 of 200
+[Parallel(n_jobs=-1)]: Done 168 tasks      | elapsed:  1.3min
+[Parallel(n_jobs=-1)]: Done 169 tasks      | elapsed:  1.3min
+building tree 185 of 200
+building tree 186 of 200
+building tree 187 of 200
+building tree 188 of 200
+[Parallel(n_jobs=-1)]: Done 172 out of 200 | elapsed:  1.3min remaining:   13.2s
+building tree 189 of 200
+building tree 190 of 200
+building tree 191 of 200
+[Parallel(n_jobs=-1)]: Done 175 out of 200 | elapsed:  1.4min remaining:   11.8s
+building tree 192 of 200
+building tree 193 of 200
+building tree 194 of 200
+[Parallel(n_jobs=-1)]: Done 178 out of 200 | elapsed:  1.4min remaining:   10.5s
+building tree 195 of 200
+building tree 196 of 200
+[Parallel(n_jobs=-1)]: Done 181 out of 200 | elapsed:  1.4min remaining:    9.1s
+building tree 197 of 200
+building tree 198 of 200
+building tree 199 of 200
+building tree 200 of 200
+[Parallel(n_jobs=-1)]: Done 184 out of 200 | elapsed:  1.5min remaining:    7.6s
+[Parallel(n_jobs=-1)]: Done 187 out of 200 | elapsed:  1.5min remaining:    6.1s
+[Parallel(n_jobs=-1)]: Done 190 out of 200 | elapsed:  1.5min remaining:    4.7s
+[Parallel(n_jobs=-1)]: Done 193 out of 200 | elapsed:  1.5min remaining:    3.3s
+[Parallel(n_jobs=-1)]: Done 196 out of 200 | elapsed:  1.5min remaining:    1.9s
+[Parallel(n_jobs=-1)]: Done 200 out of 200 | elapsed:  1.6min finished
+18:58:23
+Finished!
+2022-03-27 : === BOT RANKING TRAIN MODEL STARTED ===
+                     uid trading_day  ...  c2c_vol_252_504_x     ticker
+0       20210906000876SZ  2021-09-06  ...                NaN  000876.SZ
+1       20210906000895SZ  2021-09-06  ...                NaN  000895.SZ
+2       20210906000938SZ  2021-09-06  ...                NaN  000938.SZ
+3       20210906000963SZ  2021-09-06  ...                NaN  000963.SZ
+4       20210906000977SZ  2021-09-06  ...                NaN  000977.SZ
+...                  ...         ...  ...                ...        ...
+164488    202203259988HK  2022-03-25  ...                NaN    9988.HK
+164489    202203259992HK  2022-03-25  ...                NaN    9992.HK
+164490    202203259996HK  2022-03-25  ...                NaN    9996.HK
+164491    202203259997HK  2022-03-25  ...                NaN    9997.HK
+164492    202203259999HK  2022-03-25  ...                NaN    9999.HK
+
+[164493 rows x 42 columns]
+Total Data = 164493
+  trading_day  usinter3  usgbill3  ...  emgbond  chgbond  fred_data
+0  2021-08-31       NaN      0.04  ...      NaN    2.857        NaN
+1  2021-09-15    0.1227       NaN  ...   0.1967      NaN       3.30
+2  2021-09-30       NaN      0.04  ...      NaN    2.874        NaN
+3  2021-10-15    0.1272       NaN  ...   0.3523      NaN       3.34
+4  2021-10-29       NaN      0.05  ...      NaN    2.976        NaN
+5  2021-11-15    0.1581       NaN  ...   0.3124      NaN        NaN
+6  2021-11-30       NaN      0.05  ...      NaN    2.867        NaN
+7  2021-12-31       NaN      0.05  ...      NaN      NaN        NaN
+
+[8 rows x 8 columns]
+Total Data = 8
+          ticker trading_day  eps1fd12  eps1tr12   cap1fd12
+0        0013.HK  2021-09-01       NaN       NaN        NaN
+1        2518.HK  2021-09-11     6.687     6.440    309.633
+2      300014.SZ  2021-09-11     2.207     1.430   3217.523
+3      300122.SZ  2021-09-11     4.397     3.388    611.730
+4        6030.HK  2021-09-11     1.590     1.380        NaN
+...          ...         ...       ...       ...        ...
+12646  600893.SS  2021-10-30     0.743     0.574   2081.083
+12647  000596.SZ  2021-10-16     5.544     4.477    427.929
+12648  600926.SS  2021-10-30     1.670     1.388  28183.340
+12649  000661.SZ  2021-09-16    12.262     9.448    983.360
+12650  600958.SS  2021-10-30     0.783     0.630        NaN
+
+[12651 rows x 5 columns]
+Total Data = 12651
+           ticker trading_day     fast_d     fast_k        rsi
+0             FIS  2021-09-06  17.617513  19.277108  30.454243
+1             ITW  2021-09-06  23.399549  15.633075  43.851343
+2             WAB  2021-09-06  91.655547  89.473684  63.381801
+3             BAX  2021-09-06  99.611567  99.634035  76.680647
+4             IRM  2021-09-06  88.251833  87.473904  80.708468
+...           ...         ...        ...        ...        ...
+172750        JNJ  2022-03-25  76.362009  79.054054  60.228384
+172751    0836.HK  2022-03-25  39.419795  31.911263  39.534886
+172752        ABT  2022-03-25  48.343685  51.449275  44.558680
+172753        AFL  2022-03-25  94.834393  98.850575  62.607980
+172754  002044.SZ  2022-03-25  25.818992  24.050633  28.260792
+
+[172755 rows x 5 columns]
+Total Data = 172755
+                     uid trading_day  ...     ticker   day_status
+0            20210906ITW  2021-09-06  ...        ITW      missing
+1            20210906FIS  2021-09-06  ...        FIS      missing
+2            20210906BAX  2021-09-06  ...        BAX      missing
+3            20210906HIG  2021-09-06  ...        HIG      missing
+4            20210906IRM  2021-09-06  ...        IRM      missing
+...                  ...         ...  ...        ...          ...
+172750    202203250268HK  2022-03-25  ...    0268.HK  trading_day
+172751    202203256618HK  2022-03-25  ...    6618.HK  trading_day
+172752    202203250772HK  2022-03-25  ...    0772.HK  trading_day
+172753  20220325601800SS  2022-03-25  ...  601800.SS  trading_day
+172754      20220325CEGO  2022-03-25  ...      CEG.O      missing
+
+[172755 rows x 14 columns]
+Total Data = 172755
+uno
+                                uid  ...            avg_delta
+0           LLY_20220302_ITM_008333  ...    0.699559580507386
+1        9997HK_20220222_ITM_008333  ...   0.5661607775750713
+2        2400HK_20220222_ITM_008333  ...   0.4025591271049771
+3        6690HK_20220222_OTM_008333  ...  0.12684200824861344
+4        0345HK_20220222_OTM_008333  ...  0.10989851344066533
+...                             ...  ...                  ...
+2296933   EBAYO_20220224_OTM_007692  ...  0.14519797619569658
+2296934      LH_20220224_OTM_007692  ...  0.16209771504074938
+2296935      LH_20220224_ITM_007692  ...   0.7105375241244045
+2296936  3990HK_20220214_ITM_016666  ...   0.6782876739251306
+2296937  3990HK_20220214_ITM_015384  ...   0.6831185756550758
+
+[2296938 rows x 50 columns]
+Total Data = 2296938
+                                uid  ...            avg_delta
+0           LLY_20220302_ITM_008333  ...    0.699559580507386
+1        9997HK_20220222_ITM_008333  ...   0.5661607775750713
+2        2400HK_20220222_ITM_008333  ...   0.4025591271049771
+3        6690HK_20220222_OTM_008333  ...  0.12684200824861344
+4        0345HK_20220222_OTM_008333  ...  0.10989851344066533
+...                             ...  ...                  ...
+2296933   EBAYO_20220224_OTM_007692  ...  0.14519797619569658
+2296934      LH_20220224_OTM_007692  ...  0.16209771504074938
+2296935      LH_20220224_ITM_007692  ...   0.7105375241244045
+2296936  3990HK_20220214_ITM_016666  ...   0.6782876739251306
+2296937  3990HK_20220214_ITM_015384  ...   0.6831185756550758
+
+[2296938 rows x 50 columns]
+ITM
+OTM
+ucdc
+                               uid    now_date  ...            avg_delta  avg_share
+0        VTRSO_20220218_ATM_007692  2022-03-17  ...  0.15441881666522028       None
+1          MLM_20220218_ATM_007692  2022-03-17  ...   0.4770757953063381       None
+2        MRNAO_20220218_ATM_007692  2022-03-17  ...  0.44071163076979286       None
+3        SGENO_20220218_ATM_007692  2022-03-17  ...  0.21797180780062525       None
+4        OTISK_20220218_ATM_007692  2022-03-17  ...   0.4329084182630747       None
+...                            ...         ...  ...                  ...        ...
+1148464    PVH_20220216_ATM_008333  2022-03-17  ...  0.28253764301684964       None
+1148465   PFGO_20220216_ATM_008333  2022-03-17  ...   0.5092078300231463       None
+1148466  QRVOO_20220216_ATM_008333  2022-03-17  ...   0.5357916752535499       None
+1148467     MO_20220216_ATM_008333  2022-03-17  ...  0.24646247659914347       None
+1148468    PSA_20220216_ATM_008333  2022-03-17  ...   0.1969387993930469       None
+
+[1148469 rows x 53 columns]
+Total Data = 1148469
+                               uid    now_date  ...            avg_delta  avg_share
+0        VTRSO_20220218_ATM_007692  2022-03-17  ...  0.15441881666522028       None
+1          MLM_20220218_ATM_007692  2022-03-17  ...   0.4770757953063381       None
+2        MRNAO_20220218_ATM_007692  2022-03-17  ...  0.44071163076979286       None
+3        SGENO_20220218_ATM_007692  2022-03-17  ...  0.21797180780062525       None
+4        OTISK_20220218_ATM_007692  2022-03-17  ...   0.4329084182630747       None
+...                            ...         ...  ...                  ...        ...
+1148464    PVH_20220216_ATM_008333  2022-03-17  ...  0.28253764301684964       None
+1148465   PFGO_20220216_ATM_008333  2022-03-17  ...   0.5092078300231463       None
+1148466  QRVOO_20220216_ATM_008333  2022-03-17  ...   0.5357916752535499       None
+1148467     MO_20220216_ATM_008333  2022-03-17  ...  0.24646247659914347       None
+1148468    PSA_20220216_ATM_008333  2022-03-17  ...   0.1969387993930469       None
+
+[1148469 rows x 53 columns]
+ATM
+classic
+                              uid   spot_date  ...  current_delta  avg_delta
+0        601618SS_20220124_003846  2022-01-24  ...          100.0      100.0
+1          1972HK_20210830_008333  2021-08-30  ...          100.0      100.0
+2          1972HK_20210831_008333  2021-08-31  ...          100.0      100.0
+3          1972HK_20210901_008333  2021-09-01  ...          100.0      100.0
+4        601618SS_20220125_003846  2022-01-25  ...          100.0      100.0
+...                           ...         ...  ...            ...        ...
+1151446        9988HK_20220325_05  2022-03-25  ...          100.0      100.0
+1151447        9992HK_20220325_05  2022-03-25  ...          100.0      100.0
+1151448        9996HK_20220325_05  2022-03-25  ...          100.0      100.0
+1151449        9997HK_20220325_05  2022-03-25  ...          100.0      100.0
+1151450        9999HK_20220325_05  2022-03-25  ...          100.0      100.0
+
+[1151451 rows x 24 columns]
+Total Data = 1151451
+                              uid   spot_date  ...  current_delta  avg_delta
+0        601618SS_20220124_003846  2022-01-24  ...          100.0      100.0
+1          1972HK_20210830_008333  2021-08-30  ...          100.0      100.0
+2          1972HK_20210831_008333  2021-08-31  ...          100.0      100.0
+3          1972HK_20210901_008333  2021-09-01  ...          100.0      100.0
+4        601618SS_20220125_003846  2022-01-25  ...          100.0      100.0
+...                           ...         ...  ...            ...        ...
+1151446        9988HK_20220325_05  2022-03-25  ...          100.0      100.0
+1151447        9992HK_20220325_05  2022-03-25  ...          100.0      100.0
+1151448        9996HK_20220325_05  2022-03-25  ...          100.0      100.0
+1151449        9997HK_20220325_05  2022-03-25  ...          100.0      100.0
+1151450        9999HK_20220325_05  2022-03-25  ...          100.0      100.0
+
+[1151451 rows x 24 columns]
+classic

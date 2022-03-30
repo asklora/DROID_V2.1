@@ -1,0 +1,546 @@
+2022-03-29 : === DATA PREPERATION HISTORY STARTED ===
+Data preparation history started!
+The start date is set as: 2021-08-29
+The end date is set as: 2022-03-29
+         ticker     created  ... currency_code_ibes currency_code_ws
+0       .CSI300  2021-05-10  ...               None             None
+1          .HSI  2021-05-18  ...               None             None
+2          .SPX  2021-05-10  ...               None             None
+3     000001.SZ  2021-04-08  ...                CNY              CNY
+4     000002.SZ  2021-04-08  ...                CNY              CNY
+...         ...         ...  ...                ...              ...
+1157     ZBRA.O  2021-01-26  ...                USD              USD
+1158     ZION.O  2021-08-26  ...                USD              USD
+1159       ZM.O  2021-01-26  ...                USD              USD
+1160       ZS.O  2021-01-26  ...                USD              USD
+1161        ZTS  2021-01-26  ...                USD              USD
+
+[1162 rows x 34 columns]
+Total Data = 1162
+  currency_code etf_ticker
+0           USD        SPY
+1           HKD        EWH
+2           CNY        FXI
+Total Data = 3
+  ticker     created  ... currency_code_ibes currency_code_ws
+0    EWH  2021-04-08  ...               None             None
+1    FXI  2021-04-08  ...               None             None
+2    SPY  2020-03-05  ...                USD              USD
+
+[3 rows x 34 columns]
+Total Data = 3
+                     uid trading_day  ...     ticker   day_status
+0         202005272777HK  2020-05-27  ...    2777.HK  trading_day
+1         20210830CSI300  2021-08-30  ...    .CSI300  trading_day
+2       20200527601377SS  2020-05-27  ...  601377.SS  trading_day
+3         202108300354HK  2021-08-30  ...    0354.HK  trading_day
+4       20210830000002SZ  2021-08-30  ...  000002.SZ  trading_day
+...                  ...         ...  ...        ...          ...
+613490    202203250006HK  2022-03-25  ...    0006.HK  trading_day
+613491  20220325600893SS  2022-03-25  ...  600893.SS  trading_day
+613492     20220325WYNNO  2022-03-25  ...     WYNN.O  trading_day
+613493    202203256158HK  2022-03-25  ...    6158.HK  trading_day
+613494    202203250268HK  2022-03-25  ...    0268.HK  trading_day
+
+[613495 rows x 14 columns]
+Total Data = 613495
+                 uid trading_day  ...  deriv_inf  ticker
+0        20210830SPX  2021-08-30  ...     0.2341    .SPX
+1        20210831SPX  2021-08-31  ...     0.2275    .SPX
+2        20210901SPX  2021-09-01  ...     0.2256    .SPX
+3        20210902SPX  2021-09-02  ...     0.2283    .SPX
+4        20210903SPX  2021-09-03  ...     0.2342    .SPX
+...              ...         ...  ...        ...     ...
+77224  20220311ABBVK  2022-03-11  ...     0.0000  ABBV.K
+77225    20220208LYV  2022-02-08  ...     0.0679     LYV
+77226    20220223ETN  2022-02-23  ...     0.0000     ETN
+77227    20220322ZTS  2022-03-22  ...     0.0000     ZTS
+77228    20220323ZTS  2022-03-23  ...     0.0000     ZTS
+
+[77229 rows x 10 columns]
+Total Data = 77229
+                  uid trading_day  vix_value   vix_id
+0     20200303CBOEVIX  2020-03-03      36.82  CBOEVIX
+1     20200303VSTOXXI  2020-03-03      33.45  VSTOXXI
+2     20200302VKOSPIX  2020-03-02      32.66  VKOSPIX
+3     20200302VHSIVOL  2020-03-02      28.74  VHSIVOL
+4     20200302CBOEVIX  2020-03-02      33.42  CBOEVIX
+...               ...         ...        ...      ...
+4915  20220211VKOSPIX  2022-02-11      20.92  VKOSPIX
+4916  20220214CBOEVIX  2022-02-14      29.93  CBOEVIX
+4917  20220214VHSIVOL  2022-02-14      25.23  VHSIVOL
+4918  20220214VSTOXXI  2022-02-14      24.66  VSTOXXI
+4919  20220214VKOSPIX  2022-02-14      23.84  VKOSPIX
+
+[4920 rows x 4 columns]
+Total Data = 4920
+  currency_code   ric  ...            country  etf_ticker
+0           USD  None  ...      United States         SPY
+1           HKD  HKD=  ...          Hong Kong         EWH
+2           CNY  CNY=  ...  Republic of China         FXI
+
+[3 rows x 25 columns]
+Total Data = 3
+2021-08-30 is finished.
+2021-08-31 is finished.
+2021-09-01 is finished.
+2021-09-02 is finished.
+2021-09-03 is finished.
+2021-09-06 is finished.
+2021-09-07 is finished.
+2021-09-08 is finished.
+2021-09-09 is finished.
+2021-09-10 is finished.
+2021-09-13 is finished.
+2021-09-14 is finished.
+2021-09-15 is finished.
+2021-09-16 is finished.
+2021-09-17 is finished.
+2021-09-20 is finished.
+2021-09-21 is finished.
+2021-09-22 is finished.
+2021-09-23 is finished.
+2021-09-24 is finished.
+2021-09-27 is finished.
+2021-09-28 is finished.
+2021-09-29 is finished.
+2021-09-30 is finished.
+2021-10-01 is finished.
+2021-10-04 is finished.
+2021-10-05 is finished.
+2021-10-06 is finished.
+2021-10-07 is finished.
+2021-10-08 is finished.
+2021-10-11 is finished.
+2021-10-12 is finished.
+2021-10-13 is finished.
+2021-10-14 is finished.
+2021-10-15 is finished.
+2021-10-18 is finished.
+2021-10-19 is finished.
+2021-10-20 is finished.
+2021-10-21 is finished.
+2021-10-22 is finished.
+2021-10-25 is finished.
+2021-10-26 is finished.
+2021-10-27 is finished.
+2021-10-28 is finished.
+2021-10-29 is finished.
+2021-11-01 is finished.
+2021-11-02 is finished.
+2021-11-03 is finished.
+2021-11-04 is finished.
+2021-11-05 is finished.
+2021-11-08 is finished.
+2021-11-09 is finished.
+2021-11-10 is finished.
+2021-11-11 is finished.
+2021-11-12 is finished.
+2021-11-15 is finished.
+2021-11-16 is finished.
+2021-11-17 is finished.
+2021-11-18 is finished.
+2021-11-19 is finished.
+2021-11-22 is finished.
+2021-11-23 is finished.
+2021-11-24 is finished.
+2021-11-25 is finished.
+2021-11-26 is finished.
+2021-11-29 is finished.
+2021-11-30 is finished.
+2021-12-01 is finished.
+2021-12-02 is finished.
+2021-12-03 is finished.
+2021-12-06 is finished.
+2021-12-07 is finished.
+2021-12-08 is finished.
+2021-12-09 is finished.
+2021-12-10 is finished.
+2021-12-13 is finished.
+2021-12-14 is finished.
+2021-12-15 is finished.
+2021-12-16 is finished.
+2021-12-17 is finished.
+2021-12-20 is finished.
+2021-12-21 is finished.
+2021-12-22 is finished.
+2021-12-23 is finished.
+2021-12-24 is finished.
+2021-12-27 is finished.
+2021-12-28 is finished.
+2021-12-29 is finished.
+2021-12-30 is finished.
+2021-12-31 is finished.
+2022-01-03 is finished.
+2022-01-04 is finished.
+2022-01-05 is finished.
+2022-01-06 is finished.
+2022-01-07 is finished.
+2022-01-10 is finished.
+2022-01-11 is finished.
+2022-01-12 is finished.
+2022-01-13 is finished.
+2022-01-14 is finished.
+2022-01-17 is finished.
+2022-01-18 is finished.
+2022-01-19 is finished.
+2022-01-20 is finished.
+2022-01-21 is finished.
+2022-01-24 is finished.
+2022-01-25 is finished.
+2022-01-26 is finished.
+2022-01-27 is finished.
+2022-01-28 is finished.
+2022-01-31 is finished.
+2022-02-01 is finished.
+2022-02-02 is finished.
+2022-02-03 is finished.
+2022-02-04 is finished.
+2022-02-07 is finished.
+2022-02-08 is finished.
+2022-02-09 is finished.
+2022-02-10 is finished.
+2022-02-11 is finished.
+2022-02-14 is finished.
+2022-02-15 is finished.
+2022-02-16 is finished.
+2022-02-17 is finished.
+2022-02-18 is finished.
+2022-02-21 is finished.
+2022-02-22 is finished.
+2022-02-23 is finished.
+2022-02-24 is finished.
+2022-02-25 is finished.
+2022-02-28 is finished.
+2022-03-01 is finished.
+2022-03-02 is finished.
+2022-03-03 is finished.
+2022-03-04 is finished.
+2022-03-07 is finished.
+2022-03-08 is finished.
+2022-03-09 is finished.
+2022-03-10 is finished.
+2022-03-11 is finished.
+2022-03-14 is finished.
+2022-03-15 is finished.
+2022-03-16 is finished.
+2022-03-17 is finished.
+2022-03-18 is finished.
+2022-03-21 is finished.
+2022-03-22 is finished.
+2022-03-23 is finished.
+2022-03-24 is finished.
+2022-03-25 is finished.
+2022-03-28 is finished.
+2022-03-29 is finished.
+  currency_code etf_ticker
+0           USD        SPY
+1           HKD        EWH
+2           CNY        FXI
+Total Data = 3
+         ticker     created  ... currency_code_ibes currency_code_ws
+0       .CSI300  2021-05-10  ...               None             None
+1          .HSI  2021-05-18  ...               None             None
+2          .SPX  2021-05-10  ...               None             None
+3     000001.SZ  2021-04-08  ...                CNY              CNY
+4     000002.SZ  2021-04-08  ...                CNY              CNY
+...         ...         ...  ...                ...              ...
+1157     ZBRA.O  2021-01-26  ...                USD              USD
+1158     ZION.O  2021-08-26  ...                USD              USD
+1159       ZM.O  2021-01-26  ...                USD              USD
+1160       ZS.O  2021-01-26  ...                USD              USD
+1161        ZTS  2021-01-26  ...                USD              USD
+
+[1162 rows x 34 columns]
+Total Data = 1162
+           ticker trading_day  ...  c2c_vol_252_504_x               uid
+0         .CSI300  2021-08-30  ...                NaN    20210830CSI300
+1            .HSI  2021-08-30  ...                NaN       20210830HSI
+2            .SPX  2021-08-30  ...                NaN       20210830SPX
+3       000001.SZ  2021-08-30  ...                NaN  20210830000001SZ
+4       000002.SZ  2021-08-30  ...                NaN  20210830000002SZ
+...           ...         ...  ...                ...               ...
+164443    9988.HK  2022-03-28  ...                NaN    202203289988HK
+164444    9992.HK  2022-03-28  ...                NaN    202203289992HK
+164445    9996.HK  2022-03-28  ...                NaN    202203289996HK
+164446    9997.HK  2022-03-28  ...                NaN    202203289997HK
+164447    9999.HK  2022-03-28  ...                NaN    202203289999HK
+
+[164448 rows x 42 columns]
+=== Upsert Data to Database on Table bot_data ===
+DATA UPSERT TO bot_data
+2022-03-29 : === VOLATILITY INFER HISTORY STARTED ===
+The start date is set as: 2021-08-29
+The end date is set as: 2022-03-29
+         ticker     created  ... currency_code_ibes currency_code_ws
+0       .CSI300  2021-05-10  ...               None             None
+1          .HSI  2021-05-18  ...               None             None
+2          .SPX  2021-05-10  ...               None             None
+3     000001.SZ  2021-04-08  ...                CNY              CNY
+4     000002.SZ  2021-04-08  ...                CNY              CNY
+...         ...         ...  ...                ...              ...
+1157     ZBRA.O  2021-01-26  ...                USD              USD
+1158     ZION.O  2021-08-26  ...                USD              USD
+1159       ZM.O  2021-01-26  ...                USD              USD
+1160       ZS.O  2021-01-26  ...                USD              USD
+1161        ZTS  2021-01-26  ...                USD              USD
+
+[1162 rows x 34 columns]
+Total Data = 1162
+                     uid trading_day  ...  c2c_vol_252_504_x     ticker
+0         20210830CSI300  2021-08-30  ...                NaN    .CSI300
+1            20210830HSI  2021-08-30  ...                NaN       .HSI
+2            20210830SPX  2021-08-30  ...                NaN       .SPX
+3       20210830000001SZ  2021-08-30  ...                NaN  000001.SZ
+4       20210830000002SZ  2021-08-30  ...                NaN  000002.SZ
+...                  ...         ...  ...                ...        ...
+164443    202203256993HK  2022-03-25  ...            0.21571    6993.HK
+164444    202203259618HK  2022-03-25  ...            0.21571    9618.HK
+164445    202203259626HK  2022-03-25  ...            0.21571    9626.HK
+164446    202203259633HK  2022-03-25  ...            0.21571    9633.HK
+164447    202203259688HK  2022-03-25  ...            0.21571    9688.HK
+
+[164448 rows x 42 columns]
+Total Data = 164448
+  trading_day  usinter3  usgbill3  ...  emgbond  chgbond  fred_data
+0  2021-08-31       NaN      0.04  ...      NaN    2.857        NaN
+1  2021-09-15    0.1227       NaN  ...   0.1967      NaN       3.30
+2  2021-09-30       NaN      0.04  ...      NaN    2.874        NaN
+3  2021-10-15    0.1272       NaN  ...   0.3523      NaN       3.34
+4  2021-10-29       NaN      0.05  ...      NaN    2.976        NaN
+5  2021-11-15    0.1581       NaN  ...   0.3124      NaN        NaN
+6  2021-11-30       NaN      0.05  ...      NaN    2.867        NaN
+7  2021-12-31       NaN      0.05  ...      NaN      NaN        NaN
+
+[8 rows x 8 columns]
+Total Data = 8
+          ticker trading_day  eps1fd12  eps1tr12   cap1fd12
+0        2518.HK  2021-09-11     6.687     6.440    309.633
+1      300014.SZ  2021-09-11     2.207     1.430   3217.523
+2      300122.SZ  2021-09-11     4.397     3.388    611.730
+3        6030.HK  2021-09-11     1.590     1.380        NaN
+4        6862.HK  2021-09-11     0.827     0.420   5334.555
+...          ...         ...       ...       ...        ...
+12646  600655.SS  2021-10-30     1.236     1.054   2684.667
+12647  600763.SS  2021-10-30     2.910     2.165    319.733
+12648  600893.SS  2021-10-30     0.743     0.574   2081.083
+12649  600926.SS  2021-10-30     1.670     1.388  28183.340
+12650  600958.SS  2021-10-30     0.783     0.630        NaN
+
+[12651 rows x 5 columns]
+Total Data = 12651
+           ticker trading_day     fast_d     fast_k        rsi
+0         .CSI300  2021-08-30        NaN        NaN        NaN
+1         0354.HK  2021-08-30        NaN        NaN        NaN
+2       000002.SZ  2021-08-30        NaN        NaN        NaN
+3         9858.HK  2021-08-30        NaN        NaN        NaN
+4         0788.HK  2021-08-30        NaN        NaN        NaN
+...           ...         ...        ...        ...        ...
+173911     SPGI.K  2021-11-15  31.853636  47.487956  54.795009
+173912  600570.SS  2021-11-15  71.128609  82.874016  62.553738
+173913      KHC.O  2021-11-15  79.922780  89.189189  58.640120
+173914  603899.SS  2021-11-15  27.596315  27.386935  40.380273
+173915  002460.SZ  2021-11-15   8.486836   6.666667  37.210057
+
+[173916 rows x 5 columns]
+Total Data = 173916
+         ticker     created  ... currency_code_ibes currency_code_ws
+0       .CSI300  2021-05-10  ...               None             None
+1          .HSI  2021-05-18  ...               None             None
+2          .SPX  2021-05-10  ...               None             None
+3     000001.SZ  2021-04-08  ...                CNY              CNY
+4     000002.SZ  2021-04-08  ...                CNY              CNY
+...         ...         ...  ...                ...              ...
+1157     ZBRA.O  2021-01-26  ...                USD              USD
+1158     ZION.O  2021-08-26  ...                USD              USD
+1159       ZM.O  2021-01-26  ...                USD              USD
+1160       ZS.O  2021-01-26  ...                USD              USD
+1161        ZTS  2021-01-26  ...                USD              USD
+
+[1162 rows x 34 columns]
+Total Data = 1162
+[Parallel(n_jobs=16)]: Using backend ThreadingBackend with 16 concurrent workers.
+[Parallel(n_jobs=16)]: Done   1 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done   2 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done   3 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done   4 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done   5 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done   6 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done   7 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done   8 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done   9 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done  10 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done  11 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done  12 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done  13 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done  14 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done  15 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done  16 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=16)]: Done  17 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  18 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  19 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  20 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  21 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  22 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  23 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  24 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  25 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  26 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  27 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  28 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  29 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  30 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  31 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  32 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  33 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  34 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  35 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  36 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  37 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  38 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  39 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  40 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  41 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  42 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  43 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  44 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  45 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  46 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  47 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  48 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  49 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  50 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  51 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  52 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  53 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  54 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  55 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  56 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  57 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  58 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  59 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  60 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  61 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  62 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  63 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  64 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  65 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  66 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  67 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  68 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  69 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  70 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  71 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  72 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  73 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  74 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  75 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  76 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  77 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  78 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  79 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  80 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  81 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  82 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  83 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  84 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  85 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  86 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  87 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  88 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  89 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  90 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  91 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  92 tasks      | elapsed:    0.1s
+[Parallel(n_jobs=16)]: Done  93 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done  94 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done  95 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done  96 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done  97 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done  98 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done  99 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 100 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 101 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 102 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 103 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 104 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 105 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 106 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 107 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 108 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 109 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 110 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 111 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 112 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 113 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 114 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 115 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 116 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 117 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 118 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 119 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 120 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 121 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 122 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 123 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 124 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 125 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 126 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 127 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 128 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 129 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 130 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 131 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 132 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 133 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 134 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 135 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 136 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 137 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 138 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 139 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 140 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 141 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 142 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 143 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 144 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 145 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 146 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 147 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 148 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 149 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 150 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 151 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 152 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 153 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 154 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 155 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 156 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 157 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 158 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 159 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 160 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 161 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 162 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=16)]: Done 163 tasks      | elapsed:    0.3s
+[Parallel(n_jobs=16)]: Done 164 tasks      | elapsed:    0.3s
+[Parallel(n_jobs=16)]: Done 165 tasks      | elapsed:    0.3s
+[Parallel(n_jobs=16)]: Done 166 tasks      | elapsed:    0.3s
+[Parallel(n_jobs=16)]: Done 167 tasks      | elapsed:    0.3s
+[Parallel(n_jobs=16)]: Done 168 tasks      | elapsed:    0.3s
+[Parallel(n_jobs=16)]: Done 169 tasks      | elapsed:    0.3s
+[Parallel(n_jobs=16)]: Done 172 out of 200 | elapsed:    0.3s remaining:    0.0s
+[Parallel(n_jobs=16)]: Done 175 out of 200 | elapsed:    0.3s remaining:    0.0s
+[Parallel(n_jobs=16)]: Done 178 out of 200 | elapsed:    0.3s remaining:    0.0s
+[Parallel(n_jobs=16)]: Done 181 out of 200 | elapsed:    0.3s remaining:    0.0s
+[Parallel(n_jobs=16)]: Done 184 out of 200 | elapsed:    0.3s remaining:    0.0s
+[Parallel(n_jobs=16)]: Done 187 out of 200 | elapsed:    0.3s remaining:    0.0s
+[Parallel(n_jobs=16)]: Done 190 out of 200 | elapsed:    0.3s remaining:    0.0s
+[Parallel(n_jobs=16)]: Done 193 out of 200 | elapsed:    0.3s remaining:    0.0s
+[Parallel(n_jobs=16)]: Done 196 out of 200 | elapsed:    0.3s remaining:    0.0s
+[Parallel(n_jobs=16)]: Done 200 out of 200 | elapsed:    0.3s finished
+Finished inferring. Writing to AWS.
+=== Upsert Data to Database on Table data_vol_surface_inferred ===
+DATA UPSERT TO data_vol_surface_inferred
+03:40:17
+Finished!

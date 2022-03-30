@@ -1,0 +1,251 @@
+Start Process
+         ticker     created  ... currency_code_ibes currency_code_ws
+0        TWTR.K  2021-01-26  ...                USD              USD
+1     002157.SZ  2021-04-08  ...                CNY              CNY
+2        NLSN.K  2021-08-26  ...                USD              USD
+3       0670.HK  2021-07-15  ...                CNY              CNY
+4       3396.HK  2021-07-15  ...                CNY              HKD
+...         ...         ...  ...                ...              ...
+1149      BKR.O  2021-12-16  ...                USD              USD
+1150      HON.O  2021-08-26  ...                USD              USD
+1151        SPY  2020-03-05  ...                USD              USD
+1152        WMT  2021-01-26  ...                USD              USD
+1153        ZTS  2021-01-26  ...                USD              USD
+
+[1154 rows x 34 columns]
+         ticker     created  ... currency_code_ibes currency_code_ws
+0        TWTR.K  2021-01-26  ...                USD              USD
+1     002157.SZ  2021-04-08  ...                CNY              CNY
+2        NLSN.K  2021-08-26  ...                USD              USD
+3       0670.HK  2021-07-15  ...                CNY              CNY
+4       3396.HK  2021-07-15  ...                CNY              HKD
+...         ...         ...  ...                ...              ...
+1149      BKR.O  2021-12-16  ...                USD              USD
+1150      HON.O  2021-08-26  ...                USD              USD
+1151        SPY  2020-03-05  ...                USD              USD
+1152        WMT  2021-01-26  ...                USD              USD
+1153        ZTS  2021-01-26  ...                USD              USD
+
+[1154 rows x 34 columns]
+=== Upsert Data to Database on Table universe ===
+DATA UPSERT TO universe
+         ticker  ...                 last_update
+0        TWTR.K  ...  2022-03-26 21:45:29.585088
+1     002157.SZ  ...  2022-03-26 21:45:29.585088
+2        NLSN.K  ...  2022-03-26 21:45:29.585088
+3       0670.HK  ...  2022-03-26 21:45:29.585088
+4           PWR  ...  2022-03-26 21:45:29.585088
+...         ...  ...                         ...
+1149      HON.O  ...  2022-03-26 21:45:29.585088
+1150        SPY  ...  2022-03-26 21:45:29.585088
+1151      BKR.O  ...  2022-03-26 21:45:29.585088
+1152        WMT  ...  2022-03-26 21:45:29.585088
+1153        ZTS  ...  2022-03-26 21:45:29.585088
+
+[1154 rows x 31 columns]
+         ticker  ...                 last_update
+0        TWTR.K  ...  2022-03-26 21:45:29.585088
+1     002157.SZ  ...  2022-03-26 21:45:29.585088
+2        NLSN.K  ...  2022-03-26 21:45:29.585088
+3       0670.HK  ...  2022-03-26 21:45:29.585088
+4           PWR  ...  2022-03-26 21:45:29.585088
+...         ...  ...                         ...
+1149      HON.O  ...  2022-03-26 21:45:29.585088
+1150        SPY  ...  2022-03-26 21:45:29.585088
+1151      BKR.O  ...  2022-03-26 21:45:29.585088
+1152        WMT  ...  2022-03-26 21:45:29.585088
+1153        ZTS  ...  2022-03-26 21:45:29.585088
+
+[1154 rows x 31 columns]
+=== Upsert Data to Database on Table universe_rating ===
+DATA UPSERT TO universe_rating
+              uid trading_day  atm_volatility_spot  ...  slope_inf  deriv_inf  ticker
+0     20210210SPX  2021-02-10             0.145251  ...    8.47580    0.22170    .SPX
+1     20210211SPX  2021-02-11             0.136942  ...    8.51024    0.22190    .SPX
+2     20210212SPX  2021-02-12             0.117993  ...    8.45881    0.23130    .SPX
+3     20210216SPX  2021-02-16             0.129694  ...    8.73697    0.23550    .SPX
+4     20210217SPX  2021-02-17             0.129771  ...    8.74416    0.23780    .SPX
+...           ...         ...                  ...  ...        ...        ...     ...
+9753  20220317ZTS  2022-03-17             0.255821  ...    3.75880    3.38292     ZTS
+9754  20220318ZTS  2022-03-18             0.235681  ...    3.76378    0.00000     ZTS
+9755  20220321ZTS  2022-03-21             0.263089  ...    3.76243    0.00000     ZTS
+9756  20220322ZTS  2022-03-22             0.241415  ...    3.86704    0.00000     ZTS
+9757  20220323ZTS  2022-03-23             0.263534  ...    3.89672    0.00000     ZTS
+
+[149758 rows x 10 columns]
+              uid trading_day  atm_volatility_spot  ...  slope_inf  deriv_inf  ticker
+0     20210210SPX  2021-02-10             0.145251  ...    8.47580    0.22170    .SPX
+1     20210211SPX  2021-02-11             0.136942  ...    8.51024    0.22190    .SPX
+2     20210212SPX  2021-02-12             0.117993  ...    8.45881    0.23130    .SPX
+3     20210216SPX  2021-02-16             0.129694  ...    8.73697    0.23550    .SPX
+4     20210217SPX  2021-02-17             0.129771  ...    8.74416    0.23780    .SPX
+...           ...         ...                  ...  ...        ...        ...     ...
+9753  20220317ZTS  2022-03-17             0.255821  ...    3.75880    3.38292     ZTS
+9754  20220318ZTS  2022-03-18             0.235681  ...    3.76378    0.00000     ZTS
+9755  20220321ZTS  2022-03-21             0.263089  ...    3.76243    0.00000     ZTS
+9756  20220322ZTS  2022-03-22             0.241415  ...    3.86704    0.00000     ZTS
+9757  20220323ZTS  2022-03-23             0.263534  ...    3.89672    0.00000     ZTS
+
+[149758 rows x 10 columns]
+=== Upsert Data to Database on Table data_vol_surface ===
+DATA UPSERT TO data_vol_surface
+         ticker     created  ... currency_code_ibes currency_code_ws
+0       .CSI300  2021-05-10  ...               None             None
+1          .HSI  2021-05-18  ...               None             None
+2          .SPX  2021-05-10  ...               None             None
+3     000001.SZ  2021-04-08  ...                CNY              CNY
+4     000002.SZ  2021-04-08  ...                CNY              CNY
+...         ...         ...  ...                ...              ...
+1157     ZBRA.O  2021-01-26  ...                USD              USD
+1158     ZION.O  2021-08-26  ...                USD              USD
+1159       ZM.O  2021-01-26  ...                USD              USD
+1160       ZS.O  2021-01-26  ...                USD              USD
+1161        ZTS  2021-01-26  ...                USD              USD
+
+[1162 rows x 34 columns]
+Total Data = 1162
+         ticker     created  ... currency_code_ibes currency_code_ws
+0       .CSI300  2021-05-10  ...               None             None
+1          .HSI  2021-05-18  ...               None             None
+2          .SPX  2021-05-10  ...               None             None
+3     000001.SZ  2021-04-08  ...                CNY              CNY
+4     000002.SZ  2021-04-08  ...                CNY              CNY
+...         ...         ...  ...                ...              ...
+1157     ZBRA.O  2021-01-26  ...                USD              USD
+1158     ZION.O  2021-08-26  ...                USD              USD
+1159       ZM.O  2021-01-26  ...                USD              USD
+1160       ZS.O  2021-01-26  ...                USD              USD
+1161        ZTS  2021-01-26  ...                USD              USD
+
+[1162 rows x 34 columns]
+Total Data = 1162
+                  uid trading_day  total_return_index   ticker
+0      20210830CSI300  2021-08-30             6376.20  .CSI300
+1      20210831CSI300  2021-08-31             6366.05  .CSI300
+2      20210901CSI300  2021-09-01             6450.64  .CSI300
+3      20210902CSI300  2021-09-02             6450.57  .CSI300
+4      20210903CSI300  2021-09-03             6415.67  .CSI300
+...               ...         ...                 ...      ...
+14471     20220321ZTS  2022-03-21              668.47      ZTS
+14472     20220322ZTS  2022-03-22              675.92      ZTS
+14473     20220323ZTS  2022-03-23              656.52      ZTS
+14474     20220324ZTS  2022-03-24              650.82      ZTS
+14475     20220325ZTS  2022-03-25              650.34      ZTS
+
+[174476 rows x 4 columns]
+                 uid trading_day       open  ...    volume   ticker  Error
+0     20210830CSI300  2021-08-30  4847.0348  ...  219636.0  .CSI300   None
+1     20210831CSI300  2021-08-31  4803.0854  ...  235119.0  .CSI300   None
+2     20210901CSI300  2021-09-01  4804.6863  ...  326721.0  .CSI300   None
+3     20210902CSI300  2021-09-02  4865.8218  ...  267858.0  .CSI300   None
+4     20210903CSI300  2021-09-03  4875.0656  ...  268092.0  .CSI300   None
+...              ...         ...        ...  ...       ...      ...    ...
+8478     20220318ZTS  2022-03-18   196.6700  ...    2578.9      ZTS   None
+8479     20220322ZTS  2022-03-22   195.1800  ...    2374.7      ZTS   None
+8480     20220323ZTS  2022-03-23   196.0500  ...    2115.3      ZTS   None
+8481     20220324ZTS  2022-03-24   192.0100  ...    3445.9      ZTS   None
+8482     20220325ZTS  2022-03-25   190.8000  ...    2363.1      ZTS   None
+
+[168483 rows x 9 columns]
+Calculation Start From 2021-08-29
+Filling All Missing Days
+Calculate Datapoint & Day_status
+Update Holiday Date
+             uid non_working_day  ... currency_code is_official
+0    20180501EUR      2018-05-01  ...           EUR        True
+1    20180528GBP      2018-05-28  ...           GBP        True
+2    20180528USD      2018-05-28  ...           USD        True
+3    20180529SGD      2018-05-29  ...           SGD        True
+4    20180531EUR      2018-05-31  ...           EUR        True
+..           ...             ...  ...           ...         ...
+826  20221226SGD      2022-12-26  ...           SGD        True
+827  20221226USD      2022-12-26  ...           USD        True
+828  20221227EUR      2022-12-27  ...           EUR        True
+829  20221227HKD      2022-12-27  ...           HKD        True
+830  20221230KRW      2022-12-30  ...           KRW        True
+
+[831 rows x 5 columns]
+           ticker trading_day  ... datapoint_per_day  holiday
+15        .CSI300  2021-09-20  ...                 0     True
+16        .CSI300  2021-09-21  ...                 0     True
+24        .CSI300  2021-10-01  ...                 0     True
+25        .CSI300  2021-10-04  ...                 0     True
+26        .CSI300  2021-10-05  ...                 0     True
+...           ...         ...  ...               ...      ...
+176249  601868.SS  2022-02-01  ...                 0     True
+176250  601868.SS  2022-02-02  ...                 0     True
+176251  601868.SS  2022-02-03  ...                 0     True
+176252  601868.SS  2022-02-04  ...                 1     True
+176313      CEG.O  2022-02-21  ...                 1     True
+
+[10248 rows x 12 columns]
+Fill Day Status
+         ticker trading_day  ... datapoint_per_day   day_status
+0       .CSI300  2021-08-30  ...                 5  trading_day
+1       .CSI300  2021-08-31  ...                 5  trading_day
+2       .CSI300  2021-09-01  ...                 5  trading_day
+3       .CSI300  2021-09-02  ...                 5  trading_day
+4       .CSI300  2021-09-03  ...                 5  trading_day
+...         ...         ...  ...               ...          ...
+176335    CEG.O  2022-03-23  ...                 5  trading_day
+176336    CEG.O  2022-03-24  ...                 5  trading_day
+176337    CEG.O  2022-03-25  ...                 5  trading_day
+176338    CEG.O  2022-03-28  ...                 0      missing
+176339    CEG.O  2022-03-29  ...                 0      missing
+
+[176340 rows x 12 columns]
+         ticker trading_day  ... datapoint_per_day   day_status
+0       .CSI300  2021-08-30  ...                 5  trading_day
+1       .CSI300  2021-08-31  ...                 5  trading_day
+2       .CSI300  2021-09-01  ...                 5  trading_day
+3       .CSI300  2021-09-02  ...                 5  trading_day
+4       .CSI300  2021-09-03  ...                 5  trading_day
+...         ...         ...  ...               ...          ...
+176335    CEG.O  2022-03-23  ...                 5  trading_day
+176336    CEG.O  2022-03-24  ...                 5  trading_day
+176337    CEG.O  2022-03-25  ...                 5  trading_day
+176338    CEG.O  2022-03-28  ...                 0      missing
+176339    CEG.O  2022-03-29  ...                 0      missing
+
+[176340 rows x 12 columns]
+=== Upsert Data to Database on Table master_ohlcvtr ===
+DATA UPSERT TO master_ohlcvtr
+Getting OHLCVTR Data
+                  uid trading_day  ...  currency_code   ticker
+0      20210830CSI300  2021-08-30  ...            CNY  .CSI300
+1      20210831CSI300  2021-08-31  ...            CNY  .CSI300
+2      20210901CSI300  2021-09-01  ...            CNY  .CSI300
+3      20210902CSI300  2021-09-02  ...            CNY  .CSI300
+4      20210903CSI300  2021-09-03  ...            CNY  .CSI300
+...               ...         ...  ...            ...      ...
+16488  202110069869HK  2021-10-06  ...            HKD  9869.HK
+16489  202110079869HK  2021-10-07  ...            HKD  9869.HK
+16490  202110089869HK  2021-10-08  ...            HKD  9869.HK
+16491  202110119869HK  2021-10-11  ...            HKD  9869.HK
+16492   20220221VRSKO  2022-02-21  ...            USD   VRSK.O
+
+[176493 rows x 13 columns]
+OHLCTR Done
+Delete Holiday Status
+Fill Null Data Forward & Backward
+Calculate TAC
+Round Price
+Calculate RSI
+Calculate STOCHATIC
+Calculate TAC Done
+                     uid  tri_adj_open  ...     fast_k     fast_d
+0         20210830CSI300       4755.44  ...        NaN        NaN
+1         202108300354HK         13.01  ...        NaN        NaN
+2       20210830000002SZ         18.70  ...        NaN        NaN
+3         202108309858HK          4.67  ...        NaN        NaN
+4         202108300788HK          1.02  ...        NaN        NaN
+...                  ...           ...  ...        ...        ...
+166238    202203290410HK          1.48  ...  61.111111  62.037037
+166239        20220329HD        318.48  ...   5.755744   5.755744
+166240  20220329603260SS        113.40  ...   3.739094   3.330760
+166241    202203291378HK         10.66  ...  87.311178  88.116818
+166242    202203291339HK          2.47  ...  97.368421  95.614035
+
+[166243 rows x 14 columns]
+=== Upsert Data to Database on Table master_tac ===
+DATA UPSERT TO master_tac
