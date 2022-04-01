@@ -1,0 +1,2 @@
+sudo: /home/loratech/droid2env/bin/python3: command not found
+make: *** [Makefile:25: krw_prep] Error 1

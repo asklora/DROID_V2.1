@@ -1,0 +1,2 @@
+sudo: /home/loratech/droid2env/bin/python3: command not found
+make: *** [Makefile:112: firebase_universe_ws] Error 1

@@ -1,2 +1,2 @@
 #!/bin/bash
-cd /home/loratech/PycharmProjects/DROID_V2.1 && make cny_ucdc
+cd /home/loratech/DROID_V2.1 && make cny_ucdc
