@@ -1,2 +1,294 @@
-sudo: /home/loratech/droid2env/bin/python3: command not found
-make: *** [Makefile:112: firebase_universe_ws] Error 1
+using prod db
+droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com
+2022-04-04 11:00:05 LORA-PC-2 root[2693955] WARNING celery role using -> slave
+2022-04-04 11:00:08 LORA-PC-2 root[2693955] INFO AsyncORM: patching models
+Execute Query to Table universe
+API request: industry_name from /industries
+---> Finished
+API request: industry_group_name from /industries
+---> Finished
+API request: ['ai_score', 'ai_score2'] from /ai_score
+---> Finished
+API request: /ai_score_factor
+---> Finished
+2022-04-04 11:00:15 LORA-PC-2 root[2693955] ERROR Redis isn't running. skip get cache`
+2022-04-04 11:00:15 LORA-PC-2 root[2693955] ERROR Redis isn't running. ignoring set cache 
+2022-04-04 11:00:15 LORA-PC-2 root[2693955] ERROR Redis isn't running. skip get cache`
+2022-04-04 11:00:15 LORA-PC-2 root[2693955] ERROR Redis isn't running. ignoring set cache 
+{
+    "id": "d5b9c06a-15f5-4c14-9060-966256d7388e",
+    "task": "ai_score",
+    "subtask": "firebase_universe_update",
+    "start_time": "2022-04-04T19:00:08.941908",
+    "end_time": null,
+    "ticker": null,
+    "currency": null,
+    "severity": 1,
+    "error_message": "(psycopg2.OperationalError) SSL SYSCALL error: Connection timed out\ncould not connect to server: No route to host\n\tIs the server running on host \"droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com\" (18.162.161.183) and accepting\n\tTCP/IP connections on port 5432?\n\n(Background on this error at: http://sqlalche.me/e/e3q8)"
+}
+2022-04-04 13:12:15 LORA-PC-2 elasticsearch[2693955] WARNING GET https://es-sg-6wr2adiqj0002qgdj.public.elasticsearch.aliyuncs.com:9200/ [status:N/A request:10.006s]
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2285, in _wrap_pool_connect
+    return fn()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 303, in unique_connection
+    return _ConnectionFairy._checkout(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 773, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 492, in checkout
+    rec = pool._do_get()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/impl.py", line 139, in _do_get
+    self._dec_overflow()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/impl.py", line 136, in _do_get
+    return self._create_connection()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 308, in _create_connection
+    return _ConnectionRecord(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 437, in __init__
+    self.__connect(first_connect_check=True)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 657, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 652, in __connect
+    connection = pool._invoke_creator(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/strategies.py", line 114, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 490, in connect
+    return self.dbapi.connect(*cargs, **cparams)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/psycopg2/__init__.py", line 127, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: SSL SYSCALL error: Connection timed out
+could not connect to server: No route to host
+	Is the server running on host "droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com" (18.162.161.183) and accepting
+	TCP/IP connections on port 5432?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/es_logging/logger.py", line 27, in inner
+    func(*args, **kwargs)
+  File "/home/loratech/DROID_V2.1/ingestion/firestore_migration.py", line 232, in firebase_universe_update
+    bot_statistic = get_bot_statistic_data(ticker=ticker, currency_code=currency_code)
+  File "/home/loratech/DROID_V2.1/general/sql_query.py", line 793, in get_bot_statistic_data
+    data = read_query(query, table_name, cpu_counts=True)
+  File "/home/loratech/DROID_V2.1/general/sql_query.py", line 97, in read_query
+    with engine.connect() as conn:
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2218, in connect
+    return self._connection_cls(self, **kwargs)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 103, in __init__
+    else engine.raw_connection()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2317, in raw_connection
+    return self._wrap_pool_connect(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2288, in _wrap_pool_connect
+    Connection._handle_dbapi_exception_noconnection(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1554, in _handle_dbapi_exception_noconnection
+    util.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2285, in _wrap_pool_connect
+    return fn()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 303, in unique_connection
+    return _ConnectionFairy._checkout(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 773, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 492, in checkout
+    rec = pool._do_get()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/impl.py", line 139, in _do_get
+    self._dec_overflow()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/impl.py", line 136, in _do_get
+    return self._create_connection()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 308, in _create_connection
+    return _ConnectionRecord(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 437, in __init__
+    self.__connect(first_connect_check=True)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 657, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 652, in __connect
+    connection = pool._invoke_creator(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/strategies.py", line 114, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 490, in connect
+    return self.dbapi.connect(*cargs, **cparams)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/psycopg2/__init__.py", line 127, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) SSL SYSCALL error: Connection timed out
+could not connect to server: No route to host
+	Is the server running on host "droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com" (18.162.161.183) and accepting
+	TCP/IP connections on port 5432?
+
+(Background on this error at: http://sqlalche.me/e/e3q8)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connection.py", line 156, in _new_conn
+    conn = connection.create_connection(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/util/connection.py", line 61, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+  File "/usr/lib/python3.8/socket.py", line 918, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno -3] Temporary failure in name resolution
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/connection/http_urllib3.py", line 251, in perform_request
+    response = self.pool.urlopen(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connectionpool.py", line 719, in urlopen
+    retries = retries.increment(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/util/retry.py", line 376, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/packages/six.py", line 735, in reraise
+    raise value
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connectionpool.py", line 665, in urlopen
+    httplib_response = self._make_request(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connectionpool.py", line 376, in _make_request
+    self._validate_conn(conn)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connectionpool.py", line 994, in _validate_conn
+    conn.connect()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connection.py", line 300, in connect
+    conn = self._new_conn()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connection.py", line 168, in _new_conn
+    raise NewConnectionError(
+urllib3.exceptions.NewConnectionError: <urllib3.connection.VerifiedHTTPSConnection object at 0x7f489d525640>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution
+2022-04-04 13:12:15 LORA-PC-2 root[2693955] ERROR ConnectionError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f489d525640>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution) caused by: NewConnectionError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f489d525640>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution)
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2285, in _wrap_pool_connect
+    return fn()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 303, in unique_connection
+    return _ConnectionFairy._checkout(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 773, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 492, in checkout
+    rec = pool._do_get()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/impl.py", line 139, in _do_get
+    self._dec_overflow()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/impl.py", line 136, in _do_get
+    return self._create_connection()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 308, in _create_connection
+    return _ConnectionRecord(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 437, in __init__
+    self.__connect(first_connect_check=True)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 657, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 652, in __connect
+    connection = pool._invoke_creator(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/strategies.py", line 114, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 490, in connect
+    return self.dbapi.connect(*cargs, **cparams)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/psycopg2/__init__.py", line 127, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: SSL SYSCALL error: Connection timed out
+could not connect to server: No route to host
+	Is the server running on host "droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com" (18.162.161.183) and accepting
+	TCP/IP connections on port 5432?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/es_logging/logger.py", line 27, in inner
+    func(*args, **kwargs)
+  File "/home/loratech/DROID_V2.1/ingestion/firestore_migration.py", line 232, in firebase_universe_update
+    bot_statistic = get_bot_statistic_data(ticker=ticker, currency_code=currency_code)
+  File "/home/loratech/DROID_V2.1/general/sql_query.py", line 793, in get_bot_statistic_data
+    data = read_query(query, table_name, cpu_counts=True)
+  File "/home/loratech/DROID_V2.1/general/sql_query.py", line 97, in read_query
+    with engine.connect() as conn:
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2218, in connect
+    return self._connection_cls(self, **kwargs)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 103, in __init__
+    else engine.raw_connection()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2317, in raw_connection
+    return self._wrap_pool_connect(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2288, in _wrap_pool_connect
+    Connection._handle_dbapi_exception_noconnection(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1554, in _handle_dbapi_exception_noconnection
+    util.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2285, in _wrap_pool_connect
+    return fn()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 303, in unique_connection
+    return _ConnectionFairy._checkout(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 773, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 492, in checkout
+    rec = pool._do_get()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/impl.py", line 139, in _do_get
+    self._dec_overflow()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/impl.py", line 136, in _do_get
+    return self._create_connection()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 308, in _create_connection
+    return _ConnectionRecord(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 437, in __init__
+    self.__connect(first_connect_check=True)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 657, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 652, in __connect
+    connection = pool._invoke_creator(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/strategies.py", line 114, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 490, in connect
+    return self.dbapi.connect(*cargs, **cparams)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/psycopg2/__init__.py", line 127, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) SSL SYSCALL error: Connection timed out
+could not connect to server: No route to host
+	Is the server running on host "droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com" (18.162.161.183) and accepting
+	TCP/IP connections on port 5432?
+
+(Background on this error at: http://sqlalche.me/e/e3q8)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/es_logging/logger.py", line 77, in log
+    res = self.es.index(index='droidv2-logs', document=log)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/client/utils.py", line 301, in _wrapped
+    return func(*args, params=params, headers=headers, **kwargs)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/client/__init__.py", line 405, in index
+    return self.transport.perform_request(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/transport.py", line 409, in perform_request
+    self._do_verify_elasticsearch(headers=headers, timeout=timeout)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/transport.py", line 598, in _do_verify_elasticsearch
+    raise error
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/transport.py", line 561, in _do_verify_elasticsearch
+    _, info_headers, info_response = conn.perform_request(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/connection/http_urllib3.py", line 276, in perform_request
+    raise ConnectionError("N/A", str(e), e)
+elasticsearch.exceptions.ConnectionError: ConnectionError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f489d525640>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution) caused by: NewConnectionError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f489d525640>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution)
+Cannot connect to host www.slack.com:443 ssl:default [Temporary failure in name resolution]
+2022-04-04 13:12:24 LORA-PC-2 asyncio[2693955] ERROR Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x7f489d525940>

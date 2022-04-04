@@ -1,2 +1,31 @@
-sudo: /home/loratech/droid2env/bin/python3: command not found
-make: *** [Makefile:109: firebase_universe_na] Error 1
+using prod db
+droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com
+2022-04-03 23:00:05 LORA-PC-2 root[616138] WARNING celery role using -> slave
+2022-04-03 23:00:08 LORA-PC-2 root[616138] INFO AsyncORM: patching models
+Execute Query to Table universe
+API request: industry_name from /industries
+---> Finished
+API request: industry_group_name from /industries
+---> Finished
+API request: ['ai_score', 'ai_score2'] from /ai_score
+---> Finished
+API request: /ai_score_factor
+---> Finished
+2022-04-03 23:00:16 LORA-PC-2 root[616138] ERROR Redis isn't running. skip get cache`
+2022-04-03 23:00:16 LORA-PC-2 root[616138] ERROR Redis isn't running. ignoring set cache 
+2022-04-03 23:00:16 LORA-PC-2 root[616138] ERROR Redis isn't running. skip get cache`
+2022-04-03 23:00:16 LORA-PC-2 root[616138] ERROR Redis isn't running. ignoring set cache 
+{
+    "id": "cc4a5050-5197-49eb-b210-efd7b1982e43",
+    "task": "ai_score",
+    "subtask": "firebase_universe_update",
+    "start_time": "2022-04-04T07:00:09.776478",
+    "end_time": "2022-04-04T07:00:35.044296",
+    "ticker": null,
+    "currency": null,
+    "severity": null,
+    "error_message": null
+}
+2022-04-03 23:00:35 LORA-PC-2 elasticsearch[616138] WARNING GET https://es-sg-6wr2adiqj0002qgdj.public.elasticsearch.aliyuncs.com:9200/ [status:403 request:0.035s]
+2022-04-03 23:00:35 LORA-PC-2 elasticsearch[616138] INFO POST https://es-sg-6wr2adiqj0002qgdj.public.elasticsearch.aliyuncs.com:9200/droidv2-logs/_doc [status:201 request:0.009s]
+2022-04-03 23:00:35 LORA-PC-2 root[616138] INFO {'_index': 'droidv2-logs', '_type': '_doc', '_id': 'WuSo8X8BfALGvLAkogN0', '_version': 1, 'result': 'created', '_shards': {'total': 1, 'successful': 1, 'failed': 0}, '_seq_no': 474992, '_primary_term': 1}

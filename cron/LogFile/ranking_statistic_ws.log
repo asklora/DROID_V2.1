@@ -1,2 +1,207 @@
-sudo: /home/loratech/droid2env/bin/python3: command not found
-make: *** [Makefile:73: ranking_statistic_ws] Error 1
+using prod db
+droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com
+2022-04-02 01:00:05 LORA-PC-2 root[703810] WARNING celery role using -> slave
+2022-04-02 01:00:09 LORA-PC-2 root[703810] INFO AsyncORM: patching models
+uno backtest
+                                 uid    ticker  ... bot_return   event
+0            HPE_20220330_ITM_015384       HPE  ...        NaN    None
+1            HPE_20220330_ITM_003846       HPE  ...        NaN    None
+2            HPE_20220330_ITM_007692       HPE  ...        NaN    None
+3            HPE_20220330_ITM_016666       HPE  ...        NaN    None
+4               HPE_20220330_ITM_025       HPE  ...        NaN    None
+...                              ...       ...  ...        ...     ...
+1849451  NOKIAHE_20220107_ITM_016666  NOKIA.HE  ...  -0.102850  expire
+1849452  NOKIAHE_20220107_OTM_016666  NOKIA.HE  ...  -0.029033  expire
+1849453   BEIGDE_20220107_OTM_016666   BEIG.DE  ...  -0.051950  expire
+1849454   BEIGDE_20220107_ITM_016666   BEIG.DE  ...  -0.061557  expire
+1849455   CNHIMI_20220107_ITM_016666   CNHI.MI  ...  -0.117374  expire
+
+[1849456 rows x 12 columns]
+=== Upsert Data to Database on Table bot_backtest ===
+2022-04-02 01:02:46 LORA-PC-2 alembic.runtime.migration[703810] INFO Context impl PostgresqlImpl.
+2022-04-02 01:02:46 LORA-PC-2 alembic.runtime.migration[703810] INFO Will assume transactional DDL.
+DATA UPSERT TO bot_backtest
+=== Upsert Data to Database on Table bot_backtest ===
+2022-04-02 01:05:35 LORA-PC-2 alembic.runtime.migration[703810] INFO Context impl PostgresqlImpl.
+2022-04-02 01:05:35 LORA-PC-2 alembic.runtime.migration[703810] INFO Will assume transactional DDL.
+DATA UPSERT TO bot_backtest
+ucdc backtest
+                            uid    ticker  ... bot_return   event
+0        SOGNPA_20220309_ATM_05   SOGN.PA  ...        NaN    None
+1       NEXIIMI_20220309_ATM_05  NEXII.MI  ...        NaN    None
+2        SOPRPA_20220309_ATM_05   SOPR.PA  ...        NaN    None
+3       ENR1nDE_20220309_ATM_05  ENR1n.DE  ...        NaN    None
+4        ERSTVI_20220309_ATM_05   ERST.VI  ...        NaN    None
+...                         ...       ...  ...        ...     ...
+924723     SPY_20210923_ATM_025       SPY  ...   0.105565  expire
+924724      SPY_20210924_ATM_05       SPY  ...   0.041942  expire
+924725      SPX_20210924_ATM_05      .SPX  ...   0.048120  expire
+924726     SPY_20210924_ATM_025       SPY  ...   0.107301  expire
+924727     SPX_20210924_ATM_025      .SPX  ...   0.109992  expire
+
+[924728 rows x 12 columns]
+=== Upsert Data to Database on Table bot_backtest ===
+2022-04-02 01:17:31 LORA-PC-2 alembic.runtime.migration[703810] INFO Context impl PostgresqlImpl.
+2022-04-02 01:17:31 LORA-PC-2 alembic.runtime.migration[703810] INFO Will assume transactional DDL.
+DATA UPSERT TO bot_backtest
+=== Upsert Data to Database on Table bot_backtest ===
+2022-04-02 01:18:35 LORA-PC-2 alembic.runtime.migration[703810] INFO Context impl PostgresqlImpl.
+2022-04-02 01:18:35 LORA-PC-2 alembic.runtime.migration[703810] INFO Will assume transactional DDL.
+DATA UPSERT TO bot_backtest
+classic backtest
+                            uid    ticker  ... bot_return event
+0         FERMC_20211021_008333    FER.MC  ...  -0.006410    NT
+1           JPM_20210922_015384       JPM  ...   0.076586    NT
+2        OMVVVI_20210917_016666   OMVV.VI  ...   0.073449    NT
+3        ORANPA_20210917_016666   ORAN.PA  ...   0.054545    NT
+4           WRB_20210917_016666       WRB  ...   0.125225    NT
+...                         ...       ...  ...        ...   ...
+936553        CPGL_20210915_025     CPG.L  ...   0.068339    NT
+936554  MUVGnDE_20211117_007692  MUVGn.DE  ...  -0.017211    NT
+936555      OKE_20211117_007692       OKE  ...  -0.027874    NT
+936556      OMC_20211117_007692       OMC  ...   0.009401    NT
+936557      NOC_20211117_007692       NOC  ...   0.043871    NT
+
+[936558 rows x 12 columns]
+=== Upsert Data to Database on Table bot_backtest ===
+2022-04-02 01:25:01 LORA-PC-2 alembic.runtime.migration[703810] INFO Context impl PostgresqlImpl.
+2022-04-02 01:25:01 LORA-PC-2 alembic.runtime.migration[703810] INFO Will assume transactional DDL.
+DATA UPSERT TO bot_backtest
+=== Upsert Data to Database on Table bot_backtest ===
+2022-04-02 01:25:56 LORA-PC-2 alembic.runtime.migration[703810] INFO Context impl PostgresqlImpl.
+2022-04-02 01:25:56 LORA-PC-2 alembic.runtime.migration[703810] INFO Will assume transactional DDL.
+DATA UPSERT TO bot_backtest
+2022-04-02 : === BOT RANKING CHECK NEW TICKER STARTED ===
+2018-04-02
+2022-04-02 : === BOT RANKING DAILY STARTED ===
+The start date is set as: 2021-05-07
+The end date is set as: 2022-04-02
+uno
+                              uid    now_date  ... currency_code  ticker
+0             PFE_20210629_ITM_05  2021-08-16  ...           USD     PFE
+1             WST_20210527_ITM_05  2021-09-02  ...           USD     WST
+2        AALL_20210720_ITM_016666  2021-08-04  ...           GBP   AAL.L
+3           CRDAL_20210706_ITM_05  2021-08-24  ...           GBP  CRDA.L
+4               A_20210527_ITM_05  2021-09-02  ...           USD       A
+...                           ...         ...  ...           ...     ...
+2883701    BNZLL_20210909_OTM_025  2021-12-08  ...           GBP  BNZL.L
+2883702    BNZLL_20210909_ITM_025  2021-12-08  ...           GBP  BNZL.L
+2883703    PSONL_20210909_ITM_025  2021-12-08  ...           GBP  PSON.L
+2883704    TSCOL_20210909_OTM_025  2021-12-08  ...           GBP  TSCO.L
+2883705    TSCOL_20210909_ITM_025  2021-12-08  ...           GBP  TSCO.L
+
+[2883706 rows x 45 columns]
+ITM
+OTM
+ucdc
+                             uid    now_date  ... currency_code    ticker
+0         SOGNPA_20220309_ATM_05  2022-04-01  ...           EUR   SOGN.PA
+1         SOPRPA_20220309_ATM_05  2022-04-01  ...           EUR   SOPR.PA
+2        NEXIIMI_20220309_ATM_05  2022-04-01  ...           EUR  NEXII.MI
+3        ENR1nDE_20220309_ATM_05  2022-04-01  ...           EUR  ENR1n.DE
+4         ERSTVI_20220309_ATM_05  2022-04-01  ...           EUR   ERST.VI
+...                          ...         ...  ...           ...       ...
+1441848      SNL_20211115_ATM_05  2022-04-01  ...           GBP      SN.L
+1441849      BTL_20211115_ATM_05  2022-04-01  ...           GBP      BT.L
+1441850      TWL_20211115_ATM_05  2022-04-01  ...           GBP      TW.L
+1441851     IMBL_20211115_ATM_05  2022-04-01  ...           GBP     IMB.L
+1441852    ANTOL_20211115_ATM_05  2022-04-01  ...           GBP    ANTO.L
+
+[1441853 rows x 47 columns]
+ATM
+classic
+                            uid   spot_date  ...    pnl   ticker
+0        ZALGDE_20210729_007692  2021-07-29  ...  -1.74  ZALG.DE
+1           HCA_20210525_008333  2021-05-25  ...  -1.64      HCA
+2             O_20210602_007692  2021-06-02  ...  -3.17        O
+3           RCL_20210624_003846  2021-06-24  ...  -0.89      RCL
+4        ZALGDE_20210730_007692  2021-07-30  ...   0.60  ZALG.DE
+...                         ...         ...  ...    ...      ...
+1460069      BEIGDE_20210618_05  2021-06-18  ... -12.31  BEIG.DE
+1460070         SPY_20210827_05  2021-08-27  ... -18.91      SPY
+1460071      CABKMC_20210618_05  2021-06-18  ...  -0.26  CABK.MC
+1460072       SGENO_20210618_05  2021-06-18  ... -11.35   SGEN.O
+1460073     HPE_20211018_016666  2021-10-18  ...   0.39      HPE
+
+[1460074 rows x 19 columns]
+classic
+       ticker  spot_date bot_type  ... ranking                  bot_id time_to_exp
+0         ZTS 2022-03-31      UNO  ...       1          UNO_ITM_003846     0.03846
+1         ZTS 2022-03-31     UCDC  ...       2         UCDC_ATM_003846     0.03846
+2         ZTS 2022-03-31  CLASSIC  ...       3  CLASSIC_classic_003846     0.03846
+3         ZTS 2022-03-31      UNO  ...       4          UNO_OTM_003846     0.03846
+4         ZTS 2022-03-31  CLASSIC  ...       1  CLASSIC_classic_007692     0.07692
+...       ...        ...      ...  ...     ...                     ...         ...
+25531  MTCH.O 2022-03-31  CLASSIC  ...       4     CLASSIC_classic_025     0.25000
+25532  MTCH.O 2022-03-31      UNO  ...       1              UNO_OTM_05     0.50000
+25533  MTCH.O 2022-03-31      UNO  ...       2              UNO_ITM_05     0.50000
+25534  MTCH.O 2022-03-31     UCDC  ...       3             UCDC_ATM_05     0.50000
+25535  MTCH.O 2022-03-31  CLASSIC  ...       4      CLASSIC_classic_05     0.50000
+
+[25536 rows x 8 columns]
+          ticker  spot_date  ...  currency_code              uid
+0            ZTS 2022-03-31  ...            USD      20220331ZTS
+1        MRCG.DE 2022-03-31  ...            EUR   20220331MRCGDE
+2       NEXII.MI 2022-03-31  ...            EUR  20220331NEXIIMI
+3       NESTE.HE 2022-03-31  ...            EUR  20220331NESTEHE
+4        NEKG.DE 2022-03-31  ...            EUR   20220331NEKGDE
+...          ...        ...  ...            ...              ...
+211044    HBAN.O 2021-05-07  ...            USD    20210507HBANO
+211045       HCA 2021-05-07  ...            HKD      20210507HCA
+211046        HD 2021-05-07  ...            USD       20210507HD
+211047       HES 2021-05-07  ...            CNY      20210507HES
+211048      EA.O 2021-05-07  ...            USD      20210507EAO
+
+[211049 rows x 62 columns]
+       ticker  spot_date  ... time_to_exp                         uid
+0         ZTS 2022-03-31  ...     0.03846          ZTS_UNO_ITM_003846
+1         ZTS 2022-03-31  ...     0.03846         ZTS_UCDC_ATM_003846
+2         ZTS 2022-03-31  ...     0.03846  ZTS_CLASSIC_classic_003846
+3         ZTS 2022-03-31  ...     0.03846          ZTS_UNO_OTM_003846
+4         ZTS 2022-03-31  ...     0.07692  ZTS_CLASSIC_classic_007692
+...       ...        ...  ...         ...                         ...
+25531  MTCH.O 2022-03-31  ...     0.25000  MTCH.O_CLASSIC_classic_025
+25532  MTCH.O 2022-03-31  ...     0.50000           MTCH.O_UNO_OTM_05
+25533  MTCH.O 2022-03-31  ...     0.50000           MTCH.O_UNO_ITM_05
+25534  MTCH.O 2022-03-31  ...     0.50000          MTCH.O_UCDC_ATM_05
+25535  MTCH.O 2022-03-31  ...     0.50000   MTCH.O_CLASSIC_classic_05
+
+[25536 rows x 9 columns]
+=== Upsert Data to Database on Table bot_ranking ===
+2022-04-02 02:39:36 LORA-PC-2 alembic.runtime.migration[703810] INFO Context impl PostgresqlImpl.
+2022-04-02 02:39:36 LORA-PC-2 alembic.runtime.migration[703810] INFO Will assume transactional DDL.
+
+=== Upsert Data to Database on Table latest_bot_ranking ===
+2022-04-02 02:40:47 LORA-PC-2 asyncio[703810] ERROR Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x7fbb4a46dfa0>
+2022-04-02 02:40:48 LORA-PC-2 alembic.runtime.migration[703810] INFO Context impl PostgresqlImpl.
+2022-04-02 02:40:48 LORA-PC-2 alembic.runtime.migration[703810] INFO Will assume transactional DDL.
+DATA UPSERT TO latest_bot_ranking
+2022-04-02 : === BOT RANKING DAILY COMPLETED ===
+create connections to db
+trigger functions latest_bot_update
+functions latest_bot_update succeed
+close connections
+COMPLETE
+2022-04-02 : === BOT STATISTIC UCDC STARTED ===
+                               uid    now_date  ... currency_code   ticker
+0            SPLKO_20201123_ATM_05  2021-05-21  ...           USD   SPLK.O
+1            MSCIK_20201123_ATM_05  2021-05-21  ...           USD   MSCI.K
+2           AKZOAS_20201103_ATM_05  2021-05-03  ...           EUR  AKZO.AS
+3              MHK_20201123_ATM_05  2021-05-21  ...           USD      MHK
+4            ADBEO_20201123_ATM_05  2021-05-21  ...           USD   ADBE.O
+...                            ...         ...  ...           ...      ...
+4426180    USB_20200930_ATM_015384  2020-11-24  ...           USD      USB
+4426181     EL_20200930_ATM_015384  2020-11-24  ...           USD       EL
+4426182  FASTO_20200930_ATM_015384  2020-11-24  ...           USD   FAST.O
+4426183     BA_20200930_ATM_015384  2020-11-24  ...           USD       BA
+4426184        EWH_20201123_ATM_05  2021-05-21  ...           USD      EWH
+
+[4426185 rows x 47 columns]
+=== Upsert Data to Database on Table bot_statistic ===
+2022-04-02 02:45:35 LORA-PC-2 alembic.runtime.migration[703810] INFO Context impl PostgresqlImpl.
+2022-04-02 02:45:35 LORA-PC-2 alembic.runtime.migration[703810] INFO Will assume transactional DDL.
+DATA UPSERT TO bot_statistic
+2022-04-02 : === ['GBP', 'EUR', 'USD'] BOT STATISTIC UCDC COMPLETED ===
+2022-04-02 : === BOT STATISTIC UNO STARTED ===
+make: *** [Makefile:73: ranking_statistic_ws] Killed

@@ -1,2 +1,126 @@
-sudo: /home/loratech/droid2env/bin/python3: command not found
+using prod db
+droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com
+2022-04-02 04:31:05 LORA-PC-2 root[1414832] WARNING celery role using -> slave
+2022-04-02 04:31:08 LORA-PC-2 root[1414832] INFO AsyncORM: patching models
+2022-04-02 : === ['USD'] DATA PREPERATION STARTED ===
+The start date is set as: 2021-04-30
+The end date is set as: 2022-04-02
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2285, in _wrap_pool_connect
+    return fn()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 303, in unique_connection
+    return _ConnectionFairy._checkout(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 773, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 492, in checkout
+    rec = pool._do_get()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/impl.py", line 139, in _do_get
+    self._dec_overflow()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/impl.py", line 136, in _do_get
+    return self._create_connection()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 308, in _create_connection
+    return _ConnectionRecord(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 437, in __init__
+    self.__connect(first_connect_check=True)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 657, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 652, in __connect
+    connection = pool._invoke_creator(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/strategies.py", line 114, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 490, in connect
+    return self.dbapi.connect(*cargs, **cparams)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/psycopg2/__init__.py", line 127, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: could not connect to server: Connection timed out
+	Is the server running on host "droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com" (18.162.161.183) and accepting
+	TCP/IP connections on port 5432?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/manage.py", line 24, in <module>
+    main()
+  File "/home/loratech/DROID_V2.1/manage.py", line 20, in main
+    execute_from_command_line(sys.argv)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/django/core/management/__init__.py", line 419, in execute_from_command_line
+    utility.execute()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/django/core/management/__init__.py", line 413, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/django/core/management/base.py", line 354, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/django/core/management/base.py", line 398, in execute
+    output = self.handle(*args, **options)
+  File "/home/loratech/DROID_V2.1/core/djangomodule/management/commands/backtest.py", line 37, in handle
+    daily_shcedule_uno_ucdc(currency_code=options["currency_code"], uno=options["uno"], 
+  File "/home/loratech/DROID_V2.1/main_executive.py", line 80, in daily_shcedule_uno_ucdc
+    data_prep_daily(ticker=ticker, currency_code=currency_code)
+  File "/home/loratech/DROID_V2.1/main_executive.py", line 202, in data_prep_daily
+    populate_bot_data(start_date=start_date, end_date=end_date, ticker=ticker)
+  File "/home/loratech/DROID_V2.1/bot/main_file.py", line 51, in populate_bot_data
+    currency_data = get_currency_data(currency_code=currency_code)
+  File "/home/loratech/DROID_V2.1/bot/data_download.py", line 108, in get_currency_data
+    data = read_query(query, table_name, cpu_counts=True)
+  File "/home/loratech/DROID_V2.1/general/sql_query.py", line 97, in read_query
+    with engine.connect() as conn:
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2218, in connect
+    return self._connection_cls(self, **kwargs)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 103, in __init__
+    else engine.raw_connection()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2317, in raw_connection
+    return self._wrap_pool_connect(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2288, in _wrap_pool_connect
+    Connection._handle_dbapi_exception_noconnection(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1554, in _handle_dbapi_exception_noconnection
+    util.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2285, in _wrap_pool_connect
+    return fn()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 303, in unique_connection
+    return _ConnectionFairy._checkout(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 773, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 492, in checkout
+    rec = pool._do_get()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/impl.py", line 139, in _do_get
+    self._dec_overflow()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/impl.py", line 136, in _do_get
+    return self._create_connection()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 308, in _create_connection
+    return _ConnectionRecord(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 437, in __init__
+    self.__connect(first_connect_check=True)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 657, in __connect
+    pool.logger.debug("Error on connect(): %s", e)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/langhelpers.py", line 68, in __exit__
+    compat.raise_(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/util/compat.py", line 178, in raise_
+    raise exception
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/pool/base.py", line 652, in __connect
+    connection = pool._invoke_creator(self)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/strategies.py", line 114, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 490, in connect
+    return self.dbapi.connect(*cargs, **cparams)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/psycopg2/__init__.py", line 127, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) could not connect to server: Connection timed out
+	Is the server running on host "droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com" (18.162.161.183) and accepting
+	TCP/IP connections on port 5432?
+
+(Background on this error at: http://sqlalche.me/e/e3q8)
 make: *** [Makefile:43: usd_prep] Error 1

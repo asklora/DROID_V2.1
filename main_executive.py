@@ -168,14 +168,13 @@ def train_lebeler_model(ticker=None, currency_code=None, time_to_exp=time_to_exp
     report = "BOT RANKING TRAIN MODEL COMPLETED"
     report_check(report, time_to_exp=time_to_exp)
 
-def train_model(ticker=None, currency_code=None):
+def train_model(ticker=None, currency_code=None, start_date = str_to_date(droid_start_date())):
     ''' train bot model, details refer to populate_vol_infer() '''
 
     folder_check()
     print("{} : === VOLATILITY TRAIN MODEL STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
-    start_date = str_to_date(droid_start_date())
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
@@ -224,9 +223,9 @@ def data_prep_check_new_ticker(ticker=None, currency_code=None):
         report_check(report, ticker=ticker, currency_code=currency_code)
 
 
-def data_prep_history(currency_code=None):
+def data_prep_history(currency_code=None, start_date = str_to_date(droid_start_date_buffer())):
     print("{} : === DATA PREPERATION HISTORY STARTED ===".format(dateNow()))
-    start_date = str_to_date(droid_start_date_buffer())
+    
     end_date = str_to_date(dateNow())
     print("Data preparation history started!")
     print(f"The start date is set as: {start_date}")
@@ -272,10 +271,9 @@ def infer_check_new_ticker(ticker=None, currency_code=None):
         report = "VOLATILITY INFER CHECK NEW TICKER COMPLETED"
         report_check(report, ticker=ticker, currency_code=currency_code)
 
-def infer_history(currency_code=None):
+def infer_history(currency_code=None, start_date = str_to_date(droid_start_date_buffer())):
     folder_check()
     print("{} : === VOLATILITY INFER HISTORY STARTED ===".format(dateNow()))
-    start_date = str_to_date(droid_start_date_buffer())
     end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
