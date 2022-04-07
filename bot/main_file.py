@@ -62,103 +62,106 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     main_df = pd.DataFrame(columns=main_columns_list)
     # *********************************************************************************
     for trading_day in trading_day_list:
-        # For each day technicals are calculated separately and at the end all are appended together.
-        valid_tickers = (dates_df.loc[trading_day] == "trading_day")
-        valid_tickers_list = valid_tickers[valid_tickers == True].index
+        try:
+            # For each day technicals are calculated separately and at the end all are appended together.
+            valid_tickers = (dates_df.loc[trading_day] == "trading_day")
+            valid_tickers_list = valid_tickers[valid_tickers == True].index
 
-        temp_df = pd.DataFrame(columns=main_columns_list)
-        temp_df.ticker = valid_tickers_list
-        temp_df.trading_day = trading_day
-        prices_df_temp = prices_df[(prices_df["trading_day"] <= trading_day) & (prices_df["trading_day"] > trading_day - BDay(period * 48))]
-        prices_df_temp_forward = prices_df[(prices_df["trading_day"] >= trading_day - BDay(1)) &
-                                           (prices_df["trading_day"] <= trading_day + BDay(125 * 2))]
+            temp_df = pd.DataFrame(columns=main_columns_list)
+            temp_df.ticker = valid_tickers_list
+            temp_df.trading_day = trading_day
+            prices_df_temp = prices_df[(prices_df["trading_day"] <= trading_day) & (prices_df["trading_day"] > trading_day - BDay(period * 48))]
+            prices_df_temp_forward = prices_df[(prices_df["trading_day"] >= trading_day - BDay(1)) &
+                                               (prices_df["trading_day"] <= trading_day + BDay(125 * 2))]
 
-        main_open, main_high, main_low, main_close, main_tri, main_multiples = remove_holidays(prices_df_temp)
+            main_open, main_high, main_low, main_close, main_tri, main_multiples = remove_holidays(prices_df_temp)
 
-        main_open = main_open.bfill().ffill()
-        main_high = main_high.bfill().ffill()
-        main_low = main_low.bfill().ffill()
-        main_close = main_close.bfill().ffill()
-        main_tri = main_tri.bfill().ffill()
-        main_multiples = main_multiples.bfill().ffill()
+            main_open = main_open.bfill().ffill()
+            main_high = main_high.bfill().ffill()
+            main_low = main_low.bfill().ffill()
+            main_close = main_close.bfill().ffill()
+            main_tri = main_tri.bfill().ffill()
+            main_multiples = main_multiples.bfill().ffill()
 
-        main_open = main_open.replace(to_replace=0, method="ffill")
-        main_high = main_high.replace(to_replace=0, method="ffill")
-        main_low = main_low.replace(to_replace=0, method="ffill")
-        main_close = main_close.replace(to_replace=0, method="ffill")
-        main_tri = main_tri.replace(to_replace=0, method="ffill")
-        main_multiples = main_multiples.replace(to_replace=0, method="ffill")
+            main_open = main_open.replace(to_replace=0, method="ffill")
+            main_high = main_high.replace(to_replace=0, method="ffill")
+            main_low = main_low.replace(to_replace=0, method="ffill")
+            main_close = main_close.replace(to_replace=0, method="ffill")
+            main_tri = main_tri.replace(to_replace=0, method="ffill")
+            main_multiples = main_multiples.replace(to_replace=0, method="ffill")
 
-        # **********************************************************************************************
-        # In case any stock did not exist for a period of time, and all the values for that period are just H.
+            # **********************************************************************************************
+            # In case any stock did not exist for a period of time, and all the values for that period are just H.
 
-        main_close = main_close.loc[:, ~main_close.fillna("H").eq("H").all()]
-        main_open = main_open[main_close.columns]
-        main_high = main_high[main_close.columns]
-        main_low = main_low[main_close.columns]
-        main_tri = main_tri[main_close.columns]
-        main_multiples = main_multiples[main_close.columns]
-        # **********************************************************************************************
-        c2c_vol_0_21 = get_close_vol(lookback_creator(main_multiples, 0, period))
-        c2c_vol_21_42 = get_close_vol(lookback_creator(main_multiples, period, 2 * period))
-        c2c_vol_42_63 = get_close_vol(lookback_creator(main_multiples, 2 * period, 3 * period))
-        c2c_vol_63_126 = get_close_vol(lookback_creator(main_multiples, 3 * period, 6 * period))
-        c2c_vol_126_252 = get_close_vol(lookback_creator(main_multiples, 6 * period, 12 * period))
-        c2c_vol_252_504 = get_close_vol(lookback_creator(main_multiples, 12 * period, 24 * period))
+            main_close = main_close.loc[:, ~main_close.fillna("H").eq("H").all()]
+            main_open = main_open[main_close.columns]
+            main_high = main_high[main_close.columns]
+            main_low = main_low[main_close.columns]
+            main_tri = main_tri[main_close.columns]
+            main_multiples = main_multiples[main_close.columns]
+            # **********************************************************************************************
+            c2c_vol_0_21 = get_close_vol(lookback_creator(main_multiples, 0, period))
+            c2c_vol_21_42 = get_close_vol(lookback_creator(main_multiples, period, 2 * period))
+            c2c_vol_42_63 = get_close_vol(lookback_creator(main_multiples, 2 * period, 3 * period))
+            c2c_vol_63_126 = get_close_vol(lookback_creator(main_multiples, 3 * period, 6 * period))
+            c2c_vol_126_252 = get_close_vol(lookback_creator(main_multiples, 6 * period, 12 * period))
+            c2c_vol_252_504 = get_close_vol(lookback_creator(main_multiples, 12 * period, 24 * period))
 
-        kurt_0_504 = get_kurt(lookback_creator(main_multiples, 0, 24 * period))
-        rs_vol_0_21 = get_rogers_satchell(lookback_creator(main_open, 0, period),
-                                          lookback_creator(main_high, 0, period),
-                                          lookback_creator(main_low, 0, period),
-                                          lookback_creator(main_close, 0, period))
-        rs_vol_21_42 = get_rogers_satchell(lookback_creator(main_open, period, 2 * period),
-                                           lookback_creator(main_high, period, 2 * period),
-                                           lookback_creator(main_low, period, 2 * period),
-                                           lookback_creator(main_close, period, 2 * period))
-        rs_vol_42_63 = get_rogers_satchell(lookback_creator(main_open, 2 * period, 3 * period),
-                                           lookback_creator(main_high, 2 * period, 3 * period),
-                                           lookback_creator(main_low, 2 * period, 3 * period),
-                                           lookback_creator(main_close, 2 * period, 3 * period))
-        rs_vol_63_126 = get_rogers_satchell(lookback_creator(main_open, 3 * period, 6 * period),
-                                            lookback_creator(main_high, 3 * period, 6 * period),
-                                            lookback_creator(main_low, 3 * period, 6 * period),
-                                            lookback_creator(main_close, 3 * period, 6 * period))
-        rs_vol_126_252 = get_rogers_satchell(lookback_creator(main_open, 6 * period, 12 * period),
-                                             lookback_creator(main_high, 6 * period, 12 * period),
-                                             lookback_creator(main_low, 6 * period, 12 * period),
-                                             lookback_creator(main_close, 6 * period, 12 * period))
-        rs_vol_252_504 = get_rogers_satchell(lookback_creator(main_open, 12 * period, 24 * period),
-                                             lookback_creator(main_high, 12 * period, 24 * period),
-                                             lookback_creator(main_low, 12 * period, 24 * period),
-                                             lookback_creator(main_close, 12 * period, 24 * period))
+            kurt_0_504 = get_kurt(lookback_creator(main_multiples, 0, 24 * period))
+            rs_vol_0_21 = get_rogers_satchell(lookback_creator(main_open, 0, period),
+                                              lookback_creator(main_high, 0, period),
+                                              lookback_creator(main_low, 0, period),
+                                              lookback_creator(main_close, 0, period))
+            rs_vol_21_42 = get_rogers_satchell(lookback_creator(main_open, period, 2 * period),
+                                               lookback_creator(main_high, period, 2 * period),
+                                               lookback_creator(main_low, period, 2 * period),
+                                               lookback_creator(main_close, period, 2 * period))
+            rs_vol_42_63 = get_rogers_satchell(lookback_creator(main_open, 2 * period, 3 * period),
+                                               lookback_creator(main_high, 2 * period, 3 * period),
+                                               lookback_creator(main_low, 2 * period, 3 * period),
+                                               lookback_creator(main_close, 2 * period, 3 * period))
+            rs_vol_63_126 = get_rogers_satchell(lookback_creator(main_open, 3 * period, 6 * period),
+                                                lookback_creator(main_high, 3 * period, 6 * period),
+                                                lookback_creator(main_low, 3 * period, 6 * period),
+                                                lookback_creator(main_close, 3 * period, 6 * period))
+            rs_vol_126_252 = get_rogers_satchell(lookback_creator(main_open, 6 * period, 12 * period),
+                                                 lookback_creator(main_high, 6 * period, 12 * period),
+                                                 lookback_creator(main_low, 6 * period, 12 * period),
+                                                 lookback_creator(main_close, 6 * period, 12 * period))
+            rs_vol_252_504 = get_rogers_satchell(lookback_creator(main_open, 12 * period, 24 * period),
+                                                 lookback_creator(main_high, 12 * period, 24 * period),
+                                                 lookback_creator(main_low, 12 * period, 24 * period),
+                                                 lookback_creator(main_close, 12 * period, 24 * period))
 
-        total_returns_0_1 = get_total_return(lookback_creator(main_tri, 0, 1 + 1))
-        total_returns_0_21 = get_total_return(lookback_creator(main_tri, 0, period + 1))
-        total_returns_0_63 = get_total_return(lookback_creator(main_tri, 0, 3 * period + 1))
-        total_returns_21_126 = get_total_return(lookback_creator(main_tri, period, 6 * period + 1))
-        total_returns_21_231 = get_total_return(lookback_creator(main_tri, period, 231 + 1))
+            total_returns_0_1 = get_total_return(lookback_creator(main_tri, 0, 1 + 1))
+            total_returns_0_21 = get_total_return(lookback_creator(main_tri, 0, period + 1))
+            total_returns_0_63 = get_total_return(lookback_creator(main_tri, 0, 3 * period + 1))
+            total_returns_21_126 = get_total_return(lookback_creator(main_tri, period, 6 * period + 1))
+            total_returns_21_231 = get_total_return(lookback_creator(main_tri, period, 231 + 1))
 
-        technicals_list = [c2c_vol_0_21, c2c_vol_21_42, c2c_vol_42_63, c2c_vol_63_126, c2c_vol_126_252, c2c_vol_252_504, kurt_0_504, 
-            rs_vol_0_21, rs_vol_21_42, rs_vol_42_63, rs_vol_63_126, rs_vol_126_252, rs_vol_252_504, 
-            total_returns_0_1, total_returns_0_21, total_returns_0_63, total_returns_21_126, total_returns_21_231]
+            technicals_list = [c2c_vol_0_21, c2c_vol_21_42, c2c_vol_42_63, c2c_vol_63_126, c2c_vol_126_252, c2c_vol_252_504, kurt_0_504,
+                rs_vol_0_21, rs_vol_21_42, rs_vol_42_63, rs_vol_63_126, rs_vol_126_252, rs_vol_252_504,
+                total_returns_0_1, total_returns_0_21, total_returns_0_63, total_returns_21_126, total_returns_21_231]
 
-        technicals_names_list = ["c2c_vol_0_21", "c2c_vol_21_42", "c2c_vol_42_63", "c2c_vol_63_126", "c2c_vol_126_252", "c2c_vol_252_504", "kurt_0_504", 
-            "rs_vol_0_21", "rs_vol_21_42", "rs_vol_42_63", "rs_vol_63_126", "rs_vol_126_252", "rs_vol_252_504",
-            "total_returns_0_1", "total_returns_0_21", "total_returns_0_63", "total_returns_21_126", "total_returns_21_231"]
+            technicals_names_list = ["c2c_vol_0_21", "c2c_vol_21_42", "c2c_vol_42_63", "c2c_vol_63_126", "c2c_vol_126_252", "c2c_vol_252_504", "kurt_0_504",
+                "rs_vol_0_21", "rs_vol_21_42", "rs_vol_42_63", "rs_vol_63_126", "rs_vol_126_252", "rs_vol_252_504",
+                "total_returns_0_1", "total_returns_0_21", "total_returns_0_63", "total_returns_21_126", "total_returns_21_231"]
 
-        def series_to_pandas(df):
-            aa = pd.DataFrame(df[df.index.isin(valid_tickers_list)])
-            aa.reset_index(inplace=True)
-            return aa
+            def series_to_pandas(df):
+                aa = pd.DataFrame(df[df.index.isin(valid_tickers_list)])
+                aa.reset_index(inplace=True)
+                return aa
 
-        for i in range(len(technicals_list)):
-            tech_temp = series_to_pandas(technicals_list[i])
-            tech_temp = tech_temp.rename(columns={0 : technicals_names_list[i]})
-            temp_df = temp_df.drop(columns=[technicals_names_list[i]])
-            temp_df = temp_df.merge(tech_temp, how="left", on=["ticker"])
-            #temp_df[technicals_names_list[i]] = np.where(tech_temp["ticker"] == temp_df["ticker"], tech_temp[0], temp_df[technicals_names_list[i]])
-        main_df = main_df.append(temp_df)
-        print(f"{trading_day} is finished.")
+            for i in range(len(technicals_list)):
+                tech_temp = series_to_pandas(technicals_list[i])
+                tech_temp = tech_temp.rename(columns={0 : technicals_names_list[i]})
+                temp_df = temp_df.drop(columns=[technicals_names_list[i]])
+                temp_df = temp_df.merge(tech_temp, how="left", on=["ticker"])
+                #temp_df[technicals_names_list[i]] = np.where(tech_temp["ticker"] == temp_df["ticker"], tech_temp[0], temp_df[technicals_names_list[i]])
+            main_df = main_df.append(temp_df)
+            print(f"{trading_day} is finished.")
+        except Exception as e:
+            print(e)
     main_df = main_df.merge(prices_df[["vix_value", "ticker", "trading_day"]], on=["ticker", "trading_day"], how="left")
     Y_columns_temp = ["atm_volatility_spot", "atm_volatility_one_year", "atm_volatility_infinity", "deriv_inf",
                       "deriv", "slope", "slope_inf", "ticker", "trading_day"]
@@ -207,15 +210,15 @@ def populate_bot_data(start_date=None, end_date=None, ticker=None, currency_code
     # main_df = main_df.merge(temp, on=["ticker"], how="left")
     main_df["trading_day"] = pd.to_datetime(main_df["trading_day"]).dt.date
     main_df = uid_maker(main_df, uid="uid", ticker="ticker", trading_day="trading_day")
-
+    main_df.to_pickle('bot_data.pkl')
     table_name = get_bot_data_table_name()
     print(main_df)
     if(daily):
-        upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=True, Text=True)
+        upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=False, Text=True)
     elif(new_ticker):
         # latest_main_df = main_df[main_df.trading_day == main_df.trading_day.max()]
-        upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=True, Text=True)
+        upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=False, Text=True)
     else:
         main_df.to_csv("main_df_executive.csv")
         # truncate_table(table_name)
-        upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=True, Text=True)
+        upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=False, Text=True)
