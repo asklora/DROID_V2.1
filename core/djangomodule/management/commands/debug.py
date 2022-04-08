@@ -53,6 +53,7 @@ class Command(BaseCommand):
         # data_prep_history(start_date=str_to_date(backdate_by_year(13)))
 
         main_df = pd.read_pickle('bot_data.pkl')
+        breakpoint()
         print(main_df.dtypes)
 
         main_df = main_df.drop(columns=['2009-04-07_x', '2009-04-07_y', '2009-07-02', '2009-07-31', '2009-12-25'])
