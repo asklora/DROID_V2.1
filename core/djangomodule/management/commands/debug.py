@@ -52,7 +52,7 @@ class Command(BaseCommand):
         from general.sql_output import upsert_data_to_database
         # data_prep_history(start_date=str_to_date(backdate_by_year(13)))
 
-        main_df = pd.to_pickle('bot_data.pkl')
+        main_df = pd.read_pickle('bot_data.pkl')
         print(main_df.shape)
         table_name = get_bot_data_table_name()
         upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=False, Text=True)
