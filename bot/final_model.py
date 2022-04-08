@@ -184,7 +184,6 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
                         temp_df_infer.loc[temp_df_infer["deriv_inf"] == 1, "deriv_inf"] = 0.06
                         temp_df_infer.loc[temp_df_infer["deriv_inf"] == 2, "deriv_inf"] = 0
                     temp_y_rf.append(temp_df_infer)
-            final_inferred.to_csv("vol_history_infered.csv")
 
     if history or daily:
         # Preparing final inferred dataframe and writing it to aws.
