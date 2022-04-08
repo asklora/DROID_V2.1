@@ -52,20 +52,20 @@ class Command(BaseCommand):
         from general.sql_output import upsert_data_to_database
         # data_prep_history(start_date=str_to_date(backdate_by_year(13)))
 
-        dtypes = {'uid': 'text', 'trading_day': 'date', 'c2c_vol_0_21': 'double precision', 'c2c_vol_21_42': 'double precision', 'c2c_vol_42_63': 'double precision', 'c2c_vol_63_126': 'double precision', 'c2c_vol_126_252': 'double precision', 'c2c_vol_252_504': 'double precision', 'kurt_0_504': 'double precision', 'rs_vol_0_21': 'double precision', 'rs_vol_21_42': 'double precision', 'rs_vol_42_63': 'double precision', 'rs_vol_63_126': 'double precision', 'rs_vol_126_252': 'double precision', 'rs_vol_252_504': 'double precision', 'total_returns_0_1': 'double precision', 'total_returns_0_21': 'double precision', 'total_returns_0_63': 'double precision', 'total_returns_21_126': 'double precision', 'total_returns_21_231': 'double precision', 'vix_value': 'double precision', 'atm_volatility_spot': 'double precision', 'atm_volatility_one_year': 'double precision', 'atm_volatility_infinity': 'double precision', 'slope': 'double precision', 'deriv': 'double precision', 'slope_inf': 'double precision', 'deriv_inf': 'double precision', 'atm_volatility_spot_x': 'double precision', 'atm_volatility_one_year_x': 'double precision', 'atm_volatility_infinity_x': 'double precision', 'total_returns_0_63_x': 'double precision', 'total_returns_21_126_x': 'double precision', 'total_returns_0_21_x': 'double precision', 'total_returns_21_231_x': 'double precision', 'c2c_vol_0_21_x': 'double precision', 'c2c_vol_21_42_x': 'double precision', 'c2c_vol_42_63_x': 'double precision', 'c2c_vol_63_126_x': 'double precision', 'c2c_vol_126_252_x': 'double precision', 'c2c_vol_252_504_x': 'double precision', 'ticker': 'character varying'}
-        main_df = pd.read_pickle('bot_data.pkl')
-        # breakpoint()
-        print(main_df.dtypes)
-
-        main_df = main_df.filter(list(dtypes.keys()))
-        float_col = ['total_returns_21_126', 'total_returns_21_231', 'total_returns_21_126_x', 'total_returns_21_231_x']
-        main_df[float_col] = main_df[float_col].astype(float)
-        print(main_df.shape)
-        print(main_df.dtypes)
-
-        table_name = get_bot_data_table_name()
-        upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=False, Text=True)
-        exit(200)
+        # dtypes = {'uid': 'text', 'trading_day': 'date', 'c2c_vol_0_21': 'double precision', 'c2c_vol_21_42': 'double precision', 'c2c_vol_42_63': 'double precision', 'c2c_vol_63_126': 'double precision', 'c2c_vol_126_252': 'double precision', 'c2c_vol_252_504': 'double precision', 'kurt_0_504': 'double precision', 'rs_vol_0_21': 'double precision', 'rs_vol_21_42': 'double precision', 'rs_vol_42_63': 'double precision', 'rs_vol_63_126': 'double precision', 'rs_vol_126_252': 'double precision', 'rs_vol_252_504': 'double precision', 'total_returns_0_1': 'double precision', 'total_returns_0_21': 'double precision', 'total_returns_0_63': 'double precision', 'total_returns_21_126': 'double precision', 'total_returns_21_231': 'double precision', 'vix_value': 'double precision', 'atm_volatility_spot': 'double precision', 'atm_volatility_one_year': 'double precision', 'atm_volatility_infinity': 'double precision', 'slope': 'double precision', 'deriv': 'double precision', 'slope_inf': 'double precision', 'deriv_inf': 'double precision', 'atm_volatility_spot_x': 'double precision', 'atm_volatility_one_year_x': 'double precision', 'atm_volatility_infinity_x': 'double precision', 'total_returns_0_63_x': 'double precision', 'total_returns_21_126_x': 'double precision', 'total_returns_0_21_x': 'double precision', 'total_returns_21_231_x': 'double precision', 'c2c_vol_0_21_x': 'double precision', 'c2c_vol_21_42_x': 'double precision', 'c2c_vol_42_63_x': 'double precision', 'c2c_vol_63_126_x': 'double precision', 'c2c_vol_126_252_x': 'double precision', 'c2c_vol_252_504_x': 'double precision', 'ticker': 'character varying'}
+        # main_df = pd.read_pickle('bot_data.pkl')
+        # # breakpoint()
+        # print(main_df.dtypes)
+        #
+        # main_df = main_df.filter(list(dtypes.keys()))
+        # float_col = ['total_returns_21_126', 'total_returns_21_231', 'total_returns_21_126_x', 'total_returns_21_231_x']
+        # main_df[float_col] = main_df[float_col].astype(float)
+        # print(main_df.shape)
+        # print(main_df.dtypes)
+        #
+        # table_name = get_bot_data_table_name()
+        # upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=False, Text=True)
+        # exit(200)
 
         train_model(start_date=str_to_date(backdate_by_year(13)))
         infer_history(start_date=str_to_date(backdate_by_year(13)))
