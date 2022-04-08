@@ -55,7 +55,6 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
     main_df_copy_no_fund = main_df_copy_no_fund.infer_objects()
     main_train = main_df_copy_no_fund[~main_df_copy_no_fund.atm_volatility_spot.isna()].copy()
     print(f'main_train: {main_df["trading_day"].min()}')
-    breakpoint()
     not_inferred_tickers = main_train.ticker.unique()
     cond = (main_df_copy_no_fund.atm_volatility_spot.isna()) & (~main_df_copy_no_fund.ticker.isin(not_inferred_tickers))
     main_infer = main_df_copy_no_fund[cond].copy()
@@ -76,6 +75,8 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
             main_infer = main_infer.fillna(0)
 
     trading_day_list = main_infer.trading_day
+    print(f'trading_day_list: {trading_day_list}')
+    breakpoint()
     ticker_list = main_infer.ticker
 
     X_col_list = X_columns
