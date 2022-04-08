@@ -76,7 +76,6 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
 
     trading_day_list = main_infer.trading_day
     print(f'trading_day_list: {trading_day_list}')
-    breakpoint()
     ticker_list = main_infer.ticker
 
     X_col_list = X_columns
