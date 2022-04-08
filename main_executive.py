@@ -177,7 +177,7 @@ def train_model(ticker=None, currency_code=None, start_date = str_to_date(droid_
         ticker = get_active_universe()["ticker"].tolist()
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
-    populate_vol_infer(start_date, end_date, ticker=ticker, currency_code=currency_code, train_model=True)
+    populate_vol_infer(start_date, end_date, ticker=ticker, currency_code=currency_code, train_model=True, history=True)
     print("{} : === VOLATILITY TRAIN MODEL COMPLETED ===".format(dateNow()))
     report_to_slack("{} : === VOLATILITY TRAIN MODEL COMPLETED ===".format(dateNow()))
 
