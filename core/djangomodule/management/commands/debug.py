@@ -54,6 +54,8 @@ class Command(BaseCommand):
 
         main_df = pd.read_pickle('bot_data.pkl')
         print(main_df.shape)
+        print(main_df.dtypes)
+
         table_name = get_bot_data_table_name()
         upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=False, Text=True)
 
