@@ -68,6 +68,8 @@ class Command(BaseCommand):
         # exit(200)
 
         # train_model(start_date='2010-01-01', end_date='2018-05-10')
-        infer_history(start_date='2010-01-01', end_date='2014-01-01')
-        infer_history(start_date='2014-01-01', end_date='2018-05-10')
+        infer_history(start_date='2010-01-01', end_date='2012-01-01')
+        infer_history(start_date='2012-01-01', end_date='2014-01-01')
+        infer_history(start_date='2014-01-01', end_date='2016-01-01')
+        infer_history(start_date='2016-01-01', end_date='2018-05-10')
 
