@@ -53,11 +53,15 @@ class Command(BaseCommand):
         # data_prep_history(start_date=str_to_date(backdate_by_year(13)))
 
         main_df = pd.read_pickle('bot_data.pkl')
+        main_df = main_df.drop(columns = ['2009-04-07_x', '2009-04-07_y', '2009-07-02', '2009-07-31', '2009-12-25'])
+        float_col = ['total_returns_21_126', 'total_returns_21_231', 'total_returns_21_126_x', 'total_returns_21_231_x']
+        main_df[float_col] = main_df[float_col].astype(float)
         print(main_df.shape)
         print(main_df.dtypes)
 
         table_name = get_bot_data_table_name()
         upsert_data_to_database(main_df, table_name, "uid", how="update", cpu_count=False, Text=True)
+        exit(200)
 
         train_model(start_date=str_to_date(backdate_by_year(13)))
         infer_history(start_date=str_to_date(backdate_by_year(13)))
