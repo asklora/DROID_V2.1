@@ -168,14 +168,13 @@ def train_lebeler_model(ticker=None, currency_code=None, time_to_exp=time_to_exp
     report = "BOT RANKING TRAIN MODEL COMPLETED"
     report_check(report, time_to_exp=time_to_exp)
 
-def train_model(ticker=None, currency_code=None, start_date = str_to_date(droid_start_date())):
+def train_model(ticker=None, currency_code=None, start_date = str_to_date(droid_start_date()), end_date = str_to_date(dateNow())):
     ''' train bot model, details refer to populate_vol_infer() '''
 
     folder_check()
     print("{} : === VOLATILITY TRAIN MODEL STARTED ===".format(dateNow()))
     if(type(ticker) == type(None) and type(currency_code) == type(None)):
         ticker = get_active_universe()["ticker"].tolist()
-    end_date = str_to_date(dateNow())
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
     populate_vol_infer(start_date, end_date, ticker=ticker, currency_code=currency_code, train_model=True)

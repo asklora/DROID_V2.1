@@ -68,4 +68,4 @@ class Command(BaseCommand):
         # exit(200)
 
         train_model(start_date=str_to_date(backdate_by_year(13)))
-        infer_history(start_date=str_to_date(backdate_by_year(13)))
+        # infer_history(start_date=str_to_date(backdate_by_year(13)))

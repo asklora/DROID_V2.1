@@ -199,6 +199,7 @@ def populate_vol_infer(start_date, end_date, ticker=None, currency_code=None, tr
 
         start_date = start_date.strftime("%Y-%m-%d")
         end_date = end_date.strftime("%Y-%m-%d")
+        final_inferred.to_pickle('final_inferred.pkl')
 
         print("Finished inferring. Writing to AWS.")
         table_name = get_data_vol_surface_inferred_table_name()
