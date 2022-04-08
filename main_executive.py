@@ -270,10 +270,11 @@ def infer_check_new_ticker(ticker=None, currency_code=None):
         report = "VOLATILITY INFER CHECK NEW TICKER COMPLETED"
         report_check(report, ticker=ticker, currency_code=currency_code)
 
-def infer_history(currency_code=None, start_date = str_to_date(droid_start_date_buffer())):
+def infer_history(currency_code=None, start_date = str_to_date(droid_start_date_buffer()),
+                  end_date = str_to_date(dateNow())):
     folder_check()
     print("{} : === VOLATILITY INFER HISTORY STARTED ===".format(dateNow()))
-    end_date = str_to_date(dateNow())
+
     print(f"The start date is set as: {start_date}")
     print(f"The end date is set as: {end_date}")
 
