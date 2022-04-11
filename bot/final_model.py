@@ -1,6 +1,6 @@
 import time
 import numpy as np
-import modin.pandas as pd
+import pandas as pd
 import lightgbm as lgb
 from joblib import dump, load
 from sklearn.ensemble import RandomForestRegressor
