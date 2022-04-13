@@ -4,7 +4,7 @@ from core.universe.models import ExchangeMarket
 from django.utils import timezone
 import subprocess
 import os
-
+from datetime import timedelta
 def restart_worker():
     envrion = os.environ.get("DJANGO_SETTINGS_MODULE", False)
     if envrion in ["config.settings.production", "config.settings.prodtest"]:
@@ -21,7 +21,7 @@ def restart_worker():
 
 
 def update_due(exchange: ExchangeMarket) -> bool:
-    return exchange.until_time < timezone.now()
+    return (exchange.until_time + timedelta(minutes=15)) < timezone.now()
 
 
 @app.task(ignore_result=True)
