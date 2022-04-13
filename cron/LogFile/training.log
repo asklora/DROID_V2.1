@@ -1,0 +1,788 @@
+using prod db
+droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com
+2022-04-09 11:00:06 pc2 root[1474897] WARNING celery role using -> slave
+2022-04-09 11:00:09 pc2 root[1474897] INFO AsyncORM: patching models
+2022-04-09 : === VOLATILITY TRAIN MODEL STARTED ===
+The start date is set as: 2018-04-09
+The end date is set as: 2022-04-09
+[Parallel(n_jobs=-1)]: Using backend ThreadingBackend with 16 concurrent workers.
+building tree 1 of 200building tree 2 of 200building tree 3 of 200building tree 4 of 200building tree 5 of 200building tree 6 of 200
+building tree 8 of 200
+
+
+
+building tree 7 of 200
+building tree 16 of 200
+building tree 11 of 200building tree 12 of 200
+building tree 9 of 200building tree 10 of 200
+building tree 14 of 200
+building tree 13 of 200
+
+
+building tree 15 of 200
+
+
+building tree 17 of 200[Parallel(n_jobs=-1)]: Done   1 tasks      | elapsed:   35.9s
+
+building tree 18 of 200[Parallel(n_jobs=-1)]: Done   2 tasks      | elapsed:   36.6s
+
+building tree 19 of 200[Parallel(n_jobs=-1)]: Done   3 tasks      | elapsed:   36.7s
+
+building tree 20 of 200[Parallel(n_jobs=-1)]: Done   4 tasks      | elapsed:   37.4s
+
+building tree 21 of 200[Parallel(n_jobs=-1)]: Done   5 tasks      | elapsed:   37.4s
+
+building tree 22 of 200[Parallel(n_jobs=-1)]: Done   6 tasks      | elapsed:   37.8s
+
+building tree 23 of 200building tree 24 of 200
+[Parallel(n_jobs=-1)]: Done   7 tasks      | elapsed:   37.8s
+[Parallel(n_jobs=-1)]: Done   8 tasks      | elapsed:   37.8s
+
+building tree 25 of 200[Parallel(n_jobs=-1)]: Done   9 tasks      | elapsed:   37.9s
+
+building tree 26 of 200[Parallel(n_jobs=-1)]: Done  10 tasks      | elapsed:   37.9s
+
+building tree 27 of 200[Parallel(n_jobs=-1)]: Done  11 tasks      | elapsed:   38.2s
+
+building tree 28 of 200[Parallel(n_jobs=-1)]: Done  12 tasks      | elapsed:   38.3s
+
+building tree 29 of 200[Parallel(n_jobs=-1)]: Done  13 tasks      | elapsed:   38.6s
+
+building tree 30 of 200[Parallel(n_jobs=-1)]: Done  14 tasks      | elapsed:   39.3s
+
+building tree 31 of 200[Parallel(n_jobs=-1)]: Done  15 tasks      | elapsed:   39.5s
+
+building tree 32 of 200[Parallel(n_jobs=-1)]: Done  16 tasks      | elapsed:   40.2s
+
+building tree 33 of 200[Parallel(n_jobs=-1)]: Done  17 tasks      | elapsed:  1.2min
+
+building tree 34 of 200[Parallel(n_jobs=-1)]: Done  18 tasks      | elapsed:  1.2min
+
+building tree 35 of 200[Parallel(n_jobs=-1)]: Done  19 tasks      | elapsed:  1.2min
+
+building tree 36 of 200[Parallel(n_jobs=-1)]: Done  20 tasks      | elapsed:  1.3min
+
+building tree 37 of 200[Parallel(n_jobs=-1)]: Done  21 tasks      | elapsed:  1.3min
+
+building tree 38 of 200[Parallel(n_jobs=-1)]: Done  22 tasks      | elapsed:  1.3min
+
+building tree 39 of 200[Parallel(n_jobs=-1)]: Done  23 tasks      | elapsed:  1.3min
+
+building tree 40 of 200[Parallel(n_jobs=-1)]: Done  24 tasks      | elapsed:  1.3min
+
+building tree 41 of 200[Parallel(n_jobs=-1)]: Done  25 tasks      | elapsed:  1.3min
+
+building tree 42 of 200[Parallel(n_jobs=-1)]: Done  26 tasks      | elapsed:  1.3min
+
+building tree 43 of 200[Parallel(n_jobs=-1)]: Done  27 tasks      | elapsed:  1.3min
+
+building tree 44 of 200[Parallel(n_jobs=-1)]: Done  28 tasks      | elapsed:  1.3min
+
+building tree 45 of 200[Parallel(n_jobs=-1)]: Done  29 tasks      | elapsed:  1.3min
+
+building tree 46 of 200[Parallel(n_jobs=-1)]: Done  30 tasks      | elapsed:  1.3min
+
+building tree 47 of 200[Parallel(n_jobs=-1)]: Done  31 tasks      | elapsed:  1.3min
+
+building tree 48 of 200[Parallel(n_jobs=-1)]: Done  32 tasks      | elapsed:  1.3min
+
+building tree 49 of 200[Parallel(n_jobs=-1)]: Done  33 tasks      | elapsed:  1.8min
+
+building tree 50 of 200[Parallel(n_jobs=-1)]: Done  34 tasks      | elapsed:  1.9min
+
+building tree 51 of 200[Parallel(n_jobs=-1)]: Done  35 tasks      | elapsed:  1.9min
+
+building tree 52 of 200[Parallel(n_jobs=-1)]: Done  36 tasks      | elapsed:  1.9min
+
+building tree 53 of 200[Parallel(n_jobs=-1)]: Done  37 tasks      | elapsed:  1.9min
+
+building tree 54 of 200[Parallel(n_jobs=-1)]: Done  38 tasks      | elapsed:  1.9min
+
+building tree 55 of 200[Parallel(n_jobs=-1)]: Done  39 tasks      | elapsed:  1.9min
+
+building tree 56 of 200[Parallel(n_jobs=-1)]: Done  40 tasks      | elapsed:  1.9min
+
+building tree 57 of 200[Parallel(n_jobs=-1)]: Done  41 tasks      | elapsed:  1.9min
+
+building tree 58 of 200[Parallel(n_jobs=-1)]: Done  42 tasks      | elapsed:  1.9min
+
+building tree 59 of 200[Parallel(n_jobs=-1)]: Done  43 tasks      | elapsed:  1.9min
+
+building tree 60 of 200[Parallel(n_jobs=-1)]: Done  44 tasks      | elapsed:  1.9min
+
+building tree 61 of 200[Parallel(n_jobs=-1)]: Done  45 tasks      | elapsed:  1.9min
+
+building tree 62 of 200[Parallel(n_jobs=-1)]: Done  46 tasks      | elapsed:  1.9min
+
+building tree 63 of 200[Parallel(n_jobs=-1)]: Done  47 tasks      | elapsed:  2.0min
+
+building tree 64 of 200[Parallel(n_jobs=-1)]: Done  48 tasks      | elapsed:  2.0min
+
+building tree 65 of 200[Parallel(n_jobs=-1)]: Done  49 tasks      | elapsed:  2.5min
+
+building tree 66 of 200[Parallel(n_jobs=-1)]: Done  50 tasks      | elapsed:  2.5min
+
+building tree 67 of 200[Parallel(n_jobs=-1)]: Done  51 tasks      | elapsed:  2.5min
+
+building tree 68 of 200[Parallel(n_jobs=-1)]: Done  52 tasks      | elapsed:  2.5min
+
+building tree 69 of 200[Parallel(n_jobs=-1)]: Done  53 tasks      | elapsed:  2.5min
+
+building tree 70 of 200[Parallel(n_jobs=-1)]: Done  54 tasks      | elapsed:  2.5min
+
+building tree 71 of 200[Parallel(n_jobs=-1)]: Done  55 tasks      | elapsed:  2.5min
+
+building tree 72 of 200[Parallel(n_jobs=-1)]: Done  56 tasks      | elapsed:  2.5min
+
+building tree 73 of 200[Parallel(n_jobs=-1)]: Done  57 tasks      | elapsed:  2.5min
+
+building tree 74 of 200[Parallel(n_jobs=-1)]: Done  58 tasks      | elapsed:  2.5min
+
+building tree 75 of 200[Parallel(n_jobs=-1)]: Done  59 tasks      | elapsed:  2.6min
+
+building tree 76 of 200[Parallel(n_jobs=-1)]: Done  60 tasks      | elapsed:  2.6min
+
+building tree 77 of 200[Parallel(n_jobs=-1)]: Done  61 tasks      | elapsed:  2.6min
+
+building tree 78 of 200[Parallel(n_jobs=-1)]: Done  62 tasks      | elapsed:  2.6min
+
+building tree 79 of 200[Parallel(n_jobs=-1)]: Done  63 tasks      | elapsed:  2.6min
+
+building tree 80 of 200[Parallel(n_jobs=-1)]: Done  64 tasks      | elapsed:  2.6min
+
+building tree 81 of 200[Parallel(n_jobs=-1)]: Done  65 tasks      | elapsed:  3.1min
+
+building tree 82 of 200[Parallel(n_jobs=-1)]: Done  66 tasks      | elapsed:  3.1min
+
+building tree 83 of 200[Parallel(n_jobs=-1)]: Done  67 tasks      | elapsed:  3.1min
+
+building tree 84 of 200[Parallel(n_jobs=-1)]: Done  68 tasks      | elapsed:  3.1min
+
+building tree 85 of 200[Parallel(n_jobs=-1)]: Done  69 tasks      | elapsed:  3.1min
+
+building tree 86 of 200[Parallel(n_jobs=-1)]: Done  70 tasks      | elapsed:  3.1min
+
+building tree 87 of 200[Parallel(n_jobs=-1)]: Done  71 tasks      | elapsed:  3.2min
+
+building tree 88 of 200[Parallel(n_jobs=-1)]: Done  72 tasks      | elapsed:  3.2min
+
+building tree 89 of 200[Parallel(n_jobs=-1)]: Done  73 tasks      | elapsed:  3.2min
+
+building tree 90 of 200[Parallel(n_jobs=-1)]: Done  74 tasks      | elapsed:  3.2min
+
+building tree 91 of 200[Parallel(n_jobs=-1)]: Done  75 tasks      | elapsed:  3.2min
+
+building tree 92 of 200[Parallel(n_jobs=-1)]: Done  76 tasks      | elapsed:  3.2min
+
+building tree 93 of 200[Parallel(n_jobs=-1)]: Done  77 tasks      | elapsed:  3.2min
+
+building tree 94 of 200[Parallel(n_jobs=-1)]: Done  78 tasks      | elapsed:  3.2min
+
+building tree 95 of 200[Parallel(n_jobs=-1)]: Done  79 tasks      | elapsed:  3.3min
+
+building tree 96 of 200[Parallel(n_jobs=-1)]: Done  80 tasks      | elapsed:  3.3min
+
+building tree 97 of 200[Parallel(n_jobs=-1)]: Done  81 tasks      | elapsed:  3.8min
+
+building tree 98 of 200[Parallel(n_jobs=-1)]: Done  82 tasks      | elapsed:  3.8min
+
+building tree 99 of 200[Parallel(n_jobs=-1)]: Done  83 tasks      | elapsed:  3.8min
+
+building tree 100 of 200[Parallel(n_jobs=-1)]: Done  84 tasks      | elapsed:  3.8min
+
+building tree 101 of 200[Parallel(n_jobs=-1)]: Done  85 tasks      | elapsed:  3.8min
+
+building tree 102 of 200[Parallel(n_jobs=-1)]: Done  86 tasks      | elapsed:  3.8min
+
+building tree 103 of 200[Parallel(n_jobs=-1)]: Done  87 tasks      | elapsed:  3.8min
+
+building tree 104 of 200[Parallel(n_jobs=-1)]: Done  88 tasks      | elapsed:  3.8min
+
+building tree 105 of 200[Parallel(n_jobs=-1)]: Done  89 tasks      | elapsed:  3.8min
+
+building tree 106 of 200[Parallel(n_jobs=-1)]: Done  90 tasks      | elapsed:  3.8min
+
+building tree 107 of 200[Parallel(n_jobs=-1)]: Done  91 tasks      | elapsed:  3.9min
+
+building tree 108 of 200[Parallel(n_jobs=-1)]: Done  92 tasks      | elapsed:  3.9min
+
+building tree 109 of 200[Parallel(n_jobs=-1)]: Done  93 tasks      | elapsed:  3.9min
+
+building tree 110 of 200[Parallel(n_jobs=-1)]: Done  94 tasks      | elapsed:  3.9min
+
+building tree 111 of 200[Parallel(n_jobs=-1)]: Done  95 tasks      | elapsed:  3.9min
+
+building tree 112 of 200[Parallel(n_jobs=-1)]: Done  96 tasks      | elapsed:  3.9min
+
+building tree 113 of 200[Parallel(n_jobs=-1)]: Done  97 tasks      | elapsed:  4.4min
+
+building tree 114 of 200[Parallel(n_jobs=-1)]: Done  98 tasks      | elapsed:  4.4min
+
+building tree 115 of 200[Parallel(n_jobs=-1)]: Done  99 tasks      | elapsed:  4.4min
+
+building tree 116 of 200[Parallel(n_jobs=-1)]: Done 100 tasks      | elapsed:  4.4min
+
+building tree 117 of 200[Parallel(n_jobs=-1)]: Done 101 tasks      | elapsed:  4.4min
+
+building tree 118 of 200[Parallel(n_jobs=-1)]: Done 102 tasks      | elapsed:  4.4min
+
+building tree 119 of 200[Parallel(n_jobs=-1)]: Done 103 tasks      | elapsed:  4.4min
+
+building tree 120 of 200[Parallel(n_jobs=-1)]: Done 104 tasks      | elapsed:  4.5min
+
+building tree 121 of 200[Parallel(n_jobs=-1)]: Done 105 tasks      | elapsed:  4.5min
+
+building tree 122 of 200[Parallel(n_jobs=-1)]: Done 106 tasks      | elapsed:  4.5min
+
+building tree 123 of 200[Parallel(n_jobs=-1)]: Done 107 tasks      | elapsed:  4.5min
+
+building tree 124 of 200[Parallel(n_jobs=-1)]: Done 108 tasks      | elapsed:  4.5min
+
+building tree 125 of 200[Parallel(n_jobs=-1)]: Done 109 tasks      | elapsed:  4.5min
+
+building tree 126 of 200[Parallel(n_jobs=-1)]: Done 110 tasks      | elapsed:  4.5min
+
+building tree 127 of 200[Parallel(n_jobs=-1)]: Done 111 tasks      | elapsed:  4.5min
+
+building tree 128 of 200[Parallel(n_jobs=-1)]: Done 112 tasks      | elapsed:  4.6min
+
+building tree 129 of 200[Parallel(n_jobs=-1)]: Done 113 tasks      | elapsed:  5.0min
+
+building tree 130 of 200[Parallel(n_jobs=-1)]: Done 114 tasks      | elapsed:  5.1min
+
+building tree 131 of 200[Parallel(n_jobs=-1)]: Done 115 tasks      | elapsed:  5.1min
+
+building tree 132 of 200[Parallel(n_jobs=-1)]: Done 116 tasks      | elapsed:  5.1min
+
+building tree 133 of 200
+[Parallel(n_jobs=-1)]: Done 117 tasks      | elapsed:  5.1min
+building tree 134 of 200[Parallel(n_jobs=-1)]: Done 118 tasks      | elapsed:  5.1min
+
+building tree 135 of 200[Parallel(n_jobs=-1)]: Done 119 tasks      | elapsed:  5.1min
+
+building tree 136 of 200[Parallel(n_jobs=-1)]: Done 120 tasks      | elapsed:  5.1min
+
+building tree 137 of 200[Parallel(n_jobs=-1)]: Done 121 tasks      | elapsed:  5.1min
+
+building tree 138 of 200[Parallel(n_jobs=-1)]: Done 122 tasks      | elapsed:  5.1min
+
+building tree 139 of 200[Parallel(n_jobs=-1)]: Done 123 tasks      | elapsed:  5.1min
+
+building tree 140 of 200[Parallel(n_jobs=-1)]: Done 124 tasks      | elapsed:  5.1min
+
+building tree 141 of 200[Parallel(n_jobs=-1)]: Done 125 tasks      | elapsed:  5.2min
+
+building tree 142 of 200[Parallel(n_jobs=-1)]: Done 126 tasks      | elapsed:  5.2min
+
+building tree 143 of 200[Parallel(n_jobs=-1)]: Done 127 tasks      | elapsed:  5.2min
+
+building tree 144 of 200[Parallel(n_jobs=-1)]: Done 128 tasks      | elapsed:  5.2min
+
+building tree 145 of 200[Parallel(n_jobs=-1)]: Done 129 tasks      | elapsed:  5.7min
+
+building tree 146 of 200[Parallel(n_jobs=-1)]: Done 130 tasks      | elapsed:  5.7min
+
+building tree 147 of 200[Parallel(n_jobs=-1)]: Done 131 tasks      | elapsed:  5.7min
+
+building tree 148 of 200[Parallel(n_jobs=-1)]: Done 132 tasks      | elapsed:  5.7min
+
+building tree 149 of 200[Parallel(n_jobs=-1)]: Done 133 tasks      | elapsed:  5.7min
+
+building tree 150 of 200[Parallel(n_jobs=-1)]: Done 134 tasks      | elapsed:  5.7min
+
+building tree 151 of 200[Parallel(n_jobs=-1)]: Done 135 tasks      | elapsed:  5.7min
+
+building tree 152 of 200[Parallel(n_jobs=-1)]: Done 136 tasks      | elapsed:  5.7min
+
+building tree 153 of 200[Parallel(n_jobs=-1)]: Done 137 tasks      | elapsed:  5.8min
+
+building tree 154 of 200[Parallel(n_jobs=-1)]: Done 138 tasks      | elapsed:  5.8min
+
+building tree 155 of 200[Parallel(n_jobs=-1)]: Done 139 tasks      | elapsed:  5.8min
+
+building tree 156 of 200[Parallel(n_jobs=-1)]: Done 140 tasks      | elapsed:  5.8min
+
+building tree 157 of 200[Parallel(n_jobs=-1)]: Done 141 tasks      | elapsed:  5.8min
+
+building tree 158 of 200[Parallel(n_jobs=-1)]: Done 142 tasks      | elapsed:  5.8min
+
+building tree 159 of 200[Parallel(n_jobs=-1)]: Done 143 tasks      | elapsed:  5.8min
+
+building tree 160 of 200[Parallel(n_jobs=-1)]: Done 144 tasks      | elapsed:  5.8min
+
+building tree 161 of 200[Parallel(n_jobs=-1)]: Done 145 tasks      | elapsed:  6.3min
+
+building tree 162 of 200[Parallel(n_jobs=-1)]: Done 146 tasks      | elapsed:  6.3min
+
+building tree 163 of 200[Parallel(n_jobs=-1)]: Done 147 tasks      | elapsed:  6.3min
+
+building tree 164 of 200[Parallel(n_jobs=-1)]: Done 148 tasks      | elapsed:  6.3min
+
+building tree 165 of 200[Parallel(n_jobs=-1)]: Done 149 tasks      | elapsed:  6.4min
+
+building tree 166 of 200[Parallel(n_jobs=-1)]: Done 150 tasks      | elapsed:  6.4min
+
+building tree 167 of 200[Parallel(n_jobs=-1)]: Done 151 tasks      | elapsed:  6.4min
+
+building tree 168 of 200[Parallel(n_jobs=-1)]: Done 152 tasks      | elapsed:  6.4min
+
+building tree 169 of 200[Parallel(n_jobs=-1)]: Done 153 tasks      | elapsed:  6.4min
+
+building tree 170 of 200[Parallel(n_jobs=-1)]: Done 154 tasks      | elapsed:  6.4min
+
+building tree 171 of 200[Parallel(n_jobs=-1)]: Done 155 tasks      | elapsed:  6.4min
+
+building tree 172 of 200[Parallel(n_jobs=-1)]: Done 156 tasks      | elapsed:  6.4min
+
+building tree 173 of 200[Parallel(n_jobs=-1)]: Done 157 tasks      | elapsed:  6.4min
+
+building tree 174 of 200[Parallel(n_jobs=-1)]: Done 158 tasks      | elapsed:  6.4min
+
+building tree 175 of 200[Parallel(n_jobs=-1)]: Done 159 tasks      | elapsed:  6.5min
+
+building tree 176 of 200[Parallel(n_jobs=-1)]: Done 160 tasks      | elapsed:  6.5min
+
+building tree 177 of 200[Parallel(n_jobs=-1)]: Done 161 tasks      | elapsed:  7.0min
+
+building tree 178 of 200[Parallel(n_jobs=-1)]: Done 162 tasks      | elapsed:  7.0min
+
+building tree 179 of 200[Parallel(n_jobs=-1)]: Done 163 tasks      | elapsed:  7.0min
+
+building tree 180 of 200[Parallel(n_jobs=-1)]: Done 164 tasks      | elapsed:  7.0min
+
+building tree 181 of 200[Parallel(n_jobs=-1)]: Done 165 tasks      | elapsed:  7.0min
+
+building tree 182 of 200[Parallel(n_jobs=-1)]: Done 166 tasks      | elapsed:  7.0min
+
+building tree 183 of 200[Parallel(n_jobs=-1)]: Done 167 tasks      | elapsed:  7.0min
+
+building tree 184 of 200[Parallel(n_jobs=-1)]: Done 168 tasks      | elapsed:  7.0min
+
+building tree 185 of 200[Parallel(n_jobs=-1)]: Done 169 tasks      | elapsed:  7.0min
+
+building tree 186 of 200
+building tree 187 of 200
+building tree 188 of 200[Parallel(n_jobs=-1)]: Done 172 out of 200 | elapsed:  7.1min remaining:  1.1min
+
+building tree 189 of 200
+building tree 190 of 200
+building tree 191 of 200[Parallel(n_jobs=-1)]: Done 175 out of 200 | elapsed:  7.1min remaining:  1.0min
+
+building tree 192 of 200
+building tree 193 of 200
+building tree 194 of 200[Parallel(n_jobs=-1)]: Done 178 out of 200 | elapsed:  7.6min remaining:   56.3s
+
+building tree 195 of 200
+building tree 196 of 200
+building tree 197 of 200[Parallel(n_jobs=-1)]: Done 181 out of 200 | elapsed:  7.6min remaining:   48.1s
+
+building tree 198 of 200
+building tree 199 of 200
+building tree 200 of 200[Parallel(n_jobs=-1)]: Done 184 out of 200 | elapsed:  7.7min remaining:   40.1s
+
+[Parallel(n_jobs=-1)]: Done 187 out of 200 | elapsed:  7.7min remaining:   32.2s
+[Parallel(n_jobs=-1)]: Done 190 out of 200 | elapsed:  7.7min remaining:   24.4s
+[Parallel(n_jobs=-1)]: Done 193 out of 200 | elapsed:  8.0min remaining:   17.5s
+[Parallel(n_jobs=-1)]: Done 196 out of 200 | elapsed:  8.1min remaining:    9.9s
+[Parallel(n_jobs=-1)]: Done 200 out of 200 | elapsed:  8.1min finished
+[LightGBM] [Info] Total Bins 9890
+[LightGBM] [Info] Number of data: 520203, number of used features: 45
+[LightGBM] [Info] Start training from score -2.544459
+[LightGBM] [Info] Start training from score -2.144559
+[LightGBM] [Info] Start training from score -1.415480
+[LightGBM] [Info] Start training from score -1.199714
+[LightGBM] [Info] Start training from score -1.736832
+[LightGBM] [Info] Start training from score -2.474585
+[LightGBM] [Info] Total Bins 9890
+[LightGBM] [Info] Number of data: 520203, number of used features: 45
+[LightGBM] [Info] Start training from score -0.962589
+[LightGBM] [Info] Start training from score -1.131095
+[LightGBM] [Info] Start training from score -1.219366
+12:22:29
+Finished!
+2022-04-09 : === VOLATILITY TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+uno
+                                uid    now_date  ... currency_code   ticker
+0        MDBIMI_20201130_OTM_003846  2020-12-11  ...           EUR  MDBI.MI
+1        SABEMC_20210126_ITM_003846  2021-02-08  ...           EUR  SABE.MC
+2          ADIO_20180921_ITM_003846  2018-10-04  ...           USD    ADI.O
+3           URI_20180921_ITM_003846  2018-10-04  ...           USD      URI
+4           CVS_20180921_ITM_003846  2018-10-04  ...           USD      CVS
+...                             ...         ...  ...           ...      ...
+3171493   BAESL_20210817_OTM_003846  2021-08-30  ...           GBP   BAES.L
+3171494    MNGL_20210817_ITM_003846  2021-08-30  ...           GBP    MNG.L
+3171495   ANTOL_20210817_OTM_003846  2021-08-30  ...           GBP   ANTO.L
+3171496    ABFL_20210817_OTM_003846  2021-08-30  ...           GBP    ABF.L
+3171497    ABFL_20210817_ITM_003846  2021-08-30  ...           GBP    ABF.L
+
+[3171498 rows x 45 columns]
+OTM
+ITM
+2022-04-09 : === [0.03846] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+ucdc
+                                  uid    now_date  ... currency_code     ticker
+0        002050SZ_20210323_ATM_003846  2021-04-02  ...           CNY  002050.SZ
+1        600760SS_20210319_ATM_003846  2021-03-31  ...           CNY  600760.SS
+2        003410KS_20201026_ATM_003846  2020-11-06  ...           KRW  003410.KS
+3        139480KS_20201026_ATM_003846  2020-11-06  ...           KRW  139480.KS
+4        015760KS_20201026_ATM_003846  2020-11-06  ...           KRW  015760.KS
+...                               ...         ...  ...           ...        ...
+1586691     PSONL_20211119_ATM_003846  2021-12-02  ...           GBP     PSON.L
+1586692      CRHL_20211119_ATM_003846  2021-12-02  ...           GBP      CRH.L
+1586693     LGENL_20211119_ATM_003846  2021-12-02  ...           GBP     LGEN.L
+1586694       TWL_20211119_ATM_003846  2021-12-02  ...           GBP       TW.L
+1586695     STANL_20211119_ATM_003846  2021-12-02  ...           GBP     STAN.L
+
+[1586696 rows x 47 columns]
+ATM
+2022-04-09 : === [0.03846] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+classic
+                              uid   spot_date  ...     pnl     ticker
+0        600547SS_20210715_003846  2021-07-15  ...    0.05  600547.SS
+1             AME_20210312_003846  2021-03-12  ...    0.00        AME
+2        600570SS_20210715_003846  2021-07-15  ...   -3.04  600570.SS
+3        600584SS_20210715_003846  2021-07-15  ...   -1.25  600584.SS
+4             SPX_20210503_003846  2021-05-03  ...   41.33       .SPX
+...                           ...         ...  ...     ...        ...
+1730547  271560KS_20211203_003846  2021-12-03  ...  998.00  271560.KS
+1730548  272210KS_20211203_003846  2021-12-03  ...  850.00  272210.KS
+1730549    2772HK_20211203_003846  2021-12-03  ...    0.26    2772.HK
+1730550    2777HK_20211203_003846  2021-12-03  ...    0.06    2777.HK
+1730551       DIS_20211203_003846  2021-12-03  ...    6.72        DIS
+
+[1730552 rows x 19 columns]
+classic
+2022-04-09 : === [0.03846] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+uno
+                                uid    now_date  ... currency_code   ticker
+0         ADPPA_20210209_ITM_007692  2021-03-08  ...           EUR   ADP.PA
+1        CAPPPA_20201130_ITM_007692  2020-12-24  ...           EUR  CAPP.PA
+2        STDMPA_20201130_OTM_007692  2020-12-24  ...           EUR  STDM.PA
+3        CAGRPA_20201130_ITM_007692  2020-12-24  ...           EUR  CAGR.PA
+4        PRTPPA_20201130_ITM_007692  2020-12-24  ...           EUR  PRTP.PA
+...                             ...         ...  ...           ...      ...
+3170753    RELL_20210803_OTM_007692  2021-12-07  ...           GBP    REL.L
+3170754     NGL_20210803_OTM_007692  2021-12-08  ...           GBP     NG.L
+3170755     NGL_20210803_ITM_007692  2021-12-06  ...           GBP     NG.L
+3170756   EXPNL_20210803_ITM_007692  2021-12-09  ...           GBP   EXPN.L
+3170757    DGEL_20210803_ITM_007692  2021-12-06  ...           GBP    DGE.L
+
+[3170758 rows x 45 columns]
+ITM
+OTM
+2022-04-09 : === [0.07692] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+ucdc
+                                  uid    now_date  ... currency_code     ticker
+0        052690KS_20190910_ATM_007692  2019-10-07  ...           KRW  052690.KS
+1        039490KS_20201026_ATM_007692  2020-11-20  ...           KRW  039490.KS
+2        204320KS_20201026_ATM_007692  2020-11-20  ...           KRW  204320.KS
+3        090430KS_20201026_ATM_007692  2020-11-20  ...           KRW  090430.KS
+4        003670KS_20201026_ATM_007692  2020-11-20  ...           KRW  003670.KS
+...                               ...         ...  ...           ...        ...
+1586482     ITRKL_20211116_ATM_007692  2021-12-13  ...           GBP     ITRK.L
+1586483     PHNXL_20211116_ATM_007692  2021-12-13  ...           GBP     PHNX.L
+1586484     TSCOL_20211116_ATM_007692  2021-12-13  ...           GBP     TSCO.L
+1586485      ICPL_20211116_ATM_007692  2021-12-13  ...           GBP      ICP.L
+1586486      IIIL_20211116_ATM_007692  2021-12-13  ...           GBP      III.L
+
+[1586487 rows x 47 columns]
+ATM
+2022-04-09 : === [0.07692] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+classic
+                              uid   spot_date  ...       pnl     ticker
+0            MARO_20180528_007692  2018-05-28  ...     -5.23      MAR.O
+1             MAA_20180528_007692  2018-05-28  ...      7.27        MAA
+2             MAA_20180704_007692  2018-07-04  ...      2.06        MAA
+3             MAA_20180903_007692  2018-09-03  ...     -3.08        MAA
+4             MAA_20181122_007692  2018-11-22  ...     -2.82        MAA
+...                           ...         ...  ...       ...        ...
+1730547  002311SZ_20211117_007692  2021-11-17  ...      5.18  002311.SZ
+1730548  002352SZ_20211117_007692  2021-11-17  ...      2.24  002352.SZ
+1730549  002371SZ_20211117_007692  2021-11-17  ...    -41.21  002371.SZ
+1730550  002380KS_20211117_007692  2021-11-17  ...  15500.00  002380.KS
+1730551  002410SZ_20211117_007692  2021-11-17  ...     -0.50  002410.SZ
+
+[1730552 rows x 19 columns]
+classic
+2022-04-09 : === [0.07692] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+uno
+                                  uid    now_date  ... currency_code     ticker
+0         SGRENMC_20201130_OTM_008333  2020-12-29  ...           EUR   SGREN.MC
+1          TCFPPA_20201130_ITM_008333  2020-12-29  ...           EUR    TCFP.PA
+2           SANMC_20201130_OTM_008333  2020-12-29  ...           EUR     SAN.MC
+3              EW_20180921_ITM_008333  2018-09-26  ...           USD         EW
+4         NOKIAHE_20190726_OTM_008333  2019-08-23  ...           EUR   NOKIA.HE
+...                               ...         ...  ...           ...        ...
+3170513  603986SS_20211201_OTM_008333  2021-12-30  ...           CNY  603986.SS
+3170514   TYRESHE_20211202_OTM_008333  2021-12-31  ...           EUR   TYRES.HE
+3170515    0839HK_20211209_OTM_008333  2022-01-07  ...           HKD    0839.HK
+3170516    3669HK_20211209_OTM_008333  2022-01-07  ...           HKD    3669.HK
+3170517    2359HK_20211130_OTM_008333  2021-12-29  ...           HKD    2359.HK
+
+[3170518 rows x 45 columns]
+OTM
+ITM
+2022-04-09 : === [0.08333] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+ucdc
+                                uid    now_date  ... currency_code   ticker
+0        HEINAS_20200529_ATM_008333  2020-06-25  ...           EUR  HEIN.AS
+1         HSICO_20190319_ATM_008333  2019-04-17  ...           USD   HSIC.O
+2           DVA_20190319_ATM_008333  2019-04-17  ...           USD      DVA
+3          CZRO_20190319_ATM_008333  2019-04-17  ...           USD    CZR.O
+4          NWSO_20190319_ATM_008333  2019-04-17  ...           USD    NWS.O
+...                             ...         ...  ...           ...      ...
+1586378    RTOL_20211105_ATM_008333  2021-12-03  ...           GBP    RTO.L
+1586379    SMTL_20211105_ATM_008333  2021-12-03  ...           GBP    SMT.L
+1586380   FERGL_20211105_ATM_008333  2021-12-03  ...           GBP   FERG.L
+1586381   LANDL_20211105_ATM_008333  2021-12-03  ...           GBP   LAND.L
+1586382     SPY_20211027_ATM_008333  2021-11-25  ...           USD      SPY
+
+[1586383 rows x 47 columns]
+ATM
+2022-04-09 : === [0.08333] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+classic
+                            uid   spot_date  ...   pnl   ticker
+0        BNPPPA_20190821_008333  2019-08-21  ...  3.95  BNPP.PA
+1        BNPPPA_20190822_008333  2019-08-22  ...  4.41  BNPP.PA
+2        BNPPPA_20190823_008333  2019-08-23  ...  3.64  BNPP.PA
+3        BNPPPA_20190826_008333  2019-08-26  ...  4.00  BNPP.PA
+4        BNPPPA_20190827_008333  2019-08-27  ...  4.23  BNPP.PA
+...                         ...         ...  ...   ...      ...
+1730547     OXY_20211119_008333  2021-11-19  ...  1.13      OXY
+1730548     DGX_20211118_008333  2021-11-18  ...  9.90      DGX
+1730549     DIS_20211119_008333  2021-11-19  ... -1.06      DIS
+1730550     ZTS_20211117_008333  2021-11-17  ...  8.29      ZTS
+1730551     KIM_20211129_008333  2021-11-29  ...  0.95      KIM
+
+[1730552 rows x 19 columns]
+classic
+2022-04-09 : === [0.08333] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+uno
+                                  uid    now_date  ... currency_code     ticker
+0          TKAGDE_20201130_OTM_015384  2020-12-23  ...           EUR    TKAG.DE
+1           FOXAO_20181022_ITM_015384  2018-12-14  ...           USD     FOXA.O
+2             NEM_20181022_ITM_015384  2018-12-14  ...           USD        NEM
+3           JBHTO_20181022_OTM_015384  2018-12-14  ...           USD     JBHT.O
+4             COF_20181022_OTM_015384  2018-12-14  ...           USD        COF
+...                               ...         ...  ...           ...        ...
+3168758    BESIAS_20211208_ITM_015384  2022-02-01  ...           EUR    BESI.AS
+3168759  336260KS_20211209_OTM_015384  2022-02-02  ...           KRW  336260.KS
+3168760  006260KS_20211209_OTM_015384  2022-02-02  ...           KRW  006260.KS
+3168761  009150KS_20211208_OTM_015384  2022-02-01  ...           KRW  009150.KS
+3168762    SGEFPA_20211201_ITM_015384  2022-01-25  ...           EUR    SGEF.PA
+
+[3168763 rows x 45 columns]
+OTM
+ITM
+2022-04-09 : === [0.15384] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+ucdc
+                                  uid    now_date  ... currency_code     ticker
+0            LNTO_20190319_ATM_015384  2019-05-13  ...           USD      LNT.O
+1             FRT_20190319_ATM_015384  2019-05-13  ...           USD        FRT
+2             CRL_20190319_ATM_015384  2019-05-13  ...           USD        CRL
+3           TEAMO_20190319_ATM_015384  2019-05-13  ...           USD     TEAM.O
+4           SGENO_20190319_ATM_015384  2019-05-13  ...           USD     SGEN.O
+...                               ...         ...  ...           ...        ...
+1585478     BDEVL_20211104_ATM_015384  2021-12-29  ...           GBP     BDEV.L
+1585479  005380KS_20211210_ATM_015384  2022-02-03  ...           KRW  005380.KS
+1585480  016380KS_20211210_ATM_015384  2022-02-03  ...           KRW  016380.KS
+1585481     STANL_20211201_ATM_015384  2022-01-25  ...           GBP     STAN.L
+1585482     BRBYL_20211206_ATM_015384  2022-01-28  ...           GBP     BRBY.L
+
+[1585483 rows x 47 columns]
+ATM
+2022-04-09 : === [0.15384] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+classic
+                              uid   spot_date  ...      pnl     ticker
+0           AIRPA_20210505_015384  2021-05-05  ...    15.19     AIR.PA
+1             MCD_20210505_015384  2021-05-05  ...     0.66        MCD
+2             SPX_20210322_015384  2021-03-22  ...   297.98       .SPX
+3        042660KS_20210415_015384  2021-04-15  ...  6298.00  042660.KS
+4        042660KS_20210416_015384  2021-04-16  ...  6298.00  042660.KS
+...                           ...         ...  ...      ...        ...
+1730547      HASO_20211022_015384  2021-10-22  ...    11.54      HAS.O
+1730548       HCA_20211022_015384  2021-10-22  ...   -11.67        HCA
+1730549    HEIGDE_20211022_015384  2021-10-22  ...    -4.36    HEIG.DE
+1730550    AENAMC_20211022_015384  2021-10-22  ...   -11.30    AENA.MC
+1730551      AEPO_20211022_015384  2021-10-22  ...    -1.26      AEP.O
+
+[1730552 rows x 19 columns]
+classic
+2022-04-09 : === [0.15384] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+uno
+                                  uid    now_date  ... currency_code     ticker
+0          TKAGDE_20201130_ITM_016666  2020-12-17  ...           EUR    TKAG.DE
+1             TGT_20181022_OTM_016666  2018-12-21  ...           USD        TGT
+2           AMATO_20181022_ITM_016666  2018-12-21  ...           USD     AMAT.O
+3             PKI_20181022_OTM_016666  2018-12-21  ...           USD        PKI
+4             MKC_20181022_ITM_016666  2018-12-21  ...           USD        MKC
+...                               ...         ...  ...           ...        ...
+3168577  000568SZ_20211207_ITM_016666  2022-02-04  ...           CNY  000568.SZ
+3168578    2359HK_20211130_OTM_016666  2022-01-28  ...           HKD    2359.HK
+3168579    0345HK_20211209_OTM_016666  2022-02-07  ...           HKD    0345.HK
+3168580    0839HK_20211209_OTM_016666  2022-02-07  ...           HKD    0839.HK
+3168581    3669HK_20211209_OTM_016666  2022-02-07  ...           HKD    3669.HK
+
+[3168582 rows x 45 columns]
+ITM
+OTM
+2022-04-09 : === [0.16666] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+ucdc
+                               uid    now_date  ... currency_code  ticker
+0        PAYCK_20190319_ATM_016666  2019-05-17  ...           USD  PAYC.K
+1          DXC_20190319_ATM_016666  2019-05-17  ...           USD     DXC
+2           RE_20190319_ATM_016666  2019-05-17  ...           USD      RE
+3        EVRGK_20190319_ATM_016666  2019-05-17  ...           USD  EVRG.K
+4         HONO_20190319_ATM_016666  2019-05-17  ...           USD   HON.O
+...                            ...         ...  ...           ...     ...
+1585403   MNGL_20211008_ATM_016666  2021-12-07  ...           GBP   MNG.L
+1585404  BARCL_20211008_ATM_016666  2021-12-07  ...           GBP  BARC.L
+1585405   NWGL_20211008_ATM_016666  2021-12-07  ...           GBP   NWG.L
+1585406    BTL_20211008_ATM_016666  2021-12-07  ...           GBP    BT.L
+1585407   CCHL_20211008_ATM_016666  2021-12-07  ...           GBP   CCH.L
+
+[1585408 rows x 47 columns]
+ATM
+2022-04-09 : === [0.16666] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+classic
+                              uid   spot_date  ...       pnl     ticker
+0             AFL_20210106_016666  2021-01-06  ...      5.34        AFL
+1             AES_20210106_016666  2021-01-06  ...      1.16        AES
+2             AES_20210107_016666  2021-01-07  ...      1.69        AES
+3             AES_20210108_016666  2021-01-08  ...      2.25        AES
+4             AES_20210111_016666  2021-01-11  ...      3.13        AES
+...                           ...         ...  ...       ...        ...
+1730547       NOC_20211018_016666  2021-10-18  ...    -24.29        NOC
+1730548    CRDIMI_20211019_016666  2021-10-19  ...      1.18    CRDI.MI
+1730549    0486HK_20211019_016666  2021-10-19  ...     -1.54    0486.HK
+1730550  020150KS_20211019_016666  2021-10-19  ...   4500.00  020150.KS
+1730551  139480KS_20211019_016666  2021-10-19  ... -10499.00  139480.KS
+
+[1730552 rows x 19 columns]
+classic
+2022-04-09 : === [0.16666] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+uno
+                            uid    now_date  ... currency_code  ticker
+0        NTESO_20201102_OTM_025  2021-01-25  ...           USD  NTES.O
+1           IR_20201102_ITM_025  2021-01-06  ...           USD      IR
+2          GIS_20201102_OTM_025  2021-01-29  ...           USD     GIS
+3        NDAQO_20201102_OTM_025  2021-01-29  ...           USD  NDAQ.O
+4        ANTMK_20201102_ITM_025  2021-01-29  ...           USD  ANTM.K
+...                         ...         ...  ...           ...     ...
+3167785   RMGL_20210910_ITM_025  2021-12-09  ...           GBP   RMG.L
+3167786  BRBYL_20210910_OTM_025  2021-12-09  ...           GBP  BRBY.L
+3167787   IHGL_20210910_ITM_025  2021-12-09  ...           GBP   IHG.L
+3167788   IHGL_20210910_OTM_025  2021-12-09  ...           GBP   IHG.L
+3167789  BRBYL_20210910_ITM_025  2021-12-09  ...           GBP  BRBY.L
+
+[3167790 rows x 45 columns]
+OTM
+ITM
+2022-04-09 : === [0.25] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+ucdc
+                               uid    now_date  ... currency_code     ticker
+0             FRT_20190319_ATM_025  2019-06-17  ...           USD        FRT
+1           NLSNK_20190319_ATM_025  2019-06-17  ...           USD     NLSN.K
+2            REGO_20190319_ATM_025  2019-06-17  ...           USD      REG.O
+3           JKHYO_20190319_ATM_025  2019-06-17  ...           USD     JKHY.O
+4              UA_20190319_ATM_025  2019-06-17  ...           USD         UA
+...                            ...         ...  ...           ...        ...
+1584475  047040KS_20210902_ATM_025  2021-12-01  ...           KRW  047040.KS
+1584476  035720KS_20210902_ATM_025  2021-12-01  ...           KRW  035720.KS
+1584477  005380KS_20210902_ATM_025  2021-12-01  ...           KRW  005380.KS
+1584478  030200KS_20210902_ATM_025  2021-12-01  ...           KRW  030200.KS
+1584479  006400KS_20210902_ATM_025  2021-12-01  ...           KRW  006400.KS
+
+[1584480 rows x 47 columns]
+ATM
+2022-04-09 : === [0.25] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+classic
+                           uid   spot_date  ...      pnl     ticker
+0              MS_20210326_025  2021-03-26  ...     6.29         MS
+1          0813HK_20210331_025  2021-03-31  ...    -3.37    0813.HK
+2             HCA_20210331_025  2021-03-31  ...    18.09        HCA
+3           WELLK_20210331_025  2021-03-31  ...    12.42     WELL.K
+4        000660KS_20210331_025  2021-03-31  ... -6449.00  000660.KS
+...                        ...         ...  ...      ...        ...
+1730547       XYL_20210917_025  2021-09-17  ...    -8.17        XYL
+1730548    1128HK_20210917_025  2021-09-17  ...     0.26    1128.HK
+1730549      BRKb_20210917_025  2021-09-17  ...     7.76       BRKb
+1730550     LGENL_20210917_025  2021-09-17  ...    14.20     LGEN.L
+1730551    LTENPA_20210917_025  2021-09-17  ...    16.70    LTEN.PA
+
+[1730552 rows x 19 columns]
+classic
+2022-04-09 : === [0.25] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+uno
+                              uid    now_date  ... currency_code     ticker
+0           CDNSO_20181022_ITM_05  2019-02-20  ...           USD     CDNS.O
+1        008770KS_20191017_OTM_05  2020-04-14  ...           KRW  008770.KS
+2        008770KS_20191017_ITM_05  2020-04-14  ...           KRW  008770.KS
+3        000338SZ_20201203_ITM_05  2021-02-09  ...           CNY  000338.SZ
+4           CDNSO_20181022_OTM_05  2019-02-25  ...           USD     CDNS.O
+...                           ...         ...  ...           ...        ...
+3164586       SPX_20210819_ITM_05  2022-02-16  ...           USD       .SPX
+3164587       SPY_20210819_OTM_05  2022-02-16  ...           USD        SPY
+3164588       SPY_20210819_ITM_05  2022-02-16  ...           USD        SPY
+3164589       SPY_20210820_OTM_05  2022-02-17  ...           USD        SPY
+3164590       SPY_20210820_ITM_05  2022-02-17  ...           USD        SPY
+
+[3164591 rows x 45 columns]
+ITM
+OTM
+2022-04-09 : === [0.5] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+ucdc
+                              uid    now_date  ... currency_code     ticker
+0             ABC_20190319_ATM_05  2019-09-16  ...           USD        ABC
+1             SEE_20190319_ATM_05  2019-09-16  ...           USD        SEE
+2        004000KS_20190910_ATM_05  2020-03-09  ...           KRW  004000.KS
+3              NI_20190319_ATM_05  2019-09-16  ...           USD         NI
+4              RE_20190319_ATM_05  2019-09-16  ...           USD         RE
+...                           ...         ...  ...           ...        ...
+1583123        ED_20210803_ATM_05  2022-01-31  ...           USD         ED
+1583124  003670KS_20211210_ATM_05  2022-04-08  ...           KRW  003670.KS
+1583125  005380KS_20211210_ATM_05  2022-04-08  ...           KRW  005380.KS
+1583126  016380KS_20211210_ATM_05  2022-04-08  ...           KRW  016380.KS
+1583127  204320KS_20211209_ATM_05  2022-04-08  ...           KRW  204320.KS
+
+[1583128 rows x 47 columns]
+ATM
+2022-04-09 : === [0.5] BOT RANKING TRAIN MODEL COMPLETED ===
+2022-04-09 : === BOT RANKING TRAIN MODEL STARTED ===
+classic
+                          uid   spot_date  ...      pnl     ticker
+0           INCYO_20201230_05  2020-12-30  ...    -1.75     INCY.O
+1             DHR_20201204_05  2020-12-04  ...    16.98        DHR
+2        016360KS_20201230_05  2020-12-30  ...  7253.00  016360.KS
+3          1638HK_20210810_05  2021-08-10  ...    -1.23    1638.HK
+4           HRGVL_20210521_05  2021-05-21  ...   -93.22     HRGV.L
+...                       ...         ...  ...      ...        ...
+1730547       STE_20210617_05  2021-06-17  ...    32.86        STE
+1730548  601696SS_20210617_05  2021-06-17  ...    -1.26  601696.SS
+1730549  034220KS_20210617_05  2021-06-17  ... -1450.00  034220.KS
+1730550    1288HK_20210617_05  2021-06-17  ...    -0.06    1288.HK
+1730551    1238HK_20210617_05  2021-06-17  ...    -2.24    1238.HK
+
+[1730552 rows x 19 columns]
+classic
+2022-04-09 : === [0.5] BOT RANKING TRAIN MODEL COMPLETED ===

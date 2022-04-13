@@ -1,2 +1,111 @@
-sudo: /home/loratech/droid2env/bin/python3: command not found
-make: *** [Makefile:112: firebase_universe_ws] Error 1
+using prod db
+droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com
+2022-04-12 11:00:05 pc2 root[1354071] WARNING celery role using -> slave
+2022-04-12 11:00:09 pc2 root[1354071] INFO AsyncORM: patching models
+Execute Query to Table universe
+API request: industry_name from /industries
+---> Finished
+API request: industry_group_name from /industries
+---> Finished
+API request: ['ai_score', 'ai_score2'] from /ai_score
+---> Finished
+API request: /ai_score_factor
+---> Finished
+2022-04-12 11:00:15 pc2 root[1354071] ERROR Redis isn't running. skip get cache`
+2022-04-12 11:00:15 pc2 root[1354071] ERROR Redis isn't running. ignoring set cache 
+2022-04-12 11:00:15 pc2 root[1354071] ERROR Redis isn't running. skip get cache`
+2022-04-12 11:00:15 pc2 root[1354071] ERROR Redis isn't running. ignoring set cache 
+{
+    "id": "f31e17c2-5499-4d47-91c1-3fbe51aa004e",
+    "task": "ai_score",
+    "subtask": "firebase_universe_update",
+    "start_time": "2022-04-12T19:00:09.673618",
+    "end_time": "2022-04-12T19:00:49.459893",
+    "ticker": null,
+    "currency": null,
+    "severity": null,
+    "error_message": null
+}
+2022-04-12 11:00:59 pc2 elasticsearch[1354071] WARNING GET https://es-sg-6wr2adiqj0002qgdj.public.elasticsearch.aliyuncs.com:9200/ [status:N/A request:10.059s]
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connection.py", line 156, in _new_conn
+    conn = connection.create_connection(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/util/connection.py", line 84, in create_connection
+    raise err
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/util/connection.py", line 74, in create_connection
+    sock.connect(sa)
+socket.timeout: timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/connection/http_urllib3.py", line 251, in perform_request
+    response = self.pool.urlopen(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connectionpool.py", line 719, in urlopen
+    retries = retries.increment(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/util/retry.py", line 376, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/packages/six.py", line 735, in reraise
+    raise value
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connectionpool.py", line 665, in urlopen
+    httplib_response = self._make_request(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connectionpool.py", line 376, in _make_request
+    self._validate_conn(conn)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connectionpool.py", line 994, in _validate_conn
+    conn.connect()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connection.py", line 300, in connect
+    conn = self._new_conn()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connection.py", line 161, in _new_conn
+    raise ConnectTimeoutError(
+urllib3.exceptions.ConnectTimeoutError: (<urllib3.connection.VerifiedHTTPSConnection object at 0x7fc82b68ed60>, 'Connection to es-sg-6wr2adiqj0002qgdj.public.elasticsearch.aliyuncs.com timed out. (connect timeout=10)')
+2022-04-12 11:00:59 pc2 root[1354071] ERROR ConnectionError((<urllib3.connection.VerifiedHTTPSConnection object at 0x7fc82b68ed60>, 'Connection to es-sg-6wr2adiqj0002qgdj.public.elasticsearch.aliyuncs.com timed out. (connect timeout=10)')) caused by: ConnectTimeoutError((<urllib3.connection.VerifiedHTTPSConnection object at 0x7fc82b68ed60>, 'Connection to es-sg-6wr2adiqj0002qgdj.public.elasticsearch.aliyuncs.com timed out. (connect timeout=10)'))
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connection.py", line 156, in _new_conn
+    conn = connection.create_connection(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/util/connection.py", line 84, in create_connection
+    raise err
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/util/connection.py", line 74, in create_connection
+    sock.connect(sa)
+socket.timeout: timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/connection/http_urllib3.py", line 251, in perform_request
+    response = self.pool.urlopen(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connectionpool.py", line 719, in urlopen
+    retries = retries.increment(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/util/retry.py", line 376, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/packages/six.py", line 735, in reraise
+    raise value
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connectionpool.py", line 665, in urlopen
+    httplib_response = self._make_request(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connectionpool.py", line 376, in _make_request
+    self._validate_conn(conn)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connectionpool.py", line 994, in _validate_conn
+    conn.connect()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connection.py", line 300, in connect
+    conn = self._new_conn()
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/urllib3/connection.py", line 161, in _new_conn
+    raise ConnectTimeoutError(
+urllib3.exceptions.ConnectTimeoutError: (<urllib3.connection.VerifiedHTTPSConnection object at 0x7fc82b68ed60>, 'Connection to es-sg-6wr2adiqj0002qgdj.public.elasticsearch.aliyuncs.com timed out. (connect timeout=10)')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/loratech/DROID_V2.1/es_logging/logger.py", line 77, in log
+    res = self.es.index(index='droidv2-logs', document=log)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/client/utils.py", line 301, in _wrapped
+    return func(*args, params=params, headers=headers, **kwargs)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/client/__init__.py", line 405, in index
+    return self.transport.perform_request(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/transport.py", line 409, in perform_request
+    self._do_verify_elasticsearch(headers=headers, timeout=timeout)
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/transport.py", line 598, in _do_verify_elasticsearch
+    raise error
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/transport.py", line 561, in _do_verify_elasticsearch
+    _, info_headers, info_response = conn.perform_request(
+  File "/home/loratech/DROID_V2.1/env/lib/python3.8/site-packages/elasticsearch/connection/http_urllib3.py", line 276, in perform_request
+    raise ConnectionError("N/A", str(e), e)
+elasticsearch.exceptions.ConnectionError: ConnectionError((<urllib3.connection.VerifiedHTTPSConnection object at 0x7fc82b68ed60>, 'Connection to es-sg-6wr2adiqj0002qgdj.public.elasticsearch.aliyuncs.com timed out. (connect timeout=10)')) caused by: ConnectTimeoutError((<urllib3.connection.VerifiedHTTPSConnection object at 0x7fc82b68ed60>, 'Connection to es-sg-6wr2adiqj0002qgdj.public.elasticsearch.aliyuncs.com timed out. (connect timeout=10)'))

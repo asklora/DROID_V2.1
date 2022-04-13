@@ -167,7 +167,7 @@ def firebase_universe_update(ticker=None, currency_code=None,update_firebase=Tru
         "pb", "pe_forecast", "pe_ratio", "revenue_per_share", "wk52_high", "wk52_low",
         "open", "high", "low", "close", "intraday_date", "intraday_ask", "intraday_bid",
         "latest_price_change", "intraday_time", "last_date", "capital_change",
-        "latest_price", "volume"]].to_dict("records")
+        "latest_price", "volume", "latest_net_change"]].to_dict("records")
         price = pd.DataFrame({"ticker":[tick], "price":[price_data[0]]}, index=[0])
         price_df = price_df.append(price)
     price_df = price_df.reset_index(inplace=False)

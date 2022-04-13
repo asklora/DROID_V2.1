@@ -1,2 +1,276 @@
-sudo: /home/loratech/droid2env/bin/python3: command not found
-make: *** [Makefile:43: usd_prep] Error 1
+using prod db
+droid-v2-production-cluster.cluster-cy4dofwtnffp.ap-east-1.rds.amazonaws.com
+2022-04-13 04:31:05 pc2 root[2210128] WARNING celery role using -> slave
+2022-04-13 04:31:08 pc2 root[2210128] INFO AsyncORM: patching models
+2022-04-13 : === ['USD'] DATA PREPERATION STARTED ===
+The start date is set as: 2021-04-30
+The end date is set as: 2022-04-13
+2021-04-30 is finished.
+2021-05-03 is finished.
+2021-05-04 is finished.
+2021-05-05 is finished.
+2021-05-06 is finished.
+2021-05-07 is finished.
+2021-05-10 is finished.
+2021-05-11 is finished.
+2021-05-12 is finished.
+2021-05-13 is finished.
+2021-05-14 is finished.
+2021-05-17 is finished.
+2021-05-18 is finished.
+2021-05-19 is finished.
+2021-05-20 is finished.
+2021-05-21 is finished.
+2021-05-24 is finished.
+2021-05-25 is finished.
+2021-05-26 is finished.
+2021-05-27 is finished.
+2021-05-28 is finished.
+2021-06-01 is finished.
+2021-06-02 is finished.
+2021-06-03 is finished.
+2021-06-04 is finished.
+2021-06-07 is finished.
+2021-06-08 is finished.
+2021-06-09 is finished.
+2021-06-10 is finished.
+2021-06-11 is finished.
+2021-06-14 is finished.
+2021-06-15 is finished.
+2021-06-16 is finished.
+2021-06-17 is finished.
+2021-06-18 is finished.
+2021-06-21 is finished.
+2021-06-22 is finished.
+2021-06-23 is finished.
+2021-06-24 is finished.
+2021-06-25 is finished.
+2021-06-28 is finished.
+2021-06-29 is finished.
+2021-06-30 is finished.
+2021-07-01 is finished.
+2021-07-02 is finished.
+2021-07-06 is finished.
+2021-07-07 is finished.
+2021-07-08 is finished.
+2021-07-09 is finished.
+2021-07-12 is finished.
+2021-07-13 is finished.
+2021-07-14 is finished.
+2021-07-15 is finished.
+2021-07-16 is finished.
+2021-07-19 is finished.
+2021-07-20 is finished.
+2021-07-21 is finished.
+2021-07-22 is finished.
+2021-07-23 is finished.
+2021-07-26 is finished.
+2021-07-27 is finished.
+2021-07-28 is finished.
+2021-07-29 is finished.
+2021-07-30 is finished.
+2021-08-02 is finished.
+2021-08-03 is finished.
+2021-08-04 is finished.
+2021-08-05 is finished.
+2021-08-06 is finished.
+2021-08-09 is finished.
+2021-08-10 is finished.
+2021-08-11 is finished.
+2021-08-12 is finished.
+2021-08-13 is finished.
+2021-08-16 is finished.
+2021-08-17 is finished.
+2021-08-18 is finished.
+2021-08-19 is finished.
+2021-08-20 is finished.
+2021-08-23 is finished.
+2021-08-24 is finished.
+2021-08-25 is finished.
+2021-08-26 is finished.
+2021-08-27 is finished.
+2021-08-30 is finished.
+2021-08-31 is finished.
+2021-09-01 is finished.
+2021-09-02 is finished.
+2021-09-03 is finished.
+2021-09-07 is finished.
+2021-09-08 is finished.
+2021-09-09 is finished.
+2021-09-10 is finished.
+2021-09-13 is finished.
+2021-09-14 is finished.
+2021-09-15 is finished.
+2021-09-16 is finished.
+2021-09-17 is finished.
+2021-09-20 is finished.
+2021-09-21 is finished.
+2021-09-22 is finished.
+2021-09-23 is finished.
+2021-09-24 is finished.
+2021-09-27 is finished.
+2021-09-28 is finished.
+2021-09-29 is finished.
+2021-09-30 is finished.
+2021-10-01 is finished.
+2021-10-04 is finished.
+2021-10-05 is finished.
+2021-10-06 is finished.
+2021-10-07 is finished.
+2021-10-08 is finished.
+2021-10-11 is finished.
+2021-10-12 is finished.
+2021-10-13 is finished.
+2021-10-14 is finished.
+2021-10-15 is finished.
+2021-10-18 is finished.
+2021-10-19 is finished.
+2021-10-20 is finished.
+2021-10-21 is finished.
+2021-10-22 is finished.
+2021-10-25 is finished.
+2021-10-26 is finished.
+2021-10-27 is finished.
+2021-10-28 is finished.
+2021-10-29 is finished.
+2021-11-01 is finished.
+2021-11-02 is finished.
+2021-11-03 is finished.
+2021-11-04 is finished.
+2021-11-05 is finished.
+2021-11-08 is finished.
+2021-11-09 is finished.
+2021-11-10 is finished.
+2021-11-11 is finished.
+2021-11-12 is finished.
+2021-11-15 is finished.
+2021-11-16 is finished.
+2021-11-17 is finished.
+2021-11-18 is finished.
+2021-11-19 is finished.
+2021-11-22 is finished.
+2021-11-23 is finished.
+2021-11-24 is finished.
+2021-11-26 is finished.
+2021-11-29 is finished.
+2021-11-30 is finished.
+2021-12-01 is finished.
+2021-12-02 is finished.
+2021-12-03 is finished.
+2021-12-06 is finished.
+2021-12-07 is finished.
+2021-12-08 is finished.
+2021-12-09 is finished.
+2021-12-10 is finished.
+2021-12-13 is finished.
+2021-12-14 is finished.
+2021-12-15 is finished.
+2021-12-16 is finished.
+2021-12-17 is finished.
+2021-12-20 is finished.
+2021-12-21 is finished.
+2021-12-22 is finished.
+2021-12-23 is finished.
+2021-12-27 is finished.
+2021-12-28 is finished.
+2021-12-29 is finished.
+2021-12-30 is finished.
+2021-12-31 is finished.
+2022-01-03 is finished.
+2022-01-04 is finished.
+2022-01-05 is finished.
+2022-01-06 is finished.
+2022-01-07 is finished.
+2022-01-10 is finished.
+2022-01-11 is finished.
+2022-01-12 is finished.
+2022-01-13 is finished.
+2022-01-14 is finished.
+2022-01-18 is finished.
+2022-01-19 is finished.
+2022-01-20 is finished.
+2022-01-21 is finished.
+2022-01-24 is finished.
+2022-01-25 is finished.
+2022-01-26 is finished.
+2022-01-27 is finished.
+2022-01-28 is finished.
+2022-01-31 is finished.
+2022-02-01 is finished.
+2022-02-02 is finished.
+2022-02-03 is finished.
+2022-02-04 is finished.
+2022-02-07 is finished.
+2022-02-08 is finished.
+2022-02-09 is finished.
+2022-02-10 is finished.
+2022-02-11 is finished.
+2022-02-14 is finished.
+2022-02-15 is finished.
+2022-02-16 is finished.
+2022-02-17 is finished.
+2022-02-18 is finished.
+2022-02-22 is finished.
+2022-02-23 is finished.
+2022-02-24 is finished.
+2022-02-25 is finished.
+2022-02-28 is finished.
+2022-03-01 is finished.
+2022-03-02 is finished.
+2022-03-03 is finished.
+2022-03-04 is finished.
+2022-03-07 is finished.
+2022-03-08 is finished.
+2022-03-09 is finished.
+2022-03-10 is finished.
+2022-03-11 is finished.
+2022-03-14 is finished.
+2022-03-15 is finished.
+2022-03-16 is finished.
+2022-03-17 is finished.
+2022-03-18 is finished.
+2022-03-21 is finished.
+2022-03-22 is finished.
+2022-03-23 is finished.
+2022-03-24 is finished.
+2022-03-25 is finished.
+2022-03-28 is finished.
+2022-03-29 is finished.
+2022-03-30 is finished.
+2022-03-31 is finished.
+2022-04-01 is finished.
+2022-04-04 is finished.
+2022-04-05 is finished.
+2022-04-06 is finished.
+2022-04-07 is finished.
+2022-04-08 is finished.
+2022-04-11 is finished.
+2022-04-12 is finished.
+2022-04-13 is finished.
+        ticker trading_day  ...  c2c_vol_252_504_x            uid
+0         .SPX  2021-04-30  ...           0.317799    20210430SPX
+1            A  2021-04-30  ...           0.317799      20210430A
+2        AAL.O  2021-04-30  ...           0.317799   20210430AALO
+3          AAP  2021-04-30  ...           0.317799    20210430AAP
+4       AAPL.O  2021-04-30  ...           0.317799  20210430AAPLO
+...        ...         ...  ...                ...            ...
+127557  ZBRA.O  2022-04-12  ...           0.189457  20220412ZBRAO
+127558  ZION.O  2022-04-12  ...           0.189457  20220412ZIONO
+127559    ZM.O  2022-04-12  ...           0.189457    20220412ZMO
+127560    ZS.O  2022-04-12  ...           0.189457    20220412ZSO
+127561     ZTS  2022-04-12  ...           0.189457    20220412ZTS
+
+[127562 rows x 42 columns]
+=== Upsert Data to Database on Table bot_data ===
+2022-04-13 04:49:39 pc2 alembic.runtime.migration[2210128] INFO Context impl PostgresqlImpl.
+2022-04-13 04:49:39 pc2 alembic.runtime.migration[2210128] INFO Will assume transactional DDL.
+DATA UPSERT TO bot_data
+2022-04-13 : === ['USD'] DATA PREPERATION DAILY COMPLETED ===
+2022-04-13 : === DATA PREPERATION CHECK NEW TICKER STARTED ===
+The start date is set as: 2018-04-13
+The end date is set as: 2022-04-13
+create connections to db
+trigger functions latest_bot_data
+functions latest_bot_data succeed
+close connections
+COMPLETE
