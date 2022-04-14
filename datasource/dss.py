@@ -173,8 +173,8 @@ def get_data_from_reuters(
     note = _jResp["Notes"][0].encode("utf-8")
     s3 = boto3.client(
         "s3",
-        aws_access_key_id="AKIA2XEOTUNGWEQ43TB6",
-        aws_secret_access_key="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",
+        aws_access_key_id="AKIA2XEOTUNG3F3FQ2NW",
+        aws_secret_access_key="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",
         region_name="ap-east-1",
     )
     file_name = pd.Timestamp.now()

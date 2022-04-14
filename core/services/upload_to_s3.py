@@ -3,7 +3,7 @@ import boto3
 import pandas as pd
 
 def s3_uploader(content, dir_name, bucket_name=None, filename=None):
-    s3 = boto3.client('s3', aws_access_key_id='AKIA2XEOTUNGWEQ43TB6' ,aws_secret_access_key='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', region_name='ap-east-1')
+    s3 = boto3.client('s3', aws_access_key_id='AKIA2XEOTUNG3F3FQ2NW' ,aws_secret_access_key='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', region_name='ap-east-1')
     content = content.encode('utf-8')
 
     if dir_name == None:
