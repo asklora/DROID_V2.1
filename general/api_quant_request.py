@@ -7,8 +7,8 @@ import json
 from retry import retry
 import time
 
-api_url = "http://quant.loratechai.com:8000"
-# api_url = "http://8.210.201.22:8000"
+# api_url = "http://quant.loratechai.com:8000"
+api_url = "http://8.210.201.22:8000"
 
 env = Env()
 load_dotenv()
