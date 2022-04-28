@@ -37,9 +37,9 @@ def get_ai_score_factor(tickers):
     content = json.loads(response.content)
     print('---> Finished')
     data = pd.DataFrame(content["hits"])
-    for i in ["positive", "negative"]:
-        data[f"{i}_factors"] = pd.json_normalize(data["details"], max_level=1)[f"currency.{i}"]
-        data[f"{i}_factors"] = [list(i.keys()) if i!="NA" else [] for i in data[f"{i}_factors"]]
+    for pn in ["positive", "negative"]:
+        data[f"{pn}_factors"] = pd.json_normalize(data["details"], max_level=1)[f"currency.{pn}"].fillna("NA")
+        data[f"{pn}_factors"] = [list(i.keys()) if ((i != "NA") & (len(i) > 0)) else [] for i in data[f"{pn}_factors"]]
     return data.drop(columns=["details"])
 
 @retry(delay=1)
@@ -65,8 +65,10 @@ def get_industry_group():
 
 if __name__ == '__main__':
 
-    tickers = ["AAPL.O", "TSLA.O"]
-    print(get_ai_score(tickers, fields=["ai_score", "ai_score2"]))
+    response = requests.get(f"{api_url}/universe/?field=ticker", headers=headers)
+    tickers = json.loads(response.content)
+    tickers = pd.DataFrame(tickers["hits"])['ticker'].to_list()
+    # print(get_ai_score(tickers, fields=["ai_score", "ai_score2"]))
     print(get_ai_score_factor(tickers))
-    print(get_industry())
-    print(get_industry_group())
+    # print(get_industry())
+    # print(get_industry_group())
