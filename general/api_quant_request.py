@@ -7,17 +7,19 @@ import json
 from retry import retry
 import time
 
-# api_url = "http://quant.loratechai.com:8000"
-api_url = "http://8.210.201.22:8000"
+api_url = "http://quant.loratechai.com:8000"
+# api_url = "http://8.210.201.22:8000"
+# api_url = "http://192.168.49.2:31260"
 
 env = Env()
 load_dotenv()
-headers={"x-secret-key": os.getenv("API_AUTH")}
+headers = {"x-secret-key": os.getenv("API_AUTH")}
+print(headers)
 
 @retry(delay=1)
 def get_ai_score(tickers, fields):
     print(f"API request: {fields} from /ai_score")
-    query = {'tickers': tickers, 'fields': fields, "weeks_to_expire": [4]}
+    query = {'tickers': tickers, 'fields': fields, "weeks_to_expire": [8]}
     response = requests.get(f"{api_url}/ai_score/", params=query, headers=headers)
     content = json.loads(response.content)
     print('---> Finished')
@@ -30,7 +32,7 @@ def get_ai_score(tickers, fields):
 def get_ai_score_factor(tickers):
     ''' get positive / negative factors from API '''
     print(f"API request: /ai_score_factor")
-    query = {'tickers': tickers, "weeks_to_expire": 4}      # ai_score using 4w
+    query = {'tickers': tickers, "weeks_to_expire": 8}      # ai_score using 4w
     response = requests.get(f"{api_url}/ai_score_factor/", params=query, headers=headers)
     content = json.loads(response.content)
     print('---> Finished')
@@ -42,7 +44,7 @@ def get_ai_score_factor(tickers):
 
 @retry(delay=1)
 def get_industry():
-    ''' get industry code/name from API '''
+    """ get industry code/name from API """
     print(f"API request: industry_name from /industries")
     response = requests.get(f"{api_url}/industries/?industry_code_length=8", headers=headers)
     content = json.loads(response.content)
@@ -63,7 +65,7 @@ def get_industry_group():
 
 if __name__ == '__main__':
 
-    tickers = ["AAPL.O", "TSLA.O", ".SPX"]
+    tickers = ["AAPL.O", "TSLA.O"]
     print(get_ai_score(tickers, fields=["ai_score", "ai_score2"]))
     print(get_ai_score_factor(tickers))
     print(get_industry())
