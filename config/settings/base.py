@@ -83,11 +83,11 @@ ADDITIONAL_APPS = [
 ]
 CORE_APPS = [
     "core.djangomodule",
-    "core.bot",
+    # "core.bot",
     # "core.services",
     # "core.universe",
     # "core.user",
-    "core.master",
+    # "core.master",
     # "core.topstock",
     # "core.Clients",
     # "core.orders",
