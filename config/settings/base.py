@@ -58,13 +58,13 @@ CORS_ALLOW_ALL_ORIGINS = True
 Active applications
 """
 DJANGO_DEFAULT_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "django.contrib.postgres",
+    # "django.contrib.admin",
+    # "django.contrib.auth",
+    # "django.contrib.contenttypes",
+    # "django.contrib.sessions",
+    # "django.contrib.messages",
+    # "django.contrib.staticfiles",
+    # "django.contrib.postgres",
 ]
 ADDITIONAL_APPS = [
     # 'django_celery_results',
