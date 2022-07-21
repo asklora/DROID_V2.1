@@ -159,6 +159,7 @@ def update_fundamentals_score_in_droid_universe_daily(data, table):
     # session.commit()
     # engine.dispose()
     # print(f"DATA UPDATE TO {table}")
+    pass
 
 def fill_null_company_desc_with_ticker_name():
     query = f"update {get_universe_table_name()} set company_description=ticker_fullname "
@@ -209,6 +210,7 @@ def clean_latest_price():
     # query = f"delete from {table_name} where ticker not in (select ticker from universe where is_active = True)"
     # data = execute_query(query, table=table_name)
     # return data
+    pass
 
 def update_capital_change(ticker):
     table_name = get_latest_price_table_name()
