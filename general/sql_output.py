@@ -140,25 +140,25 @@ def update_universe_consolidated_data_to_database(data, table):
         execute_query(query, table=table)
     return True
 
-# def update_fundamentals_score_in_droid_universe_daily(data, table):
-#     print(f"=== Update Data to Database on Table {table} ===")
-#     data = data[["ticker","mkt_cap"]]
-#     resultdict = data.to_dict("records")
-#     engine = db.create_engine(DB_WRITE)
-#     sm = sessionmaker(bind=engine)
-#     session = sm()
-#     metadata = db.MetaData(bind=engine)
-#     datatable = db.Table(table, metadata, autoload=True)
-#     stmt = db.sql.update(datatable).where(datatable.c.ticker == bindparam("ticker")).values({
-#         "mkt_cap": bindparam("mkt_cap"),
-#         "ticker": bindparam("ticker")
-#
-#     })
-#     session.execute(stmt,resultdict)
-#     session.flush()
-#     session.commit()
-#     engine.dispose()
-#     print(f"DATA UPDATE TO {table}")
+def update_fundamentals_score_in_droid_universe_daily(data, table):
+    # print(f"=== Update Data to Database on Table {table} ===")
+    # data = data[["ticker","mkt_cap"]]
+    # resultdict = data.to_dict("records")
+    # engine = db.create_engine(DB_WRITE)
+    # sm = sessionmaker(bind=engine)
+    # session = sm()
+    # metadata = db.MetaData(bind=engine)
+    # datatable = db.Table(table, metadata, autoload=True)
+    # stmt = db.sql.update(datatable).where(datatable.c.ticker == bindparam("ticker")).values({
+    #     "mkt_cap": bindparam("mkt_cap"),
+    #     "ticker": bindparam("ticker")
+    #
+    # })
+    # session.execute(stmt,resultdict)
+    # session.flush()
+    # session.commit()
+    # engine.dispose()
+    # print(f"DATA UPDATE TO {table}")
 
 def fill_null_company_desc_with_ticker_name():
     query = f"update {get_universe_table_name()} set company_description=ticker_fullname "
@@ -204,11 +204,11 @@ def delete_old_backtest_on_database():
     data = execute_query(query, table=get_bot_backtest_table_name())
     return data
 
-# def clean_latest_price():
-#     table_name = get_latest_price_table_name()
-#     query = f"delete from {table_name} where ticker not in (select ticker from universe where is_active = True)"
-#     data = execute_query(query, table=table_name)
-#     return data
+def clean_latest_price():
+    # table_name = get_latest_price_table_name()
+    # query = f"delete from {table_name} where ticker not in (select ticker from universe where is_active = True)"
+    # data = execute_query(query, table=table_name)
+    # return data
 
 def update_capital_change(ticker):
     table_name = get_latest_price_table_name()
@@ -330,17 +330,17 @@ def update_all_data_by_capital_change(ticker, trading_day, capital_change, price
 #     except Exception as e:
 #         print(e)
 #         return False
-#
-# def update_ingestion_update_time(table):
-#     ''' decorator for update update_ingestion_update_time '''
-#
-#     def decorator(func):
-#         def inner(*args, **kwargs):
-#             __update_ingestion_update_time(table, finish=False)
-#             func(*args, **kwargs)
-#             __update_ingestion_update_time(table, finish=True)
-#         return inner
-#     return decorator
+
+def update_ingestion_update_time(table):
+    ''' decorator for update update_ingestion_update_time '''
+
+    # def decorator(func):
+    #     def inner(*args, **kwargs):
+    #         __update_ingestion_update_time(table, finish=False)
+    #         func(*args, **kwargs)
+    #         __update_ingestion_update_time(table, finish=True)
+    #     return inner
+    # return decorator
 
 def clean_daily_profit_history():
     table_name = get_user_profit_history_table_name()
