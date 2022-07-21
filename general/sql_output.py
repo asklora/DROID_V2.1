@@ -260,49 +260,50 @@ def update_all_data_by_capital_change(ticker, trading_day, capital_change, price
         row["order_summary"]["hedge_shares"] = round(row["order_summary"]["hedge_shares"] / capital_change)
     upsert_data_to_database(performance, table_name, "performance_uid", how="update", cpu_count=True, Text=True)
 
-# def update_ingestion_count(source='dsws', n_ingest=0, dsws=True):
-#     ''' record total number of ingestion of every month
-#
-#     Parameters
-#     ----------
-#     source :        Str, data source name (default=dsws)
-#     n_ingest :      Int, num of data ingested (including Null returns)
-#     dsws :          Boolean, determine which EIKON-DSWS account used for ingestion (default=True)
-#
-#     Returns
-#     -------
-#     append ingestion record df to Alibaba Prod DB "ingestion_count"
-#
-#     '''
-#     try:
-#         source_name = '{}{}'.format(source, 1-int(dsws))
-#         ingest_dict = {'source': source_name,       # default = #0 account
-#                        'update_month': str_to_date(dateNow()[:-2]+'01'),
-#                        'count': n_ingest,
-#                        'last_update': timestampNow(),
-#                        }
-#         data_type = {"tbl_name": TEXT}
-#         print(f"=== [{n_ingest}] new ingestion from [{source_name}] ===")
-#
-#         engine = create_engine(DB_URL_ALIBABA_PROD, max_overflow=-1, isolation_level="AUTOCOMMIT")
-#         conn = engine.connect()
-#         old_count = pd.read_sql(f"SELECT count FROM ingestion_count WHERE source='{source_name}' "
-#                            f"AND update_month='{ingest_dict['update_month']}'", conn)["count"]
-#         if len(old_count)==0:
-#             old_count = 0
-#         ingest_dict["count"] += old_count
-#         data = pd.DataFrame(ingest_dict, index=[0])
-#         data["uid"] = data['source'] + data['update_month'].astype(str).str.replace("-","")
-#         upsert(engine=engine,
-#                df=data.set_index("uid"),
-#                table_name="ingestion_count",
-#                if_row_exists="update",
-#                dtype=data_type)
-#         engine.dispose()
-#         return True
-#     except Exception as e:
-#         print(e)
-#         report_to_slack(f'=== update_ingestion_count ERROR === :{e}', 'U026B04RB3J')
+def update_ingestion_count(source='dsws', n_ingest=0, dsws=True):
+    ''' record total number of ingestion of every month
+
+    Parameters
+    ----------
+    source :        Str, data source name (default=dsws)
+    n_ingest :      Int, num of data ingested (including Null returns)
+    dsws :          Boolean, determine which EIKON-DSWS account used for ingestion (default=True)
+
+    Returns
+    -------
+    append ingestion record df to Alibaba Prod DB "ingestion_count"
+
+    '''
+    # try:
+    #     source_name = '{}{}'.format(source, 1-int(dsws))
+    #     ingest_dict = {'source': source_name,       # default = #0 account
+    #                    'update_month': str_to_date(dateNow()[:-2]+'01'),
+    #                    'count': n_ingest,
+    #                    'last_update': timestampNow(),
+    #                    }
+    #     data_type = {"tbl_name": TEXT}
+    #     print(f"=== [{n_ingest}] new ingestion from [{source_name}] ===")
+    #
+    #     engine = create_engine(DB_URL_ALIBABA_PROD, max_overflow=-1, isolation_level="AUTOCOMMIT")
+    #     conn = engine.connect()
+    #     old_count = pd.read_sql(f"SELECT count FROM ingestion_count WHERE source='{source_name}' "
+    #                        f"AND update_month='{ingest_dict['update_month']}'", conn)["count"]
+    #     if len(old_count)==0:
+    #         old_count = 0
+    #     ingest_dict["count"] += old_count
+    #     data = pd.DataFrame(ingest_dict, index=[0])
+    #     data["uid"] = data['source'] + data['update_month'].astype(str).str.replace("-","")
+    #     upsert(engine=engine,
+    #            df=data.set_index("uid"),
+    #            table_name="ingestion_count",
+    #            if_row_exists="update",
+    #            dtype=data_type)
+    #     engine.dispose()
+    #     return True
+    # except Exception as e:
+    #     print(e)
+    #     report_to_slack(f'=== update_ingestion_count ERROR === :{e}', 'U026B04RB3J')
+    pass
 #
 # def __update_ingestion_update_time(table, finish=False):
 #     ''' update last update time for tables
