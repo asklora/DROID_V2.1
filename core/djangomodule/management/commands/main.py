@@ -4,9 +4,9 @@ from django.core.management.base import BaseCommand
 from general.date_process import dateNow, str_to_date
 from general.sql_process import do_function
 from general.sql_output import activate_position_ticker, fill_null_quandl_symbol
-from ingestion.master_multiple import master_multiple_update
-from ingestion.master_tac import master_tac_update
-from ingestion.master_ohlcvtr import master_ohlctr_update
+# from ingestion.master_multiple import master_multiple_update
+# from ingestion.master_tac import master_tac_update
+# from ingestion.master_ohlcvtr import master_ohlctr_update
 from bot.preprocess import (
     dividend_daily_update, 
     interest_daily_update

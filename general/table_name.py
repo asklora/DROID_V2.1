@@ -2,6 +2,8 @@
 Utility functions to get database table names
 '''
 
+from utils import models
+
 def get_region_table_name():
     return "region"
 
@@ -51,10 +53,10 @@ def get_industry_worldscope_table_name():
     return "industry_worldscope"
 
 def get_master_ohlcvtr_table_name():
-    return "master_ohlcvtr"
+    return models.MasterOhlcvtr.__table__.schema + '.' + models.MasterOhlcvtr.__table__.name
 
 def get_master_tac_table_name():
-    return "master_tac"
+    return models.MasterTac.__table__.schema + '.' + models.MasterTac.__table__.name
 
 def get_master_multiple_table_name():
     return "master_multiple"
@@ -133,37 +135,37 @@ def get_top_stock_models_stock_table_name():
 
 #Bot Backtest Table
 def get_bot_backtest_table_name():
-    return "bot_backtest"
+    return models.BotBacktest.__table__.schema + '.' + models.BotBacktest.__table__.name
 
 def get_bot_uno_backtest_table_name():
-    return "bot_uno_backtest"
+    return models.UnoBacktest.__table__.schema + '.' + models.UnoBacktest.__table__.name
 
 def get_bot_ucdc_backtest_table_name():
-    return "bot_ucdc_backtest"
+    return models.UcdcBacktest.__table__.schema + '.' + models.UcdcBacktest.__table__.name
 
 def get_bot_classic_backtest_table_name():
-    return "bot_classic_backtest"
+    return models.ClassicBacktest.__table__.schema + '.' + models.ClassicBacktest.__table__.name
 
 def get_bot_ranking_table_name():
-    return "bot_ranking"
+    return models.BotRanking.__table__.schema + '.' + models.BotRanking.__table__.name
 
 def get_bot_latest_ranking_table_name():
-    return "latest_bot_ranking"
+    return models.LatestBotRanking.__table__.schema + '.' + models.LatestBotRanking.__table__.name
 
 def get_latest_bot_data_table_name():
-    return "latest_bot_data"
+    return models.LatestBotData.__table__.schema + '.' + models.LatestBotData.__table__.name
 
 def get_bot_data_table_name():
-    return "bot_data"
+    return models.BotData.__table__.schema + '.' + models.BotData.__table__.name
 
 def get_data_vol_surface_table_name():
-    return "data_vol_surface"
+    return models.DataVolSurface.__table__.schema + '.' + models.DataVolSurface.__table__.name
 
 def get_data_vol_surface_inferred_table_name():
-    return "data_vol_surface_inferred"
+    return models.DataVolSurfaceInferred.__table__.schema + '.' + models.DataVolSurfaceInferred.__table__.name
 
 def get_bot_statistic_table_name():
-    return "bot_statistic"
+    return models.BotStatistic.__table__.schema + '.' + models.BotStatistic.__table__.name
 
 def get_client_table_name():
     return "client"
@@ -172,31 +174,31 @@ def get_user_clients_table_name():
     return "user_clients"
 
 def get_data_dividend_table_name():
-    return "data_dividend"
+    return models.DataDividend.__table__.schema + '.' + models.DataDividend.__table__.name
 
 def get_data_dividend_daily_rates_table_name():
-    return "data_dividend_daily_rates"
+    return models.DataDividendDailyRate.__table__.schema + '.' + models.DataDividendDailyRate.__table__.name
 
 def get_data_interest_table_name():
-    return "data_interest"
+    return models.DataInterest.__table__.schema + '.' + models.DataInterest.__table__.name
 
 def get_data_interest_daily_rates_table_name():
-    return "data_interest_daily_rates"
+    return models.DataInterestDailyRate.__table__.schema + '.' + models.DataInterestDailyRate.__table__.name
 
 def get_latest_vol_table_name():
-    return "latest_vol"
+    return models.LatestVol.__table__.schema + '.' + models.LatestVol.__table__.name
 
 def get_latest_bot_update_table_name():
-    return "latest_bot_update"
+    return models.LatestBotUpdate.__table__.schema + '.' + models.LatestBotUpdate.__table__.name
 
 def get_latest_bot_ranking_table_name():
-    return "latest_bot_ranking"
+    return models.LatestBotRanking.__table__.schema + '.' + models.LatestBotRanking.__table__.name
 
 def get_bot_type_table_name():
-    return "bot_type"
+    return models.BotType.__table__.schema + '.' + models.BotType.__table__.name
 
 def get_bot_option_type_table_name():
-    return "bot_option_type"
+    return models.BotOptionType.__table__.schema + '.' + models.BotOptionType.__table__.name
 
 def get_orders_table_name():
     return "orders"

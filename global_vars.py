@@ -17,11 +17,16 @@ from datetime import datetime
 
 MONGO_URL = "mongodb+srv://postgres:postgres@cluster0.b0com.mongodb.net/test?retryWrites=true&w=majority"
 
-DB_URL_READ = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+os.getenv("DBHOSTREAD")+":"+os.getenv("DBPORT")+"/"+os.getenv("DBUSER")
-DB_URL_WRITE = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+os.getenv("DBHOSTWRITE")+":"+os.getenv("DBPORT")+"/"+os.getenv("DBUSER")
-DB_URL_ALIBABA_DEV = "postgres://asklora:AskLORAv2@pgm-3nse9b275d7vr3u18o.pg.rds.aliyuncs.com:1921/postgres"
-DB_URL_ALIBABA_PROD = "postgres://asklora:AskLORAv2@pgm-3nscoa6v8c876g5xlo.pg.rds.aliyuncs.com:1924/postgres"
-DB_URL_LOCAL = "postgres://postgres:AskLORAv2@localhost:5432/postgres"
+# DB_URL_READ = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+os.getenv("DBHOSTREAD")+":"+os.getenv("DBPORT")+"/"+os.getenv("DBUSER")
+# DB_URL_WRITE = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+os.getenv("DBHOSTWRITE")+":"+os.getenv("DBPORT")+"/"+os.getenv("DBUSER")
+# DB_URL_ALIBABA_DEV = "postgres://asklora:AskLORAv2@pgm-3nse9b275d7vr3u18o.pg.rds.aliyuncs.com:1921/postgres"
+# DB_URL_ALIBABA_PROD = "postgres://asklora:AskLORAv2@pgm-3nscoa6v8c876g5xlo.pg.rds.aliyuncs.com:1924/postgres"
+# DB_URL_LOCAL = "postgres://postgres:AskLORAv2@localhost:5432/postgres"
+
+DB_URL_ALIBABA_DEV = "postgres://postgres:AskLORAv2@192.168.1.151:5432/quant_dev"
+DB_URL_ALIBABA_PROD = "postgres://postgres:AskLORAv2@192.168.1.151:5432/quant_staging"
+DB_URL_LOCAL = "postgres://postgres:AskLORAv2@192.168.1.151:5432/quant_staging"
+
 DBPASSWORDHKPOLYU="DLvalue123"
 DBHOSTHKPOLYU="hkpolyu.cgqhw7rofrpo.ap-northeast-2.rds.amazonaws.com"
 

@@ -60,48 +60,48 @@ from general.table_name import (
 
 
 from core.djangomodule.general import logging
+from utils import read_query
 
-
-def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=settings.SQLPRINT, local=False):
-    """Base function for database query
-
-    Args:
-        query (String): Raw SQL query to be performed
-        table (String, optional): Database table name. Defaults to get_universe_table_name().
-        cpu_counts (bool, optional): Use cpu counts from the running system. Defaults to False.
-        dlp (bool, optional): Use DLP database. Defaults to False.
-        alibaba (bool, optional): Use Alibaba database. Defaults to False.
-        prints (bool, optional): Print detailed data. Defaults to True.
-
-    Returns:
-        DataFrame: Resulting data from the query
-    """
-
-    if(prints):
-        logging.info(f"Get Data From Database on {table} table")
-    if alibaba:
-        dbcon = alibaba_db_url
-    elif local:
-        dbcon = local_db_url
-    else:
-        dbcon = db_read
-
-    if cpu_counts:
-        engine = create_engine(
-            dbcon, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT"
-        )
-    else:
-        engine = create_engine(dbcon, max_overflow=-1,
-                               isolation_level="AUTOCOMMIT")
-
-    with engine.connect() as conn:
-        data = pd.read_sql(query, con=conn)
-    engine.dispose()
-    data = pd.DataFrame(data)
-
-    if prints:
-        logging.info("Total Data = " + str(len(data)))
-    return data
+# def read_query(query, table=get_universe_table_name(), cpu_counts=False, alibaba=False, prints=settings.SQLPRINT, local=False):
+#     """Base function for database query
+#
+#     Args:
+#         query (String): Raw SQL query to be performed
+#         table (String, optional): Database table name. Defaults to get_universe_table_name().
+#         cpu_counts (bool, optional): Use cpu counts from the running system. Defaults to False.
+#         dlp (bool, optional): Use DLP database. Defaults to False.
+#         alibaba (bool, optional): Use Alibaba database. Defaults to False.
+#         prints (bool, optional): Print detailed data. Defaults to True.
+#
+#     Returns:
+#         DataFrame: Resulting data from the query
+#     """
+#
+#     if(prints):
+#         logging.info(f"Get Data From Database on {table} table")
+#     if alibaba:
+#         dbcon = alibaba_db_url
+#     elif local:
+#         dbcon = local_db_url
+#     else:
+#         dbcon = db_read
+#
+#     if cpu_counts:
+#         engine = create_engine(
+#             dbcon, pool_size=cpu_count(), max_overflow=-1, isolation_level="AUTOCOMMIT"
+#         )
+#     else:
+#         engine = create_engine(dbcon, max_overflow=-1,
+#                                isolation_level="AUTOCOMMIT")
+#
+#     with engine.connect() as conn:
+#         data = pd.read_sql(query, con=conn)
+#     engine.dispose()
+#     data = pd.DataFrame(data)
+#
+#     if prints:
+#         logging.info("Total Data = " + str(len(data)))
+#     return data
 
 
 def check_start_end_date(start_date, end_date):

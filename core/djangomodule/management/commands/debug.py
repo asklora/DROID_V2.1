@@ -24,6 +24,12 @@ from datasource.rkd import RkdData
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+
+        from general.firestore_query import get_all_universe_from_firestore
+        t = get_all_universe_from_firestore()['ticker'].to_list()
+        print(t)
+        breakpoint()
+
         print("Process")
         # run_healthcheck.apply()
         # pending_order_checker(currency=["HKD"])
