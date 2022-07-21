@@ -4,7 +4,7 @@ from core.djangomodule.general import get_cached_data, set_cache_data
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
 from general import table_name
-from general.sql_process import db_read, alibaba_db_url, DB_URL_ALIBABA_PROD, local_db_url
+# from general.sql_process import db_read, alibaba_db_url, DB_URL_ALIBABA_PROD, local_db_url
 from general.date_process import (
     backdate_by_day,
     backdate_by_year,
