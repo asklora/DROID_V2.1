@@ -84,13 +84,13 @@ ADDITIONAL_APPS = [
 CORE_APPS = [
     "core.djangomodule",
     "core.bot",
-    "core.services",
-    "core.universe",
-    "core.user",
+    # "core.services",
+    # "core.universe",
+    # "core.user",
     "core.master",
-    "core.topstock",
-    "core.Clients",
-    "core.orders",
+    # "core.topstock",
+    # "core.Clients",
+    # "core.orders",
 ]
 
 INSTALLED_APPS = DJANGO_DEFAULT_APPS + ADDITIONAL_APPS + CORE_APPS
