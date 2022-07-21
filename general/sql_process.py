@@ -25,22 +25,23 @@
 #     debug_read_endpoint, debug_write_endpoint, debug_port = db.test_url
 #     db_debug_write = "postgres://"+os.getenv("DBNAME")+":"+os.getenv("DBPASSWORD")+"@"+debug_write_endpoint+":"+str(debug_port)+"/"+os.getenv("DBUSER")
 #     return db_debug_write
-#
-# def do_function(func):
-#     engine = create_engine(db_write)
-#     print("create connections to db")
-#     connection = engine.raw_connection()
-#     cursor = connection.cursor()
-#     try:
-#         print(f"trigger functions {func}")
-#         cursor.callproc(func)
-#         cursor.close()
-#         connection.commit()
-#         print(f"functions {func} succeed")
-#     except Exception as e:
-#         print(f"error: {e}")
-#     finally:
-#         print("close connections")
-#         connection.close()
-#         print("COMPLETE")
-#     engine.dispose()
+
+from utils import execute_query
+
+
+def do_function(func: str):
+    # engine = create_engine(db_write)
+    # print("create connections to db")
+    # connection = engine.raw_connection()
+    # cursor = connection.cursor()
+    try:
+        print(f"trigger functions {func}")
+        execute_query(f"SELECT {func}();")
+        print(f"functions {func} succeed")
+    except Exception as e:
+        print(f"error: {e}")
+    finally:
+        print("close connections")
+        # connection.close()
+        print("COMPLETE")
+    # engine.dispose()
