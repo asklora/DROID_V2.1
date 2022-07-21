@@ -1,6 +1,6 @@
 from core.djangomodule.models import BaseTimeStampModel
 from django.db import models
-from .manager import ConsolidatedManager, UniverseManager
+# from .manager import ConsolidatedManager, UniverseManager
 from core.djangomodule.general import generate_id
 from django.db import IntegrityError
 from django.utils import timezone
@@ -170,7 +170,7 @@ class UniverseConsolidated(models.Model):
     permid = models.CharField(max_length=500, blank=True, null=True)
     consolidated_ticker = models.CharField(
         max_length=50, blank=True, null=True)
-    ingestion_manager = ConsolidatedManager()
+    # ingestion_manager = ConsolidatedManager()
     has_data = models.BooleanField(default=False)
     objects = models.Manager()
 
@@ -213,7 +213,7 @@ class Universe(models.Model):
     A group of tickers with their details
     """
     objects = models.Manager()
-    manager = UniverseManager()
+    # manager = UniverseManager()
     ticker = models.CharField(max_length=255, primary_key=True)
     currency_code = models.ForeignKey(Currency, on_delete=models.CASCADE, db_column="currency_code",
                                       related_name="universe_currency_code", blank=True, null=True)
