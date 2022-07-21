@@ -7,71 +7,71 @@ You can use this configuration file by running:
 `python manage.py runserver --settings=config.settings.production`
 """
 
-try:
-    EC2_IP_PUBLIC = requests.get('http://169.254.169.254/latest/meta-data/public-ipv4').text
-    EC2_IP_LOCAL =requests.get('http://169.254.169.254/latest/meta-data/local-ipv4').text
-    ALLOWED_HOSTS.append(EC2_IP_PUBLIC)
-    ALLOWED_HOSTS.append(EC2_IP_LOCAL)
-except requests.exceptions.RequestException:
-    pass
-
-## GCP
-
-firebase_admin.initialize_app(
-    FIREBASE_PROD_CREDS,
-    {
-        "databaseURL": "https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/"
-    },
-)
+# try:
+#     EC2_IP_PUBLIC = requests.get('http://169.254.169.254/latest/meta-data/public-ipv4').text
+#     EC2_IP_LOCAL =requests.get('http://169.254.169.254/latest/meta-data/local-ipv4').text
+#     ALLOWED_HOSTS.append(EC2_IP_PUBLIC)
+#     ALLOWED_HOSTS.append(EC2_IP_LOCAL)
+# except requests.exceptions.RequestException:
+#     pass
+#
+# ## GCP
+#
+# firebase_admin.initialize_app(
+#     FIREBASE_PROD_CREDS,
+#     {
+#         "databaseURL": "https://asklora-android-default-rtdb.asia-southeast1.firebasedatabase.app/"
+#     },
+# )
 
 
 SQLPRINT=False
-CHANNEL_LAYERS = {
-    'default': {
-
-        # Method 2: Via local Redis
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('redis', 6379)],
-            "capacity": 1500,  # default 100
-            "expiry": 2,
-        },
-
-        # Method 3: Via In-memory channel layer
-        # Using this method.
-        # "BACKEND": "channels.layers.InMemoryChannelLayer"
-    },
-}
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
-}
-}
+# CHANNEL_LAYERS = {
+#     'default': {
+#
+#         # Method 2: Via local Redis
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             "hosts": [('redis', 6379)],
+#             "capacity": 1500,  # default 100
+#             "expiry": 2,
+#         },
+#
+#         # Method 3: Via In-memory channel layer
+#         # Using this method.
+#         # "BACKEND": "channels.layers.InMemoryChannelLayer"
+#     },
+# }
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://redis:6379/1",
+# }
+# }
 
 # Databases
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-print('using prod db')
-# read_endpoint, write_endpoint, port = db.prod_url
-MQPASS="NjI0NkZFQzVBQkQwNUE2RERCRjY1QzJGMzA2OUFFMjE1MjAyMkRFMjoxNjMxNjA0MjEwOTY5"
-MQUSER="MjphbXFwLXNnLTZ3cjJjbG1hbzAwMzpMVEFJNXRTaGR4VUhxV3ZCVm9MNVR5amE="
-# CELERY_BROKER_URL = f'amqp://{MQUSER}:{MQPASS}@amqp-sg-6wr2clmao003.mq-amqp.cn-hongkong-3568556-b.aliyuncs.com:5672/master'
-CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@47.242.245.63:5672'
+# print('using prod db')
+# # read_endpoint, write_endpoint, port = db.prod_url
+# MQPASS="NjI0NkZFQzVBQkQwNUE2RERCRjY1QzJGMzA2OUFFMjE1MjAyMkRFMjoxNjMxNjA0MjEwOTY5"
+# MQUSER="MjphbXFwLXNnLTZ3cjJjbG1hbzAwMzpMVEFJNXRTaGR4VUhxV3ZCVm9MNVR5amE="
+# # CELERY_BROKER_URL = f'amqp://{MQUSER}:{MQPASS}@amqp-sg-6wr2clmao003.mq-amqp.cn-hongkong-3568556-b.aliyuncs.com:5672/master'
+# CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@47.242.245.63:5672'
 
 
 # CELERY_SINGLETON_BACKEND_URL = 'redis://redis:6379/1'
-BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 86400}
-WORKER_PREFETCH_MULTIPLIER=1
-CELERY_TASK_DEFAULT_QUEUE ='celery'
-HEDGE_WORKER_DEFAULT_QUEUE ='hedger'
-BROADCAST_WORKER_DEFAULT_QUEUE='broadcaster'
-PORTFOLIO_WORKER_DEFAULT_QUEUE='portofolio'
-UTILS_WORKER_DEFAULT_QUEUE='utils'
-ASKLORA_QUEUE="asklora"
+# BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 86400}
+# WORKER_PREFETCH_MULTIPLIER=1
+# CELERY_TASK_DEFAULT_QUEUE ='celery'
+# HEDGE_WORKER_DEFAULT_QUEUE ='hedger'
+# BROADCAST_WORKER_DEFAULT_QUEUE='broadcaster'
+# PORTFOLIO_WORKER_DEFAULT_QUEUE='portofolio'
+# UTILS_WORKER_DEFAULT_QUEUE='utils'
+# ASKLORA_QUEUE="asklora"
 
 # print(read_endpoint)
 
-DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
+# DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
 # DATABASES = {
 #     'default': {
 #         'ENGINE': DB_ENGINE,
