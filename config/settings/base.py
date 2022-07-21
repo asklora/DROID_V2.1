@@ -67,19 +67,19 @@ DJANGO_DEFAULT_APPS = [
     "django.contrib.postgres",
 ]
 ADDITIONAL_APPS = [
-    'django_celery_results',
-    'rest_framework',
-    'import_export',
-    'django_celery_beat',
-    'drf_spectacular',
-    'corsheaders',
-    'rest_framework_simplejwt.token_blacklist',
-    'channels',
-    'channels_presence',
-    'django_redis',
-    'simple_history',
+    # 'django_celery_results',
+    # 'rest_framework',
+    # 'import_export',
+    # 'django_celery_beat',
+    # 'drf_spectacular',
+    # 'corsheaders',
+    # 'rest_framework_simplejwt.token_blacklist',
+    # 'channels',
+    # 'channels_presence',
+    # 'django_redis',
+    # 'simple_history',
     # docs https://github.com/vishalanandl177/DRF-API-Logger
-    'drf_api_logger',
+    # 'drf_api_logger',
 ]
 CORE_APPS = [
     "core.djangomodule",
@@ -145,22 +145,22 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 ROOT_URLCONF = "config.urls"
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "files/staticfiles")
-AUTH_USER_MODEL = "user.User"
-REST_FRAMEWORK = {
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_PERMISSION_CLASSES": [
-        # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
-    "PAGE_SIZE": 10,
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "config.jwt_auth_module.AuthJwt",
-    ),
-    'DEFAULT_THROTTLE_RATES': {
-        'order': '10/min',
-        'order_action': '10/min',
-    }
-}
+# AUTH_USER_MODEL = "user.User"
+# REST_FRAMEWORK = {
+#     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+#     "DEFAULT_PERMISSION_CLASSES": [
+#         # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+#     ],
+#     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+#     "PAGE_SIZE": 10,
+#     "DEFAULT_AUTHENTICATION_CLASSES": (
+#         "config.jwt_auth_module.AuthJwt",
+#     ),
+#     'DEFAULT_THROTTLE_RATES': {
+#         'order': '10/min',
+#         'order_action': '10/min',
+#     }
+# }
 
 
 DB_ENGINE = 'django.db.backends.postgresql_psycopg2'
