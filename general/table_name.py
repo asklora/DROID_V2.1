@@ -8,13 +8,13 @@ def get_region_table_name():
     return "region"
 
 def get_calendar_table_name():
-    return "currency_calendar"
+    return models.CurrencyCalendar.__table__.schema + '.' + models.CurrencyCalendar.__table__.name
 
 def get_universe_consolidated_table_name():
     return "universe_consolidated"
 
 def get_universe_table_name():
-    return "universe"
+    return models.Universe.__table__.schema + '.' + models.Universe.__table__.name
 
 def get_universe_client_table_name():
     return "universe_client"
@@ -32,7 +32,7 @@ def get_historic_fx_rate_table_name():
     return "data_factor_eikon_others_fx"
 
 def get_currency_table_name():
-    return "currency"
+    return models.Currency.__table__.schema + '.' + models.Currency.__table__.name
 
 def get_currency_price_history_table_name():
     return "currency_price_history"
@@ -77,10 +77,10 @@ def get_data_dsws_table_name():
     return "data_dsws"
 
 def get_data_vix_table_name():
-    return "data_vix"
+    return models.DataVix.__table__.schema + '.' + models.DataVix.__table__.name
 
 def get_latest_price_table_name():
-    return "latest_price"
+    return models.LatestPrice.__table__.schema + '.' + models.LatestPrice.__table__.name
 
 def get_quandl_table_name():
     return "data_quandl"
@@ -98,13 +98,13 @@ def get_data_ibes_table_name():
     return "data_ibes"
 
 def get_data_ibes_monthly_table_name():
-    return "data_ibes_monthly"
+    return models.DataIbes.__table__.schema + '.' + models.DataIbes.__table__.name
 
 def get_data_macro_table_name():
-    return "data_macro"
+    return models.DataMacro.__table__.schema + '.' + models.DataMacro.__table__.name
 
 def get_data_macro_monthly_table_name():
-    return "data_macro_monthly"
+    return models.DataMacro.__table__.schema + '.' + models.DataMacro.__table__.name
 
 def get_data_worldscope_summary_table_name():
     return "data_worldscope_summary"
