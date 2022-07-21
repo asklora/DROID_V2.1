@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from environs import Env
-from core.djangomodule.network.cloud import DroidDb
+# from core.djangomodule.network.cloud import DroidDb
 from datetime import timedelta
 import firebase_admin
 import warnings
@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv()
 env = Env()
-db = DroidDb()
+# db = DroidDb()
 db_debug = env.bool("DROID_DEBUG")
 
 # Quick-start development settings - unsuitable for production
