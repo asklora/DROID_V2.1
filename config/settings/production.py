@@ -52,7 +52,7 @@ CACHES = {
 # Databases
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 print('using prod db')
-read_endpoint, write_endpoint, port = db.prod_url
+# read_endpoint, write_endpoint, port = db.prod_url
 MQPASS="NjI0NkZFQzVBQkQwNUE2RERCRjY1QzJGMzA2OUFFMjE1MjAyMkRFMjoxNjMxNjA0MjEwOTY5"
 MQUSER="MjphbXFwLXNnLTZ3cjJjbG1hbzAwMzpMVEFJNXRTaGR4VUhxV3ZCVm9MNVR5amE="
 # CELERY_BROKER_URL = f'amqp://{MQUSER}:{MQPASS}@amqp-sg-6wr2clmao003.mq-amqp.cn-hongkong-3568556-b.aliyuncs.com:5672/master'
@@ -69,78 +69,78 @@ PORTFOLIO_WORKER_DEFAULT_QUEUE='portofolio'
 UTILS_WORKER_DEFAULT_QUEUE='utils'
 ASKLORA_QUEUE="asklora"
 
-print(read_endpoint)
+# print(read_endpoint)
 
 DATABASE_ROUTERS = ['config.DbRouter.AuroraRouters']
-DATABASES = {
-    'default': {
-        'ENGINE': DB_ENGINE,
-        'NAME': os.getenv('DBNAME'),  # dbname
-        'USER': os.getenv('DBUSER'),
-        'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': read_endpoint,
-        'PORT': port,
-    },
-    'aurora_read': {
-        'ENGINE': DB_ENGINE,
-        'NAME': os.getenv('DBNAME'),  # dbname
-        'USER': os.getenv('DBUSER'),
-        'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': read_endpoint,
-        'PORT': port,
-
-    },
-    'aurora_write': {
-        'ENGINE': DB_ENGINE,
-        'NAME': os.getenv('DBNAME'),  # dbname
-        'USER': os.getenv('DBUSER'),
-        'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': write_endpoint,
-        'PORT': port,
-
-    }
-
-}
-FIREBASE_COLLECTION={
-    'portfolio':'prod_portfolio',
-    'universe':'universe',
-    'ranking':'ranking'
-}
-CELERY_TASK_ROUTES = {
-    # ===== SHORT INTERVAL =====
-    #websocket ping
-    'core.services.tasks.ping_available_presence': {'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
-    #prune inactive channel
-    'core.services.tasks.channel_prune':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
-    #realtime ranking and portfolio
-   ' core.services.order_services.update_rtdb_user_porfolio':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
-    #market price realtime
-    'datasource.rkd.update_rtdb':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
-    'datasource.rkd.bulk_update_rtdb':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
-    # ===== SHORT INTERVAL =====
-
-    # ===== ORDER & PORTFOLIO =====
-    # order executor
-    'core.services.order_services.order_executor':{'queue': PORTFOLIO_WORKER_DEFAULT_QUEUE},
-    # ===== ORDER & PORTFOLIO =====
-    
-    # ===== HEDGE BOT RELATED =====
-    # weekly topstock and hedge
-    'core.services.tasks.populate_client_top_stock_weekly':{'queue': HEDGE_WORKER_DEFAULT_QUEUE},
-    'core.services.tasks.daily_hedge':{'queue': HEDGE_WORKER_DEFAULT_QUEUE},
-    # ===== HEDGE BOT RELATED =====
-
-    # ===== UTILITY =====
-    # update ticker weekly
-    'core.services.tasks.weekly_universe_firebase_update':{'queue': UTILS_WORKER_DEFAULT_QUEUE},
-    # exchange hours updater
-    'core.services.exchange_services.init_exchange_check':{'queue': CELERY_TASK_DEFAULT_QUEUE},
-    'core.services.exchange_services.market_check_routines':{'queue': CELERY_TASK_DEFAULT_QUEUE},
-    # ===== UTILITY =====
-
-    # ===== CELERY DEFAULT =====
-    # contains celery beat, user sync, micro service cross language
-    #   . config.celery.app_publish -> for cross language/app producer
-    #   . config.celery.listener  -> for cross language/app consumer
-
-    }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': DB_ENGINE,
+#         'NAME': os.getenv('DBNAME'),  # dbname
+#         'USER': os.getenv('DBUSER'),
+#         'PASSWORD': os.getenv('DBPASSWORD'),
+#         'HOST': read_endpoint,
+#         'PORT': port,
+#     },
+#     'aurora_read': {
+#         'ENGINE': DB_ENGINE,
+#         'NAME': os.getenv('DBNAME'),  # dbname
+#         'USER': os.getenv('DBUSER'),
+#         'PASSWORD': os.getenv('DBPASSWORD'),
+#         'HOST': read_endpoint,
+#         'PORT': port,
+#
+#     },
+#     'aurora_write': {
+#         'ENGINE': DB_ENGINE,
+#         'NAME': os.getenv('DBNAME'),  # dbname
+#         'USER': os.getenv('DBUSER'),
+#         'PASSWORD': os.getenv('DBPASSWORD'),
+#         'HOST': write_endpoint,
+#         'PORT': port,
+#
+#     }
+#
+# }
+# FIREBASE_COLLECTION={
+#     'portfolio':'prod_portfolio',
+#     'universe':'universe',
+#     'ranking':'ranking'
+# }
+# CELERY_TASK_ROUTES = {
+#     # ===== SHORT INTERVAL =====
+#     #websocket ping
+#     'core.services.tasks.ping_available_presence': {'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
+#     #prune inactive channel
+#     'core.services.tasks.channel_prune':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
+#     #realtime ranking and portfolio
+#    ' core.services.order_services.update_rtdb_user_porfolio':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
+#     #market price realtime
+#     'datasource.rkd.update_rtdb':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
+#     'datasource.rkd.bulk_update_rtdb':{'queue': BROADCAST_WORKER_DEFAULT_QUEUE},
+#     # ===== SHORT INTERVAL =====
+#
+#     # ===== ORDER & PORTFOLIO =====
+#     # order executor
+#     'core.services.order_services.order_executor':{'queue': PORTFOLIO_WORKER_DEFAULT_QUEUE},
+#     # ===== ORDER & PORTFOLIO =====
+#
+#     # ===== HEDGE BOT RELATED =====
+#     # weekly topstock and hedge
+#     'core.services.tasks.populate_client_top_stock_weekly':{'queue': HEDGE_WORKER_DEFAULT_QUEUE},
+#     'core.services.tasks.daily_hedge':{'queue': HEDGE_WORKER_DEFAULT_QUEUE},
+#     # ===== HEDGE BOT RELATED =====
+#
+#     # ===== UTILITY =====
+#     # update ticker weekly
+#     'core.services.tasks.weekly_universe_firebase_update':{'queue': UTILS_WORKER_DEFAULT_QUEUE},
+#     # exchange hours updater
+#     'core.services.exchange_services.init_exchange_check':{'queue': CELERY_TASK_DEFAULT_QUEUE},
+#     'core.services.exchange_services.market_check_routines':{'queue': CELERY_TASK_DEFAULT_QUEUE},
+#     # ===== UTILITY =====
+#
+#     # ===== CELERY DEFAULT =====
+#     # contains celery beat, user sync, micro service cross language
+#     #   . config.celery.app_publish -> for cross language/app producer
+#     #   . config.celery.listener  -> for cross language/app consumer
+#
+#     }
